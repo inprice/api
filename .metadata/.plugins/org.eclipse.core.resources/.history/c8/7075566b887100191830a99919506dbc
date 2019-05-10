@@ -1,0 +1,60 @@
+package test;
+
+public class DomainExtractor {
+
+	public static void main(String[] args) {
+		System.out.println(getHostName("http://git-getir.COM"));
+		System.out.println(getHostName("https://git-getir.COM"));
+		System.out.println(getHostName("www.git-getir.COM"));
+		System.out.println(getHostName("http://www.git-getir.COM"));
+		System.out.println(getHostName("https://www.git-getir.COM"));
+
+		System.out.println(getHostName("http://urun.git-getir.COM"));
+		System.out.println(getHostName("https://urun.git-getir.COM"));
+
+		System.out.println(getHostName("www.urun.git-getir.COM"));
+		System.out.println(getHostName("http://www.urun.git-getir.COM"));
+		System.out.println(getHostName("https://www.urun.git-getir.COM"));
+
+		System.out.println(getHostName("www.GOOGLE.COM"));
+		System.out.println(getHostName("www.GOOGLE.COM:8080"));
+		System.out.println(getHostName("www.hepsiburada.com/aaa/bbb/ccc-ddd"));
+		System.out.println(getHostName("http://urun.hepsiburada.com:7070/aaa/bbb/ccc-ddd"));
+		System.out.println(getHostName("https://urun.hepsiburada.com/aaa/bbb/ccc-ddd"));
+		System.out.println(getHostName("HTTP://www.hepsiburada.com/aaa/bbb/ccc-ddd"));
+		System.out.println(getHostName("https://www.hepsiburada.com/aaa/bbb/ccc-ddd"));
+		System.out.println(getHostName("HTTPS://WWW.HEPSIBURADA.COM.TR:9090/URUN-DETAY/123"));
+		System.out.println(getHostName("hepsiburada.com/aaa/bbb/ccc-ddd"));
+		System.out.println(getHostName("urun.hepsiburada.com/aaa/bbb/ccc-ddd"));
+		System.out.println(getHostName("https://incoming-sms.vkk.io.com.tr/aaa/bbb/ccc-ddd"));
+		System.out.println(getHostName("https://incoming.sms.vkk.io.com.tr/aaa/bbb/ccc-ddd"));
+	}
+
+	public static String getHostName(String url) {
+		String decentUrl = url.toLowerCase();
+		if (decentUrl.indexOf("www") == -1) {
+			decentUrl = url.toLowerCase().replaceFirst("http[s]://", "$0www.");
+		}
+		
+		System.out.println(decentUrl);
+		
+		String domainName = decentUrl.replaceFirst("^(?i)(http|www|ftp|file).*?\\.", "").toLowerCase();
+
+		int index = domainName.indexOf('/');
+		if (index != -1) {
+			domainName = domainName.substring(0, index);
+		}
+
+		index = domainName.indexOf(':');
+		if (index != -1) {
+			domainName = domainName.substring(0, index);
+		}
+
+		index = domainName.indexOf('.');
+		if (index == -1) {
+			domainName = url.replaceFirst("^(http[s]?://www\\.|http[s]?://|www\\.)", "").toLowerCase();
+		}
+
+		return domainName;
+	}
+}
