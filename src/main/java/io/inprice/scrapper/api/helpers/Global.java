@@ -1,11 +1,12 @@
 package io.inprice.scrapper.api.helpers;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class Global {
 
-    public static final Gson gson = new Gson();
+    public static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 
-    public static volatile boolean isRunning = false;
+    public static volatile boolean isApplicationRunning = false;
 
 }
