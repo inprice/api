@@ -24,8 +24,7 @@ public class ConfigScanner {
             try {
                 Class<?> declaringClass = method.getDeclaringClass();
 
-                String[] folders = declaringClass.getName().split("\\.");
-                log.info(String.format("   + %s.%s : OK", folders[folders.length-2], folders[folders.length-1]));
+                log.info(String.format("   + %s : OK", declaringClass.getSimpleName()));
 
                 method.invoke(declaringClass.newInstance());
             } catch (Exception e) {

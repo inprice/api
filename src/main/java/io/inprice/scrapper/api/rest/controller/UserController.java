@@ -1,27 +1,28 @@
-package io.inprice.scrapper.api.rest.user;
+package io.inprice.scrapper.api.rest.controller;
 
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.Response;
+import io.inprice.scrapper.api.rest.service.UserService;
 import io.inprice.scrapper.common.logging.Logger;
 import io.inprice.scrapper.common.models.User;
 import org.eclipse.jetty.http.HttpStatus;
 
-class Controller {
+public class UserController {
 
-    private static final Logger log = new Logger("UserController");
+    private static final Logger log = new Logger(UserController.class);
 
-    private final Service service = Beans.getSingleton(Service.class);
+    private final UserService service = Beans.getSingleton(UserService.class);
 
-    Response findById(Long id) {
+    public Response findById(Long id) {
         return service.findById(id);
     }
 
-    Response findByEmail(String email) {
+    public Response findByEmail(String email) {
         return service.findByEmail(email);
     }
 
-    Response upsert(String body, boolean insert) {
+    public Response upsert(String body, boolean insert) {
         User user = toModel(body);
         if (user != null) {
             if (insert)

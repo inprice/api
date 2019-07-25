@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.rest.user;
+package io.inprice.scrapper.api.rest.repository;
 
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
@@ -11,32 +11,30 @@ import jodd.util.BCrypt;
 
 import java.sql.*;
 
-class Repository {
+public class UserRepository {
 
-    private static final Logger log = new Logger("UserRepository");
+    private static final Logger log = new Logger(UserRepository.class);
 
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
-    Response insert(User user) {
+    public Response insert(User user) {
         final String salt = BCrypt.gensalt(12);
         final String query =
             "insert into user " +
-            "(user_type, company_name, contact_name, email, website, password_hash, password_salt, country_id) " +
+            "(user_type, name, email, password_salt, password_hash, company_id) " +
             "values " +
-            "(?, ?, ?, ?, ?, ?, ?, ?) ";
+            "(?, ?, ?, ?, ?, ?) ";
 
         try (Connection con = dbUtils.getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
 
             int i = 0;
             pst.setString(++i, user.getUserType().name());
-            pst.setString(++i, user.getCompanyName());
-            pst.setString(++i, user.getContactName());
+            pst.setString(++i, user.getName());
             pst.setString(++i, user.getEmail());
-            pst.setString(++i, user.getWebsite());
             pst.setString(++i, salt);
             pst.setString(++i, BCrypt.hashpw(user.getPassword(), salt));
-            pst.setLong(++i, user.getCountryId());
+            pst.setLong(++i, user.getCompanyId());
 
             if (pst.executeUpdate() > 0)
                 return Responses.OK;
@@ -52,10 +50,10 @@ class Repository {
         }
     }
 
-    Response update(User user) {
+    public Response update(User user) {
         final String query =
             "update user " +
-            "set user_type=?, company_name=?, contact_name=?, website=?, country_id=? " +
+            "set user_type=?, company_id=? " +
             "where email=?";
 
         try (Connection con = dbUtils.getConnection();
@@ -63,10 +61,7 @@ class Repository {
 
             int i = 0;
             pst.setString(++i, user.getUserType().name());
-            pst.setString(++i, user.getCompanyName());
-            pst.setString(++i, user.getContactName());
-            pst.setString(++i, user.getWebsite());
-            pst.setLong(++i, user.getCountryId());
+            pst.setLong(++i, user.getCompanyId());
             pst.setString(++i, user.getEmail());
 
             if (pst.executeUpdate() > 0)
@@ -80,7 +75,7 @@ class Repository {
         }
     }
 
-    Response findById(Long id, boolean passwordFields) {
+    public Response findById(Long id, boolean passwordFields) {
         User model = dbUtils.findSingle(String.format("select * from user where id = %d", id), this::map);
         if (model != null) {
             if (! passwordFields) {
@@ -93,7 +88,7 @@ class Repository {
         }
     }
 
-    Response findByEmail(String email, boolean passwordFields) {
+    public Response findByEmail(String email, boolean passwordFields) {
         User model = dbUtils.findSingle(String.format("select * from user where email = '%s'", email), this::map);
         if (model != null) {
             if (! passwordFields) {
@@ -111,13 +106,10 @@ class Repository {
             User user = new User();
             user.setId(rs.getLong("id"));
             user.setUserType(UserType.valueOf(rs.getString("user_type")));
-            user.setCompanyName(rs.getString("company_name"));
-            user.setContactName(rs.getString("contact_name"));
             user.setEmail(rs.getString("email"));
-            user.setWebsite(rs.getString("website"));
             user.setPasswordHash(rs.getString("password_hash"));
             user.setPasswordSalt(rs.getString("password_salt"));
-            user.setCountryId(rs.getLong("country_id"));
+            user.setCompanyId(rs.getLong("company_id"));
             user.setInsertAt(rs.getDate("insert_at"));
             return user;
         } catch (SQLException e) {

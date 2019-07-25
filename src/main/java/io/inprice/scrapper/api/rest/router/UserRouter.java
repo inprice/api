@@ -1,18 +1,19 @@
-package io.inprice.scrapper.api.rest.user;
+package io.inprice.scrapper.api.rest.router;
 
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.Response;
+import io.inprice.scrapper.api.rest.controller.UserController;
 import org.apache.commons.validator.routines.LongValidator;
 
 import static spark.Spark.*;
 
-public class Router {
+public class UserRouter {
 
     private static final String ROOT = "user";
 
-    private final Controller controller = Beans.getSingleton(Controller.class);
+    private final UserController controller = Beans.getSingleton(UserController.class);
 
     @Routing
     public void routes() {
