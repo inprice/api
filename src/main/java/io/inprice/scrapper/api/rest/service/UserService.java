@@ -1,21 +1,23 @@
 package io.inprice.scrapper.api.rest.service;
 
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.Response;
 import io.inprice.scrapper.api.info.Responses;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
-import io.inprice.scrapper.common.logging.Logger;
+import org.slf4j.Logger;
 import io.inprice.scrapper.common.models.User;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.eclipse.jetty.http.HttpStatus;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserService {
 
-    private static final Logger log = new Logger(UserService.class);
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
     
     private final UserRepository repository = Beans.getSingleton(UserRepository.class);
 
@@ -40,7 +42,7 @@ public class UserService {
             }
             res = repository.insert(user);
             if (res.isOK()) {
-                log.info("A new user has been added successfully. Name: %s, CompanyId: %d", user.getName(), user.getCompanyId());
+                log.info("A new user has been added successfully. Name: {}, CompanyId: {}", user.getName(), user.getCompanyId());
             }
         }
         return res;
@@ -58,16 +60,26 @@ public class UserService {
         return res;
     }
 
+    //todo: a dto class should be used here
     private Response validate(User cust, boolean insert) {
-        List<String> problems = new ArrayList<>();
+        List<Problem> problems = new ArrayList<>();
 
-        if (! EmailValidator.getInstance().isValid(cust.getEmail())) problems.add("Email address is invalid!");
-        if (insert && (StringUtils.isBlank(cust.getPassword()) || cust.getPassword().trim().length() < 4)) problems.add("Password length of should between 4 and 12!");
-        if (cust.getCompanyId() == null || cust.getCompanyId().intValue() < 1)problems.add("Company cannot be null!");
+        if (! EmailValidator.getInstance().isValid(cust.getEmail())) {
+            problems.add(new Problem("email", "Email address is invalid!"));
+        }
+
+        //todo: passwordAgain should be added and cheked
+        if (StringUtils.isBlank(cust.getPassword()) || cust.getPassword().trim().length() < 4) {
+            problems.add(new Problem("password", "Password length of should between 4 and 12!"));
+        }
+
+        if (cust.getCompanyId() == null || cust.getCompanyId().intValue() < 1) {
+            problems.add(new Problem("form", "Company cannot be null!"));
+        }
 
         if (problems.size() > 0) {
             Response res = new Response(HttpStatus.BAD_REQUEST_400);
-            res.setProblemList(problems);
+            res.setProblems(problems);
             return res;
         } else {
             return Responses.OK;

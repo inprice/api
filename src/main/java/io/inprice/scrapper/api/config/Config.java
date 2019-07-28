@@ -1,6 +1,7 @@
 package io.inprice.scrapper.api.config;
 
-import io.inprice.scrapper.common.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,7 +9,7 @@ import java.util.Properties;
 
 public class Config {
 
-	private static final Logger log = new Logger(Config.class);
+	private static final Logger log = LoggerFactory.getLogger(Config.class);
 
 	private final Properties prop;
 
@@ -22,8 +23,16 @@ public class Config {
 			}
 			prop.load(input);
 		} catch (IOException e) {
-			log.error(e);
+			log.error("Error", e);
 		}
+	}
+
+	public int getAPP_Port() {
+		return getOrDefault("app.port", 4567);
+	}
+
+	public String getDB_Driver() {
+		return prop.getProperty("db.driver", "mysql");
 	}
 
 	public String getDB_Host() {
@@ -38,12 +47,20 @@ public class Config {
 		return prop.getProperty("db.database", "inprice");
 	}
 
+	public String getDB_Additions() {
+		return prop.getProperty("db.additions", "");
+	}
+
 	public String getDB_Username() {
 		return prop.getProperty("db.username", "root");
 	}
 
 	public String getDB_Password() {
 		return prop.getProperty("db.password", "1234");
+	}
+
+	public int getAS_SaltRounds() {
+		return getOrDefault("app.security.salt-rounds", 12);
 	}
 
 	private int getOrDefault(String key, int defauld) {

@@ -5,8 +5,9 @@ import com.zaxxer.hikari.HikariDataSource;
 import io.inprice.scrapper.api.config.Config;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.common.helpers.ModelMapper;
-import io.inprice.scrapper.common.logging.Logger;
+import org.slf4j.Logger;
 import io.inprice.scrapper.common.models.Model;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import java.util.List;
 
 public class DBUtils {
 
-    private static final Logger log = new Logger(DBUtils.class);
+    private static final Logger log = LoggerFactory.getLogger(DBUtils.class);
 
     private final Config config = Beans.getSingleton(Config.class);
     private final HikariDataSource ds;
@@ -22,7 +23,13 @@ public class DBUtils {
     private DBUtils() {
         HikariConfig hConf = new HikariConfig();
 
-        hConf.setJdbcUrl(String.format("jdbc:mysql://%s:%d/%s?characterEncoding=utf8", config.getDB_Host(), config.getDB_Port(), config.getDB_Database()));
+        final String connectionString =
+                String.format("jdbc:%s:%s:%d/%s%s", config.getDB_Driver(), config.getDB_Host(),
+                        config.getDB_Port(), config.getDB_Database(), config.getDB_Additions());
+
+        log.info(connectionString);
+
+        hConf.setJdbcUrl(connectionString);
         hConf.setUsername(config.getDB_Username());
         hConf.setPassword(config.getDB_Password());
         hConf.addDataSourceProperty("cachePrepStmts", "true");

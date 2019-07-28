@@ -1,6 +1,7 @@
 package io.inprice.scrapper.api.framework;
 
-import io.inprice.scrapper.common.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
@@ -8,7 +9,7 @@ import java.util.Map;
 
 public class Beans {
 
-    private static final Logger log = new Logger(Beans.class);
+    private static final Logger log = LoggerFactory.getLogger(Beans.class);
 
     private static Map<Class<?>, Object> singletonMap = new HashMap<>();
 
@@ -21,7 +22,7 @@ public class Beans {
                 con.setAccessible(true);
                 obj = (T) con.newInstance();
             } catch (Exception e) {
-                log.error(e);
+                log.error("Error", e);
             }
             singletonMap.put(clazz, obj);
         }

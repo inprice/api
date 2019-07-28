@@ -4,21 +4,24 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.info.Response;
 import io.inprice.scrapper.api.info.Responses;
-import io.inprice.scrapper.common.logging.Logger;
+import io.inprice.scrapper.api.utils.CodeGenerator;
+import org.slf4j.Logger;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.User;
 import jodd.util.BCrypt;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 
 public class UserRepository {
 
-    private static final Logger log = new Logger(UserRepository.class);
+    private static final Logger log = LoggerFactory.getLogger(UserRepository.class);
 
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+    private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
     public Response insert(User user) {
-        final String salt = BCrypt.gensalt(12);
+        final String salt = codeGenerator.generateSalt();
         final String query =
             "insert into user " +
             "(user_type, name, email, password_salt, password_hash, company_id) " +
