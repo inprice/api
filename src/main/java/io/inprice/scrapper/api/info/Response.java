@@ -27,6 +27,11 @@ public class Response<T extends Model> {
         this.model = model;
     }
 
+    public Response(List<T> models) {
+        this.status = HttpStatus.OK_200;
+        this.modelList = models;
+    }
+
     public boolean isOK() {
         return (status == HttpStatus.OK_200);
     }

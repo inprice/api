@@ -5,38 +5,22 @@ import java.io.Serializable;
 /**
  * Used for handling company info in client side
  */
-public class CompanyDTO implements Serializable {
-
-    private Long id;
+public class CompanyDTO extends UserDTO implements Serializable {
 
     //company
-    private String name;
+    private String companyName;
     private String website;
     private Long countryId;
-
-    //account owner
-    private String contactName;
-    private String contactEmail;
-    private String password;
-    private String passwordAgain;
 
     //security
     private String captcha;
 
-    public Long getId() {
-        return id;
+    public String getCompanyName() {
+        return companyName;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
     }
 
     public String getWebsite() {
@@ -55,54 +39,11 @@ public class CompanyDTO implements Serializable {
         this.countryId = countryId;
     }
 
-    public String getContactName() {
-        return contactName;
-    }
-
-    public void setContactName(String contactName) {
-        this.contactName = contactName;
-    }
-
-    public String getContactEmail() {
-        return contactEmail;
-    }
-
-    public void setContactEmail(String contactEmail) {
-        this.contactEmail = contactEmail;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getPasswordAgain() {
-        return passwordAgain;
-    }
-
-    public void setPasswordAgain(String passwordAgain) {
-        this.passwordAgain = passwordAgain;
-    }
-
     public String getCaptcha() {
         return captcha;
     }
 
     public void setCaptcha(String captcha) {
         this.captcha = captcha;
-    }
-
-    @Override
-    public String toString() {
-        return "CompanyDTO{" +
-                "name='" + name + '\'' +
-                ", website='" + website + '\'' +
-                ", countryId=" + countryId +
-                ", contactName='" + contactName + '\'' +
-                ", contactEmail='" + contactEmail + '\'' +
-                '}';
     }
 }

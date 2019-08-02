@@ -48,7 +48,7 @@ public class CompanyController {
             else
                 return service.update(companyDTO);
         }
-        log.error("Invalid company data: " + body);
+
         return new Response(HttpStatus.BAD_REQUEST_400, "Invalid data for company!");
     }
 
@@ -56,7 +56,7 @@ public class CompanyController {
         try {
             return Global.gson.fromJson(body, CompanyDTO.class);
         } catch (Exception e) {
-            log.error("Data conversion error for company!", e);
+            log.error("Data conversion error for: " + body);
         }
 
         return null;

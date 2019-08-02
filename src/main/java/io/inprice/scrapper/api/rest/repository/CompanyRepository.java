@@ -48,7 +48,7 @@ public class CompanyRepository {
                      con.prepareStatement("insert into company (name, website, country_id) values (?, ?, ?) ",
                              Statement.RETURN_GENERATED_KEYS)) {
                 int i = 0;
-                pst.setString(++i, companyDTO.getName());
+                pst.setString(++i, companyDTO.getCompanyName());
                 pst.setString(++i, companyDTO.getWebsite());
                 pst.setLong(++i, companyDTO.getCountryId());
 
@@ -73,8 +73,8 @@ public class CompanyRepository {
                 try (PreparedStatement pst = con.prepareStatement(q2, Statement.RETURN_GENERATED_KEYS)) {
                     int i = 0;
                     pst.setString(++i, UserType.OWNER.name());
-                    pst.setString(++i, companyDTO.getContactName());
-                    pst.setString(++i, companyDTO.getContactEmail());
+                    pst.setString(++i, companyDTO.getFullName());
+                    pst.setString(++i, companyDTO.getEmail());
                     pst.setString(++i, salt);
                     pst.setString(++i, BCrypt.hashpw(companyDTO.getPassword(), salt));
                     pst.setLong(++i, companyId);
@@ -129,7 +129,7 @@ public class CompanyRepository {
             PreparedStatement pst = con.prepareStatement("update company set name=?, website=?, country_id=? where id=?")) {
 
             int i = 0;
-            pst.setString(++i, companyDTO.getName());
+            pst.setString(++i, companyDTO.getCompanyName());
             pst.setString(++i, companyDTO.getWebsite());
             pst.setLong(++i, companyDTO.getCountryId());
             pst.setLong(++i, companyDTO.getId());

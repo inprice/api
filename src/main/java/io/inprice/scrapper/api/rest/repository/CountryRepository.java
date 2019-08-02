@@ -24,17 +24,17 @@ public class CountryRepository {
     public CountryRepository() {
         countryIdMap = new HashMap<>();
 
-        countries = dbUtils.findMultiple("select * from country", CountryRepository::map);
+        countries = dbUtils.findMultiple("select * from country order by name", CountryRepository::map);
         for (Country country: countries) {
             countryIdMap.put(country.getId(), country);
         }
-        Collections.sort(countries);
     }
 
     public Country findById(Long id) {
         return countryIdMap.get(id);
     }
 
+    //TODO: should be fetch from redis first
     public List<Country> getAll() {
         return countries;
     }
