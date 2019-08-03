@@ -22,8 +22,8 @@ public class CompanyRepository {
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
-    public Response findById(Long id) {
-        Response response = Responses.CRUD_ERROR;
+    public Response<Company> findById(Long id) {
+        Response<Company> response = Responses.CRUD_ERROR;
 
         Company model = dbUtils.findSingle("select * from company where id="+ id, CompanyRepository::map);
         if (model != null) {
@@ -64,15 +64,15 @@ public class CompanyRepository {
             if (companyId != null) {
                 final String salt = codeGenerator.generateSalt();
                 final String q2 =
-                        "insert into user " +
-                        "(user_type, name, email, password_salt, password_hash, company_id) " +
-                        "values " +
-                        "(?, ?, ?, ?, ?, ?) ";
+                    "insert into user " +
+                    "(user_type, full_name, email, password_salt, password_hash, company_id) " +
+                    "values " +
+                    "(?, ?, ?, ?, ?, ?) ";
 
                 //owner is inserted
                 try (PreparedStatement pst = con.prepareStatement(q2, Statement.RETURN_GENERATED_KEYS)) {
                     int i = 0;
-                    pst.setString(++i, UserType.OWNER.name());
+                    pst.setString(++i, UserType.ADMIN.name());
                     pst.setString(++i, companyDTO.getFullName());
                     pst.setString(++i, companyDTO.getEmail());
                     pst.setString(++i, salt);
@@ -85,7 +85,7 @@ public class CompanyRepository {
                                 long ownerId = generatedKeys.getLong(1);
 
                                 //company's owner is set
-                                try (PreparedStatement subPst = con.prepareStatement("update company set owner_id=? where id=? ")) {
+                                try (PreparedStatement subPst = con.prepareStatement("update company set admin_id=? where id=? ")) {
                                     subPst.setLong(1, ownerId);
                                     subPst.setLong(2, companyId);
                                     if (subPst.executeUpdate() > 0) {
@@ -154,7 +154,7 @@ public class CompanyRepository {
             model.setId(rs.getLong("id"));
             model.setName(rs.getString("name"));
             model.setWebsite(rs.getString("website"));
-            model.setOwnerId(rs.getLong("owner_id"));
+            model.setAdminId(rs.getLong("admin_id"));
             model.setCountryId(rs.getLong("country_id"));
             model.setInsertAt(rs.getDate("insert_at"));
 

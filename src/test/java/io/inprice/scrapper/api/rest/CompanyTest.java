@@ -4,9 +4,10 @@ import io.inprice.scrapper.api.Application;
 import io.inprice.scrapper.api.config.Config;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.DBUtils;
+import io.inprice.scrapper.api.helpers.Global;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -15,16 +16,18 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class CompanyTest {
 
+    private static final String ROOT = "/company";
+
     private final Config config = Beans.getSingleton(Config.class);
+    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     @BeforeClass
     public static void setup() {
-        Application.main(null);
-    }
-
-    @AfterClass
-    public static void teardown() {
-        Application.shutdown();
+        if (Global.isApplicationRunning) {
+            dbUtils.reset();
+        } else {
+            Application.main(null);
+        }
     }
 
     @Test
@@ -36,7 +39,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
@@ -48,7 +51,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body("wrong body!").
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("result", equalTo("Invalid data for company!"));
@@ -63,7 +66,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Company name cannot be null!"));
@@ -78,7 +81,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("The length of name field must be between 3 and 250 chars!"));
@@ -93,7 +96,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("The length of name field must be between 3 and 250 chars!"));
@@ -108,7 +111,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .put("/company").
+            .put(ROOT).
         then()
             .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
             .body("result", equalTo("Company not found!"));
@@ -123,7 +126,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("You should pick a country!"));
@@ -138,7 +141,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Unknown country!"));
@@ -153,7 +156,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Contact name cannot be null!"));
@@ -168,7 +171,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Contact name must be between 2 and 150 chars!"));
@@ -183,7 +186,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Contact name must be between 2 and 150 chars!"));
@@ -198,7 +201,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Email address cannot be null!"));
@@ -214,13 +217,13 @@ public class CompanyTest {
         given()
             .port(config.getAPP_Port())
             .body(company)
-        .post("/company");
+        .post(ROOT);
 
         given()
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo(email + " is already used by another user!"));
@@ -235,7 +238,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
@@ -250,7 +253,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
@@ -265,7 +268,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Invalid email address!"));
@@ -280,7 +283,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password cannot be null!"));
@@ -295,7 +298,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -310,7 +313,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -325,7 +328,7 @@ public class CompanyTest {
             .port(config.getAPP_Port())
             .body(company).
         when()
-            .post("/company").
+            .post(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Passwords are mismatch!"));

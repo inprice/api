@@ -18,9 +18,20 @@ public class DBUtils {
     private static final Logger log = LoggerFactory.getLogger(DBUtils.class);
 
     private final Config config = Beans.getSingleton(Config.class);
-    private final HikariDataSource ds;
+    private HikariDataSource ds;
 
     private DBUtils() {
+        wakeup();
+    }
+
+    public void reset() {
+        if (config.isRunningForTests()) {
+            shutdown();
+            wakeup();
+        }
+    }
+
+    private void wakeup() {
         HikariConfig hConf = new HikariConfig();
 
         final String connectionString =

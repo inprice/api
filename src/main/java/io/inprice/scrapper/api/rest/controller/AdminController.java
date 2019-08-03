@@ -1,16 +1,19 @@
 package io.inprice.scrapper.api.rest.controller;
 
+import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
+import io.inprice.scrapper.api.info.Claims;
 import io.inprice.scrapper.api.info.Response;
 import io.inprice.scrapper.api.rest.service.AdminService;
 import org.apache.commons.validator.routines.LongValidator;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Spark;
 
 import static spark.Spark.*;
 
@@ -24,45 +27,68 @@ public class AdminController {
 
     @Routing
     public void routes() {
-        get(ROOT + "/:id", (req, res) -> {
+
+        //update admin
+        put(ROOT + "/update", (req, res) -> {
+            //todo: company id should be gotten from a real claim object coming from client
+            Response serviceRes = updateAdmin(Consts.claims, req.body());
+            res.status(serviceRes.getStatus());
+            return serviceRes;
+        }, Global.gson::toJson);
+
+        //update admin password
+        put(ROOT + "/update-password", (req, res) -> {
+            //todo: company id should be gotten from a real claim object coming from client
+            Response serviceRes = updateAdminPassword(Consts.claims, req.body());
+            res.status(serviceRes.getStatus());
+            return serviceRes;
+        }, Global.gson::toJson);
+
+        //insert a user
+        post(ROOT + "/user", (req, res) -> {
+            //todo: company id should be gotten from a real claim object coming from client
+            Response serviceRes = upsertUser(Consts.claims, req.body(), true);
+            res.status(serviceRes.getStatus());
+            return serviceRes;
+        }, Global.gson::toJson);
+
+        //update a user
+        put(ROOT + "/user/update", (req, res) -> {
+            //todo: company id should be gotten from a real claim object coming from client
+            Response serviceRes = upsertUser(Consts.claims, req.body(), false);
+            res.status(serviceRes.getStatus());
+            return serviceRes;
+        }, Global.gson::toJson);
+
+        //delete a user
+        delete(ROOT + "/user/:id", (req, res) -> {
+            Long id = LongValidator.getInstance().validate(req.params(":id"));
+            Response serviceRes = deleteById(id);
+            res.status(serviceRes.getStatus());
+            return serviceRes;
+        }, Global.gson::toJson);
+
+        //find a user by id
+        get(ROOT + "/user/:id", (req, res) -> {
             Long id = LongValidator.getInstance().validate(req.params(":id"));
             Response serviceRes = findById(id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
-        get(ROOT + "/all", (req, res) -> {
+        //get user list
+        get(ROOT + "/user/list", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = getAll(Consts.claims.getCompanyId());
+            Response serviceRes = getList(Consts.claims.getCompanyId());
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
-        post(ROOT, (req, res) -> {
-            //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = upsert(Consts.claims.getCompanyId(), req.body(), true);
-            res.status(serviceRes.getStatus());
-            return serviceRes;
-        }, Global.gson::toJson);
-
-        put(ROOT, (req, res) -> {
-            //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = upsert(Consts.claims.getCompanyId(), req.body(), false);
-            res.status(serviceRes.getStatus());
-            return serviceRes;
-        }, Global.gson::toJson);
-
-        put(ROOT + "/toggle-status/:id", (req, res) -> {
+        //toggle a user's active status
+        put(ROOT + "/user/toggle-status/:id", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
             Long id = LongValidator.getInstance().validate(req.params(":id"));
             Response serviceRes = toggleStatus(id);
-            res.status(serviceRes.getStatus());
-            return serviceRes;
-        }, Global.gson::toJson);
-
-        delete(ROOT + "/:id", (req, res) -> {
-            Long id = LongValidator.getInstance().validate(req.params(":id"));
-            Response serviceRes = deleteById(id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -73,8 +99,8 @@ public class AdminController {
         return service.findById(id);
     }
 
-    Response getAll(long companyId) {
-        return service.getAll(companyId);
+    Response getList(long companyId) {
+        return service.getList(companyId);
     }
 
     Response deleteById(Long id) {
@@ -85,17 +111,34 @@ public class AdminController {
         return service.toggleStatus(id);
     }
 
-    Response upsert(long companyId, String body, boolean insert) {
+    Response upsertUser(Claims claims, String body, boolean insert) {
         UserDTO userDTO = toModel(body);
         if (userDTO != null) {
-            userDTO.setCompanyId(companyId); //
             if (insert)
-                return service.insert(userDTO);
+                return service.insert(claims, userDTO);
             else
-                return service.update(userDTO);
+                return service.update(claims, userDTO, true);
         }
         log.error("Invalid user data: " + body);
         return new Response(HttpStatus.BAD_REQUEST_400, "Invalid data for user!");
+    }
+
+    Response updateAdmin(Claims claims, String body) {
+        UserDTO userDTO = toModel(body);
+        if (userDTO != null) {
+            return service.update(claims, userDTO, false);
+        }
+        log.error("Invalid user data: " + body);
+        return new Response(HttpStatus.BAD_REQUEST_400, "Invalid data for user!");
+    }
+
+    Response updateAdminPassword(Claims claims, String body) {
+        PasswordDTO passwordDTO = toModel(body);
+        if (passwordDTO != null) {
+            return service.updatePassword(claims, passwordDTO);
+        }
+        log.error("Invalid password data: " + body);
+        return new Response(HttpStatus.BAD_REQUEST_400, "Invalid data for password!");
     }
 
     private UserDTO toModel(String body) {

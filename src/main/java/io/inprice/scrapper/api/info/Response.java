@@ -52,7 +52,7 @@ public class Response<T extends Model> {
         this.result = result;
     }
 
-    public Model getModel() {
+    public T getModel() {
         return model;
     }
 

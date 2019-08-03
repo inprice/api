@@ -3,11 +3,15 @@ package io.inprice.scrapper.api.rest;
 import io.inprice.scrapper.api.Application;
 import io.inprice.scrapper.api.config.Config;
 import io.inprice.scrapper.api.dto.CompanyDTO;
+import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.DBUtils;
+import io.inprice.scrapper.api.helpers.Global;
+import io.inprice.scrapper.common.meta.UserType;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
-import org.junit.AfterClass;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -16,22 +20,36 @@ import static org.hamcrest.Matchers.equalTo;
 
 public class AdminTest {
 
+    private static final String ROOT = "/admin";
+
     private static final Config config = Beans.getSingleton(Config.class);
+    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     @BeforeClass
     public static void setup() {
-        Application.main(null);
+        if (Global.isApplicationRunning) {
+            dbUtils.reset();
+        } else {
+            Application.main(null);
+        }
 
         //insert a default company
         given()
             .port(config.getAPP_Port())
-            .body(createAValidCompany())
-        .post("/company");
-    }
+            .body(createAValidCompany()).
+        when()
+            .post("/company").
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat();
 
-    @AfterClass
-    public static void teardown() {
-        Application.shutdown();
+        //insert a default user to manipulate him
+        given()
+            .port(config.getAPP_Port())
+            .body(createAValidUser()).
+        when()
+            .post(ROOT + "/user").
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat();
     }
 
     @Test
@@ -43,7 +61,47 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post("/user").
+            .post(ROOT + "/user").
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("result", equalTo("OK"));
+    }
+
+    @Test
+    public void user_found_for_correct_id() {
+        final int id = 1;
+
+        given()
+            .port(config.getAPP_Port()).
+        when()
+            .get(ROOT + "/user/" + id).
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("model.id", equalTo(id));
+    }
+
+    @Test
+    public void user_not_found_for_wrong_id() {
+        given()
+            .port(config.getAPP_Port()).
+        when()
+            .get(ROOT + "/user/0").
+        then()
+            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
+            .body("result", equalTo("User not found!"));
+    }
+
+    @Test
+    public void everything_should_be_ok_with_update() {
+        final UserDTO user = createAValidUser();
+        user.setFullName("Jane Doe");
+        user.setEmail("janed@inprice.io");
+
+        given()
+            .port(config.getAPP_Port())
+            .body(user).
+        when()
+            .put(ROOT + "/user/update").
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
@@ -55,14 +113,14 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body("wrong body!").
         when()
-            .post("/user").
+            .post(ROOT + "/user").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("result", equalTo("Invalid data for user!"));
     }
 
     @Test
-    public void user_name_cannot_be_null() {
+    public void full_name_cannot_be_null() {
         final UserDTO user = createAValidUser();
         user.setFullName(null);
 
@@ -70,14 +128,14 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post("/user").
+            .post(ROOT + "/user").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("User name cannot be null!"));
+            .body("problems.reason[0]", equalTo("Full name cannot be null!"));
     }
 
     @Test
-    public void user_name_length_is_out_of_range_if_less_than_3() {
+    public void full_name_length_is_out_of_range_if_less_than_3() {
         final UserDTO user = createAValidUser();
         user.setFullName("A");
 
@@ -85,14 +143,14 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post("/user").
+            .post(ROOT + "/user").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("User name must be between 2 and 150 chars!"));
+            .body("problems.reason[0]", equalTo("Full name must be between 2 and 150 chars!"));
     }
 
     @Test
-    public void user_name_length_is_out_of_range_if_greater_than_250() {
+    public void full_name_length_is_out_of_range_if_greater_than_250() {
         final UserDTO user = createAValidUser();
         user.setFullName(StringUtils.repeat('A', 251));
 
@@ -100,70 +158,26 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post("/user").
+            .post(ROOT + "/user").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("User name must be between 2 and 150 chars!"));
+            .body("problems.reason[0]", equalTo("Full name must be between 2 and 150 chars!"));
     }
 
     @Test
     public void user_not_found_for_a_wrong_id_when_updated() {
         final UserDTO user = createAValidUser();
         user.setId(0L);
+        user.setEmail("test@iprice.io");
 
         given()
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .put("/user").
+            .put(ROOT + "/user/update").
         then()
             .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
             .body("result", equalTo("User not found!"));
-    }
-
-    @Test
-    public void contact_name_cannot_be_null() {
-        final UserDTO user = createAValidUser();
-        user.setFullName(null);
-
-        given()
-            .port(config.getAPP_Port())
-            .body(user).
-        when()
-            .post("/user").
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("User name cannot be null!"));
-    }
-
-    @Test
-    public void contact_name_length_is_out_of_range_if_less_than_2() {
-        final UserDTO user = createAValidUser();
-        user.setFullName("A");
-
-        given()
-            .port(config.getAPP_Port())
-            .body(user).
-        when()
-            .post("/user").
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("User name must be between 2 and 150 chars!"));
-    }
-
-    @Test
-    public void contact_name_length_is_out_of_range_if_greater_than_150() {
-        final UserDTO user = createAValidUser();
-        user.setFullName(StringUtils.repeat('A', 151));
-
-        given()
-            .port(config.getAPP_Port())
-            .body(user).
-        when()
-            .post("/user").
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("User name must be between 2 and 150 chars!"));
     }
 
     @Test
@@ -175,7 +189,7 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post("/user").
+            .post(ROOT + "/user").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Email address cannot be null!"));
@@ -190,14 +204,17 @@ public class AdminTest {
 
         given()
             .port(config.getAPP_Port())
-            .body(user)
-        .post("/user");
+            .body(user).
+        when()
+            .post(ROOT + "/user").
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat();
 
         given()
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post("/user").
+            .post(ROOT + "/user").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo(email + " is already used by another user!"));
@@ -212,7 +229,7 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post("/user").
+            .post(ROOT + "/user").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
@@ -227,7 +244,7 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post("/user").
+            .post(ROOT + "/user").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
@@ -242,37 +259,54 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post("/user").
+            .post(ROOT + "/user").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Invalid email address!"));
     }
 
     @Test
-    public void password_cannot_be_null() {
-        final UserDTO user = createAValidUser();
-        user.setPassword(null);
+    public void password_change_should_be_ok() {
+        final PasswordDTO pass = new PasswordDTO();
+        pass.setId(1L);
+        pass.setPasswordOld("p4ssw0rd");
+        pass.setPassword("p4ssw0rd-new");
+        pass.setPasswordAgain("p4ssw0rd-new");
 
         given()
             .port(config.getAPP_Port())
-            .body(user).
+            .body(pass).
         when()
-            .post("/user").
+            .put(ROOT + "/update-password").
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat();
+    }
+
+
+    @Test
+    public void password_cannot_be_null() {
+        final PasswordDTO pass = new PasswordDTO();
+
+        given()
+            .port(config.getAPP_Port())
+            .body(pass).
+        when()
+            .put(ROOT + "/update-password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Password cannot be null!"));
+        .body("problems.reason[0]", equalTo("Password cannot be null!"));
     }
 
     @Test
     public void password_length_is_out_of_range_if_less_than_5() {
-        final UserDTO user = createAValidUser();
-        user.setPassword("pass");
+        final PasswordDTO pass = new PasswordDTO();
+        pass.setPassword("pass");
 
         given()
             .port(config.getAPP_Port())
-            .body(user).
+            .body(pass).
         when()
-            .post("/user").
+            .put(ROOT + "/update-password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -280,14 +314,14 @@ public class AdminTest {
 
     @Test
     public void password_length_is_out_of_range_if_greater_than_16() {
-        final UserDTO user = createAValidUser();
-        user.setPassword(StringUtils.repeat('a', 17));
+        final PasswordDTO pass = new PasswordDTO();
+        pass.setPassword(StringUtils.repeat('a', 17));
 
         given()
             .port(config.getAPP_Port())
-            .body(user).
+            .body(pass).
         when()
-            .post("/user").
+            .put(ROOT + "/update-password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -295,21 +329,58 @@ public class AdminTest {
 
     @Test
     public void password_are_mismatch() {
-        final UserDTO user = createAValidUser();
-        user.setPasswordAgain("password"); // --> password is p4ssw0rd
+        final PasswordDTO pass = new PasswordDTO();
+        pass.setPassword("password");
+        pass.setPasswordAgain("p4ssw0rd");
 
         given()
             .port(config.getAPP_Port())
-            .body(user).
+            .body(pass).
         when()
-            .post("/user").
+            .put(ROOT + "/update-password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Passwords are mismatch!"));
     }
 
-    private UserDTO createAValidUser() {
+    @Test
+    public void old_password_cannot_be_null() {
+        final PasswordDTO pass = new PasswordDTO();
+        pass.setPassword("p4ssw0rd");
+        pass.setPasswordAgain("p4ssw0rd");
+
+        given()
+            .port(config.getAPP_Port())
+            .body(pass).
+        when()
+            .put(ROOT + "/update-password").
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Old password cannot be null!"));
+    }
+
+    @Test
+    public void old_password_is_incorrect() {
+        final PasswordDTO pass = new PasswordDTO();
+        pass.setId(1L);
+        pass.setPasswordOld("wrong");
+        pass.setPassword("p4ssw0rd");
+        pass.setPasswordAgain("p4ssw0rd");
+
+        given()
+            .port(config.getAPP_Port())
+            .body(pass).
+        when()
+            .put(ROOT + "/update-password").
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Old password is incorrect!"));
+    }
+
+    private static UserDTO createAValidUser() {
         UserDTO user = new UserDTO();
+        user.setId(1L);
+        user.setType(UserType.USER);
         user.setFullName("John Doe");
         user.setEmail("jdoe@inprice.io");
         user.setPassword("p4ssw0rd");

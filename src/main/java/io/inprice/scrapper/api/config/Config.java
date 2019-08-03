@@ -27,6 +27,11 @@ public class Config {
 		}
 	}
 
+	public boolean isRunningForTests() {
+		String runningAt = prop.getProperty("app.running-at", "prod");
+		return runningAt.equals("test");
+	}
+
 	public int getAPP_Port() {
 		return getOrDefault("app.port", 4567);
 	}

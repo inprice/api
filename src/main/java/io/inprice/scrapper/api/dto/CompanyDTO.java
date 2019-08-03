@@ -1,11 +1,9 @@
 package io.inprice.scrapper.api.dto;
 
-import java.io.Serializable;
-
 /**
  * Used for handling company info in client side
  */
-public class CompanyDTO extends UserDTO implements Serializable {
+public class CompanyDTO extends UserDTO {
 
     //company
     private String companyName;

@@ -3,10 +3,10 @@ package io.inprice.scrapper.api;
 import io.inprice.scrapper.api.config.Config;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.ConfigScanner;
+import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.helpers.Global;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.Spark;
 
 import static spark.Spark.*;
 
@@ -15,6 +15,7 @@ public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
     private static final Config config = Beans.getSingleton(Config.class);
+    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     public static void main(String[] args) {
         new Thread(() -> {
@@ -33,10 +34,10 @@ public class Application {
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             log.info("APPLICATION IS TERMINATING...");
-            Global.isApplicationRunning = false;
 
             log.info(" - Web server is shutting down...");
-            Spark.stop();
+            stop();
+            awaitStop();
 
             //log.info(" - TaskManager scheduler is shutting down...");
             //TaskManager.stop();
@@ -51,16 +52,12 @@ public class Application {
             //RabbitMQ.closeChannel();
 
             log.info(" - DB connection is closing...");
-            //DBUtils.shutdown();
-
-            shutdown();
+            dbUtils.shutdown();
 
             log.info("ALL SERVICES IS DONE.");
-        },"shutdown-hook"));
-    }
 
-    public static void shutdown() {
-        stop();
+            Global.isApplicationRunning = false;
+        },"shutdown-hook"));
     }
 
 }

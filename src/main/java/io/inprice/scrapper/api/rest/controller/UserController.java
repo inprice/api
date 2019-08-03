@@ -1,18 +1,19 @@
 package io.inprice.scrapper.api.rest.controller;
 
+import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
+import io.inprice.scrapper.api.info.Claims;
 import io.inprice.scrapper.api.info.Response;
 import io.inprice.scrapper.api.rest.service.UserService;
-import org.apache.commons.validator.routines.LongValidator;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static spark.Spark.*;
+import static spark.Spark.put;
 
 public class UserController {
 
@@ -24,34 +25,42 @@ public class UserController {
 
     @Routing
     public void routes() {
-        get(ROOT + "/:id", (req, res) -> {
-            Long id = LongValidator.getInstance().validate(req.params(":id"));
-            Response serviceRes = findById(id);
-            res.status(serviceRes.getStatus());
-            return serviceRes;
-        }, Global.gson::toJson);
 
-        put(ROOT, (req, res) -> {
+        //update
+        //a user can edit only his/her data
+        put(ROOT + "/update", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = update(Consts.claims.getCompanyId(), req.body());
+            Response serviceRes = update(Consts.claims, req.body());
+            res.status(serviceRes.getStatus());
+            return serviceRes;
+        }, Global.gson::toJson);
+
+        //update password
+        put(ROOT + "/update-password", (req, res) -> {
+            //todo: company id should be gotten from a real claim object coming from client
+            Response serviceRes = updatePassword(Consts.claims, req.body());
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
     }
 
-    Response findById(Long id) {
-        return service.findById(id);
-    }
-
-    Response update(long companyId, String body) {
+    Response update(Claims claims, String body) {
         UserDTO userDTO = toModel(body);
         if (userDTO != null) {
-            userDTO.setCompanyId(companyId); //
-            return service.update(userDTO);
+            return service.update(claims, userDTO);
         }
         log.error("Invalid user data: " + body);
         return new Response(HttpStatus.BAD_REQUEST_400, "Invalid data for user!");
+    }
+
+    Response updatePassword(Claims claims, String body) {
+        PasswordDTO passwordDTO = toModel(body);
+        if (passwordDTO != null) {
+            return service.updatePassword(claims, passwordDTO);
+        }
+        log.error("Invalid password data: " + body);
+        return new Response(HttpStatus.BAD_REQUEST_400, "Invalid data for password!");
     }
 
     private UserDTO toModel(String body) {

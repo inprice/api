@@ -1,5 +1,6 @@
 package io.inprice.scrapper.api.info;
 
+import io.inprice.scrapper.common.models.Model;
 import org.eclipse.jetty.http.HttpStatus;
 
 public class Responses {
@@ -8,8 +9,8 @@ public class Responses {
     public static final Response CRUD_ERROR = new Response(HttpStatus.INTERNAL_SERVER_ERROR_500, "Database operation failed, please retry again!");
     public static final Response SERVER_ERROR = new Response(HttpStatus.INTERNAL_SERVER_ERROR_500, "Something went wrong in server. We will take care of it asap.");
 
-    public static Response NOT_FOUND(String tag) {
-        return new Response(HttpStatus.NOT_FOUND_404, tag + " not found!");
+    public static <T extends Model> Response<T> NOT_FOUND(String tag) {
+        return new Response<>(HttpStatus.NOT_FOUND_404, tag + " not found!");
     }
 
     public static Response INVALID_PARAM(String tag) {

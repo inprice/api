@@ -1,8 +1,10 @@
 package io.inprice.scrapper.api.rest.repository;
 
+import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
+import io.inprice.scrapper.api.info.Claims;
 import io.inprice.scrapper.api.info.Response;
 import io.inprice.scrapper.api.info.Responses;
 import io.inprice.scrapper.api.utils.CodeGenerator;
@@ -22,57 +24,74 @@ public class UserRepository {
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
-    public Response findById(Long id, boolean passwordFields) {
+    public Response<User> findById(Long id, boolean passwordFields) {
         User model = dbUtils.findSingle(String.format("select * from user where id = %d", id), this::map);
         if (model != null) {
             if (! passwordFields) {
                 model.setPasswordSalt(null);
                 model.setPasswordHash(null);
             }
-            return new Response(model);
+            return new Response<>(model);
         } else {
             return Responses.NOT_FOUND("User");
         }
     }
 
-    public Response<User> getAll(long companyId) {
-        List<User> users = dbUtils.findMultiple(String.format("select * from user where company_id = %d order by email", companyId), this::map);
+    public Response<User> getList(long companyId) {
+        List<User> users = dbUtils.findMultiple(
+            String.format(
+                "select * from user " +
+                "where type != 'ADMIN' " +
+                "  and company_id = %d " +
+                "order by full_name", companyId), this::map);
+
         if (users != null && users.size() > 0) {
-            return new Response(users);
+            return new Response<>(users);
         }
         return Responses.NOT_FOUND("User");
     }
 
-    public Response findByEmail(String email, boolean passwordFields) {
+    public Response<User> findByEmail(String email, boolean passwordFields) {
         User model = dbUtils.findSingle(String.format("select * from user where email = '%s'", email), this::map);
         if (model != null) {
             if (! passwordFields) {
                 model.setPasswordSalt(null);
                 model.setPasswordHash(null);
             }
-            return new Response(model);
+            return new Response<>(model);
         } else {
             return Responses.NOT_FOUND("User");
         }
     }
 
-    public Response insert(UserDTO userDTO) {
-        final String salt = codeGenerator.generateSalt();
+    public Response<User> findByEmailForUpdateCheck(String email, long userId) {
+        User model = dbUtils.findSingle(String.format("select * from user where email = '%s' and id != %d", email, userId), this::map);
+        if (model != null) {
+            model.setPasswordSalt(null);
+            model.setPasswordHash(null);
+            return new Response<>(model);
+        } else {
+            return Responses.NOT_FOUND("User");
+        }
+    }
+
+    public Response<User> insert(UserDTO userDTO) {
         final String query =
             "insert into user " +
-            "(user_type, name, email, password_salt, password_hash, company_id) " +
+            "(user_type, full_name, email, password_salt, password_hash, company_id) " +
             "values " +
             "(?, ?, ?, ?, ?, ?) ";
 
         try (Connection con = dbUtils.getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
 
-
             //never trust client side!!!
             UserType ut = userDTO.getType();
             if (ut == null || UserType.ADMIN.equals(ut)) ut = UserType.USER;
 
             int i = 0;
+            final String salt = codeGenerator.generateSalt();
+
             pst.setString(++i, ut.name());
             pst.setString(++i, userDTO.getFullName());
             pst.setString(++i, userDTO.getEmail());
@@ -94,25 +113,66 @@ public class UserRepository {
         }
     }
 
-    public Response updateByAdmin(UserDTO userDTO) {
-        final String query =
+    public Response<User> update(Claims claims, UserDTO userDTO, boolean byAdmin, boolean passwordWillBeUpdate) {
+        final String query = String.format(
             "update user " +
-            "set active?, name=?, email=?, user_type=? " +
-            "where id=?";
+            "set full_name=?, email=? " +
+            (byAdmin ? ", user_type=?, active=?" : "") +
+            (passwordWillBeUpdate ? ", password_salt=?, password_hash=?" : "") +
+            " where id=?");
 
         try (Connection con = dbUtils.getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
 
-            //never trust client side!!!
-            UserType ut = userDTO.getType();
-            if (UserType.ADMIN.equals(ut)) ut = UserType.USER;
-
             int i = 0;
-            pst.setBoolean(++i, userDTO.getActive());
             pst.setString(++i, userDTO.getFullName());
             pst.setString(++i, userDTO.getEmail());
-            pst.setString(++i, ut.name());
+
+            if (byAdmin) {
+                UserType ut = userDTO.getType();
+                if (ut == null || UserType.ADMIN.equals(ut)) ut = UserType.USER;
+
+                pst.setString(++i, ut.name());
+                pst.setBoolean(++i, (userDTO.getActive() != null ? userDTO.getActive() : Boolean.TRUE));
+            }
+
+            if (passwordWillBeUpdate) {
+                final String salt = codeGenerator.generateSalt();
+                pst.setString(++i, salt);
+                pst.setString(++i, BCrypt.hashpw(userDTO.getPassword(), salt));
+            }
+
             pst.setLong(++i, userDTO.getId());
+
+            if (pst.executeUpdate() > 0)
+                return Responses.OK;
+            else
+                return Responses.NOT_FOUND("User");
+
+        } catch (SQLException sqle) {
+            log.error("Failed to update user", sqle);
+            return Responses.SERVER_ERROR;
+        } catch (Exception e) {
+            log.error("Failed to update user", e);
+            return Responses.SERVER_ERROR;
+        }
+    }
+
+    public Response<User> updatePassword(Claims claims, PasswordDTO passwordDTO) {
+        final String query = String.format(
+            "update user " +
+            "set password_salt=?, password_hash=? " +
+            "where id=?");
+
+        try (Connection con = dbUtils.getConnection();
+             PreparedStatement pst = con.prepareStatement(query)) {
+
+            int i = 0;
+            final String salt = codeGenerator.generateSalt();
+
+            pst.setString(++i, salt);
+            pst.setString(++i, BCrypt.hashpw(passwordDTO.getPassword(), salt));
+            pst.setLong(++i, passwordDTO.getId());
 
             if (pst.executeUpdate() > 0)
                 return Responses.OK;
@@ -125,49 +185,26 @@ public class UserRepository {
         }
     }
 
-    public Response updateByUser(UserDTO userDTO) {
-        final String query =
-            "update user " +
-            "set name=?, email=? " +
-            "where id=?";
-
-        try (Connection con = dbUtils.getConnection();
-             PreparedStatement pst = con.prepareStatement(query)) {
-
-            //never trust client side!!!
-            UserType ut = userDTO.getType();
-            if (UserType.ADMIN.equals(ut)) ut = UserType.USER;
-
-            int i = 0;
-            pst.setString(++i, userDTO.getFullName());
-            pst.setString(++i, userDTO.getEmail());
-            pst.setLong(++i, userDTO.getId());
-
-            if (pst.executeUpdate() > 0)
-                return Responses.OK;
-            else
-                return Responses.CRUD_ERROR;
-
-        } catch (Exception e) {
-            log.error("Failed to update user", e);
-            return Responses.SERVER_ERROR;
-        }
-    }
-
-    public Response deleteById(Long id) {
+    public Response<User> deleteById(Long id) {
         boolean result =
             dbUtils.executeQuery(
-                String.format("delete from user where id = %d", id),"Failed to delete user with id: " + id);
+                String.format(
+                    "delete from user " +
+                        "where id = %d " +
+                        "  and user_type != '%s'", id, UserType.ADMIN.name()),
+                "Failed to delete user with id: " + id);
 
         if (result) return Responses.OK;
 
         return Responses.NOT_FOUND("User");
     }
 
-    public Response toggleStatus(Long id) {
+    public Response<User> toggleStatus(Long id) {
         boolean result =
             dbUtils.executeQuery(
-                String.format("update user set active = !active where id = %d and user_type != 'ADMIN'", id),"Failed to toggle user status! id: " + id);
+                String.format(
+                    "update user set active = !active where id = %d and user_type != '%s'", id, UserType.ADMIN.name()),
+                "Failed to toggle user status! id: " + id);
 
         if (result) return Responses.OK;
 
@@ -178,7 +215,9 @@ public class UserRepository {
         try {
             User user = new User();
             user.setId(rs.getLong("id"));
+            user.setActive(rs.getBoolean("active"));
             user.setUserType(UserType.valueOf(rs.getString("user_type")));
+            user.setFullName(rs.getString("full_name"));
             user.setEmail(rs.getString("email"));
             user.setPasswordHash(rs.getString("password_hash"));
             user.setPasswordSalt(rs.getString("password_salt"));
