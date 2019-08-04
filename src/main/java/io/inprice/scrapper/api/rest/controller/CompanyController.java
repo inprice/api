@@ -56,7 +56,7 @@ public class CompanyController {
         try {
             return Global.gson.fromJson(body, CompanyDTO.class);
         } catch (Exception e) {
-            log.error("Data conversion error for: " + body);
+            log.error("Data conversion error for company, body: " + body);
         }
 
         return null;

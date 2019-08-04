@@ -41,9 +41,9 @@ public class UserRepository {
         List<User> users = dbUtils.findMultiple(
             String.format(
                 "select * from user " +
-                "where type != 'ADMIN' " +
+                "where user_type != '%s' " +
                 "  and company_id = %d " +
-                "order by full_name", companyId), this::map);
+                "order by full_name", UserType.ADMIN, companyId), this::map);
 
         if (users != null && users.size() > 0) {
             return new Response<>(users);
@@ -172,7 +172,7 @@ public class UserRepository {
 
             pst.setString(++i, salt);
             pst.setString(++i, BCrypt.hashpw(passwordDTO.getPassword(), salt));
-            pst.setLong(++i, passwordDTO.getId());
+            pst.setLong(++i, claims.getUserId());
 
             if (pst.executeUpdate() > 0)
                 return Responses.OK;
@@ -203,8 +203,11 @@ public class UserRepository {
         boolean result =
             dbUtils.executeQuery(
                 String.format(
-                    "update user set active = !active where id = %d and user_type != '%s'", id, UserType.ADMIN.name()),
-                "Failed to toggle user status! id: " + id);
+                    "update user " +
+                        "set active = not active " +
+                        "where id = %d " +
+                        "  and user_type != '%s'", id, UserType.ADMIN.name()),
+        "Failed to toggle user status! id: " + id);
 
         if (result) return Responses.OK;
 

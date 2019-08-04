@@ -26,19 +26,18 @@ public class UserController {
     @Routing
     public void routes() {
 
-        //update
-        //a user can edit only his/her data
+        //update. a user can edit only his/her data
         put(ROOT + "/update", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = update(Consts.claims, req.body());
+            Response serviceRes = update(Consts.USER_CLAIMS, req.body());
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
-        //update password
+        //update password. a user can edit only his/her password
         put(ROOT + "/update-password", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = updatePassword(Consts.claims, req.body());
+            Response serviceRes = updatePassword(Consts.USER_CLAIMS, req.body());
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -67,7 +66,7 @@ public class UserController {
         try {
             return Global.gson.fromJson(body, UserDTO.class);
         } catch (Exception e) {
-            log.error("Data conversion error for user!", e);
+            log.error("Data conversion error for user, body: " + body);
         }
 
         return null;

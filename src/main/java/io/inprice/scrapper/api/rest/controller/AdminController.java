@@ -13,7 +13,6 @@ import org.apache.commons.validator.routines.LongValidator;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.Spark;
 
 import static spark.Spark.*;
 
@@ -31,7 +30,7 @@ public class AdminController {
         //update admin
         put(ROOT + "/update", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = updateAdmin(Consts.claims, req.body());
+            Response serviceRes = updateAdmin(Consts.ADMIN_CLAIMS, req.body());
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -39,7 +38,7 @@ public class AdminController {
         //update admin password
         put(ROOT + "/update-password", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = updateAdminPassword(Consts.claims, req.body());
+            Response serviceRes = updateAdminPassword(Consts.ADMIN_CLAIMS, req.body());
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -47,7 +46,7 @@ public class AdminController {
         //insert a user
         post(ROOT + "/user", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = upsertUser(Consts.claims, req.body(), true);
+            Response serviceRes = upsertUser(Consts.ADMIN_CLAIMS, req.body(), true);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -55,7 +54,7 @@ public class AdminController {
         //update a user
         put(ROOT + "/user/update", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = upsertUser(Consts.claims, req.body(), false);
+            Response serviceRes = upsertUser(Consts.ADMIN_CLAIMS, req.body(), false);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -77,9 +76,9 @@ public class AdminController {
         }, Global.gson::toJson);
 
         //get user list
-        get(ROOT + "/user/list", (req, res) -> {
+        get(ROOT + "/users", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = getList(Consts.claims.getCompanyId());
+            Response serviceRes = getList(Consts.ADMIN_CLAIMS.getCompanyId());
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -145,7 +144,7 @@ public class AdminController {
         try {
             return Global.gson.fromJson(body, UserDTO.class);
         } catch (Exception e) {
-            log.error("Data conversion error for user!", e);
+            log.error("Data conversion error for user, body: " + body);
         }
 
         return null;

@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
 
 public class AdminTest {
 
@@ -42,7 +43,9 @@ public class AdminTest {
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
 
-        //insert a default user to manipulate him
+        //be careful, the id 1 is reserved for the admin only during testing
+
+        //insert admin user to use him
         given()
             .port(config.getAPP_Port())
             .body(createAValidUser()).
@@ -50,10 +53,23 @@ public class AdminTest {
             .post(ROOT + "/user").
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
+
+        //insert an ordinary user to manipulate him
+        final UserDTO user = createAValidUser();
+        user.setId(3L);
+        user.setEmail("ordinary@inprice.io");
+        given()
+            .port(config.getAPP_Port())
+            .body(user).
+        when()
+            .post(ROOT + "/user").
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat();
+
     }
 
     @Test
-    public void everything_should_be_ok_with_insert() {
+    public void everything_should_be_ok_with_inserting() {
         final UserDTO user = createAValidUser();
         user.setEmail("test@test.com");
 
@@ -68,7 +84,7 @@ public class AdminTest {
     }
 
     @Test
-    public void user_found_for_correct_id() {
+    public void everything_should_be_ok_with_finding() {
         final int id = 1;
 
         given()
@@ -81,7 +97,7 @@ public class AdminTest {
     }
 
     @Test
-    public void user_not_found_for_wrong_id() {
+    public void user_not_found_when_get_with_a_wrong_id() {
         given()
             .port(config.getAPP_Port()).
         when()
@@ -92,7 +108,112 @@ public class AdminTest {
     }
 
     @Test
-    public void everything_should_be_ok_with_update() {
+    public void fail_to_delete_admin_user() {
+        final int id = 1;
+
+        given()
+            .port(config.getAPP_Port()).
+        when()
+            .delete(ROOT + "/user/" + id).
+        then()
+            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
+            .body("result", equalTo("User not found!"));
+    }
+
+    @Test
+    public void user_not_found_when_delete_with_a_wrong_id() {
+        given()
+            .port(config.getAPP_Port()).
+        when()
+            .delete(ROOT + "/user/0").
+        then()
+            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
+            .body("result", equalTo("User not found!"));
+    }
+
+    @Test
+    public void everything_should_be_ok_with_deleting() {
+        final long id = 4;
+
+        final UserDTO user = createAValidUser();
+        user.setId(id);
+        user.setEmail("harrietj@inprice.io");
+
+        given()
+            .port(config.getAPP_Port())
+            .body(user).
+        when()
+            .post(ROOT + "/user").
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat();
+
+        given()
+            .port(config.getAPP_Port()).
+        when()
+            .delete(ROOT + "/user/" + id).
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("result", equalTo("OK"));
+    }
+
+    @Test
+    public void everything_should_be_ok_with_listing() {
+        given()
+            .port(config.getAPP_Port()).
+        when()
+            .get(ROOT + "/users").
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("models.size", greaterThan(0)); //since we have a default user inserted at the beginning
+    }
+
+    @Test
+    public void everything_should_be_ok_with_toggling_status() {
+        final int userId = 3;
+
+        //should return true
+        given()
+            .port(config.getAPP_Port()).
+        when()
+            .get(ROOT + "/user/" + userId).
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+        .body("model.active", equalTo(true));
+
+        //should set false
+        given()
+            .port(config.getAPP_Port()).
+        when()
+            .put(ROOT + "/user/toggle-status/" + userId).
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat(); //since we have a default user inserted at the beginning
+
+        //should return false
+        given()
+            .port(config.getAPP_Port()).
+        when()
+            .get(ROOT + "/user/" + userId).
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+        .body("model.active", equalTo(false));
+    }
+
+    @Test
+    public void fail_to_toggle_admins_status() {
+        final int userId = 1;
+
+        //should set false
+        given()
+            .port(config.getAPP_Port()).
+        when()
+            .put(ROOT + "/user/toggle-status/" + userId).
+        then()
+            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
+            .body("result", equalTo("User not found!"));
+    }
+
+    @Test
+    public void everything_should_be_ok_with_updating() {
         final UserDTO user = createAValidUser();
         user.setFullName("Jane Doe");
         user.setEmail("janed@inprice.io");
@@ -165,7 +286,7 @@ public class AdminTest {
     }
 
     @Test
-    public void user_not_found_for_a_wrong_id_when_updated() {
+    public void user_not_found_when_update_with_a_wrong_id() {
         final UserDTO user = createAValidUser();
         user.setId(0L);
         user.setEmail("test@iprice.io");
@@ -197,7 +318,7 @@ public class AdminTest {
 
     @Test
     public void email_address_is_already_used_by_another_user() {
-        final String email = "mustafa@inprice.com";
+        final String email = "harrietj@inprice.com";
 
         final UserDTO user = createAValidUser();
         user.setEmail(email);
@@ -266,7 +387,7 @@ public class AdminTest {
     }
 
     @Test
-    public void password_change_should_be_ok() {
+    public void everything_should_be_ok_with_changing_password() {
         final PasswordDTO pass = new PasswordDTO();
         pass.setId(1L);
         pass.setPasswordOld("p4ssw0rd");
@@ -379,7 +500,7 @@ public class AdminTest {
 
     private static UserDTO createAValidUser() {
         UserDTO user = new UserDTO();
-        user.setId(1L);
+        user.setId(2L);
         user.setType(UserType.USER);
         user.setFullName("John Doe");
         user.setEmail("jdoe@inprice.io");

@@ -41,6 +41,8 @@ public class UserTest {
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
 
+        //be careful, the id 1 is reserved for the admin only during testing
+
         //insert a default user to manipulate him
         given()
             .port(config.getAPP_Port())
@@ -52,7 +54,7 @@ public class UserTest {
     }
 
     @Test
-    public void everything_should_be_ok_with_update() {
+    public void everything_should_be_ok_with_updating() {
         final UserDTO user = createAValidUser();
         user.setFullName("Jane Doe");
         user.setEmail("janed@inprice.io");
@@ -141,7 +143,7 @@ public class UserTest {
 
     @Test
     public void email_address_is_already_used_by_another_user() {
-        final String email = "mustafa@inprice.com";
+        final String email = "harrietj@inprice.com";
 
         final UserDTO user = createAValidUser();
         user.setEmail(email);
@@ -210,7 +212,7 @@ public class UserTest {
     }
 
     @Test
-    public void password_change_should_be_ok() {
+    public void everything_should_be_ok_with_changing_password() {
         final PasswordDTO pass = new PasswordDTO();
         pass.setId(1L);
         pass.setPasswordOld("p4ssw0rd");
@@ -322,7 +324,7 @@ public class UserTest {
 
     private static UserDTO createAValidUser() {
         UserDTO user = new UserDTO();
-        user.setId(1L);
+        user.setId(2L);
         user.setType(UserType.USER);
         user.setFullName("John Doe");
         user.setEmail("jdoe@inprice.io");

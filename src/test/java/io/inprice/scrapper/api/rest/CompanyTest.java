@@ -209,7 +209,7 @@ public class CompanyTest {
 
     @Test
     public void email_address_is_already_used_by_another_user() {
-        final String email = "mustafa@inprice.com";
+        final String email = "harrietj@inprice.com";
 
         final CompanyDTO company = createAValidCompany();
         company.setEmail(email);

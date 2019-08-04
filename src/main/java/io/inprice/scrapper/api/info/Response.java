@@ -10,7 +10,7 @@ public class Response<T extends Model> {
     private int status;
     private String result;
     private T model;
-    private List<T> modelList;
+    private List<T> models;
     private List<Problem> problems;
 
     public Response(int status) {
@@ -29,7 +29,7 @@ public class Response<T extends Model> {
 
     public Response(List<T> models) {
         this.status = HttpStatus.OK_200;
-        this.modelList = models;
+        this.models = models;
     }
 
     public boolean isOK() {
@@ -60,12 +60,12 @@ public class Response<T extends Model> {
         this.model = model;
     }
 
-    public List<T> getModelList() {
-        return modelList;
+    public List<T> getModels() {
+        return models;
     }
 
-    public void setModelList(List<T> modelList) {
-        this.modelList = modelList;
+    public void setModels(List<T> models) {
+        this.models = models;
     }
 
     public List<Problem> getProblems() {
