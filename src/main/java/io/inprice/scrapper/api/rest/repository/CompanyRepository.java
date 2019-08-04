@@ -34,16 +34,23 @@ public class CompanyRepository {
         return response;
     }
 
+    /**
+     * When a company is created three insert operations happen
+     *  - company
+     *  - workspace
+     *  - and admin
+     *
+     */
     public Response insert(CompanyDTO companyDTO) {
         Response response = Responses.CRUD_ERROR;
 
         Connection con = null;
+
+        //company is inserted
         try {
             con = dbUtils.getTransactionalConnection();
-
             Long companyId = null;
 
-            //company is inserted
             try (PreparedStatement pst =
                      con.prepareStatement("insert into company (name, website, country_id) values (?, ?, ?) ",
                              Statement.RETURN_GENERATED_KEYS)) {
@@ -61,49 +68,71 @@ public class CompanyRepository {
                 }
             }
 
+            //workspace is inserted
             if (companyId != null) {
-                final String salt = codeGenerator.generateSalt();
-                final String q2 =
-                    "insert into user " +
-                    "(user_type, full_name, email, password_salt, password_hash, company_id) " +
-                    "values " +
-                    "(?, ?, ?, ?, ?, ?) ";
 
-                //owner is inserted
-                try (PreparedStatement pst = con.prepareStatement(q2, Statement.RETURN_GENERATED_KEYS)) {
+                Long workspaceId = null;
+                try (PreparedStatement pst =
+                         con.prepareStatement("insert into workspace (name, company_id) values (?, ?) ",
+                             Statement.RETURN_GENERATED_KEYS)) {
                     int i = 0;
-                    pst.setString(++i, UserType.ADMIN.name());
-                    pst.setString(++i, companyDTO.getFullName());
-                    pst.setString(++i, companyDTO.getEmail());
-                    pst.setString(++i, salt);
-                    pst.setString(++i, BCrypt.hashpw(companyDTO.getPassword(), salt));
+                    pst.setString(++i, "DEFAULT WORKSPACE");
                     pst.setLong(++i, companyId);
 
                     if (pst.executeUpdate() > 0) {
                         try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
                             if (generatedKeys.next()) {
-                                long ownerId = generatedKeys.getLong(1);
+                                workspaceId = generatedKeys.getLong(1);
+                            }
+                        }
+                    }
+                }
 
-                                //company's owner is set
-                                try (PreparedStatement subPst = con.prepareStatement("update company set admin_id=? where id=? ")) {
-                                    subPst.setLong(1, ownerId);
-                                    subPst.setLong(2, companyId);
-                                    if (subPst.executeUpdate() > 0) {
-                                        response = Responses.OK;
+                //admin is inserted
+                if (workspaceId != null) {
+
+                    final String salt = codeGenerator.generateSalt();
+                    final String q2 =
+                            "insert into user " +
+                                "(user_type, full_name, email, password_salt, password_hash, company_id, default_workspace_id) " +
+                                "values " +
+                                "(?, ?, ?, ?, ?, ?, ?) ";
+
+                    try (PreparedStatement pst = con.prepareStatement(q2, Statement.RETURN_GENERATED_KEYS)) {
+                        int i = 0;
+                        pst.setString(++i, UserType.ADMIN.name());
+                        pst.setString(++i, companyDTO.getFullName());
+                        pst.setString(++i, companyDTO.getEmail());
+                        pst.setString(++i, salt);
+                        pst.setString(++i, BCrypt.hashpw(companyDTO.getPassword(), salt));
+                        pst.setLong(++i, companyId);
+                        pst.setLong(++i, workspaceId);
+
+                        if (pst.executeUpdate() > 0) {
+                            try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                                if (generatedKeys.next()) {
+                                    long adminId = generatedKeys.getLong(1);
+
+                                    //company's admin is set
+                                    try (PreparedStatement subPst = con.prepareStatement("update company set admin_id=? where id=? ")) {
+                                        subPst.setLong(1, adminId);
+                                        subPst.setLong(2, companyId);
+                                        if (subPst.executeUpdate() > 0) {
+                                            response = Responses.OK;
+                                        }
                                     }
                                 }
                             }
                         }
+
+                    } catch (SQLIntegrityConstraintViolationException ie) {
+                        log.error("Failed to insert user!", ie);
+                        response = Responses.SERVER_ERROR;
+                    } catch (Exception e) {
+                        log.error("Failed to insert user", e);
+                        response = Responses.SERVER_ERROR;
                     }
-
-                } catch (SQLIntegrityConstraintViolationException ie) {
-                    log.error("Failed to insert user!", ie);
-                    response = Responses.SERVER_ERROR;
-                } catch (Exception e) {
-                    log.error("Failed to insert user", e);
-                    response = Responses.SERVER_ERROR;
                 }
-
             }
 
             if (Responses.OK.equals(response)) {

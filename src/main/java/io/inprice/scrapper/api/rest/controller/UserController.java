@@ -9,6 +9,7 @@ import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.Claims;
 import io.inprice.scrapper.api.info.Response;
 import io.inprice.scrapper.api.rest.service.UserService;
+import org.apache.commons.validator.routines.LongValidator;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,15 +20,14 @@ public class UserController {
 
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
+    private final String ROOT = "user";
     private final UserService service = Beans.getSingleton(UserService.class);
-
-    private static final String ROOT = "user";
 
     @Routing
     public void routes() {
 
         //update. a user can edit only his/her data
-        put(ROOT + "/update", (req, res) -> {
+        put(ROOT, (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
             Response serviceRes = update(Consts.USER_CLAIMS, req.body());
             res.status(serviceRes.getStatus());
@@ -35,9 +35,17 @@ public class UserController {
         }, Global.gson::toJson);
 
         //update password. a user can edit only his/her password
-        put(ROOT + "/update-password", (req, res) -> {
+        put(ROOT + "/password", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
             Response serviceRes = updatePassword(Consts.USER_CLAIMS, req.body());
+            res.status(serviceRes.getStatus());
+            return serviceRes;
+        }, Global.gson::toJson);
+
+        //set default workspace
+        put(ROOT + "/workspace/:ws_id", (req, res) -> {
+            Long wsId = LongValidator.getInstance().validate(req.params(":ws_id"));
+            Response serviceRes = setDefaultWorkspace(Consts.ADMIN_CLAIMS, wsId);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -60,6 +68,10 @@ public class UserController {
         }
         log.error("Invalid password data: " + body);
         return new Response(HttpStatus.BAD_REQUEST_400, "Invalid data for password!");
+    }
+
+    Response setDefaultWorkspace(Claims claims, Long wsId) {
+        return service.setDefaultWorkspace(claims, wsId);
     }
 
     private UserDTO toModel(String body) {

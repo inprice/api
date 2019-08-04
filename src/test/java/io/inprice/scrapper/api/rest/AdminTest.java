@@ -17,7 +17,6 @@ import org.junit.Test;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
 
 public class AdminTest {
 
@@ -45,7 +44,7 @@ public class AdminTest {
 
         //be careful, the id 1 is reserved for the admin only during testing
 
-        //insert admin user to use him
+        //insert a default user
         given()
             .port(config.getAPP_Port())
             .body(createAValidUser()).
@@ -53,58 +52,6 @@ public class AdminTest {
             .post(ROOT + "/user").
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
-
-        //insert an ordinary user to manipulate him
-        final UserDTO user = createAValidUser();
-        user.setId(3L);
-        user.setEmail("ordinary@inprice.io");
-        given()
-            .port(config.getAPP_Port())
-            .body(user).
-        when()
-            .post(ROOT + "/user").
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat();
-
-    }
-
-    @Test
-    public void everything_should_be_ok_with_inserting() {
-        final UserDTO user = createAValidUser();
-        user.setEmail("test@test.com");
-
-        given()
-            .port(config.getAPP_Port())
-            .body(user).
-        when()
-            .post(ROOT + "/user").
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
-    }
-
-    @Test
-    public void everything_should_be_ok_with_finding() {
-        final int id = 1;
-
-        given()
-            .port(config.getAPP_Port()).
-        when()
-            .get(ROOT + "/user/" + id).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("model.id", equalTo(id));
-    }
-
-    @Test
-    public void user_not_found_when_get_with_a_wrong_id() {
-        given()
-            .port(config.getAPP_Port()).
-        when()
-            .get(ROOT + "/user/0").
-        then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("User not found!"));
     }
 
     @Test
@@ -121,184 +68,18 @@ public class AdminTest {
     }
 
     @Test
-    public void user_not_found_when_delete_with_a_wrong_id() {
-        given()
-            .port(config.getAPP_Port()).
-        when()
-            .delete(ROOT + "/user/0").
-        then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("User not found!"));
-    }
-
-    @Test
-    public void everything_should_be_ok_with_deleting() {
-        final long id = 4;
-
+    public void email_address_is_invalid() {
         final UserDTO user = createAValidUser();
-        user.setId(id);
-        user.setEmail("harrietj@inprice.io");
+        user.setEmail("test@invalid");
 
         given()
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT + "/user").
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat();
-
-        given()
-            .port(config.getAPP_Port()).
-        when()
-            .delete(ROOT + "/user/" + id).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
-    }
-
-    @Test
-    public void everything_should_be_ok_with_listing() {
-        given()
-            .port(config.getAPP_Port()).
-        when()
-            .get(ROOT + "/users").
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("models.size", greaterThan(0)); //since we have a default user inserted at the beginning
-    }
-
-    @Test
-    public void everything_should_be_ok_with_toggling_status() {
-        final int userId = 3;
-
-        //should return true
-        given()
-            .port(config.getAPP_Port()).
-        when()
-            .get(ROOT + "/user/" + userId).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-        .body("model.active", equalTo(true));
-
-        //should set false
-        given()
-            .port(config.getAPP_Port()).
-        when()
-            .put(ROOT + "/user/toggle-status/" + userId).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat(); //since we have a default user inserted at the beginning
-
-        //should return false
-        given()
-            .port(config.getAPP_Port()).
-        when()
-            .get(ROOT + "/user/" + userId).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-        .body("model.active", equalTo(false));
-    }
-
-    @Test
-    public void fail_to_toggle_admins_status() {
-        final int userId = 1;
-
-        //should set false
-        given()
-            .port(config.getAPP_Port()).
-        when()
-            .put(ROOT + "/user/toggle-status/" + userId).
-        then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("User not found!"));
-    }
-
-    @Test
-    public void everything_should_be_ok_with_updating() {
-        final UserDTO user = createAValidUser();
-        user.setFullName("Jane Doe");
-        user.setEmail("janed@inprice.io");
-
-        given()
-            .port(config.getAPP_Port())
-            .body(user).
-        when()
-            .put(ROOT + "/user/update").
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
-    }
-
-    @Test
-    public void invalid_data_for_user() {
-        given()
-            .port(config.getAPP_Port())
-            .body("wrong body!").
-        when()
-            .post(ROOT + "/user").
+            .put(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("result", equalTo("Invalid data for user!"));
-    }
-
-    @Test
-    public void full_name_cannot_be_null() {
-        final UserDTO user = createAValidUser();
-        user.setFullName(null);
-
-        given()
-            .port(config.getAPP_Port())
-            .body(user).
-        when()
-            .post(ROOT + "/user").
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Full name cannot be null!"));
-    }
-
-    @Test
-    public void full_name_length_is_out_of_range_if_less_than_3() {
-        final UserDTO user = createAValidUser();
-        user.setFullName("A");
-
-        given()
-            .port(config.getAPP_Port())
-            .body(user).
-        when()
-            .post(ROOT + "/user").
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Full name must be between 2 and 150 chars!"));
-    }
-
-    @Test
-    public void full_name_length_is_out_of_range_if_greater_than_250() {
-        final UserDTO user = createAValidUser();
-        user.setFullName(StringUtils.repeat('A', 251));
-
-        given()
-            .port(config.getAPP_Port())
-            .body(user).
-        when()
-            .post(ROOT + "/user").
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Full name must be between 2 and 150 chars!"));
-    }
-
-    @Test
-    public void user_not_found_when_update_with_a_wrong_id() {
-        final UserDTO user = createAValidUser();
-        user.setId(0L);
-        user.setEmail("test@iprice.io");
-
-        given()
-            .port(config.getAPP_Port())
-            .body(user).
-        when()
-            .put(ROOT + "/user/update").
-        then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("User not found!"));
+            .body("problems.reason[0]", equalTo("Invalid email address!"));
     }
 
     @Test
@@ -310,7 +91,7 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT + "/user").
+            .put(ROOT + "/user").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Email address cannot be null!"));
@@ -318,27 +99,18 @@ public class AdminTest {
 
     @Test
     public void email_address_is_already_used_by_another_user() {
-        final String email = "harrietj@inprice.com";
-
         final UserDTO user = createAValidUser();
-        user.setEmail(email);
+        user.setId(1L);
+        user.setEmail("jdoe@inprice.io");
 
         given()
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT + "/user").
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat();
-
-        given()
-            .port(config.getAPP_Port())
-            .body(user).
-        when()
-            .post(ROOT + "/user").
+            .put(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo(email + " is already used by another user!"));
+            .body("problems.reason[0]", equalTo(user.getEmail() + " is already used by another user!"));
     }
 
     @Test
@@ -350,7 +122,7 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT + "/user").
+            .put(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
@@ -365,25 +137,54 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT + "/user").
+            .put(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
     }
-
     @Test
-    public void email_address_is_invalid() {
+    public void full_name_cannot_be_null() {
         final UserDTO user = createAValidUser();
-        user.setEmail("test@invalid");
+        user.setFullName(null);
 
         given()
             .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT + "/user").
+            .put(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Invalid email address!"));
+            .body("problems.reason[0]", equalTo("Full name cannot be null!"));
+    }
+
+    @Test
+    public void full_name_length_is_out_of_range_if_less_than_3() {
+        final UserDTO user = createAValidUser();
+        user.setFullName("A");
+
+        given()
+            .port(config.getAPP_Port())
+            .body(user).
+        when()
+            .put(ROOT).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Full name must be between 2 and 150 chars!"));
+    }
+
+    @Test
+    public void full_name_length_is_out_of_range_if_greater_than_250() {
+        final UserDTO user = createAValidUser();
+        user.setFullName(StringUtils.repeat('A', 251));
+
+        given()
+            .port(config.getAPP_Port())
+            .body(user).
+        when()
+            .put(ROOT).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Full name must be between 2 and 150 chars!"));
     }
 
     @Test
@@ -398,11 +199,10 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/update-password").
+            .put(ROOT + "/password").
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
     }
-
 
     @Test
     public void password_cannot_be_null() {
@@ -412,7 +212,7 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/update-password").
+            .put(ROOT + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
         .body("problems.reason[0]", equalTo("Password cannot be null!"));
@@ -427,7 +227,7 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/update-password").
+            .put(ROOT + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -442,7 +242,7 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/update-password").
+            .put(ROOT + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -458,7 +258,7 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/update-password").
+            .put(ROOT + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Passwords are mismatch!"));
@@ -474,7 +274,7 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/update-password").
+            .put(ROOT + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Old password cannot be null!"));
@@ -492,7 +292,7 @@ public class AdminTest {
             .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/update-password").
+            .put(ROOT + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Old password is incorrect!"));

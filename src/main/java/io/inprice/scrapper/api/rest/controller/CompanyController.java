@@ -17,9 +17,8 @@ public class CompanyController {
 
     private static final Logger log = LoggerFactory.getLogger(CompanyController.class);
 
+    private final String ROOT = "company";
     private final CompanyService service = Beans.getSingleton(CompanyService.class);
-
-    private static final String ROOT = "company";
 
     @Routing
     public void routes() {
@@ -34,10 +33,6 @@ public class CompanyController {
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
-    }
-
-    Response findById(Long id) {
-        return service.findById(id);
     }
 
     Response upsert(String body, boolean insert) {

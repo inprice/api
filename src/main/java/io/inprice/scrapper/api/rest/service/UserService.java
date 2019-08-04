@@ -9,8 +9,10 @@ import io.inprice.scrapper.api.info.Response;
 import io.inprice.scrapper.api.info.Responses;
 import io.inprice.scrapper.api.rest.repository.CompanyRepository;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
+import io.inprice.scrapper.api.rest.repository.WorkspaceRepository;
 import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
+import io.inprice.scrapper.common.models.Workspace;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,7 @@ public class UserService {
 
     private final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
     private final UserRepository repository = Beans.getSingleton(UserRepository.class);
+    private final WorkspaceRepository workspaceRepository = Beans.getSingleton(WorkspaceRepository.class);
 
     public Response findById(Long id) {
         return repository.findById(id, false);
@@ -42,6 +45,15 @@ public class UserService {
             res = repository.updatePassword(claims, passwordDTO);
         }
         return res;
+    }
+
+    public Response setDefaultWorkspace(Claims claims, Long wsId) {
+        Response<Workspace> found = workspaceRepository.findById(claims, wsId);
+        if (found.isOK()) {
+            return repository.setDefaultWorkspace(claims, wsId);
+        } else {
+            return Responses.NOT_FOUND("Workspace");
+        }
     }
 
     private Response validate(PasswordDTO passwordDTO) {

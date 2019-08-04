@@ -214,6 +214,21 @@ public class UserRepository {
         return Responses.NOT_FOUND("User");
     }
 
+    public Response<User> setDefaultWorkspace(Claims claims, Long wsId) {
+        boolean result =
+            dbUtils.executeQuery(
+                String.format(
+                    "update user " +
+                        "set default_workspace_id = %d " +
+                        "where id = %d " +
+                        "  and company_id = %d ", wsId, claims.getUserId(), claims.getCompanyId()),
+        "Failed to set default workspace! User Id: " + claims.getUserId() + ", Workspace Id: " + wsId);
+
+        if (result) return Responses.OK;
+
+        return Responses.NOT_FOUND("Workspace or User");
+    }
+
     private User map(ResultSet rs) {
         try {
             User user = new User();
