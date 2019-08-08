@@ -3,7 +3,7 @@ package io.inprice.scrapper.api.rest.validator;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.Problem;
-import io.inprice.scrapper.api.info.Response;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.common.models.User;
 import jodd.util.BCrypt;
@@ -28,7 +28,7 @@ public class PasswordDTOValidator {
         }
 
         if (checkOldPassword && problems.size() < 1) {
-            Response<User> user = userRepository.findById(dto.getId(), true);
+            ServiceResponse<User> user = userRepository.findById(dto.getId(), true);
 
             if (StringUtils.isBlank(dto.getPasswordOld())) {
                 problems.add(new Problem("passwordOld", "Old password cannot be null!"));

@@ -114,7 +114,7 @@ public class AdminTest {
     }
 
     @Test
-    public void email_address_length_is_out_of_range_if_less_than_9() {
+    public void email_address_length_is_out_of_range_if_less_than_4() {
         final UserDTO user = createAValidUser();
         user.setEmail("jd@in.io");
 
@@ -125,7 +125,7 @@ public class AdminTest {
             .put(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
+            .body("problems.reason[0]", equalTo("Email address must be between 4 and 250 chars!"));
     }
 
     @Test
@@ -140,7 +140,7 @@ public class AdminTest {
             .put(ROOT).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
+            .body("problems.reason[0]", equalTo("Email address must be between 4 and 250 chars!"));
     }
     @Test
     public void full_name_cannot_be_null() {

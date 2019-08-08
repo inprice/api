@@ -5,7 +5,7 @@ import org.eclipse.jetty.http.HttpStatus;
 
 import java.util.List;
 
-public class Response<T extends Model> {
+public class ServiceResponse<T extends Model> {
 
     private int status;
     private String result;
@@ -13,21 +13,21 @@ public class Response<T extends Model> {
     private List<T> models;
     private List<Problem> problems;
 
-    public Response(int status) {
+    public ServiceResponse(int status) {
         this.status = status;
     }
 
-    public Response(int status, String result) {
+    public ServiceResponse(int status, String result) {
         this.status = status;
         this.result = result;
     }
 
-    public Response(T model) {
+    public ServiceResponse(T model) {
         this.status = HttpStatus.OK_200;
         this.model = model;
     }
 
-    public Response(List<T> models) {
+    public ServiceResponse(List<T> models) {
         this.status = HttpStatus.OK_200;
         this.models = models;
     }

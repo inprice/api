@@ -3,8 +3,8 @@ package io.inprice.scrapper.api.rest.repository;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.Response;
-import io.inprice.scrapper.api.info.Responses;
+import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.utils.CodeGenerator;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.Company;
@@ -22,8 +22,8 @@ public class CompanyRepository {
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
-    public Response<Company> findById(Long id) {
-        Response<Company> response = Responses.CRUD_ERROR;
+    public ServiceResponse<Company> findById(Long id) {
+        ServiceResponse<Company> response = InstantResponses.CRUD_ERROR;
 
         Company model = dbUtils.findSingle("select * from company where id="+ id, CompanyRepository::map);
         if (model != null) {
@@ -41,8 +41,8 @@ public class CompanyRepository {
      *  - and admin
      *
      */
-    public Response insert(CompanyDTO companyDTO) {
-        Response response = Responses.CRUD_ERROR;
+    public ServiceResponse insert(CompanyDTO companyDTO) {
+        ServiceResponse response = InstantResponses.CRUD_ERROR;
 
         Connection con = null;
 
@@ -118,7 +118,7 @@ public class CompanyRepository {
                                         subPst.setLong(1, adminId);
                                         subPst.setLong(2, companyId);
                                         if (subPst.executeUpdate() > 0) {
-                                            response = Responses.OK;
+                                            response = InstantResponses.OK;
                                         }
                                     }
                                 }
@@ -127,15 +127,15 @@ public class CompanyRepository {
 
                     } catch (SQLIntegrityConstraintViolationException ie) {
                         log.error("Failed to insert user!", ie);
-                        response = Responses.SERVER_ERROR;
+                        response = InstantResponses.SERVER_ERROR;
                     } catch (Exception e) {
                         log.error("Failed to insert user", e);
-                        response = Responses.SERVER_ERROR;
+                        response = InstantResponses.SERVER_ERROR;
                     }
                 }
             }
 
-            if (Responses.OK.equals(response)) {
+            if (InstantResponses.OK.equals(response)) {
                 dbUtils.commit(con);
             } else {
                 dbUtils.rollback(con);
@@ -151,8 +151,8 @@ public class CompanyRepository {
         return response;
     }
 
-    public Response update(CompanyDTO companyDTO) {
-        Response response;
+    public ServiceResponse update(CompanyDTO companyDTO) {
+        ServiceResponse response;
 
         try (Connection con = dbUtils.getConnection();
             PreparedStatement pst = con.prepareStatement("update company set name=?, website=?, country_id=? where id=?")) {
@@ -164,14 +164,14 @@ public class CompanyRepository {
             pst.setLong(++i, companyDTO.getId());
 
             if (pst.executeUpdate() > 0) {
-                response = Responses.OK;
+                response = InstantResponses.OK;
             } else {
-                response = Responses.NOT_FOUND("Company");
+                response = InstantResponses.NOT_FOUND("Company");
             }
 
         } catch (SQLException e) {
             log.error("Failed to update company. " + companyDTO, e);
-            response = Responses.SERVER_ERROR;
+            response = InstantResponses.SERVER_ERROR;
         }
 
         return response;

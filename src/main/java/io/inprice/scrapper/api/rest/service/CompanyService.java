@@ -3,8 +3,8 @@ package io.inprice.scrapper.api.rest.service;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.Problem;
-import io.inprice.scrapper.api.info.Response;
-import io.inprice.scrapper.api.info.Responses;
+import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.rest.repository.CompanyRepository;
 import io.inprice.scrapper.api.rest.repository.CountryRepository;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
@@ -23,12 +23,12 @@ public class CompanyService {
     private final CompanyRepository repository = Beans.getSingleton(CompanyRepository.class);
     private final CountryRepository countryRepository = Beans.getSingleton(CountryRepository.class);
 
-    public Response findById(Long id) {
+    public ServiceResponse findById(Long id) {
         return repository.findById(id);
     }
 
-    public Response insert(CompanyDTO companyDTO) {
-        Response res = validate(companyDTO, true);
+    public ServiceResponse insert(CompanyDTO companyDTO) {
+        ServiceResponse res = validate(companyDTO, true);
         if (res.isOK()) {
             res = repository.insert(companyDTO);
             if (res.isOK()) {
@@ -38,16 +38,16 @@ public class CompanyService {
         return res;
     }
 
-    public Response update(CompanyDTO companyDTO) {
-        Response res = validate(companyDTO, false);
+    public ServiceResponse update(CompanyDTO companyDTO) {
+        ServiceResponse res = validate(companyDTO, false);
         if (res.isOK()) {
             res = repository.update(companyDTO);
         }
         return res;
     }
 
-    private Response validate(CompanyDTO companyDTO, boolean insert) {
-        Response res = new Response(HttpStatus.BAD_REQUEST_400);
+    private ServiceResponse validate(CompanyDTO companyDTO, boolean insert) {
+        ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
 
         List<Problem> problems;
 
@@ -80,7 +80,7 @@ public class CompanyService {
         if (problems.size() > 0) {
             res.setProblems(problems);
         } else if (res.getResult() == null) {
-            res = Responses.OK;
+            res = InstantResponses.OK;
         }
 
         return res;

@@ -5,8 +5,8 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
-import io.inprice.scrapper.api.info.Claims;
-import io.inprice.scrapper.api.info.Response;
+import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.AdminWorkspaceService;
 import org.apache.commons.validator.routines.LongValidator;
 import org.eclipse.jetty.http.HttpStatus;
@@ -28,7 +28,7 @@ public class AdminWorkspaceController {
         //insert
         post(ROOT, (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = upsert(Consts.ADMIN_CLAIMS, req.body(), true);
+            ServiceResponse serviceRes = upsert(Consts.ADMIN_CLAIMS, req.body(), true);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -36,7 +36,7 @@ public class AdminWorkspaceController {
         //update
         put(ROOT, (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = upsert(Consts.ADMIN_CLAIMS, req.body(), false);
+            ServiceResponse serviceRes = upsert(Consts.ADMIN_CLAIMS, req.body(), false);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -44,7 +44,7 @@ public class AdminWorkspaceController {
         //delete
         delete(ROOT + "/:id", (req, res) -> {
             Long id = LongValidator.getInstance().validate(req.params(":id"));
-            Response serviceRes = deleteById(id);
+            ServiceResponse serviceRes = deleteById(id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -53,7 +53,7 @@ public class AdminWorkspaceController {
         get(ROOT + "/:id", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
             Long id = LongValidator.getInstance().validate(req.params(":id"));
-            Response serviceRes = findById(Consts.ADMIN_CLAIMS, id);
+            ServiceResponse serviceRes = findById(Consts.ADMIN_CLAIMS, id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -61,26 +61,26 @@ public class AdminWorkspaceController {
         //list
         get(ROOT + "s", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = getList(Consts.ADMIN_CLAIMS.getCompanyId());
+            ServiceResponse serviceRes = getList(Consts.ADMIN_CLAIMS.getCompanyId());
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
     }
 
-    Response findById(Claims claims, Long id) {
+    ServiceResponse findById(AuthUser claims, Long id) {
         return service.findById(claims, id);
     }
 
-    Response getList(long companyId) {
+    ServiceResponse getList(long companyId) {
         return service.getList(companyId);
     }
 
-    Response deleteById(Long id) {
+    ServiceResponse deleteById(Long id) {
         return service.deleteById(id);
     }
 
-    Response upsert(Claims claims, String body, boolean insert) {
+    ServiceResponse upsert(AuthUser claims, String body, boolean insert) {
         WorkspaceDTO workspaceDTO = toModel(body);
         if (workspaceDTO != null) {
             if (insert)
@@ -89,7 +89,7 @@ public class AdminWorkspaceController {
                 return service.update(claims, workspaceDTO, true);
         }
         log.error("Invalid workspace data: " + body);
-        return new Response(HttpStatus.BAD_REQUEST_400, "Invalid data for workspace!");
+        return new ServiceResponse(HttpStatus.BAD_REQUEST_400, "Invalid data for workspace!");
     }
 
     private WorkspaceDTO toModel(String body) {

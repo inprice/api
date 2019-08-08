@@ -5,6 +5,7 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.ConfigScanner;
 import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.helpers.Global;
+import io.inprice.scrapper.api.rest.component.AuthFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +24,8 @@ public class Application {
 
             //spark configs
             port(config.getAPP_Port());
+
+            before(new AuthFilter());
             before((req, res) -> res.type("application/json"));
 
             ConfigScanner.scan();

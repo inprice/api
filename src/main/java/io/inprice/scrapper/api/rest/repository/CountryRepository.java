@@ -2,10 +2,7 @@ package io.inprice.scrapper.api.rest.repository;
 
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.Response;
-import io.inprice.scrapper.api.info.Responses;
 import io.inprice.scrapper.common.models.Country;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

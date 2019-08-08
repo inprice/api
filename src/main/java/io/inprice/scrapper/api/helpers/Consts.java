@@ -1,15 +1,26 @@
 package io.inprice.scrapper.api.helpers;
 
-import io.inprice.scrapper.api.info.Claims;
+import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.common.meta.UserType;
 
 public class Consts {
 
-    public static final String API_KEY = "API-KEY";
-    public static final String CSRF_TOKEN = "CSRF-TOKEN";
+    public static class Auth {
+        public static final String SECRET_KEY = "-8'fq{>As@njcx.U*$=P]#Z5wY+";
+        public static final long TOKEN_EXPIRATION_TIME = 15 * 60 * 1000L;
 
-    //TODO: should be dynamic in request object coming from web in Application.java
-    public static final Claims ADMIN_CLAIMS = new Claims(1,1,1, UserType.ADMIN);
-    public static final Claims USER_CLAIMS = new Claims(1,1,2, UserType.USER);
+        public static final String AUTHORIZATION_HEADER = "Authorization";
+        public static final String TOKEN_PREFIX = "Bearer";
+
+        public static final String LOGIN_ENDPOINT = "/login";
+        public static final String REGISTRATION_ENDPOINT = "/register";
+        public static final String AUTH_ENDPOINT_PREFIX = "/auth";
+
+        public static final String USER_ID = "userId";
+        public static final String USER_TYPE = "userType";
+        public static final String USER_FULL_NAME = "fullName";
+        public static final String COMPANY_ID = "companyId";
+        public static final String WORKSPACE_ID = "workspaceId";
+    }
 
 }

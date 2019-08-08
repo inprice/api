@@ -3,12 +3,10 @@ package io.inprice.scrapper.api.rest.validator;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.Problem;
-import io.inprice.scrapper.api.info.Response;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
-import io.inprice.scrapper.api.utils.CodeGenerator;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.User;
-import jodd.util.BCrypt;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 
@@ -42,14 +40,14 @@ public class UserDTOValidator {
         final String email = userDTO.getEmail();
         if (StringUtils.isBlank(email)) {
             problems.add(new Problem("email", "Email address cannot be null!"));
-        } else if (email.length() < 9 || email.length() > 250) {
-            problems.add(new Problem("email", "Email address must be between 9 and 250 chars!"));
+        } else if (email.length() < 4 || email.length() > 250) {
+            problems.add(new Problem("email", "Email address must be between 4 and 250 chars!"));
         } else if (!EmailValidator.getInstance().isValid(email)) {
             problems.add(new Problem("email", "Invalid email address!"));
         } else {
-            Response<User> found = null;
+            ServiceResponse<User> found = null;
             if (insert) {
-                found = userRepository.findByEmail(email, false);
+                found = userRepository.findByEmail(email);
             } else if (userDTO.getId() != null) {
                 found = userRepository.findByEmailForUpdateCheck(email, userDTO.getId());
             }

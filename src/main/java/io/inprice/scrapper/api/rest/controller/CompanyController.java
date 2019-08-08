@@ -4,7 +4,7 @@ import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Global;
-import io.inprice.scrapper.api.info.Response;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.CompanyService;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
@@ -23,19 +23,19 @@ public class CompanyController {
     @Routing
     public void routes() {
         post(ROOT, (req, res) -> {
-            Response serviceRes = upsert(req.body(), true);
+            ServiceResponse serviceRes = upsert(req.body(), true);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         put(ROOT, (req, res) -> {
-            Response serviceRes = upsert(req.body(), false);
+            ServiceResponse serviceRes = upsert(req.body(), false);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
     }
 
-    Response upsert(String body, boolean insert) {
+    ServiceResponse upsert(String body, boolean insert) {
         CompanyDTO companyDTO = toModel(body);
         if (companyDTO != null) {
             if (insert)
@@ -44,7 +44,7 @@ public class CompanyController {
                 return service.update(companyDTO);
         }
 
-        return new Response(HttpStatus.BAD_REQUEST_400, "Invalid data for company!");
+        return new ServiceResponse(HttpStatus.BAD_REQUEST_400, "Invalid data for company!");
     }
 
     private CompanyDTO toModel(String body) {

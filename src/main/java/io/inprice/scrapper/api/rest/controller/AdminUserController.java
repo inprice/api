@@ -6,8 +6,8 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
-import io.inprice.scrapper.api.info.Claims;
-import io.inprice.scrapper.api.info.Response;
+import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.AdminUserService;
 import org.apache.commons.validator.routines.LongValidator;
 import org.eclipse.jetty.http.HttpStatus;
@@ -29,7 +29,7 @@ public class AdminUserController {
         //insert
         post(ROOT, (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = upsert(Consts.ADMIN_CLAIMS, req.body(), true);
+            ServiceResponse serviceRes = upsert(Consts.ADMIN_CLAIMS, req.body(), true);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -37,7 +37,7 @@ public class AdminUserController {
         //update
         put(ROOT, (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = upsert(Consts.ADMIN_CLAIMS, req.body(), false);
+            ServiceResponse serviceRes = upsert(Consts.ADMIN_CLAIMS, req.body(), false);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -45,7 +45,7 @@ public class AdminUserController {
         //delete
         delete(ROOT + "/:id", (req, res) -> {
             Long id = LongValidator.getInstance().validate(req.params(":id"));
-            Response serviceRes = deleteById(id);
+            ServiceResponse serviceRes = deleteById(id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -53,7 +53,7 @@ public class AdminUserController {
         //find
         get(ROOT + "/:id", (req, res) -> {
             Long id = LongValidator.getInstance().validate(req.params(":id"));
-            Response serviceRes = findById(id);
+            ServiceResponse serviceRes = findById(id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -61,7 +61,7 @@ public class AdminUserController {
         //list
         get(ROOT + "s", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = getList(Consts.ADMIN_CLAIMS.getCompanyId());
+            ServiceResponse serviceRes = getList(Consts.ADMIN_CLAIMS.getCompanyId());
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -69,7 +69,7 @@ public class AdminUserController {
         //toggle active status
         put(ROOT + "/toggle-status/:id", (req, res) -> {
             Long id = LongValidator.getInstance().validate(req.params(":id"));
-            Response serviceRes = toggleStatus(id);
+            ServiceResponse serviceRes = toggleStatus(id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -77,30 +77,30 @@ public class AdminUserController {
         //update password
         put(ROOT + "/password", (req, res) -> {
             //todo: company id should be gotten from a real claim object coming from client
-            Response serviceRes = updatePassword(Consts.ADMIN_CLAIMS, req.body());
+            ServiceResponse serviceRes = updatePassword(Consts.ADMIN_CLAIMS, req.body());
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
     }
 
-    Response findById(Long id) {
+    ServiceResponse findById(Long id) {
         return service.findById(id);
     }
 
-    Response getList(long companyId) {
+    ServiceResponse getList(long companyId) {
         return service.getList(companyId);
     }
 
-    Response deleteById(Long id) {
+    ServiceResponse deleteById(Long id) {
         return service.deleteById(id);
     }
 
-    Response toggleStatus(Long id) {
+    ServiceResponse toggleStatus(Long id) {
         return service.toggleStatus(id);
     }
 
-    Response upsert(Claims claims, String body, boolean insert) {
+    ServiceResponse upsert(AuthUser claims, String body, boolean insert) {
         UserDTO userDTO = toModel(body);
         if (userDTO != null) {
             if (insert)
@@ -109,16 +109,16 @@ public class AdminUserController {
                 return service.update(claims, userDTO, true);
         }
         log.error("Invalid user data: " + body);
-        return new Response(HttpStatus.BAD_REQUEST_400, "Invalid data for user!");
+        return new ServiceResponse(HttpStatus.BAD_REQUEST_400, "Invalid data for user!");
     }
 
-    Response updatePassword(Claims claims, String body) {
+    ServiceResponse updatePassword(AuthUser claims, String body) {
         PasswordDTO passwordDTO = toModel(body);
         if (passwordDTO != null) {
             return service.updatePassword(claims, passwordDTO);
         }
         log.error("Invalid password data: " + body);
-        return new Response(HttpStatus.BAD_REQUEST_400, "Invalid data for password!");
+        return new ServiceResponse(HttpStatus.BAD_REQUEST_400, "Invalid data for password!");
     }
 
     private UserDTO toModel(String body) {
