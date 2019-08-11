@@ -14,7 +14,6 @@ public class WorkspaceDTO {
     private Date lastCollectingTime;
     private Boolean lastCollectingStatus;
     private Integer retry;
-    private Long companyId;
     private Long planId;
 
     public Long getId() {
@@ -71,14 +70,6 @@ public class WorkspaceDTO {
 
     public void setRetry(Integer retry) {
         this.retry = retry;
-    }
-
-    public Long getCompanyId() {
-        return companyId;
-    }
-
-    public void setCompanyId(Long companyId) {
-        this.companyId = companyId;
     }
 
     public Long getPlanId() {

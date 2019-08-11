@@ -2,7 +2,7 @@ package io.inprice.scrapper.api.helpers;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import io.inprice.scrapper.api.config.Config;
+import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.common.helpers.ModelMapper;
 import org.slf4j.Logger;
@@ -17,7 +17,7 @@ public class DBUtils {
 
     private static final Logger log = LoggerFactory.getLogger(DBUtils.class);
 
-    private final Config config = Beans.getSingleton(Config.class);
+    private final Properties properties = Beans.getSingleton(Properties.class);
     private HikariDataSource ds;
 
     private DBUtils() {
@@ -25,7 +25,7 @@ public class DBUtils {
     }
 
     public void reset() {
-        if (config.isRunningForTests()) {
+        if (properties.isRunningForTests()) {
             shutdown();
             wakeup();
         }
@@ -35,14 +35,14 @@ public class DBUtils {
         HikariConfig hConf = new HikariConfig();
 
         final String connectionString =
-                String.format("jdbc:%s:%s:%d/%s%s", config.getDB_Driver(), config.getDB_Host(),
-                        config.getDB_Port(), config.getDB_Database(), config.getDB_Additions());
+                String.format("jdbc:%s:%s:%d/%s%s", properties.getDB_Driver(), properties.getDB_Host(),
+                        properties.getDB_Port(), properties.getDB_Database(), properties.getDB_Additions());
 
         log.info(connectionString);
 
         hConf.setJdbcUrl(connectionString);
-        hConf.setUsername(config.getDB_Username());
-        hConf.setPassword(config.getDB_Password());
+        hConf.setUsername(properties.getDB_Username());
+        hConf.setPassword(properties.getDB_Password());
         hConf.addDataSourceProperty("cachePrepStmts", "true");
         hConf.addDataSourceProperty("prepStmtCacheSize", "250");
         hConf.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");

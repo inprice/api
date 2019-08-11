@@ -13,7 +13,6 @@ public class UserDTO extends PasswordDTO {
     private UserType type;
     private String fullName;
     private String email;
-    private Long companyId;
 
     public Boolean getActive() {
         return active;
@@ -47,14 +46,6 @@ public class UserDTO extends PasswordDTO {
         this.email = email;
     }
 
-    public Long getCompanyId() {
-        return companyId;
-    }
-
-    public void setCompanyId(Long companyId) {
-        this.companyId = companyId;
-    }
-
     @Override
     public String toString() {
         return "UserDTO{" +
@@ -66,7 +57,6 @@ public class UserDTO extends PasswordDTO {
                 ", passwordOld='" + getPasswordOld() + '\'' +
                 ", password='" + getPassword() + '\'' +
                 ", passwordAgain='" + getPasswordAgain() + '\'' +
-                ", companyId=" + companyId +
                 '}';
     }
 }

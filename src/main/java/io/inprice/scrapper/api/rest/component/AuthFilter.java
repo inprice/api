@@ -2,12 +2,16 @@ package io.inprice.scrapper.api.rest.component;
 
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Consts;
-import io.inprice.scrapper.api.rest.service.TokenService;
+import io.inprice.scrapper.api.rest.service.AuthService;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Filter;
 import spark.Request;
 import spark.Response;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static spark.Spark.halt;
 
@@ -15,27 +19,50 @@ public class AuthFilter implements Filter {
 
     private static final Logger log = LoggerFactory.getLogger(AuthFilter.class);
 
-    private final TokenService tokenService = Beans.getSingleton(TokenService.class);
+    private final AuthService authService = Beans.getSingleton(AuthService.class);
+    private final Set<String> allowedURIs;
+
+    public AuthFilter() {
+        allowedURIs = new HashSet<>(3);
+        allowedURIs.add(Consts.Paths.Auth.LOGIN);
+        allowedURIs.add(Consts.Paths.Auth.REFRESH_TOKEN);
+        allowedURIs.add(Consts.Paths.Auth.FORGOT_PASSWORD);
+        allowedURIs.add(Consts.Paths.Auth.RESET_PASSWORD);
+        allowedURIs.add(Consts.Paths.Auth.LOGOUT);
+        allowedURIs.add(Consts.Paths.Company.REGISTER);
+
+        log.info("Allowed URIs");
+        for (String uri: allowedURIs) {
+            log.info(" - " + uri);
+        }
+    }
 
     public void handle(Request request, Response response) {
-        if (!isLoginRequest(request) && !isRegistrationRequest(request)) {
+        if (isAuthenticationNeeded(request)) {
             String authHeader = request.headers(Consts.Auth.AUTHORIZATION_HEADER);
             if (authHeader == null) {
                 log.warn("Missing header: Authorization");
-                halt(401);
-            } else if (!tokenService.validateToken(authHeader.replace(Consts.Auth.TOKEN_PREFIX, ""))) {
-                log.warn("Expired token :" + authHeader);
-                halt(401);
+                halt(HttpStatus.UNAUTHORIZED_401);
+            } else {
+                String token = authHeader.replace(Consts.Auth.TOKEN_PREFIX, "");
+                if (! authService.validateToken(token)) {
+                    log.warn("Expired token!");
+                    halt(HttpStatus.UNAUTHORIZED_401);
+                }
             }
         }
     }
 
-    private boolean isLoginRequest(Request request) {
-        return request.uri().equals(Consts.Auth.AUTH_ENDPOINT_PREFIX + Consts.Auth.LOGIN_ENDPOINT);
-    }
+    private boolean isAuthenticationNeeded(Request req) {
+        final String uri = req.uri();
 
-    private boolean isRegistrationRequest(Request request) {
-        return request.uri().equals(Consts.Auth.AUTH_ENDPOINT_PREFIX + Consts.Auth.REGISTRATION_ENDPOINT);
+        //todo: should be check the trailing part of each uri
+        if (allowedURIs.contains(uri)) return false;
+
+        for (String u: allowedURIs) {
+            if (uri.startsWith(u)) return false;
+        }
+        return true;
     }
 
 }

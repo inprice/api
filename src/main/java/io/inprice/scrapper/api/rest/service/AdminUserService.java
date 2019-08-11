@@ -22,51 +22,51 @@ public class AdminUserService {
 
     private final UserRepository repository = Beans.getSingleton(UserRepository.class);
 
-    public ServiceResponse findById(Long id) {
-        return repository.findById(id);
+    public ServiceResponse findById(AuthUser authUser, Long id) {
+        return repository.findById(authUser, id);
     }
 
-    public ServiceResponse getList(long companyId) {
-        return repository.getList(companyId);
+    public ServiceResponse getList(AuthUser authUser) {
+        return repository.getList(authUser);
     }
 
-    public ServiceResponse insert(AuthUser claims, UserDTO userDTO) {
-        ServiceResponse res = validate(userDTO, true);
+    public ServiceResponse insert(AuthUser authUser, UserDTO userDTO) {
+        ServiceResponse res = validate(authUser, userDTO, true);
         if (res.isOK()) {
-            res = repository.insert(userDTO);
+            res = repository.insert(authUser, userDTO);
             if (res.isOK()) {
-                log.info("A new user has been added successfully. CompanyId: {}, Email: {}", userDTO.getCompanyId(), userDTO.getEmail());
+                log.info("A new user has been added successfully. CompanyId: {}, Email: {}", authUser.getCompanyId(), userDTO.getEmail());
             }
         }
         return res;
     }
 
-    public ServiceResponse update(AuthUser claims, UserDTO userDTO, boolean passwordWillBeUpdated) {
-        ServiceResponse res = validate(userDTO, false);
+    public ServiceResponse update(AuthUser authUser, UserDTO userDTO, boolean passwordWillBeUpdated) {
+        ServiceResponse res = validate(authUser, userDTO, false);
         if (res.isOK()) {
-            res = repository.update(claims, userDTO, true, passwordWillBeUpdated);
+            res = repository.update(authUser, userDTO, true, passwordWillBeUpdated);
         }
         return res;
     }
 
-    public ServiceResponse updatePassword(AuthUser claims, PasswordDTO passwordDTO) {
-        ServiceResponse res = validate(passwordDTO);
+    public ServiceResponse updatePassword(AuthUser authUser, PasswordDTO passwordDTO) {
+        ServiceResponse res = validate(authUser, passwordDTO);
         if (res.isOK()) {
-            res = repository.updatePassword(claims, passwordDTO);
+            res = repository.updatePassword(authUser, passwordDTO);
         }
         return res;
     }
 
-    public ServiceResponse deleteById(Long id) {
-        return repository.deleteById(id);
+    public ServiceResponse deleteById(AuthUser authUser, Long id) {
+        return repository.deleteById(authUser, id);
     }
 
-    public ServiceResponse toggleStatus(Long id) {
-        return repository.toggleStatus(id);
+    public ServiceResponse toggleStatus(AuthUser authUser, Long id) {
+        return repository.toggleStatus(authUser, id);
     }
 
-    private ServiceResponse validate(PasswordDTO passwordDTO) {
-        List<Problem> problems = PasswordDTOValidator.verify(passwordDTO, true);
+    private ServiceResponse validate(AuthUser authUser, PasswordDTO passwordDTO) {
+        List<Problem> problems = PasswordDTOValidator.verify(authUser, passwordDTO, true, true);
 
         if (problems.size() > 0) {
             ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
@@ -77,8 +77,8 @@ public class AdminUserService {
         }
     }
 
-    private ServiceResponse validate(UserDTO userDTO, boolean insert) {
-        List<Problem> problems = UserDTOValidator.verify(userDTO, insert, "Full");
+    private ServiceResponse validate(AuthUser authUser, UserDTO userDTO, boolean insert) {
+        List<Problem> problems = UserDTOValidator.verify(authUser, userDTO, insert, "Full");
 
         if (problems.size() > 0) {
             ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);

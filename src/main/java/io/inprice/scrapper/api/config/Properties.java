@@ -5,16 +5,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Properties;
 
-public class Config {
+public class Properties {
 
-	private static final Logger log = LoggerFactory.getLogger(Config.class);
+	private static final Logger log = LoggerFactory.getLogger(Properties.class);
 
-	private final Properties prop;
+	private final java.util.Properties prop;
 
-	Config() {
-		prop = new Properties();
+	Properties() {
+		prop = new java.util.Properties();
 
 		try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
 			if (input == null) {
@@ -66,6 +65,26 @@ public class Config {
 
 	public int getAS_SaltRounds() {
 		return getOrDefault("app.security.salt-rounds", 12);
+	}
+
+	public String getRedis_Host() {
+		return prop.getProperty("redis.host", "localhost");
+	}
+
+	public int getRedis_Port() {
+		return getOrDefault("redis.port", 6379);
+	}
+
+	public String getRedis_Password() {
+		return prop.getProperty("redis.password", null);
+	}
+
+	public int getTTL_Tokens() {
+		return getOrDefault("ttl.tokens", 15);
+	}
+
+	public int getTTL_InvalidatedTokens() {
+		return getOrDefault("ttl.invalidated-tokens", 16);
 	}
 
 	private int getOrDefault(String key, int defauld) {

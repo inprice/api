@@ -2,6 +2,7 @@ package io.inprice.scrapper.api.rest.validator;
 
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
@@ -17,7 +18,7 @@ public class UserDTOValidator {
 
     private static final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
 
-    public static List<Problem> verify(UserDTO userDTO, boolean insert, String field) {
+    public static List<Problem> verify(AuthUser authUser, UserDTO userDTO, boolean insert, String field) {
         List<Problem> problems = new ArrayList<>();
 
         if (! insert && userDTO.getId() == null) {
@@ -35,13 +36,13 @@ public class UserDTOValidator {
         }
 
         //when it is updated, no need to check for passwords since they are updated and checked in different service calls
-        if (insert) problems.addAll(PasswordDTOValidator.verify(userDTO, false));
+        if (insert) problems.addAll(PasswordDTOValidator.verify(authUser, userDTO, true, false));
 
         final String email = userDTO.getEmail();
         if (StringUtils.isBlank(email)) {
             problems.add(new Problem("email", "Email address cannot be null!"));
-        } else if (email.length() < 4 || email.length() > 250) {
-            problems.add(new Problem("email", "Email address must be between 4 and 250 chars!"));
+        } else if (email.length() < 9 || email.length() > 250) {
+            problems.add(new Problem("email", "Email address must be between 9 and 250 chars!"));
         } else if (!EmailValidator.getInstance().isValid(email)) {
             problems.add(new Problem("email", "Invalid email address!"));
         } else {

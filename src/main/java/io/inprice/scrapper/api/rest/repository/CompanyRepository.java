@@ -3,6 +3,7 @@ package io.inprice.scrapper.api.rest.repository;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
+import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.utils.CodeGenerator;
@@ -151,17 +152,23 @@ public class CompanyRepository {
         return response;
     }
 
-    public ServiceResponse update(CompanyDTO companyDTO) {
+    public ServiceResponse update(AuthUser authUser, CompanyDTO companyDTO) {
         ServiceResponse response;
 
         try (Connection con = dbUtils.getConnection();
-            PreparedStatement pst = con.prepareStatement("update company set name=?, website=?, country_id=? where id=?")) {
+            PreparedStatement pst =
+                con.prepareStatement(
+                    "update company " +
+                        "set name=?, website=?, country_id=? " +
+                        "where id=? " +
+                        "  and admin_id=?")) {
 
             int i = 0;
             pst.setString(++i, companyDTO.getCompanyName());
             pst.setString(++i, companyDTO.getWebsite());
             pst.setLong(++i, companyDTO.getCountryId());
             pst.setLong(++i, companyDTO.getId());
+            pst.setLong(++i, authUser.getId());
 
             if (pst.executeUpdate() > 0) {
                 response = InstantResponses.OK;

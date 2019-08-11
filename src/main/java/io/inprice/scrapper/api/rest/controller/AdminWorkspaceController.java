@@ -6,10 +6,11 @@ import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.AdminWorkspaceService;
+import io.inprice.scrapper.api.rest.service.AuthService;
 import org.apache.commons.validator.routines.LongValidator;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,77 +20,83 @@ public class AdminWorkspaceController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminWorkspaceController.class);
 
-    private static final String ROOT = "admin/workspace";
-    private final AdminWorkspaceService service = Beans.getSingleton(AdminWorkspaceService.class);
+    private final AdminWorkspaceService adminWorkspaceService = Beans.getSingleton(AdminWorkspaceService.class);
+    private final AuthService authService = Beans.getSingleton(AuthService.class);
 
     @Routing
     public void routes() {
 
         //insert
-        post(ROOT, (req, res) -> {
-            //todo: company id should be gotten from a real claim object coming from client
-            ServiceResponse serviceRes = upsert(Consts.ADMIN_CLAIMS, req.body(), true);
+        post(Consts.Paths.Workspace.BASE, (req, res) -> {
+            final AuthUser authUser = authService.getAuthUser(req);
+
+            ServiceResponse serviceRes = upsert(authUser, req.body(), true);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //update
-        put(ROOT, (req, res) -> {
-            //todo: company id should be gotten from a real claim object coming from client
-            ServiceResponse serviceRes = upsert(Consts.ADMIN_CLAIMS, req.body(), false);
+        put(Consts.Paths.Workspace.BASE, (req, res) -> {
+            final AuthUser authUser = authService.getAuthUser(req);
+
+            ServiceResponse serviceRes = upsert(authUser, req.body(), false);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //delete
-        delete(ROOT + "/:id", (req, res) -> {
-            Long id = LongValidator.getInstance().validate(req.params(":id"));
-            ServiceResponse serviceRes = deleteById(id);
+        delete(Consts.Paths.Workspace.BASE + "/:id", (req, res) -> {
+            final AuthUser authUser = authService.getAuthUser(req);
+            final Long id = LongValidator.getInstance().validate(req.params(":id"));
+
+            ServiceResponse serviceRes = deleteById(authUser, id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //find
-        get(ROOT + "/:id", (req, res) -> {
-            //todo: company id should be gotten from a real claim object coming from client
-            Long id = LongValidator.getInstance().validate(req.params(":id"));
-            ServiceResponse serviceRes = findById(Consts.ADMIN_CLAIMS, id);
+        get(Consts.Paths.Workspace.BASE + "/:id", (req, res) -> {
+            final AuthUser authUser = authService.getAuthUser(req);
+            final Long id = LongValidator.getInstance().validate(req.params(":id"));
+
+            ServiceResponse serviceRes = findById(authUser, id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //list
-        get(ROOT + "s", (req, res) -> {
-            //todo: company id should be gotten from a real claim object coming from client
-            ServiceResponse serviceRes = getList(Consts.ADMIN_CLAIMS.getCompanyId());
+        get(Consts.Paths.Workspace.BASE + "s", (req, res) -> {
+            final AuthUser authUser = authService.getAuthUser(req);
+
+            ServiceResponse serviceRes = getList(authUser);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
     }
 
-    ServiceResponse findById(AuthUser claims, Long id) {
-        return service.findById(claims, id);
+    private ServiceResponse findById(AuthUser authUser, Long id) {
+        return adminWorkspaceService.findById(authUser, id);
     }
 
-    ServiceResponse getList(long companyId) {
-        return service.getList(companyId);
+    private ServiceResponse getList(AuthUser authUser) {
+        return adminWorkspaceService.getList(authUser);
     }
 
-    ServiceResponse deleteById(Long id) {
-        return service.deleteById(id);
+    private ServiceResponse deleteById(AuthUser authUser, Long id) {
+        return adminWorkspaceService.deleteById(authUser, id);
     }
 
-    ServiceResponse upsert(AuthUser claims, String body, boolean insert) {
+    private ServiceResponse upsert(AuthUser authUser, String body, boolean insert) {
         WorkspaceDTO workspaceDTO = toModel(body);
         if (workspaceDTO != null) {
             if (insert)
-                return service.insert(claims, workspaceDTO);
+                return adminWorkspaceService.insert(authUser, workspaceDTO);
             else
-                return service.update(claims, workspaceDTO, true);
+                return adminWorkspaceService.update(authUser, workspaceDTO);
         }
         log.error("Invalid workspace data: " + body);
-        return new ServiceResponse(HttpStatus.BAD_REQUEST_400, "Invalid data for workspace!");
+        return InstantResponses.INVALID_DATA("workspace!");
     }
 
     private WorkspaceDTO toModel(String body) {

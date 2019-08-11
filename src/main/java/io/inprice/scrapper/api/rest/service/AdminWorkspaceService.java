@@ -17,32 +17,32 @@ public class AdminWorkspaceService {
 
     private final WorkspaceRepository repository = Beans.getSingleton(WorkspaceRepository.class);
 
-    public ServiceResponse findById(AuthUser claims, Long id) {
-        return repository.findById(claims, id);
+    public ServiceResponse findById(AuthUser authUser, Long id) {
+        return repository.findById(authUser, id);
     }
 
-    public ServiceResponse getList(long companyId) {
-        return repository.getList(companyId);
+    public ServiceResponse getList(AuthUser authUser) {
+        return repository.getList(authUser);
     }
 
-    public ServiceResponse insert(AuthUser claims, WorkspaceDTO workspaceDTO) {
+    public ServiceResponse insert(AuthUser authUser, WorkspaceDTO workspaceDTO) {
         ServiceResponse res = validate(workspaceDTO, true);
         if (res.isOK()) {
-            res = repository.insert(claims.getCompanyId(), workspaceDTO);
+            res = repository.insert(authUser, workspaceDTO);
         }
         return res;
     }
 
-    public ServiceResponse update(AuthUser claims, WorkspaceDTO workspaceDTO, boolean passwordWillBeUpdated) {
+    public ServiceResponse update(AuthUser authUser, WorkspaceDTO workspaceDTO) {
         ServiceResponse res = validate(workspaceDTO, false);
         if (res.isOK()) {
-            res = repository.update(workspaceDTO);
+            res = repository.update(authUser, workspaceDTO);
         }
         return res;
     }
 
-    public ServiceResponse deleteById(Long id) {
-        return repository.deleteById(id);
+    public ServiceResponse deleteById(AuthUser authUser, Long id) {
+        return repository.deleteById(authUser, id);
     }
 
     private ServiceResponse validate(WorkspaceDTO workspaceDTO, boolean insert) {

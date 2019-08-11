@@ -24,12 +24,17 @@ public class UserRepository {
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
-    public ServiceResponse<User> findById(Long id) {
-        return findById(id, false);
+    public ServiceResponse<User> findById(AuthUser authUser, Long id) {
+        return findById(authUser, id, false);
     }
 
-    public ServiceResponse<User> findById(Long id, boolean passwordFields) {
-        User model = dbUtils.findSingle(String.format("select * from user where id = %d", id), this::map);
+    public ServiceResponse<User> findById(AuthUser authUser, Long id, boolean passwordFields) {
+        User model =
+            dbUtils.findSingle(
+                String.format(
+                    "select * from user " +
+                        "where id = %d " +
+                        "  and company_id = %d", id, authUser.getCompanyId()), this::map);
         if (model != null) {
             if (! passwordFields) {
                 model.setPasswordSalt(null);
@@ -41,13 +46,13 @@ public class UserRepository {
         }
     }
 
-    public ServiceResponse<User> getList(long companyId) {
+    public ServiceResponse<User> getList(AuthUser authUser) {
         List<User> users = dbUtils.findMultiple(
             String.format(
                 "select * from user " +
                 "where user_type != '%s' " +
                 "  and company_id = %d " +
-                "order by full_name", UserType.ADMIN, companyId), this::map);
+                "order by full_name", UserType.ADMIN, authUser.getCompanyId()), this::map);
 
         if (users != null && users.size() > 0) {
             return new ServiceResponse<>(users);
@@ -83,7 +88,7 @@ public class UserRepository {
         }
     }
 
-    public ServiceResponse<User> insert(UserDTO userDTO) {
+    public ServiceResponse<User> insert(AuthUser authUser, UserDTO userDTO) {
         final String query =
             "insert into user " +
             "(user_type, full_name, email, password_salt, password_hash, company_id) " +
@@ -105,7 +110,7 @@ public class UserRepository {
             pst.setString(++i, userDTO.getEmail());
             pst.setString(++i, salt);
             pst.setString(++i, BCrypt.hashpw(userDTO.getPassword(), salt));
-            pst.setLong(++i, userDTO.getCompanyId());
+            pst.setLong(++i, authUser.getCompanyId());
 
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
@@ -121,13 +126,14 @@ public class UserRepository {
         }
     }
 
-    public ServiceResponse<User> update(AuthUser claims, UserDTO userDTO, boolean byAdmin, boolean passwordWillBeUpdate) {
+    public ServiceResponse<User> update(AuthUser authUser, UserDTO userDTO, boolean byAdmin, boolean passwordWillBeUpdate) {
         final String query = String.format(
             "update user " +
             "set full_name=?, email=? " +
             (byAdmin ? ", user_type=?, active=?" : "") +
             (passwordWillBeUpdate ? ", password_salt=?, password_hash=?" : "") +
-            " where id=?");
+            " where id=?" +
+            "   and company_id=?");
 
         try (Connection con = dbUtils.getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
@@ -151,6 +157,7 @@ public class UserRepository {
             }
 
             pst.setLong(++i, userDTO.getId());
+            pst.setLong(++i, authUser.getCompanyId());
 
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
@@ -166,11 +173,12 @@ public class UserRepository {
         }
     }
 
-    public ServiceResponse<User> updatePassword(AuthUser claims, PasswordDTO passwordDTO) {
+    public ServiceResponse<User> updatePassword(AuthUser authUser, PasswordDTO passwordDTO) {
         final String query = String.format(
             "update user " +
             "set password_salt=?, password_hash=? " +
-            "where id=?");
+            "where id=?" +
+            "  and company_id=?");
 
         try (Connection con = dbUtils.getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
@@ -180,7 +188,8 @@ public class UserRepository {
 
             pst.setString(++i, salt);
             pst.setString(++i, BCrypt.hashpw(passwordDTO.getPassword(), salt));
-            pst.setLong(++i, claims.getId());
+            pst.setLong(++i, authUser.getId());
+            pst.setLong(++i, authUser.getCompanyId());
 
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
@@ -193,28 +202,30 @@ public class UserRepository {
         }
     }
 
-    public ServiceResponse<User> deleteById(Long id) {
+    public ServiceResponse<User> deleteById(AuthUser authUser, Long id) {
         boolean result =
             dbUtils.executeQuery(
                 String.format(
                     "delete from user " +
                         "where id = %d " +
-                        "  and user_type != '%s'", id, UserType.ADMIN.name()),
-                "Failed to delete user with id: " + id);
+                        "  and company_id = %d " +
+                        "  and user_type != '%s'", id, authUser.getCompanyId(), UserType.ADMIN.name()),
+            "Failed to delete user with id: " + id);
 
         if (result) return InstantResponses.OK;
 
         return InstantResponses.NOT_FOUND("User");
     }
 
-    public ServiceResponse<User> toggleStatus(Long id) {
+    public ServiceResponse<User> toggleStatus(AuthUser authUser, Long id) {
         boolean result =
             dbUtils.executeQuery(
                 String.format(
                     "update user " +
                         "set active = not active " +
                         "where id = %d " +
-                        "  and user_type != '%s'", id, UserType.ADMIN.name()),
+                        "  and company_id = %d " +
+                        "  and user_type != '%s'", id, authUser.getCompanyId(), UserType.ADMIN.name()),
         "Failed to toggle user status! id: " + id);
 
         if (result) return InstantResponses.OK;
@@ -222,15 +233,15 @@ public class UserRepository {
         return InstantResponses.NOT_FOUND("User");
     }
 
-    public ServiceResponse<User> setDefaultWorkspace(AuthUser claims, Long wsId) {
+    public ServiceResponse<User> setDefaultWorkspace(AuthUser authUser, Long wsId) {
         boolean result =
             dbUtils.executeQuery(
                 String.format(
                     "update user " +
                         "set default_workspace_id = %d " +
                         "where id = %d " +
-                        "  and company_id = %d ", wsId, claims.getId(), claims.getCompanyId()),
-        "Failed to set default workspace! User Id: " + claims.getId() + ", Workspace Id: " + wsId);
+                        "  and company_id = %d ", wsId, authUser.getId(), authUser.getCompanyId()),
+        "Failed to set default workspace! User Id: " + authUser.getId() + ", Workspace Id: " + wsId);
 
         if (result) return InstantResponses.OK;
 

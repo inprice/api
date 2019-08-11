@@ -2,12 +2,15 @@ package io.inprice.scrapper.api.rest.service;
 
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.rest.repository.CompanyRepository;
 import io.inprice.scrapper.api.rest.repository.CountryRepository;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
+import io.inprice.scrapper.common.meta.UserType;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
@@ -28,7 +31,7 @@ public class CompanyService {
     }
 
     public ServiceResponse insert(CompanyDTO companyDTO) {
-        ServiceResponse res = validate(companyDTO, true);
+        ServiceResponse res = validate(null, companyDTO, true);
         if (res.isOK()) {
             res = repository.insert(companyDTO);
             if (res.isOK()) {
@@ -38,31 +41,29 @@ public class CompanyService {
         return res;
     }
 
-    public ServiceResponse update(CompanyDTO companyDTO) {
-        ServiceResponse res = validate(companyDTO, false);
+    public ServiceResponse update(AuthUser authUser, CompanyDTO companyDTO) {
+        ServiceResponse res = validate(authUser, companyDTO, false);
         if (res.isOK()) {
-            res = repository.update(companyDTO);
+            res = repository.update(authUser, companyDTO);
         }
         return res;
     }
 
-    private ServiceResponse validate(CompanyDTO companyDTO, boolean insert) {
+    private ServiceResponse validate(AuthUser authUser, CompanyDTO companyDTO, boolean insert) {
         ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
 
         List<Problem> problems;
 
         if (insert) {
-            problems = UserDTOValidator.verify(companyDTO, true, "Contact");
+            problems = UserDTOValidator.verify(authUser, companyDTO, true, "Contact");
         } else {
             problems = new ArrayList<>();
-        }
 
-        /*
-         * company controls
-         */
-        if (! insert && companyDTO.getId() == null) {
-            res.setResult("Company not found!");
-            return res;
+            //only admins can update their companies
+            if (UserType.ADMIN.equals(authUser.getType())) {
+                res.setStatus(HttpStatus.FORBIDDEN_403);
+                res.setResult("User has no permission to update this company!");
+            }
         }
 
         if (StringUtils.isBlank(companyDTO.getCompanyName())) {

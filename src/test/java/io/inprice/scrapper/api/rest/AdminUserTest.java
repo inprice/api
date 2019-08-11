@@ -1,28 +1,30 @@
 package io.inprice.scrapper.api.rest;
 
 import io.inprice.scrapper.api.Application;
-import io.inprice.scrapper.api.config.Config;
-import io.inprice.scrapper.api.dto.CompanyDTO;
+import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.DBUtils;
+import io.inprice.scrapper.api.helpers.DTOHelper;
 import io.inprice.scrapper.api.helpers.Global;
-import io.inprice.scrapper.common.meta.UserType;
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.response.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
 public class AdminUserTest {
 
-    private static final String ROOT = "/admin/user";
-
-    private static final Config config = Beans.getSingleton(Config.class);
+    private static final Properties properties = Beans.getSingleton(Properties.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     @BeforeClass
@@ -33,36 +35,48 @@ public class AdminUserTest {
             Application.main(null);
         }
 
+        RestAssured.port = properties.getAPP_Port();
+
         //insert a default company
         given()
-            .port(config.getAPP_Port())
-            .body(createAValidCompany()).
+            .body(DTOHelper.getCompanyDTO()).
         when()
-            .post("/company").
+            .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
 
         //be careful, the id 1 is reserved for the admin only during testing
+        Response res =
+            given()
+                .body(DTOHelper.getLoginDTO()).
+            when()
+                .post(Consts.Paths.Auth.LOGIN).
+            then()
+                .extract().
+            response();
+
+        RestAssured.requestSpecification =
+            new RequestSpecBuilder()
+                .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
+            .build();
 
         //insert a user to use him
         given()
-            .port(config.getAPP_Port())
-            .body(createAValidUser()).
+            .body(DTOHelper.getUserDTO()).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
 
         //insert an ordinary user to manipulate him
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setId(3L);
         user.setEmail("ordinary@inprice.io");
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
 
@@ -70,14 +84,13 @@ public class AdminUserTest {
 
     @Test
     public void everything_should_be_ok_with_inserting() {
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setEmail("test@test.com");
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
@@ -87,10 +100,8 @@ public class AdminUserTest {
     public void everything_should_be_ok_with_finding() {
         final int id = 1;
 
-        given()
-            .port(config.getAPP_Port()).
         when()
-            .get(ROOT + "/" + id).
+            .get(Consts.Paths.AdminUser.BASE + "/" + id).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("model.id", equalTo(id));
@@ -98,10 +109,8 @@ public class AdminUserTest {
 
     @Test
     public void user_not_found_when_get_with_a_wrong_id() {
-        given()
-            .port(config.getAPP_Port()).
         when()
-            .get(ROOT + "/0").
+            .get(Consts.Paths.AdminUser.BASE + "/0").
         then()
             .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
             .body("result", equalTo("User not found!"));
@@ -111,10 +120,8 @@ public class AdminUserTest {
     public void fail_to_delete_admin_user() {
         final int id = 1;
 
-        given()
-            .port(config.getAPP_Port()).
         when()
-            .delete(ROOT + "/" + id).
+            .delete(Consts.Paths.AdminUser.BASE + "/" + id).
         then()
             .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
             .body("result", equalTo("User not found!"));
@@ -122,10 +129,8 @@ public class AdminUserTest {
 
     @Test
     public void user_not_found_when_delete_with_a_wrong_id() {
-        given()
-            .port(config.getAPP_Port()).
         when()
-            .delete(ROOT + "/0").
+            .delete(Consts.Paths.AdminUser.BASE + "/0").
         then()
             .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
             .body("result", equalTo("User not found!"));
@@ -135,22 +140,19 @@ public class AdminUserTest {
     public void everything_should_be_ok_with_deleting() {
         final long id = 4;
 
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setId(id);
         user.setEmail("harrietj@inprice.io");
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
 
-        given()
-            .port(config.getAPP_Port()).
         when()
-            .delete(ROOT + "/" + id).
+            .delete(Consts.Paths.AdminUser.BASE + "/" + id).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
@@ -158,10 +160,8 @@ public class AdminUserTest {
 
     @Test
     public void everything_should_be_ok_with_listing() {
-        given()
-            .port(config.getAPP_Port()).
         when()
-            .get(ROOT + "s").
+            .get(Consts.Paths.AdminUser.BASE + "s").
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("models.size", greaterThan(0)); //since we have a default user inserted at the beginning
@@ -172,27 +172,21 @@ public class AdminUserTest {
         final int userId = 3;
 
         //should return true
-        given()
-            .port(config.getAPP_Port()).
         when()
-            .get(ROOT + "/" + userId).
+            .get(Consts.Paths.AdminUser.BASE + "/" + userId).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
         .body("model.active", equalTo(true));
 
         //should set false
-        given()
-            .port(config.getAPP_Port()).
         when()
-            .put(ROOT + "/toggle-status/" + userId).
+            .put(Consts.Paths.AdminUser.BASE + "/toggle-status/" + userId).
         then()
             .statusCode(HttpStatus.OK_200).assertThat(); //since we have a default user inserted at the beginning
 
         //should return false
-        given()
-            .port(config.getAPP_Port()).
         when()
-            .get(ROOT + "/" + userId).
+            .get(Consts.Paths.AdminUser.BASE + "/" + userId).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
         .body("model.active", equalTo(false));
@@ -203,10 +197,8 @@ public class AdminUserTest {
         final int userId = 1;
 
         //should set false
-        given()
-            .port(config.getAPP_Port()).
         when()
-            .put(ROOT + "/toggle-status/" + userId).
+            .put(Consts.Paths.AdminUser.BASE + "/toggle-status/" + userId).
         then()
             .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
             .body("result", equalTo("User not found!"));
@@ -214,15 +206,14 @@ public class AdminUserTest {
 
     @Test
     public void everything_should_be_ok_with_updating() {
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setFullName("Jane Doe");
         user.setEmail("janed@inprice.io");
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .put(ROOT).
+            .put(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
@@ -231,10 +222,9 @@ public class AdminUserTest {
     @Test
     public void invalid_data_for_user() {
         given()
-            .port(config.getAPP_Port())
             .body("wrong body!").
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("result", equalTo("Invalid data for user!"));
@@ -242,14 +232,13 @@ public class AdminUserTest {
 
     @Test
     public void full_name_cannot_be_null() {
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setFullName(null);
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Full name cannot be null!"));
@@ -257,14 +246,13 @@ public class AdminUserTest {
 
     @Test
     public void full_name_length_is_out_of_range_if_less_than_3() {
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setFullName("A");
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Full name must be between 2 and 150 chars!"));
@@ -272,14 +260,13 @@ public class AdminUserTest {
 
     @Test
     public void full_name_length_is_out_of_range_if_greater_than_250() {
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setFullName(StringUtils.repeat('A', 251));
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Full name must be between 2 and 150 chars!"));
@@ -287,15 +274,14 @@ public class AdminUserTest {
 
     @Test
     public void user_not_found_when_update_with_a_wrong_id() {
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setId(0L);
         user.setEmail("test@iprice.io");
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .put(ROOT).
+            .put(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
             .body("result", equalTo("User not found!"));
@@ -303,14 +289,13 @@ public class AdminUserTest {
 
     @Test
     public void email_address_cannot_be_null() {
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setEmail(null);
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Email address cannot be null!"));
@@ -320,22 +305,20 @@ public class AdminUserTest {
     public void email_address_is_already_used_by_another_user() {
         final String email = "harrietj@inprice.com";
 
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setEmail(email);
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo(email + " is already used by another user!"));
@@ -343,44 +326,41 @@ public class AdminUserTest {
 
     @Test
     public void email_address_length_is_out_of_range_if_less_than_4() {
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setEmail("jd@in.io");
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Email address must be between 4 and 250 chars!"));
+            .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
     }
 
     @Test
     public void email_address_length_is_out_of_range_if_greater_than_250() {
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setEmail(StringUtils.repeat('a', 251));
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Email address must be between 4 and 250 chars!"));
+            .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
     }
 
     @Test
     public void email_address_is_invalid() {
-        final UserDTO user = createAValidUser();
+        final UserDTO user = DTOHelper.getUserDTO();
         user.setEmail("test@invalid");
 
         given()
-            .port(config.getAPP_Port())
             .body(user).
         when()
-            .post(ROOT).
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Invalid email address!"));
@@ -395,10 +375,9 @@ public class AdminUserTest {
         pass.setPasswordAgain("p4ssw0rd-new");
 
         given()
-            .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/password").
+            .put(Consts.Paths.AdminUser.BASE + "/password").
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
     }
@@ -408,10 +387,9 @@ public class AdminUserTest {
         final PasswordDTO pass = new PasswordDTO();
 
         given()
-            .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/password").
+            .put(Consts.Paths.AdminUser.BASE + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
         .body("problems.reason[0]", equalTo("Password cannot be null!"));
@@ -423,10 +401,9 @@ public class AdminUserTest {
         pass.setPassword("pass");
 
         given()
-            .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/password").
+            .put(Consts.Paths.AdminUser.BASE + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -438,10 +415,9 @@ public class AdminUserTest {
         pass.setPassword(StringUtils.repeat('a', 17));
 
         given()
-            .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/password").
+            .put(Consts.Paths.AdminUser.BASE + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -454,10 +430,9 @@ public class AdminUserTest {
         pass.setPasswordAgain("p4ssw0rd");
 
         given()
-            .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/password").
+            .put(Consts.Paths.AdminUser.BASE + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Passwords are mismatch!"));
@@ -470,10 +445,9 @@ public class AdminUserTest {
         pass.setPasswordAgain("p4ssw0rd");
 
         given()
-            .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/password").
+            .put(Consts.Paths.AdminUser.BASE + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Old password cannot be null!"));
@@ -488,37 +462,12 @@ public class AdminUserTest {
         pass.setPasswordAgain("p4ssw0rd");
 
         given()
-            .port(config.getAPP_Port())
             .body(pass).
         when()
-            .put(ROOT + "/password").
+            .put(Consts.Paths.AdminUser.BASE + "/password").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Old password is incorrect!"));
-    }
-
-    private static UserDTO createAValidUser() {
-        UserDTO user = new UserDTO();
-        user.setId(2L);
-        user.setType(UserType.USER);
-        user.setFullName("John Doe");
-        user.setEmail("jdoe@inprice.io");
-        user.setPassword("p4ssw0rd");
-        user.setPasswordAgain("p4ssw0rd");
-        user.setCompanyId(1L);
-        return user;
-    }
-
-    private static CompanyDTO createAValidCompany() {
-        CompanyDTO company = new CompanyDTO();
-        company.setCompanyName("inprice");
-        company.setWebsite("www.inprice.io");
-        company.setFullName("John Doe");
-        company.setEmail("sample@inprice.io");
-        company.setPassword("p4ssw0rd");
-        company.setPasswordAgain("p4ssw0rd");
-        company.setCountryId(1L);
-        return company;
     }
 
 }

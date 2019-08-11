@@ -1,6 +1,6 @@
 package io.inprice.scrapper.api;
 
-import io.inprice.scrapper.api.config.Config;
+import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.ConfigScanner;
 import io.inprice.scrapper.api.helpers.DBUtils;
@@ -8,6 +8,7 @@ import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.rest.component.AuthFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Spark;
 
 import static spark.Spark.*;
 
@@ -15,19 +16,14 @@ public class Application {
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    private static final Config config = Beans.getSingleton(Config.class);
+    private static final Properties properties = Beans.getSingleton(Properties.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     public static void main(String[] args) {
         new Thread(() -> {
             log.info("APPLICATION IS STARTING...");
 
-            //spark configs
-            port(config.getAPP_Port());
-
-            before(new AuthFilter());
-            before((req, res) -> res.type("application/json"));
-
+            applySparkSettings();
             ConfigScanner.scan();
 
             Global.isApplicationRunning = true;
@@ -61,6 +57,26 @@ public class Application {
 
             Global.isApplicationRunning = false;
         },"shutdown-hook"));
+    }
+
+    private static void applySparkSettings() {
+        Spark.port(properties.getAPP_Port());
+
+        Spark.before(new AuthFilter());
+        Spark.before((req, res) -> res.type("application/json"));
+
+        //Enable CORS
+        Spark.options("/*", (req, res)->{
+            String acrh = req.headers("Access-Control-Request-Headers");
+            if (acrh != null) res.header("Access-Control-Allow-Headers", acrh);
+
+            String acrm = req.headers("Access-Control-Request-Method");
+            if(acrm != null) res.header("Access-Control-Allow-Methods", acrm);
+
+            return "OK";
+        });
+
+        Spark.before((request, response)-> response.header("Access-Control-Allow-Origin", "*"));
     }
 
 }

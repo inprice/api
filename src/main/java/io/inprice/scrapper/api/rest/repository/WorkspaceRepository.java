@@ -18,12 +18,12 @@ public class WorkspaceRepository {
     private static final Logger log = LoggerFactory.getLogger(WorkspaceRepository.class);
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
-    public ServiceResponse<Workspace> findById(AuthUser claims, Long id) {
+    public ServiceResponse<Workspace> findById(AuthUser authUser, Long id) {
         Workspace model = dbUtils.findSingle(
             String.format(
             "select * from workspace " +
                 "where id = %d " +
-                "  and company_id = %d", id, claims.getCompanyId()), this::map);
+                "  and company_id = %d", id, authUser.getCompanyId()), this::map);
         if (model != null) {
             return new ServiceResponse<>(model);
         } else {
@@ -31,12 +31,12 @@ public class WorkspaceRepository {
         }
     }
 
-    public ServiceResponse<Workspace> getList(long companyId) {
+    public ServiceResponse<Workspace> getList(AuthUser authUser) {
         List<Workspace> workspaces = dbUtils.findMultiple(
             String.format(
                 "select * from workspace " +
                     "where company_id = %d " +
-                    "order by name", companyId), this::map);
+                    "order by name", authUser.getCompanyId()), this::map);
 
         if (workspaces != null && workspaces.size() > 0) {
             return new ServiceResponse<>(workspaces);
@@ -48,7 +48,7 @@ public class WorkspaceRepository {
      * must be done by an admin
      *
      */
-    public ServiceResponse<Workspace> insert(Long companyId, WorkspaceDTO workspaceDTO) {
+    public ServiceResponse<Workspace> insert(AuthUser authUser, WorkspaceDTO workspaceDTO) {
         final String query =
                 "insert into workspace " +
                 "(name, plan_id, company_id) " +
@@ -61,7 +61,7 @@ public class WorkspaceRepository {
             int i = 0;
             pst.setString(++i, workspaceDTO.getName());
             pst.setLong(++i, workspaceDTO.getPlanId());
-            pst.setLong(++i, companyId);
+            pst.setLong(++i, authUser.getCompanyId());
 
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
@@ -81,13 +81,14 @@ public class WorkspaceRepository {
      * must be done by an admin
      *
      */
-    public ServiceResponse<Workspace> update(WorkspaceDTO workspaceDTO) {
+    public ServiceResponse<Workspace> update(AuthUser authUser, WorkspaceDTO workspaceDTO) {
         try (Connection con = dbUtils.getConnection();
-             PreparedStatement pst = con.prepareStatement("update workspace set name=? where id=?")) {
+             PreparedStatement pst = con.prepareStatement("update workspace set name=? where id=? and company_id=?")) {
 
             int i = 0;
             pst.setString(++i, workspaceDTO.getName());
             pst.setLong(++i, workspaceDTO.getId());
+            pst.setLong(++i, authUser.getCompanyId());
 
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
@@ -107,10 +108,14 @@ public class WorkspaceRepository {
      * must be done by an admin
      *
      */
-    public ServiceResponse<Workspace> deleteById(Long id) {
+    public ServiceResponse<Workspace> deleteById(AuthUser authUser, Long id) {
         boolean result =
             dbUtils.executeQuery(
-                String.format("delete from workspace where id = %d ", id),"Failed to delete workspace with id: " + id);
+                String.format(
+                    "delete from workspace " +
+                        "where id = %d " +
+                        "  and company_id = %d", id, authUser.getCompanyId()),
+            "Failed to delete workspace with id: " + id);
 
         if (result) return InstantResponses.OK;
 

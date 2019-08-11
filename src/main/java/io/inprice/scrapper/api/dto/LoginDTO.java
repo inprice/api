@@ -12,4 +12,11 @@ public class LoginDTO extends PasswordDTO {
         this.email = email;
     }
 
+    @Override
+    public String toString() {
+        return "LoginDTO{" +
+                "email='" + email + '\'' +
+                ", password='" + getPassword() + '\'' +
+                '}';
+    }
 }

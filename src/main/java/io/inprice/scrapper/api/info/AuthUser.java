@@ -8,13 +8,13 @@ public class AuthUser extends Model {
     private String email;
     private UserType type;
     private String fullName;
-    private long companyId;
-    private long workspaceId;
+    private Long companyId;
+    private Long workspaceId;
 
     public AuthUser() {
     }
 
-    public AuthUser(long id, String email, UserType type, String fullName, long companyId, long workspaceId) {
+    public AuthUser(Long id, String email, UserType type, String fullName, Long companyId, Long workspaceId) {
         this.email = email;
         this.type = type;
         this.fullName = fullName;
@@ -47,19 +47,19 @@ public class AuthUser extends Model {
         this.fullName = fullName;
     }
 
-    public long getCompanyId() {
+    public Long getCompanyId() {
         return companyId;
     }
 
-    public void setCompanyId(long companyId) {
+    public void setCompanyId(Long companyId) {
         this.companyId = companyId;
     }
 
-    public long getWorkspaceId() {
+    public Long getWorkspaceId() {
         return workspaceId;
     }
 
-    public void setWorkspaceId(long workspaceId) {
+    public void setWorkspaceId(Long workspaceId) {
         this.workspaceId = workspaceId;
     }
 }

@@ -11,7 +11,7 @@ import java.util.List;
 public class LoginDTOValidator {
 
     public static List<Problem> verify(LoginDTO loginDTO) {
-        List<Problem> problems = PasswordDTOValidator.verify(loginDTO, false);
+        List<Problem> problems = PasswordDTOValidator.verify(null, loginDTO, false, false);
 
         final String email = loginDTO.getEmail();
         if (StringUtils.isBlank(email)) {

@@ -1,13 +1,14 @@
 package io.inprice.scrapper.api.rest.service;
 
+import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.info.AuthUser;
-import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.rest.repository.LoggedOutTokensRepository;
+import io.inprice.scrapper.api.rest.controller.AuthController;
+import io.inprice.scrapper.api.rest.repository.InvalidatedTokensRepository;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.api.rest.validator.LoginDTOValidator;
 import io.inprice.scrapper.common.meta.UserType;
@@ -18,14 +19,21 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClaims;
 import jodd.util.BCrypt;
 import org.eclipse.jetty.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import spark.Request;
 
 import java.util.Date;
 import java.util.List;
 
 public class AuthService {
 
-    private final LoggedOutTokensRepository loggedOutTokensRepository = new LoggedOutTokensRepository();
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+
     private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
+    private final InvalidatedTokensRepository invalidatedTokensRepository = Beans.getSingleton(InvalidatedTokensRepository.class);
+
+    private final Properties properties = Beans.getSingleton(Properties.class);
 
     public ServiceResponse<AuthUser> login(LoginDTO loginDTO) {
         ServiceResponse<AuthUser> res = validate(loginDTO);
@@ -58,11 +66,6 @@ public class AuthService {
         return res;
     }
 
-    //todo: must be called within a periodic job
-    public final void removeExpired() {
-        loggedOutTokensRepository.removeExpired();
-    }
-
     public final String newToken(AuthUser authUser) {
         DefaultClaims claims = new DefaultClaims();
         claims.setSubject(authUser.getEmail());
@@ -72,24 +75,30 @@ public class AuthService {
         claims.put(Consts.Auth.COMPANY_ID, authUser.getCompanyId());
         claims.put(Consts.Auth.WORKSPACE_ID, authUser.getWorkspaceId());
 
+        Date now = new Date();
+
         return
             Jwts.builder()
                 .setClaims(claims)
-                .setExpiration(new Date(System.currentTimeMillis() + Consts.Auth.TOKEN_EXPIRATION_TIME))
+                .setIssuedAt(now)
+                .setExpiration(new Date(now.getTime() + properties.getTTL_Tokens() * 60 * 1000L))
                 .signWith(SignatureAlgorithm.HS512, Consts.Auth.SECRET_KEY)
             .compact();
     }
 
     public final void revokeToken(String token) {
-        Date expirationDate = Jwts.parser()
-                .setSigningKey(Consts.Auth.SECRET_KEY)
-                .parseClaimsJws(token)
-                .getBody()
-                .getExpiration();
-        loggedOutTokensRepository.addToken(token, expirationDate.getTime());
+        invalidatedTokensRepository.addToken(token);
     }
 
-    public final AuthUser getAuthenticatedUser(String token) {
+    public final AuthUser getAuthUser(Request req) {
+        String token = getToken(req);
+        if (token != null) {
+            return getAuthUser(token);
+        }
+        return null;
+    }
+
+    public final AuthUser getAuthUser(String token) {
         Claims claims =
             Jwts.parser()
                 .setSigningKey(Consts.Auth.SECRET_KEY)
@@ -100,23 +109,28 @@ public class AuthService {
             new AuthUser(
                 claims.get(Consts.Auth.USER_ID, Long.class),
                 claims.getSubject(),
-                claims.get(Consts.Auth.USER_TYPE, UserType.class),
+                UserType.valueOf(claims.get(Consts.Auth.USER_TYPE, String.class)),
                 claims.get(Consts.Auth.USER_FULL_NAME, String.class),
                 claims.get(Consts.Auth.COMPANY_ID, Long.class),
                 claims.get(Consts.Auth.WORKSPACE_ID, Long.class)
             );
     }
 
-    public final boolean isTokenLoggedOut(String token) {
-        return loggedOutTokensRepository.isTokenLoggedOut(token);
+    public String getToken(Request request) {
+        String header = request.headers(Consts.Auth.AUTHORIZATION_HEADER);
+        if (header != null && header.length() > 0)
+            return header.replace(Consts.Auth.TOKEN_PREFIX, "");
+        else
+            return null;
     }
 
     public final boolean validateToken(String token) {
-        if (! isTokenLoggedOut(token)) {
+        if (! isTokenInvalidated(token)) {
             try {
-                getAuthenticatedUser(token);
+                getAuthUser(token);
                 return true;
             } catch (Exception e) {
+                log.error(e.getMessage());
                 return false;
             }
         } else {
@@ -124,14 +138,18 @@ public class AuthService {
         }
     }
 
-    private ServiceResponse validate(LoginDTO loginDTO) {
-        ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
+    public final boolean isTokenInvalidated(String token) {
+        return invalidatedTokensRepository.isTokenInvalidated(token);
+    }
+
+    private ServiceResponse<AuthUser> validate(LoginDTO loginDTO) {
+        ServiceResponse<AuthUser> res = new ServiceResponse<>(HttpStatus.BAD_REQUEST_400);
         List<Problem> problems = LoginDTOValidator.verify(loginDTO);
 
         if (problems.size() > 0) {
             res.setProblems(problems);
         } else {
-            res = InstantResponses.OK;
+            res = new ServiceResponse<>(HttpStatus.OK_200);
         }
         return res;
     }

@@ -21,33 +21,33 @@ public class AdminService {
     private final UserRepository repository = Beans.getSingleton(UserRepository.class);
     private final WorkspaceRepository workspaceRepository = Beans.getSingleton(WorkspaceRepository.class);
 
-    public ServiceResponse update(AuthUser claims, UserDTO userDTO) {
-        ServiceResponse res = validate(userDTO);
+    public ServiceResponse update(AuthUser authUser, UserDTO userDTO) {
+        ServiceResponse res = validate(authUser, userDTO);
         if (res.isOK()) {
-            res = repository.update(claims, userDTO, true, false);
+            res = repository.update(authUser, userDTO, true, false);
         }
         return res;
     }
 
-    public ServiceResponse updatePassword(AuthUser claims, PasswordDTO passwordDTO) {
-        ServiceResponse res = validate(passwordDTO);
+    public ServiceResponse updatePassword(AuthUser authUser, PasswordDTO passwordDTO) {
+        ServiceResponse res = validate(authUser, passwordDTO);
         if (res.isOK()) {
-            res = repository.updatePassword(claims, passwordDTO);
+            res = repository.updatePassword(authUser, passwordDTO);
         }
         return res;
     }
 
-    public ServiceResponse setDefaultWorkspace(AuthUser claims, Long wsId) {
-        ServiceResponse<Workspace> found = workspaceRepository.findById(claims, wsId);
+    public ServiceResponse setDefaultWorkspace(AuthUser authUser, Long wsId) {
+        ServiceResponse<Workspace> found = workspaceRepository.findById(authUser, wsId);
         if (found.isOK()) {
-            return repository.setDefaultWorkspace(claims, wsId);
+            return repository.setDefaultWorkspace(authUser, wsId);
         } else {
             return InstantResponses.NOT_FOUND("Workspace");
         }
     }
 
-    private ServiceResponse validate(PasswordDTO passwordDTO) {
-        List<Problem> problems = PasswordDTOValidator.verify(passwordDTO, true);
+    private ServiceResponse validate(AuthUser authUser, PasswordDTO passwordDTO) {
+        List<Problem> problems = PasswordDTOValidator.verify(authUser, passwordDTO, true, true);
 
         if (problems.size() > 0) {
             ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
@@ -58,8 +58,8 @@ public class AdminService {
         }
     }
 
-    private ServiceResponse validate(UserDTO userDTO) {
-        List<Problem> problems = UserDTOValidator.verify(userDTO, false, "Full");
+    private ServiceResponse validate(AuthUser authUser, UserDTO userDTO) {
+        List<Problem> problems = UserDTOValidator.verify(authUser, userDTO, false, "Full");
 
         if (problems.size() > 0) {
             ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);

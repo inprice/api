@@ -17,4 +17,8 @@ public class InstantResponses {
         return new ServiceResponse(HttpStatus.BAD_REQUEST_400, tag + " is invalid!");
     }
 
+    public static ServiceResponse INVALID_DATA(String tag) {
+        return new ServiceResponse(HttpStatus.BAD_REQUEST_400, "Invalid data for " + tag);
+    }
+
 }
