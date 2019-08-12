@@ -1,14 +1,8 @@
 package io.inprice.scrapper.api.rest;
 
-import io.inprice.scrapper.api.Application;
-import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.CompanyDTO;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Consts;
-import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.helpers.DTOHelper;
-import io.inprice.scrapper.api.helpers.Global;
-import io.restassured.RestAssured;
+import io.inprice.scrapper.api.helpers.TestHelper;
 import io.restassured.response.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
@@ -21,23 +15,14 @@ import static org.hamcrest.Matchers.hasItem;
 
 public class CompanyTest {
 
-    private static final Properties properties = Beans.getSingleton(Properties.class);
-    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
-
     @BeforeClass
     public static void setup() {
-        if (Global.isApplicationRunning) {
-            dbUtils.reset();
-        } else {
-            Application.main(null);
-        }
-
-        RestAssured.port = properties.getAPP_Port();
+        TestHelper.setup(false, false);
     }
 
     @Test
     public void everything_should_be_ok_with_insert() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setEmail("test@test.com");
 
         given()
@@ -62,7 +47,7 @@ public class CompanyTest {
 
     @Test
     public void company_name_cannot_be_null() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setCompanyName(null);
 
         given()
@@ -76,7 +61,7 @@ public class CompanyTest {
 
     @Test
     public void company_name_length_is_out_of_range_if_less_than_3() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setEmail("test@inprice.io");
         company.setCompanyName("AA");
 
@@ -91,7 +76,7 @@ public class CompanyTest {
 
     @Test
     public void company_name_length_is_out_of_range_if_greater_than_250() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setEmail("test@inprice.io");
         company.setCompanyName(StringUtils.repeat('A', 251));
 
@@ -106,7 +91,7 @@ public class CompanyTest {
 
     @Test
     public void user_has_no_permission_to_update_another_company() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
 
         //insert a default company
         given()
@@ -118,7 +103,7 @@ public class CompanyTest {
 
         Response res =
             given()
-                .body(DTOHelper.getLoginDTO()).
+                .body(TestHelper.getLoginDTO()).
             when()
                 .post(Consts.Paths.Auth.LOGIN).
             then()
@@ -141,7 +126,7 @@ public class CompanyTest {
 
     @Test
     public void you_should_pick_a_country_when_country_not_presented() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setCountryId(null);
 
         given()
@@ -155,7 +140,7 @@ public class CompanyTest {
 
     @Test
     public void unknown_country_for_a_wrong_id() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setCountryId(9999L);
 
         given()
@@ -169,7 +154,7 @@ public class CompanyTest {
 
     @Test
     public void contact_name_cannot_be_null() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setFullName(null);
 
         given()
@@ -183,7 +168,7 @@ public class CompanyTest {
 
     @Test
     public void contact_name_length_is_out_of_range_if_less_than_2() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setFullName("A");
 
         given()
@@ -197,7 +182,7 @@ public class CompanyTest {
 
     @Test
     public void contact_name_length_is_out_of_range_if_greater_than_150() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setFullName(StringUtils.repeat('A', 151));
 
         given()
@@ -211,7 +196,7 @@ public class CompanyTest {
 
     @Test
     public void email_address_cannot_be_null() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setEmail(null);
 
         given()
@@ -227,7 +212,7 @@ public class CompanyTest {
     public void email_address_is_already_used_by_another_user() {
         final String email = "harrietj@inprice.com";
 
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setEmail(email);
 
         given()
@@ -244,8 +229,8 @@ public class CompanyTest {
     }
 
     @Test
-    public void email_address_length_is_out_of_range_if_less_than_4() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+    public void email_address_length_is_out_of_range_if_less_than_9() {
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setEmail("jd@in.io");
 
         given()
@@ -259,7 +244,7 @@ public class CompanyTest {
 
     @Test
     public void email_address_length_is_out_of_range_if_greater_than_250() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setEmail(StringUtils.repeat('a', 251));
 
         given()
@@ -273,7 +258,7 @@ public class CompanyTest {
 
     @Test
     public void email_address_is_invalid() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setEmail("test@invalid");
 
         given()
@@ -287,7 +272,7 @@ public class CompanyTest {
 
     @Test
     public void password_cannot_be_null() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setPassword(null);
 
         given()
@@ -301,7 +286,7 @@ public class CompanyTest {
 
     @Test
     public void password_length_is_out_of_range_if_less_than_5() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setPassword("pass");
 
         given()
@@ -315,7 +300,7 @@ public class CompanyTest {
 
     @Test
     public void password_length_is_out_of_range_if_greater_than_16() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setPassword(StringUtils.repeat('a', 17));
 
         given()
@@ -329,7 +314,7 @@ public class CompanyTest {
 
     @Test
     public void password_are_mismatch() {
-        final CompanyDTO company = DTOHelper.getCompanyDTO();
+        final CompanyDTO company = TestHelper.getCompanyDTO();
         company.setPasswordAgain("password"); // --> password is p4ssw0rd
 
         given()

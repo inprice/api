@@ -1,17 +1,10 @@
 package io.inprice.scrapper.api.rest;
 
-import io.inprice.scrapper.api.Application;
-import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
-import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.dto.WorkspaceDTO;
 import io.inprice.scrapper.api.helpers.Consts;
-import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.helpers.DTOHelper;
-import io.inprice.scrapper.api.helpers.Global;
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.response.Response;
+import io.inprice.scrapper.api.helpers.TestHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.BeforeClass;
@@ -24,52 +17,12 @@ import static org.hamcrest.Matchers.greaterThan;
 
 public class AdminUserTest {
 
-    private static final Properties properties = Beans.getSingleton(Properties.class);
-    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
-
     @BeforeClass
     public static void setup() {
-        if (Global.isApplicationRunning) {
-            dbUtils.reset();
-        } else {
-            Application.main(null);
-        }
-
-        RestAssured.port = properties.getAPP_Port();
-
-        //insert a default company
-        given()
-            .body(DTOHelper.getCompanyDTO()).
-        when()
-            .post(Consts.Paths.Company.REGISTER).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat();
-
-        //be careful, the id 1 is reserved for the admin only during testing
-        Response res =
-            given()
-                .body(DTOHelper.getLoginDTO()).
-            when()
-                .post(Consts.Paths.Auth.LOGIN).
-            then()
-                .extract().
-            response();
-
-        RestAssured.requestSpecification =
-            new RequestSpecBuilder()
-                .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
-            .build();
-
-        //insert a user to use him
-        given()
-            .body(DTOHelper.getUserDTO()).
-        when()
-            .post(Consts.Paths.AdminUser.BASE).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat();
+        TestHelper.setup(true, true);
 
         //insert an ordinary user to manipulate him
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setId(3L);
         user.setEmail("ordinary@inprice.io");
 
@@ -84,7 +37,7 @@ public class AdminUserTest {
 
     @Test
     public void everything_should_be_ok_with_inserting() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setEmail("test@test.com");
 
         given()
@@ -140,7 +93,7 @@ public class AdminUserTest {
     public void everything_should_be_ok_with_deleting() {
         final long id = 4;
 
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setId(id);
         user.setEmail("harrietj@inprice.io");
 
@@ -180,7 +133,7 @@ public class AdminUserTest {
 
         //should set false
         when()
-            .put(Consts.Paths.AdminUser.BASE + "/toggle-status/" + userId).
+            .put(Consts.Paths.AdminUser.TOGGLE_STATUS + "/" + userId).
         then()
             .statusCode(HttpStatus.OK_200).assertThat(); //since we have a default user inserted at the beginning
 
@@ -198,7 +151,7 @@ public class AdminUserTest {
 
         //should set false
         when()
-            .put(Consts.Paths.AdminUser.BASE + "/toggle-status/" + userId).
+            .put(Consts.Paths.AdminUser.TOGGLE_STATUS + "/" + userId).
         then()
             .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
             .body("result", equalTo("User not found!"));
@@ -206,7 +159,7 @@ public class AdminUserTest {
 
     @Test
     public void everything_should_be_ok_with_updating() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setFullName("Jane Doe");
         user.setEmail("janed@inprice.io");
 
@@ -232,7 +185,7 @@ public class AdminUserTest {
 
     @Test
     public void full_name_cannot_be_null() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setFullName(null);
 
         given()
@@ -246,7 +199,7 @@ public class AdminUserTest {
 
     @Test
     public void full_name_length_is_out_of_range_if_less_than_3() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setFullName("A");
 
         given()
@@ -260,7 +213,7 @@ public class AdminUserTest {
 
     @Test
     public void full_name_length_is_out_of_range_if_greater_than_250() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setFullName(StringUtils.repeat('A', 251));
 
         given()
@@ -274,7 +227,7 @@ public class AdminUserTest {
 
     @Test
     public void user_not_found_when_update_with_a_wrong_id() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setId(0L);
         user.setEmail("test@iprice.io");
 
@@ -289,7 +242,7 @@ public class AdminUserTest {
 
     @Test
     public void email_address_cannot_be_null() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setEmail(null);
 
         given()
@@ -305,7 +258,7 @@ public class AdminUserTest {
     public void email_address_is_already_used_by_another_user() {
         final String email = "harrietj@inprice.com";
 
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setEmail(email);
 
         given()
@@ -325,8 +278,8 @@ public class AdminUserTest {
     }
 
     @Test
-    public void email_address_length_is_out_of_range_if_less_than_4() {
-        final UserDTO user = DTOHelper.getUserDTO();
+    public void email_address_length_is_out_of_range_if_less_than_9() {
+        final UserDTO user = TestHelper.getUserDTO();
         user.setEmail("jd@in.io");
 
         given()
@@ -340,7 +293,7 @@ public class AdminUserTest {
 
     @Test
     public void email_address_length_is_out_of_range_if_greater_than_250() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setEmail(StringUtils.repeat('a', 251));
 
         given()
@@ -354,7 +307,7 @@ public class AdminUserTest {
 
     @Test
     public void email_address_is_invalid() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setEmail("test@invalid");
 
         given()
@@ -377,7 +330,7 @@ public class AdminUserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.AdminUser.BASE + "/password").
+            .put(Consts.Paths.AdminUser.PASSWORD).
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
     }
@@ -389,7 +342,7 @@ public class AdminUserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.AdminUser.BASE + "/password").
+            .put(Consts.Paths.AdminUser.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
         .body("problems.reason[0]", equalTo("Password cannot be null!"));
@@ -403,7 +356,7 @@ public class AdminUserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.AdminUser.BASE + "/password").
+            .put(Consts.Paths.AdminUser.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -417,7 +370,7 @@ public class AdminUserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.AdminUser.BASE + "/password").
+            .put(Consts.Paths.AdminUser.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -432,7 +385,7 @@ public class AdminUserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.AdminUser.BASE + "/password").
+            .put(Consts.Paths.AdminUser.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Passwords are mismatch!"));
@@ -447,7 +400,7 @@ public class AdminUserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.AdminUser.BASE + "/password").
+            .put(Consts.Paths.AdminUser.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Old password cannot be null!"));
@@ -464,7 +417,7 @@ public class AdminUserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.AdminUser.BASE + "/password").
+            .put(Consts.Paths.AdminUser.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Old password is incorrect!"));

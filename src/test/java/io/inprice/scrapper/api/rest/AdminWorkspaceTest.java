@@ -1,16 +1,8 @@
 package io.inprice.scrapper.api.rest;
 
-import io.inprice.scrapper.api.Application;
-import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.WorkspaceDTO;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Consts;
-import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.helpers.DTOHelper;
-import io.inprice.scrapper.api.helpers.Global;
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.response.Response;
+import io.inprice.scrapper.api.helpers.TestHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.BeforeClass;
@@ -23,45 +15,13 @@ import static org.hamcrest.Matchers.greaterThan;
 
 public class AdminWorkspaceTest {
 
-    private static final Properties properties = Beans.getSingleton(Properties.class);
-    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
-
     @BeforeClass
     public static void setup() {
-        if (Global.isApplicationRunning) {
-            dbUtils.reset();
-        } else {
-            Application.main(null);
-        }
-
-        RestAssured.port = properties.getAPP_Port();
-
-        //insert a default company
-        given()
-            .body(DTOHelper.getCompanyDTO()).
-        when()
-            .post(Consts.Paths.Company.REGISTER).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat();
-
-        //be careful, the id 1 is reserved for the admin only during testing
-        Response res =
-            given()
-                .body(DTOHelper.getLoginDTO()).
-            when()
-                .post(Consts.Paths.Auth.LOGIN).
-            then()
-                .extract().
-            response();
-
-        RestAssured.requestSpecification =
-            new RequestSpecBuilder()
-                .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
-            .build();
+        TestHelper.setup(true, false);
 
         //insert a secondary workspace
         given()
-            .body(DTOHelper.getWorkspaceDTO()).
+            .body(TestHelper.getWorkspaceDTO()).
         when()
             .post(Consts.Paths.Workspace.BASE).
         then()
@@ -70,7 +30,7 @@ public class AdminWorkspaceTest {
 
     @Test
     public void everything_should_be_ok_with_inserting() {
-        final WorkspaceDTO workspace = DTOHelper.getWorkspaceDTO();
+        final WorkspaceDTO workspace = TestHelper.getWorkspaceDTO();
 
         given()
             .body(workspace).
@@ -114,7 +74,7 @@ public class AdminWorkspaceTest {
     public void everything_should_be_ok_with_deleting() {
         final long id = 3;
 
-        final WorkspaceDTO workspace = DTOHelper.getWorkspaceDTO();
+        final WorkspaceDTO workspace = TestHelper.getWorkspaceDTO();
         workspace.setName("A THIRD WS");
 
         given()
@@ -143,7 +103,7 @@ public class AdminWorkspaceTest {
 
     @Test
     public void everything_should_be_ok_with_updating() {
-        final WorkspaceDTO workspace = DTOHelper.getWorkspaceDTO();
+        final WorkspaceDTO workspace = TestHelper.getWorkspaceDTO();
         workspace.setId(2L);
         workspace.setName("SPECIAL WS");
 
@@ -169,7 +129,7 @@ public class AdminWorkspaceTest {
 
     @Test
     public void workspace_name_cannot_be_null() {
-        final WorkspaceDTO workspace = DTOHelper.getWorkspaceDTO();
+        final WorkspaceDTO workspace = TestHelper.getWorkspaceDTO();
         workspace.setName(null);
 
         given()
@@ -183,7 +143,7 @@ public class AdminWorkspaceTest {
 
     @Test
     public void workspace_name_length_is_out_of_range_if_less_than_3() {
-        final WorkspaceDTO workspace = DTOHelper.getWorkspaceDTO();
+        final WorkspaceDTO workspace = TestHelper.getWorkspaceDTO();
         workspace.setName("AA");
 
         given()
@@ -197,7 +157,7 @@ public class AdminWorkspaceTest {
 
     @Test
     public void workspace_name_length_is_out_of_range_if_greater_than_50() {
-        final WorkspaceDTO workspace = DTOHelper.getWorkspaceDTO();
+        final WorkspaceDTO workspace = TestHelper.getWorkspaceDTO();
         workspace.setName(StringUtils.repeat('A', 51));
 
         given()
@@ -211,7 +171,7 @@ public class AdminWorkspaceTest {
 
     @Test
     public void workspace_not_found_when_update_with_a_wrong_id() {
-        final WorkspaceDTO workspace = DTOHelper.getWorkspaceDTO();
+        final WorkspaceDTO workspace = TestHelper.getWorkspaceDTO();
         workspace.setId(0L);
 
         given()

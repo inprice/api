@@ -1,75 +1,29 @@
 package io.inprice.scrapper.api.rest;
 
-import io.inprice.scrapper.api.Application;
-import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
-import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.dto.WorkspaceDTO;
 import io.inprice.scrapper.api.helpers.Consts;
-import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.helpers.DTOHelper;
-import io.inprice.scrapper.api.helpers.Global;
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.response.Response;
+import io.inprice.scrapper.api.helpers.TestHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 
 public class UserTest {
 
-    private static final Properties properties = Beans.getSingleton(Properties.class);
-    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
-
     @BeforeClass
     public static void setup() {
-        if (Global.isApplicationRunning) {
-            dbUtils.reset();
-        } else {
-            Application.main(null);
-        }
-
-        RestAssured.port = properties.getAPP_Port();
-
-        //insert a default company
-        given()
-            .body(DTOHelper.getCompanyDTO()).
-        when()
-            .post(Consts.Paths.Company.REGISTER).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat();
-
-        //be careful, the id 1 is reserved for the admin only during testing
-        Response res =
-            given()
-                .body(DTOHelper.getLoginDTO()).
-            when()
-                .post(Consts.Paths.Auth.LOGIN).
-            then()
-                .extract().
-            response();
-
-        RestAssured.requestSpecification =
-            new RequestSpecBuilder()
-                .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
-            .build();
-
-        //insert a default user to manipulate him
-        given()
-            .body(DTOHelper.getUserDTO()).
-        when()
-            .post(Consts.Paths.AdminUser.BASE).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat();
+        TestHelper.setup(true, true);
     }
 
     @Test
     public void everything_should_be_ok_with_updating() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setFullName("Jane Doe");
         user.setEmail("janed@inprice.io");
 
@@ -95,7 +49,7 @@ public class UserTest {
 
     @Test
     public void full_name_cannot_be_null() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setFullName(null);
 
         given()
@@ -109,7 +63,7 @@ public class UserTest {
 
     @Test
     public void full_name_length_is_out_of_range_if_less_than_3() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setFullName("A");
 
         given()
@@ -123,7 +77,7 @@ public class UserTest {
 
     @Test
     public void full_name_length_is_out_of_range_if_greater_than_250() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setFullName(StringUtils.repeat('A', 251));
 
         given()
@@ -137,7 +91,7 @@ public class UserTest {
 
     @Test
     public void email_address_cannot_be_null() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setEmail(null);
 
         given()
@@ -153,13 +107,13 @@ public class UserTest {
     public void email_address_is_already_used_by_another_user() {
         final String email = "harrietj@inprice.com";
 
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setEmail(email);
 
         given()
             .body(user).
         when()
-            .post("/admin/user").
+            .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
 
@@ -173,8 +127,8 @@ public class UserTest {
     }
 
     @Test
-    public void email_address_length_is_out_of_range_if_less_than_4() {
-        final UserDTO user = DTOHelper.getUserDTO();
+    public void email_address_length_is_out_of_range_if_less_than_9() {
+        final UserDTO user = TestHelper.getUserDTO();
         user.setEmail("jd@in.io");
 
         given()
@@ -188,7 +142,7 @@ public class UserTest {
 
     @Test
     public void email_address_length_is_out_of_range_if_greater_than_250() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setEmail(StringUtils.repeat('a', 251));
 
         given()
@@ -202,7 +156,7 @@ public class UserTest {
 
     @Test
     public void email_address_is_invalid() {
-        final UserDTO user = DTOHelper.getUserDTO();
+        final UserDTO user = TestHelper.getUserDTO();
         user.setEmail("test@invalid");
 
         given()
@@ -216,10 +170,19 @@ public class UserTest {
 
     @Test
     public void everything_should_be_ok_with_setting_default_workspace() {
+        final WorkspaceDTO workspace = TestHelper.getWorkspaceDTO();
+        workspace.setName("A SECOND WS");
+
         given()
-            .port(properties.getAPP_Port()).
+            .body(workspace).
         when()
-            .put(Consts.Paths.User.BASE + "/workspace/1").
+            .post(Consts.Paths.Workspace.BASE).
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("result", equalTo("OK"));
+
+        when()
+            .put(Consts.Paths.User.WORKSPACE + "/2").
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
@@ -227,10 +190,8 @@ public class UserTest {
 
     @Test
     public void workspace_not_found_for_a_wrong_ws_id() {
-        given()
-            .port(properties.getAPP_Port()).
         when()
-            .put(Consts.Paths.User.BASE + "/workspace/2").
+            .put(Consts.Paths.User.WORKSPACE + "/5").
         then()
             .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
             .body("result", equalTo("Workspace not found!"));
@@ -247,7 +208,7 @@ public class UserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.User.BASE + "/password").
+            .put(Consts.Paths.User.PASSWORD).
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
     }
@@ -259,7 +220,7 @@ public class UserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.User.BASE + "/password").
+            .put(Consts.Paths.User.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password cannot be null!"));
@@ -273,7 +234,7 @@ public class UserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.User.BASE + "/password").
+            .put(Consts.Paths.User.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -287,7 +248,7 @@ public class UserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.User.BASE + "/password").
+            .put(Consts.Paths.User.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
@@ -302,7 +263,7 @@ public class UserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.User.BASE + "/password").
+            .put(Consts.Paths.User.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Passwords are mismatch!"));
@@ -317,7 +278,7 @@ public class UserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.User.BASE + "/password").
+            .put(Consts.Paths.User.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Old password cannot be null!"));
@@ -334,7 +295,7 @@ public class UserTest {
         given()
             .body(pass).
         when()
-            .put(Consts.Paths.User.BASE + "/password").
+            .put(Consts.Paths.User.PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Old password is incorrect!"));
