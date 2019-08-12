@@ -24,11 +24,11 @@ public class AuthFilter implements Filter {
 
     public AuthFilter() {
         allowedURIs = new HashSet<>(3);
-        allowedURIs.add(Consts.Paths.Auth.LOGIN);
-        allowedURIs.add(Consts.Paths.Auth.REFRESH_TOKEN);
-        allowedURIs.add(Consts.Paths.Auth.FORGOT_PASSWORD);
-        allowedURIs.add(Consts.Paths.Auth.RESET_PASSWORD);
-        allowedURIs.add(Consts.Paths.Auth.LOGOUT);
+        allowedURIs.add(Consts.Paths.Intro.LOGIN);
+        allowedURIs.add(Consts.Paths.Intro.REFRESH_TOKEN);
+        allowedURIs.add(Consts.Paths.Intro.FORGOT_PASSWORD);
+        allowedURIs.add(Consts.Paths.Intro.RESET_PASSWORD);
+        allowedURIs.add(Consts.Paths.Intro.LOGOUT);
         allowedURIs.add(Consts.Paths.Company.REGISTER);
 
         log.info("Allowed URIs");
@@ -41,7 +41,7 @@ public class AuthFilter implements Filter {
         if (isAuthenticationNeeded(request)) {
             String authHeader = request.headers(Consts.Auth.AUTHORIZATION_HEADER);
             if (authHeader == null) {
-                log.warn("Missing header: Authorization");
+                log.warn("Missing header: " + Consts.Auth.AUTHORIZATION_HEADER);
                 halt(HttpStatus.UNAUTHORIZED_401);
             } else {
                 String token = authHeader.replace(Consts.Auth.TOKEN_PREFIX, "");

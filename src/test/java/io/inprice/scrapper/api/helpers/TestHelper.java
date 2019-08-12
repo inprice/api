@@ -14,6 +14,8 @@ import io.restassured.response.Response;
 import org.eclipse.jetty.http.HttpStatus;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
+import static org.hamcrest.Matchers.equalTo;
 
 public class TestHelper {
 
@@ -38,20 +40,7 @@ public class TestHelper {
             then()
                 .statusCode(HttpStatus.OK_200).assertThat();
 
-            //be careful, the id 1 is reserved for the admin only during testing
-            Response res =
-                given()
-                    .body(TestHelper.getLoginDTO()).
-                when()
-                    .post(Consts.Paths.Auth.LOGIN).
-                then()
-                    .extract().
-                response();
-
-            RestAssured.requestSpecification =
-                new RequestSpecBuilder()
-                    .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
-                .build();
+            login();
 
             //insert a user to use him
             if (extraUser) {
@@ -103,6 +92,36 @@ public class TestHelper {
 
         company.setCountryId(1L);
         return company;
+    }
+
+    public static void login() {
+        RestAssured.requestSpecification = null;
+
+        //dont forget, the id 1 is reserved for the admin only during testing
+        Response res =
+            given()
+                .body(TestHelper.getLoginDTO()).
+            when()
+                .post(Consts.Paths.Intro.LOGIN).
+            then()
+                .statusCode(HttpStatus.OK_200).assertThat()
+                .body("result", equalTo("OK"))
+            .extract().
+        response();
+
+        RestAssured.requestSpecification =
+            new RequestSpecBuilder()
+                .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
+            .build();
+    }
+
+
+    public static void logout() {
+        when()
+            .post(Consts.Paths.Intro.LOGOUT).
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("result", equalTo("OK"));
     }
 
 }

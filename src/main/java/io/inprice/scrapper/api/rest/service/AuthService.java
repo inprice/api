@@ -7,7 +7,6 @@ import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.rest.controller.AuthController;
 import io.inprice.scrapper.api.rest.repository.InvalidatedTokensRepository;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.api.rest.validator.LoginDTOValidator;
@@ -18,6 +17,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClaims;
 import jodd.util.BCrypt;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +66,9 @@ public class AuthService {
         return res;
     }
 
-    public final String newToken(AuthUser authUser) {
+    public String newToken(AuthUser authUser) {
+        Date now = new Date();
+
         DefaultClaims claims = new DefaultClaims();
         claims.setSubject(authUser.getEmail());
         claims.put(Consts.Auth.USER_ID, authUser.getId());
@@ -74,8 +76,7 @@ public class AuthService {
         claims.put(Consts.Auth.USER_FULL_NAME, authUser.getFullName());
         claims.put(Consts.Auth.COMPANY_ID, authUser.getCompanyId());
         claims.put(Consts.Auth.WORKSPACE_ID, authUser.getWorkspaceId());
-
-        Date now = new Date();
+        claims.put(Consts.Auth.ISSUED_AT, now.getTime());
 
         return
             Jwts.builder()
@@ -86,11 +87,11 @@ public class AuthService {
             .compact();
     }
 
-    public final void revokeToken(String token) {
-        invalidatedTokensRepository.addToken(token);
+    public void revokeToken(String token) {
+        if (! StringUtils.isBlank(token)) invalidatedTokensRepository.addToken(token);
     }
 
-    public final AuthUser getAuthUser(Request req) {
+    public AuthUser getAuthUser(Request req) {
         String token = getToken(req);
         if (token != null) {
             return getAuthUser(token);
@@ -124,7 +125,7 @@ public class AuthService {
             return null;
     }
 
-    public final boolean validateToken(String token) {
+    public boolean validateToken(String token) {
         if (! isTokenInvalidated(token)) {
             try {
                 getAuthUser(token);
@@ -138,7 +139,7 @@ public class AuthService {
         }
     }
 
-    public final boolean isTokenInvalidated(String token) {
+    public boolean isTokenInvalidated(String token) {
         return invalidatedTokensRepository.isTokenInvalidated(token);
     }
 

@@ -16,8 +16,8 @@ public class LoginDTOValidator {
         final String email = loginDTO.getEmail();
         if (StringUtils.isBlank(email)) {
             problems.add(new Problem("email", "Email address cannot be null!"));
-        } else if (email.length() < 4 || email.length() > 250) {
-            problems.add(new Problem("email", "Email address must be between 4 and 250 chars!"));
+        } else if (email.length() < 9 || email.length() > 250) {
+            problems.add(new Problem("email", "Email address must be between 9 and 250 chars!"));
         } else if (!EmailValidator.getInstance().isValid(email)) {
             problems.add(new Problem("email", "Invalid email address!"));
         }
