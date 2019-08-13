@@ -61,8 +61,8 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.LOGIN).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("result", equalTo("Email or password is invalid!"));
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body("result", equalTo("Invalid data for email or password!"));
     }
 
     @Test
@@ -165,13 +165,31 @@ public class AuthTest {
 
     @Test
     public void everything_should_be_ok_with_refreshing() {
-        TestHelper.login();
+        RestAssured.requestSpecification = null;
 
+        LoginDTO login = new LoginDTO();
+        login.setEmail("jdoe@inprice.io");
+        login.setPassword("p4ssw0rd");
+
+        Response res =
+            given()
+                .body(login).
+            when()
+                .post(Consts.Paths.Auth.LOGIN).
+            then()
+                .statusCode(HttpStatus.OK_200).assertThat()
+                .extract().
+        response();
+
+        given()
+          .header(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER)).
         when()
             .post(Consts.Paths.Auth.REFRESH_TOKEN).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
+
+        TestHelper.login();
     }
 
     @Test
@@ -201,9 +219,9 @@ public class AuthTest {
     }
 
     @Test
-    public void everything_should_be_ok_with_forgot_and_password() {
+    public void everything_should_be_ok_with_forgot_and_reset_password() {
         EmailDTO email = new EmailDTO();
-        email.setEmail(TestHelper.getLoginDTO().getEmail());
+        email.setEmail(TestHelper.getUserDTO().getEmail());
 
         //forgot password request
         Response res =
@@ -221,8 +239,8 @@ public class AuthTest {
 
         PasswordDTO password = new PasswordDTO();
         password.setToken(token);
-        password.setPassword("n3wp4ss");
-        password.setPasswordAgain("n3wp4ss");
+        password.setPassword("p4ssw0rd");
+        password.setPasswordAgain("p4ssw0rd");
 
         //reset password request
         given()
@@ -245,7 +263,89 @@ public class AuthTest {
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
-
     }
+
+    @Test
+    public void invalid_email_for_forgot_password() {
+        given()
+            .body("wrong body").
+        when()
+            .post(Consts.Paths.Auth.FORGOT_PASSWORD).
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body("result", equalTo("Invalid data for email!"));
+    }
+
+    @Test
+    public void email_cannot_be_null_for_forgot_password() {
+        EmailDTO email = new EmailDTO();
+
+        given()
+            .body(email).
+        when()
+            .post(Consts.Paths.Auth.FORGOT_PASSWORD).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Email address cannot be null!"));
+    }
+
+    @Test
+    public void email_not_found_for_forgot_password() {
+        EmailDTO email = new EmailDTO();
+        email.setEmail("test@inprice.io");
+
+        given()
+            .body(email).
+        when()
+            .post(Consts.Paths.Auth.FORGOT_PASSWORD).
+        then()
+            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
+            .body("result", equalTo("Email not found!"));
+    }
+
+    @Test
+    public void passwords_are_mismatch_for_reset_password() {
+        PasswordDTO password = new PasswordDTO();
+        password.setPassword("p4ssw0rd");
+
+        given()
+            .body(password).
+        when()
+            .post(Consts.Paths.Auth.RESET_PASSWORD).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Passwords are mismatch!"));
+    }
+
+    @Test
+    public void token_cannot_be_null_for_reset_password() {
+        PasswordDTO password = new PasswordDTO();
+        password.setPassword("p4ssw0rd");
+        password.setPasswordAgain("p4ssw0rd");
+
+        given()
+            .body(password).
+        when()
+            .post(Consts.Paths.Auth.RESET_PASSWORD).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Token cannot be null!"));
+    }
+
+    @Test
+    public void password_cannot_be_null_reset_password() {
+        EmailDTO email = new EmailDTO();
+        email.setEmail(TestHelper.getLoginDTO().getEmail());
+
+        given()
+            .body(email).
+        when()
+            .post(Consts.Paths.Auth.RESET_PASSWORD).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Password cannot be null!"));
+    }
+
+    //todo: expired token tests must be implemented for both email and login tokens
 
 }

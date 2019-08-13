@@ -43,7 +43,7 @@ public class UserTest {
         when()
             .put(Consts.Paths.User.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
             .body("result", equalTo("Invalid data for user!"));
     }
 

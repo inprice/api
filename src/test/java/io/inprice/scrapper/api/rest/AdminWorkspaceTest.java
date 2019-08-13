@@ -123,7 +123,7 @@ public class AdminWorkspaceTest {
         when()
             .post(Consts.Paths.Workspace.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
             .body("result", equalTo("Invalid data for workspace!"));
     }
 

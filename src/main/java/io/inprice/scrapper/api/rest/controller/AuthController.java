@@ -67,7 +67,7 @@ public class AuthController {
         if (loginDTO != null) {
             return authService.login(loginDTO, res);
         }
-        return InstantResponses.INVALID_PARAM("Email or password");
+        return InstantResponses.INVALID_DATA("email or password!");
     }
 
     private ServiceResponse refresh(Request req, Response res) {
@@ -79,7 +79,7 @@ public class AuthController {
         if (emailDTO != null) {
             return authService.forgotPassword(emailDTO);
         }
-        return InstantResponses.INVALID_PARAM("Email");
+        return InstantResponses.INVALID_DATA("email!");
     }
 
     private ServiceResponse resetPassword(Request req) {
@@ -87,7 +87,7 @@ public class AuthController {
         if (passwordDTO != null) {
             return authService.resetPassword(passwordDTO);
         }
-        return InstantResponses.INVALID_PARAM("Password");
+        return InstantResponses.INVALID_DATA("password!");
     }
 
     private ServiceResponse logout(Request req) {

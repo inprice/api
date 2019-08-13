@@ -7,6 +7,7 @@ import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.dto.WorkspaceDTO;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.rest.service.TokenService;
 import io.inprice.scrapper.common.meta.UserType;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
