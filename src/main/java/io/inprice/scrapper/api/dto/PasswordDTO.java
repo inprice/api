@@ -11,6 +11,7 @@ public class PasswordDTO implements Serializable {
     private String passwordOld;
     private String password;
     private String passwordAgain;
+    private String token;
 
     public Long getId() {
         return id;
@@ -44,6 +45,14 @@ public class PasswordDTO implements Serializable {
         this.passwordAgain = passwordAgain;
     }
 
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
     @Override
     public String toString() {
         return "PasswordDTO{" +
@@ -51,6 +60,7 @@ public class PasswordDTO implements Serializable {
                 ", passwordOld='" + passwordOld + '\'' +
                 ", password='" + password + '\'' +
                 ", passwordAgain='" + passwordAgain + '\'' +
+                ", token='" + token + '\'' +
                 '}';
     }
 }

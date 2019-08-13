@@ -10,7 +10,7 @@ import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.AdminService;
-import io.inprice.scrapper.api.rest.service.AuthService;
+import io.inprice.scrapper.api.rest.service.TokenService;
 import org.apache.commons.validator.routines.LongValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,14 +22,14 @@ public class AdminController {
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     private static final AdminService adminService = Beans.getSingleton(AdminService.class);
-    private static final AuthService authService = Beans.getSingleton(AuthService.class);
+    private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
 
     @Routing
     public void routes() {
 
         //update admin info
         put(Consts.Paths.Admin.BASE, (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = update(authUser, req.body());
             res.status(serviceRes.getStatus());
@@ -38,7 +38,7 @@ public class AdminController {
 
         //update admin password
         put(Consts.Paths.Admin.PASSWORD, (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = updatePassword(authUser, req.body());
             res.status(serviceRes.getStatus());
@@ -47,7 +47,7 @@ public class AdminController {
 
         //set default workspace
         put(Consts.Paths.Admin.WORKSPACE + "/:ws_id", (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long wsId = LongValidator.getInstance().validate(req.params(":ws_id"));
 
             ServiceResponse serviceRes = setDefaultWorkspace(authUser, wsId);

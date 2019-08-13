@@ -9,7 +9,7 @@ import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.AdminWorkspaceService;
-import io.inprice.scrapper.api.rest.service.AuthService;
+import io.inprice.scrapper.api.rest.service.TokenService;
 import org.apache.commons.validator.routines.LongValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,15 +20,15 @@ public class AdminWorkspaceController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminWorkspaceController.class);
 
-    private final AdminWorkspaceService adminWorkspaceService = Beans.getSingleton(AdminWorkspaceService.class);
-    private final AuthService authService = Beans.getSingleton(AuthService.class);
+    private static final AdminWorkspaceService adminWorkspaceService = Beans.getSingleton(AdminWorkspaceService.class);
+    private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
 
     @Routing
     public void routes() {
 
         //insert
         post(Consts.Paths.Workspace.BASE, (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = upsert(authUser, req.body(), true);
             res.status(serviceRes.getStatus());
@@ -37,7 +37,7 @@ public class AdminWorkspaceController {
 
         //update
         put(Consts.Paths.Workspace.BASE, (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = upsert(authUser, req.body(), false);
             res.status(serviceRes.getStatus());
@@ -46,7 +46,7 @@ public class AdminWorkspaceController {
 
         //delete
         delete(Consts.Paths.Workspace.BASE + "/:id", (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long id = LongValidator.getInstance().validate(req.params(":id"));
 
             ServiceResponse serviceRes = deleteById(authUser, id);
@@ -56,7 +56,7 @@ public class AdminWorkspaceController {
 
         //find
         get(Consts.Paths.Workspace.BASE + "/:id", (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long id = LongValidator.getInstance().validate(req.params(":id"));
 
             ServiceResponse serviceRes = findById(authUser, id);
@@ -66,7 +66,7 @@ public class AdminWorkspaceController {
 
         //list
         get(Consts.Paths.Workspace.BASE + "s", (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = getList(authUser);
             res.status(serviceRes.getStatus());

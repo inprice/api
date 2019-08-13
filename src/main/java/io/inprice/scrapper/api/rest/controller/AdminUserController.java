@@ -11,6 +11,7 @@ import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.AdminUserService;
 import io.inprice.scrapper.api.rest.service.AuthService;
+import io.inprice.scrapper.api.rest.service.TokenService;
 import org.apache.commons.validator.routines.LongValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,15 +22,15 @@ public class AdminUserController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminUserController.class);
     
-    private final AdminUserService adminUserService = Beans.getSingleton(AdminUserService.class);
-    private final AuthService authService = Beans.getSingleton(AuthService.class);
+    private static final AdminUserService adminUserService = Beans.getSingleton(AdminUserService.class);
+    private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
 
     @Routing
     public void routes() {
 
         //insert
         post(Consts.Paths.AdminUser.BASE, (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = upsert(authUser, req.body(), true);
             res.status(serviceRes.getStatus());
@@ -38,7 +39,7 @@ public class AdminUserController {
 
         //update
         put(Consts.Paths.AdminUser.BASE, (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = upsert(authUser, req.body(), false);
             res.status(serviceRes.getStatus());
@@ -47,7 +48,7 @@ public class AdminUserController {
 
         //delete
         delete(Consts.Paths.AdminUser.BASE + "/:id", (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long id = LongValidator.getInstance().validate(req.params(":id"));
 
             ServiceResponse serviceRes = deleteById(authUser, id);
@@ -57,7 +58,7 @@ public class AdminUserController {
 
         //find
         get(Consts.Paths.AdminUser.BASE + "/:id", (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long id = LongValidator.getInstance().validate(req.params(":id"));
 
             ServiceResponse serviceRes = findById(authUser, id);
@@ -67,7 +68,7 @@ public class AdminUserController {
 
         //list
         get(Consts.Paths.AdminUser.BASE + "s", (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = getList(authUser);
             res.status(serviceRes.getStatus());
@@ -76,7 +77,7 @@ public class AdminUserController {
 
         //toggle active status
         put(Consts.Paths.AdminUser.TOGGLE_STATUS + "/:id", (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long id = LongValidator.getInstance().validate(req.params(":id"));
 
             ServiceResponse serviceRes = toggleStatus(authUser, id);
@@ -86,7 +87,7 @@ public class AdminUserController {
 
         //update password
         put(Consts.Paths.AdminUser.PASSWORD, (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = updatePassword(authUser, req.body());
             res.status(serviceRes.getStatus());

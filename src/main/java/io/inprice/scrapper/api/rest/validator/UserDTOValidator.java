@@ -38,22 +38,17 @@ public class UserDTOValidator {
         //when it is updated, no need to check for passwords since they are updated and checked in different service calls
         if (insert) problems.addAll(PasswordDTOValidator.verify(authUser, userDTO, true, false));
 
-        final String email = userDTO.getEmail();
-        if (StringUtils.isBlank(email)) {
-            problems.add(new Problem("email", "Email address cannot be null!"));
-        } else if (email.length() < 9 || email.length() > 250) {
-            problems.add(new Problem("email", "Email address must be between 9 and 250 chars!"));
-        } else if (!EmailValidator.getInstance().isValid(email)) {
-            problems.add(new Problem("email", "Invalid email address!"));
-        } else {
+        boolean verifiedByEmailDTOValidator = EmailDTOValidator.verify(userDTO.getEmail(), problems);
+
+        if (verifiedByEmailDTOValidator) {
             ServiceResponse<User> found = null;
             if (insert) {
-                found = userRepository.findByEmail(email);
+                found = userRepository.findByEmail(userDTO.getEmail());
             } else if (userDTO.getId() != null) {
-                found = userRepository.findByEmailForUpdateCheck(email, userDTO.getId());
+                found = userRepository.findByEmailForUpdateCheck(userDTO.getEmail(), userDTO.getId());
             }
             if (found != null && found.isOK()) {
-                problems.add(new Problem("email", email + " is already used by another user!"));
+                problems.add(new Problem("email", userDTO.getEmail() + " is already used by another user!"));
             }
         }
 

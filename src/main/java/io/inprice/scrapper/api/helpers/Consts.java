@@ -15,7 +15,7 @@ public class Consts {
 
     public static class Paths {
 
-        public static class Intro {
+        public static class Auth {
             public static final String LOGIN = "/login";
             public static final String REFRESH_TOKEN = "/refresh-token";
             public static final String RESET_PASSWORD = "/reset-password";

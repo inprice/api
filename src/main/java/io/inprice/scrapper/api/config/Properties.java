@@ -87,6 +87,14 @@ public class Properties {
 		return getOrDefault("ttl.invalidated-tokens", 16);
 	}
 
+	public String getEmail_Sender() {
+		return prop.getProperty("email.sender", "support@inprice.io");
+	}
+
+	public String getEmail_APIKey() {
+		return prop.getProperty("email.sendgrid.api-key", "test");
+	}
+
 	private int getOrDefault(String key, int defauld) {
 		String val = prop.getProperty(key, "" + defauld);
 		return Integer.parseInt(val.trim());

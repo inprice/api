@@ -105,7 +105,7 @@ public class CompanyTest {
             given()
                 .body(TestHelper.getLoginDTO()).
             when()
-                .post(Consts.Paths.Intro.LOGIN).
+                .post(Consts.Paths.Auth.LOGIN).
             then()
                 .extract().
             response();

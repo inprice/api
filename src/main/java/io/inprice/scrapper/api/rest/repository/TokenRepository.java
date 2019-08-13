@@ -7,15 +7,12 @@ import org.redisson.api.RSetCache;
 
 import java.util.concurrent.TimeUnit;
 
-public final class AuthRepository {
+public final class TokenRepository {
 
     private final RedisClient redisClient = Beans.getSingleton(RedisClient.class);
     private final Properties properties = Beans.getSingleton(Properties.class);
 
     private final RSetCache<String> invalidatedTokenSet = redisClient.getInvalidatedTokenSet();
-
-    AuthRepository() {
-    }
 
     public void invalidateToken(String token) {
         invalidatedTokenSet.add(token, properties.getTTL_InvalidatedTokens(), TimeUnit.MINUTES);

@@ -1,24 +1,22 @@
 package io.inprice.scrapper.api.rest.service;
 
-import com.google.gson.Gson;
 import io.inprice.scrapper.api.config.Properties;
+import io.inprice.scrapper.api.dto.EmailDTO;
 import io.inprice.scrapper.api.dto.LoginDTO;
+import io.inprice.scrapper.api.dto.PasswordDTO;
+import io.inprice.scrapper.api.email.EmailSender;
+import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Consts;
-import io.inprice.scrapper.api.helpers.Cryptor;
-import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.rest.repository.AuthRepository;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
+import io.inprice.scrapper.api.rest.validator.EmailDTOValidator;
 import io.inprice.scrapper.api.rest.validator.LoginDTOValidator;
-import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
 import io.inprice.scrapper.common.models.User;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.impl.DefaultClaims;
 import jodd.util.BCrypt;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
@@ -27,18 +25,20 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-import java.util.Base64;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-    private final AuthRepository authRepository = Beans.getSingleton(AuthRepository.class);
-
+    private final TokenService tokenService = Beans.getSingleton(TokenService.class);
+    private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
     private final Properties properties = Beans.getSingleton(Properties.class);
+    private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
 
     public ServiceResponse<AuthUser> login(LoginDTO loginDTO, Response response) {
         ServiceResponse<AuthUser> res = validate(loginDTO);
@@ -57,7 +57,7 @@ public class AuthService {
                     authUser.setCompanyId(user.getCompanyId());
                     authUser.setWorkspaceId(user.getDefaultWorkspaceId());
 
-                    response.header(Consts.Auth.AUTHORIZATION_HEADER, Consts.Auth.TOKEN_PREFIX + newToken(authUser));
+                    response.header(Consts.Auth.AUTHORIZATION_HEADER, Consts.Auth.TOKEN_PREFIX + tokenService.newToken(authUser));
 
                     res.setResult("OK");
                     res.setStatus(HttpStatus.OK_200);
@@ -73,19 +73,69 @@ public class AuthService {
         return res;
     }
 
+    public ServiceResponse forgotPassword(EmailDTO emailDTO) {
+        ServiceResponse res = validateEmail(emailDTO);
+        if (res.isOK()) {
+            ServiceResponse<User> found = userRepository.findByEmail(emailDTO.getEmail());
+            if (found.isOK()) {
+
+                final String token = tokenService.newTokenEmailFor(emailDTO.getEmail());
+                try {
+                    if (properties.isRunningForTests()) {
+                        res.setResult(token); //--> for test purposes, we need this info to test some functionality during testing
+                    } else {
+                        Map<String, Object> dataMap = new HashMap<>(2);
+                        dataMap.put("fullName", found.getModel().getFullName());
+                        dataMap.put("token", token);
+
+                        final String message = renderer.renderForgotPassword(dataMap);
+                        emailSender.send(properties.getEmail_Sender(), "Reset your password", found.getModel().getEmail(), message);
+
+                        res.setResult("OK");
+                    }
+                    res.setStatus(HttpStatus.OK_200);
+                } catch (Exception e) {
+                    log.error("An error occurred in rendering email for forgetting password", e);
+                    res = InstantResponses.SERVER_ERROR(e);
+                }
+            } else {
+                res = InstantResponses.NOT_FOUND("Email");
+            }
+        }
+        return res;
+    }
+
+    public ServiceResponse resetPassword(PasswordDTO passwordDTO) {
+        ServiceResponse res = validatePassword(passwordDTO);
+        if (res.isOK()) {
+            final String email = tokenService.getEmail(passwordDTO.getToken());
+
+            ServiceResponse<User> found = userRepository.findByEmail(email);
+            if (found.isOK()) {
+                AuthUser authUser = new AuthUser();
+                authUser.setId(found.getModel().getId());
+                authUser.setCompanyId(found.getModel().getCompanyId());
+                res = userRepository.updatePassword(authUser, passwordDTO);
+            } else {
+                res = InstantResponses.NOT_FOUND("Email");
+            }
+        }
+        return res;
+    }
+
     public ServiceResponse refresh(Request req, Response res) {
         ServiceResponse serRes = new ServiceResponse(HttpStatus.UNAUTHORIZED_401);
 
-        final String token = getToken(req);
+        final String token = tokenService.getToken(req);
 
         if (StringUtils.isBlank(token)) {
             serRes.setResult("Missing header: " + Consts.Auth.AUTHORIZATION_HEADER);
-        } else if (isTokenInvalidated(token)) {
+        } else if (tokenService.isTokenInvalidated(token)) {
             serRes.setResult("Invalid token!");
         } else {
-            revokeToken(token);
-            AuthUser authUser = getAuthUser(token);
-            res.header(Consts.Auth.AUTHORIZATION_HEADER, Consts.Auth.TOKEN_PREFIX + newToken(authUser));
+            tokenService.revokeToken(token);
+            AuthUser authUser = tokenService.getAuthUser(token);
+            res.header(Consts.Auth.AUTHORIZATION_HEADER, Consts.Auth.TOKEN_PREFIX + tokenService.newToken(authUser));
 
             serRes.setStatus(HttpStatus.OK_200);
             serRes.setResult("OK");
@@ -94,74 +144,36 @@ public class AuthService {
         return serRes;
     }
 
-    public String newToken(AuthUser authUser) {
-        Date now = new Date();
+    private ServiceResponse validateEmail(EmailDTO emailDTO) {
+        ServiceResponse res = new ServiceResponse<>(HttpStatus.BAD_REQUEST_400);
 
-        final String prePayload = Global.gson.toJson(authUser);
-        final byte[] payload = Cryptor.encrypt(prePayload);
+        List<Problem> problems = new ArrayList<>();
+        boolean isValid = EmailDTOValidator.verify(emailDTO.getEmail(), problems);
 
-        DefaultClaims claims = new DefaultClaims();
-        claims.put(Consts.Auth.PAYLOAD, payload);
-        claims.put(Consts.Auth.ISSUED_AT, now.getTime()); //this property provides uniqueness to all tokens (even for the same user)
-
-        return
-            Jwts.builder()
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + properties.getTTL_Tokens() * 60 * 1000L))
-                .setClaims(claims)
-                .signWith(SignatureAlgorithm.HS512, Consts.Auth.APP_SECRET_KEY)
-            .compact();
-    }
-
-    public void revokeToken(String token) {
-        if (! StringUtils.isBlank(token)) authRepository.invalidateToken(token);
-    }
-
-    public AuthUser getAuthUser(Request req) {
-        String token = getToken(req);
-        if (token != null) {
-            return getAuthUser(token);
-        }
-        return null;
-    }
-
-    public final AuthUser getAuthUser(String token) {
-        Claims claims =
-            Jwts.parser()
-                .setSigningKey(Consts.Auth.APP_SECRET_KEY)
-                .parseClaimsJws(token)
-            .getBody();
-
-        final byte[] prePayload = Base64.getDecoder().decode(claims.get(Consts.Auth.PAYLOAD, String.class));
-        final String payload = Cryptor.decrypt(prePayload);
-
-        return Global.gson.fromJson(payload, AuthUser.class);
-    }
-
-    public String getToken(Request request) {
-        String header = request.headers(Consts.Auth.AUTHORIZATION_HEADER);
-        if (header != null && header.length() > 0)
-            return header.replace(Consts.Auth.TOKEN_PREFIX, "");
-        else
-            return null;
-    }
-
-    public boolean validateToken(String token) {
-        if (! isTokenInvalidated(token)) {
-            try {
-                getAuthUser(token);
-                return true;
-            } catch (Exception e) {
-                log.error(e.getMessage());
-                return false;
-            }
+        if (! isValid) {
+            res.setProblems(problems);
         } else {
-            return false;
+            res = new ServiceResponse<>(HttpStatus.OK_200);
         }
+        return res;
     }
 
-    public boolean isTokenInvalidated(String token) {
-        return authRepository.isTokenInvalidated(token);
+    private ServiceResponse validatePassword(PasswordDTO passwordDTO) {
+        List<Problem> problems = PasswordDTOValidator.verify(null, passwordDTO, true, true);
+
+        if (StringUtils.isBlank(passwordDTO.getToken())) {
+            problems.add(new Problem("form", "Token cannot be null!"));
+        } else if (! tokenService.validateEmailToken(passwordDTO.getToken())) {
+            problems.add(new Problem("form", "Token is invalid or expired!"));
+        }
+
+        if (problems.size() > 0) {
+            ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
+            res.setProblems(problems);
+            return res;
+        } else {
+            return InstantResponses.OK;
+        }
     }
 
     private ServiceResponse<AuthUser> validate(LoginDTO loginDTO) {

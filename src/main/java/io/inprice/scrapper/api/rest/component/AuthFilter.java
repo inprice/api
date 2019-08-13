@@ -2,7 +2,7 @@ package io.inprice.scrapper.api.rest.component;
 
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Consts;
-import io.inprice.scrapper.api.rest.service.AuthService;
+import io.inprice.scrapper.api.rest.service.TokenService;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,16 +19,16 @@ public class AuthFilter implements Filter {
 
     private static final Logger log = LoggerFactory.getLogger(AuthFilter.class);
 
-    private final AuthService authService = Beans.getSingleton(AuthService.class);
+    private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
     private final Set<String> allowedURIs;
 
     public AuthFilter() {
         allowedURIs = new HashSet<>(3);
-        allowedURIs.add(Consts.Paths.Intro.LOGIN);
-        allowedURIs.add(Consts.Paths.Intro.REFRESH_TOKEN);
-        allowedURIs.add(Consts.Paths.Intro.FORGOT_PASSWORD);
-        allowedURIs.add(Consts.Paths.Intro.RESET_PASSWORD);
-        allowedURIs.add(Consts.Paths.Intro.LOGOUT);
+        allowedURIs.add(Consts.Paths.Auth.LOGIN);
+        allowedURIs.add(Consts.Paths.Auth.REFRESH_TOKEN);
+        allowedURIs.add(Consts.Paths.Auth.FORGOT_PASSWORD);
+        allowedURIs.add(Consts.Paths.Auth.RESET_PASSWORD);
+        allowedURIs.add(Consts.Paths.Auth.LOGOUT);
         allowedURIs.add(Consts.Paths.Company.REGISTER);
 
         log.info("Allowed URIs");
@@ -45,7 +45,7 @@ public class AuthFilter implements Filter {
                 halt(HttpStatus.UNAUTHORIZED_401);
             } else {
                 String token = authHeader.replace(Consts.Auth.TOKEN_PREFIX, "");
-                if (! authService.validateToken(token)) {
+                if (! tokenService.validateToken(token)) {
                     log.warn("Expired token!");
                     halt(HttpStatus.UNAUTHORIZED_401);
                 }

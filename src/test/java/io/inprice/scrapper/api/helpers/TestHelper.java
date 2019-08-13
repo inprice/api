@@ -15,7 +15,6 @@ import org.eclipse.jetty.http.HttpStatus;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
-import static org.hamcrest.Matchers.equalTo;
 
 public class TestHelper {
 
@@ -102,7 +101,7 @@ public class TestHelper {
             given()
                 .body(TestHelper.getLoginDTO()).
             when()
-                .post(Consts.Paths.Intro.LOGIN).
+                .post(Consts.Paths.Auth.LOGIN).
             then()
                 .statusCode(HttpStatus.OK_200).assertThat()
             .extract().
@@ -117,7 +116,7 @@ public class TestHelper {
 
     public static void logout() {
         when()
-            .post(Consts.Paths.Intro.LOGOUT).
+            .post(Consts.Paths.Auth.LOGOUT).
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
     }

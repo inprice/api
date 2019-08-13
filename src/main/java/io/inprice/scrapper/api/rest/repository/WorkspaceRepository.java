@@ -70,10 +70,10 @@ public class WorkspaceRepository {
 
         } catch (SQLIntegrityConstraintViolationException ie) {
             log.error("Failed to insert workspace: " + ie.getMessage());
-            return InstantResponses.SERVER_ERROR;
+            return InstantResponses.SERVER_ERROR(ie);
         } catch (Exception e) {
             log.error("Failed to insert workspace", e);
-            return InstantResponses.SERVER_ERROR;
+            return InstantResponses.SERVER_ERROR(e);
         }
     }
 
@@ -97,10 +97,10 @@ public class WorkspaceRepository {
 
         } catch (SQLException sqle) {
             log.error("Failed to update workspace", sqle);
-            return InstantResponses.SERVER_ERROR;
+            return InstantResponses.SERVER_ERROR(sqle);
         } catch (Exception e) {
             log.error("Failed to update workspace", e);
-            return InstantResponses.SERVER_ERROR;
+            return InstantResponses.SERVER_ERROR(e);
         }
     }
 

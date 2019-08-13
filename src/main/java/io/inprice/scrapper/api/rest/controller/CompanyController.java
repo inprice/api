@@ -8,8 +8,8 @@ import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.rest.service.AuthService;
 import io.inprice.scrapper.api.rest.service.CompanyService;
+import io.inprice.scrapper.api.rest.service.TokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,14 +20,14 @@ public class CompanyController {
 
     private static final Logger log = LoggerFactory.getLogger(CompanyController.class);
 
-    private static final CompanyService service = Beans.getSingleton(CompanyService.class);
-    private static final AuthService authService = Beans.getSingleton(AuthService.class);
+    private static final CompanyService companyService = Beans.getSingleton(CompanyService.class);
+    private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
 
     @Routing
     public void routes() {
 
         put(Consts.Paths.Company.BASE, (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = update(authUser, req.body());
             res.status(serviceRes.getStatus());
@@ -45,7 +45,7 @@ public class CompanyController {
     private ServiceResponse insert(String body) {
         CompanyDTO companyDTO = toModel(body);
         if (companyDTO != null) {
-            return service.insert(companyDTO);
+            return companyService.insert(companyDTO);
         }
         return InstantResponses.INVALID_DATA("company!");
     }
@@ -53,7 +53,7 @@ public class CompanyController {
     private ServiceResponse update(AuthUser authUser, String body) {
         CompanyDTO companyDTO = toModel(body);
         if (companyDTO != null) {
-            return service.update(authUser, companyDTO);
+            return companyService.update(authUser, companyDTO);
         }
         return InstantResponses.INVALID_DATA("company!");
     }

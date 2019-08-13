@@ -119,10 +119,10 @@ public class UserRepository {
 
         } catch (SQLIntegrityConstraintViolationException ie) {
             log.error("Failed to insert user: " + ie.getMessage());
-            return InstantResponses.SERVER_ERROR;
+            return InstantResponses.SERVER_ERROR(ie);
         } catch (Exception e) {
             log.error("Failed to insert user", e);
-            return InstantResponses.SERVER_ERROR;
+            return InstantResponses.SERVER_ERROR(e);
         }
     }
 
@@ -166,10 +166,10 @@ public class UserRepository {
 
         } catch (SQLException sqle) {
             log.error("Failed to update user", sqle);
-            return InstantResponses.SERVER_ERROR;
+            return InstantResponses.SERVER_ERROR(sqle);
         } catch (Exception e) {
             log.error("Failed to update user", e);
-            return InstantResponses.SERVER_ERROR;
+            return InstantResponses.SERVER_ERROR(e);
         }
     }
 
@@ -198,7 +198,7 @@ public class UserRepository {
 
         } catch (Exception e) {
             log.error("Failed to update user", e);
-            return InstantResponses.SERVER_ERROR;
+            return InstantResponses.SERVER_ERROR(e);
         }
     }
 

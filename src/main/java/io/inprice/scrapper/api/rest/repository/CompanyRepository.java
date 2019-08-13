@@ -128,10 +128,10 @@ public class CompanyRepository {
 
                     } catch (SQLIntegrityConstraintViolationException ie) {
                         log.error("Failed to insert user!", ie);
-                        response = InstantResponses.SERVER_ERROR;
+                        response = InstantResponses.SERVER_ERROR(ie);
                     } catch (Exception e) {
                         log.error("Failed to insert user", e);
-                        response = InstantResponses.SERVER_ERROR;
+                        response = InstantResponses.SERVER_ERROR(e);
                     }
                 }
             }
@@ -178,7 +178,7 @@ public class CompanyRepository {
 
         } catch (SQLException e) {
             log.error("Failed to update company. " + companyDTO, e);
-            response = InstantResponses.SERVER_ERROR;
+            response = InstantResponses.SERVER_ERROR(e);
         }
 
         return response;

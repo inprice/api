@@ -9,7 +9,7 @@ import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.rest.service.AuthService;
+import io.inprice.scrapper.api.rest.service.TokenService;
 import io.inprice.scrapper.api.rest.service.UserService;
 import org.apache.commons.validator.routines.LongValidator;
 import org.slf4j.Logger;
@@ -22,14 +22,14 @@ public class UserController {
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     private static final UserService userService = Beans.getSingleton(UserService.class);
-    private static final AuthService authService = Beans.getSingleton(AuthService.class);
+    private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
 
     @Routing
     public void routes() {
 
         //update. a user can edit only his/her data
         put(Consts.Paths.User.BASE, (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = update(authUser, req.body());
             res.status(serviceRes.getStatus());
@@ -38,7 +38,7 @@ public class UserController {
 
         //update password. a user can edit only his/her password
         put(Consts.Paths.User.PASSWORD, (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
 
             ServiceResponse serviceRes = updatePassword(authUser, req.body());
             res.status(serviceRes.getStatus());
@@ -47,7 +47,7 @@ public class UserController {
 
         //set default workspace
         put(Consts.Paths.User.WORKSPACE + "/:ws_id", (req, res) -> {
-            final AuthUser authUser = authService.getAuthUser(req);
+            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long wsId = LongValidator.getInstance().validate(req.params(":ws_id"));
 
             ServiceResponse serviceRes = setDefaultWorkspace(authUser, wsId);
