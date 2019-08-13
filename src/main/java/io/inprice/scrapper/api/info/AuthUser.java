@@ -11,18 +11,6 @@ public class AuthUser extends Model {
     private Long companyId;
     private Long workspaceId;
 
-    public AuthUser() {
-    }
-
-    public AuthUser(Long id, String email, UserType type, String fullName, Long companyId, Long workspaceId) {
-        this.email = email;
-        this.type = type;
-        this.fullName = fullName;
-        this.companyId = companyId;
-        this.workspaceId = workspaceId;
-        setId(id);
-    }
-
     public String getEmail() {
         return email;
     }

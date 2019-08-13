@@ -1,20 +1,13 @@
 package io.inprice.scrapper.api.rest;
 
 import io.inprice.scrapper.api.dto.LoginDTO;
-import io.inprice.scrapper.api.dto.PasswordDTO;
-import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.TestHelper;
 import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.response.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;

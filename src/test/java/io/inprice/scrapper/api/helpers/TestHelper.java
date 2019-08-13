@@ -105,7 +105,6 @@ public class TestHelper {
                 .post(Consts.Paths.Intro.LOGIN).
             then()
                 .statusCode(HttpStatus.OK_200).assertThat()
-                .body("result", equalTo("OK"))
             .extract().
         response();
 
@@ -120,8 +119,7 @@ public class TestHelper {
         when()
             .post(Consts.Paths.Intro.LOGOUT).
         then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .statusCode(HttpStatus.OK_200).assertThat();
     }
 
 }

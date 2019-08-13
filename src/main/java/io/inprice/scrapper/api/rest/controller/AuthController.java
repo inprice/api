@@ -9,7 +9,6 @@ import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.AuthService;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,9 +18,9 @@ import spark.Response;
 import static spark.Spark.get;
 import static spark.Spark.post;
 
-public class IntroController {
+public class AuthController {
 
-    private static final Logger log = LoggerFactory.getLogger(IntroController.class);
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private static final AuthService authService = Beans.getSingleton(AuthService.class);
 
@@ -60,40 +59,16 @@ public class IntroController {
 
     }
 
-    //todo: the logic here should be moved into the service
     private ServiceResponse login(Request req, Response res) {
         LoginDTO loginDTO = toLoginModel(req.body());
         if (loginDTO != null) {
-            ServiceResponse<AuthUser> serviceRes = authService.login(loginDTO);
-            if (serviceRes.isOK()) {
-                res.header(Consts.Auth.AUTHORIZATION_HEADER, Consts.Auth.TOKEN_PREFIX + authService.newToken(serviceRes.getModel()));
-                return InstantResponses.OK;
-            }
-            return serviceRes;
+            return authService.login(loginDTO, res);
         }
         return InstantResponses.INVALID_PARAM("Email or password");
     }
 
-    //todo: the logic here should be moved into the service
     private ServiceResponse refresh(Request req, Response res) {
-        ServiceResponse serRes = new ServiceResponse(HttpStatus.UNAUTHORIZED_401);
-
-        final String token = authService.getToken(req);
-
-        if (StringUtils.isBlank(token)) {
-            serRes.setResult("Missing header: " + Consts.Auth.AUTHORIZATION_HEADER);
-        } else if (authService.isTokenInvalidated(token)) {
-            serRes.setResult("Invalid token!");
-        } else {
-            authService.revokeToken(token);
-            AuthUser authUser = authService.getAuthUser(token);
-            res.header(Consts.Auth.AUTHORIZATION_HEADER, Consts.Auth.TOKEN_PREFIX + authService.newToken(authUser));
-
-            serRes.setStatus(HttpStatus.OK_200);
-            serRes.setResult("OK");
-        }
-
-        return serRes;
+        return authService.refresh(req, res);
     }
 
     private ServiceResponse logout(Request req) {

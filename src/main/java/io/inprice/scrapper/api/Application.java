@@ -10,7 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Spark;
 
-import static spark.Spark.*;
+import static spark.Spark.awaitStop;
+import static spark.Spark.stop;
 
 public class Application {
 
@@ -77,6 +78,29 @@ public class Application {
         });
 
         Spark.before((request, response)-> response.header("Access-Control-Allow-Origin", "*"));
+
+        /*
+        if (properties.isRunningForTests()) {
+            Spark.after((request, response)-> {
+                if (response.status() != HttpStatus.OK_200) {
+                    StringBuilder sb = new StringBuilder("Request  -> ");
+                    sb.append(request.requestMethod());
+                    sb.append(" - ");
+                    sb.append(request.url());
+                    if (request.body().length() > 0) {
+                        sb.append(" -> ");
+                        sb.append(request.body());
+                    }
+                    log.warn(sb.toString());
+
+                    sb.setLength(0);
+                    sb.append("Response -> ");
+                    sb.append(response.body());
+                    log.warn(sb.toString());
+                }
+            });
+        }
+         */
     }
 
 }

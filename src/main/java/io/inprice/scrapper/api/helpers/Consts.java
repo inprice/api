@@ -3,16 +3,13 @@ package io.inprice.scrapper.api.helpers;
 public class Consts {
 
     public static class Auth {
-        public static final String SECRET_KEY = "-8'fq{>As@njcx.U*$=P]#Z5wY+";
+        public static final String APP_SECRET_KEY = "-8'fq{>As@njcx.U*$=P]#Z5wY+";
+        public static final String DATA_SECRET_KEY = "gFn+f3Ksa@YJWEq%8SeaM%MK^e";
 
         public static final String AUTHORIZATION_HEADER = "Authorization";
         public static final String TOKEN_PREFIX = "Bearer ";
 
-        public static final String USER_ID = "userId";
-        public static final String USER_TYPE = "userType";
-        public static final String USER_FULL_NAME = "fullName";
-        public static final String COMPANY_ID = "companyId";
-        public static final String WORKSPACE_ID = "workspaceId";
+        public static final String PAYLOAD = "payload";
         public static final String ISSUED_AT = "issuedAt";
     }
 
