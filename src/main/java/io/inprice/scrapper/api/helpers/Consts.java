@@ -8,9 +8,7 @@ public class Consts {
 
         public static final String AUTHORIZATION_HEADER = "Authorization";
         public static final String TOKEN_PREFIX = "Bearer ";
-
         public static final String PAYLOAD = "payload";
-        public static final String ISSUED_AT = "issuedAt";
     }
 
     public static class Paths {

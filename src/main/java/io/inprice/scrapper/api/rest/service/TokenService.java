@@ -42,7 +42,6 @@ public class TokenService {
         claims.setIssuedAt(now);
         claims.setExpiration(new Date(now.getTime() + (properties.getTTL_TokensInSeconds() * 1000L)));
         claims.put(Consts.Auth.PAYLOAD, payload);
-        claims.put(Consts.Auth.ISSUED_AT, now.getTime()); //this property provides uniqueness to all tokens (even for the same user)
 
         return
             Jwts.builder()
