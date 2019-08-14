@@ -163,8 +163,10 @@ public class AuthService {
 
         if (StringUtils.isBlank(passwordDTO.getToken())) {
             problems.add(new Problem("form", "Token cannot be null!"));
-        } else if (! tokenService.validateEmailToken(passwordDTO.getToken())) {
-            problems.add(new Problem("form", "Token is invalid or expired!"));
+        } else if (tokenService.isTokenInvalidated(passwordDTO.getToken())) {
+            problems.add(new Problem("form", "Invalid token!"));
+        } else if (tokenService.isEmailTokenExpired(passwordDTO.getToken())) {
+            problems.add(new Problem("form", "Expired token!"));
         }
 
         if (problems.size() > 0) {

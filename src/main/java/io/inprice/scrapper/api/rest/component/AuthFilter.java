@@ -23,9 +23,8 @@ public class AuthFilter implements Filter {
     private final Set<String> allowedURIs;
 
     public AuthFilter() {
-        allowedURIs = new HashSet<>(3);
+        allowedURIs = new HashSet<>(5);
         allowedURIs.add(Consts.Paths.Auth.LOGIN);
-        allowedURIs.add(Consts.Paths.Auth.REFRESH_TOKEN);
         allowedURIs.add(Consts.Paths.Auth.FORGOT_PASSWORD);
         allowedURIs.add(Consts.Paths.Auth.RESET_PASSWORD);
         allowedURIs.add(Consts.Paths.Auth.LOGOUT);
@@ -45,7 +44,10 @@ public class AuthFilter implements Filter {
                 halt(HttpStatus.UNAUTHORIZED_401);
             } else {
                 String token = authHeader.replace(Consts.Auth.TOKEN_PREFIX, "");
-                if (! tokenService.validateToken(token)) {
+                if (tokenService.isTokenInvalidated(token)) {
+                    log.warn("Invalidated token!");
+                    halt(HttpStatus.UNAUTHORIZED_401);
+                } else if (tokenService.isTokenExpired(token)) {
                     log.warn("Expired token!");
                     halt(HttpStatus.UNAUTHORIZED_401);
                 }
@@ -56,7 +58,6 @@ public class AuthFilter implements Filter {
     private boolean isAuthenticationNeeded(Request req) {
         final String uri = req.uri();
 
-        //todo: should be check the trailing part of each uri
         if (allowedURIs.contains(uri)) return false;
 
         for (String u: allowedURIs) {

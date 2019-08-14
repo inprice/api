@@ -7,7 +7,6 @@ import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.dto.WorkspaceDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.rest.service.TokenService;
 import io.inprice.scrapper.common.meta.UserType;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
@@ -120,6 +119,10 @@ public class TestHelper {
             .post(Consts.Paths.Auth.LOGOUT).
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
+    }
+
+    public static int getTTL_TokensInSeconds() {
+        return properties.getTTL_TokensInSeconds();
     }
 
 }

@@ -15,7 +15,7 @@ public final class TokenRepository {
     private final RSetCache<String> invalidatedTokenSet = redisClient.getInvalidatedTokenSet();
 
     public void invalidateToken(String token) {
-        invalidatedTokenSet.add(token, properties.getTTL_InvalidatedTokens(), TimeUnit.MINUTES);
+        invalidatedTokenSet.add(token, properties.getTTL_TokensInSeconds() + 60, TimeUnit.SECONDS);
     }
 
     public boolean isTokenInvalidated(String token) {

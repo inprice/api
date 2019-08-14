@@ -19,7 +19,6 @@ import spark.Request;
 import java.util.Base64;
 import java.util.Date;
 
-//TODO: some methods must be added to provide expired tokens for testing
 public class TokenService {
 
     private static final Logger log = LoggerFactory.getLogger(TokenService.class);
@@ -40,13 +39,13 @@ public class TokenService {
         Date now = new Date();
 
         DefaultClaims claims = new DefaultClaims();
+        claims.setIssuedAt(now);
+        claims.setExpiration(new Date(now.getTime() + (properties.getTTL_TokensInSeconds() * 1000L)));
         claims.put(Consts.Auth.PAYLOAD, payload);
         claims.put(Consts.Auth.ISSUED_AT, now.getTime()); //this property provides uniqueness to all tokens (even for the same user)
 
         return
             Jwts.builder()
-                .setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + properties.getTTL_Tokens() * 60 * 1000L))
                 .setClaims(claims)
                 .signWith(SignatureAlgorithm.HS512, Consts.Auth.APP_SECRET_KEY)
             .compact();
@@ -96,31 +95,21 @@ public class TokenService {
             return null;
     }
 
-    public boolean validateToken(String token) {
-        if (! isTokenInvalidated(token)) {
-            try {
-                getAuthUser(token);
-                return true;
-            } catch (Exception e) {
-                log.error(e.getMessage());
-                return false;
-            }
-        } else {
+    public boolean isTokenExpired(String token) {
+        try {
+            getAuthUser(token);
             return false;
+        } catch (Exception e) {
+            return true;
         }
     }
 
-    public boolean validateEmailToken(String token) {
-        if (! isTokenInvalidated(token)) {
-            try {
-                getEmail(token);
-                return true;
-            } catch (Exception e) {
-                log.error(e.getMessage());
-                return false;
-            }
-        } else {
+    public boolean isEmailTokenExpired(String token) {
+        try {
+            getEmail(token);
             return false;
+        } catch (Exception e) {
+            return true;
         }
     }
 

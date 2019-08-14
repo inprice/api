@@ -79,12 +79,8 @@ public class Properties {
 		return prop.getProperty("redis.password", null);
 	}
 
-	public int getTTL_Tokens() {
-		return getOrDefault("ttl.tokens", 15);
-	}
-
-	public int getTTL_InvalidatedTokens() {
-		return getOrDefault("ttl.invalidated-tokens", 16);
+	public int getTTL_TokensInSeconds() {
+		return getOrDefault("ttl.tokens.in-seconds", 900); //15 minutes
 	}
 
 	public String getEmail_Sender() {

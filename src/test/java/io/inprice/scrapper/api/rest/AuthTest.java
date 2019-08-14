@@ -199,8 +199,7 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.REFRESH_TOKEN).
         then()
-            .statusCode(HttpStatus.UNAUTHORIZED_401).assertThat()
-            .body("result", equalTo("Missing header: " + Consts.Auth.AUTHORIZATION_HEADER));
+            .statusCode(HttpStatus.UNAUTHORIZED_401).assertThat();
 
         TestHelper.login();
     }
@@ -212,8 +211,23 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.REFRESH_TOKEN).
         then()
-            .statusCode(HttpStatus.UNAUTHORIZED_401).assertThat()
-        .body("result", equalTo("Invalid token!"));
+            .statusCode(HttpStatus.UNAUTHORIZED_401).assertThat();
+
+        TestHelper.login();
+    }
+
+    @Test
+    public void token_should_be_expired() {
+        try {
+            Thread.sleep((TestHelper.getTTL_TokensInSeconds() + 1) * 1000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        when()
+            .post(Consts.Paths.Auth.REFRESH_TOKEN).
+        then()
+            .statusCode(HttpStatus.UNAUTHORIZED_401).assertThat();
 
         TestHelper.login();
     }
@@ -345,7 +359,5 @@ public class AuthTest {
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Password cannot be null!"));
     }
-
-    //todo: expired token tests must be implemented for both email and login tokens
 
 }
