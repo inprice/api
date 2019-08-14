@@ -2,16 +2,15 @@ package io.inprice.scrapper.api.helpers;
 
 import io.inprice.scrapper.api.Application;
 import io.inprice.scrapper.api.config.Properties;
-import io.inprice.scrapper.api.dto.CompanyDTO;
-import io.inprice.scrapper.api.dto.LoginDTO;
-import io.inprice.scrapper.api.dto.UserDTO;
-import io.inprice.scrapper.api.dto.WorkspaceDTO;
+import io.inprice.scrapper.api.dto.*;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.common.meta.UserType;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.response.Response;
 import org.eclipse.jetty.http.HttpStatus;
+
+import java.math.BigDecimal;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -39,7 +38,7 @@ public class TestHelper {
             then()
                 .statusCode(HttpStatus.OK_200).assertThat();
 
-            login();
+            loginAsAdmin();
 
             //insert a user to use him
             if (extraUser) {
@@ -71,6 +70,15 @@ public class TestHelper {
         return user;
     }
 
+    public static ProductDTO getProductDTO() {
+        ProductDTO product = new ProductDTO();
+        product.setCode("AX-123");
+        product.setName("120x150 Dinner Table");
+        product.setBrand("Wooden");
+        product.setPrice(BigDecimal.valueOf(420.00));
+        return product;
+    }
+
     public static WorkspaceDTO getWorkspaceDTO() {
         WorkspaceDTO ws = new WorkspaceDTO();
         ws.setName("SECONDARY WS");
@@ -93,7 +101,7 @@ public class TestHelper {
         return company;
     }
 
-    public static void login() {
+    public static void loginAsAdmin() {
         RestAssured.requestSpecification = null;
 
         //dont forget, the id 1 is reserved for the admin only during testing
@@ -113,6 +121,25 @@ public class TestHelper {
             .build();
     }
 
+    public static void loginAsUser() {
+        RestAssured.requestSpecification = null;
+
+        //dont forget, the id 1 is reserved for the admin only during testing
+        Response res =
+            given()
+                .body(TestHelper.getUserDTO()).
+            when()
+                .post(Consts.Paths.Auth.LOGIN).
+            then()
+                .statusCode(HttpStatus.OK_200).assertThat()
+            .extract().
+        response();
+
+        RestAssured.requestSpecification =
+            new RequestSpecBuilder()
+                .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
+            .build();
+    }
 
     public static void logout() {
         when()

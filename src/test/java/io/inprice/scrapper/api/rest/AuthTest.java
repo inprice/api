@@ -189,7 +189,7 @@ public class AuthTest {
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
 
-        TestHelper.login();
+        TestHelper.loginAsAdmin();
     }
 
     @Test
@@ -201,7 +201,7 @@ public class AuthTest {
         then()
             .statusCode(HttpStatus.UNAUTHORIZED_401).assertThat();
 
-        TestHelper.login();
+        TestHelper.loginAsAdmin();
     }
 
     @Test
@@ -213,7 +213,7 @@ public class AuthTest {
         then()
             .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat();
 
-        TestHelper.login();
+        TestHelper.loginAsAdmin();
     }
 
     @Test
@@ -230,7 +230,7 @@ public class AuthTest {
         then()
             .statusCode(HttpStatus.REQUEST_TIMEOUT_408).assertThat();
 
-        TestHelper.login();
+        TestHelper.loginAsAdmin();
     }
 
     @Test
@@ -266,7 +266,7 @@ public class AuthTest {
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
 
-        //login with new credentials
+        //loginAsAdmin with new credentials
         LoginDTO login = new LoginDTO();
         login.setEmail(email.getEmail());
         login.setPassword(password.getPassword());

@@ -6,7 +6,6 @@ import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.Product;
 import io.inprice.scrapper.common.models.User;
 import org.slf4j.Logger;
@@ -113,10 +112,10 @@ public class ProductRepository {
         boolean result =
             dbUtils.executeQuery(
                 String.format(
-                    "delete from product " +
-                        "where id = %d " +
-                        "  and workspace_id = %d", id, authUser.getWorkspaceId()),
-            "Failed to delete product with id: " + id);
+                "delete from product " +
+                    "where id = %d " +
+                    "  and workspace_id = %d", id, authUser.getWorkspaceId()),
+        "Failed to delete product with id: " + id);
 
         if (result) return InstantResponses.OK;
 

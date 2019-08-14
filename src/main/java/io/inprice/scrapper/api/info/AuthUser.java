@@ -7,12 +7,17 @@ import java.util.UUID;
 
 public class AuthUser extends Model {
 
+    private String sessionId = UUID.randomUUID().toString();
+
     private String email;
     private UserType type;
     private String fullName;
     private Long companyId;
     private Long workspaceId;
-    private String uuid = UUID.randomUUID().toString(); //used for making JWT tokens unique
+
+    public String getSessionId() {
+        return sessionId;
+    }
 
     public String getEmail() {
         return email;
@@ -54,7 +59,4 @@ public class AuthUser extends Model {
         this.workspaceId = workspaceId;
     }
 
-    public String getUuid() {
-        return uuid;
-    }
 }

@@ -66,8 +66,8 @@ public class ProductService {
             problems.add(new Problem("form", "Product id cannot be null!"));
         }
 
-        if (! StringUtils.isBlank(productDTO.getCode()) && productDTO.getName().length() > 120) {
-            problems.add(new Problem("code", "Product code can be up to 121 chars!"));
+        if (! StringUtils.isBlank(productDTO.getCode()) && productDTO.getCode().length() > 120) {
+            problems.add(new Problem("code", "Product code can be up to 120 chars!"));
         }
 
         if (! StringUtils.isBlank(productDTO.getBrand()) && productDTO.getBrand().length() > 100) {

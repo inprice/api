@@ -257,6 +257,7 @@ public class UserRepository {
             user.setPasswordHash(rs.getString("password_hash"));
             user.setPasswordSalt(rs.getString("password_salt"));
             user.setCompanyId(rs.getLong("company_id"));
+            user.setDefaultWorkspaceId(rs.getLong("default_workspace_id"));
             user.setInsertAt(rs.getDate("insert_at"));
             return user;
         } catch (SQLException e) {
