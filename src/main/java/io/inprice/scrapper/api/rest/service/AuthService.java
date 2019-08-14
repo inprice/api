@@ -57,7 +57,7 @@ public class AuthService {
                     authUser.setCompanyId(user.getCompanyId());
                     authUser.setWorkspaceId(user.getDefaultWorkspaceId());
 
-                    response.header(Consts.Auth.AUTHORIZATION_HEADER, Consts.Auth.TOKEN_PREFIX + tokenService.newToken(authUser));
+                    response.header(Consts.Auth.AUTHORIZATION_HEADER, tokenService.newToken(authUser));
 
                     res.setResult("OK");
                     res.setStatus(HttpStatus.OK_200);
@@ -135,7 +135,7 @@ public class AuthService {
         } else {
             tokenService.revokeToken(token);
             AuthUser authUser = tokenService.getAuthUser(token);
-            res.header(Consts.Auth.AUTHORIZATION_HEADER, Consts.Auth.TOKEN_PREFIX + tokenService.newToken(authUser));
+            res.header(Consts.Auth.AUTHORIZATION_HEADER, tokenService.newToken(authUser));
 
             serRes.setStatus(HttpStatus.OK_200);
             serRes.setResult("OK");

@@ -21,7 +21,7 @@ public class Consts {
             public static final String LOGOUT = "/logout";
         }
 
-        private static final String ADMIN_BASE = "/admin";
+        public static final String ADMIN_BASE = "/admin";
 
         public static class Admin {
             public static final String BASE = ADMIN_BASE;

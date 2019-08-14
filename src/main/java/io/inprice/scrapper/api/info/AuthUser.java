@@ -3,6 +3,8 @@ package io.inprice.scrapper.api.info;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.Model;
 
+import java.util.UUID;
+
 public class AuthUser extends Model {
 
     private String email;
@@ -10,6 +12,7 @@ public class AuthUser extends Model {
     private String fullName;
     private Long companyId;
     private Long workspaceId;
+    private String uuid = UUID.randomUUID().toString(); //used for making JWT tokens unique
 
     public String getEmail() {
         return email;
@@ -49,5 +52,9 @@ public class AuthUser extends Model {
 
     public void setWorkspaceId(Long workspaceId) {
         this.workspaceId = workspaceId;
+    }
+
+    public String getUuid() {
+        return uuid;
     }
 }

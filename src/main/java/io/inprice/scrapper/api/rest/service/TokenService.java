@@ -12,8 +12,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClaims;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 
 import java.util.Base64;
@@ -21,14 +19,12 @@ import java.util.Date;
 
 public class TokenService {
 
-    private static final Logger log = LoggerFactory.getLogger(TokenService.class);
-
     private final TokenRepository tokenRepository = Beans.getSingleton(TokenRepository.class);
     private final Properties properties = Beans.getSingleton(Properties.class);
 
     public String newToken(AuthUser authUser) {
         final String payload = Global.gson.toJson(authUser);
-        return generateToken(Cryptor.encrypt(payload));
+        return Consts.Auth.TOKEN_PREFIX + generateToken(Cryptor.encrypt(payload));
     }
 
     public String newTokenEmailFor(String email) {
@@ -94,12 +90,11 @@ public class TokenService {
             return null;
     }
 
-    public boolean isTokenExpired(String token) {
+    public AuthUser isTokenExpired(String token) {
         try {
-            getAuthUser(token);
-            return false;
+            return getAuthUser(token);
         } catch (Exception e) {
-            return true;
+            return null;
         }
     }
 

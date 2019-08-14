@@ -211,23 +211,24 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.REFRESH_TOKEN).
         then()
-            .statusCode(HttpStatus.UNAUTHORIZED_401).assertThat();
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat();
 
         TestHelper.login();
     }
 
     @Test
     public void token_should_be_expired() {
+        //give some time to make actual token expired
         try {
-            Thread.sleep((TestHelper.getTTL_TokensInSeconds() + 1) * 1000L);
+            Thread.sleep(TestHelper.getTTL_TokensInSeconds() * 1000L);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            //
         }
 
         when()
             .post(Consts.Paths.Auth.REFRESH_TOKEN).
         then()
-            .statusCode(HttpStatus.UNAUTHORIZED_401).assertThat();
+            .statusCode(HttpStatus.REQUEST_TIMEOUT_408).assertThat();
 
         TestHelper.login();
     }

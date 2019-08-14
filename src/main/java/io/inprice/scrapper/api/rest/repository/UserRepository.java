@@ -130,7 +130,7 @@ public class UserRepository {
         final String query = String.format(
             "update user " +
             "set full_name=?, email=? " +
-            (byAdmin ? ", user_type=?, active=?" : "") +
+            (byAdmin ? ", user_type=?" : "") +
             (passwordWillBeUpdate ? ", password_salt=?, password_hash=?" : "") +
             " where id=?" +
             "   and company_id=?");
@@ -145,9 +145,7 @@ public class UserRepository {
             if (byAdmin) {
                 UserType ut = userDTO.getType();
                 if (ut == null || UserType.ADMIN.equals(ut)) ut = UserType.USER;
-
                 pst.setString(++i, ut.name());
-                pst.setBoolean(++i, (userDTO.getActive() != null ? userDTO.getActive() : Boolean.TRUE));
             }
 
             if (passwordWillBeUpdate) {

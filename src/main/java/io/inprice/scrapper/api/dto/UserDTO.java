@@ -9,18 +9,9 @@ import java.io.Serializable;
  */
 public class UserDTO extends PasswordDTO {
 
-    private Boolean active;
     private UserType type;
     private String fullName;
     private String email;
-
-    public Boolean getActive() {
-        return active;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
-    }
 
     public UserType getType() {
         return type;
@@ -50,7 +41,6 @@ public class UserDTO extends PasswordDTO {
     public String toString() {
         return "UserDTO{" +
                 "id=" + getId() +
-                ", active=" + active +
                 ", type=" + type +
                 ", fullName='" + fullName + '\'' +
                 ", email='" + email + '\'' +
