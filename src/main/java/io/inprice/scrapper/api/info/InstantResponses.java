@@ -12,8 +12,8 @@ public class InstantResponses {
         return new ServiceResponse<>(HttpStatus.NOT_FOUND_404, tag + " not found!");
     }
 
-    public static ServiceResponse INVALID_PARAM(String tag) {
-        return new ServiceResponse(HttpStatus.BAD_REQUEST_400, tag + " is invalid!");
+    public static ServiceResponse PERMISSION_PROBLEM(String info) {
+        return new ServiceResponse(HttpStatus.FORBIDDEN_403, "User has no permission to " + info);
     }
 
     public static ServiceResponse INVALID_DATA(String tag) {

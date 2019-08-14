@@ -32,7 +32,7 @@ public class Consts {
         public static class AdminUser {
             public static final String BASE = ADMIN_BASE + "/user";
             public static final String PASSWORD = BASE + "/password";
-            public static final String TOGGLE_STATUS = BASE + "/toggle-status";
+            public static final String TOGGLE_STATUS = BASE + "/toggle";
         }
 
         public static class Company {
@@ -48,6 +48,11 @@ public class Consts {
             public static final String BASE = "/user";
             public static final String PASSWORD = BASE + "/password";
             public static final String WORKSPACE = BASE + "/workspace";
+        }
+
+        public static class Product {
+            public static final String BASE = "/product";
+            public static final String TOGGLE_STATUS = BASE + "/toggle";
         }
 
     }

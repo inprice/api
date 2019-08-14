@@ -59,10 +59,9 @@ public class CompanyService {
         } else {
             problems = new ArrayList<>();
 
-            //only admins can update their companies
+            //only admin can update their companies
             if (UserType.ADMIN.equals(authUser.getType())) {
-                res.setStatus(HttpStatus.FORBIDDEN_403);
-                res.setResult("User has no permission to update this company!");
+                res = InstantResponses.PERMISSION_PROBLEM("update this company!");
             }
         }
 
