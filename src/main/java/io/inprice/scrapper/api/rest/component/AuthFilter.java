@@ -42,7 +42,7 @@ public class AuthFilter implements Filter {
         if (isAuthenticationNeeded(request)) {
             String authHeader = request.headers(Consts.Auth.AUTHORIZATION_HEADER);
             if (authHeader == null) {
-                log.warn("Missing header: " + Consts.Auth.AUTHORIZATION_HEADER);
+                log.warn("Missing authentication header!");
                 halt(HttpStatus.UNAUTHORIZED_401);
             } else {
                 String token = tokenService.getToken(request);
@@ -56,7 +56,7 @@ public class AuthFilter implements Filter {
                         halt(HttpStatus.REQUEST_TIMEOUT_408);
                     } else if (! UserType.ADMIN.equals(authUser.getType()) && request.uri().startsWith(Consts.Paths.ADMIN_BASE)) {
                         log.warn("Unauthorized user!");
-                        halt(HttpStatus.UNAUTHORIZED_401);
+                        halt(HttpStatus.FORBIDDEN_403);
                     }
                 }
             }

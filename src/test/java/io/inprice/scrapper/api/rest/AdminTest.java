@@ -288,4 +288,16 @@ public class AdminTest {
             .body("result", equalTo("OK"));
     }
 
+    @Test
+    public void permission_problem_for_a_user_with_changing_admins_password() {
+        TestHelper.loginAsUser();
+
+        when()
+            .put(Consts.Paths.Admin.PASSWORD).
+        then()
+            .statusCode(HttpStatus.FORBIDDEN_403).assertThat();
+
+        TestHelper.loginAsAdmin();
+    }
+
 }
