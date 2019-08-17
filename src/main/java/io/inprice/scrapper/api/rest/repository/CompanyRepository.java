@@ -24,7 +24,7 @@ public class CompanyRepository {
     private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
     public ServiceResponse<Company> findById(Long id) {
-        ServiceResponse<Company> response = InstantResponses.CRUD_ERROR;
+        ServiceResponse<Company> response = InstantResponses.CRUD_ERROR("");
 
         Company model = dbUtils.findSingle("select * from company where id="+ id, CompanyRepository::map);
         if (model != null) {
@@ -43,7 +43,7 @@ public class CompanyRepository {
      *
      */
     public ServiceResponse insert(CompanyDTO companyDTO) {
-        ServiceResponse response = InstantResponses.CRUD_ERROR;
+        ServiceResponse response = InstantResponses.CRUD_ERROR("");
 
         Connection con = null;
 
@@ -53,8 +53,8 @@ public class CompanyRepository {
             Long companyId = null;
 
             try (PreparedStatement pst =
-                     con.prepareStatement("insert into company (name, website, country_id) values (?, ?, ?) ",
-                             Statement.RETURN_GENERATED_KEYS)) {
+                 con.prepareStatement("insert into company (name, website, country_id) values (?, ?, ?) ",
+                     Statement.RETURN_GENERATED_KEYS)) {
                 int i = 0;
                 pst.setString(++i, companyDTO.getCompanyName());
                 pst.setString(++i, companyDTO.getWebsite());
@@ -74,8 +74,8 @@ public class CompanyRepository {
 
                 Long workspaceId = null;
                 try (PreparedStatement pst =
-                         con.prepareStatement("insert into workspace (name, company_id) values (?, ?) ",
-                             Statement.RETURN_GENERATED_KEYS)) {
+                     con.prepareStatement("insert into workspace (name, company_id) values (?, ?) ",
+                         Statement.RETURN_GENERATED_KEYS)) {
                     int i = 0;
                     pst.setString(++i, "DEFAULT WORKSPACE");
                     pst.setLong(++i, companyId);
@@ -94,10 +94,10 @@ public class CompanyRepository {
 
                     final String salt = codeGenerator.generateSalt();
                     final String q2 =
-                            "insert into user " +
-                                "(user_type, full_name, email, password_salt, password_hash, company_id, default_workspace_id) " +
-                                "values " +
-                                "(?, ?, ?, ?, ?, ?, ?) ";
+                        "insert into user " +
+                        "(user_type, full_name, email, password_salt, password_hash, company_id, default_workspace_id) " +
+                        "values " +
+                        "(?, ?, ?, ?, ?, ?, ?) ";
 
                     try (PreparedStatement pst = con.prepareStatement(q2, Statement.RETURN_GENERATED_KEYS)) {
                         int i = 0;

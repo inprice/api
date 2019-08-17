@@ -22,6 +22,10 @@ public class AdminService {
     private final WorkspaceRepository workspaceRepository = Beans.getSingleton(WorkspaceRepository.class);
 
     public ServiceResponse update(AuthUser authUser, UserDTO userDTO) {
+        if (userDTO.getId() == null || userDTO.getId() < 1) {
+            return InstantResponses.NOT_FOUND("User");
+        }
+
         ServiceResponse res = validate(authUser, userDTO);
         if (res.isOK()) {
             res = repository.update(authUser, userDTO, true, false);
@@ -30,6 +34,10 @@ public class AdminService {
     }
 
     public ServiceResponse updatePassword(AuthUser authUser, PasswordDTO passwordDTO) {
+        if (passwordDTO.getId() == null || passwordDTO.getId() < 1) {
+            return InstantResponses.NOT_FOUND("User");
+        }
+
         ServiceResponse res = validate(authUser, passwordDTO);
         if (res.isOK()) {
             res = repository.updatePassword(authUser, passwordDTO);
@@ -38,6 +46,10 @@ public class AdminService {
     }
 
     public ServiceResponse setDefaultWorkspace(AuthUser authUser, Long wsId) {
+        if (wsId == null || wsId < 1) {
+            return InstantResponses.NOT_FOUND("Workspace");
+        }
+
         ServiceResponse<Workspace> found = workspaceRepository.findById(authUser, wsId);
         if (found.isOK()) {
             return repository.setDefaultWorkspace(authUser, wsId);

@@ -10,6 +10,7 @@ import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.ProductService;
 import io.inprice.scrapper.api.rest.service.TokenService;
+import io.inprice.scrapper.common.meta.UserType;
 import org.apache.commons.validator.routines.LongValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,10 +95,13 @@ public class ProductController {
     }
 
     private ServiceResponse deleteById(AuthUser authUser, Long id) {
+        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("delete a product!");
         return productService.deleteById(authUser, id);
     }
 
     private ServiceResponse upsert(AuthUser authUser, String body, boolean insert) {
+        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("save a product!");
+
         ProductDTO productDTO = toModel(body);
         if (productDTO != null) {
             if (insert)
@@ -110,6 +114,7 @@ public class ProductController {
     }
 
     private ServiceResponse toggleStatus(AuthUser authUser, Long id) {
+        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("toggle a product's status!");
         return productService.toggleStatus(authUser, id);
     }
 

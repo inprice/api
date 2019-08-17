@@ -1,7 +1,7 @@
 package io.inprice.scrapper.api.dto;
 
 /**
- * Used for handling company info in client side
+ * Used for handling company info from client side
  */
 public class CompanyDTO extends UserDTO {
 

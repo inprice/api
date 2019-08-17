@@ -170,6 +170,20 @@ public class ProductTest {
     }
 
     @Test
+    public void category_length_is_out_of_range_if_greater_than_100() {
+        final ProductDTO product = TestHelper.getProductDTO();
+        product.setCategory(StringUtils.repeat('A', 101));
+
+        given()
+            .body(product).
+        when()
+            .post(Consts.Paths.Product.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Category can be up to 100 chars!"));
+    }
+
+    @Test
     public void product_name_cannot_be_null() {
         final ProductDTO product = TestHelper.getProductDTO();
         product.setName(null);
@@ -265,7 +279,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to insert a new product!"));
+            .body("result", equalTo("User has no permission to save a product!"));
 
         TestHelper.loginAsAdmin();
     }
@@ -282,7 +296,7 @@ public class ProductTest {
             .put(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to update a product!"));
+            .body("result", equalTo("User has no permission to save a product!"));
 
         TestHelper.loginAsAdmin();
     }

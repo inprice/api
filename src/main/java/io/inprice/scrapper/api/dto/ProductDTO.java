@@ -1,10 +1,9 @@
 package io.inprice.scrapper.api.dto;
 
 import java.math.BigDecimal;
-import java.util.Date;
 
 /**
- * Used for handling product info in client side
+ * Used for handling product info from client side
  */
 public class ProductDTO {
 
@@ -12,14 +11,8 @@ public class ProductDTO {
     private String code;
     private String name;
     private String brand;
+    private String category;
     private BigDecimal price;
-    private Integer position;
-    private String minSeller;
-    private String maxSeller;
-    private BigDecimal minPrice;
-    private BigDecimal avgPrice;
-    private BigDecimal maxPrice;
-    private Date lastUpdate;
 
     public Long getId() {
         return id;
@@ -53,68 +46,20 @@ public class ProductDTO {
         this.brand = brand;
     }
 
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
     public BigDecimal getPrice() {
         return price;
     }
 
     public void setPrice(BigDecimal price) {
         this.price = price;
-    }
-
-    public Integer getPosition() {
-        return position;
-    }
-
-    public void setPosition(Integer position) {
-        this.position = position;
-    }
-
-    public String getMinSeller() {
-        return minSeller;
-    }
-
-    public void setMinSeller(String minSeller) {
-        this.minSeller = minSeller;
-    }
-
-    public String getMaxSeller() {
-        return maxSeller;
-    }
-
-    public void setMaxSeller(String maxSeller) {
-        this.maxSeller = maxSeller;
-    }
-
-    public BigDecimal getMinPrice() {
-        return minPrice;
-    }
-
-    public void setMinPrice(BigDecimal minPrice) {
-        this.minPrice = minPrice;
-    }
-
-    public BigDecimal getAvgPrice() {
-        return avgPrice;
-    }
-
-    public void setAvgPrice(BigDecimal avgPrice) {
-        this.avgPrice = avgPrice;
-    }
-
-    public BigDecimal getMaxPrice() {
-        return maxPrice;
-    }
-
-    public void setMaxPrice(BigDecimal maxPrice) {
-        this.maxPrice = maxPrice;
-    }
-
-    public Date getLastUpdate() {
-        return lastUpdate;
-    }
-
-    public void setLastUpdate(Date lastUpdate) {
-        this.lastUpdate = lastUpdate;
     }
 
     @Override
@@ -124,14 +69,8 @@ public class ProductDTO {
                 ", code='" + code + '\'' +
                 ", name='" + name + '\'' +
                 ", brand='" + brand + '\'' +
+                ", category='" + category + '\'' +
                 ", price=" + price +
-                ", position=" + position +
-                ", minSeller='" + minSeller + '\'' +
-                ", maxSeller='" + maxSeller + '\'' +
-                ", minPrice=" + minPrice +
-                ", avgPrice=" + avgPrice +
-                ", maxPrice=" + maxPrice +
-                ", lastUpdate=" + lastUpdate +
                 '}';
     }
 }

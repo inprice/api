@@ -13,6 +13,13 @@ public class PasswordDTO implements Serializable {
     private String passwordAgain;
     private String token;
 
+    public PasswordDTO() {
+    }
+
+    public PasswordDTO(Long id) {
+        this.id = id;
+    }
+
     public Long getId() {
         return id;
     }

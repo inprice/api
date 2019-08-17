@@ -4,9 +4,9 @@ import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.rest.repository.CompanyRepository;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.api.rest.repository.WorkspaceRepository;
@@ -14,16 +14,11 @@ import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
 import io.inprice.scrapper.common.models.Workspace;
 import org.eclipse.jetty.http.HttpStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class UserService {
 
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
-
-    private final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
     private final UserRepository repository = Beans.getSingleton(UserRepository.class);
     private final WorkspaceRepository workspaceRepository = Beans.getSingleton(WorkspaceRepository.class);
 
@@ -32,6 +27,10 @@ public class UserService {
     }
 
     public ServiceResponse update(AuthUser authUser, UserDTO userDTO) {
+        if (userDTO.getId() == null || userDTO.getId() < 1) {
+            return InstantResponses.NOT_FOUND("User");
+        }
+
         ServiceResponse res = validate(authUser, userDTO);
         if (res.isOK()) {
             res = repository.update(authUser, userDTO, false, false);
@@ -40,6 +39,10 @@ public class UserService {
     }
 
     public ServiceResponse updatePassword(AuthUser authUser, PasswordDTO passwordDTO) {
+        if (passwordDTO.getId() == null || passwordDTO.getId() < 1) {
+            return InstantResponses.NOT_FOUND("User");
+        }
+
         ServiceResponse res = validate(authUser, passwordDTO);
         if (res.isOK()) {
             res = repository.updatePassword(authUser, passwordDTO);
@@ -70,12 +73,6 @@ public class UserService {
 
     private ServiceResponse validate(AuthUser authUser, UserDTO userDTO) {
         List<Problem> problems = UserDTOValidator.verify(authUser, userDTO, false, "Full");
-
-        if (authUser.getCompanyId() < 1) {
-            problems.add(new Problem("form", "Company cannot be null!"));
-        } else if (! companyRepository.findById(authUser.getCompanyId()).isOK()) {
-            problems.add(new Problem("form", "Unknown company info!"));
-        }
 
         if (problems.size() > 0) {
             ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);

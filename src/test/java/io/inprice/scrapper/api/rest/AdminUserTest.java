@@ -337,7 +337,7 @@ public class AdminUserTest {
 
     @Test
     public void password_cannot_be_null() {
-        final PasswordDTO pass = new PasswordDTO();
+        final PasswordDTO pass = new PasswordDTO(1L);
 
         given()
             .body(pass).
@@ -350,7 +350,7 @@ public class AdminUserTest {
 
     @Test
     public void password_length_is_out_of_range_if_less_than_5() {
-        final PasswordDTO pass = new PasswordDTO();
+        final PasswordDTO pass = new PasswordDTO(1L);
         pass.setPassword("pass");
 
         given()
@@ -364,7 +364,7 @@ public class AdminUserTest {
 
     @Test
     public void password_length_is_out_of_range_if_greater_than_16() {
-        final PasswordDTO pass = new PasswordDTO();
+        final PasswordDTO pass = new PasswordDTO(1L);
         pass.setPassword(StringUtils.repeat('a', 17));
 
         given()
@@ -378,7 +378,7 @@ public class AdminUserTest {
 
     @Test
     public void password_are_mismatch() {
-        final PasswordDTO pass = new PasswordDTO();
+        final PasswordDTO pass = new PasswordDTO(1L);
         pass.setPassword("password");
         pass.setPasswordAgain("p4ssw0rd");
 
@@ -393,7 +393,7 @@ public class AdminUserTest {
 
     @Test
     public void old_password_cannot_be_null() {
-        final PasswordDTO pass = new PasswordDTO();
+        final PasswordDTO pass = new PasswordDTO(1L);
         pass.setPassword("p4ssw0rd");
         pass.setPasswordAgain("p4ssw0rd");
 
@@ -408,8 +408,7 @@ public class AdminUserTest {
 
     @Test
     public void old_password_is_incorrect() {
-        final PasswordDTO pass = new PasswordDTO();
-        pass.setId(1L);
+        final PasswordDTO pass = new PasswordDTO(1L);
         pass.setPasswordOld("wrong");
         pass.setPassword("p4ssw0rd");
         pass.setPasswordAgain("p4ssw0rd");

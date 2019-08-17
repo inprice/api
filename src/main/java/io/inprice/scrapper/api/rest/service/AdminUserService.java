@@ -42,6 +42,10 @@ public class AdminUserService {
     }
 
     public ServiceResponse update(AuthUser authUser, UserDTO userDTO, boolean passwordWillBeUpdated) {
+        if (userDTO.getId() == null || userDTO.getId() < 1) {
+            return InstantResponses.NOT_FOUND("User");
+        }
+
         ServiceResponse res = validate(authUser, userDTO, false);
         if (res.isOK()) {
             res = repository.update(authUser, userDTO, true, passwordWillBeUpdated);
@@ -50,6 +54,10 @@ public class AdminUserService {
     }
 
     public ServiceResponse updatePassword(AuthUser authUser, PasswordDTO passwordDTO) {
+        if (passwordDTO.getId() == null || passwordDTO.getId() < 1) {
+            return InstantResponses.NOT_FOUND("User");
+        }
+
         ServiceResponse res = validate(authUser, passwordDTO);
         if (res.isOK()) {
             res = repository.updatePassword(authUser, passwordDTO);
@@ -58,10 +66,18 @@ public class AdminUserService {
     }
 
     public ServiceResponse deleteById(AuthUser authUser, Long id) {
+        if (id == null || id < 1) {
+            return InstantResponses.NOT_FOUND("User");
+        }
+
         return repository.deleteById(authUser, id);
     }
 
     public ServiceResponse toggleStatus(AuthUser authUser, Long id) {
+        if (id == null || id < 1) {
+            return InstantResponses.NOT_FOUND("User");
+        }
+
         return repository.toggleStatus(authUser, id);
     }
 

@@ -55,6 +55,13 @@ public class Consts {
             public static final String TOGGLE_STATUS = BASE + "/toggle";
         }
 
+        public static class Link {
+            public static final String BASE = "/link";
+            public static final String RENEW = BASE + "/renew";
+            public static final String PAUSE = BASE + "/pause";
+            public static final String RESUME = BASE + "/resume";
+        }
+
     }
 
 }

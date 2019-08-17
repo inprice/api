@@ -188,6 +188,10 @@ public class DBUtils {
      *
      */
     public boolean executeBatchQueries(String[] queries, String errorMessage) {
+        return executeBatchQueries(queries, errorMessage, true);
+    }
+
+    public boolean executeBatchQueries(String[] queries, String errorMessage, boolean resultSensitive) {
         boolean result = false;
 
         Connection con = null;
@@ -204,7 +208,9 @@ public class DBUtils {
 
             result = true;
             for (int aff: affected) {
-                if (aff < 1) {
+                if (! resultSensitive && aff > 0) { //one is enough
+                    break;
+                } else if (resultSensitive && aff < 1) { //each result matters
                     rollback(con);
                     result = false;
                     break;

@@ -7,7 +7,6 @@ import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.common.models.Product;
-import io.inprice.scrapper.common.models.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +16,9 @@ import java.util.List;
 public class ProductRepository {
 
     private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
+
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+    private final LinkRepository linkRepository = Beans.getSingleton(LinkRepository.class);
 
     public ServiceResponse<Product> findById(AuthUser authUser, Long id) {
         Product model = dbUtils.findSingle(
@@ -45,12 +46,12 @@ public class ProductRepository {
         return InstantResponses.NOT_FOUND("Product");
     }
 
-    public ServiceResponse<Product> insert(AuthUser authUser, ProductDTO productDTO) {
+    public ServiceResponse insert(AuthUser authUser, ProductDTO productDTO) {
         final String query =
                 "insert into product " +
-                "(code, name, brand, price, workspace_id, company_id) " +
+                "(code, name, brand, category, price, workspace_id, company_id) " +
                 "values " +
-                "(?, ?, ?, ?, ?, ?) ";
+                "(?, ?, ?, ?, ?, ?, ?) ";
 
         try (Connection con = dbUtils.getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
@@ -59,6 +60,7 @@ public class ProductRepository {
             pst.setString(++i, productDTO.getCode());
             pst.setString(++i, productDTO.getName());
             pst.setString(++i, productDTO.getBrand());
+            pst.setString(++i, productDTO.getCode());
             pst.setBigDecimal(++i, productDTO.getPrice());
             pst.setLong(++i, authUser.getWorkspaceId());
             pst.setLong(++i, authUser.getCompanyId());
@@ -66,7 +68,7 @@ public class ProductRepository {
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
             else
-                return InstantResponses.CRUD_ERROR;
+                return InstantResponses.CRUD_ERROR("");
 
         } catch (SQLIntegrityConstraintViolationException ie) {
             log.error("Failed to insert product: " + ie.getMessage());
@@ -77,12 +79,12 @@ public class ProductRepository {
         }
     }
 
-    public ServiceResponse<Product> update(AuthUser authUser, ProductDTO productDTO) {
+    public ServiceResponse update(AuthUser authUser, ProductDTO productDTO) {
         try (Connection con = dbUtils.getConnection();
              PreparedStatement pst =
                  con.prepareStatement(
                      "update product " +
-                         "set code=?, name=?, brand=?, price=? " +
+                         "set code=?, name=?, brand=?, category=?, price=? " +
                          "where id=? " +
                          "  and workspace_id=?")) {
 
@@ -90,6 +92,7 @@ public class ProductRepository {
             pst.setString(++i, productDTO.getCode());
             pst.setString(++i, productDTO.getName());
             pst.setString(++i, productDTO.getBrand());
+            pst.setString(++i, productDTO.getCategory());
             pst.setBigDecimal(++i, productDTO.getPrice());
             pst.setLong(++i, productDTO.getId());
             pst.setLong(++i, authUser.getWorkspaceId());
@@ -102,27 +105,47 @@ public class ProductRepository {
         } catch (SQLException sqle) {
             log.error("Failed to update product", sqle);
             return InstantResponses.SERVER_ERROR(sqle);
-        } catch (Exception e) {
-            log.error("Failed to update product", e);
-            return InstantResponses.SERVER_ERROR(e);
         }
     }
 
-    public ServiceResponse<Product> deleteById(AuthUser authUser, Long id) {
-        boolean result =
-            dbUtils.executeQuery(
+    public ServiceResponse deleteById(AuthUser authUser, Long id) {
+        boolean result = dbUtils.executeBatchQueries(new String[] {
+
                 String.format(
-                "delete from product " +
-                    "where id = %d " +
-                    "  and workspace_id = %d", id, authUser.getWorkspaceId()),
-        "Failed to delete product with id: " + id);
+                "delete link_price where product_id=%d and workspace_id=%d;",
+                    id, authUser.getWorkspaceId()
+                ),
+                String.format(
+                "delete link_history where product_id=%d and workspace_id=%d;",
+                    id, authUser.getWorkspaceId()
+                ),
+                String.format(
+                "delete link_spec where product_id=%d and workspace_id=%d;",
+                    id, authUser.getWorkspaceId()
+                ),
+                String.format(
+                "delete link where product_id=%d and workspace_id=%d;",
+                    id, authUser.getWorkspaceId()
+                ),
+                String.format(
+                "delete product_price where product_id=%d and workspace_id=%d;",
+                    id, authUser.getWorkspaceId()
+                ),
+                String.format(
+                "delete product where id=%d and workspace_id=%d;",
+                    id, authUser.getWorkspaceId()
+                )
+
+            }, String.format("Failed to delete product. Id: %d", id), false
+
+        );
 
         if (result) return InstantResponses.OK;
 
         return InstantResponses.NOT_FOUND("Product");
     }
 
-    public ServiceResponse<User> toggleStatus(AuthUser authUser, Long id) {
+    public ServiceResponse toggleStatus(AuthUser authUser, Long id) {
         boolean result =
             dbUtils.executeQuery(
                 String.format(
@@ -141,9 +164,11 @@ public class ProductRepository {
         try {
             Product model = new Product();
             model.setId(rs.getLong("id"));
+            model.setActive(rs.getBoolean("active"));
             model.setCode(rs.getString("code"));
             model.setName(rs.getString("name"));
             model.setBrand(rs.getString("brand"));
+            model.setCategory(rs.getString("category"));
             model.setPrice(rs.getBigDecimal("price"));
             model.setPosition(rs.getInt("position"));
             model.setMinSeller(rs.getString("min_seller"));

@@ -34,6 +34,10 @@ public class AdminWorkspaceService {
     }
 
     public ServiceResponse update(AuthUser authUser, WorkspaceDTO workspaceDTO) {
+        if (workspaceDTO.getId() == null || workspaceDTO.getId() < 1) {
+            return InstantResponses.NOT_FOUND("Workspace");
+        }
+
         ServiceResponse res = validate(workspaceDTO, false);
         if (res.isOK()) {
             res = repository.update(authUser, workspaceDTO);
@@ -42,15 +46,15 @@ public class AdminWorkspaceService {
     }
 
     public ServiceResponse deleteById(AuthUser authUser, Long id) {
+        if (id == null || id < 1) {
+            return InstantResponses.NOT_FOUND("Workspace");
+        }
+
         return repository.deleteById(authUser, id);
     }
 
     private ServiceResponse validate(WorkspaceDTO workspaceDTO, boolean insert) {
         List<Problem> problems = new ArrayList<>();
-
-        if (! insert && workspaceDTO.getId() == null) {
-            problems.add(new Problem("name", "Workspace id cannot be null!"));
-        }
 
         if (StringUtils.isBlank(workspaceDTO.getName())) {
             problems.add(new Problem("name", "Workspace name cannot be null!"));

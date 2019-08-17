@@ -1,7 +1,7 @@
 package io.inprice.scrapper.api.dto;
 
 /**
- * Used for handling workspace info in client side
+ * Used for handling workspace info from client side
  */
 public class WorkspaceDTO {
 

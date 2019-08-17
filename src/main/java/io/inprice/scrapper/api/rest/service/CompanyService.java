@@ -42,6 +42,10 @@ public class CompanyService {
     }
 
     public ServiceResponse update(AuthUser authUser, CompanyDTO companyDTO) {
+        if (companyDTO.getId() == null || companyDTO.getId() < 1) {
+            return InstantResponses.NOT_FOUND("Company");
+        }
+
         ServiceResponse res = validate(authUser, companyDTO, false);
         if (res.isOK()) {
             res = repository.update(authUser, companyDTO);

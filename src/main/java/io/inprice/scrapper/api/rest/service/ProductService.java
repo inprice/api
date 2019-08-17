@@ -7,7 +7,6 @@ import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.repository.ProductRepository;
-import io.inprice.scrapper.common.meta.UserType;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 
@@ -28,8 +27,6 @@ public class ProductService {
     }
 
     public ServiceResponse insert(AuthUser authUser, ProductDTO productDTO) {
-        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("insert a new product!");
-
         ServiceResponse res = validate(productDTO, true);
         if (res.isOK()) {
             res = repository.insert(authUser, productDTO);
@@ -38,7 +35,9 @@ public class ProductService {
     }
 
     public ServiceResponse update(AuthUser authUser, ProductDTO productDTO) {
-        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("update a product!");
+        if (productDTO.getId() == null || productDTO.getId() < 1) {
+            return InstantResponses.NOT_FOUND("Product");
+        }
 
         ServiceResponse res = validate(productDTO, false);
         if (res.isOK()) {
@@ -48,13 +47,17 @@ public class ProductService {
     }
 
     public ServiceResponse deleteById(AuthUser authUser, Long id) {
-        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("delete a product!");
+        if (id == null || id < 1) {
+            return InstantResponses.NOT_FOUND("Product");
+        }
 
         return repository.deleteById(authUser, id);
     }
 
     public ServiceResponse toggleStatus(AuthUser authUser, Long id) {
-        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("toggle a product's status!");
+        if (id == null || id < 1) {
+            return InstantResponses.NOT_FOUND("Product");
+        }
 
         return repository.toggleStatus(authUser, id);
     }
@@ -62,16 +65,16 @@ public class ProductService {
     private ServiceResponse validate(ProductDTO productDTO, boolean insert) {
         List<Problem> problems = new ArrayList<>();
 
-        if (! insert && productDTO.getId() == null) {
-            problems.add(new Problem("form", "Product id cannot be null!"));
-        }
-
         if (! StringUtils.isBlank(productDTO.getCode()) && productDTO.getCode().length() > 120) {
             problems.add(new Problem("code", "Product code can be up to 120 chars!"));
         }
 
         if (! StringUtils.isBlank(productDTO.getBrand()) && productDTO.getBrand().length() > 100) {
             problems.add(new Problem("brand", "Brand can be up to 100 chars!"));
+        }
+
+        if (! StringUtils.isBlank(productDTO.getCategory()) && productDTO.getCategory().length() > 100) {
+            problems.add(new Problem("category", "Category can be up to 100 chars!"));
         }
 
         if (productDTO.getPrice() == null || productDTO.getPrice().compareTo(BigDecimal.ONE) < 0) {

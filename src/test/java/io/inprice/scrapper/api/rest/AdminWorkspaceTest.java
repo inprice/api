@@ -170,7 +170,7 @@ public class AdminWorkspaceTest {
     }
 
     @Test
-    public void workspace_not_found_when_update_with_a_wrong_id() {
+    public void workspace_is_missing_when_update_with_an_unknown_id() {
         final WorkspaceDTO workspace = TestHelper.getWorkspaceDTO();
         workspace.setId(0L);
 

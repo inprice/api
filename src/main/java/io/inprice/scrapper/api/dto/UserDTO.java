@@ -5,7 +5,7 @@ import io.inprice.scrapper.common.meta.UserType;
 import java.io.Serializable;
 
 /**
- * Used for handling user info in client side
+ * Used for handling user info from client side
  */
 public class UserDTO extends PasswordDTO {
 
