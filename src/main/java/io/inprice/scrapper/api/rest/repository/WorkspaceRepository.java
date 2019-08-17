@@ -133,11 +133,11 @@ public class WorkspaceRepository {
                     id, authUser.getCompanyId()
                 ),
                 String.format(
-                "delete workspace where id=%d and company_id=%d;",
+                "delete workspace where id=%d and company_id=%d;",  //must be successful
                     id, authUser.getCompanyId()
                 )
 
-            }, String.format("Failed to delete workspace. Id: %d", id), false
+            }, String.format("Failed to delete workspace. Id: %d", id), 1 //1 of 8 execution must be successful
 
         );
 

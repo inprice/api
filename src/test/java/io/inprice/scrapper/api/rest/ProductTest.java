@@ -89,7 +89,7 @@ public class ProductTest {
         final long id = 2;
 
         final ProductDTO product = TestHelper.getProductDTO();
-        product.setName("A THIRD WS");
+        product.setName("A NEW PRODUCT");
 
         given()
             .body(product).

@@ -93,7 +93,7 @@ public class DBUtils {
 
     private void close(Connection con, Statement pst) {
         try {
-            pst.close();
+            if (pst != null) pst.close();
             con.close();
         } catch (SQLException ex) {
             //
@@ -188,10 +188,10 @@ public class DBUtils {
      *
      */
     public boolean executeBatchQueries(String[] queries, String errorMessage) {
-        return executeBatchQueries(queries, errorMessage, true);
+        return executeBatchQueries(queries, errorMessage, 0);
     }
 
-    public boolean executeBatchQueries(String[] queries, String errorMessage, boolean resultSensitive) {
+    public boolean executeBatchQueries(String[] queries, String errorMessage, int expectedSuccessfulStatementCount) {
         boolean result = false;
 
         Connection con = null;
@@ -206,22 +206,35 @@ public class DBUtils {
 
             int[] affected = sta.executeBatch();
 
-            result = true;
+            result = false;
+            int successfulStatementCount = 0;
+
             for (int aff: affected) {
-                if (! resultSensitive && aff > 0) { //one is enough
-                    break;
-                } else if (resultSensitive && aff < 1) { //each result matters
-                    rollback(con);
-                    result = false;
-                    break;
+                if (expectedSuccessfulStatementCount > 0) {
+                    if (aff > 0) successfulStatementCount++;
+                    if (successfulStatementCount >= expectedSuccessfulStatementCount) {
+                        result = true;
+                        break;
+                    }
+                } else {
+                    if (aff < 1) {
+                        break;
+                    }
                 }
             }
-            commit(con);
+
+            if (result) {
+                commit(con);
+            } else {
+                rollback(con);
+                log.error(errorMessage);
+            }
+
         } catch (SQLException e) {
-            rollback(con);
+            if (con != null) rollback(con);
             log.error(errorMessage, e);
         } finally {
-            close(con, sta);
+            if (con != null) close(con, sta);
         }
         return result;
     }

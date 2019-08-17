@@ -80,11 +80,11 @@ public class LinkRepository {
         boolean result = dbUtils.executeBatchQueries(new String[] {
 
                 String.format(
-                "delete link_price where link_id=%d and workspace_id=%d;",
+                "delete link_price where link_id=%d and workspace_id=%d;",    //must be successful
                     id, authUser.getWorkspaceId()
                 ),
                 String.format(
-                "delete link_history where link_id=%d and workspace_id=%d;",
+                "delete link_history where link_id=%d and workspace_id=%d;",  //must be successful
                     id, authUser.getWorkspaceId()
                 ),
                 String.format(
@@ -92,11 +92,11 @@ public class LinkRepository {
                     id, authUser.getWorkspaceId()
                 ),
                 String.format(
-                "delete link where id=%d and workspace_id=%d;",
+                "delete link where id=%d and workspace_id=%d;",              //must be successful
                     id, authUser.getWorkspaceId()
                 )
 
-            }, String.format("Failed to delete link. Id: %d", id), false
+            }, String.format("Failed to delete link. Id: %d", id), 3 //3 of 4 execution must be successful
 
         );
 

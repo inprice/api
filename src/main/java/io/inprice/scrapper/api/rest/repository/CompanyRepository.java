@@ -158,10 +158,10 @@ public class CompanyRepository {
         try (Connection con = dbUtils.getConnection();
             PreparedStatement pst =
                 con.prepareStatement(
-                    "update company " +
-                        "set name=?, website=?, country_id=? " +
-                        "where id=? " +
-                        "  and admin_id=?")) {
+                "update company " +
+                    "set name=?, website=?, country_id=? " +
+                    "where id=? " +
+                    "  and admin_id=?")) {
 
             int i = 0;
             pst.setString(++i, companyDTO.getCompanyName());

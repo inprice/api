@@ -18,7 +18,6 @@ public class ProductRepository {
     private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
 
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
-    private final LinkRepository linkRepository = Beans.getSingleton(LinkRepository.class);
 
     public ServiceResponse<Product> findById(AuthUser authUser, Long id) {
         Product model = dbUtils.findSingle(
@@ -47,64 +46,96 @@ public class ProductRepository {
     }
 
     public ServiceResponse insert(AuthUser authUser, ProductDTO productDTO) {
-        final String query =
-                "insert into product " +
-                "(code, name, brand, category, price, workspace_id, company_id) " +
-                "values " +
-                "(?, ?, ?, ?, ?, ?, ?) ";
+        Connection con = null;
+        boolean result = false;
 
-        try (Connection con = dbUtils.getConnection();
-             PreparedStatement pst = con.prepareStatement(query)) {
+        try {
+            con = dbUtils.getTransactionalConnection();
 
-            int i = 0;
-            pst.setString(++i, productDTO.getCode());
-            pst.setString(++i, productDTO.getName());
-            pst.setString(++i, productDTO.getBrand());
-            pst.setString(++i, productDTO.getCode());
-            pst.setBigDecimal(++i, productDTO.getPrice());
-            pst.setLong(++i, authUser.getWorkspaceId());
-            pst.setLong(++i, authUser.getCompanyId());
+            final String query =
+                    "insert into product " +
+                    "(code, name, brand, category, price, workspace_id, company_id) " +
+                    "values " +
+                    "(?, ?, ?, ?, ?, ?, ?) ";
 
-            if (pst.executeUpdate() > 0)
+            try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+                int i = 0;
+                pst.setString(++i, productDTO.getCode());
+                pst.setString(++i, productDTO.getName());
+                pst.setString(++i, productDTO.getBrand());
+                pst.setString(++i, productDTO.getCode());
+                pst.setBigDecimal(++i, productDTO.getPrice());
+                pst.setLong(++i, authUser.getWorkspaceId());
+                pst.setLong(++i, authUser.getCompanyId());
+
+                if (pst.executeUpdate() > 0) {
+                    try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            productDTO.setId(generatedKeys.getLong(1));
+                            result = addAPriceHistory(authUser, con, productDTO);
+                        }
+                    }
+                }
+            }
+
+            if (result) {
+                dbUtils.commit(con);
                 return InstantResponses.OK;
-            else
+            } else {
+                dbUtils.rollback(con);
                 return InstantResponses.CRUD_ERROR("");
+            }
 
-        } catch (SQLIntegrityConstraintViolationException ie) {
-            log.error("Failed to insert product: " + ie.getMessage());
-            return InstantResponses.SERVER_ERROR(ie);
         } catch (Exception e) {
-            log.error("Failed to insert product", e);
+            if (con != null) dbUtils.rollback(con);
+            log.error("Failed to insert a new product. " + productDTO, e);
             return InstantResponses.SERVER_ERROR(e);
+        } finally {
+            if (con != null) dbUtils.close(con);
         }
     }
 
     public ServiceResponse update(AuthUser authUser, ProductDTO productDTO) {
-        try (Connection con = dbUtils.getConnection();
-             PreparedStatement pst =
-                 con.prepareStatement(
-                     "update product " +
-                         "set code=?, name=?, brand=?, category=?, price=? " +
-                         "where id=? " +
-                         "  and workspace_id=?")) {
+        Connection con = null;
+        boolean result = false;
 
-            int i = 0;
-            pst.setString(++i, productDTO.getCode());
-            pst.setString(++i, productDTO.getName());
-            pst.setString(++i, productDTO.getBrand());
-            pst.setString(++i, productDTO.getCategory());
-            pst.setBigDecimal(++i, productDTO.getPrice());
-            pst.setLong(++i, productDTO.getId());
-            pst.setLong(++i, authUser.getWorkspaceId());
+        try {
+            con = dbUtils.getTransactionalConnection();
 
-            if (pst.executeUpdate() > 0)
-                return InstantResponses.OK;
-            else
-                return InstantResponses.NOT_FOUND("Product");
+            final String query =
+                 "update product " +
+                 "set code=?, name=?, brand=?, category=?, price=? " +
+                 "where id=? " +
+                 "  and workspace_id=?";
 
-        } catch (SQLException sqle) {
-            log.error("Failed to update product", sqle);
-            return InstantResponses.SERVER_ERROR(sqle);
+            try (PreparedStatement pst = con.prepareStatement(query)) {
+                int i = 0;
+                pst.setString(++i, productDTO.getCode());
+                pst.setString(++i, productDTO.getName());
+                pst.setString(++i, productDTO.getBrand());
+                pst.setString(++i, productDTO.getCategory());
+                pst.setBigDecimal(++i, productDTO.getPrice());
+                pst.setLong(++i, productDTO.getId());
+                pst.setLong(++i, authUser.getWorkspaceId());
+
+                if (pst.executeUpdate() > 0) {
+                    result = addAPriceHistory(authUser, con, productDTO);
+                }
+
+                if (result) {
+                    dbUtils.commit(con);
+                    return InstantResponses.OK;
+                } else {
+                    dbUtils.rollback(con);
+                    return InstantResponses.CRUD_ERROR("");
+                }
+            }
+        } catch (Exception e) {
+            if (con != null) dbUtils.rollback(con);
+            log.error("Failed to update a product. " + productDTO, e);
+            return InstantResponses.SERVER_ERROR(e);
+        } finally {
+            if (con != null) dbUtils.close(con);
         }
     }
 
@@ -128,15 +159,15 @@ public class ProductRepository {
                     id, authUser.getWorkspaceId()
                 ),
                 String.format(
-                "delete product_price where product_id=%d and workspace_id=%d;",
+                "delete product_price where product_id=%d and workspace_id=%d;",  //must be successful
                     id, authUser.getWorkspaceId()
                 ),
                 String.format(
-                "delete product where id=%d and workspace_id=%d;",
+                "delete product where id=%d and workspace_id=%d;",                //must be successful
                     id, authUser.getWorkspaceId()
                 )
 
-            }, String.format("Failed to delete product. Id: %d", id), false
+            }, String.format("Failed to delete product. Id: %d", id), 2 //2 of 6 execution must be successful
 
         );
 
@@ -158,6 +189,28 @@ public class ProductRepository {
         if (result) return InstantResponses.OK;
 
         return InstantResponses.NOT_FOUND("Product");
+    }
+
+    private boolean addAPriceHistory(AuthUser authUser, Connection con, ProductDTO productDTO) {
+        final String query =
+                "insert into product_price " +
+                "(product_id, price, workspace_id, company_id) " +
+                "values " +
+                "(?, ?, ?, ?) ";
+
+        try (PreparedStatement pst = con.prepareStatement(query)) {
+            int i = 0;
+            pst.setLong(++i, productDTO.getId());
+            pst.setBigDecimal(++i, productDTO.getPrice());
+            pst.setLong(++i, authUser.getWorkspaceId());
+            pst.setLong(++i, authUser.getCompanyId());
+
+            return (pst.executeUpdate() > 0);
+        } catch (Exception e) {
+            log.error("Error", e);
+        }
+
+        return false;
     }
 
     private Product map(ResultSet rs) {
