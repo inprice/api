@@ -10,6 +10,7 @@ import io.inprice.scrapper.api.rest.repository.LinkRepository;
 import io.inprice.scrapper.api.rest.repository.ProductRepository;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.utils.URLUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 
 import java.util.ArrayList;
@@ -64,6 +65,8 @@ public class LinkService {
 
         if (! URLUtils.isAValidURL(linkDTO.getUrl())) {
             problems.add(new Problem("url", "Invalid URL!"));
+        } else if (linkDTO.getUrl().length() > 2000) {
+            problems.add(new Problem("url", "The length of URL must be less than 2000 chars!"));
         }
 
         if (linkDTO.getProductId() == null || linkDTO.getProductId() < 1) {

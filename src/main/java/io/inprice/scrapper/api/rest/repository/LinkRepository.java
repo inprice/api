@@ -80,11 +80,11 @@ public class LinkRepository {
         boolean result = dbUtils.executeBatchQueries(new String[] {
 
                 String.format(
-                "delete link_price where link_id=%d and workspace_id=%d;",    //must be successful
+                "delete link_price where link_id=%d and workspace_id=%d;",
                     id, authUser.getWorkspaceId()
                 ),
                 String.format(
-                "delete link_history where link_id=%d and workspace_id=%d;",  //must be successful
+                "delete link_history where link_id=%d and workspace_id=%d;",
                     id, authUser.getWorkspaceId()
                 ),
                 String.format(
@@ -96,7 +96,7 @@ public class LinkRepository {
                     id, authUser.getWorkspaceId()
                 )
 
-            }, String.format("Failed to delete link. Id: %d", id), 3 //3 of 4 execution must be successful
+            }, String.format("Failed to delete link. Id: %d", id), 1 //1 of 4 execution must be successful
 
         );
 
@@ -120,7 +120,8 @@ public class LinkRepository {
                 "  and product_id=? " +
                 "  and status != ? ";
 
-            boolean result;
+            boolean res1;
+            boolean res2 = false;
 
             try (PreparedStatement pst = con.prepareStatement(q1)) {
                 int i = 0;
@@ -130,14 +131,14 @@ public class LinkRepository {
                 pst.setLong(++i, productId);
                 pst.setString(++i, status.name());
 
-                result = (pst.executeUpdate() > 0);
+                res1 = (pst.executeUpdate() > 0);
             }
 
-            if (result) {
+            if (res1) {
                 try (PreparedStatement
                      pst = con.prepareStatement(
                          "insert into link_history (link_id, status, company_id, workspace_id, product_id) " +
-                             "values (%d, %s, %d, %d, %d)")) {
+                             "values (?, ?, ?, ?, ?)")) {
                     int i = 0;
                     pst.setLong(++i, id);
                     pst.setString(++i, status.name());
@@ -145,24 +146,22 @@ public class LinkRepository {
                     pst.setLong(++i, authUser.getWorkspaceId());
                     pst.setLong(++i, productId);
 
-                    result = (pst.executeUpdate() > 0);
+                    res2 = (pst.executeUpdate() > 0);
                 }
             } else {
                 log.warn("Link's status is already changed! Link Id: {}, New Status: {}", id, status);
             }
 
-            if (result) {
-                dbUtils.commit(con);
-                res = InstantResponses.OK;
+            if (res1) {
+                if (res2) {
+                    dbUtils.commit(con);
+                    res = InstantResponses.OK;
+                } else {
+                    dbUtils.rollback(con);
+                    res = InstantResponses.CRUD_ERROR("Seems that link's status is already changed!");
+                }
             } else {
-                dbUtils.rollback(con);
-                res = InstantResponses.CRUD_ERROR(
-                    String.format(
-                        "Failed to change link's status! " +
-                        "Status: %s, Product Id: %d, Link Id: %d",
-                        status.name(), productId, id
-                    )
-                );
+                res = InstantResponses.WRONG_PARAMETER("Invalid product!");
             }
 
         } catch (SQLException e) {
@@ -193,7 +192,7 @@ public class LinkRepository {
             model.setLastUpdate(rs.getDate("last_update"));
             model.setRetry(rs.getInt("retry"));
             model.setHttpStatus(rs.getInt("http_status"));
-            model.setWebsiteClassName(rs.getString("web_site_class_name"));
+            model.setWebsiteClassName(rs.getString("website_class_name"));
             model.setCompanyId(rs.getLong("company_id"));
             model.setWorkspaceId(rs.getLong("workspace_id"));
             model.setProductId(rs.getLong("product_id"));

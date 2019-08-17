@@ -5,6 +5,18 @@ public class LinkDTO {
     private Long productId;
     private String url;
 
+    public LinkDTO() {
+    }
+
+    public LinkDTO(Long productId) {
+        this.productId = productId;
+    }
+
+    public LinkDTO(Long productId, String url) {
+        this.productId = productId;
+        this.url = url;
+    }
+
     public Long getProductId() {
         return productId;
     }

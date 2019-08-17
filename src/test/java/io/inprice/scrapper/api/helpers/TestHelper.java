@@ -79,6 +79,12 @@ public class TestHelper {
         return product;
     }
 
+    public static LinkDTO getLinkDTO(Long prodId) {
+        LinkDTO link = new LinkDTO(prodId);
+        link.setUrl("https://www.amazon.com/dp/1234567890");
+        return link;
+    }
+
     public static WorkspaceDTO getWorkspaceDTO() {
         WorkspaceDTO ws = new WorkspaceDTO();
         ws.setName("SECONDARY WS");

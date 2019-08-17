@@ -127,7 +127,7 @@ public class LinkController {
     }
 
     private ServiceResponse changeStatus(AuthUser authUser, Long id, Long productId, Status status) {
-        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("change a link's status!");
+        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("change link's status!");
         return linkService.changeStatus(authUser, id, productId, status);
     }
 

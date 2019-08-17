@@ -18,6 +18,10 @@ public class InstantResponses {
         return new ServiceResponse(HttpStatus.NOT_ACCEPTABLE_406, "Invalid data for " + tag);
     }
 
+    public static ServiceResponse WRONG_PARAMETER(String info) {
+        return new ServiceResponse(HttpStatus.NOT_ACCEPTABLE_406, info);
+    }
+
     public static ServiceResponse CRUD_ERROR(String info) {
         return new ServiceResponse(HttpStatus.INTERNAL_SERVER_ERROR_500, "Database operation failed. " + info);
     }
