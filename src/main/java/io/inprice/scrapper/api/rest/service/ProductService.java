@@ -2,7 +2,6 @@ package io.inprice.scrapper.api.rest.service;
 
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
@@ -18,51 +17,51 @@ public class ProductService {
 
     private final ProductRepository repository = Beans.getSingleton(ProductRepository.class);
 
-    public ServiceResponse findById(AuthUser authUser, Long id) {
-        return repository.findById(authUser, id);
+    public ServiceResponse findById(Long id) {
+        return repository.findById(id);
     }
 
-    public ServiceResponse getList(AuthUser authUser) {
-        return repository.getList(authUser);
+    public ServiceResponse getList() {
+        return repository.getList();
     }
 
-    public ServiceResponse insert(AuthUser authUser, ProductDTO productDTO) {
-        ServiceResponse res = validate(productDTO, true);
+    public ServiceResponse insert(ProductDTO productDTO) {
+        ServiceResponse res = validate(productDTO);
         if (res.isOK()) {
-            res = repository.insert(authUser, productDTO);
+            res = repository.insert(productDTO);
         }
         return res;
     }
 
-    public ServiceResponse update(AuthUser authUser, ProductDTO productDTO) {
+    public ServiceResponse update(ProductDTO productDTO) {
         if (productDTO.getId() == null || productDTO.getId() < 1) {
             return InstantResponses.NOT_FOUND("Product");
         }
 
-        ServiceResponse res = validate(productDTO, false);
+        ServiceResponse res = validate(productDTO);
         if (res.isOK()) {
-            res = repository.update(authUser, productDTO);
+            res = repository.update(productDTO);
         }
         return res;
     }
 
-    public ServiceResponse deleteById(AuthUser authUser, Long id) {
+    public ServiceResponse deleteById(Long id) {
         if (id == null || id < 1) {
             return InstantResponses.NOT_FOUND("Product");
         }
 
-        return repository.deleteById(authUser, id);
+        return repository.deleteById(id);
     }
 
-    public ServiceResponse toggleStatus(AuthUser authUser, Long id) {
+    public ServiceResponse toggleStatus(Long id) {
         if (id == null || id < 1) {
             return InstantResponses.NOT_FOUND("Product");
         }
 
-        return repository.toggleStatus(authUser, id);
+        return repository.toggleStatus(id);
     }
 
-    private ServiceResponse validate(ProductDTO productDTO, boolean insert) {
+    private ServiceResponse validate(ProductDTO productDTO) {
         List<Problem> problems = new ArrayList<>();
 
         if (! StringUtils.isBlank(productDTO.getCode()) && productDTO.getCode().length() > 120) {

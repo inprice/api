@@ -6,6 +6,7 @@ import io.inprice.scrapper.api.framework.ConfigScanner;
 import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.rest.component.AuthFilter;
+import io.inprice.scrapper.api.rest.component.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Spark;
@@ -78,6 +79,8 @@ public class Application {
         });
 
         Spark.before((request, response)-> response.header("Access-Control-Allow-Origin", "*"));
+
+        Spark.after((request, response)-> Context.cleanup());
 
         /*
         if (properties.isRunningForTests()) {

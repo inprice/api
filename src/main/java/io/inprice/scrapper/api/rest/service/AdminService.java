@@ -3,10 +3,10 @@ package io.inprice.scrapper.api.rest.service;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.api.rest.repository.WorkspaceRepository;
 import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
@@ -21,45 +21,45 @@ public class AdminService {
     private final UserRepository repository = Beans.getSingleton(UserRepository.class);
     private final WorkspaceRepository workspaceRepository = Beans.getSingleton(WorkspaceRepository.class);
 
-    public ServiceResponse update(AuthUser authUser, UserDTO userDTO) {
+    public ServiceResponse update(UserDTO userDTO) {
         if (userDTO.getId() == null || userDTO.getId() < 1) {
             return InstantResponses.NOT_FOUND("User");
         }
 
-        ServiceResponse res = validate(authUser, userDTO);
+        ServiceResponse res = validate(userDTO);
         if (res.isOK()) {
-            res = repository.update(authUser, userDTO, true, false);
+            res = repository.update(userDTO, true, false);
         }
         return res;
     }
 
-    public ServiceResponse updatePassword(AuthUser authUser, PasswordDTO passwordDTO) {
+    public ServiceResponse updatePassword(PasswordDTO passwordDTO) {
         if (passwordDTO.getId() == null || passwordDTO.getId() < 1) {
             return InstantResponses.NOT_FOUND("User");
         }
 
-        ServiceResponse res = validate(authUser, passwordDTO);
+        ServiceResponse res = validate(passwordDTO);
         if (res.isOK()) {
-            res = repository.updatePassword(authUser, passwordDTO);
+            res = repository.updatePassword(passwordDTO, Context.getAuthUser());
         }
         return res;
     }
 
-    public ServiceResponse setDefaultWorkspace(AuthUser authUser, Long wsId) {
+    public ServiceResponse setDefaultWorkspace(Long wsId) {
         if (wsId == null || wsId < 1) {
             return InstantResponses.NOT_FOUND("Workspace");
         }
 
-        ServiceResponse<Workspace> found = workspaceRepository.findById(authUser, wsId);
+        ServiceResponse<Workspace> found = workspaceRepository.findById(wsId);
         if (found.isOK()) {
-            return repository.setDefaultWorkspace(authUser, wsId);
+            return repository.setDefaultWorkspace(wsId);
         } else {
             return InstantResponses.NOT_FOUND("Workspace");
         }
     }
 
-    private ServiceResponse validate(AuthUser authUser, PasswordDTO passwordDTO) {
-        List<Problem> problems = PasswordDTOValidator.verify(authUser, passwordDTO, true, true);
+    private ServiceResponse validate(PasswordDTO passwordDTO) {
+        List<Problem> problems = PasswordDTOValidator.verify(passwordDTO, true, true);
 
         if (problems.size() > 0) {
             ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
@@ -70,8 +70,8 @@ public class AdminService {
         }
     }
 
-    private ServiceResponse validate(AuthUser authUser, UserDTO userDTO) {
-        List<Problem> problems = UserDTOValidator.verify(authUser, userDTO, false, "Full");
+    private ServiceResponse validate(UserDTO userDTO) {
+        List<Problem> problems = UserDTOValidator.verify(userDTO, false, "Full");
 
         if (problems.size() > 0) {
             ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);

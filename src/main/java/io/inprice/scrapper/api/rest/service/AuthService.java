@@ -55,7 +55,6 @@ public class AuthService {
                     authUser.setFullName(user.getFullName());
                     authUser.setType(user.getUserType());
                     authUser.setCompanyId(user.getCompanyId());
-                    authUser.setWorkspaceId(user.getDefaultWorkspaceId());
 
                     response.header(Consts.Auth.AUTHORIZATION_HEADER, tokenService.newToken(authUser));
 
@@ -115,7 +114,7 @@ public class AuthService {
                 AuthUser authUser = new AuthUser();
                 authUser.setId(found.getModel().getId());
                 authUser.setCompanyId(found.getModel().getCompanyId());
-                res = userRepository.updatePassword(authUser, passwordDTO);
+                res = userRepository.updatePassword(passwordDTO, authUser);
             } else {
                 res = InstantResponses.NOT_FOUND("Email");
             }
@@ -144,6 +143,11 @@ public class AuthService {
         return serRes;
     }
 
+    public ServiceResponse logout(Request req) {
+        tokenService.revokeToken(tokenService.getToken(req));
+        return InstantResponses.OK;
+    }
+
     private ServiceResponse validateEmail(EmailDTO emailDTO) {
         ServiceResponse res = new ServiceResponse<>(HttpStatus.BAD_REQUEST_400);
 
@@ -159,7 +163,7 @@ public class AuthService {
     }
 
     private ServiceResponse validatePassword(PasswordDTO passwordDTO) {
-        List<Problem> problems = PasswordDTOValidator.verify(null, passwordDTO, true, true);
+        List<Problem> problems = PasswordDTOValidator.verify(passwordDTO, true, false);
 
         if (StringUtils.isBlank(passwordDTO.getToken())) {
             problems.add(new Problem("form", "Token cannot be null!"));

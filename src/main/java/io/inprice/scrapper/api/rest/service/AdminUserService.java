@@ -3,10 +3,10 @@ package io.inprice.scrapper.api.rest.service;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
@@ -22,67 +22,67 @@ public class AdminUserService {
 
     private final UserRepository repository = Beans.getSingleton(UserRepository.class);
 
-    public ServiceResponse findById(AuthUser authUser, Long id) {
-        return repository.findById(authUser, id);
+    public ServiceResponse findById(Long id) {
+        return repository.findById(id);
     }
 
-    public ServiceResponse getList(AuthUser authUser) {
-        return repository.getList(authUser);
+    public ServiceResponse getList() {
+        return repository.getList();
     }
 
-    public ServiceResponse insert(AuthUser authUser, UserDTO userDTO) {
-        ServiceResponse res = validate(authUser, userDTO, true);
+    public ServiceResponse insert(UserDTO userDTO) {
+        ServiceResponse res = validate(userDTO, true);
         if (res.isOK()) {
-            res = repository.insert(authUser, userDTO);
+            res = repository.insert(userDTO);
             if (res.isOK()) {
-                log.info("A new user has been added successfully. CompanyId: {}, Email: {}", authUser.getCompanyId(), userDTO.getEmail());
+                log.info("A new user has been added successfully. CompanyId: {}, Email: {}", Context.getCompanyId(), userDTO.getEmail());
             }
         }
         return res;
     }
 
-    public ServiceResponse update(AuthUser authUser, UserDTO userDTO, boolean passwordWillBeUpdated) {
+    public ServiceResponse update(UserDTO userDTO, boolean passwordWillBeUpdated) {
         if (userDTO.getId() == null || userDTO.getId() < 1) {
             return InstantResponses.NOT_FOUND("User");
         }
 
-        ServiceResponse res = validate(authUser, userDTO, false);
+        ServiceResponse res = validate(userDTO, false);
         if (res.isOK()) {
-            res = repository.update(authUser, userDTO, true, passwordWillBeUpdated);
+            res = repository.update(userDTO, true, passwordWillBeUpdated);
         }
         return res;
     }
 
-    public ServiceResponse updatePassword(AuthUser authUser, PasswordDTO passwordDTO) {
+    public ServiceResponse updatePassword(PasswordDTO passwordDTO) {
         if (passwordDTO.getId() == null || passwordDTO.getId() < 1) {
             return InstantResponses.NOT_FOUND("User");
         }
 
-        ServiceResponse res = validate(authUser, passwordDTO);
+        ServiceResponse res = validate(passwordDTO);
         if (res.isOK()) {
-            res = repository.updatePassword(authUser, passwordDTO);
+            res = repository.updatePassword(passwordDTO, Context.getAuthUser());
         }
         return res;
     }
 
-    public ServiceResponse deleteById(AuthUser authUser, Long id) {
+    public ServiceResponse deleteById(Long id) {
         if (id == null || id < 1) {
             return InstantResponses.NOT_FOUND("User");
         }
 
-        return repository.deleteById(authUser, id);
+        return repository.deleteById(id);
     }
 
-    public ServiceResponse toggleStatus(AuthUser authUser, Long id) {
+    public ServiceResponse toggleStatus(Long id) {
         if (id == null || id < 1) {
             return InstantResponses.NOT_FOUND("User");
         }
 
-        return repository.toggleStatus(authUser, id);
+        return repository.toggleStatus(id);
     }
 
-    private ServiceResponse validate(AuthUser authUser, PasswordDTO passwordDTO) {
-        List<Problem> problems = PasswordDTOValidator.verify(authUser, passwordDTO, true, true);
+    private ServiceResponse validate(PasswordDTO passwordDTO) {
+        List<Problem> problems = PasswordDTOValidator.verify(passwordDTO, true, true);
 
         if (problems.size() > 0) {
             ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
@@ -93,8 +93,8 @@ public class AdminUserService {
         }
     }
 
-    private ServiceResponse validate(AuthUser authUser, UserDTO userDTO, boolean insert) {
-        List<Problem> problems = UserDTOValidator.verify(authUser, userDTO, insert, "Full");
+    private ServiceResponse validate(UserDTO userDTO, boolean insert) {
+        List<Problem> problems = UserDTOValidator.verify(userDTO, insert, "Full");
 
         if (problems.size() > 0) {
             ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);

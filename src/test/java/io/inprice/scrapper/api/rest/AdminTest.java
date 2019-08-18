@@ -14,6 +14,7 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 
+//todo: some test cases must be added for insert and update operations
 public class AdminTest {
 
     @BeforeClass

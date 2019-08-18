@@ -5,8 +5,8 @@ import com.zaxxer.hikari.HikariDataSource;
 import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.common.helpers.ModelMapper;
-import org.slf4j.Logger;
 import io.inprice.scrapper.common.models.Model;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;

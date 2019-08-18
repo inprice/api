@@ -22,12 +22,12 @@ public class TokenService {
     private final TokenRepository tokenRepository = Beans.getSingleton(TokenRepository.class);
     private final Properties properties = Beans.getSingleton(Properties.class);
 
-    public String newToken(AuthUser authUser) {
+    String newToken(AuthUser authUser) {
         final String payload = Global.gson.toJson(authUser);
         return Consts.Auth.TOKEN_PREFIX + generateToken(Cryptor.encrypt(payload));
     }
 
-    public String newTokenEmailFor(String email) {
+    String newTokenEmailFor(String email) {
         return generateToken(Cryptor.encrypt(email));
     }
 
@@ -46,7 +46,7 @@ public class TokenService {
             .compact();
     }
 
-    public void revokeToken(String token) {
+    void revokeToken(String token) {
         if (! StringUtils.isBlank(token)) tokenRepository.invalidateToken(token);
     }
 
@@ -98,7 +98,7 @@ public class TokenService {
         }
     }
 
-    public boolean isEmailTokenExpired(String token) {
+    boolean isEmailTokenExpired(String token) {
         try {
             getEmail(token);
             return false;

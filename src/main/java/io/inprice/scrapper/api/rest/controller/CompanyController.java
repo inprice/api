@@ -5,11 +5,9 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
-import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.CompanyService;
-import io.inprice.scrapper.api.rest.service.TokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,15 +19,12 @@ public class CompanyController {
     private static final Logger log = LoggerFactory.getLogger(CompanyController.class);
 
     private static final CompanyService companyService = Beans.getSingleton(CompanyService.class);
-    private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
 
     @Routing
     public void routes() {
 
         put(Consts.Paths.Company.BASE, (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
-
-            ServiceResponse serviceRes = update(authUser, req.body());
+            ServiceResponse serviceRes = update(req.body());
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -50,10 +45,10 @@ public class CompanyController {
         return InstantResponses.INVALID_DATA("company!");
     }
 
-    private ServiceResponse update(AuthUser authUser, String body) {
+    private ServiceResponse update(String body) {
         CompanyDTO companyDTO = toModel(body);
         if (companyDTO != null) {
-            return companyService.update(authUser, companyDTO);
+            return companyService.update(companyDTO);
         }
         return InstantResponses.INVALID_DATA("company!");
     }

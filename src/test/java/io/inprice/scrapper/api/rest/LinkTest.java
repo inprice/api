@@ -3,6 +3,7 @@ package io.inprice.scrapper.api.rest;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.TestHelper;
+import io.restassured.RestAssured;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -12,11 +13,12 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
+//todo: workspace id in cookies must be tested
 public class LinkTest {
 
     @BeforeClass
     public static void setup() {
-        TestHelper.setup(true, true);
+        TestHelper.setup(true, true, true);
 
         //adding a product to crud on it
         given()
@@ -86,24 +88,6 @@ public class LinkTest {
     }
 
     @Test
-    public void link_not_found_when_get_with_a_wrong_id() {
-        when()
-            .get(Consts.Paths.Link.BASE + "/0").
-        then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Link not found!"));
-    }
-
-    @Test
-    public void link_not_found_when_delete_with_a_wrong_id() {
-        when()
-            .delete(Consts.Paths.Link.BASE + "/0").
-        then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Link not found!"));
-    }
-
-    @Test
     public void everything_should_be_ok_with_deleting() {
         final long id = 2;
 
@@ -133,6 +117,131 @@ public class LinkTest {
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("models.size", greaterThan(0)); //since we have a default link inserted at the beginning
+    }
+
+    @Test
+    public void missing_workspace_with_inserting() {
+        TestHelper.loginAsUser();
+
+        final LinkDTO link = TestHelper.getLinkDTO(1L);
+
+        given()
+            .body(link).
+        when()
+            .post(Consts.Paths.Link.BASE).
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void missing_workspace_with_finding() {
+        TestHelper.loginAsUser();
+
+        final int id = 1;
+
+        when()
+            .get(Consts.Paths.Link.BASE + "/" + id).
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void missing_workspace_with_changing_status_to_PAUSED() {
+        TestHelper.loginAsUser();
+
+        final int id = 1;
+
+        when()
+            .put(Consts.Paths.Link.PAUSE + "/" + id + "?product_id=1").
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void missing_workspace_with_changing_status_to_RENEWED() {
+        TestHelper.loginAsUser();
+
+        final int id = 1;
+
+        when()
+            .put(Consts.Paths.Link.RENEW + "/" + id + "?product_id=1").
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void missing_workspace_with_changing_status_to_RESUMED() {
+        TestHelper.loginAsUser();
+
+        final int id = 1;
+
+        when()
+            .put(Consts.Paths.Link.RESUME + "/" + id + "?product_id=1").
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void missing_workspace_ok_with_deleting() {
+        TestHelper.loginAsUser();
+
+        final long id = 1;
+
+        when()
+            .delete(Consts.Paths.Link.BASE + "/" + id).
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void missing_workspace_with_listing() {
+        TestHelper.loginAsUser();
+
+        final long id = 1;
+
+        when()
+            .get(Consts.Paths.Link.BASE + "s/" + id).
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void link_not_found_when_get_with_a_wrong_id() {
+        when()
+            .get(Consts.Paths.Link.BASE + "/0").
+        then()
+            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
+            .body("result", equalTo("Link not found!"));
+    }
+
+    @Test
+    public void link_not_found_when_delete_with_a_wrong_id() {
+        when()
+            .delete(Consts.Paths.Link.BASE + "/0").
+        then()
+            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
+            .body("result", equalTo("Link not found!"));
     }
 
     @Test
@@ -201,7 +310,7 @@ public class LinkTest {
 
     @Test
     public void permission_problem_for_a_user_with_inserting() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsUser(true);
 
         final LinkDTO link = TestHelper.getLinkDTO(1L);
 
@@ -213,12 +322,12 @@ public class LinkTest {
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
             .body("result", equalTo("User has no permission to insert a new link!"));
 
-        TestHelper.loginAsAdmin();
+        TestHelper.loginAsAdmin(true);
     }
 
     @Test
     public void permission_problem_for_a_user_with_deleting() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsUser(true);
 
         final int id = 1;
 
@@ -228,12 +337,12 @@ public class LinkTest {
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
             .body("result", equalTo("User has no permission to delete a link!"));
 
-        TestHelper.loginAsAdmin();
+        TestHelper.loginAsAdmin(true);
     }
 
     @Test
     public void permission_problem_for_a_user_with_changing_status_to_PAUSED() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsUser(true);
 
         final int id = 1;
         final int productId = 1;
@@ -244,12 +353,12 @@ public class LinkTest {
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
             .body("result", equalTo("User has no permission to change link's status!"));
 
-        TestHelper.loginAsAdmin();
+        TestHelper.loginAsAdmin(true);
     }
 
     @Test
     public void permission_problem_for_a_user_with_changing_status_to_RENEWED() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsUser(true);
 
         final int id = 1;
         final int productId = 1;
@@ -260,12 +369,12 @@ public class LinkTest {
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
             .body("result", equalTo("User has no permission to change link's status!"));
 
-        TestHelper.loginAsAdmin();
+        TestHelper.loginAsAdmin(true);
     }
 
     @Test
     public void permission_problem_for_a_user_with_changing_status_to_RESUMED() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsUser(true);
 
         final int id = 1;
         final int productId = 1;
@@ -276,7 +385,7 @@ public class LinkTest {
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
             .body("result", equalTo("User has no permission to change link's status!"));
 
-        TestHelper.loginAsAdmin();
+        TestHelper.loginAsAdmin(true);
     }
 
     @Test
@@ -290,7 +399,7 @@ public class LinkTest {
             .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
             .body("result", equalTo("Invalid product!"));
 
-        TestHelper.loginAsAdmin();
+        TestHelper.loginAsAdmin(true);
     }
 
     @Test
@@ -304,7 +413,7 @@ public class LinkTest {
             .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
             .body("result", equalTo("Invalid product!"));
 
-        TestHelper.loginAsAdmin();
+        TestHelper.loginAsAdmin(true);
     }
 
     @Test

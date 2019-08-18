@@ -21,6 +21,10 @@ public class TestHelper {
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     public static void setup(boolean defaultCompanyAndUser, boolean extraUser) {
+        setup(defaultCompanyAndUser, extraUser, false);
+    }
+
+    public static void setup(boolean defaultCompanyAndUser, boolean extraUser, boolean addWorkspaceCookie) {
         if (Global.isApplicationRunning) {
             dbUtils.reset();
         } else {
@@ -38,7 +42,7 @@ public class TestHelper {
             then()
                 .statusCode(HttpStatus.OK_200).assertThat();
 
-            loginAsAdmin();
+            loginAsAdmin(addWorkspaceCookie);
 
             //insert a user to use him
             if (extraUser) {
@@ -108,6 +112,10 @@ public class TestHelper {
     }
 
     public static void loginAsAdmin() {
+        loginAsAdmin(false);
+    }
+
+    public static void loginAsAdmin(boolean addWorkspaceCookie) {
         RestAssured.requestSpecification = null;
 
         //dont forget, the id 1 is reserved for the admin only during testing
@@ -123,11 +131,16 @@ public class TestHelper {
 
         RestAssured.requestSpecification =
             new RequestSpecBuilder()
+                .addCookie(Consts.Auth.WORKSPACE_COOKIE, addWorkspaceCookie ? "1" : null)
                 .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
             .build();
     }
 
     public static void loginAsUser() {
+        loginAsUser(false);
+    }
+
+    public static void loginAsUser(boolean addWorkspaceCookie) {
         RestAssured.requestSpecification = null;
 
         //dont forget, the id 1 is reserved for the admin only during testing
@@ -143,6 +156,7 @@ public class TestHelper {
 
         RestAssured.requestSpecification =
             new RequestSpecBuilder()
+                .addCookie(Consts.Auth.WORKSPACE_COOKIE, addWorkspaceCookie ? "1" : null)
                 .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
             .build();
     }

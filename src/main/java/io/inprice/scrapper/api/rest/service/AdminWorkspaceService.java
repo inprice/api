@@ -2,10 +2,9 @@ package io.inprice.scrapper.api.rest.service;
 
 import io.inprice.scrapper.api.dto.WorkspaceDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.rest.repository.WorkspaceRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
@@ -17,40 +16,40 @@ public class AdminWorkspaceService {
 
     private final WorkspaceRepository repository = Beans.getSingleton(WorkspaceRepository.class);
 
-    public ServiceResponse findById(AuthUser authUser, Long id) {
-        return repository.findById(authUser, id);
+    public ServiceResponse findById(Long id) {
+        return repository.findById(id);
     }
 
-    public ServiceResponse getList(AuthUser authUser) {
-        return repository.getList(authUser);
+    public ServiceResponse getList() {
+        return repository.getList();
     }
 
-    public ServiceResponse insert(AuthUser authUser, WorkspaceDTO workspaceDTO) {
+    public ServiceResponse insert(WorkspaceDTO workspaceDTO) {
         ServiceResponse res = validate(workspaceDTO, true);
         if (res.isOK()) {
-            res = repository.insert(authUser, workspaceDTO);
+            res = repository.insert(workspaceDTO);
         }
         return res;
     }
 
-    public ServiceResponse update(AuthUser authUser, WorkspaceDTO workspaceDTO) {
+    public ServiceResponse update(WorkspaceDTO workspaceDTO) {
         if (workspaceDTO.getId() == null || workspaceDTO.getId() < 1) {
             return InstantResponses.NOT_FOUND("Workspace");
         }
 
         ServiceResponse res = validate(workspaceDTO, false);
         if (res.isOK()) {
-            res = repository.update(authUser, workspaceDTO);
+            res = repository.update(workspaceDTO);
         }
         return res;
     }
 
-    public ServiceResponse deleteById(AuthUser authUser, Long id) {
+    public ServiceResponse deleteById(Long id) {
         if (id == null || id < 1) {
             return InstantResponses.NOT_FOUND("Workspace");
         }
 
-        return repository.deleteById(authUser, id);
+        return repository.deleteById(id);
     }
 
     private ServiceResponse validate(WorkspaceDTO workspaceDTO, boolean insert) {

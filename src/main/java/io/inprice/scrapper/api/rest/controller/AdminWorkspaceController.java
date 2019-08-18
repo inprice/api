@@ -5,11 +5,9 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
-import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.AdminWorkspaceService;
-import io.inprice.scrapper.api.rest.service.TokenService;
 import org.apache.commons.validator.routines.LongValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,79 +19,70 @@ public class AdminWorkspaceController {
     private static final Logger log = LoggerFactory.getLogger(AdminWorkspaceController.class);
 
     private static final AdminWorkspaceService adminWorkspaceService = Beans.getSingleton(AdminWorkspaceService.class);
-    private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
 
     @Routing
     public void routes() {
 
         //insert
         post(Consts.Paths.Workspace.BASE, (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
-
-            ServiceResponse serviceRes = upsert(authUser, req.body(), true);
+            ServiceResponse serviceRes = upsert(req.body(), true);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //update
         put(Consts.Paths.Workspace.BASE, (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
-
-            ServiceResponse serviceRes = upsert(authUser, req.body(), false);
+            ServiceResponse serviceRes = upsert(req.body(), false);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //delete
         delete(Consts.Paths.Workspace.BASE + "/:id", (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long id = LongValidator.getInstance().validate(req.params(":id"));
 
-            ServiceResponse serviceRes = deleteById(authUser, id);
+            ServiceResponse serviceRes = deleteById(id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //find
         get(Consts.Paths.Workspace.BASE + "/:id", (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long id = LongValidator.getInstance().validate(req.params(":id"));
 
-            ServiceResponse serviceRes = findById(authUser, id);
+            ServiceResponse serviceRes = findById(id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //list
         get(Consts.Paths.Workspace.BASE + "s", (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
-
-            ServiceResponse serviceRes = getList(authUser);
+            ServiceResponse serviceRes = getList();
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
     }
 
-    private ServiceResponse findById(AuthUser authUser, Long id) {
-        return adminWorkspaceService.findById(authUser, id);
+    private ServiceResponse findById(Long id) {
+        return adminWorkspaceService.findById(id);
     }
 
-    private ServiceResponse getList(AuthUser authUser) {
-        return adminWorkspaceService.getList(authUser);
+    private ServiceResponse getList() {
+        return adminWorkspaceService.getList();
     }
 
-    private ServiceResponse deleteById(AuthUser authUser, Long id) {
-        return adminWorkspaceService.deleteById(authUser, id);
+    private ServiceResponse deleteById(Long id) {
+        return adminWorkspaceService.deleteById(id);
     }
 
-    private ServiceResponse upsert(AuthUser authUser, String body, boolean insert) {
+    private ServiceResponse upsert(String body, boolean insert) {
         WorkspaceDTO workspaceDTO = toModel(body);
         if (workspaceDTO != null) {
             if (insert)
-                return adminWorkspaceService.insert(authUser, workspaceDTO);
+                return adminWorkspaceService.insert(workspaceDTO);
             else
-                return adminWorkspaceService.update(authUser, workspaceDTO);
+                return adminWorkspaceService.update(workspaceDTO);
         }
         log.error("Invalid workspace data: " + body);
         return InstantResponses.INVALID_DATA("workspace!");

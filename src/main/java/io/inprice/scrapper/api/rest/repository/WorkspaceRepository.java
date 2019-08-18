@@ -3,9 +3,9 @@ package io.inprice.scrapper.api.rest.repository;
 import io.inprice.scrapper.api.dto.WorkspaceDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.models.Workspace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,12 +18,12 @@ public class WorkspaceRepository {
     private static final Logger log = LoggerFactory.getLogger(WorkspaceRepository.class);
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
-    public ServiceResponse<Workspace> findById(AuthUser authUser, Long id) {
+    public ServiceResponse<Workspace> findById(Long id) {
         Workspace model = dbUtils.findSingle(
             String.format(
             "select * from workspace " +
                 "where id = %d " +
-                "  and company_id = %d", id, authUser.getCompanyId()), this::map);
+                "  and company_id = %d", id, Context.getCompanyId()), this::map);
         if (model != null) {
             return new ServiceResponse<>(model);
         } else {
@@ -31,12 +31,12 @@ public class WorkspaceRepository {
         }
     }
 
-    public ServiceResponse<Workspace> getList(AuthUser authUser) {
+    public ServiceResponse<Workspace> getList() {
         List<Workspace> workspaces = dbUtils.findMultiple(
             String.format(
             "select * from workspace " +
                 "where company_id = %d " +
-                "order by name", authUser.getCompanyId()), this::map);
+                "order by name", Context.getCompanyId()), this::map);
 
         if (workspaces != null && workspaces.size() > 0) {
             return new ServiceResponse<>(workspaces);
@@ -48,7 +48,7 @@ public class WorkspaceRepository {
      * must be done by an admin
      *
      */
-    public ServiceResponse insert(AuthUser authUser, WorkspaceDTO workspaceDTO) {
+    public ServiceResponse insert(WorkspaceDTO workspaceDTO) {
         final String query =
                 "insert into workspace " +
                 "(name, plan_id, company_id) " +
@@ -61,12 +61,12 @@ public class WorkspaceRepository {
             int i = 0;
             pst.setString(++i, workspaceDTO.getName());
             pst.setLong(++i, workspaceDTO.getPlanId());
-            pst.setLong(++i, authUser.getCompanyId());
+            pst.setLong(++i, Context.getCompanyId());
 
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
             else
-                return InstantResponses.CRUD_ERROR("");
+                return InstantResponses.CRUD_ERROR("Couldn't insert the workspace. " + workspaceDTO.toString());
 
         } catch (SQLIntegrityConstraintViolationException ie) {
             log.error("Failed to insert workspace: " + ie.getMessage());
@@ -81,14 +81,14 @@ public class WorkspaceRepository {
      * must be done by an admin
      *
      */
-    public ServiceResponse update(AuthUser authUser, WorkspaceDTO workspaceDTO) {
+    public ServiceResponse update(WorkspaceDTO workspaceDTO) {
         try (Connection con = dbUtils.getConnection();
              PreparedStatement pst = con.prepareStatement("update workspace set name=? where id=? and company_id=?")) {
 
             int i = 0;
             pst.setString(++i, workspaceDTO.getName());
             pst.setLong(++i, workspaceDTO.getId());
-            pst.setLong(++i, authUser.getCompanyId());
+            pst.setLong(++i, Context.getCompanyId());
 
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
@@ -101,40 +101,40 @@ public class WorkspaceRepository {
         }
     }
 
-    public ServiceResponse deleteById(AuthUser authUser, Long id) {
+    public ServiceResponse deleteById(Long id) {
         boolean result = dbUtils.executeBatchQueries(new String[] {
 
                 String.format(
                 "delete link_price where workspace_id=%d and company_id=%d;",
-                    id, authUser.getCompanyId()
+                    id, Context.getCompanyId()
                 ),
                 String.format(
                 "delete link_history where workspace_id=%d and company_id=%d;",
-                    id, authUser.getCompanyId()
+                    id, Context.getCompanyId()
                 ),
                 String.format(
                 "delete link_spec where workspace_id=%d and company_id=%d;",
-                    id, authUser.getCompanyId()
+                    id, Context.getCompanyId()
                 ),
                 String.format(
                 "delete link where workspace_id=%d and company_id=%d;",
-                    id, authUser.getCompanyId()
+                    id, Context.getCompanyId()
                 ),
                 String.format(
                 "delete product_price where workspace_id=%d and company_id=%d;",
-                    id, authUser.getCompanyId()
+                    id, Context.getCompanyId()
                 ),
                 String.format(
                 "delete product where workspace_id=%d and company_id=%d;",
-                    id, authUser.getCompanyId()
+                    id, Context.getCompanyId()
                 ),
                 String.format(
                 "delete workspace_history where workspace_id=%d and company_id=%d;",
-                    id, authUser.getCompanyId()
+                    id, Context.getCompanyId()
                 ),
                 String.format(
                 "delete workspace where id=%d and company_id=%d;",  //must be successful
-                    id, authUser.getCompanyId()
+                    id, Context.getCompanyId()
                 )
 
             }, String.format("Failed to delete workspace. Id: %d", id), 1 //1 of 8 execution must be successful

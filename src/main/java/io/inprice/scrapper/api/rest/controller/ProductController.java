@@ -5,11 +5,10 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
-import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.service.ProductService;
-import io.inprice.scrapper.api.rest.service.TokenService;
 import io.inprice.scrapper.common.meta.UserType;
 import org.apache.commons.validator.routines.LongValidator;
 import org.slf4j.Logger;
@@ -22,100 +21,90 @@ public class ProductController {
     private static final Logger log = LoggerFactory.getLogger(ProductController.class);
 
     private static final ProductService productService = Beans.getSingleton(ProductService.class);
-    private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
 
     @Routing
     public void routes() {
 
         //insert
         post(Consts.Paths.Product.BASE, (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
-
-            ServiceResponse serviceRes = upsert(authUser, req.body(), true);
+            ServiceResponse serviceRes = upsert(req.body(), true);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //update
         put(Consts.Paths.Product.BASE, (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
-
-            ServiceResponse serviceRes = upsert(authUser, req.body(), false);
+            ServiceResponse serviceRes = upsert(req.body(), false);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //delete
         delete(Consts.Paths.Product.BASE + "/:id", (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long id = LongValidator.getInstance().validate(req.params(":id"));
 
-            ServiceResponse serviceRes = deleteById(authUser, id);
+            ServiceResponse serviceRes = deleteById(id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //find
         get(Consts.Paths.Product.BASE + "/:id", (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long id = LongValidator.getInstance().validate(req.params(":id"));
 
-            ServiceResponse serviceRes = findById(authUser, id);
+            ServiceResponse serviceRes = findById(id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //list
         get(Consts.Paths.Product.BASE + "s", (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
-
-            ServiceResponse serviceRes = getList(authUser);
+            ServiceResponse serviceRes = getList();
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //toggle active status
         put(Consts.Paths.Product.TOGGLE_STATUS + "/:id", (req, res) -> {
-            final AuthUser authUser = tokenService.getAuthUser(req);
             final Long id = LongValidator.getInstance().validate(req.params(":id"));
 
-            ServiceResponse serviceRes = toggleStatus(authUser, id);
+            ServiceResponse serviceRes = toggleStatus(id);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
     }
 
-    private ServiceResponse findById(AuthUser authUser, Long id) {
-        return productService.findById(authUser, id);
+    private ServiceResponse findById(Long id) {
+        return productService.findById(id);
     }
 
-    private ServiceResponse getList(AuthUser authUser) {
-        return productService.getList(authUser);
+    private ServiceResponse getList() {
+        return productService.getList();
     }
 
-    private ServiceResponse deleteById(AuthUser authUser, Long id) {
-        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("delete a product!");
-        return productService.deleteById(authUser, id);
+    private ServiceResponse deleteById(Long id) {
+        if (Context.getAuthUser().getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("delete a product!");
+        return productService.deleteById(id);
     }
 
-    private ServiceResponse upsert(AuthUser authUser, String body, boolean insert) {
-        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("save a product!");
+    private ServiceResponse upsert(String body, boolean insert) {
+        if (Context.getAuthUser().getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("save a product!");
 
         ProductDTO productDTO = toModel(body);
         if (productDTO != null) {
             if (insert)
-                return productService.insert(authUser, productDTO);
+                return productService.insert(productDTO);
             else
-                return productService.update(authUser, productDTO);
+                return productService.update(productDTO);
         }
         log.error("Invalid product data: " + body);
         return InstantResponses.INVALID_DATA("product!");
     }
 
-    private ServiceResponse toggleStatus(AuthUser authUser, Long id) {
-        if (authUser.getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("toggle a product's status!");
-        return productService.toggleStatus(authUser, id);
+    private ServiceResponse toggleStatus(Long id) {
+        if (Context.getAuthUser().getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("toggle a product's status!");
+        return productService.toggleStatus(id);
     }
 
     private ProductDTO toModel(String body) {

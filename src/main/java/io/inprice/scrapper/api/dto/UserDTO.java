@@ -2,8 +2,6 @@ package io.inprice.scrapper.api.dto;
 
 import io.inprice.scrapper.common.meta.UserType;
 
-import java.io.Serializable;
-
 /**
  * Used for handling user info from client side
  */

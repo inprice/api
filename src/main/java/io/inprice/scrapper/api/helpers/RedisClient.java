@@ -4,7 +4,6 @@ import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.framework.Beans;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.Redisson;
-import org.redisson.api.RSet;
 import org.redisson.api.RSetCache;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;

@@ -5,6 +5,7 @@ import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.rest.service.TokenService;
 import io.inprice.scrapper.common.meta.UserType;
+import org.apache.commons.validator.routines.LongValidator;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +23,9 @@ public class AuthFilter implements Filter {
     private static final Logger log = LoggerFactory.getLogger(AuthFilter.class);
 
     private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
+
     private final Set<String> allowedURIs;
+    private final Set<String> workspaceNeededURIs;
 
     public AuthFilter() {
         allowedURIs = new HashSet<>(5);
@@ -31,6 +34,10 @@ public class AuthFilter implements Filter {
         allowedURIs.add(Consts.Paths.Auth.FORGOT_PASSWORD);
         allowedURIs.add(Consts.Paths.Auth.RESET_PASSWORD);
         allowedURIs.add(Consts.Paths.Auth.LOGOUT);
+
+        workspaceNeededURIs = new HashSet<>(2);
+        workspaceNeededURIs.add(Consts.Paths.Product.BASE);
+        workspaceNeededURIs.add(Consts.Paths.Link.BASE);
 
         log.info("Allowed URIs");
         for (String uri: allowedURIs) {
@@ -42,34 +49,50 @@ public class AuthFilter implements Filter {
         if (isAuthenticationNeeded(request)) {
             String authHeader = request.headers(Consts.Auth.AUTHORIZATION_HEADER);
             if (authHeader == null) {
-                log.warn("Missing authentication header!");
-                halt(HttpStatus.UNAUTHORIZED_401);
+                halt(HttpStatus.UNAUTHORIZED_401, "Missing authentication header!");
             } else {
                 String token = tokenService.getToken(request);
                 if (tokenService.isTokenInvalidated(token)) {
-                    log.warn("Invalidated token!");
-                    halt(HttpStatus.NOT_ACCEPTABLE_406);
+                    halt(HttpStatus.NOT_ACCEPTABLE_406, "Invalidated token!");
                 } else {
                     AuthUser authUser = tokenService.isTokenExpired(token);
                     if (authUser == null) {
-                        log.warn("Expired token!");
-                        halt(HttpStatus.REQUEST_TIMEOUT_408);
+                        halt(HttpStatus.REQUEST_TIMEOUT_408, "Expired token!");
                     } else if (! UserType.ADMIN.equals(authUser.getType()) && request.uri().startsWith(Consts.Paths.ADMIN_BASE)) {
-                        log.warn("Unauthorized user!");
-                        halt(HttpStatus.FORBIDDEN_403);
+                        halt(HttpStatus.FORBIDDEN_403, "Unauthorized user!");
                     }
+
+                    Context.setAuthUser(authUser);
+
+                    boolean isWorkspaceSet = false;
+                    String workspace = request.cookie(Consts.Auth.WORKSPACE_COOKIE);
+                    if (workspace != null) {
+                        try {
+                            Context.setWorkspaceId(Long.parseLong(workspace));
+                            isWorkspaceSet = true;
+                        } catch (Exception e) {
+                            //
+                        }
+                    }
+                    if (isWorkspaceNeeded(request) && ! isWorkspaceSet) {
+                        halt(HttpStatus.NOT_ACCEPTABLE_406, "Workspace is missing!");
+                    }
+
                 }
             }
         }
     }
 
     private boolean isAuthenticationNeeded(Request req) {
-        final String uri = req.uri();
-        if (allowedURIs.contains(uri)) return false;
-        for (String u: allowedURIs) {
-            if (uri.startsWith(u)) return false;
+        return ! (allowedURIs.contains(req.uri()));
+    }
+
+    private boolean isWorkspaceNeeded(Request req) {
+        if (workspaceNeededURIs.contains(req.uri())) return true;
+        for (String uri: workspaceNeededURIs) {
+            if (req.uri().startsWith(uri)) return true;
         }
-        return true;
+        return false;
     }
 
 }

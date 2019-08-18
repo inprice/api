@@ -2,11 +2,10 @@ package io.inprice.scrapper.api.rest.service;
 
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.Consts;
-import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.repository.CompanyRepository;
 import io.inprice.scrapper.api.rest.repository.CountryRepository;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
@@ -31,7 +30,7 @@ public class CompanyService {
     }
 
     public ServiceResponse insert(CompanyDTO companyDTO) {
-        ServiceResponse res = validate(null, companyDTO, true);
+        ServiceResponse res = validate(companyDTO, true);
         if (res.isOK()) {
             res = repository.insert(companyDTO);
             if (res.isOK()) {
@@ -41,30 +40,30 @@ public class CompanyService {
         return res;
     }
 
-    public ServiceResponse update(AuthUser authUser, CompanyDTO companyDTO) {
+    public ServiceResponse update(CompanyDTO companyDTO) {
         if (companyDTO.getId() == null || companyDTO.getId() < 1) {
             return InstantResponses.NOT_FOUND("Company");
         }
 
-        ServiceResponse res = validate(authUser, companyDTO, false);
+        ServiceResponse res = validate(companyDTO, false);
         if (res.isOK()) {
-            res = repository.update(authUser, companyDTO);
+            res = repository.update(companyDTO);
         }
         return res;
     }
 
-    private ServiceResponse validate(AuthUser authUser, CompanyDTO companyDTO, boolean insert) {
+    private ServiceResponse validate(CompanyDTO companyDTO, boolean insert) {
         ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
 
         List<Problem> problems;
 
         if (insert) {
-            problems = UserDTOValidator.verify(authUser, companyDTO, true, "Contact");
+            problems = UserDTOValidator.verify(companyDTO, true, "Contact");
         } else {
             problems = new ArrayList<>();
 
             //only admin can update their companies
-            if (UserType.ADMIN.equals(authUser.getType())) {
+            if (UserType.ADMIN.equals(Context.getAuthUser().getType())) {
                 res = InstantResponses.PERMISSION_PROBLEM("update this company!");
             }
         }

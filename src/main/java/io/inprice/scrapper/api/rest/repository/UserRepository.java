@@ -7,6 +7,7 @@ import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.utils.CodeGenerator;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.User;
@@ -24,17 +25,17 @@ public class UserRepository {
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
-    public ServiceResponse<User> findById(AuthUser authUser, Long id) {
-        return findById(authUser, id, false);
+    public ServiceResponse<User> findById(Long id) {
+        return findById(id, false);
     }
 
-    public ServiceResponse<User> findById(AuthUser authUser, Long id, boolean passwordFields) {
+    public ServiceResponse<User> findById(Long id, boolean passwordFields) {
         User model =
             dbUtils.findSingle(
                 String.format(
                     "select * from user " +
                         "where id = %d " +
-                        "  and company_id = %d", id, authUser.getCompanyId()), this::map);
+                        "  and company_id = %d", id, Context.getCompanyId()), this::map);
         if (model != null) {
             if (! passwordFields) {
                 model.setPasswordSalt(null);
@@ -46,13 +47,13 @@ public class UserRepository {
         }
     }
 
-    public ServiceResponse<User> getList(AuthUser authUser) {
+    public ServiceResponse<User> getList() {
         List<User> users = dbUtils.findMultiple(
             String.format(
                 "select * from user " +
                 "where user_type != '%s' " +
                 "  and company_id = %d " +
-                "order by full_name", UserType.ADMIN, authUser.getCompanyId()), this::map);
+                "order by full_name", UserType.ADMIN, Context.getCompanyId()), this::map);
 
         if (users != null && users.size() > 0) {
             return new ServiceResponse<>(users);
@@ -88,7 +89,7 @@ public class UserRepository {
         }
     }
 
-    public ServiceResponse insert(AuthUser authUser, UserDTO userDTO) {
+    public ServiceResponse insert(UserDTO userDTO) {
         final String query =
             "insert into user " +
             "(user_type, full_name, email, password_salt, password_hash, company_id) " +
@@ -110,12 +111,12 @@ public class UserRepository {
             pst.setString(++i, userDTO.getEmail());
             pst.setString(++i, salt);
             pst.setString(++i, BCrypt.hashpw(userDTO.getPassword(), salt));
-            pst.setLong(++i, authUser.getCompanyId());
+            pst.setLong(++i, Context.getCompanyId());
 
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
             else
-                return InstantResponses.CRUD_ERROR("");
+                return InstantResponses.CRUD_ERROR("Couldn't insert user. " + userDTO.toString());
 
         } catch (SQLIntegrityConstraintViolationException ie) {
             log.error("Failed to insert user: " + ie.getMessage());
@@ -126,7 +127,7 @@ public class UserRepository {
         }
     }
 
-    public ServiceResponse update(AuthUser authUser, UserDTO userDTO, boolean byAdmin, boolean passwordWillBeUpdate) {
+    public ServiceResponse update(UserDTO userDTO, boolean byAdmin, boolean passwordWillBeUpdate) {
         final String query =
             "update user " +
             "set full_name=?, email=? " +
@@ -155,7 +156,7 @@ public class UserRepository {
             }
 
             pst.setLong(++i, userDTO.getId());
-            pst.setLong(++i, authUser.getCompanyId());
+            pst.setLong(++i, Context.getCompanyId());
 
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
@@ -168,7 +169,7 @@ public class UserRepository {
         }
     }
 
-    public ServiceResponse updatePassword(AuthUser authUser, PasswordDTO passwordDTO) {
+    public ServiceResponse updatePassword(PasswordDTO passwordDTO, AuthUser authUser) {
         final String query =
             "update user " +
             "set password_salt=?, password_hash=? " +
@@ -189,7 +190,7 @@ public class UserRepository {
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
             else
-                return InstantResponses.CRUD_ERROR("");
+                return InstantResponses.CRUD_ERROR("User not found!");
 
         } catch (Exception e) {
             log.error("Failed to update user", e);
@@ -197,14 +198,14 @@ public class UserRepository {
         }
     }
 
-    public ServiceResponse deleteById(AuthUser authUser, Long id) {
+    public ServiceResponse deleteById(Long id) {
         boolean result =
             dbUtils.executeQuery(
                 String.format(
                 "delete from user " +
                     "where id = %d " +
                     "  and company_id = %d " +
-                    "  and user_type != '%s'", id, authUser.getCompanyId(), UserType.ADMIN.name()),
+                    "  and user_type != '%s'", id, Context.getCompanyId(), UserType.ADMIN.name()),
             "Failed to delete user with id: " + id);
 
         if (result) return InstantResponses.OK;
@@ -212,7 +213,7 @@ public class UserRepository {
         return InstantResponses.NOT_FOUND("User");
     }
 
-    public ServiceResponse toggleStatus(AuthUser authUser, Long id) {
+    public ServiceResponse toggleStatus(Long id) {
         boolean result =
             dbUtils.executeQuery(
                 String.format(
@@ -220,7 +221,7 @@ public class UserRepository {
                     "set active = not active " +
                     "where id = %d " +
                     "  and company_id = %d " +
-                    "  and user_type != '%s'", id, authUser.getCompanyId(), UserType.ADMIN.name()),
+                    "  and user_type != '%s'", id, Context.getCompanyId(), UserType.ADMIN.name()),
         "Failed to toggle user status! id: " + id);
 
         if (result) return InstantResponses.OK;
@@ -228,15 +229,15 @@ public class UserRepository {
         return InstantResponses.NOT_FOUND("User");
     }
 
-    public ServiceResponse setDefaultWorkspace(AuthUser authUser, Long wsId) {
+    public ServiceResponse setDefaultWorkspace(Long wsId) {
         boolean result =
             dbUtils.executeQuery(
                 String.format(
                 "update user " +
                     "set default_workspace_id = %d " +
                     "where id = %d " +
-                    "  and company_id = %d ", wsId, authUser.getId(), authUser.getCompanyId()),
-        "Failed to set default workspace! User Id: " + authUser.getId() + ", Workspace Id: " + wsId);
+                    "  and company_id = %d ", wsId, Context.getAuthUser().getId(), Context.getCompanyId()),
+        "Failed to set default workspace! User Id: " + Context.getAuthUser().getId() + ", Workspace Id: " + wsId);
 
         if (result) return InstantResponses.OK;
 

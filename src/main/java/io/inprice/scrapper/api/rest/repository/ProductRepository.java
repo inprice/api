@@ -3,9 +3,9 @@ package io.inprice.scrapper.api.rest.repository;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.models.Product;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,12 +19,13 @@ public class ProductRepository {
 
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
-    public ServiceResponse<Product> findById(AuthUser authUser, Long id) {
+    public ServiceResponse<Product> findById(Long id) {
         Product model = dbUtils.findSingle(
             String.format(
             "select * from product " +
                 "where id = %d " +
-                "  and workspace_id = %d", id, authUser.getWorkspaceId()), this::map);
+                "  and company_id = %d " +
+                "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         if (model != null) {
             return new ServiceResponse<>(model);
         } else {
@@ -32,12 +33,13 @@ public class ProductRepository {
         }
     }
 
-    public ServiceResponse<Product> getList(AuthUser authUser) {
+    public ServiceResponse<Product> getList() {
         List<Product> products = dbUtils.findMultiple(
             String.format(
                 "select * from product " +
-                    "where workspace_id = %d " +
-                    "order by name", authUser.getWorkspaceId()), this::map);
+                    "where company_id = %d " +
+                    "  and workspace_id = %d " +
+                    "order by name", Context.getCompanyId(), Context.getWorkspaceId()), this::map);
 
         if (products != null && products.size() > 0) {
             return new ServiceResponse<>(products);
@@ -45,7 +47,7 @@ public class ProductRepository {
         return InstantResponses.NOT_FOUND("Product");
     }
 
-    public ServiceResponse insert(AuthUser authUser, ProductDTO productDTO) {
+    public ServiceResponse insert(ProductDTO productDTO) {
         Connection con = null;
         boolean result = false;
 
@@ -54,7 +56,7 @@ public class ProductRepository {
 
             final String query =
                     "insert into product " +
-                    "(code, name, brand, category, price, workspace_id, company_id) " +
+                    "(code, name, brand, category, price, company_id, workspace_id) " +
                     "values " +
                     "(?, ?, ?, ?, ?, ?, ?) ";
 
@@ -65,14 +67,14 @@ public class ProductRepository {
                 pst.setString(++i, productDTO.getBrand());
                 pst.setString(++i, productDTO.getCode());
                 pst.setBigDecimal(++i, productDTO.getPrice());
-                pst.setLong(++i, authUser.getWorkspaceId());
-                pst.setLong(++i, authUser.getCompanyId());
+                pst.setLong(++i, Context.getCompanyId());
+                pst.setLong(++i, Context.getWorkspaceId());
 
                 if (pst.executeUpdate() > 0) {
                     try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
                         if (generatedKeys.next()) {
                             productDTO.setId(generatedKeys.getLong(1));
-                            result = addAPriceHistory(authUser, con, productDTO);
+                            result = addAPriceHistory(con, productDTO);
                         }
                     }
                 }
@@ -83,7 +85,7 @@ public class ProductRepository {
                 return InstantResponses.OK;
             } else {
                 dbUtils.rollback(con);
-                return InstantResponses.CRUD_ERROR("");
+                return InstantResponses.CRUD_ERROR("Couldn't insert the product. " + productDTO.toString());
             }
 
         } catch (Exception e) {
@@ -95,7 +97,7 @@ public class ProductRepository {
         }
     }
 
-    public ServiceResponse update(AuthUser authUser, ProductDTO productDTO) {
+    public ServiceResponse update(ProductDTO productDTO) {
         Connection con = null;
         boolean result = false;
 
@@ -106,7 +108,8 @@ public class ProductRepository {
                  "update product " +
                  "set code=?, name=?, brand=?, category=?, price=? " +
                  "where id=? " +
-                 "  and workspace_id=?";
+                 "  and company_id=? " +
+                 "  and workspace_id=? ";
 
             try (PreparedStatement pst = con.prepareStatement(query)) {
                 int i = 0;
@@ -116,10 +119,11 @@ public class ProductRepository {
                 pst.setString(++i, productDTO.getCategory());
                 pst.setBigDecimal(++i, productDTO.getPrice());
                 pst.setLong(++i, productDTO.getId());
-                pst.setLong(++i, authUser.getWorkspaceId());
+                pst.setLong(++i, Context.getCompanyId());
+                pst.setLong(++i, Context.getWorkspaceId());
 
                 if (pst.executeUpdate() > 0) {
-                    result = addAPriceHistory(authUser, con, productDTO);
+                    result = addAPriceHistory(con, productDTO);
                 }
 
                 if (result) {
@@ -127,7 +131,7 @@ public class ProductRepository {
                     return InstantResponses.OK;
                 } else {
                     dbUtils.rollback(con);
-                    return InstantResponses.CRUD_ERROR("");
+                    return InstantResponses.CRUD_ERROR("Couldn't update the product. " + productDTO.toString());
                 }
             }
         } catch (Exception e) {
@@ -139,32 +143,32 @@ public class ProductRepository {
         }
     }
 
-    public ServiceResponse deleteById(AuthUser authUser, Long id) {
+    public ServiceResponse deleteById(Long id) {
         boolean result = dbUtils.executeBatchQueries(new String[] {
 
                 String.format(
-                "delete link_price where product_id=%d and workspace_id=%d;",
-                    id, authUser.getWorkspaceId()
+                "delete link_price where product_id=%d and company_id=%d and workspace_id=%d;",
+                    id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link_history where product_id=%d and workspace_id=%d;",
-                    id, authUser.getWorkspaceId()
+                "delete link_history where product_id=%d and company_id=%d and workspace_id=%d;",
+                    id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link_spec where product_id=%d and workspace_id=%d;",
-                    id, authUser.getWorkspaceId()
+                "delete link_spec where product_id=%d and company_id=%d and workspace_id=%d;",
+                    id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link where product_id=%d and workspace_id=%d;",
-                    id, authUser.getWorkspaceId()
+                "delete link where product_id=%d and company_id=%d and workspace_id=%d;",
+                    id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete product_price where product_id=%d and workspace_id=%d;",  //must be successful
-                    id, authUser.getWorkspaceId()
+                "delete product_price where product_id=%d and company_id=%d and workspace_id=%d;",  //must be successful
+                    id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete product where id=%d and workspace_id=%d;",                //must be successful
-                    id, authUser.getWorkspaceId()
+                "delete product where id=%d and company_id=%d and workspace_id=%d;",                //must be successful
+                    id, Context.getCompanyId(), Context.getWorkspaceId()
                 )
 
             }, String.format("Failed to delete product. Id: %d", id), 2 //2 of 6 execution must be successful
@@ -176,14 +180,15 @@ public class ProductRepository {
         return InstantResponses.NOT_FOUND("Product");
     }
 
-    public ServiceResponse toggleStatus(AuthUser authUser, Long id) {
+    public ServiceResponse toggleStatus(Long id) {
         boolean result =
             dbUtils.executeQuery(
                 String.format(
                 "update product " +
                     "set active = not active " +
                     "where id = %d " +
-                    "  and workspace_id = %d ", id, authUser.getWorkspaceId()),
+                    "  and company_id = %d " +
+                    "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()),
         "Failed to toggle product status! id: " + id);
 
         if (result) return InstantResponses.OK;
@@ -191,10 +196,10 @@ public class ProductRepository {
         return InstantResponses.NOT_FOUND("Product");
     }
 
-    private boolean addAPriceHistory(AuthUser authUser, Connection con, ProductDTO productDTO) {
+    private boolean addAPriceHistory(Connection con, ProductDTO productDTO) {
         final String query =
                 "insert into product_price " +
-                "(product_id, price, workspace_id, company_id) " +
+                "(product_id, price, company_id, workspace_id) " +
                 "values " +
                 "(?, ?, ?, ?) ";
 
@@ -202,8 +207,8 @@ public class ProductRepository {
             int i = 0;
             pst.setLong(++i, productDTO.getId());
             pst.setBigDecimal(++i, productDTO.getPrice());
-            pst.setLong(++i, authUser.getWorkspaceId());
-            pst.setLong(++i, authUser.getCompanyId());
+            pst.setLong(++i, Context.getCompanyId());
+            pst.setLong(++i, Context.getWorkspaceId());
 
             return (pst.executeUpdate() > 0);
         } catch (Exception e) {

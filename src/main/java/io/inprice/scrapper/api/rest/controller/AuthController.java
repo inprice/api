@@ -10,14 +10,11 @@ import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.AuthService;
-import io.inprice.scrapper.api.rest.service.TokenService;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-import static spark.Spark.get;
 import static spark.Spark.post;
 
 public class AuthController {
@@ -25,7 +22,6 @@ public class AuthController {
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private static final AuthService authService = Beans.getSingleton(AuthService.class);
-    private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
 
     @Routing
     public void routes() {
@@ -55,7 +51,7 @@ public class AuthController {
         }, Global.gson::toJson);
 
         post(Consts.Paths.Auth.LOGOUT, (req, res) -> {
-            ServiceResponse serviceRes = logout(req);
+            ServiceResponse serviceRes = authService.logout(req);
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -88,11 +84,6 @@ public class AuthController {
             return authService.resetPassword(passwordDTO);
         }
         return InstantResponses.INVALID_DATA("password!");
-    }
-
-    private ServiceResponse logout(Request req) {
-        tokenService.revokeToken(tokenService.getToken(req));
-        return InstantResponses.OK;
     }
 
     private PasswordDTO toPasswordModel(String body) {

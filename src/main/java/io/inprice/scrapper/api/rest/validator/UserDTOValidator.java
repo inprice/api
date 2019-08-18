@@ -2,14 +2,12 @@ package io.inprice.scrapper.api.rest.validator;
 
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.User;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.validator.routines.EmailValidator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +16,7 @@ public class UserDTOValidator {
 
     private static final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
 
-    public static List<Problem> verify(AuthUser authUser, UserDTO userDTO, boolean insert, String field) {
+    public static List<Problem> verify(UserDTO userDTO, boolean insert, String field) {
         List<Problem> problems = new ArrayList<>();
 
         if (! insert && userDTO.getId() == null) {
@@ -35,8 +33,8 @@ public class UserDTOValidator {
             problems.add(new Problem("fullName", field + " name must be between 2 and 150 chars!"));
         }
 
-        //when it is updated, no need to check for passwords since they are updated and checked in different service calls
-        if (insert) problems.addAll(PasswordDTOValidator.verify(authUser, userDTO, true, false));
+        //when it is updated, no need to check for passwords, since they are updated and checked in different service calls
+        if (insert) problems.addAll(PasswordDTOValidator.verify(userDTO, true, false));
 
         boolean verifiedByEmailDTOValidator = EmailDTOValidator.verify(userDTO.getEmail(), problems);
 

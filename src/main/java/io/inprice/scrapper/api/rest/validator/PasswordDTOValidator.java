@@ -2,9 +2,9 @@ package io.inprice.scrapper.api.rest.validator;
 
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.User;
@@ -18,7 +18,7 @@ public class PasswordDTOValidator {
 
     private static final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
 
-    public static List<Problem> verify(AuthUser authUser, PasswordDTO dto, boolean againPassCheck, boolean oldPassCheck) {
+    public static List<Problem> verify(PasswordDTO dto, boolean againPassCheck, boolean oldPassCheck) {
         List<Problem> problems = new ArrayList<>();
 
         if (StringUtils.isBlank(dto.getPassword())) {
@@ -29,14 +29,14 @@ public class PasswordDTOValidator {
             problems.add(new Problem("password", "Passwords are mismatch!"));
         }
 
-        if (authUser != null) {
-            if (!UserType.ADMIN.equals(authUser.getType()) && !authUser.getId().equals(dto.getId())) {
+        if (oldPassCheck) {
+            if (!UserType.ADMIN.equals(Context.getAuthUser().getType()) && !dto.getId().equals(Context.getAuthUser().getId())) {
                 problems.add(new Problem("form", "User has no permission to update password!"));
-            } else if (oldPassCheck) {
+            } else {
                 if (StringUtils.isBlank(dto.getPasswordOld())) {
                     problems.add(new Problem("passwordOld", "Old password cannot be null!"));
                 } else if (problems.size() < 1) {
-                    ServiceResponse<User> user = userRepository.findById(authUser, dto.getId(), true);
+                    ServiceResponse<User> user = userRepository.findById(dto.getId(), true);
                     if (user.isOK()) {
                         final String hash = BCrypt.hashpw(dto.getPasswordOld(), user.getModel().getPasswordSalt());
                         if (!hash.equals(user.getModel().getPasswordHash())) {

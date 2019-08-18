@@ -15,11 +15,12 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
+//todo: workspace id in cookies must be tested
 public class ProductTest {
 
     @BeforeClass
     public static void setup() {
-        TestHelper.setup(true, true);
+        TestHelper.setup(true, true, true);
 
         //adding a product to crud on it
         given()
@@ -67,24 +68,6 @@ public class ProductTest {
     }
 
     @Test
-    public void product_not_found_when_get_with_a_wrong_id() {
-        when()
-            .get(Consts.Paths.Product.BASE + "/0").
-        then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Product not found!"));
-    }
-
-    @Test
-    public void product_not_found_when_delete_with_a_wrong_id() {
-        when()
-            .delete(Consts.Paths.Product.BASE + "/0").
-        then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Product not found!"));
-    }
-
-    @Test
     public void everything_should_be_ok_with_deleting() {
         final long id = 2;
 
@@ -128,6 +111,118 @@ public class ProductTest {
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
+    }
+
+    @Test
+    public void missing_workspace_with_inserting() {
+        TestHelper.loginAsUser();
+
+        final ProductDTO product = TestHelper.getProductDTO();
+
+        given()
+            .body(product).
+        when()
+            .post(Consts.Paths.Product.BASE).
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void missing_workspace_with_finding() {
+        TestHelper.loginAsUser();
+
+        final int id = 1;
+
+        when()
+            .get(Consts.Paths.Product.BASE + "/" + id).
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void missing_workspace_with_toggle_status() {
+        TestHelper.loginAsUser();
+
+        final int id = 1;
+
+        when()
+            .put(Consts.Paths.Product.TOGGLE_STATUS + "/" + id).
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void missing_workspace_with_deleting() {
+        TestHelper.loginAsUser();
+
+        final long id = 2;
+
+        when()
+            .delete(Consts.Paths.Product.BASE + "/" + id).
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void missing_workspace_ok_with_listing() {
+        TestHelper.loginAsUser();
+
+        when()
+            .get(Consts.Paths.Product.BASE + "s").
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void missing_workspace_ok_with_updating() {
+        TestHelper.loginAsUser();
+
+        final ProductDTO product = TestHelper.getProductDTO();
+        product.setId(1L);
+        product.setName("New name shouldn't be updated!");
+
+        given()
+            .body(product).
+        when()
+            .put(Consts.Paths.Product.BASE).
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("Workspace is missing!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
+    public void product_not_found_when_get_with_a_wrong_id() {
+        when()
+            .get(Consts.Paths.Product.BASE + "/0").
+        then()
+            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
+            .body("result", equalTo("Product not found!"));
+    }
+
+    @Test
+    public void product_not_found_when_delete_with_a_wrong_id() {
+        when()
+            .delete(Consts.Paths.Product.BASE + "/0").
+        then()
+            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
+            .body("result", equalTo("Product not found!"));
     }
 
     @Test
@@ -269,7 +364,7 @@ public class ProductTest {
 
     @Test
     public void permission_problem_for_a_user_with_inserting() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsUser(true);
 
         final ProductDTO product = TestHelper.getProductDTO();
 
@@ -281,12 +376,12 @@ public class ProductTest {
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
             .body("result", equalTo("User has no permission to save a product!"));
 
-        TestHelper.loginAsAdmin();
+        TestHelper.loginAsAdmin(true);
     }
 
     @Test
     public void permission_problem_for_a_user_with_updating() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsUser(true);
 
         final ProductDTO product = TestHelper.getProductDTO();
 
@@ -298,12 +393,12 @@ public class ProductTest {
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
             .body("result", equalTo("User has no permission to save a product!"));
 
-        TestHelper.loginAsAdmin();
+        TestHelper.loginAsAdmin(true);
     }
 
     @Test
     public void permission_problem_for_a_user_with_deleting() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsUser(true);
 
         final int id = 1;
 
@@ -313,12 +408,12 @@ public class ProductTest {
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
             .body("result", equalTo("User has no permission to delete a product!"));
 
-        TestHelper.loginAsAdmin();
+        TestHelper.loginAsAdmin(true);
     }
 
     @Test
     public void permission_problem_for_a_user_with_toggle_status() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsUser(true);
 
         final int id = 1;
 
@@ -328,7 +423,7 @@ public class ProductTest {
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
             .body("result", equalTo("User has no permission to toggle a product's status!"));
 
-        TestHelper.loginAsAdmin();
+        TestHelper.loginAsAdmin(true);
     }
 
 }

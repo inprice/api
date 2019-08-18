@@ -13,7 +13,6 @@ public class AuthUser extends Model {
     private UserType type;
     private String fullName;
     private Long companyId;
-    private Long workspaceId;
 
     public String getSessionId() {
         return sessionId;
@@ -49,14 +48,6 @@ public class AuthUser extends Model {
 
     public void setCompanyId(Long companyId) {
         this.companyId = companyId;
-    }
-
-    public Long getWorkspaceId() {
-        return workspaceId;
-    }
-
-    public void setWorkspaceId(Long workspaceId) {
-        this.workspaceId = workspaceId;
     }
 
 }

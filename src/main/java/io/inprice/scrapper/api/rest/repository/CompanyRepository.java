@@ -3,9 +3,9 @@ package io.inprice.scrapper.api.rest.repository;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.AuthUser;
-import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.utils.CodeGenerator;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.Company;
@@ -43,7 +43,7 @@ public class CompanyRepository {
      *
      */
     public ServiceResponse insert(CompanyDTO companyDTO) {
-        ServiceResponse response = InstantResponses.CRUD_ERROR("");
+        ServiceResponse response = InstantResponses.CRUD_ERROR("Couldn't insert the company. " + companyDTO.toString());
 
         Connection con = null;
 
@@ -152,7 +152,7 @@ public class CompanyRepository {
         return response;
     }
 
-    public ServiceResponse update(AuthUser authUser, CompanyDTO companyDTO) {
+    public ServiceResponse update(CompanyDTO companyDTO) {
         ServiceResponse response;
 
         try (Connection con = dbUtils.getConnection();
@@ -168,7 +168,7 @@ public class CompanyRepository {
             pst.setString(++i, companyDTO.getWebsite());
             pst.setLong(++i, companyDTO.getCountryId());
             pst.setLong(++i, companyDTO.getId());
-            pst.setLong(++i, authUser.getId());
+            pst.setLong(++i, Context.getAuthUser().getId());
 
             if (pst.executeUpdate() > 0) {
                 response = InstantResponses.OK;

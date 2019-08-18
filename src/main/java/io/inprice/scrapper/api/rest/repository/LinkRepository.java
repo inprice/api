@@ -3,9 +3,9 @@ package io.inprice.scrapper.api.rest.repository;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.Link;
 import org.slf4j.Logger;
@@ -19,12 +19,13 @@ public class LinkRepository {
     private static final Logger log = LoggerFactory.getLogger(LinkRepository.class);
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
-    public ServiceResponse<Link> findById(AuthUser authUser, Long id) {
+    public ServiceResponse<Link> findById(Long id) {
         Link model = dbUtils.findSingle(
             String.format(
             "select * from link " +
                 "where id = %d " +
-                "  and workspace_id = %d", id, authUser.getWorkspaceId()), this::map);
+                "  and company_id = %d " +
+                "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         if (model != null) {
             return new ServiceResponse<>(model);
         } else {
@@ -32,13 +33,14 @@ public class LinkRepository {
         }
     }
 
-    public ServiceResponse<Link> getList(AuthUser authUser, Long productId) {
+    public ServiceResponse<Link> getList(Long productId) {
         List<Link> links = dbUtils.findMultiple(
             String.format(
                 "select * from link " +
                     "where product_id = %d " +
+                    "  and company_id = %d " +
                     "  and workspace_id = %d " +
-                    "order by name", productId, authUser.getWorkspaceId()), this::map);
+                    "order by name", productId, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
 
         if (links != null && links.size() > 0) {
             return new ServiceResponse<>(links);
@@ -46,10 +48,10 @@ public class LinkRepository {
         return InstantResponses.NOT_FOUND("Link");
     }
 
-    public ServiceResponse insert(AuthUser authUser, LinkDTO linkDTO) {
+    public ServiceResponse insert(LinkDTO linkDTO) {
         final String query =
                 "insert into link " +
-                "(url, product_id, workspace_id, company_id) " +
+                "(url, product_id, company_id, workspace_id) " +
                 "values " +
                 "(?, ?, ?, ?) ";
 
@@ -59,13 +61,13 @@ public class LinkRepository {
             int i = 0;
             pst.setString(++i, linkDTO.getUrl());
             pst.setLong(++i, linkDTO.getProductId());
-            pst.setLong(++i, authUser.getWorkspaceId());
-            pst.setLong(++i, authUser.getCompanyId());
+            pst.setLong(++i, Context.getCompanyId());
+            pst.setLong(++i, Context.getWorkspaceId());
 
             if (pst.executeUpdate() > 0)
                 return InstantResponses.OK;
             else
-                return InstantResponses.CRUD_ERROR("Couldn't insert the link!");
+                return InstantResponses.CRUD_ERROR("Couldn't insert the link. " + linkDTO.toString());
 
         } catch (SQLIntegrityConstraintViolationException ie) {
             log.error("Failed to insert link: " + ie.getMessage());
@@ -76,24 +78,24 @@ public class LinkRepository {
         }
     }
 
-    public ServiceResponse deleteById(AuthUser authUser, Long id) {
+    public ServiceResponse deleteById(Long id) {
         boolean result = dbUtils.executeBatchQueries(new String[] {
 
                 String.format(
-                "delete link_price where link_id=%d and workspace_id=%d;",
-                    id, authUser.getWorkspaceId()
+                "delete link_price where link_id=%d and company_id=%d and workspace_id=%d;",
+                    id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link_history where link_id=%d and workspace_id=%d;",
-                    id, authUser.getWorkspaceId()
+                "delete link_history where link_id=%d and company_id=%d and workspace_id=%d;",
+                    id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link_spec where link_id=%d and workspace_id=%d;",
-                    id, authUser.getWorkspaceId()
+                "delete link_spec where link_id=%d and company_id=%d and workspace_id=%d;",
+                    id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link where id=%d and workspace_id=%d;",              //must be successful
-                    id, authUser.getWorkspaceId()
+                "delete link where id=%d and company_id=%d and workspace_id=%d;",              //must be successful
+                    id, Context.getCompanyId(), Context.getWorkspaceId()
                 )
 
             }, String.format("Failed to delete link. Id: %d", id), 1 //1 of 4 execution must be successful
@@ -105,7 +107,7 @@ public class LinkRepository {
         return InstantResponses.NOT_FOUND("Link");
     }
 
-    public ServiceResponse changeStatus(AuthUser authUser, Long id, Long productId, Status status) {
+    public ServiceResponse changeStatus(Long id, Long productId, Status status) {
         ServiceResponse res;
 
         Connection con = null;
@@ -116,9 +118,10 @@ public class LinkRepository {
                 "update link " +
                 "set previous_status=status, status=?, last_update=now() " +
                 "where id=? " +
-                "  and workspace_id=? " +
+                "  and status != ? " +
                 "  and product_id=? " +
-                "  and status != ? ";
+                "  and company_id=? " +
+                "  and workspace_id=? ";
 
             boolean res1;
             boolean res2 = false;
@@ -127,9 +130,10 @@ public class LinkRepository {
                 int i = 0;
                 pst.setString(++i, status.name());
                 pst.setLong(++i, id);
-                pst.setLong(++i, authUser.getWorkspaceId());
-                pst.setLong(++i, productId);
                 pst.setString(++i, status.name());
+                pst.setLong(++i, productId);
+                pst.setLong(++i, Context.getCompanyId());
+                pst.setLong(++i, Context.getWorkspaceId());
 
                 res1 = (pst.executeUpdate() > 0);
             }
@@ -137,14 +141,14 @@ public class LinkRepository {
             if (res1) {
                 try (PreparedStatement
                      pst = con.prepareStatement(
-                         "insert into link_history (link_id, status, company_id, workspace_id, product_id) " +
+                         "insert into link_history (link_id, status, product_id, company_id, workspace_id) " +
                              "values (?, ?, ?, ?, ?)")) {
                     int i = 0;
                     pst.setLong(++i, id);
                     pst.setString(++i, status.name());
-                    pst.setLong(++i, authUser.getCompanyId());
-                    pst.setLong(++i, authUser.getWorkspaceId());
                     pst.setLong(++i, productId);
+                    pst.setLong(++i, Context.getCompanyId());
+                    pst.setLong(++i, Context.getWorkspaceId());
 
                     res2 = (pst.executeUpdate() > 0);
                 }
@@ -167,7 +171,7 @@ public class LinkRepository {
         } catch (SQLException e) {
             if (con != null) dbUtils.rollback(con);
             log.error("Failed to change link's status. Link Id: " + id, e);
-            res = InstantResponses.CRUD_ERROR(e.getMessage());
+            res = InstantResponses.SERVER_ERROR(e);
         } finally {
             if (con != null) dbUtils.close(con);
         }
