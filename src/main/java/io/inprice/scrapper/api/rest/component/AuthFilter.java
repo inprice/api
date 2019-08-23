@@ -5,7 +5,6 @@ import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.rest.service.TokenService;
 import io.inprice.scrapper.common.meta.UserType;
-import org.apache.commons.validator.routines.LongValidator;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,18 +63,21 @@ public class AuthFilter implements Filter {
 
                     Context.setAuthUser(authUser);
 
-                    boolean isWorkspaceSet = false;
-                    String workspace = request.cookie(Consts.Auth.WORKSPACE_COOKIE);
-                    if (workspace != null) {
-                        try {
-                            Context.setWorkspaceId(Long.parseLong(workspace));
-                            isWorkspaceSet = true;
-                        } catch (Exception e) {
-                            //
+                    if (isWorkspaceNeeded(request)) {
+                        boolean isWorkspaceSet = false;
+                        String workspace = request.headers(Consts.Auth.WORKSPACE_HEADER);
+                        if (workspace != null) {
+                            try {
+                                Long wsId = Long.valueOf(workspace);
+                                Context.setWorkspaceId(wsId);
+                                isWorkspaceSet = true;
+                            } catch (Exception e) {
+                                //
+                            }
                         }
-                    }
-                    if (isWorkspaceNeeded(request) && ! isWorkspaceSet) {
-                        halt(HttpStatus.NOT_ACCEPTABLE_406, "Workspace is missing!");
+                        if (! isWorkspaceSet) {
+                            halt(HttpStatus.NOT_ACCEPTABLE_406, "Workspace is missing!");
+                        }
                     }
 
                 }

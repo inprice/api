@@ -131,7 +131,7 @@ public class TestHelper {
 
         RestAssured.requestSpecification =
             new RequestSpecBuilder()
-                .addCookie(Consts.Auth.WORKSPACE_COOKIE, addWorkspaceCookie ? "1" : null)
+                .addCookie(Consts.Auth.WORKSPACE_HEADER, addWorkspaceCookie ? "1" : null)
                 .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
             .build();
     }
@@ -156,7 +156,7 @@ public class TestHelper {
 
         RestAssured.requestSpecification =
             new RequestSpecBuilder()
-                .addCookie(Consts.Auth.WORKSPACE_COOKIE, addWorkspaceCookie ? "1" : null)
+                .addCookie(Consts.Auth.WORKSPACE_HEADER, addWorkspaceCookie ? "1" : null)
                 .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
             .build();
     }

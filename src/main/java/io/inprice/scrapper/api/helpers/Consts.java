@@ -4,12 +4,12 @@ public class Consts {
 
     public static class Auth {
         public static final String APP_SECRET_KEY = "-8'fq{>As@njcx.U*$=P]#Z5wY+";
-        public static final String DATA_SECRET_KEY = "gFn+f3Ksa@YJWEq%8SeaM%MK^e";
+        static final String DATA_SECRET_KEY = "gFn+f3Ksa@YJWEq%8SeaM%MK^e";
 
         public static final String AUTHORIZATION_HEADER = "Authorization";
+        public static final String WORKSPACE_HEADER = "workspace";
         public static final String TOKEN_PREFIX = "Bearer ";
         public static final String PAYLOAD = "payload";
-        public static final String WORKSPACE_COOKIE = "workspace";
     }
 
     public static class Paths {
