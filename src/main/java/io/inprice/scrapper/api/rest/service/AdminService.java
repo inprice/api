@@ -11,7 +11,6 @@ import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.api.rest.repository.WorkspaceRepository;
 import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
-import io.inprice.scrapper.common.models.Workspace;
 import org.eclipse.jetty.http.HttpStatus;
 
 import java.util.List;
@@ -43,19 +42,6 @@ public class AdminService {
             res = repository.updatePassword(passwordDTO, Context.getAuthUser());
         }
         return res;
-    }
-
-    public ServiceResponse setDefaultWorkspace(Long wsId) {
-        if (wsId == null || wsId < 1) {
-            return InstantResponses.NOT_FOUND("Workspace");
-        }
-
-        ServiceResponse<Workspace> found = workspaceRepository.findById(wsId);
-        if (found.isOK()) {
-            return repository.setDefaultWorkspace(wsId);
-        } else {
-            return InstantResponses.NOT_FOUND("Workspace");
-        }
     }
 
     private ServiceResponse validate(PasswordDTO passwordDTO) {

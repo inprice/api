@@ -229,21 +229,6 @@ public class UserRepository {
         return InstantResponses.NOT_FOUND("User");
     }
 
-    public ServiceResponse setDefaultWorkspace(Long wsId) {
-        boolean result =
-            dbUtils.executeQuery(
-                String.format(
-                "update user " +
-                    "set default_workspace_id = %d " +
-                    "where id = %d " +
-                    "  and company_id = %d ", wsId, Context.getAuthUser().getId(), Context.getCompanyId()),
-        "Failed to set default workspace! User Id: " + Context.getAuthUser().getId() + ", Workspace Id: " + wsId);
-
-        if (result) return InstantResponses.OK;
-
-        return InstantResponses.NOT_FOUND("Workspace or User");
-    }
-
     private User map(ResultSet rs) {
         try {
             User model = new User();
@@ -255,7 +240,6 @@ public class UserRepository {
             model.setPasswordHash(rs.getString("password_hash"));
             model.setPasswordSalt(rs.getString("password_salt"));
             model.setCompanyId(rs.getLong("company_id"));
-            model.setDefaultWorkspaceId(rs.getLong("default_workspace_id"));
             model.setInsertAt(rs.getDate("insert_at"));
             return model;
         } catch (SQLException e) {

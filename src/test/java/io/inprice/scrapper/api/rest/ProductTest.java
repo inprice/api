@@ -15,7 +15,8 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
-//todo: workspace id in cookies must be tested
+//todo: workspace id in headers must be tested
+//todo: duplicate code in insert and update must be tested
 public class ProductTest {
 
     @BeforeClass
@@ -35,6 +36,7 @@ public class ProductTest {
     @Test
     public void everything_should_be_ok_with_inserting() {
         final ProductDTO product = TestHelper.getProductDTO();
+        product.setCode(product.getCode()+"P1");
 
         given()
             .body(product).
@@ -72,6 +74,7 @@ public class ProductTest {
         final long id = 2;
 
         final ProductDTO product = TestHelper.getProductDTO();
+        product.setCode(product.getCode()+"P1");
         product.setName("A NEW PRODUCT");
 
         given()

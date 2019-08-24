@@ -24,7 +24,7 @@ public class TestHelper {
         setup(defaultCompanyAndUser, extraUser, false);
     }
 
-    public static void setup(boolean defaultCompanyAndUser, boolean extraUser, boolean addWorkspaceCookie) {
+    public static void setup(boolean defaultCompanyAndUser, boolean extraUser, boolean addWorkspaceHeader) {
         if (Global.isApplicationRunning) {
             dbUtils.reset();
         } else {
@@ -42,7 +42,7 @@ public class TestHelper {
             then()
                 .statusCode(HttpStatus.OK_200).assertThat();
 
-            loginAsAdmin(addWorkspaceCookie);
+            loginAsAdmin(addWorkspaceHeader);
 
             //insert a user to use him
             if (extraUser) {
@@ -115,7 +115,7 @@ public class TestHelper {
         loginAsAdmin(false);
     }
 
-    public static void loginAsAdmin(boolean addWorkspaceCookie) {
+    public static void loginAsAdmin(boolean addWorkspaceHeader) {
         RestAssured.requestSpecification = null;
 
         //dont forget, the id 1 is reserved for the admin only during testing
@@ -131,7 +131,7 @@ public class TestHelper {
 
         RestAssured.requestSpecification =
             new RequestSpecBuilder()
-                .addCookie(Consts.Auth.WORKSPACE_HEADER, addWorkspaceCookie ? "1" : null)
+                .addHeader(Consts.Auth.WORKSPACE_HEADER, addWorkspaceHeader ? "1" : "")
                 .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
             .build();
     }
@@ -140,7 +140,7 @@ public class TestHelper {
         loginAsUser(false);
     }
 
-    public static void loginAsUser(boolean addWorkspaceCookie) {
+    public static void loginAsUser(boolean addWorkspaceHeader) {
         RestAssured.requestSpecification = null;
 
         //dont forget, the id 1 is reserved for the admin only during testing
@@ -156,7 +156,7 @@ public class TestHelper {
 
         RestAssured.requestSpecification =
             new RequestSpecBuilder()
-                .addCookie(Consts.Auth.WORKSPACE_HEADER, addWorkspaceCookie ? "1" : null)
+                .addHeader(Consts.Auth.WORKSPACE_HEADER, addWorkspaceHeader ? "1" : "")
                 .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
             .build();
     }

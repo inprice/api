@@ -9,7 +9,6 @@ import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.service.UserService;
-import org.apache.commons.validator.routines.LongValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,15 +37,6 @@ public class UserController {
             return serviceRes;
         }, Global.gson::toJson);
 
-        //set default workspace
-        put(Consts.Paths.User.WORKSPACE + "/:ws_id", (req, res) -> {
-            final Long wsId = LongValidator.getInstance().validate(req.params(":ws_id"));
-
-            ServiceResponse serviceRes = setDefaultWorkspace(wsId);
-            res.status(serviceRes.getStatus());
-            return serviceRes;
-        }, Global.gson::toJson);
-
     }
 
     private ServiceResponse update(String body) {
@@ -65,10 +55,6 @@ public class UserController {
         }
         log.error("Invalid password data: " + body);
         return InstantResponses.INVALID_DATA("password!");
-    }
-
-    private ServiceResponse setDefaultWorkspace(Long wsId) {
-        return userService.setDefaultWorkspace(wsId);
     }
 
     private UserDTO toModel(String body) {

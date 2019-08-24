@@ -1,5 +1,6 @@
 package io.inprice.scrapper.api.rest.repository;
 
+import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
@@ -16,8 +17,8 @@ import java.util.List;
 public class ProductRepository {
 
     private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
-
-    private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+    private static final Properties properties = Beans.getSingleton(Properties.class);
 
     public ServiceResponse<Product> findById(Long id) {
         Product model = dbUtils.findSingle(
@@ -48,6 +49,13 @@ public class ProductRepository {
     }
 
     public ServiceResponse insert(ProductDTO productDTO) {
+        if (properties.isProdUniqueness()) {
+            boolean alreadyExists = doesExist(productDTO.getCode(), null);
+            if (alreadyExists) {
+                return InstantResponses.ALREADY_EXISTS(productDTO.getCode());
+            }
+        }
+
         Connection con = null;
         boolean result = false;
 
@@ -98,6 +106,13 @@ public class ProductRepository {
     }
 
     public ServiceResponse update(ProductDTO productDTO) {
+        if (properties.isProdUniqueness()) {
+            boolean alreadyExists = doesExist(productDTO.getCode(), productDTO.getId());
+            if (alreadyExists) {
+                return InstantResponses.ALREADY_EXISTS(productDTO.getCode());
+            }
+        }
+
         Connection con = null;
         boolean result = false;
 
@@ -216,6 +231,17 @@ public class ProductRepository {
         }
 
         return false;
+    }
+
+    private boolean doesExist(String code, Long id) {
+        Product model = dbUtils.findSingle(
+            String.format(
+            "select * from product " +
+                "where code = '%s' " +
+                (id != null ? " and id != " + id : "") +
+                "  and company_id = %d " +
+                "  and workspace_id = %d ", code, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
+        return (model != null);
     }
 
     private Product map(ResultSet rs) {

@@ -95,9 +95,9 @@ public class CompanyRepository {
                     final String salt = codeGenerator.generateSalt();
                     final String q2 =
                         "insert into user " +
-                        "(user_type, full_name, email, password_salt, password_hash, company_id, default_workspace_id) " +
+                        "(user_type, full_name, email, password_salt, password_hash, company_id) " +
                         "values " +
-                        "(?, ?, ?, ?, ?, ?, ?) ";
+                        "(?, ?, ?, ?, ?, ?) ";
 
                     try (PreparedStatement pst = con.prepareStatement(q2, Statement.RETURN_GENERATED_KEYS)) {
                         int i = 0;
@@ -107,7 +107,6 @@ public class CompanyRepository {
                         pst.setString(++i, salt);
                         pst.setString(++i, BCrypt.hashpw(companyDTO.getPassword(), salt));
                         pst.setLong(++i, companyId);
-                        pst.setLong(++i, workspaceId);
 
                         if (pst.executeUpdate() > 0) {
                             try (ResultSet generatedKeys = pst.getGeneratedKeys()) {

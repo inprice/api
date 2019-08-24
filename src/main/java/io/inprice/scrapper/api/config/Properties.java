@@ -31,6 +31,16 @@ public class Properties {
 		return runningAt.equals("test");
 	}
 
+	public boolean isProdUniqueness() {
+		String uniqueness = prop.getProperty("app.prod-uniqueness", "false");
+		return uniqueness.equals("true");
+	}
+
+	public boolean isLinkUniqueness() {
+		String uniqueness = prop.getProperty("app.link-uniqueness", "false");
+		return uniqueness.equals("true");
+	}
+
 	public int getAPP_Port() {
 		return getOrDefault("app.port", 4567);
 	}

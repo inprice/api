@@ -10,6 +10,10 @@ public class InstantResponses {
         return new ServiceResponse(HttpStatus.FORBIDDEN_403, "User has no permission to " + info);
     }
 
+    public static ServiceResponse ALREADY_EXISTS(String info) {
+        return new ServiceResponse(HttpStatus.BAD_REQUEST_400, info + " already exists in this workspace!");
+    }
+
     public static ServiceResponse NOT_FOUND(String tag) {
         return new ServiceResponse<>(HttpStatus.NOT_FOUND_404, tag + " not found!");
     }

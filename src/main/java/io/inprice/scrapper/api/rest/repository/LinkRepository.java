@@ -1,5 +1,6 @@
 package io.inprice.scrapper.api.rest.repository;
 
+import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
@@ -8,6 +9,7 @@ import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.Link;
+import io.inprice.scrapper.common.models.Product;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +19,8 @@ import java.util.List;
 public class LinkRepository {
 
     private static final Logger log = LoggerFactory.getLogger(LinkRepository.class);
-    private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+    private static final Properties properties = Beans.getSingleton(Properties.class);
 
     public ServiceResponse<Link> findById(Long id) {
         Link model = dbUtils.findSingle(
@@ -49,6 +52,13 @@ public class LinkRepository {
     }
 
     public ServiceResponse insert(LinkDTO linkDTO) {
+        if (properties.isLinkUniqueness()) {
+            boolean alreadyExists = doesExist(linkDTO.getUrl(), null, linkDTO.getProductId());
+            if (alreadyExists) {
+                return InstantResponses.ALREADY_EXISTS("The url");
+            }
+        }
+
         final String query =
                 "insert into link " +
                 "(url, product_id, company_id, workspace_id) " +
@@ -177,6 +187,18 @@ public class LinkRepository {
         }
 
         return res;
+    }
+
+    private boolean doesExist(String url, Long id, Long productId) {
+        Link model = dbUtils.findSingle(
+            String.format(
+            "select * from link " +
+                "where url = '%s' " +
+                (id != null ? " and id != " + id : "") +
+                "  and product_id = %d " +
+                "  and company_id = %d " +
+                "  and workspace_id = %d ", url, productId, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
+        return (model != null);
     }
 
     private Link map(ResultSet rs) {

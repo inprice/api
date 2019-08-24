@@ -169,35 +169,6 @@ public class UserTest {
     }
 
     @Test
-    public void everything_should_be_ok_with_setting_default_workspace() {
-        final WorkspaceDTO workspace = TestHelper.getWorkspaceDTO();
-        workspace.setName("A SECOND WS");
-
-        given()
-            .body(workspace).
-        when()
-            .post(Consts.Paths.Workspace.BASE).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
-
-        when()
-            .put(Consts.Paths.User.WORKSPACE + "/2").
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
-    }
-
-    @Test
-    public void workspace_not_found_for_a_wrong_ws_id() {
-        when()
-            .put(Consts.Paths.User.WORKSPACE + "/5").
-        then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Workspace not found!"));
-    }
-
-    @Test
     public void everything_should_be_ok_with_changing_password() {
         final PasswordDTO pass = new PasswordDTO(1L);
         pass.setPasswordOld("p4ssw0rd");

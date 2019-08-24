@@ -3,7 +3,6 @@ package io.inprice.scrapper.api.rest;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.TestHelper;
-import io.restassured.RestAssured;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -13,7 +12,8 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
-//todo: workspace id in cookies must be tested
+//todo: workspace id in headers must be tested
+//todo: duplicate urls in insert and update must be tested
 public class LinkTest {
 
     @BeforeClass
@@ -33,6 +33,7 @@ public class LinkTest {
     @Test
     public void everything_should_be_ok_with_inserting() {
         final LinkDTO link = TestHelper.getLinkDTO(1L);
+        link.setUrl(link.getUrl()+"L0");
 
         given()
             .body(link).
@@ -91,15 +92,27 @@ public class LinkTest {
     public void everything_should_be_ok_with_deleting() {
         final long id = 2;
 
-        for (int i = 0; i < 2; i++) {
-            given()
-                .body(TestHelper.getLinkDTO(1L)).
-            when()
-                .post(Consts.Paths.Link.BASE).
-            then()
-                .statusCode(HttpStatus.OK_200).assertThat()
-                .body("result", equalTo("OK"));
-        }
+        LinkDTO l1 = TestHelper.getLinkDTO(1L);
+        l1.setUrl(l1.getUrl()+"L1");
+
+        LinkDTO l2 = TestHelper.getLinkDTO(1L);
+        l2.setUrl(l2.getUrl()+"L2");
+
+        given()
+            .body(l1).
+        when()
+            .post(Consts.Paths.Link.BASE).
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("result", equalTo("OK"));
+
+        given()
+            .body(l2).
+        when()
+            .post(Consts.Paths.Link.BASE).
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("result", equalTo("OK"));
 
         when()
             .delete(Consts.Paths.Link.BASE + "/" + id).
