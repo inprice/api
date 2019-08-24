@@ -8,12 +8,15 @@ import io.inprice.scrapper.common.meta.UserType;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.response.Response;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.http.HttpStatus;
 
+import java.io.*;
 import java.math.BigDecimal;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
+import static java.lang.System.in;
 
 public class TestHelper {
 
@@ -170,6 +173,21 @@ public class TestHelper {
 
     public static int getTTL_TokensInSeconds() {
         return properties.getTTL_TokensInSeconds();
+    }
+
+    public static File loadFileFromResources(String fileName) {
+        try {
+            InputStream in = TestHelper.class.getClassLoader().getResourceAsStream("files/"+fileName);
+            final File tempFile = File.createTempFile(fileName, "");
+            tempFile.deleteOnExit();
+            try (FileOutputStream out = new FileOutputStream(tempFile)) {
+                IOUtils.copy(in, out);
+            }
+            return tempFile;
+        } catch (IOException e) {
+            System.err.println(e);
+        }
+        return null;
     }
 
 }

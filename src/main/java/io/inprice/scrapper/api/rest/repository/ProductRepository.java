@@ -4,6 +4,7 @@ import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
+import io.inprice.scrapper.api.info.ImportReport;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
@@ -57,37 +58,9 @@ public class ProductRepository {
         }
 
         Connection con = null;
-        boolean result = false;
-
         try {
             con = dbUtils.getTransactionalConnection();
-
-            final String query =
-                    "insert into product " +
-                    "(code, name, brand, category, price, company_id, workspace_id) " +
-                    "values " +
-                    "(?, ?, ?, ?, ?, ?, ?) ";
-
-            try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-                int i = 0;
-                pst.setString(++i, productDTO.getCode());
-                pst.setString(++i, productDTO.getName());
-                pst.setString(++i, productDTO.getBrand());
-                pst.setString(++i, productDTO.getCode());
-                pst.setBigDecimal(++i, productDTO.getPrice());
-                pst.setLong(++i, Context.getCompanyId());
-                pst.setLong(++i, Context.getWorkspaceId());
-
-                if (pst.executeUpdate() > 0) {
-                    try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
-                        if (generatedKeys.next()) {
-                            productDTO.setId(generatedKeys.getLong(1));
-                            result = addAPriceHistory(con, productDTO);
-                        }
-                    }
-                }
-            }
-
+            boolean result = insertANewProduct(con, productDTO);
             if (result) {
                 dbUtils.commit(con);
                 return InstantResponses.OK;
@@ -233,6 +206,42 @@ public class ProductRepository {
         return false;
     }
 
+    public ServiceResponse bulkInsert(ImportReport report, List<ProductDTO> prodList) {
+        Connection con = null;
+        try {
+            con = dbUtils.getTransactionalConnection();
+
+            for (ProductDTO productDTO: prodList) {
+                if (properties.isProdUniqueness()) {
+                    boolean alreadyExists = doesExist(productDTO.getCode(), null);
+                    if (alreadyExists) {
+                        report.setDuplicateCount(report.getDuplicateCount() + 1);
+                        continue;
+                    }
+                }
+                boolean result = insertANewProduct(con, productDTO);
+                if (result) {
+                    report.setInsertCount(report.getInsertCount() + 1);
+                }
+            }
+
+            if (report.getInsertCount() > 0) {
+                dbUtils.commit(con);
+                return InstantResponses.OK;
+            } else {
+                dbUtils.rollback(con);
+                return InstantResponses.CRUD_ERROR("Couldn't insert any product!");
+            }
+
+        } catch (Exception e) {
+            if (con != null) dbUtils.rollback(con);
+            log.error("Failed to insert a new products. ", e);
+            return InstantResponses.SERVER_ERROR(e);
+        } finally {
+            if (con != null) dbUtils.close(con);
+        }
+    }
+
     private boolean doesExist(String code, Long id) {
         Product model = dbUtils.findSingle(
             String.format(
@@ -242,6 +251,36 @@ public class ProductRepository {
                 "  and company_id = %d " +
                 "  and workspace_id = %d ", code, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         return (model != null);
+    }
+
+    private boolean insertANewProduct(Connection con, ProductDTO productDTO) throws SQLException {
+        final String query =
+            "insert into product " +
+            "(code, name, brand, category, price, company_id, workspace_id) " +
+            "values " +
+            "(?, ?, ?, ?, ?, ?, ?) ";
+
+        try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            int i = 0;
+            pst.setString(++i, productDTO.getCode());
+            pst.setString(++i, productDTO.getName());
+            pst.setString(++i, productDTO.getBrand());
+            pst.setString(++i, productDTO.getCode());
+            pst.setBigDecimal(++i, productDTO.getPrice());
+            pst.setLong(++i, Context.getCompanyId());
+            pst.setLong(++i, Context.getWorkspaceId());
+
+            if (pst.executeUpdate() > 0) {
+                try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        productDTO.setId(generatedKeys.getLong(1));
+                        return addAPriceHistory(con, productDTO);
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     private Product map(ResultSet rs) {

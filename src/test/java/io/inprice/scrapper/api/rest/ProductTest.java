@@ -282,6 +282,48 @@ public class ProductTest {
     }
 
     @Test
+    public void product_code_cannot_be_null() {
+        final ProductDTO product = TestHelper.getProductDTO();
+        product.setCode(null);
+
+        given()
+            .body(product).
+        when()
+            .post(Consts.Paths.Product.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Product code cannot be null!"));
+    }
+
+    @Test
+    public void product_code_length_is_out_of_range_if_less_than_2() {
+        final ProductDTO product = TestHelper.getProductDTO();
+        product.setName("A");
+
+        given()
+            .body(product).
+        when()
+            .post(Consts.Paths.Product.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Product code must be between 2 and 500 chars!"));
+    }
+
+    @Test
+    public void product_code_length_is_out_of_range_if_greater_than_500() {
+        final ProductDTO product = TestHelper.getProductDTO();
+        product.setCode(StringUtils.repeat('A', 121));
+
+        given()
+            .body(product).
+        when()
+            .post(Consts.Paths.Product.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Product code must be between 2 and 500 chars!"));
+    }
+
+    @Test
     public void product_name_cannot_be_null() {
         final ProductDTO product = TestHelper.getProductDTO();
         product.setName(null);
