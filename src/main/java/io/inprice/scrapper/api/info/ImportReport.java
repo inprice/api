@@ -9,7 +9,6 @@ public class ImportReport {
 
     private int insertCount;
     private int duplicateCount;
-    private int ignoreCount;
     private List<ImportProblem> problems;
 
     public ImportReport(int status) {
@@ -51,14 +50,6 @@ public class ImportReport {
 
     public void setDuplicateCount(int duplicateCount) {
         this.duplicateCount = duplicateCount;
-    }
-
-    public int getIgnoreCount() {
-        return ignoreCount;
-    }
-
-    public void setIgnoreCount(int ignoreCount) {
-        this.ignoreCount = ignoreCount;
     }
 
     public List<ImportProblem> getProblems() {

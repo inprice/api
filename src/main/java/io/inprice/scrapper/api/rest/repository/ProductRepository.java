@@ -50,16 +50,18 @@ public class ProductRepository {
     }
 
     public ServiceResponse insert(ProductDTO productDTO) {
-        if (properties.isProdUniqueness()) {
-            boolean alreadyExists = doesExist(productDTO.getCode(), null);
-            if (alreadyExists) {
-                return InstantResponses.ALREADY_EXISTS(productDTO.getCode());
-            }
-        }
-
         Connection con = null;
         try {
             con = dbUtils.getTransactionalConnection();
+
+            if (properties.isProdUniqueness()) {
+                boolean alreadyExists = doesExist(con, productDTO.getCode(), null);
+                if (alreadyExists) {
+                    return InstantResponses.ALREADY_EXISTS(productDTO.getCode());
+                }
+            }
+
+
             boolean result = insertANewProduct(con, productDTO);
             if (result) {
                 dbUtils.commit(con);
@@ -79,18 +81,18 @@ public class ProductRepository {
     }
 
     public ServiceResponse update(ProductDTO productDTO) {
-        if (properties.isProdUniqueness()) {
-            boolean alreadyExists = doesExist(productDTO.getCode(), productDTO.getId());
-            if (alreadyExists) {
-                return InstantResponses.ALREADY_EXISTS(productDTO.getCode());
-            }
-        }
-
         Connection con = null;
         boolean result = false;
 
         try {
             con = dbUtils.getTransactionalConnection();
+
+            if (properties.isProdUniqueness()) {
+                boolean alreadyExists = doesExist(con, productDTO.getCode(), productDTO.getId());
+                if (alreadyExists) {
+                    return InstantResponses.ALREADY_EXISTS(productDTO.getCode());
+                }
+            }
 
             final String query =
                  "update product " +
@@ -213,7 +215,7 @@ public class ProductRepository {
 
             for (ProductDTO productDTO: prodList) {
                 if (properties.isProdUniqueness()) {
-                    boolean alreadyExists = doesExist(productDTO.getCode(), null);
+                    boolean alreadyExists = doesExist(con, productDTO.getCode(), null);
                     if (alreadyExists) {
                         report.setDuplicateCount(report.getDuplicateCount() + 1);
                         continue;
@@ -242,15 +244,49 @@ public class ProductRepository {
         }
     }
 
-    private boolean doesExist(String code, Long id) {
-        Product model = dbUtils.findSingle(
-            String.format(
-            "select * from product " +
-                "where code = '%s' " +
-                (id != null ? " and id != " + id : "") +
-                "  and company_id = %d " +
-                "  and workspace_id = %d ", code, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
-        return (model != null);
+    private boolean doesExist(Connection con, String code, Long id) {
+        final String query =
+            "select id from product " +
+            "where code=? " +
+            (id != null ? " and id != " + id : "") +
+            "  and company_id=? " +
+            "  and workspace_id=? ";
+
+        try (PreparedStatement pst = con.prepareStatement(query)) {
+            int i = 0;
+            pst.setString(++i, code);
+            pst.setLong(++i, Context.getCompanyId());
+            pst.setLong(++i, Context.getWorkspaceId());
+
+            ResultSet rs = pst.executeQuery();
+            return rs.next();
+        } catch (Exception e) {
+            log.error("Error", e);
+        }
+        return false;
+    }
+
+    public int findProductCount() {
+        final String query =
+            "select count(id) from product " +
+            "where company_id=? " +
+            "  and workspace_id=? ";
+
+        try (Connection con = dbUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement(query)) {
+            pst.setLong(1, Context.getCompanyId());
+            pst.setLong(2, Context.getWorkspaceId());
+
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            rs.close();
+        } catch (Exception e) {
+            log.error("Error", e);
+            return -1;
+        }
+        return 0;
     }
 
     private boolean insertANewProduct(Connection con, ProductDTO productDTO) throws SQLException {

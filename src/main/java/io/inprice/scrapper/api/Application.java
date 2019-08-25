@@ -9,7 +9,13 @@ import io.inprice.scrapper.api.rest.component.AuthFilter;
 import io.inprice.scrapper.api.rest.component.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.ExceptionMapper;
 import spark.Spark;
+import spark.embeddedserver.EmbeddedServer;
+import spark.embeddedserver.EmbeddedServerFactory;
+import spark.embeddedserver.EmbeddedServers;
+import spark.route.Routes;
+import spark.staticfiles.StaticFilesConfiguration;
 
 import static spark.Spark.awaitStop;
 import static spark.Spark.stop;

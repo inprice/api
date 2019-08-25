@@ -15,22 +15,22 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Maven: io.inprice.scrapper:common:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: com.rabbitmq:amqp-client:5.7.0" level="project" />
-    <orderEntry type="library" name="Maven: com.sparkjava:spark-core:2.9.0" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-server:9.4.15.v20190215" level="project" />
+    <orderEntry type="library" name="Maven: com.sparkjava:spark-core:2.9.1" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-server:9.4.18.v20190429" level="project" />
     <orderEntry type="library" name="Maven: javax.servlet:javax.servlet-api:3.1.0" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-http:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-util:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-io:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-webapp:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-xml:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-servlet:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-security:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty.websocket:websocket-server:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty.websocket:websocket-common:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty.websocket:websocket-client:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-client:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty.websocket:websocket-servlet:9.4.15.v20190215" level="project" />
-    <orderEntry type="library" name="Maven: org.eclipse.jetty.websocket:websocket-api:9.4.15.v20190215" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-http:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-util:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-io:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-webapp:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-xml:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-servlet:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-security:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty.websocket:websocket-server:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty.websocket:websocket-common:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty.websocket:websocket-client:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-client:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty.websocket:websocket-servlet:9.4.18.v20190429" level="project" />
+    <orderEntry type="library" name="Maven: org.eclipse.jetty.websocket:websocket-api:9.4.18.v20190429" level="project" />
     <orderEntry type="library" name="Maven: at.favre.lib:bcrypt:0.8.0" level="project" />
     <orderEntry type="library" name="Maven: at.favre.lib:bytes:1.1.0" level="project" />
     <orderEntry type="library" name="Maven: mysql:mysql-connector-java:8.0.15" level="project" />

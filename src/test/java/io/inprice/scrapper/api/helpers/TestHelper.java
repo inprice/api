@@ -177,7 +177,7 @@ public class TestHelper {
 
     public static File loadFileFromResources(String fileName) {
         try {
-            InputStream in = TestHelper.class.getClassLoader().getResourceAsStream("files/"+fileName);
+            InputStream in = TestHelper.class.getClassLoader().getResourceAsStream("files/import/"+fileName);
             final File tempFile = File.createTempFile(fileName, "");
             tempFile.deleteOnExit();
             try (FileOutputStream out = new FileOutputStream(tempFile)) {

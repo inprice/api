@@ -5,24 +5,24 @@ import java.util.List;
 
 public class ImportProblem implements Serializable {
 
-    private String field;
+    private String info;
     private List<Problem> problems;
 
-    public ImportProblem(String field) {
-        this.field = field;
+    public ImportProblem(String info) {
+        this.info = info;
     }
 
-    public ImportProblem(String field, List<Problem> problems) {
-        this.field = field;
+    public ImportProblem(String info, List<Problem> problems) {
+        this.info = info;
         this.problems = problems;
     }
 
-    public String getField() {
-        return field;
+    public String getInfo() {
+        return info;
     }
 
-    public void setField(String field) {
-        this.field = field;
+    public void setInfo(String info) {
+        this.info = info;
     }
 
     public List<Problem> getProblems() {

@@ -1,6 +1,5 @@
 package io.inprice.scrapper.api.rest.service;
 
-import io.inprice.scrapper.api.dto.CSVUploadDTO;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.*;
@@ -10,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.Request;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -69,51 +67,124 @@ public class ProductService {
         return repository.toggleStatus(id);
     }
 
-    public ImportReport uploadCSV(CSVUploadDTO csv) {
+    public ImportReport uploadAmazonASIN(String file) {
         ImportReport report = new ImportReport(HttpStatus.OK_200);
         report.setProblems(new ArrayList<>());
 
         List<ProductDTO> prodList = new ArrayList<>();
         try {
             int row = 1;
-            Scanner scanner = new Scanner(csv.getFile());
-            while (scanner.hasNext()) {
-                int i = 0;
-                List<String> line = parseLine(scanner.nextLine());
-                if (line.size() == 5) {
-                    ProductDTO prod = new ProductDTO();
-                    prod.setCode(line.get(i++));
-                    prod.setName(line.get(i++));
-                    prod.setBrand(line.get(i++));
-                    prod.setCategory(line.get(i++));
-                    prod.setPrice(new BigDecimal(NumberUtils.extractPrice(line.get(i))));
+            int prodCount = repository.findProductCount();
 
-                    ServiceResponse res = validate(prod);
-                    if (res.isOK()) {
-                        prodList.add(prod);
-                    } else {
-                        ImportProblem ip = new ImportProblem("Line: " + row + ", Code: " + prod.getCode(), res.getProblems());
-                        report.getProblems().add(ip);
-                    }
+            Scanner scanner = new Scanner(file);
+
+            while (scanner.hasNext()) {
+                String asin = scanner.nextLine();
+
+                if (asin.matches("^(?i)(B0|BT)[0-9A-Z]{8}$")) {
+                    System.out.println("https://www.amazon.com/dp/" + asin);
                 } else {
-                    ImportProblem ip = new ImportProblem("Line: " + row + ": Invalid format. There must be 5 fields in each row!");
+                    ImportProblem ip = new ImportProblem("Line: " + row + ". Code: " + asin);
                     report.getProblems().add(ip);
                 }
+
+                //todo: must be limited with workspace's plan limit
+                if (prodCount > 100) {
+                    break;
+                }
+
                 row++;
             }
             scanner.close();
 
             if (report.getProblems() == null || report.getProblems().size() == 0) {
+                //todo: some logic must be added into repository in order to save links to become product
                 ServiceResponse res = repository.bulkInsert(report, prodList);
                 if (res.isOK()) {
-                    report.setResult("CSV file has been successfully uploaded.");
+                    report.setResult("Amazon ASIN list file has been successfully uploaded.");
                 } else {
                     report.setStatus(HttpStatus.BAD_REQUEST_400);
                     report.setResult(res.getResult());
                 }
             } else {
                 report.setStatus(HttpStatus.BAD_REQUEST_400);
-                report.setResult("Failed to upload CSV file correctly, please see details.");
+                report.setResult("Failed to upload Amazon ASIN list file, please see details.");
+            }
+        } catch (Exception e) {
+            log.error("Failed to import Amazon ASIN list file.", e);
+            report = new ImportReport(HttpStatus.INTERNAL_SERVER_ERROR_500, e.getMessage());
+        }
+        return report;
+    }
+
+    public ImportReport uploadCSV(String file) {
+        ImportReport report = new ImportReport(HttpStatus.OK_200);
+        report.setProblems(new ArrayList<>());
+
+        List<ProductDTO> prodList = new ArrayList<>();
+        try {
+            int row = 1;
+            int prodCount = repository.findProductCount();
+
+            boolean formatError = false;
+            Scanner scanner = new Scanner(file);
+
+            while (scanner.hasNext()) {
+                int i = 0;
+                String data = scanner.nextLine();
+
+                if (data.indexOf(DEFAULT_SEPARATOR) > -1) {
+                    List<String> line = parseLine(data);
+                    if (line.size() == 5) {
+                        ProductDTO prod = new ProductDTO();
+                        prod.setCode(line.get(i++));
+                        prod.setName(line.get(i++));
+                        prod.setBrand(line.get(i++));
+                        prod.setCategory(line.get(i++));
+                        prod.setPrice(new BigDecimal(NumberUtils.extractPrice(line.get(i))));
+
+                        ServiceResponse res = validate(prod);
+                        if (res.isOK()) {
+                            prodList.add(prod);
+                            prodCount++;
+                        } else {
+                            ImportProblem ip = new ImportProblem("Line: " + row + ", Code: " + prod.getCode(), res.getProblems());
+                            report.getProblems().add(ip);
+                        }
+                    } else {
+                        ImportProblem ip = new ImportProblem("Line: " + row + ": Invalid format. There must be 5 fields in each row!");
+                        report.getProblems().add(ip);
+                    }
+                } else {
+                    formatError = true;
+                    break;
+                }
+
+                //todo: must be limited with workspace's plan limit
+                if (prodCount > 100) {
+                    break;
+                }
+
+                row++;
+            }
+            scanner.close();
+
+            if (formatError) {
+                report.setStatus(HttpStatus.BAD_REQUEST_400);
+                report.setResult("Format error! Rules: Header line isn't allowed. Separator must be " + DEFAULT_SEPARATOR + " and allowed Quote can be " + DEFAULT_QUOTE);
+            } else {
+                if (report.getProblems() == null || report.getProblems().size() == 0) {
+                    ServiceResponse res = repository.bulkInsert(report, prodList);
+                    if (res.isOK()) {
+                        report.setResult("CSV file has been successfully uploaded.");
+                    } else {
+                        report.setStatus(HttpStatus.BAD_REQUEST_400);
+                        report.setResult(res.getResult());
+                    }
+                } else {
+                    report.setStatus(HttpStatus.BAD_REQUEST_400);
+                    report.setResult("Failed to upload CSV file, please see details.");
+                }
             }
         } catch (Exception e) {
             log.error("Failed to import a csv file.", e);
