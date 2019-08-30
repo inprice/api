@@ -101,7 +101,7 @@ public class UserRepository {
 
             //never trust client side!!!
             UserType ut = userDTO.getType();
-            if (ut == null || UserType.ADMIN.equals(ut)) ut = UserType.USER;
+            if (ut == null || UserType.ADMIN.equals(ut)) ut = UserType.EDITOR;
 
             int i = 0;
             final String salt = codeGenerator.generateSalt();
@@ -145,7 +145,7 @@ public class UserRepository {
 
             if (byAdmin) {
                 UserType ut = userDTO.getType();
-                if (ut == null || UserType.ADMIN.equals(ut)) ut = UserType.USER;
+                if (ut == null || UserType.ADMIN.equals(ut)) ut = UserType.EDITOR;
                 pst.setString(++i, ut.name());
             }
 

@@ -69,7 +69,7 @@ public class TestHelper {
     public static UserDTO getUserDTO() {
         UserDTO user = new UserDTO();
         user.setId(2L);
-        user.setType(UserType.USER);
+        user.setType(UserType.READER);
         user.setFullName("John Doe");
         user.setEmail("jdoe@inprice.io");
         user.setPassword("p4ssw0rd");

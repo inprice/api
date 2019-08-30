@@ -84,12 +84,12 @@ public class ProductController {
     }
 
     private ServiceResponse deleteById(Long id) {
-        if (Context.getAuthUser().getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("delete a product!");
+        if (Context.getAuthUser().getType().equals(UserType.READER)) return InstantResponses.PERMISSION_PROBLEM("delete a product!");
         return productService.deleteById(id);
     }
 
     private ServiceResponse upsert(String body, boolean insert) {
-        if (Context.getAuthUser().getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("save a product!");
+        if (Context.getAuthUser().getType().equals(UserType.READER)) return InstantResponses.PERMISSION_PROBLEM("save a product!");
 
         ProductDTO productDTO = toModel(body);
         if (productDTO != null) {
@@ -103,7 +103,7 @@ public class ProductController {
     }
 
     private ServiceResponse toggleStatus(Long id) {
-        if (Context.getAuthUser().getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("toggle a product's status!");
+        if (Context.getAuthUser().getType().equals(UserType.READER)) return InstantResponses.PERMISSION_PROBLEM("toggle a product's status!");
         return productService.toggleStatus(id);
     }
 

@@ -4,11 +4,13 @@ import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.ImportReport;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
+import io.inprice.scrapper.common.models.ImportProduct;
+import io.inprice.scrapper.common.models.ImportProductRow;
 import io.inprice.scrapper.common.models.Product;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +30,20 @@ public class ProductRepository {
                 "where id = %d " +
                 "  and company_id = %d " +
                 "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
+        if (model != null) {
+            return new ServiceResponse<>(model);
+        } else {
+            return InstantResponses.NOT_FOUND("Product");
+        }
+    }
+
+    public ServiceResponse<Product> findByCode(String code) {
+        Product model = dbUtils.findSingle(
+            String.format(
+            "select * from product " +
+                "where code = '%s' " +
+                "  and company_id = %d " +
+                "  and workspace_id = %d ", code, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         if (model != null) {
             return new ServiceResponse<>(model);
         } else {
@@ -60,7 +76,6 @@ public class ProductRepository {
                     return InstantResponses.ALREADY_EXISTS(productDTO.getCode());
                 }
             }
-
 
             boolean result = insertANewProduct(con, productDTO);
             if (result) {
@@ -137,27 +152,27 @@ public class ProductRepository {
         boolean result = dbUtils.executeBatchQueries(new String[] {
 
                 String.format(
-                "delete link_price where product_id=%d and company_id=%d and workspace_id=%d;",
+                "delete from link_price where product_id=%d and company_id=%d and workspace_id=%d",
                     id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link_history where product_id=%d and company_id=%d and workspace_id=%d;",
+                "delete from link_history where product_id=%d and company_id=%d and workspace_id=%d",
                     id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link_spec where product_id=%d and company_id=%d and workspace_id=%d;",
+                "delete from link_spec where product_id=%d and company_id=%d and workspace_id=%d",
                     id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link where product_id=%d and company_id=%d and workspace_id=%d;",
+                "delete from link where product_id=%d and company_id=%d and workspace_id=%d",
                     id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete product_price where product_id=%d and company_id=%d and workspace_id=%d;",  //must be successful
+                "delete from product_price where product_id=%d and company_id=%d and workspace_id=%d",  //must be successful
                     id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete product where id=%d and company_id=%d and workspace_id=%d;",                //must be successful
+                "delete from product where id=%d and company_id=%d and workspace_id=%d",                //must be successful
                     id, Context.getCompanyId(), Context.getWorkspaceId()
                 )
 
@@ -208,36 +223,77 @@ public class ProductRepository {
         return false;
     }
 
-    public ServiceResponse bulkInsert(ImportReport report, List<ProductDTO> prodList) {
+    public ServiceResponse bulkInsert(ImportProduct report, List<ImportProductRow> importList, List<ProductDTO> dtoList) {
         Connection con = null;
         try {
             con = dbUtils.getTransactionalConnection();
 
-            for (ProductDTO productDTO: prodList) {
-                if (properties.isProdUniqueness()) {
-                    boolean alreadyExists = doesExist(con, productDTO.getCode(), null);
-                    if (alreadyExists) {
-                        report.setDuplicateCount(report.getDuplicateCount() + 1);
-                        continue;
+            final String headerQuery =
+                "insert into import_product " +
+                "(import_type, status, result, total_count, insert_count, duplicate_count, problem_count, company_id, workspace_id) " +
+                "values " +
+                "(?, ?, ?, ?, ?, ?, ?, ?, ?) ";
+
+            Long importId = null;
+
+            try (PreparedStatement pst = con.prepareStatement(headerQuery, Statement.RETURN_GENERATED_KEYS)) {
+                int i = 0;
+                pst.setString(++i, report.getImportType().name());
+                pst.setInt(++i, report.getStatus());
+                pst.setString(++i, report.getResult());
+                pst.setInt(++i, report.getTotalCount());
+                pst.setInt(++i, report.getInsertCount());
+                pst.setInt(++i, report.getDuplicateCount());
+                pst.setInt(++i, report.getProblemCount());
+                pst.setLong(++i, Context.getCompanyId());
+                pst.setLong(++i, Context.getWorkspaceId());
+
+                if (pst.executeUpdate() > 0) {
+                    try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            importId = generatedKeys.getLong(1);
+                        }
                     }
-                }
-                boolean result = insertANewProduct(con, productDTO);
-                if (result) {
-                    report.setInsertCount(report.getInsertCount() + 1);
                 }
             }
 
-            if (report.getInsertCount() > 0) {
+            if (importId != null) {
+                final String rowQuery =
+                    "insert into import_product_row " +
+                    "(import_id, import_type, data, status, description, company_id, workspace_id) " +
+                    "values " +
+                    "(?, ?, ?, ?, ?, ?, ?) ";
+                try (PreparedStatement pst = con.prepareStatement(rowQuery)) {
+                    for (ImportProductRow impRow : importList) {
+                        int i = 0;
+                        pst.setLong(++i, importId);
+                        pst.setString(++i, impRow.getImportType().name());
+                        pst.setString(++i, impRow.getData());
+                        pst.setString(++i, impRow.getStatus().name());
+                        pst.setString(++i, impRow.getDescription());
+                        pst.setLong(++i, Context.getCompanyId());
+                        pst.setLong(++i, Context.getWorkspaceId());
+                        pst.addBatch();
+                    }
+                    pst.executeBatch();
+                }
+
+                if (dtoList != null && dtoList.size() > 0) {
+                    for (ProductDTO dto : dtoList) {
+                        insertANewProduct(con, dto);
+                    }
+                }
+
                 dbUtils.commit(con);
                 return InstantResponses.OK;
             } else {
                 dbUtils.rollback(con);
-                return InstantResponses.CRUD_ERROR("Couldn't insert any product!");
+                return new ServiceResponse(HttpStatus.NOT_IMPLEMENTED_501, "Import operations failed!");
             }
 
         } catch (Exception e) {
             if (con != null) dbUtils.rollback(con);
-            log.error("Failed to insert a new products. ", e);
+            log.error("Failed to import new products. ", e);
             return InstantResponses.SERVER_ERROR(e);
         } finally {
             if (con != null) dbUtils.close(con);

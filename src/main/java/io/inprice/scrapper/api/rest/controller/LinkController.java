@@ -101,12 +101,12 @@ public class LinkController {
     }
 
     private ServiceResponse deleteById(Long id) {
-        if (Context.getAuthUser().getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("delete a link!");
+        if (Context.getAuthUser().getType().equals(UserType.READER)) return InstantResponses.PERMISSION_PROBLEM("delete a link!");
         return linkService.deleteById(id);
     }
 
     private ServiceResponse insert(String body) {
-        if (Context.getAuthUser().getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("insert a new link!");
+        if (Context.getAuthUser().getType().equals(UserType.READER)) return InstantResponses.PERMISSION_PROBLEM("insert a new link!");
 
         LinkDTO linkDTO = toModel(body);
         if (linkDTO != null) {
@@ -117,7 +117,7 @@ public class LinkController {
     }
 
     private ServiceResponse changeStatus(Long id, Long productId, Status status) {
-        if (Context.getAuthUser().getType().equals(UserType.USER)) return InstantResponses.PERMISSION_PROBLEM("change link's status!");
+        if (Context.getAuthUser().getType().equals(UserType.READER)) return InstantResponses.PERMISSION_PROBLEM("change link's status!");
         return linkService.changeStatus(id, productId, status);
     }
 

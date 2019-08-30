@@ -25,7 +25,7 @@ public class ProductImportTest {
         given()
             .body(TestHelper.loadFileFromResources("asin/correct-products.txt")).
         when()
-            .post(Consts.Paths.Product.UPLOAD_AMAZON_ASIN_LIST).
+            .post(Consts.Paths.Product.IMPORT_AMAZON_ASIN_LIST).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("insertCount", equalTo(3)).assertThat()
@@ -39,7 +39,7 @@ public class ProductImportTest {
         given()
             .body(TestHelper.loadFileFromResources("csv/correct-products.csv")).
         when()
-            .post(Consts.Paths.Product.UPLOAD_CSV).
+            .post(Consts.Paths.Product.IMPORT_CSV).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("insertCount", equalTo(2)).assertThat()
@@ -53,7 +53,7 @@ public class ProductImportTest {
         given()
             .body(TestHelper.loadFileFromResources("csv/duplicate-products.csv")).
         when()
-            .post(Consts.Paths.Product.UPLOAD_CSV).
+            .post(Consts.Paths.Product.IMPORT_CSV).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("insertCount", equalTo(2)).assertThat()
@@ -67,7 +67,7 @@ public class ProductImportTest {
         given()
             .body(TestHelper.loadFileFromResources("csv/incorrect-products.csv")).
         when()
-            .post(Consts.Paths.Product.UPLOAD_CSV).
+            .post(Consts.Paths.Product.IMPORT_CSV).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("result", equalTo("Failed to upload CSV file, please see details."));
@@ -78,7 +78,7 @@ public class ProductImportTest {
         given()
             .body(TestHelper.loadFileFromResources("csv/format-error-products.csv")).
         when()
-            .post(Consts.Paths.Product.UPLOAD_CSV).
+            .post(Consts.Paths.Product.IMPORT_CSV).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("result", equalTo("Format error! Rules: Header line isn't allowed. " +
@@ -88,7 +88,7 @@ public class ProductImportTest {
     @Test
     public void validation_problems_with_importing_an_empty_csv() {
         when()
-            .post(Consts.Paths.Product.UPLOAD_CSV).
+            .post(Consts.Paths.Product.IMPORT_CSV).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("result", equalTo("CSV file is incorrect!"));

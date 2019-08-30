@@ -53,11 +53,10 @@ public class Consts {
             public static final String BASE = "/product";
             public static final String TOGGLE_STATUS = BASE + "/toggle";
 
-            static final String UPLOAD_BASE = BASE + "/import";
-            public static final String UPLOAD_CSV = UPLOAD_BASE + "/csv";
-            public static final String UPLOAD_LINK = UPLOAD_BASE + "/link";
-            public static final String UPLOAD_EBAY_SKU_LIST = UPLOAD_BASE + "/ebay";
-            public static final String UPLOAD_AMAZON_ASIN_LIST = UPLOAD_BASE + "/amazon";
+            static final String IMPORT_BASE = BASE + "/import";
+            public static final String IMPORT_CSV = IMPORT_BASE + "/csv";
+            public static final String IMPORT_EBAY_SKU_LIST = IMPORT_BASE + "/ebay";
+            public static final String IMPORT_AMAZON_ASIN_LIST = IMPORT_BASE + "/amazon";
         }
 
         public static class Link {

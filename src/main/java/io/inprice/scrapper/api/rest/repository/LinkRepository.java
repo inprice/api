@@ -92,19 +92,19 @@ public class LinkRepository {
         boolean result = dbUtils.executeBatchQueries(new String[] {
 
                 String.format(
-                "delete link_price where link_id=%d and company_id=%d and workspace_id=%d;",
+                "delete from link_price where link_id=%d and company_id=%d and workspace_id=%d",
                     id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link_history where link_id=%d and company_id=%d and workspace_id=%d;",
+                "delete from link_history where link_id=%d and company_id=%d and workspace_id=%d",
                     id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link_spec where link_id=%d and company_id=%d and workspace_id=%d;",
+                "delete from link_spec where link_id=%d and company_id=%d and workspace_id=%d",
                     id, Context.getCompanyId(), Context.getWorkspaceId()
                 ),
                 String.format(
-                "delete link where id=%d and company_id=%d and workspace_id=%d;",              //must be successful
+                "delete from link where id=%d and company_id=%d and workspace_id=%d",              //must be successful
                     id, Context.getCompanyId(), Context.getWorkspaceId()
                 )
 

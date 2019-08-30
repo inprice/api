@@ -6,10 +6,6 @@ public class InstantResponses {
 
     public static final ServiceResponse OK = new ServiceResponse(HttpStatus.OK_200, "OK");
 
-    public static ImportReport FILE_PROBLEM(String tag) {
-        return new ImportReport(HttpStatus.BAD_REQUEST_400, tag + " file is incorrect!");
-    }
-
     public static ServiceResponse PERMISSION_PROBLEM(String info) {
         return new ServiceResponse(HttpStatus.FORBIDDEN_403, "User has no permission to " + info);
     }

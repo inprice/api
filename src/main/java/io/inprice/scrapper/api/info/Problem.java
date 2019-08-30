@@ -27,4 +27,9 @@ public class Problem implements Serializable {
     public void setReason(String reason) {
         this.reason = reason;
     }
+
+    @Override
+    public String toString() {
+        return "Field=" + field + ", Reason=" + reason;
+    }
 }
