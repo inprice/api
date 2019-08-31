@@ -9,7 +9,6 @@ import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.Link;
-import io.inprice.scrapper.common.models.Product;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +20,8 @@ public class LinkRepository {
     private static final Logger log = LoggerFactory.getLogger(LinkRepository.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private static final Properties properties = Beans.getSingleton(Properties.class);
+
+    private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
 
     public ServiceResponse<Link> findById(Long id) {
         Link model = dbUtils.findSingle(
@@ -89,32 +90,15 @@ public class LinkRepository {
     }
 
     public ServiceResponse deleteById(Long id) {
-        boolean result = dbUtils.executeBatchQueries(new String[] {
-
-                String.format(
-                "delete from link_price where link_id=%d and company_id=%d and workspace_id=%d",
-                    id, Context.getCompanyId(), Context.getWorkspaceId()
-                ),
-                String.format(
-                "delete from link_history where link_id=%d and company_id=%d and workspace_id=%d",
-                    id, Context.getCompanyId(), Context.getWorkspaceId()
-                ),
-                String.format(
-                "delete from link_spec where link_id=%d and company_id=%d and workspace_id=%d",
-                    id, Context.getCompanyId(), Context.getWorkspaceId()
-                ),
-                String.format(
-                "delete from link where id=%d and company_id=%d and workspace_id=%d",              //must be successful
-                    id, Context.getCompanyId(), Context.getWorkspaceId()
-                )
-
-            }, String.format("Failed to delete link. Id: %d", id), 1 //1 of 4 execution must be successful
-
+        boolean result = dbUtils.executeBatchQueries(
+            bulkDeleteStatements.linksByLinkIdId(id),
+            String.format("Failed to delete link. Id: %d", id), 1 //at least one execution must be successful
         );
 
-        if (result) return InstantResponses.OK;
-
-        return InstantResponses.NOT_FOUND("Link");
+        if (result)
+            return InstantResponses.OK;
+        else
+            return InstantResponses.NOT_FOUND("Product");
     }
 
     public ServiceResponse changeStatus(Long id, Long productId, Status status) {

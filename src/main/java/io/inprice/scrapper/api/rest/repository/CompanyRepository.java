@@ -1,5 +1,6 @@
 package io.inprice.scrapper.api.rest.repository;
 
+import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
@@ -22,6 +23,7 @@ public class CompanyRepository {
 
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
+    private final Properties properties = Beans.getSingleton(Properties.class);
 
     public ServiceResponse<Company> findById(Long id) {
         ServiceResponse<Company> response = InstantResponses.CRUD_ERROR("");
@@ -74,10 +76,15 @@ public class CompanyRepository {
 
                 Long workspaceId = null;
                 try (PreparedStatement pst =
-                     con.prepareStatement("insert into workspace (name, company_id) values (?, ?) ",
+                     con.prepareStatement("insert into workspace (name, plan_id, company_id) values (?, ?, ?) ",
                          Statement.RETURN_GENERATED_KEYS)) {
                     int i = 0;
                     pst.setString(++i, "DEFAULT WORKSPACE");
+                    if (properties.isRunningForTests()) {
+                        pst.setLong(++i, 1L);
+                    } else {
+                        pst.setNull(++i, Types.BIGINT);
+                    }
                     pst.setLong(++i, companyId);
 
                     if (pst.executeUpdate() > 0) {

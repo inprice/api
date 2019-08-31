@@ -36,7 +36,7 @@ public class ProductTest {
     @Test
     public void everything_should_be_ok_with_inserting() {
         final ProductDTO product = TestHelper.getProductDTO();
-        product.setCode(product.getCode()+"P1");
+        product.setCode(product.getCode()+"INS-1");
 
         given()
             .body(product).
@@ -240,6 +240,20 @@ public class ProductTest {
     }
 
     @Test
+    public void product_code_length_is_out_of_range_if_less_than_3() {
+        final ProductDTO product = TestHelper.getProductDTO();
+        product.setCode("AA");
+
+        given()
+            .body(product).
+        when()
+            .post(Consts.Paths.Product.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason[0]", equalTo("Product code must be between 3 and 120 chars!"));
+    }
+
+    @Test
     public void product_code_length_is_out_of_range_if_greater_than_120() {
         final ProductDTO product = TestHelper.getProductDTO();
         product.setCode(StringUtils.repeat('A', 121));
@@ -250,7 +264,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Product code can be up to 120 chars!"));
+            .body("problems.reason[0]", equalTo("Product code must be between 3 and 120 chars!"));
     }
 
     @Test
@@ -293,34 +307,6 @@ public class ProductTest {
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason[0]", equalTo("Product code cannot be null!"));
-    }
-
-    @Test
-    public void product_code_length_is_out_of_range_if_less_than_2() {
-        final ProductDTO product = TestHelper.getProductDTO();
-        product.setName("A");
-
-        given()
-            .body(product).
-        when()
-            .post(Consts.Paths.Product.BASE).
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Product code must be between 2 and 500 chars!"));
-    }
-
-    @Test
-    public void product_code_length_is_out_of_range_if_greater_than_500() {
-        final ProductDTO product = TestHelper.getProductDTO();
-        product.setCode(StringUtils.repeat('A', 121));
-
-        given()
-            .body(product).
-        when()
-            .post(Consts.Paths.Product.BASE).
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("problems.reason[0]", equalTo("Product code must be between 2 and 500 chars!"));
     }
 
     @Test

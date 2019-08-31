@@ -16,13 +16,13 @@ public class ProductDTOValidator {
     public static ServiceResponse validate(ProductDTO productDTO) {
         List<Problem> problems = new ArrayList<>();
 
-        if (StringUtils.isBlank(productDTO.getCode().trim())) {
+        if (StringUtils.isBlank(productDTO.getCode())) {
             problems.add(new Problem("code", "Product code cannot be null!"));
-        } else if (productDTO.getCode().length() < 2 || productDTO.getCode().length() > 120) {
-            problems.add(new Problem("code", "Product code must be between 2 and 120 chars!"));
+        } else if (productDTO.getCode().length() < 3 || productDTO.getCode().length() > 120) {
+            problems.add(new Problem("code", "Product code must be between 3 and 120 chars!"));
         }
 
-        if (StringUtils.isBlank(productDTO.getName().trim())) {
+        if (StringUtils.isBlank(productDTO.getName())) {
             problems.add(new Problem("name", "Product name cannot be null!"));
         } else if (productDTO.getName().length() < 3 || productDTO.getName().length() > 500) {
             problems.add(new Problem("name", "Product name must be between 3 and 500 chars!"));

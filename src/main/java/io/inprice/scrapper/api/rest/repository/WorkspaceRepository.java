@@ -18,6 +18,8 @@ public class WorkspaceRepository {
     private static final Logger log = LoggerFactory.getLogger(WorkspaceRepository.class);
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
+    private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
+
     public ServiceResponse<Workspace> findById(Long id) {
         Workspace model = dbUtils.findSingle(
             String.format(
@@ -102,48 +104,15 @@ public class WorkspaceRepository {
     }
 
     public ServiceResponse deleteById(Long id) {
-        boolean result = dbUtils.executeBatchQueries(new String[] {
-
-                String.format(
-                "delete link_price where workspace_id=%d and company_id=%d;",
-                    id, Context.getCompanyId()
-                ),
-                String.format(
-                "delete link_history where workspace_id=%d and company_id=%d;",
-                    id, Context.getCompanyId()
-                ),
-                String.format(
-                "delete link_spec where workspace_id=%d and company_id=%d;",
-                    id, Context.getCompanyId()
-                ),
-                String.format(
-                "delete link where workspace_id=%d and company_id=%d;",
-                    id, Context.getCompanyId()
-                ),
-                String.format(
-                "delete product_price where workspace_id=%d and company_id=%d;",
-                    id, Context.getCompanyId()
-                ),
-                String.format(
-                "delete product where workspace_id=%d and company_id=%d;",
-                    id, Context.getCompanyId()
-                ),
-                String.format(
-                "delete workspace_history where workspace_id=%d and company_id=%d;",
-                    id, Context.getCompanyId()
-                ),
-                String.format(
-                "delete workspace where id=%d and company_id=%d;",  //must be successful
-                    id, Context.getCompanyId()
-                )
-
-            }, String.format("Failed to delete workspace. Id: %d", id), 1 //1 of 8 execution must be successful
-
+        boolean result = dbUtils.executeBatchQueries(
+            bulkDeleteStatements.workspaces(id),
+            String.format("Failed to delete workspace. Id: %d", id), 1 //at least one execution must be successful
         );
 
-        if (result) return InstantResponses.OK;
-
-        return InstantResponses.NOT_FOUND("Workspace");
+        if (result)
+            return InstantResponses.OK;
+        else
+            return InstantResponses.NOT_FOUND("Workspace");
     }
 
     private Workspace map(ResultSet rs) {
