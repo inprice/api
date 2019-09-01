@@ -6,16 +6,16 @@ import java.util.Arrays;
 
 class BulkDeleteStatements {
 
-    String[] linksByWorkspaceId(Long workspaceId) {
+    String[] linksByLinkIdId(Long linkId) {
+        return links(null, null, linkId);
+    }
+
+    private String[] linksByWorkspaceId(Long workspaceId) {
         return links(workspaceId, null, null);
     }
 
-    String[] linksByProductId(Long productId) {
+    private String[] linksByProductId(Long productId) {
         return links(null, productId, null);
-    }
-
-    String[] linksByLinkIdId(Long linkId) {
-        return links(null, null, linkId);
     }
 
     /**
@@ -55,12 +55,12 @@ class BulkDeleteStatements {
         };
     }
 
-    String[] productsByWorkspaceId(Long workspaceId) {
-        return products(workspaceId, null);
-    }
-
     String[] productsByProductId(Long productId) {
         return products(null, productId);
+    }
+
+    private String[] productsByWorkspaceId(Long workspaceId) {
+        return products(workspaceId, null);
     }
 
     /**

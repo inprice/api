@@ -25,7 +25,7 @@ public class ConfigScanner {
             try {
                 Class<?> declaringClass = method.getDeclaringClass();
 
-                log.info(String.format("   + %s : OK", declaringClass.getSimpleName()));
+                log.info(String.format("  + %s : OK", declaringClass.getSimpleName()));
 
                 method.invoke(declaringClass.newInstance());
             } catch (Exception e) {

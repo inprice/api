@@ -20,9 +20,9 @@ public class ProductImportController {
 
         //upload csv
         post(Consts.Paths.Product.IMPORT_CSV, "text/csv", (req, res) -> {
-            ImportProduct imbort = uploadCSV(req);
-            res.status(imbort.getStatus());
-            return imbort;
+            ImportProduct importReport = uploadCSV(req);
+            res.status(importReport.getStatus());
+            return importReport;
         }, Global.gson::toJson);
 
     }

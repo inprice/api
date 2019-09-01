@@ -3,13 +3,13 @@ package io.inprice.scrapper.api.rest;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.TestHelper;
 import org.eclipse.jetty.http.HttpStatus;
+import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.equalTo;
 
-//todo: workspace id in headers must be tested
 public class ProductCSVImportTest {
 
     @BeforeClass
@@ -91,8 +91,8 @@ public class ProductCSVImportTest {
             .body("insertCount", equalTo(1)).assertThat()
             .body("duplicateCount", equalTo(0)).assertThat()
             .body("problemCount", equalTo(2)).assertThat()
-            .body("problemList[0]", equalTo("Row: 2. Price must be greater than zero!")).assertThat()
-            .body("problemList[1]", equalTo("Row: 3. Product name must be between 3 and 500 chars!")).assertThat();
+            .body("problemList[0]", equalTo("002: Price must be greater than zero!")).assertThat()
+            .body("problemList[1]", equalTo("003: Product name must be between 3 and 500 chars!")).assertThat();
     }
 
     @Test
@@ -108,17 +108,12 @@ public class ProductCSVImportTest {
             .body("insertCount", equalTo(0)).assertThat()
             .body("duplicateCount", equalTo(0)).assertThat()
             .body("problemCount", equalTo(2)).assertThat()
-            .body("problemList[0]", equalTo("Row: 1. There must be 5 columns in each row!. Column separator is comma ,")).assertThat()
-            .body("problemList[1]", equalTo("Row: 2. There must be 5 columns in each row!. Column separator is comma ,")).assertThat();
+            .body("problemList[0]", equalTo("001: There must be 5 columns in each row!. Column separator is comma ,")).assertThat()
+            .body("problemList[1]", equalTo("002: There must be 5 columns in each row!. Column separator is comma ,")).assertThat();
     }
 
     @Test
     public void limit_problem_for_two_cases_with_importing_csv() {
-        //delete others
-        for (int i = 0; i < 30; i++) {
-            delete(Consts.Paths.Product.BASE + "/" + (i+1));
-        }
-
         //case 1
         given()
             .body(TestHelper.loadFileFromResources("csv/too-many-products.csv")).
@@ -129,7 +124,7 @@ public class ProductCSVImportTest {
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("totalCount", equalTo(31)).assertThat()
             .body("problemCount", equalTo(1)).assertThat()
-            .body("problemList[0]", equalTo("Row: 31. You have reached your plan's maximum product limit.")).assertThat();
+            .body("problemList[0]", equalTo("031: You have reached your plan's maximum product limit.")).assertThat();
 
         //case 2
         given()
@@ -139,8 +134,10 @@ public class ProductCSVImportTest {
         then()
             .body("result", equalTo("You have already reached your plan's maximum product limit.")).assertThat()
             .statusCode(HttpStatus.TOO_MANY_REQUESTS_429).assertThat();
+    }
 
-        //delete all
+    @After
+    public void clearAllProducts() {
         for (int i = 0; i < 50; i++) {
             delete(Consts.Paths.Product.BASE + "/" + (i+1));
         }

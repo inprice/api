@@ -332,26 +332,48 @@ public class ProductRepository {
     }
 
     public int findProductCount() {
-        final String query =
-            "select count(id) from product " +
-            "where company_id=? " +
-            "  and workspace_id=? ";
+        int result = 0;
 
-        try (Connection con = dbUtils.getConnection();
-            PreparedStatement pst = con.prepareStatement(query)) {
-            pst.setLong(1, Context.getCompanyId());
-            pst.setLong(2, Context.getWorkspaceId());
+        try (Connection con = dbUtils.getConnection()) {
 
-            ResultSet rs = pst.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1);
+            //from product definition
+            final String q1 =
+                "select count(id) from product " +
+                "where company_id=? " +
+                "  and workspace_id=? ";
+            try (PreparedStatement pst = con.prepareStatement(q1)) {
+                pst.setLong(1, Context.getCompanyId());
+                pst.setLong(2, Context.getWorkspaceId());
+
+                ResultSet rs = pst.executeQuery();
+                if (rs.next()) {
+                    result += rs.getInt(1);
+                }
+                rs.close();
             }
-            rs.close();
+
+            //from product imports
+            final String q2 =
+                "select count(id) from import_product_row " +
+                "where status=? " +
+                "  and company_id=? " +
+                "  and workspace_id=? ";
+            try (PreparedStatement pst = con.prepareStatement(q2)) {
+                pst.setString(1, Status.NEW.name());
+                pst.setLong(2, Context.getCompanyId());
+                pst.setLong(3, Context.getWorkspaceId());
+
+                ResultSet rs = pst.executeQuery();
+                if (rs.next()) {
+                    result += rs.getInt(1);
+                }
+                rs.close();
+            }
+
         } catch (Exception e) {
             log.error("Error", e);
-            return -1;
         }
-        return 0;
+        return result;
     }
 
     private boolean insertANewProduct(Connection con, ProductDTO productDTO) throws SQLException {

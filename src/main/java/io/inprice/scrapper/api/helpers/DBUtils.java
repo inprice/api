@@ -227,7 +227,7 @@ public class DBUtils {
                 commit(con);
             } else {
                 rollback(con);
-                log.error(errorMessage);
+                if (! properties.isRunningForTests() && ! errorMessage.contains("to delete")) log.error(errorMessage);
             }
 
         } catch (SQLException e) {
