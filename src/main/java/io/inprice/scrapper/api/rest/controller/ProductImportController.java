@@ -7,9 +7,10 @@ import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
-import io.inprice.scrapper.api.rest.service.ProductASINImportService;
+import io.inprice.scrapper.api.rest.service.ProductCodeImportService;
 import io.inprice.scrapper.api.rest.service.ProductCSVImportService;
 import io.inprice.scrapper.api.rest.service.ProductImportService;
+import io.inprice.scrapper.common.meta.ImportType;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.ImportProduct;
 import org.apache.commons.validator.routines.LongValidator;
@@ -22,7 +23,7 @@ public class ProductImportController {
 
     private static final ProductImportService importService = Beans.getSingleton(ProductImportService.class);
     private static final ProductCSVImportService csvImportService = Beans.getSingleton(ProductCSVImportService.class);
-    private static final ProductASINImportService asinImportService = Beans.getSingleton(ProductASINImportService.class);
+    private static final ProductCodeImportService asinImportService = Beans.getSingleton(ProductCodeImportService.class);
 
     @Routing
     public void routes() {
@@ -59,9 +60,16 @@ public class ProductImportController {
             return importReport;
         }, Global.gson::toJson);
 
+        //upload ebay SKU list
+        post(Consts.Paths.Product.IMPORT_EBAY_SKU_LIST, "text/plain", (req, res) -> {
+            ImportProduct importReport = uploadCodeList(ImportType.EBAY_SKU, req);
+            res.status(importReport.getStatus());
+            return importReport;
+        }, Global.gson::toJson);
+
         //upload amazon ASIN list
         post(Consts.Paths.Product.IMPORT_AMAZON_ASIN_LIST, "text/plain", (req, res) -> {
-            ImportProduct importReport = uploadAmazonASINList(req);
+            ImportProduct importReport = uploadCodeList(ImportType.AMAZON_ASIN,req);
             res.status(importReport.getStatus());
             return importReport;
         }, Global.gson::toJson);
@@ -100,7 +108,7 @@ public class ProductImportController {
         return result;
     }
 
-    private ImportProduct uploadAmazonASINList(Request req) {
+    private ImportProduct uploadCodeList(ImportType importType, Request req) {
         ImportProduct result = new ImportProduct();
 
         if (Context.getAuthUser().getType().equals(UserType.READER)) {
@@ -111,9 +119,9 @@ public class ProductImportController {
 
         if (req.body().isEmpty()) {
             result.setStatus(HttpStatus.BAD_REQUEST_400);
-            result.setResult("ASIN list is empty!");
+            result.setResult((ImportType.EBAY_SKU.equals(importType) ? "SKU" : "ASIN") + " list is empty!");
         } else {
-            result = asinImportService.upload(req.body());
+            result = asinImportService.upload(importType, req.body());
         }
 
         return result;

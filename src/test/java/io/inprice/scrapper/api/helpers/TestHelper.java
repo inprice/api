@@ -11,12 +11,14 @@ import io.restassured.response.Response;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.http.HttpStatus;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
-import static java.lang.System.in;
 
 public class TestHelper {
 
@@ -169,10 +171,6 @@ public class TestHelper {
             .post(Consts.Paths.Auth.LOGOUT).
         then()
             .statusCode(HttpStatus.OK_200).assertThat();
-    }
-
-    public static int getTTL_TokensInSeconds() {
-        return properties.getTTL_TokensInSeconds();
     }
 
     public static File loadFileFromResources(String fileName) {
