@@ -10,11 +10,11 @@ import org.junit.Test;
 import static io.restassured.RestAssured.*;
 import static org.hamcrest.Matchers.equalTo;
 
-public class ProductCSVImportTest {
+public class ProductASINImportTest {
 
-    private static final String PATH = Consts.Paths.Product.IMPORT_CSV;
-    private static final String ROOT = "csv";
-    private static final String TYPE = "CSV file";
+    private static final String PATH = Consts.Paths.Product.IMPORT_AMAZON_ASIN_LIST;
+    private static final String ROOT = "asin";
+    private static final String TYPE = "ASIN list";
     
     @BeforeClass
     public static void setup() {
@@ -24,7 +24,7 @@ public class ProductCSVImportTest {
     @Test
     public void everything_should_be_ok() {
         given()
-            .body(TestHelper.loadFileFromResources(ROOT + "/correct-products.csv")).
+            .body(TestHelper.loadFileFromResources(ROOT + "/correct-products.txt")).
         when()
             .post(PATH).
         then()
@@ -39,7 +39,7 @@ public class ProductCSVImportTest {
     @Test
     public void everything_should_be_ok_with_duplicate_codes() {
         given()
-            .body(TestHelper.loadFileFromResources(ROOT + "/duplicate-products.csv")).
+            .body(TestHelper.loadFileFromResources(ROOT + "/duplicate-products.txt")).
         when()
             .post(PATH).
         then()
@@ -54,18 +54,7 @@ public class ProductCSVImportTest {
     @Test
     public void validation_problems() {
         given()
-            .body(TestHelper.loadFileFromResources(ROOT + "/incorrect-products.csv")).
-        when()
-            .post(PATH).
-        then()
-            .body("result", equalTo("Failed to import " + TYPE + ", please see details!")).assertThat()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat();
-    }
-
-    @Test
-    public void format_error() {
-        given()
-            .body(TestHelper.loadFileFromResources(ROOT + "/format-error-products.csv")).
+            .body(TestHelper.loadFileFromResources(ROOT + "/incorrect-products.txt")).
         when()
             .post(PATH).
         then()
@@ -85,7 +74,7 @@ public class ProductCSVImportTest {
     @Test
     public void field_validation_problems() {
         given()
-            .body(TestHelper.loadFileFromResources(ROOT + "/half-correct-products.csv")).
+            .body(TestHelper.loadFileFromResources(ROOT + "/half-correct-products.txt")).
         when()
             .post(PATH).
         then()
@@ -95,32 +84,15 @@ public class ProductCSVImportTest {
             .body("insertCount", equalTo(1)).assertThat()
             .body("duplicateCount", equalTo(0)).assertThat()
             .body("problemCount", equalTo(2)).assertThat()
-            .body("problemList[0]", equalTo("002: Price must be greater than zero!")).assertThat()
-            .body("problemList[1]", equalTo("003: Product name must be between 3 and 500 chars!")).assertThat();
-    }
-
-    @Test
-    public void missing_column_problems() {
-        given()
-            .body(TestHelper.loadFileFromResources(ROOT + "/missing-column-products.csv")).
-        when()
-            .post(PATH).
-        then()
-            .body("result", equalTo("Failed to import " + TYPE + ", please see details!")).assertThat()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("totalCount", equalTo(2)).assertThat()
-            .body("insertCount", equalTo(0)).assertThat()
-            .body("duplicateCount", equalTo(0)).assertThat()
-            .body("problemCount", equalTo(2)).assertThat()
-            .body("problemList[0]", equalTo("001: There must be 5 columns in each row!. Column separator is comma ,")).assertThat()
-            .body("problemList[1]", equalTo("002: There must be 5 columns in each row!. Column separator is comma ,")).assertThat();
+            .body("problemList[0]", equalTo("002: Invalid ASIN code!")).assertThat()
+            .body("problemList[1]", equalTo("003: Invalid ASIN code!")).assertThat();
     }
 
     @Test
     public void limit_problem_for_two_cases() {
         //case 1
         given()
-            .body(TestHelper.loadFileFromResources(ROOT + "/too-many-products.csv")).
+            .body(TestHelper.loadFileFromResources(ROOT + "/too-many-products.txt")).
         when()
             .post(PATH).
         then()
@@ -132,7 +104,7 @@ public class ProductCSVImportTest {
 
         //case 2
         given()
-            .body(TestHelper.loadFileFromResources(ROOT + "/correct-products.csv")).
+            .body(TestHelper.loadFileFromResources(ROOT + "/correct-products.txt")).
         when()
             .post(PATH).
         then()
@@ -142,8 +114,8 @@ public class ProductCSVImportTest {
 
     @After
     public void clearAllProducts() {
-        for (int i = 0; i < 30; i++) {
-            delete(Consts.Paths.Product.BASE + "/" + (i+1));
+        for (int i = 0; i < 5; i++) {
+            delete(Consts.Paths.Product.IMPORT_BASE + "/" + (i+1));
         }
     }
 

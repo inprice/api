@@ -47,6 +47,8 @@ public class ProductCSVImportService {
             int actualProdCount = productRepository.findProductCount();
             if (actualProdCount < allowedProdCount) {
 
+                Set<String> insertedCodeSet = new HashSet<>();
+
                 List<ImportProductRow> importList = new ArrayList<>();
                 try (CSVReader csvReader = new CSVReader(new StringReader(file))) {
 
@@ -68,22 +70,30 @@ public class ProductCSVImportService {
                                 dto.setCategory(values[i++]);
                                 dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[i])));
 
-                                ServiceResponse<Product> validation = ProductDTOValidator.validate(dto);
-                                if (validation.isOK()) {
-                                    importRow.setProductDTO(dto);
-                                    importRow.setDescription("Healthy.");
-                                    importRow.setStatus(Status.AVAILABLE);
-                                    actualProdCount++;
-                                    report.incInsertCount();
+                                boolean found = insertedCodeSet.contains(dto.getCode());
+                                if (found) {
+                                    importRow.setDescription("Already exists!");
+                                    importRow.setStatus(Status.DUPLICATE);
+                                    report.incDuplicateCount();
                                 } else {
-                                    StringBuilder sb = new StringBuilder();
-                                    for (Problem problem : validation.getProblems()) {
-                                        if (sb.length() != 0) sb.append(" & ");
-                                        sb.append(problem.getReason());
+                                    ServiceResponse<Product> validation = ProductDTOValidator.validate(dto);
+                                    if (validation.isOK()) {
+                                        importRow.setProductDTO(dto);
+                                        importRow.setDescription("Healthy.");
+                                        importRow.setStatus(Status.AVAILABLE);
+                                        actualProdCount++;
+                                        report.incInsertCount();
+                                        insertedCodeSet.add(dto.getCode());
+                                    } else {
+                                        StringBuilder sb = new StringBuilder();
+                                        for (Problem problem : validation.getProblems()) {
+                                            if (sb.length() != 0) sb.append(" & ");
+                                            sb.append(problem.getReason());
+                                        }
+                                        importRow.setDescription(sb.toString());
+                                        importRow.setStatus(Status.IMPROPER);
+                                        report.incProblemCount();
                                     }
-                                    importRow.setDescription(sb.toString());
-                                    importRow.setStatus(Status.IMPROPER);
-                                    report.incProblemCount();
                                 }
 
                             } else {

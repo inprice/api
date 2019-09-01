@@ -53,7 +53,7 @@ public class Consts {
             public static final String BASE = "/product";
             public static final String TOGGLE_STATUS = BASE + "/toggle";
 
-            static final String IMPORT_BASE = BASE + "/import";
+            public static final String IMPORT_BASE = BASE + "/import";
             public static final String IMPORT_CSV = IMPORT_BASE + "/csv";
             public static final String IMPORT_EBAY_SKU_LIST = IMPORT_BASE + "/ebay";
             public static final String IMPORT_AMAZON_ASIN_LIST = IMPORT_BASE + "/amazon";
