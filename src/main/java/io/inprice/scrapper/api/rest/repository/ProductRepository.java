@@ -7,6 +7,7 @@ import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
+import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.ImportProduct;
 import io.inprice.scrapper.common.models.ImportProductRow;
 import io.inprice.scrapper.common.models.Product;
@@ -22,6 +23,8 @@ public class ProductRepository {
     private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private static final Properties properties = Beans.getSingleton(Properties.class);
+
+    private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
 
     public ServiceResponse<Product> findById(Long id) {
         Product model = dbUtils.findSingle(
@@ -149,40 +152,15 @@ public class ProductRepository {
     }
 
     public ServiceResponse deleteById(Long id) {
-        boolean result = dbUtils.executeBatchQueries(new String[] {
-
-                String.format(
-                "delete from link_price where product_id=%d and company_id=%d and workspace_id=%d",
-                    id, Context.getCompanyId(), Context.getWorkspaceId()
-                ),
-                String.format(
-                "delete from link_history where product_id=%d and company_id=%d and workspace_id=%d",
-                    id, Context.getCompanyId(), Context.getWorkspaceId()
-                ),
-                String.format(
-                "delete from link_spec where product_id=%d and company_id=%d and workspace_id=%d",
-                    id, Context.getCompanyId(), Context.getWorkspaceId()
-                ),
-                String.format(
-                "delete from link where product_id=%d and company_id=%d and workspace_id=%d",
-                    id, Context.getCompanyId(), Context.getWorkspaceId()
-                ),
-                String.format(
-                "delete from product_price where product_id=%d and company_id=%d and workspace_id=%d",  //must be successful
-                    id, Context.getCompanyId(), Context.getWorkspaceId()
-                ),
-                String.format(
-                "delete from product where id=%d and company_id=%d and workspace_id=%d",                //must be successful
-                    id, Context.getCompanyId(), Context.getWorkspaceId()
-                )
-
-            }, String.format("Failed to delete product. Id: %d", id), 2 //2 of 6 execution must be successful
-
+        boolean result = dbUtils.executeBatchQueries(
+            bulkDeleteStatements.productsByProductId(id),
+            String.format("Failed to delete product. Id: %d", id), 2 //at least two executions must be successful
         );
 
-        if (result) return InstantResponses.OK;
-
-        return InstantResponses.NOT_FOUND("Product");
+        if (result)
+            return InstantResponses.OK;
+        else
+            return InstantResponses.NOT_FOUND("Product");
     }
 
     public ServiceResponse toggleStatus(Long id) {
@@ -223,7 +201,7 @@ public class ProductRepository {
         return false;
     }
 
-    public ServiceResponse bulkInsert(ImportProduct report, List<ImportProductRow> importList, List<ProductDTO> dtoList) {
+    public ServiceResponse bulkInsert(ImportProduct report, List<ImportProductRow> importList) {
         Connection con = null;
         try {
             con = dbUtils.getTransactionalConnection();
@@ -235,6 +213,10 @@ public class ProductRepository {
                 "(?, ?, ?, ?, ?, ?, ?, ?, ?) ";
 
             Long importId = null;
+
+            //these values may change when duplicated codes occur
+            int insertCount = report.getInsertCount();
+            int duplicateCount = report.getDuplicateCount();
 
             try (PreparedStatement pst = con.prepareStatement(headerQuery, Statement.RETURN_GENERATED_KEYS)) {
                 int i = 0;
@@ -264,23 +246,50 @@ public class ProductRepository {
                     "values " +
                     "(?, ?, ?, ?, ?, ?, ?) ";
                 try (PreparedStatement pst = con.prepareStatement(rowQuery)) {
-                    for (ImportProductRow impRow : importList) {
+                    for (ImportProductRow importRow: importList) {
+
+                        ProductDTO dto = null;
+                        boolean found = false;
+
+                        if (importRow.getProductDTO() != null) {
+                            dto = (ProductDTO) importRow.getProductDTO();
+                            found = doesExist(con, dto.getCode(), null);
+                        }
+
+                        if (found) {
+                            importRow.setDescription("Already exists!");
+                            importRow.setStatus(Status.DUPLICATE);
+                            report.incDuplicateCount();
+                            report.decInsertCount();
+                        } else if (dto != null) {
+                            insertANewProduct(con, dto);
+                        }
+
                         int i = 0;
                         pst.setLong(++i, importId);
-                        pst.setString(++i, impRow.getImportType().name());
-                        pst.setString(++i, impRow.getData());
-                        pst.setString(++i, impRow.getStatus().name());
-                        pst.setString(++i, impRow.getDescription());
+                        pst.setString(++i, importRow.getImportType().name());
+                        pst.setString(++i, importRow.getData());
+                        pst.setString(++i, importRow.getStatus().name());
+                        pst.setString(++i, importRow.getDescription());
                         pst.setLong(++i, Context.getCompanyId());
                         pst.setLong(++i, Context.getWorkspaceId());
-                        pst.addBatch();
+                        pst.executeUpdate();
                     }
-                    pst.executeBatch();
                 }
 
-                if (dtoList != null && dtoList.size() > 0) {
-                    for (ProductDTO dto : dtoList) {
-                        insertANewProduct(con, dto);
+                //insertCount and duplicateCount may change if duplicate codes found,
+                // so we need to update the report data with the most accurate values
+                if (insertCount != report.getInsertCount() || duplicateCount != report.getDuplicateCount()) {
+                    final String lastUpdateQuery =
+                        "update import_product " +
+                        "set insert_count=?, duplicate_count=? " +
+                        "where id=? ";
+                    try (PreparedStatement pst = con.prepareStatement(lastUpdateQuery)) {
+                        int i = 0;
+                        pst.setInt(++i, insertCount);
+                        pst.setInt(++i, duplicateCount);
+                        pst.setLong(++i, importId);
+                        pst.executeUpdate();
                     }
                 }
 
@@ -323,26 +332,48 @@ public class ProductRepository {
     }
 
     public int findProductCount() {
-        final String query =
-            "select count(id) from product " +
-            "where company_id=? " +
-            "  and workspace_id=? ";
+        int result = 0;
 
-        try (Connection con = dbUtils.getConnection();
-            PreparedStatement pst = con.prepareStatement(query)) {
-            pst.setLong(1, Context.getCompanyId());
-            pst.setLong(2, Context.getWorkspaceId());
+        try (Connection con = dbUtils.getConnection()) {
 
-            ResultSet rs = pst.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1);
+            //from product definition
+            final String q1 =
+                "select count(id) from product " +
+                "where company_id=? " +
+                "  and workspace_id=? ";
+            try (PreparedStatement pst = con.prepareStatement(q1)) {
+                pst.setLong(1, Context.getCompanyId());
+                pst.setLong(2, Context.getWorkspaceId());
+
+                ResultSet rs = pst.executeQuery();
+                if (rs.next()) {
+                    result += rs.getInt(1);
+                }
+                rs.close();
             }
-            rs.close();
+
+            //from product imports
+            final String q2 =
+                "select count(id) from import_product_row " +
+                "where status=? " +
+                "  and company_id=? " +
+                "  and workspace_id=? ";
+            try (PreparedStatement pst = con.prepareStatement(q2)) {
+                pst.setString(1, Status.NEW.name());
+                pst.setLong(2, Context.getCompanyId());
+                pst.setLong(3, Context.getWorkspaceId());
+
+                ResultSet rs = pst.executeQuery();
+                if (rs.next()) {
+                    result += rs.getInt(1);
+                }
+                rs.close();
+            }
+
         } catch (Exception e) {
             log.error("Error", e);
-            return -1;
         }
-        return 0;
+        return result;
     }
 
     private boolean insertANewProduct(Connection con, ProductDTO productDTO) throws SQLException {

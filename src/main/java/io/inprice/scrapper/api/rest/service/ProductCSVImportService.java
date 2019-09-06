@@ -14,6 +14,7 @@ import io.inprice.scrapper.common.models.ImportProduct;
 import io.inprice.scrapper.common.models.ImportProductRow;
 import io.inprice.scrapper.common.models.Product;
 import io.inprice.scrapper.common.utils.NumberUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,9 @@ import org.slf4j.LoggerFactory;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ProductCSVImportService {
 
@@ -33,19 +36,20 @@ public class ProductCSVImportService {
     private static final int COLUMN_COUNT = 5;
 
     public ImportProduct upload(String file) {
-        ImportProduct imbort = new ImportProduct();
-        imbort.setImportType(ImportType.CSV);
-        imbort.setStatus(HttpStatus.BAD_REQUEST_400);
+        ImportProduct report = new ImportProduct();
+        report.setImportType(ImportType.CSV);
+        report.setStatus(HttpStatus.BAD_REQUEST_400);
 
-        int actualProdCount = productRepository.findProductCount();
         int allowedProdCount = planRepository.findAllowedProductCount();
+        if (allowedProdCount > 0) {
+            report.setProblemList(new ArrayList<>());
 
-        if (actualProdCount > -1 && allowedProdCount > -1) {
+            int actualProdCount = productRepository.findProductCount();
             if (actualProdCount < allowedProdCount) {
 
-                List<ImportProductRow> importList = new ArrayList<>();
-                List<ProductDTO> dtoList = new ArrayList<>();
+                Set<String> insertedCodeSet = new HashSet<>();
 
+                List<ImportProductRow> importList = new ArrayList<>();
                 try (CSVReader csvReader = new CSVReader(new StringReader(file))) {
 
                     String[] values;
@@ -55,10 +59,9 @@ public class ProductCSVImportService {
                         importRow.setStatus(Status.NEW);
                         importRow.setData(String.join(",", values));
 
-                        if (actualProdCount <= allowedProdCount) {
+                        if (actualProdCount < allowedProdCount) {
 
                             if (values.length == COLUMN_COUNT) {
-
                                 int i = 0;
                                 ProductDTO dto = new ProductDTO();
                                 dto.setCode(values[i++]);
@@ -67,77 +70,87 @@ public class ProductCSVImportService {
                                 dto.setCategory(values[i++]);
                                 dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[i])));
 
-                                ServiceResponse<Product> validation = ProductDTOValidator.validate(dto);
-                                if (validation.isOK()) {
-
-                                    ServiceResponse<Product> found = productRepository.findByCode(dto.getCode());
-                                    if (! found.isOK()) {
+                                boolean found = insertedCodeSet.contains(dto.getCode());
+                                if (found) {
+                                    importRow.setDescription("Already exists!");
+                                    importRow.setStatus(Status.DUPLICATE);
+                                    report.incDuplicateCount();
+                                } else {
+                                    ServiceResponse<Product> validation = ProductDTOValidator.validate(dto);
+                                    if (validation.isOK()) {
+                                        importRow.setProductDTO(dto);
                                         importRow.setDescription("Healthy.");
                                         importRow.setStatus(Status.AVAILABLE);
                                         actualProdCount++;
-                                        imbort.incInsertCount();
-                                        dtoList.add(dto);
+                                        report.incInsertCount();
+                                        insertedCodeSet.add(dto.getCode());
                                     } else {
-                                        importRow.setDescription("Already exists!");
-                                        importRow.setStatus(Status.DUPLICATE);
-                                        imbort.incDuplicateCount();
+                                        StringBuilder sb = new StringBuilder();
+                                        for (Problem problem : validation.getProblems()) {
+                                            if (sb.length() != 0) sb.append(" & ");
+                                            sb.append(problem.getReason());
+                                        }
+                                        importRow.setDescription(sb.toString());
+                                        importRow.setStatus(Status.IMPROPER);
+                                        report.incProblemCount();
                                     }
-
-                                } else {
-                                    StringBuilder sb = new StringBuilder("Validation problem. ");
-                                    for (Problem problem: validation.getProblems()) {
-                                        if (sb.length() > 0) sb.append(" | ");
-                                        sb.append(problem.toString());
-                                    }
-                                    importRow.setDescription(sb.toString());
-                                    importRow.setStatus(Status.IMPROPER);
-                                    imbort.incProblemCount();
                                 }
 
                             } else {
                                 importRow.setDescription("There must be " + COLUMN_COUNT + " columns in each row!. Column separator is comma ,");
                                 importRow.setStatus(Status.IMPROPER);
-                                imbort.incProblemCount();
+                                report.incProblemCount();
                             }
                         } else {
                             importRow.setDescription("You have reached your plan's maximum product limit.");
                             importRow.setStatus(Status.WONT_BE_IMPLEMENTED);
-                            imbort.incProblemCount();
+                            report.incProblemCount();
                         }
                         importList.add(importRow);
 
-                        imbort.incTotalCount();
+                        report.incTotalCount();
+
+                        if (!Status.AVAILABLE.equals(importRow.getStatus())) {
+                            report.getProblemList().add(StringUtils.leftPad(""+report.getTotalCount(), 3, '0') + ": " + importRow.getDescription());
+                        }
                     }
                 } catch (Exception e) {
                     log.error("Failed to import a csv file.", e);
-                    imbort.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
-                    imbort.setResult("Server error: " + e.getMessage());
+                    report.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
+                    report.setResult("Server error: " + e.getMessage());
                 }
 
-                if (imbort.getInsertCount() > 0) {
-                    imbort.setStatus(HttpStatus.OK_200);
-                    imbort.setResult("Import operation is done successfully for " + imbort.getInsertCount() + " of " + imbort.getTotalCount() + " products.");
+                if (report.getInsertCount() > 0) {
+                    report.setStatus(HttpStatus.OK_200);
+                    if (report.getProblemCount() == 0) {
+                        report.setResult("CSV file has been successfully uploaded.");
+                    } else {
+                        report.setResult("CSV file has been uploaded. However, some problems occurred. Please see details.");
+                    }
                 } else {
-                    imbort.setStatus(HttpStatus.BAD_REQUEST_400);
-                    imbort.setResult("No product in your file is imported!");
+                    report.setStatus(HttpStatus.BAD_REQUEST_400);
+                    report.setResult("Failed to import CSV file, please see details!");
                 }
 
-                ServiceResponse bulkResponse = productRepository.bulkInsert(imbort, importList, dtoList);
-                if (! bulkResponse.isOK()) {
-                    imbort.setStatus(bulkResponse.getStatus());
-                    imbort.setResult(bulkResponse.getResult());
+                ServiceResponse bulkResponse = productRepository.bulkInsert(report, importList);
+                if (!bulkResponse.isOK()) {
+                    report.setStatus(bulkResponse.getStatus());
+                    report.setResult(bulkResponse.getResult());
                 }
 
             } else {
-                imbort.setStatus(HttpStatus.TOO_MANY_REQUESTS_429);
-                imbort.setResult("You have already reached your plan's maximum product limit.");
+                report.setStatus(HttpStatus.TOO_MANY_REQUESTS_429);
+                report.setResult("You have already reached your plan's maximum product limit.");
             }
+
+            if (report.getProblemList().size() == 0) report.setProblemList(null);
+
         } else {
-            imbort.setStatus(HttpStatus.EXPECTATION_FAILED_417);
-            imbort.setResult("Seems you haven't chosen a plan yet. You need to select one to import your products.");
+            report.setStatus(HttpStatus.EXPECTATION_FAILED_417);
+            report.setResult("Seems you haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
         }
 
-        return imbort;
+        return report;
     }
 
 }

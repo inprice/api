@@ -216,6 +216,10 @@ public class AuthTest {
         TestHelper.loginAsAdmin();
     }
 
+    /**
+     * This test case is too timely! Please use it if only if really you need!
+     */
+    /*
     @Test
     public void token_should_be_expired() {
         //give some time to make actual token expired
@@ -232,7 +236,7 @@ public class AuthTest {
 
         TestHelper.loginAsAdmin();
     }
-
+    */
     @Test
     public void everything_should_be_ok_with_forgot_and_reset_password() {
         EmailDTO email = new EmailDTO();

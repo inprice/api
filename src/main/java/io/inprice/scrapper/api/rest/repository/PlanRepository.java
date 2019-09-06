@@ -21,18 +21,16 @@ public class PlanRepository {
     public int findAllowedProductCount() {
         int result = 0;
 
-        ServiceResponse<Plan> serres = findByWorkspaceId();
-        if (serres.isOK()) {
-            result = serres.getModel().getRowLimit();
-        } else {
-            result = -1;
+        ServiceResponse<Plan> res = findByWorkspaceId();
+        if (res.isOK()) {
+            result = res.getModel().getRowLimit();
         }
 
         return result;
     }
 
-    private ServiceResponse findByWorkspaceId() {
-        ServiceResponse<Plan> response = InstantResponses.CRUD_ERROR("");
+    private ServiceResponse<Plan> findByWorkspaceId() {
+        ServiceResponse<Plan> res = InstantResponses.CRUD_ERROR("");
 
         Plan model =
             dbUtils.findSingle(
@@ -40,11 +38,11 @@ public class PlanRepository {
                     "inner join workspace as ws on p.id = ws.plan_id " +
                     "where ws.id="+ Context.getWorkspaceId(), PlanRepository::map);
         if (model != null) {
-            response.setStatus(HttpStatus.OK_200);
-            response.setModel(model);
+            res.setStatus(HttpStatus.OK_200);
+            res.setModel(model);
         }
 
-        return response;
+        return res;
     }
 
     private static Plan map(ResultSet rs) {
