@@ -65,8 +65,8 @@ public class AdminUserTest {
         when()
             .get(Consts.Paths.AdminUser.BASE + "/0").
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("User not found!"));
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body("result", equalTo("Invalid user!"));
     }
 
     @Test
@@ -85,8 +85,8 @@ public class AdminUserTest {
         when()
             .delete(Consts.Paths.AdminUser.BASE + "/0").
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("User not found!"));
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body("result", equalTo("Invalid user!"));
     }
 
     @Test
@@ -180,7 +180,7 @@ public class AdminUserTest {
             .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid data for user!"));
+            .body("result", equalTo("Invalid user!"));
     }
 
     @Test

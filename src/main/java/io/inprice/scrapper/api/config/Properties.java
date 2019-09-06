@@ -22,7 +22,7 @@ public class Properties {
 			}
 			prop.load(input);
 		} catch (IOException e) {
-			log.error("Error", e);
+			log.error("Failed to load config.properties", e);
 		}
 	}
 

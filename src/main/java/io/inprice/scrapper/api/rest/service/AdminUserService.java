@@ -23,7 +23,10 @@ public class AdminUserService {
     private final UserRepository repository = Beans.getSingleton(UserRepository.class);
 
     public ServiceResponse findById(Long id) {
-        return repository.findById(id);
+        if (id != null && id > 0 && id < Integer.MAX_VALUE) {
+            return repository.findById(id);
+        }
+        return InstantResponses.INVALID_DATA("user!");
     }
 
     public ServiceResponse getList() {
@@ -31,58 +34,57 @@ public class AdminUserService {
     }
 
     public ServiceResponse insert(UserDTO userDTO) {
-        ServiceResponse res = validate(userDTO, true);
-        if (res.isOK()) {
-            res = repository.insert(userDTO);
+        if (userDTO != null) {
+            ServiceResponse res = validateUser(userDTO, true);
             if (res.isOK()) {
-                log.info("A new user has been added successfully. CompanyId: {}, Email: {}", Context.getCompanyId(), userDTO.getEmail());
+                res = repository.insert(userDTO);
+                if (res.isOK()) {
+                    log.info("A new user has been added successfully. CompanyId: {}, Email: {}", Context.getCompanyId(), userDTO.getEmail());
+                }
             }
+            return res;
         }
-        return res;
+        return InstantResponses.INVALID_DATA("user!");
     }
 
-    public ServiceResponse update(UserDTO userDTO, boolean passwordWillBeUpdated) {
-        if (userDTO.getId() == null || userDTO.getId() < 1) {
-            return InstantResponses.NOT_FOUND("User");
+    public ServiceResponse update(UserDTO userDTO) {
+        if (userDTO != null && userDTO.getId() != null) {
+            ServiceResponse res = validateUser(userDTO, false);
+            if (res.isOK()) {
+                res = repository.update(userDTO, true, true);
+            }
+            return res;
         }
-
-        ServiceResponse res = validate(userDTO, false);
-        if (res.isOK()) {
-            res = repository.update(userDTO, true, passwordWillBeUpdated);
-        }
-        return res;
+        return InstantResponses.INVALID_DATA("user!");
     }
 
     public ServiceResponse updatePassword(PasswordDTO passwordDTO) {
-        if (passwordDTO.getId() == null || passwordDTO.getId() < 1) {
-            return InstantResponses.NOT_FOUND("User");
+        if (passwordDTO != null && passwordDTO.getId() != null) {
+            ServiceResponse res = validatePassword(passwordDTO);
+            if (res.isOK()) {
+                res = repository.updatePassword(passwordDTO, Context.getAuthUser());
+            }
+            return res;
         }
-
-        ServiceResponse res = validate(passwordDTO);
-        if (res.isOK()) {
-            res = repository.updatePassword(passwordDTO, Context.getAuthUser());
-        }
-        return res;
+        return InstantResponses.INVALID_DATA("password!");
     }
 
     public ServiceResponse deleteById(Long id) {
-        if (id == null || id < 1) {
-            return InstantResponses.NOT_FOUND("User");
+        if (id != null && id > 0 && id < Integer.MAX_VALUE) {
+            return repository.deleteById(id);
         }
-
-        return repository.deleteById(id);
+        return InstantResponses.INVALID_DATA("user!");
     }
 
     public ServiceResponse toggleStatus(Long id) {
-        if (id == null || id < 1) {
-            return InstantResponses.NOT_FOUND("User");
+        if (id != null && id > 0 && id < Integer.MAX_VALUE) {
+            return repository.toggleStatus(id);
         }
-
-        return repository.toggleStatus(id);
+        return InstantResponses.INVALID_DATA("user!");
     }
 
-    private ServiceResponse validate(PasswordDTO passwordDTO) {
-        List<Problem> problems = PasswordDTOValidator.verify(passwordDTO, true, true);
+    private ServiceResponse validateUser(UserDTO userDTO, boolean insert) {
+        List<Problem> problems = UserDTOValidator.verify(userDTO, insert, "Full");
 
         if (problems.size() > 0) {
             ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
@@ -93,8 +95,8 @@ public class AdminUserService {
         }
     }
 
-    private ServiceResponse validate(UserDTO userDTO, boolean insert) {
-        List<Problem> problems = UserDTOValidator.verify(userDTO, insert, "Full");
+    private ServiceResponse validatePassword(PasswordDTO passwordDTO) {
+        List<Problem> problems = PasswordDTOValidator.verify(passwordDTO, true, true);
 
         if (problems.size() > 0) {
             ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
