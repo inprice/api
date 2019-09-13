@@ -44,7 +44,7 @@ public class AdminUserService {
             }
             return res;
         }
-        return InstantResponses.INVALID_DATA("user!");
+        return InstantResponses.INVALID_DATA("user data!");
     }
 
     public ServiceResponse update(UserDTO userDTO) {
@@ -55,7 +55,7 @@ public class AdminUserService {
             }
             return res;
         }
-        return InstantResponses.INVALID_DATA("user!");
+        return InstantResponses.INVALID_DATA("user data!");
     }
 
     public ServiceResponse updatePassword(PasswordDTO passwordDTO) {
@@ -66,7 +66,7 @@ public class AdminUserService {
             }
             return res;
         }
-        return InstantResponses.INVALID_DATA("password!");
+        return InstantResponses.INVALID_DATA("password data!");
     }
 
     public ServiceResponse deleteById(Long id) {

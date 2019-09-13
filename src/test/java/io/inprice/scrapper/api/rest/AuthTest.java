@@ -184,7 +184,7 @@ public class AuthTest {
         given()
           .header(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER)).
         when()
-            .post(Consts.Paths.Auth.REFRESH_TOKEN).
+            .get(Consts.Paths.Auth.REFRESH_TOKEN).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("result", equalTo("OK"));
@@ -292,7 +292,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.FORGOT_PASSWORD).
         then()
             .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid data for email!"));
+            .body("result", equalTo("Invalid email!"));
     }
 
     @Test

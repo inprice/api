@@ -30,14 +30,17 @@ public class CompanyService {
     }
 
     public ServiceResponse insert(CompanyDTO companyDTO) {
-        ServiceResponse res = validate(companyDTO, true);
-        if (res.isOK()) {
-            res = repository.insert(companyDTO);
+        if (companyDTO != null) {
+            ServiceResponse res = validate(companyDTO, true);
             if (res.isOK()) {
-                log.info("A new company has been added successfully. " + companyDTO);
+                res = repository.insert(companyDTO);
+                if (res.isOK()) {
+                    log.info("A new company has been added successfully. " + companyDTO);
+                }
             }
+            return res;
         }
-        return res;
+        return InstantResponses.INVALID_DATA("company data!");
     }
 
     public ServiceResponse update(CompanyDTO companyDTO) {

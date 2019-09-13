@@ -15,12 +15,17 @@ public class Context {
     public static AuthUser getAuthUser() {
         return THREAD_VARIABLES.get().getAuthUser();
     }
+
     public static Long getCompanyId() {
         return THREAD_VARIABLES.get().getAuthUser().getCompanyId();
     }
 
     public static Long getWorkspaceId() {
         return THREAD_VARIABLES.get().getWorkspaceId();
+    }
+
+    public static Long getUserId() {
+        return THREAD_VARIABLES.get().getAuthUser().getId();
     }
 
     static void setAuthUser(AuthUser authUser) {

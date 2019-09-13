@@ -6,12 +6,17 @@ import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.service.AdminService;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static spark.Spark.put;
 
 public class AdminController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     private static final AdminService service = Beans.getSingleton(AdminService.class);
 
@@ -39,7 +44,7 @@ public class AdminController {
             try {
                 return Global.gson.fromJson(body, UserDTO.class);
             } catch (Exception e) {
-                //
+                log.error("UserId: {} -> Data conversion error for user. " + body, Context.getUserId());
             }
         }
         return null;

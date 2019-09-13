@@ -111,14 +111,6 @@ class BulkDeleteStatements {
 
         String[] workspaceDeletions = {
             String.format(
-            "delete from import_link_row where workspace_id=%d and company_id=%d",
-                workspaceId, Context.getCompanyId()
-            ),
-            String.format(
-            "delete from import_link where workspace_id=%d and company_id=%d",
-                workspaceId, Context.getCompanyId()
-            ),
-            String.format(
             "delete from import_product_row where workspace_id=%d and company_id=%d",
                 workspaceId, Context.getCompanyId()
             ),

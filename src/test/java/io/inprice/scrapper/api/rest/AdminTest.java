@@ -246,7 +246,7 @@ public class AdminTest {
             .put(Consts.Paths.Admin.BASE).
         then()
             .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid data for user!"));
+            .body("result", equalTo("Invalid user data!"));
     }
 
     @Test
@@ -257,7 +257,7 @@ public class AdminTest {
             .put(Consts.Paths.Admin.PASSWORD).
         then()
             .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid data for password!"));
+            .body("result", equalTo("Invalid password data!"));
     }
 
     @Test

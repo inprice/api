@@ -7,19 +7,14 @@ import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
-import io.inprice.scrapper.api.rest.controller.AdminController;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
 import org.eclipse.jetty.http.HttpStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class AdminService {
-
-    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     private final UserRepository repository = Beans.getSingleton(UserRepository.class);
 
@@ -33,9 +28,7 @@ public class AdminService {
 
             return res;
         }
-
-        log.error("Invalid user data: " + userDTO);
-        return InstantResponses.INVALID_DATA("user!");
+        return InstantResponses.INVALID_DATA("user data!");
     }
 
     public ServiceResponse updatePassword(PasswordDTO passwordDTO) {
@@ -49,8 +42,7 @@ public class AdminService {
             return res;
         }
 
-        log.error("Invalid password data: " + passwordDTO);
-        return InstantResponses.INVALID_DATA("password!");
+        return InstantResponses.INVALID_DATA("password data!");
     }
 
     private ServiceResponse validateUser(UserDTO userDTO) {

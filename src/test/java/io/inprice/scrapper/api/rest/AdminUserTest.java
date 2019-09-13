@@ -180,7 +180,7 @@ public class AdminUserTest {
             .post(Consts.Paths.AdminUser.BASE).
         then()
             .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid user!"));
+            .body("result", equalTo("Invalid user data!"));
     }
 
     @Test

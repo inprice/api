@@ -124,7 +124,7 @@ public class AdminWorkspaceTest {
             .post(Consts.Paths.Workspace.BASE).
         then()
             .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid data for workspace!"));
+            .body("result", equalTo("Invalid workspace data!"));
     }
 
     @Test

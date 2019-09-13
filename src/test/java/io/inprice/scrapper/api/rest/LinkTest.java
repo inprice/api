@@ -211,7 +211,7 @@ public class LinkTest {
 
     @Test
     public void missing_workspace_ok_with_deleting() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         final long id = 1;
 
@@ -276,7 +276,7 @@ public class LinkTest {
             .post(Consts.Paths.Link.BASE).
         then()
             .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid data for link!"));
+            .body("result", equalTo("Invalid link data!"));
     }
 
     @Test
@@ -364,7 +364,7 @@ public class LinkTest {
             .put(Consts.Paths.Link.PAUSE + "/" + id + "?product_id=" + productId).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to change link's status!"));
+            .body("result", equalTo("Unauthorized user!"));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -380,7 +380,7 @@ public class LinkTest {
             .put(Consts.Paths.Link.RENEW + "/" + id + "?product_id=" + productId).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to change link's status!"));
+            .body(equalTo("Unauthorized user!"));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -396,7 +396,7 @@ public class LinkTest {
             .put(Consts.Paths.Link.RESUME + "/" + id + "?product_id=" + productId).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to change link's status!"));
+            .body(equalTo("Unauthorized user!"));
 
         TestHelper.loginAsAdmin(true);
     }

@@ -26,6 +26,8 @@ public class AuthFilter implements Filter {
     private final Set<String> allowedURIs;
     private final Set<String> workspaceNeededURIs;
 
+    private final Set<String> sensitiveMethodsSet;
+
     public AuthFilter() {
         allowedURIs = new HashSet<>(5);
         allowedURIs.add(Consts.Paths.Company.REGISTER);
@@ -37,6 +39,11 @@ public class AuthFilter implements Filter {
         workspaceNeededURIs = new HashSet<>(2);
         workspaceNeededURIs.add(Consts.Paths.Product.BASE);
         workspaceNeededURIs.add(Consts.Paths.Link.BASE);
+
+        sensitiveMethodsSet = new HashSet<>(2);
+        sensitiveMethodsSet.add("DELETE");
+        sensitiveMethodsSet.add("PUT");
+        sensitiveMethodsSet.add("POST");
 
         log.info("Allowed URIs");
         for (String uri: allowedURIs) {
@@ -58,6 +65,8 @@ public class AuthFilter implements Filter {
                     if (authUser == null) {
                         halt(HttpStatus.REQUEST_TIMEOUT_408, "Expired token!");
                     } else if (! UserType.ADMIN.equals(authUser.getType()) && request.uri().startsWith(Consts.Paths.ADMIN_BASE)) {
+                        halt(HttpStatus.FORBIDDEN_403, "Unauthorized user!");
+                    } else if (UserType.READER.equals(authUser.getType()) && sensitiveMethodsSet.contains(request.requestMethod())) {
                         halt(HttpStatus.FORBIDDEN_403, "Unauthorized user!");
                     }
 

@@ -42,7 +42,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid data for company!"));
+            .body("result", equalTo("Invalid company data!"));
     }
 
     @Test

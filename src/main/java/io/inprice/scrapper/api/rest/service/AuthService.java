@@ -41,85 +41,95 @@ public class AuthService {
     private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
 
     public ServiceResponse<AuthUser> login(LoginDTO loginDTO, Response response) {
-        ServiceResponse<AuthUser> res = validate(loginDTO);
-        if (res.isOK()) {
-            ServiceResponse<User> findingRes = userRepository.findByEmail(loginDTO.getEmail(), true);
-            if (findingRes.isOK()) {
-                User user = findingRes.getModel();
-                String salt = user.getPasswordSalt();
-                String hash = BCrypt.hashpw(loginDTO.getPassword(), salt);
-                if (hash.equals(user.getPasswordHash())) {
-                    AuthUser authUser = new AuthUser();
-                    authUser.setId(user.getId());
-                    authUser.setEmail(user.getEmail());
-                    authUser.setFullName(user.getFullName());
-                    authUser.setType(user.getUserType());
-                    authUser.setCompanyId(user.getCompanyId());
+        if (loginDTO != null) {
+            ServiceResponse<AuthUser> res = validate(loginDTO);
+            if (res.isOK()) {
+                ServiceResponse<User> findingRes = userRepository.findByEmail(loginDTO.getEmail(), true);
+                if (findingRes.isOK()) {
+                    User user = findingRes.getModel();
+                    String salt = user.getPasswordSalt();
+                    String hash = BCrypt.hashpw(loginDTO.getPassword(), salt);
+                    if (hash.equals(user.getPasswordHash())) {
+                        AuthUser authUser = new AuthUser();
+                        authUser.setId(user.getId());
+                        authUser.setEmail(user.getEmail());
+                        authUser.setFullName(user.getFullName());
+                        authUser.setType(user.getUserType());
+                        authUser.setCompanyId(user.getCompanyId());
 
-                    response.header(Consts.Auth.AUTHORIZATION_HEADER, tokenService.newToken(authUser));
+                        response.header(Consts.Auth.AUTHORIZATION_HEADER, tokenService.newToken(authUser));
 
-                    res.setResult("OK");
-                    res.setStatus(HttpStatus.OK_200);
+                        res.setResult("OK");
+                        res.setStatus(HttpStatus.OK_200);
+                    } else {
+                        res.setStatus(HttpStatus.NOT_FOUND_404);
+                        res.setResult("Invalid email or password!");
+                    }
                 } else {
-                    res.setStatus(HttpStatus.NOT_FOUND_404);
-                    res.setResult("Invalid email or password!");
+                    res.setStatus(findingRes.getStatus());
+                    res.setResult(findingRes.getResult());
                 }
-            } else {
-                res.setStatus(findingRes.getStatus());
-                res.setResult(findingRes.getResult());
             }
+            return res;
         }
-        return res;
+        return InstantResponses.INVALID_DATA("data for email or password!");
     }
 
     public ServiceResponse forgotPassword(EmailDTO emailDTO) {
-        ServiceResponse res = validateEmail(emailDTO);
-        if (res.isOK()) {
-            ServiceResponse<User> found = userRepository.findByEmail(emailDTO.getEmail());
-            if (found.isOK()) {
+        if (emailDTO != null) {
+            ServiceResponse res = validateEmail(emailDTO);
+            if (res.isOK()) {
+                ServiceResponse<User> found = userRepository.findByEmail(emailDTO.getEmail());
+                if (found.isOK()) {
 
-                final String token = tokenService.newTokenEmailFor(emailDTO.getEmail());
-                try {
-                    if (properties.isRunningForTests()) {
-                        res.setResult(token); //--> for test purposes, we need this info to test some functionality during testing
-                    } else {
-                        Map<String, Object> dataMap = new HashMap<>(2);
-                        dataMap.put("fullName", found.getModel().getFullName());
-                        dataMap.put("token", token);
+                    final String token = tokenService.newTokenEmailFor(emailDTO.getEmail());
+                    try {
+                        if (properties.isRunningForTests()) {
+                            res.setResult(token); //--> for test purposes, we need this info to test some functionality during testing
+                        } else {
+                            Map<String, Object> dataMap = new HashMap<>(2);
+                            dataMap.put("fullName", found.getModel().getFullName());
+                            dataMap.put("token", token);
 
-                        final String message = renderer.renderForgotPassword(dataMap);
-                        emailSender.send(properties.getEmail_Sender(), "Reset your password", found.getModel().getEmail(), message);
+                            final String message = renderer.renderForgotPassword(dataMap);
+                            emailSender.send(properties.getEmail_Sender(), "Reset your password", found.getModel().getEmail(), message);
 
-                        res.setResult("OK");
+                            res.setResult("OK");
+                        }
+                        res.setStatus(HttpStatus.OK_200);
+                    } catch (Exception e) {
+                        log.error("An error occurred in rendering email for forgetting password", e);
+                        res = InstantResponses.SERVER_ERROR(e);
                     }
-                    res.setStatus(HttpStatus.OK_200);
-                } catch (Exception e) {
-                    log.error("An error occurred in rendering email for forgetting password", e);
-                    res = InstantResponses.SERVER_ERROR(e);
+                } else {
+                    res = InstantResponses.NOT_FOUND("Email");
                 }
-            } else {
-                res = InstantResponses.NOT_FOUND("Email");
             }
+            return res;
         }
-        return res;
+        return InstantResponses.INVALID_DATA("email!");
     }
 
     public ServiceResponse resetPassword(PasswordDTO passwordDTO) {
-        ServiceResponse res = validatePassword(passwordDTO);
-        if (res.isOK()) {
-            final String email = tokenService.getEmail(passwordDTO.getToken());
+        if (passwordDTO != null) {
+            ServiceResponse res = validatePassword(passwordDTO);
+            if (res.isOK()) {
+                final String email = tokenService.getEmail(passwordDTO.getToken());
 
-            ServiceResponse<User> found = userRepository.findByEmail(email);
-            if (found.isOK()) {
-                AuthUser authUser = new AuthUser();
-                authUser.setId(found.getModel().getId());
-                authUser.setCompanyId(found.getModel().getCompanyId());
-                res = userRepository.updatePassword(passwordDTO, authUser);
-            } else {
-                res = InstantResponses.NOT_FOUND("Email");
+                ServiceResponse<User> found = userRepository.findByEmail(email);
+                if (found.isOK()) {
+                    AuthUser authUser = new AuthUser();
+                    authUser.setId(found.getModel().getId());
+                    authUser.setCompanyId(found.getModel().getCompanyId());
+                    res = userRepository.updatePassword(passwordDTO, authUser);
+                } else {
+                    res = InstantResponses.NOT_FOUND("Email");
+                }
             }
+            return res;
         }
-        return res;
+
+        return InstantResponses.INVALID_DATA("password data!");
     }
 
     public ServiceResponse refresh(Request req, Response res) {

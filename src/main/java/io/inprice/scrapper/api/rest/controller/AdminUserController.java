@@ -6,12 +6,17 @@ import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.service.AdminUserService;
 import io.inprice.scrapper.common.utils.NumberUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static spark.Spark.*;
 
 public class AdminUserController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     private static final AdminUserService service = Beans.getSingleton(AdminUserService.class);
 
@@ -34,16 +39,14 @@ public class AdminUserController {
 
         //delete
         delete(Consts.Paths.AdminUser.BASE + "/:id", (req, res) -> {
-            Long id = NumberUtils.toLong(req.params(":id"));
-            ServiceResponse serviceRes = service.deleteById(id);
+            ServiceResponse serviceRes = service.deleteById(NumberUtils.toLong(req.params(":id")));
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
 
         //find
         get(Consts.Paths.AdminUser.BASE + "/:id", (req, res) -> {
-            Long id = NumberUtils.toLong(req.params(":id"));
-            ServiceResponse serviceRes = service.findById(id);
+            ServiceResponse serviceRes = service.findById(NumberUtils.toLong(req.params(":id")));
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -57,8 +60,7 @@ public class AdminUserController {
 
         //toggle active status
         put(Consts.Paths.AdminUser.TOGGLE_STATUS + "/:id", (req, res) -> {
-            Long id = NumberUtils.toLong(req.params(":id"));
-            ServiceResponse serviceRes = service.toggleStatus(id);
+            ServiceResponse serviceRes = service.toggleStatus(NumberUtils.toLong(req.params(":id")));
             res.status(serviceRes.getStatus());
             return serviceRes;
         }, Global.gson::toJson);
@@ -76,7 +78,7 @@ public class AdminUserController {
         try {
             return Global.gson.fromJson(body, UserDTO.class);
         } catch (Exception e) {
-            //
+            log.error("UserId: {} -> Data conversion error for user. " + body, Context.getUserId());
         }
         return null;
     }

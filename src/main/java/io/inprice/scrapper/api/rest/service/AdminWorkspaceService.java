@@ -5,14 +5,19 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.controller.AdminController;
 import io.inprice.scrapper.api.rest.repository.WorkspaceRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AdminWorkspaceService {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     private final WorkspaceRepository repository = Beans.getSingleton(WorkspaceRepository.class);
 
@@ -25,11 +30,15 @@ public class AdminWorkspaceService {
     }
 
     public ServiceResponse insert(WorkspaceDTO workspaceDTO) {
-        ServiceResponse res = validate(workspaceDTO, true);
-        if (res.isOK()) {
-            res = repository.insert(workspaceDTO);
+        if (workspaceDTO != null) {
+
+            ServiceResponse res = validate(workspaceDTO);
+            if (res.isOK()) {
+                res = repository.insert(workspaceDTO);
+            }
+            return res;
         }
-        return res;
+        return InstantResponses.INVALID_DATA("workspace data!");
     }
 
     public ServiceResponse update(WorkspaceDTO workspaceDTO) {
@@ -37,7 +46,7 @@ public class AdminWorkspaceService {
             return InstantResponses.NOT_FOUND("Workspace");
         }
 
-        ServiceResponse res = validate(workspaceDTO, false);
+        ServiceResponse res = validate(workspaceDTO);
         if (res.isOK()) {
             res = repository.update(workspaceDTO);
         }
@@ -52,7 +61,7 @@ public class AdminWorkspaceService {
         return repository.deleteById(id);
     }
 
-    private ServiceResponse validate(WorkspaceDTO workspaceDTO, boolean insert) {
+    private ServiceResponse validate(WorkspaceDTO workspaceDTO) {
         List<Problem> problems = new ArrayList<>();
 
         if (StringUtils.isBlank(workspaceDTO.getName())) {

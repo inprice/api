@@ -32,11 +32,14 @@ public class LinkService {
     }
 
     public ServiceResponse insert(LinkDTO linkDTO) {
-        ServiceResponse res = validate(linkDTO);
-        if (res.isOK()) {
-            res = linkRepository.insert(linkDTO);
+        if (linkDTO != null) {
+            ServiceResponse res = validate(linkDTO);
+            if (res.isOK()) {
+                res = linkRepository.insert(linkDTO);
+            }
+            return res;
         }
-        return res;
+        return InstantResponses.INVALID_DATA("link data!");
     }
 
     public ServiceResponse deleteById(Long id) {
