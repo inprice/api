@@ -4,18 +4,18 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
-import io.inprice.scrapper.api.info.InstantResponses;
-import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.rest.component.Context;
-import io.inprice.scrapper.api.rest.service.ProductCodeImportService;
+import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.service.ProductCSVImportService;
+import io.inprice.scrapper.api.rest.service.ProductCodeImportService;
 import io.inprice.scrapper.api.rest.service.ProductImportService;
 import io.inprice.scrapper.common.meta.ImportType;
-import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.ImportProduct;
-import org.apache.commons.validator.routines.LongValidator;
+import io.inprice.scrapper.common.utils.NumberUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import spark.Request;
+import spark.Response;
 
 import static spark.Spark.*;
 
@@ -30,77 +30,41 @@ public class ProductImportController {
 
         //find
         get(Consts.Paths.Product.IMPORT_BASE + "/:id", (req, res) -> {
-            final Long id = LongValidator.getInstance().validate(req.params(":id"));
-
-            ServiceResponse serviceRes = findById(id);
-            res.status(serviceRes.getStatus());
-            return serviceRes;
+            return Commons.createResponse(res, importService.findById(NumberUtils.toLong(req.params(":id"))));
         }, Global.gson::toJson);
 
         //list
         get(Consts.Paths.Product.IMPORT_BASE + "s", (req, res) -> {
-            ServiceResponse serviceRes = getList();
-            res.status(serviceRes.getStatus());
-            return serviceRes;
+            return Commons.createResponse(res, importService.getList());
         }, Global.gson::toJson);
 
         //delete
         delete(Consts.Paths.Product.IMPORT_BASE + "/:id", (req, res) -> {
-            final Long id = LongValidator.getInstance().validate(req.params(":id"));
-
-            ServiceResponse serviceRes = deleteById(id);
-            res.status(serviceRes.getStatus());
-            return serviceRes;
+            return Commons.createResponse(res, importService.deleteById(NumberUtils.toLong(req.params(":id"))));
         }, Global.gson::toJson);
 
         //upload csv
         post(Consts.Paths.Product.IMPORT_CSV, "text/csv", (req, res) -> {
-            ImportProduct importReport = uploadCSV(req);
-            res.status(importReport.getStatus());
-            return importReport;
+            return createResponse(res, uploadCSV(req));
         }, Global.gson::toJson);
 
         //upload ebay SKU list
         post(Consts.Paths.Product.IMPORT_EBAY_SKU_LIST, "text/plain", (req, res) -> {
-            ImportProduct importReport = uploadCodeList(ImportType.EBAY_SKU, req);
-            res.status(importReport.getStatus());
-            return importReport;
+            return createResponse(res,  uploadCodeList(ImportType.EBAY_SKU, req));
         }, Global.gson::toJson);
 
         //upload amazon ASIN list
         post(Consts.Paths.Product.IMPORT_AMAZON_ASIN_LIST, "text/plain", (req, res) -> {
-            ImportProduct importReport = uploadCodeList(ImportType.AMAZON_ASIN,req);
-            res.status(importReport.getStatus());
-            return importReport;
+            return createResponse(res,  uploadCodeList(ImportType.AMAZON_ASIN, req));
         }, Global.gson::toJson);
 
-    }
-
-    private ServiceResponse findById(Long id) {
-        return importService.findById(id);
-    }
-
-    private ServiceResponse getList() {
-        return importService.getList();
-    }
-
-    private ServiceResponse deleteById(Long id) {
-        if (Context.getAuthUser().getType().equals(UserType.READER)) return InstantResponses.PERMISSION_PROBLEM("delete an import!");
-        return importService.deleteById(id);
     }
 
     private ImportProduct uploadCSV(Request req) {
         ImportProduct result = new ImportProduct();
 
-        if (Context.getAuthUser().getType().equals(UserType.READER)) {
-            result.setStatus(HttpStatus.FORBIDDEN_403);
-            result.setResult("User has no permission to import any product!");
-            return result;
-        }
-
-        if (req.body().isEmpty()) {
-            result.setStatus(HttpStatus.BAD_REQUEST_400);
-            result.setResult("CSV file is empty!");
+        if (StringUtils.isBlank(req.body())) {
+            result.setStatus(Responses.Invalid.EMPTY_FILE.getStatus());
         } else {
             result = csvImportService.upload(req.body());
         }
@@ -111,20 +75,18 @@ public class ProductImportController {
     private ImportProduct uploadCodeList(ImportType importType, Request req) {
         ImportProduct result = new ImportProduct();
 
-        if (Context.getAuthUser().getType().equals(UserType.READER)) {
-            result.setStatus(HttpStatus.FORBIDDEN_403);
-            result.setResult("User has no permission to import any product!");
-            return result;
-        }
-
-        if (req.body().isEmpty()) {
-            result.setStatus(HttpStatus.BAD_REQUEST_400);
-            result.setResult((ImportType.EBAY_SKU.equals(importType) ? "SKU" : "ASIN") + " list is empty!");
+        if (StringUtils.isBlank(req.body())) {
+            result.setStatus(Responses.Invalid.EMPTY_FILE.getStatus());
         } else {
             result = asinImportService.upload(importType, req.body());
         }
 
         return result;
+    }
+
+    private static ImportProduct createResponse(Response res, ImportProduct importReport) {
+        res.status(importReport.getStatus() == 0 ? HttpStatus.OK_200 : HttpStatus.BAD_REQUEST_400);
+        return importReport;
     }
 
 }

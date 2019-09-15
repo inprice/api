@@ -8,10 +8,11 @@ import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.AuthUser;
-import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.api.rest.validator.EmailDTOValidator;
 import io.inprice.scrapper.api.rest.validator.LoginDTOValidator;
@@ -19,7 +20,6 @@ import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
 import io.inprice.scrapper.common.models.User;
 import jodd.util.BCrypt;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -40,9 +40,9 @@ public class AuthService {
     private final Properties properties = Beans.getSingleton(Properties.class);
     private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
 
-    public ServiceResponse<AuthUser> login(LoginDTO loginDTO, Response response) {
+    public ServiceResponse login(LoginDTO loginDTO, Response response) {
         if (loginDTO != null) {
-            ServiceResponse<AuthUser> res = validate(loginDTO);
+            ServiceResponse res = validate(loginDTO);
             if (res.isOK()) {
                 ServiceResponse<User> findingRes = userRepository.findByEmail(loginDTO.getEmail(), true);
                 if (findingRes.isOK()) {
@@ -59,20 +59,17 @@ public class AuthService {
 
                         response.header(Consts.Auth.AUTHORIZATION_HEADER, tokenService.newToken(authUser));
 
-                        res.setResult("OK");
-                        res.setStatus(HttpStatus.OK_200);
+                        return Responses.OK;
                     } else {
-                        res.setStatus(HttpStatus.NOT_FOUND_404);
-                        res.setResult("Invalid email or password!");
+                        return Responses.NotFound.USER;
                     }
                 } else {
-                    res.setStatus(findingRes.getStatus());
-                    res.setResult(findingRes.getResult());
+                    return findingRes;
                 }
             }
             return res;
         }
-        return InstantResponses.INVALID_DATA("data for email or password!");
+        return Responses.Invalid.EMAIL_OR_PASSWORD;
     }
 
     public ServiceResponse forgotPassword(EmailDTO emailDTO) {
@@ -85,7 +82,7 @@ public class AuthService {
                     final String token = tokenService.newTokenEmailFor(emailDTO.getEmail());
                     try {
                         if (properties.isRunningForTests()) {
-                            res.setResult(token); //--> for test purposes, we need this info to test some functionality during testing
+                            return new ServiceResponse(token); //--> for test purposes, we need this info to test some functionality during testing
                         } else {
                             Map<String, Object> dataMap = new HashMap<>(2);
                             dataMap.put("fullName", found.getModel().getFullName());
@@ -93,21 +90,19 @@ public class AuthService {
 
                             final String message = renderer.renderForgotPassword(dataMap);
                             emailSender.send(properties.getEmail_Sender(), "Reset your password", found.getModel().getEmail(), message);
-
-                            res.setResult("OK");
+                            return Responses.OK;
                         }
-                        res.setStatus(HttpStatus.OK_200);
                     } catch (Exception e) {
                         log.error("An error occurred in rendering email for forgetting password", e);
-                        res = InstantResponses.SERVER_ERROR(e);
+                        return Responses.ServerProblem.EXCEPTION;
                     }
                 } else {
-                    res = InstantResponses.NOT_FOUND("Email");
+                    return Responses.NotFound.EMAIL;
                 }
             }
             return res;
         }
-        return InstantResponses.INVALID_DATA("email!");
+        return Responses.Invalid.PASSWORD;
     }
 
     public ServiceResponse resetPassword(PasswordDTO passwordDTO) {
@@ -123,85 +118,58 @@ public class AuthService {
                     authUser.setCompanyId(found.getModel().getCompanyId());
                     res = userRepository.updatePassword(passwordDTO, authUser);
                 } else {
-                    res = InstantResponses.NOT_FOUND("Email");
+                    return Responses.NotFound.EMAIL;
                 }
             }
             return res;
         }
 
-        return InstantResponses.INVALID_DATA("password data!");
+        return Responses.Invalid.PASSWORD;
     }
 
     public ServiceResponse refresh(Request req, Response res) {
-        ServiceResponse serRes = new ServiceResponse(HttpStatus.UNAUTHORIZED_401);
-
         final String token = tokenService.getToken(req);
 
         if (StringUtils.isBlank(token)) {
-            serRes.setResult("Missing header: " + Consts.Auth.AUTHORIZATION_HEADER);
+            return Responses.Missing.AUTHORIZATION_HEADER;
         } else if (tokenService.isTokenInvalidated(token)) {
-            serRes.setResult("Invalid token!");
+            return Responses.Invalid.TOKEN;
         } else {
             tokenService.revokeToken(token);
             AuthUser authUser = tokenService.getAuthUser(token);
             res.header(Consts.Auth.AUTHORIZATION_HEADER, tokenService.newToken(authUser));
-
-            serRes.setStatus(HttpStatus.OK_200);
-            serRes.setResult("OK");
+            return Responses.OK;
         }
-
-        return serRes;
     }
 
     public ServiceResponse logout(Request req) {
         tokenService.revokeToken(tokenService.getToken(req));
-        return InstantResponses.OK;
+        return Responses.OK;
     }
 
     private ServiceResponse validateEmail(EmailDTO emailDTO) {
-        ServiceResponse res = new ServiceResponse<>(HttpStatus.BAD_REQUEST_400);
-
         List<Problem> problems = new ArrayList<>();
-        boolean isValid = EmailDTOValidator.verify(emailDTO.getEmail(), problems);
-
-        if (! isValid) {
-            res.setProblems(problems);
-        } else {
-            res = new ServiceResponse<>(HttpStatus.OK_200);
-        }
-        return res;
+        EmailDTOValidator.verify(emailDTO.getEmail(), problems);
+        return Commons.createResponse(problems);
     }
 
     private ServiceResponse validatePassword(PasswordDTO passwordDTO) {
-        List<Problem> problems = PasswordDTOValidator.verify(passwordDTO, true, false);
+        List<io.inprice.scrapper.api.info.Problem> problems = PasswordDTOValidator.verify(passwordDTO, true, false);
 
         if (StringUtils.isBlank(passwordDTO.getToken())) {
-            problems.add(new Problem("form", "Token cannot be null!"));
+            problems.add(new io.inprice.scrapper.api.info.Problem("form", "Token cannot be null!"));
         } else if (tokenService.isTokenInvalidated(passwordDTO.getToken())) {
-            problems.add(new Problem("form", "Invalid token!"));
+            problems.add(new io.inprice.scrapper.api.info.Problem("form", "Invalid token!"));
         } else if (tokenService.isEmailTokenExpired(passwordDTO.getToken())) {
-            problems.add(new Problem("form", "Expired token!"));
+            problems.add(new io.inprice.scrapper.api.info.Problem("form", "Expired token!"));
         }
 
-        if (problems.size() > 0) {
-            ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
-            res.setProblems(problems);
-            return res;
-        } else {
-            return InstantResponses.OK;
-        }
+        return Commons.createResponse(problems);
     }
 
-    private ServiceResponse<AuthUser> validate(LoginDTO loginDTO) {
-        ServiceResponse<AuthUser> res = new ServiceResponse<>(HttpStatus.BAD_REQUEST_400);
+    private ServiceResponse validate(LoginDTO loginDTO) {
         List<Problem> problems = LoginDTOValidator.verify(loginDTO);
-
-        if (problems.size() > 0) {
-            res.setProblems(problems);
-        } else {
-            res = new ServiceResponse<>(HttpStatus.OK_200);
-        }
-        return res;
+        return Commons.createResponse(problems);
     }
 
 }

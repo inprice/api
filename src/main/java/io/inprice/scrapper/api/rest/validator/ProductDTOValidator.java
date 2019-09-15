@@ -1,11 +1,10 @@
 package io.inprice.scrapper.api.rest.validator;
 
 import io.inprice.scrapper.api.dto.ProductDTO;
-import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Commons;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -40,13 +39,7 @@ public class ProductDTOValidator {
             problems.add(new Problem("price", "Price must be greater than zero!"));
         }
 
-        if (problems.size() > 0) {
-            ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
-            res.setProblems(problems);
-            return res;
-        } else {
-            return InstantResponses.OK;
-        }
+        return Commons.createResponse(problems);
     }
 
 }

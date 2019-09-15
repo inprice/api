@@ -4,8 +4,8 @@ import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.AuthUser;
-import io.inprice.scrapper.api.info.InstantResponses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.utils.CodeGenerator;
@@ -34,17 +34,16 @@ public class UserRepository {
             dbUtils.findSingle(
                 String.format(
                     "select * from user " +
-                        "where id = %d " +
-                        "  and company_id = %d", id, Context.getCompanyId()), this::map);
+                    "where id = %d " +
+                    "  and company_id = %d", id, Context.getCompanyId()), this::map);
         if (model != null) {
             if (! passwordFields) {
                 model.setPasswordSalt(null);
                 model.setPasswordHash(null);
             }
             return new ServiceResponse<>(model);
-        } else {
-            return InstantResponses.NOT_FOUND("User");
         }
+        return Responses.NotFound.USER;
     }
 
     public ServiceResponse<User> getList() {
@@ -58,7 +57,7 @@ public class UserRepository {
         if (users != null && users.size() > 0) {
             return new ServiceResponse<>(users);
         }
-        return InstantResponses.NOT_FOUND("User");
+        return Responses.NotFound.USER;
     }
 
     public ServiceResponse<User> findByEmail(String email) {
@@ -73,9 +72,8 @@ public class UserRepository {
                 model.setPasswordHash(null);
             }
             return new ServiceResponse<>(model);
-        } else {
-            return InstantResponses.NOT_FOUND("User");
         }
+        return Responses.NotFound.USER;
     }
 
     public ServiceResponse<User> findByEmailForUpdateCheck(String email, long userId) {
@@ -84,9 +82,8 @@ public class UserRepository {
             model.setPasswordSalt(null);
             model.setPasswordHash(null);
             return new ServiceResponse<>(model);
-        } else {
-            return InstantResponses.NOT_FOUND("User");
         }
+        return Responses.NotFound.USER;
     }
 
     public ServiceResponse insert(UserDTO userDTO) {
@@ -114,16 +111,16 @@ public class UserRepository {
             pst.setLong(++i, Context.getCompanyId());
 
             if (pst.executeUpdate() > 0)
-                return InstantResponses.OK;
+                return Responses.OK;
             else
-                return InstantResponses.CRUD_ERROR("Couldn't insert user. " + userDTO.toString());
+                return Responses.DataProblem.DB_PROBLEM;
 
         } catch (SQLIntegrityConstraintViolationException ie) {
             log.error("Failed to insert user: " + ie.getMessage());
-            return InstantResponses.SERVER_ERROR(ie);
+            return Responses.DataProblem.INTEGRITY_PROBLEM;
         } catch (Exception e) {
             log.error("Failed to insert user", e);
-            return InstantResponses.SERVER_ERROR(e);
+            return Responses.ServerProblem.EXCEPTION;
         }
     }
 
@@ -159,13 +156,13 @@ public class UserRepository {
             pst.setLong(++i, Context.getCompanyId());
 
             if (pst.executeUpdate() > 0)
-                return InstantResponses.OK;
+                return Responses.OK;
             else
-                return InstantResponses.NOT_FOUND("User");
+                return Responses.NotFound.USER;
 
         } catch (SQLException sqle) {
             log.error("Failed to update user", sqle);
-            return InstantResponses.SERVER_ERROR(sqle);
+            return Responses.ServerProblem.EXCEPTION;
         }
     }
 
@@ -188,13 +185,13 @@ public class UserRepository {
             pst.setLong(++i, authUser.getCompanyId());
 
             if (pst.executeUpdate() > 0)
-                return InstantResponses.OK;
+                return Responses.OK;
             else
-                return InstantResponses.CRUD_ERROR("User not found!");
+                return Responses.NotFound.USER;
 
         } catch (Exception e) {
             log.error("Failed to update user", e);
-            return InstantResponses.SERVER_ERROR(e);
+            return Responses.ServerProblem.EXCEPTION;
         }
     }
 
@@ -208,9 +205,10 @@ public class UserRepository {
                     "  and user_type != '%s'", id, Context.getCompanyId(), UserType.ADMIN.name()),
             "Failed to delete user with id: " + id);
 
-        if (result) return InstantResponses.OK;
-
-        return InstantResponses.NOT_FOUND("User");
+        if (result) {
+            return Responses.OK;
+        }
+        return Responses.NotFound.USER;
     }
 
     public ServiceResponse toggleStatus(Long id) {
@@ -224,9 +222,10 @@ public class UserRepository {
                     "  and user_type != '%s'", id, Context.getCompanyId(), UserType.ADMIN.name()),
         "Failed to toggle user status! id: " + id);
 
-        if (result) return InstantResponses.OK;
-
-        return InstantResponses.NOT_FOUND("User");
+        if (result) {
+            return Responses.OK;
+        }
+        return Responses.NotFound.USER;
     }
 
     private User map(ResultSet rs) {

@@ -1,6 +1,7 @@
 package io.inprice.scrapper.api.rest.service;
 
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.repository.PlanRepository;
 import io.inprice.scrapper.api.rest.repository.ProductRepository;
@@ -9,7 +10,6 @@ import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.ImportProduct;
 import io.inprice.scrapper.common.models.ImportProductRow;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +18,8 @@ import java.util.*;
 public class ProductCodeImportService {
 
     private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
-
-    private final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
-    private final PlanRepository planRepository = Beans.getSingleton(PlanRepository.class);
+    private static final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
+    private static final PlanRepository planRepository = Beans.getSingleton(PlanRepository.class);
 
     private static final String ASIN_REGEX = "^(?i)(B0|BT)[0-9A-Z]{8}$";
     private static final String SKU_REGEX = "^[1-3][0-9]{11}$";
@@ -31,7 +30,6 @@ public class ProductCodeImportService {
 
         ImportProduct report = new ImportProduct();
         report.setImportType(importType);
-        report.setStatus(HttpStatus.BAD_REQUEST_400);
 
         int allowedProdCount = planRepository.findAllowedProductCount();
         if (allowedProdCount > 0) {
@@ -94,37 +92,36 @@ public class ProductCodeImportService {
                     }
                 } catch (Exception e) {
                     log.error("Failed to import " + identifier + " list.", e);
-                    report.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
+                    report.setStatus(Responses.ServerProblem.EXCEPTION.getStatus());
                     report.setResult("Server error: " + e.getMessage());
                 }
 
                 if (report.getInsertCount() > 0) {
-                    report.setStatus(HttpStatus.OK_200);
+                    report.setStatus(Responses.OK.getStatus());
                     if (report.getProblemCount() == 0) {
                         report.setResult(identifier + " list has been successfully uploaded.");
                     } else {
                         report.setResult(identifier + " list has been uploaded. However, some problems occurred. Please see details.");
                     }
                 } else {
-                    report.setStatus(HttpStatus.BAD_REQUEST_400);
+                    report.setStatus(Responses.DataProblem.NOT_SUITABLE.getStatus());
                     report.setResult("Failed to import " + identifier + " list, please see details!");
                 }
 
                 ServiceResponse bulkResponse = productRepository.bulkInsert(report, importList);
                 if (!bulkResponse.isOK()) {
                     report.setStatus(bulkResponse.getStatus());
-                    report.setResult(bulkResponse.getResult());
                 }
 
             } else {
-                report.setStatus(HttpStatus.TOO_MANY_REQUESTS_429);
+                report.setStatus(Responses.ServerProblem.LIMIT_PROBLEM.getStatus());
                 report.setResult("You have already reached your plan's maximum product limit.");
             }
 
             if (report.getProblemList().size() == 0) report.setProblemList(null);
 
         } else {
-            report.setStatus(HttpStatus.EXPECTATION_FAILED_417);
+            report.setStatus(Responses.PermissionProblem.DONT_HAVE_A_PLAN.getStatus());
             report.setResult("Seems you haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
         }
 

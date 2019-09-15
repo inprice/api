@@ -3,6 +3,7 @@ package io.inprice.scrapper.api.rest.service;
 import com.opencsv.CSVReader;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.repository.PlanRepository;
@@ -15,7 +16,6 @@ import io.inprice.scrapper.common.models.ImportProductRow;
 import io.inprice.scrapper.common.models.Product;
 import io.inprice.scrapper.common.utils.NumberUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,16 +29,14 @@ import java.util.Set;
 public class ProductCSVImportService {
 
     private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
-
-    private final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
-    private final PlanRepository planRepository = Beans.getSingleton(PlanRepository.class);
+    private static final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
+    private static final PlanRepository planRepository = Beans.getSingleton(PlanRepository.class);
 
     private static final int COLUMN_COUNT = 5;
 
     public ImportProduct upload(String file) {
         ImportProduct report = new ImportProduct();
         report.setImportType(ImportType.CSV);
-        report.setStatus(HttpStatus.BAD_REQUEST_400);
 
         int allowedProdCount = planRepository.findAllowedProductCount();
         if (allowedProdCount > 0) {
@@ -116,37 +114,36 @@ public class ProductCSVImportService {
                     }
                 } catch (Exception e) {
                     log.error("Failed to import a csv file.", e);
-                    report.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
+                    report.setStatus(Responses.ServerProblem.EXCEPTION.getStatus());
                     report.setResult("Server error: " + e.getMessage());
                 }
 
                 if (report.getInsertCount() > 0) {
-                    report.setStatus(HttpStatus.OK_200);
+                    report.setStatus(Responses.OK.getStatus());
                     if (report.getProblemCount() == 0) {
                         report.setResult("CSV file has been successfully uploaded.");
                     } else {
                         report.setResult("CSV file has been uploaded. However, some problems occurred. Please see details.");
                     }
                 } else {
-                    report.setStatus(HttpStatus.BAD_REQUEST_400);
+                    report.setStatus(Responses.DataProblem.NOT_SUITABLE.getStatus());
                     report.setResult("Failed to import CSV file, please see details!");
                 }
 
                 ServiceResponse bulkResponse = productRepository.bulkInsert(report, importList);
                 if (!bulkResponse.isOK()) {
                     report.setStatus(bulkResponse.getStatus());
-                    report.setResult(bulkResponse.getResult());
                 }
 
             } else {
-                report.setStatus(HttpStatus.TOO_MANY_REQUESTS_429);
+                report.setStatus(Responses.ServerProblem.LIMIT_PROBLEM.getStatus());
                 report.setResult("You have already reached your plan's maximum product limit.");
             }
 
             if (report.getProblemList().size() == 0) report.setProblemList(null);
 
         } else {
-            report.setStatus(HttpStatus.EXPECTATION_FAILED_417);
+            report.setStatus(Responses.PermissionProblem.DONT_HAVE_A_PLAN.getStatus());
             report.setResult("Seems you haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
         }
 

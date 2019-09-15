@@ -10,7 +10,6 @@ public class LoginDTOValidator {
     public static List<Problem> verify(LoginDTO loginDTO) {
         List<Problem> problems = PasswordDTOValidator.verify(loginDTO, false, false);
         EmailDTOValidator.verify(loginDTO.getEmail(), problems);
-
         return problems;
     }
 

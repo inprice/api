@@ -5,6 +5,7 @@ import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.helpers.TestHelper;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
@@ -36,7 +37,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.LOGIN).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -51,7 +52,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.LOGIN).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -61,8 +62,8 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.LOGIN).
         then()
-            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid data for email or password!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.Invalid.EMAIL_OR_PASSWORD.getStatus()));
     }
 
     @Test
@@ -76,6 +77,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.LOGIN).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address cannot be null!"));
     }
 
@@ -90,6 +92,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.LOGIN).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
     }
 
@@ -104,6 +107,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.LOGIN).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
     }
 
@@ -118,6 +122,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.LOGIN).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Invalid email address!"));
     }
 
@@ -132,6 +137,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.LOGIN).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password cannot be null!"));
     }
 
@@ -146,6 +152,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.LOGIN).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
     }
 
@@ -160,6 +167,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.LOGIN).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
     }
 
@@ -178,6 +186,7 @@ public class AuthTest {
                 .post(Consts.Paths.Auth.LOGIN).
             then()
                 .statusCode(HttpStatus.OK_200).assertThat()
+                .body("status", equalTo(Responses.OK.getStatus()))
                 .extract().
         response();
 
@@ -187,7 +196,7 @@ public class AuthTest {
             .get(Consts.Paths.Auth.REFRESH_TOKEN).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
 
         TestHelper.loginAsAdmin();
     }
@@ -224,7 +233,7 @@ public class AuthTest {
     public void token_should_be_expired() {
         //give some time to make actual token expired
         try {
-            Thread.sleep(TestHelper.getTTL_TokensInSeconds() * 1000L);
+            Thread.sleep(15 * 1000L);
         } catch (InterruptedException e) {
             //
         }
@@ -237,6 +246,7 @@ public class AuthTest {
         TestHelper.loginAsAdmin();
     }
     */
+
     @Test
     public void everything_should_be_ok_with_forgot_and_reset_password() {
         EmailDTO email = new EmailDTO();
@@ -250,11 +260,12 @@ public class AuthTest {
                 .post(Consts.Paths.Auth.FORGOT_PASSWORD).
             then()
                 .statusCode(HttpStatus.OK_200).assertThat()
+                .body("status", equalTo(Responses.OK.getStatus()))
                 .extract().
             response();
 
         Map resMap = Global.gson.fromJson(res.asString(), Map.class);
-        final String token = resMap.get("result").toString();
+        final String token = resMap.get("data").toString();
 
         PasswordDTO password = new PasswordDTO();
         password.setToken(token);
@@ -268,7 +279,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.RESET_PASSWORD).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
 
         //loginAsAdmin with new credentials
         LoginDTO login = new LoginDTO();
@@ -281,7 +292,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.LOGIN).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -291,8 +302,8 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.FORGOT_PASSWORD).
         then()
-            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid email!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.Invalid.PASSWORD.getStatus()));
     }
 
     @Test
@@ -305,6 +316,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.FORGOT_PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address cannot be null!"));
     }
 
@@ -318,8 +330,8 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.FORGOT_PASSWORD).
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Email not found!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.EMAIL.getStatus()));
     }
 
     @Test
@@ -333,6 +345,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.RESET_PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Passwords are mismatch!"));
     }
 
@@ -348,6 +361,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.RESET_PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Token cannot be null!"));
     }
 
@@ -362,6 +376,7 @@ public class AuthTest {
             .post(Consts.Paths.Auth.RESET_PASSWORD).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password cannot be null!"));
     }
 

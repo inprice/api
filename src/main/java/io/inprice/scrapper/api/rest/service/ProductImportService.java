@@ -1,12 +1,9 @@
 package io.inprice.scrapper.api.rest.service;
 
-import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.repository.ProductImportRepository;
-import io.inprice.scrapper.api.rest.repository.ProductRepository;
-import io.inprice.scrapper.api.rest.validator.ProductDTOValidator;
 
 public class ProductImportService {
 
@@ -22,9 +19,8 @@ public class ProductImportService {
 
     public ServiceResponse deleteById(Long id) {
         if (id == null || id < 1) {
-            return InstantResponses.NOT_FOUND("Import");
+            return Responses.NotFound.IMPORT;
         }
-
         return repository.deleteById(id);
     }
 

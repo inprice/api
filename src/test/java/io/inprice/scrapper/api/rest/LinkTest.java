@@ -2,6 +2,7 @@ package io.inprice.scrapper.api.rest;
 
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.helpers.TestHelper;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.BeforeClass;
@@ -12,8 +13,6 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
-//todo: workspace id in headers must be tested
-//todo: duplicate urls in insert and update must be tested
 public class LinkTest {
 
     @BeforeClass
@@ -27,7 +26,7 @@ public class LinkTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -41,7 +40,7 @@ public class LinkTest {
             .post(Consts.Paths.Link.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -52,6 +51,7 @@ public class LinkTest {
             .get(Consts.Paths.Link.BASE + "/" + id).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
+            .body("status", equalTo(Responses.OK.getStatus()))
             .body("model.id", equalTo(id));
     }
 
@@ -63,7 +63,7 @@ public class LinkTest {
             .put(Consts.Paths.Link.PAUSE + "/" + id + "?product_id=1").
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -74,7 +74,7 @@ public class LinkTest {
             .put(Consts.Paths.Link.RENEW + "/" + id + "?product_id=1").
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -85,7 +85,7 @@ public class LinkTest {
             .put(Consts.Paths.Link.RESUME + "/" + id + "?product_id=1").
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -104,7 +104,7 @@ public class LinkTest {
             .post(Consts.Paths.Link.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
 
         given()
             .body(l2).
@@ -112,13 +112,13 @@ public class LinkTest {
             .post(Consts.Paths.Link.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
 
         when()
             .delete(Consts.Paths.Link.BASE + "/" + id).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -129,12 +129,13 @@ public class LinkTest {
             .get(Consts.Paths.Link.BASE + "s/" + id).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
+            .body("status", equalTo(Responses.OK.getStatus()))
             .body("models.size", greaterThan(0)); //since we have a default link inserted at the beginning
     }
 
     @Test
     public void missing_workspace_with_inserting() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         final LinkDTO link = TestHelper.getLinkDTO(1L);
 
@@ -166,7 +167,7 @@ public class LinkTest {
 
     @Test
     public void missing_workspace_with_changing_status_to_PAUSED() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         final int id = 1;
 
@@ -181,7 +182,7 @@ public class LinkTest {
 
     @Test
     public void missing_workspace_with_changing_status_to_RENEWED() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         final int id = 1;
 
@@ -196,7 +197,7 @@ public class LinkTest {
 
     @Test
     public void missing_workspace_with_changing_status_to_RESUMED() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         final int id = 1;
 
@@ -226,7 +227,7 @@ public class LinkTest {
 
     @Test
     public void missing_workspace_with_listing() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         final long id = 1;
 
@@ -244,8 +245,8 @@ public class LinkTest {
         when()
             .get(Consts.Paths.Link.BASE + "/0").
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Link not found!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.LINK.getStatus()));
     }
 
     @Test
@@ -253,8 +254,8 @@ public class LinkTest {
         when()
             .delete(Consts.Paths.Link.BASE + "/0").
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Link not found!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.LINK.getStatus()));
     }
 
     @Test
@@ -264,8 +265,8 @@ public class LinkTest {
         when()
             .get(Consts.Paths.Link.BASE + "s/" + id).
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", greaterThan("")); //since we have a default link inserted at the beginning
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
     }
 
     @Test
@@ -275,8 +276,8 @@ public class LinkTest {
         when()
             .post(Consts.Paths.Link.BASE).
         then()
-            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid link data!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.Invalid.LINK.getStatus()));
     }
 
     @Test
@@ -290,6 +291,7 @@ public class LinkTest {
             .post(Consts.Paths.Link.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Invalid URL!"));
     }
 
@@ -304,6 +306,7 @@ public class LinkTest {
             .post(Consts.Paths.Link.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Invalid URL!"));
     }
 
@@ -318,6 +321,7 @@ public class LinkTest {
             .post(Consts.Paths.Link.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Invalid URL!"));
     }
 
@@ -333,7 +337,7 @@ public class LinkTest {
             .post(Consts.Paths.Link.BASE).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to insert a new link!"));
+            .body(equalTo("Unauthorized user!"));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -348,7 +352,7 @@ public class LinkTest {
             .delete(Consts.Paths.Link.BASE + "/" + id).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to delete a link!"));
+            .body(equalTo("Unauthorized user!"));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -364,7 +368,7 @@ public class LinkTest {
             .put(Consts.Paths.Link.PAUSE + "/" + id + "?product_id=" + productId).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("Unauthorized user!"));
+            .body(equalTo("Unauthorized user!"));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -409,8 +413,8 @@ public class LinkTest {
         when()
             .put(Consts.Paths.Link.PAUSE + "/" + id + "?product_id=" + productId).
         then()
-            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid product!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -423,8 +427,8 @@ public class LinkTest {
         when()
             .put(Consts.Paths.Link.RENEW + "/" + id + "?product_id=" + productId).
         then()
-            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid product!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -437,8 +441,8 @@ public class LinkTest {
         when()
             .put(Consts.Paths.Link.RESUME + "/" + id + "?product_id=" + productId).
         then()
-            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid product!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
     }
 
 }

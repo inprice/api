@@ -2,6 +2,7 @@ package io.inprice.scrapper.api.rest;
 
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.helpers.TestHelper;
 import io.restassured.response.Response;
 import org.apache.commons.lang3.StringUtils;
@@ -31,7 +32,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -41,8 +42,8 @@ public class CompanyTest {
         when()
             .post(Consts.Paths.Company.REGISTER).
         then()
-            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid company data!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.Invalid.COMPANY.getStatus()));
     }
 
     @Test
@@ -56,6 +57,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason", hasItem("Company name cannot be null!"));
     }
 
@@ -71,6 +73,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("The length of name field must be between 3 and 250 chars!"));
     }
 
@@ -86,6 +89,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("The length of name field must be between 3 and 250 chars!"));
     }
 
@@ -99,7 +103,8 @@ public class CompanyTest {
         when()
             .post(Consts.Paths.Company.REGISTER).
         then()
-            .statusCode(HttpStatus.OK_200).assertThat();
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("status", equalTo(Responses.OK.getStatus()));
 
         Response res =
             given()
@@ -120,8 +125,8 @@ public class CompanyTest {
         when()
             .put(Consts.Paths.Company.BASE).
         then()
-            .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to update this company!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.PermissionProblem.UNAUTHORIZED.getStatus()));
     }
 
     @Test
@@ -149,6 +154,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason", hasItem("Unknown country!"));
     }
 
@@ -163,6 +169,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Contact name cannot be null!"));
     }
 
@@ -177,6 +184,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Contact name must be between 2 and 150 chars!"));
     }
 
@@ -191,6 +199,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Contact name must be between 2 and 150 chars!"));
     }
 
@@ -205,6 +214,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address cannot be null!"));
     }
 
@@ -225,6 +235,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo(email + " is already used by another user!"));
     }
 
@@ -239,6 +250,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
     }
 
@@ -253,6 +265,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
     }
 
@@ -267,6 +280,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Invalid email address!"));
     }
 
@@ -281,6 +295,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password cannot be null!"));
     }
 
@@ -295,6 +310,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
     }
 
@@ -309,6 +325,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
     }
 
@@ -323,6 +340,7 @@ public class CompanyTest {
             .post(Consts.Paths.Company.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Passwords are mismatch!"));
     }
 

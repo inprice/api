@@ -4,7 +4,7 @@ import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.meta.Status;
@@ -32,9 +32,8 @@ public class LinkRepository {
                 "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         if (model != null) {
             return new ServiceResponse<>(model);
-        } else {
-            return InstantResponses.NOT_FOUND("Link");
         }
+        return Responses.NotFound.LINK;
     }
 
     public ServiceResponse<Link> getList(Long productId) {
@@ -49,14 +48,14 @@ public class LinkRepository {
         if (links != null && links.size() > 0) {
             return new ServiceResponse<>(links);
         }
-        return InstantResponses.NOT_FOUND("Link");
+        return Responses.NotFound.PRODUCT;
     }
 
     public ServiceResponse insert(LinkDTO linkDTO) {
         if (properties.isLinkUniqueness()) {
-            boolean alreadyExists = doesExist(linkDTO.getUrl(), null, linkDTO.getProductId());
+            boolean alreadyExists = doesExist(linkDTO.getUrl(), linkDTO.getProductId());
             if (alreadyExists) {
-                return InstantResponses.ALREADY_EXISTS("The url");
+                return Responses.DataProblem.ALREADY_EXISTS;
             }
         }
 
@@ -76,16 +75,16 @@ public class LinkRepository {
             pst.setLong(++i, Context.getWorkspaceId());
 
             if (pst.executeUpdate() > 0)
-                return InstantResponses.OK;
+                return Responses.OK;
             else
-                return InstantResponses.CRUD_ERROR("Couldn't insert the link. " + linkDTO.toString());
+                return Responses.DataProblem.DB_PROBLEM;
 
         } catch (SQLIntegrityConstraintViolationException ie) {
             log.error("Failed to insert link: " + ie.getMessage());
-            return InstantResponses.SERVER_ERROR(ie);
+            return Responses.DataProblem.INTEGRITY_PROBLEM;
         } catch (Exception e) {
             log.error("Failed to insert link", e);
-            return InstantResponses.SERVER_ERROR(e);
+            return Responses.ServerProblem.EXCEPTION;
         }
     }
 
@@ -96,14 +95,12 @@ public class LinkRepository {
         );
 
         if (result)
-            return InstantResponses.OK;
+            return Responses.OK;
         else
-            return InstantResponses.NOT_FOUND("Product");
+            return Responses.NotFound.PRODUCT;
     }
 
     public ServiceResponse changeStatus(Long id, Long productId, Status status) {
-        ServiceResponse res;
-
         Connection con = null;
         try {
             con = dbUtils.getTransactionalConnection();
@@ -153,32 +150,29 @@ public class LinkRepository {
             if (res1) {
                 if (res2) {
                     dbUtils.commit(con);
-                    res = InstantResponses.OK;
+                    return Responses.OK;
                 } else {
                     dbUtils.rollback(con);
-                    res = InstantResponses.CRUD_ERROR("Seems that link's status is already changed!");
+                    return Responses.DataProblem.DB_PROBLEM;
                 }
             } else {
-                res = InstantResponses.WRONG_PARAMETER("Invalid product!");
+                return Responses.NotFound.PRODUCT;
             }
 
         } catch (SQLException e) {
             if (con != null) dbUtils.rollback(con);
             log.error("Failed to change link's status. Link Id: " + id, e);
-            res = InstantResponses.SERVER_ERROR(e);
+            return Responses.ServerProblem.EXCEPTION;
         } finally {
             if (con != null) dbUtils.close(con);
         }
-
-        return res;
     }
 
-    private boolean doesExist(String url, Long id, Long productId) {
+    private boolean doesExist(String url, Long productId) {
         Link model = dbUtils.findSingle(
             String.format(
             "select * from link " +
                 "where url = '%s' " +
-                (id != null ? " and id != " + id : "") +
                 "  and product_id = %d " +
                 "  and company_id = %d " +
                 "  and workspace_id = %d ", url, productId, Context.getCompanyId(), Context.getWorkspaceId()), this::map);

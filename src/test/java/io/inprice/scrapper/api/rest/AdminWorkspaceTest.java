@@ -2,6 +2,7 @@ package io.inprice.scrapper.api.rest;
 
 import io.inprice.scrapper.api.dto.WorkspaceDTO;
 import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.helpers.TestHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
@@ -25,7 +26,8 @@ public class AdminWorkspaceTest {
         when()
             .post(Consts.Paths.Workspace.BASE).
         then()
-            .statusCode(HttpStatus.OK_200).assertThat();
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -38,7 +40,7 @@ public class AdminWorkspaceTest {
             .post(Consts.Paths.Workspace.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -49,6 +51,7 @@ public class AdminWorkspaceTest {
             .get(Consts.Paths.Workspace.BASE + "/" + id).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
+            .body("status", equalTo(Responses.OK.getStatus()))
             .body("model.id", equalTo(id));
     }
 
@@ -57,8 +60,8 @@ public class AdminWorkspaceTest {
         when()
             .get(Consts.Paths.Workspace.BASE + "/0").
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Workspace not found!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.WORKSPACE.getStatus()));
     }
 
     @Test
@@ -66,8 +69,8 @@ public class AdminWorkspaceTest {
         when()
             .delete(Consts.Paths.Workspace.BASE + "/0").
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Workspace not found!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.WORKSPACE.getStatus()));
     }
 
     @Test
@@ -83,13 +86,13 @@ public class AdminWorkspaceTest {
             .post(Consts.Paths.Workspace.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
 
         when()
             .delete(Consts.Paths.Workspace.BASE + "/" + id).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -98,6 +101,7 @@ public class AdminWorkspaceTest {
             .get(Consts.Paths.Workspace.BASE + "s").
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
+            .body("status", equalTo(Responses.OK.getStatus()))
             .body("models.size", greaterThan(0)); //since we have a default workspace inserted at the beginning
     }
 
@@ -113,7 +117,7 @@ public class AdminWorkspaceTest {
             .put(Consts.Paths.Workspace.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -123,8 +127,8 @@ public class AdminWorkspaceTest {
         when()
             .post(Consts.Paths.Workspace.BASE).
         then()
-            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid workspace data!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.Invalid.WORKSPACE.getStatus()));
     }
 
     @Test
@@ -138,6 +142,7 @@ public class AdminWorkspaceTest {
             .post(Consts.Paths.Workspace.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Workspace name cannot be null!"));
     }
 
@@ -152,6 +157,7 @@ public class AdminWorkspaceTest {
             .post(Consts.Paths.Workspace.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Workspace name must be between 3 and 50 chars!"));
     }
 
@@ -166,6 +172,7 @@ public class AdminWorkspaceTest {
             .post(Consts.Paths.Workspace.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Workspace name must be between 3 and 50 chars!"));
     }
 
@@ -179,8 +186,8 @@ public class AdminWorkspaceTest {
         when()
             .put(Consts.Paths.Workspace.BASE).
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Workspace not found!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.WORKSPACE.getStatus()));
     }
 
 }

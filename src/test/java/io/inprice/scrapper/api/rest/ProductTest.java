@@ -2,6 +2,7 @@ package io.inprice.scrapper.api.rest;
 
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.helpers.TestHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
@@ -15,8 +16,6 @@ import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 
-//todo: workspace id in headers must be tested
-//todo: duplicate code in insert and update must be tested
 public class ProductTest {
 
     @BeforeClass
@@ -30,7 +29,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -44,7 +43,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -55,6 +54,7 @@ public class ProductTest {
             .get(Consts.Paths.Product.BASE + "/" + id).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
+            .body("status", equalTo(Responses.OK.getStatus()))
             .body("model.id", equalTo(id));
     }
 
@@ -66,7 +66,7 @@ public class ProductTest {
             .put(Consts.Paths.Product.TOGGLE_STATUS + "/" + id).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -83,13 +83,13 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
 
         when()
             .delete(Consts.Paths.Product.BASE + "/" + id).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
@@ -98,6 +98,7 @@ public class ProductTest {
             .get(Consts.Paths.Product.BASE + "s").
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
+            .body("status", equalTo(Responses.OK.getStatus()))
             .body("models.size", greaterThan(0)); //since we have a default product inserted at the beginning
     }
 
@@ -113,12 +114,12 @@ public class ProductTest {
             .put(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("result", equalTo("OK"));
+            .body("status", equalTo(Responses.OK.getStatus()));
     }
 
     @Test
     public void missing_workspace_with_inserting() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         final ProductDTO product = TestHelper.getProductDTO();
 
@@ -135,7 +136,7 @@ public class ProductTest {
 
     @Test
     public void missing_workspace_with_finding() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         final int id = 1;
 
@@ -150,7 +151,7 @@ public class ProductTest {
 
     @Test
     public void missing_workspace_with_toggle_status() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         final int id = 1;
 
@@ -165,7 +166,7 @@ public class ProductTest {
 
     @Test
     public void missing_workspace_with_deleting() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         final long id = 2;
 
@@ -180,7 +181,7 @@ public class ProductTest {
 
     @Test
     public void missing_workspace_ok_with_listing() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         when()
             .get(Consts.Paths.Product.BASE + "s").
@@ -193,7 +194,7 @@ public class ProductTest {
 
     @Test
     public void missing_workspace_ok_with_updating() {
-        TestHelper.loginAsUser();
+        TestHelper.loginAsAdmin(false);
 
         final ProductDTO product = TestHelper.getProductDTO();
         product.setId(1L);
@@ -215,8 +216,8 @@ public class ProductTest {
         when()
             .get(Consts.Paths.Product.BASE + "/0").
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Product not found!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
     }
 
     @Test
@@ -224,8 +225,8 @@ public class ProductTest {
         when()
             .delete(Consts.Paths.Product.BASE + "/0").
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Product not found!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
     }
 
     @Test
@@ -235,8 +236,8 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
-            .body("result", equalTo("Invalid data for product!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.Invalid.PRODUCT.getStatus()));
     }
 
     @Test
@@ -250,6 +251,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product code must be between 3 and 120 chars!"));
     }
 
@@ -264,6 +266,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product code must be between 3 and 120 chars!"));
     }
 
@@ -278,6 +281,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Brand can be up to 100 chars!"));
     }
 
@@ -292,6 +296,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Category can be up to 100 chars!"));
     }
 
@@ -306,6 +311,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product code cannot be null!"));
     }
 
@@ -320,6 +326,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product name cannot be null!"));
     }
 
@@ -334,6 +341,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product name must be between 3 and 500 chars!"));
     }
 
@@ -348,6 +356,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product name must be between 3 and 500 chars!"));
     }
 
@@ -361,8 +370,8 @@ public class ProductTest {
         when()
             .put(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.NOT_FOUND_404).assertThat()
-            .body("result", equalTo("Product not found!"));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
     }
 
     @Test
@@ -376,6 +385,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Price must be greater than zero!"));
     }
 
@@ -390,6 +400,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Price must be greater than zero!"));
     }
 
@@ -405,7 +416,7 @@ public class ProductTest {
             .post(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to save a product!"));
+            .body(equalTo("Unauthorized user!"));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -422,7 +433,7 @@ public class ProductTest {
             .put(Consts.Paths.Product.BASE).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to save a product!"));
+            .body(equalTo("Unauthorized user!"));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -437,7 +448,7 @@ public class ProductTest {
             .delete(Consts.Paths.Product.BASE + "/" + id).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to delete a product!"));
+            .body(equalTo("Unauthorized user!"));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -452,7 +463,7 @@ public class ProductTest {
             .put(Consts.Paths.Product.TOGGLE_STATUS + "/" + id).
         then()
             .statusCode(HttpStatus.FORBIDDEN_403).assertThat()
-            .body("result", equalTo("User has no permission to toggle a product's status!"));
+            .body(equalTo("Unauthorized user!"));
 
         TestHelper.loginAsAdmin(true);
     }

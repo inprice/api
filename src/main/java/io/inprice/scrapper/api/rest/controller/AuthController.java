@@ -7,7 +7,7 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
-import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.service.AuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,40 +19,29 @@ import static spark.Spark.post;
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
-
     private static final AuthService service = Beans.getSingleton(AuthService.class);
 
     @Routing
     public void routes() {
 
         post(Consts.Paths.Auth.LOGIN, (req, res) -> {
-            ServiceResponse serviceRes = service.login(toLoginModel(req), res);
-            res.status(serviceRes.getStatus());
-            return serviceRes;
+            return Commons.createResponse(res, service.login(toLoginModel(req), res));
         }, Global.gson::toJson);
 
         get(Consts.Paths.Auth.REFRESH_TOKEN, (req, res) -> {
-            ServiceResponse serviceRes = service.refresh(req, res);
-            res.status(serviceRes.getStatus());
-            return serviceRes;
+            return Commons.createResponse(res, service.refresh(req, res));
         }, Global.gson::toJson);
 
         post(Consts.Paths.Auth.FORGOT_PASSWORD, (req, res) -> {
-            ServiceResponse serviceRes = service.forgotPassword(toEmailModel(req));
-            res.status(serviceRes.getStatus());
-            return serviceRes;
+            return Commons.createResponse(res, service.forgotPassword(toEmailModel(req)));
         }, Global.gson::toJson);
 
         post(Consts.Paths.Auth.RESET_PASSWORD, (req, res) -> {
-            ServiceResponse serviceRes = service.resetPassword(toPasswordModel(req));
-            res.status(serviceRes.getStatus());
-            return serviceRes;
+            return Commons.createResponse(res, service.resetPassword(toPasswordModel(req)));
         }, Global.gson::toJson);
 
         post(Consts.Paths.Auth.LOGOUT, (req, res) -> {
-            ServiceResponse serviceRes = service.logout(req);
-            res.status(serviceRes.getStatus());
-            return serviceRes;
+            return Commons.createResponse(res, service.logout(req));
         }, Global.gson::toJson);
 
     }

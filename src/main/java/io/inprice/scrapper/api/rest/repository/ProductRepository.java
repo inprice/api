@@ -4,14 +4,13 @@ import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.ImportProduct;
 import io.inprice.scrapper.common.models.ImportProductRow;
 import io.inprice.scrapper.common.models.Product;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,9 +34,8 @@ public class ProductRepository {
                 "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         if (model != null) {
             return new ServiceResponse<>(model);
-        } else {
-            return InstantResponses.NOT_FOUND("Product");
         }
+        return Responses.NotFound.PRODUCT;
     }
 
     public ServiceResponse<Product> findByCode(String code) {
@@ -49,9 +47,8 @@ public class ProductRepository {
                 "  and workspace_id = %d ", code, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         if (model != null) {
             return new ServiceResponse<>(model);
-        } else {
-            return InstantResponses.NOT_FOUND("Product");
         }
+        return Responses.NotFound.PRODUCT;
     }
 
     public ServiceResponse<Product> getList() {
@@ -65,7 +62,7 @@ public class ProductRepository {
         if (products != null && products.size() > 0) {
             return new ServiceResponse<>(products);
         }
-        return InstantResponses.NOT_FOUND("Product");
+        return Responses.NotFound.PRODUCT;
     }
 
     public ServiceResponse insert(ProductDTO productDTO) {
@@ -76,23 +73,23 @@ public class ProductRepository {
             if (properties.isProdUniqueness()) {
                 boolean alreadyExists = doesExist(con, productDTO.getCode(), null);
                 if (alreadyExists) {
-                    return InstantResponses.ALREADY_EXISTS(productDTO.getCode());
+                    return Responses.DataProblem.ALREADY_EXISTS;
                 }
             }
 
             boolean result = insertANewProduct(con, productDTO);
             if (result) {
                 dbUtils.commit(con);
-                return InstantResponses.OK;
+                return Responses.OK;
             } else {
                 dbUtils.rollback(con);
-                return InstantResponses.CRUD_ERROR("Couldn't insert the product. " + productDTO.toString());
+                return Responses.DataProblem.DB_PROBLEM;
             }
 
         } catch (Exception e) {
             if (con != null) dbUtils.rollback(con);
             log.error("Failed to insert a new product. " + productDTO, e);
-            return InstantResponses.SERVER_ERROR(e);
+            return Responses.ServerProblem.EXCEPTION;
         } finally {
             if (con != null) dbUtils.close(con);
         }
@@ -108,7 +105,7 @@ public class ProductRepository {
             if (properties.isProdUniqueness()) {
                 boolean alreadyExists = doesExist(con, productDTO.getCode(), productDTO.getId());
                 if (alreadyExists) {
-                    return InstantResponses.ALREADY_EXISTS(productDTO.getCode());
+                    return Responses.DataProblem.ALREADY_EXISTS;
                 }
             }
 
@@ -136,16 +133,16 @@ public class ProductRepository {
 
                 if (result) {
                     dbUtils.commit(con);
-                    return InstantResponses.OK;
+                    return Responses.OK;
                 } else {
                     dbUtils.rollback(con);
-                    return InstantResponses.CRUD_ERROR("Couldn't update the product. " + productDTO.toString());
+                    return Responses.DataProblem.DB_PROBLEM;
                 }
             }
         } catch (Exception e) {
             if (con != null) dbUtils.rollback(con);
             log.error("Failed to update a product. " + productDTO, e);
-            return InstantResponses.SERVER_ERROR(e);
+            return Responses.ServerProblem.EXCEPTION;
         } finally {
             if (con != null) dbUtils.close(con);
         }
@@ -158,9 +155,9 @@ public class ProductRepository {
         );
 
         if (result)
-            return InstantResponses.OK;
+            return Responses.OK;
         else
-            return InstantResponses.NOT_FOUND("Product");
+            return Responses.NotFound.PRODUCT;
     }
 
     public ServiceResponse toggleStatus(Long id) {
@@ -174,9 +171,10 @@ public class ProductRepository {
                     "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()),
         "Failed to toggle product status! id: " + id);
 
-        if (result) return InstantResponses.OK;
-
-        return InstantResponses.NOT_FOUND("Product");
+        if (result) {
+            return Responses.OK;
+        }
+        return Responses.NotFound.PRODUCT;
     }
 
     private boolean addAPriceHistory(Connection con, ProductDTO productDTO) {
@@ -278,7 +276,7 @@ public class ProductRepository {
                 }
 
                 //insertCount and duplicateCount may change if duplicate codes found,
-                // so we need to update the report data with the most accurate values
+                //so we need to update the report data with the most accurate values
                 if (insertCount != report.getInsertCount() || duplicateCount != report.getDuplicateCount()) {
                     final String lastUpdateQuery =
                         "update import_product " +
@@ -294,16 +292,16 @@ public class ProductRepository {
                 }
 
                 dbUtils.commit(con);
-                return InstantResponses.OK;
+                return Responses.OK;
             } else {
                 dbUtils.rollback(con);
-                return new ServiceResponse(HttpStatus.NOT_IMPLEMENTED_501, "Import operations failed!");
+                return Responses.ServerProblem.FAILED;
             }
 
         } catch (Exception e) {
             if (con != null) dbUtils.rollback(con);
             log.error("Failed to import new products. ", e);
-            return InstantResponses.SERVER_ERROR(e);
+            return Responses.ServerProblem.EXCEPTION;
         } finally {
             if (con != null) dbUtils.close(con);
         }

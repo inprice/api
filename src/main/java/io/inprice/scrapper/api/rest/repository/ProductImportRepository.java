@@ -2,7 +2,7 @@ package io.inprice.scrapper.api.rest.repository;
 
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.meta.ImportType;
@@ -28,9 +28,9 @@ public class ProductImportRepository {
                 "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         if (model != null) {
             return new ServiceResponse<>(model);
-        } else {
-            return InstantResponses.NOT_FOUND("Product");
         }
+
+        return Responses.NotFound.IMPORT;
     }
 
     public ServiceResponse<ImportProduct> getList() {
@@ -44,7 +44,7 @@ public class ProductImportRepository {
         if (imports != null && imports.size() > 0) {
             return new ServiceResponse<>(imports);
         }
-        return InstantResponses.NOT_FOUND("Import");
+        return Responses.NotFound.IMPORT;
     }
 
     public ServiceResponse deleteById(Long id) {
@@ -63,9 +63,9 @@ public class ProductImportRepository {
         );
 
         if (result)
-            return InstantResponses.OK;
+            return Responses.OK;
         else
-            return InstantResponses.NOT_FOUND("Import");
+            return Responses.NotFound.IMPORT;
     }
 
     private ImportProduct map(ResultSet rs) {

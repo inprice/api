@@ -2,14 +2,14 @@ package io.inprice.scrapper.api.rest.service;
 
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.repository.LinkRepository;
 import io.inprice.scrapper.api.rest.repository.ProductRepository;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.utils.URLUtils;
-import org.eclipse.jetty.http.HttpStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,10 +24,7 @@ public class LinkService {
     }
 
     public ServiceResponse getList(Long productId) {
-        if (productId == null || productId < 1) {
-            return InstantResponses.NOT_FOUND("Product");
-        }
-
+        if (productId == null || productId < 1) return Responses.NotFound.PRODUCT;
         return linkRepository.getList(productId);
     }
 
@@ -39,25 +36,17 @@ public class LinkService {
             }
             return res;
         }
-        return InstantResponses.INVALID_DATA("link data!");
+        return Responses.Invalid.LINK;
     }
 
     public ServiceResponse deleteById(Long id) {
-        if (id == null || id < 1) {
-            return InstantResponses.NOT_FOUND("Link");
-        }
-
+        if (id == null || id < 1) return Responses.NotFound.LINK;
         return linkRepository.deleteById(id);
     }
 
     public ServiceResponse changeStatus(Long id, Long productId, Status status) {
-        if (id == null || id < 1) {
-            return InstantResponses.NOT_FOUND("Link");
-        }
-        if (productId == null || productId < 1) {
-            return InstantResponses.NOT_FOUND("Product");
-        }
-
+        if (id == null || id < 1) return Responses.NotFound.LINK;
+        if (productId == null || productId < 1) return Responses.NotFound.PRODUCT;
         return linkRepository.changeStatus(id, productId, status);
     }
 
@@ -76,13 +65,7 @@ public class LinkService {
             problems.add(new Problem("form", "Unknown product info!"));
         }
 
-        if (problems.size() > 0) {
-            ServiceResponse res = new ServiceResponse(HttpStatus.BAD_REQUEST_400);
-            res.setProblems(problems);
-            return res;
-        } else {
-            return InstantResponses.OK;
-        }
+        return Commons.createResponse(problems);
     }
 
 }

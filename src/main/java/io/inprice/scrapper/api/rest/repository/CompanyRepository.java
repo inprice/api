@@ -4,14 +4,13 @@ import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.utils.CodeGenerator;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.Company;
 import jodd.util.BCrypt;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,15 +25,11 @@ public class CompanyRepository {
     private final Properties properties = Beans.getSingleton(Properties.class);
 
     public ServiceResponse<Company> findById(Long id) {
-        ServiceResponse<Company> response = InstantResponses.CRUD_ERROR("");
-
         Company model = dbUtils.findSingle("select * from company where id="+ id, CompanyRepository::map);
-        if (model != null) {
-            response.setStatus(HttpStatus.OK_200);
-            response.setModel(model);
-        }
-
-        return response;
+        if (model != null)
+            return new ServiceResponse<>(model);
+        else
+            return Responses.DataProblem.DB_PROBLEM;
     }
 
     /**
@@ -42,10 +37,9 @@ public class CompanyRepository {
      *  - company
      *  - workspace
      *  - and admin
-     *
      */
     public ServiceResponse insert(CompanyDTO companyDTO) {
-        ServiceResponse response = InstantResponses.CRUD_ERROR("Couldn't insert the company. " + companyDTO.toString());
+        ServiceResponse response = new ServiceResponse<>(Responses.DataProblem.DB_PROBLEM.getStatus());
 
         Connection con = null;
 
@@ -125,7 +119,7 @@ public class CompanyRepository {
                                         subPst.setLong(1, adminId);
                                         subPst.setLong(2, companyId);
                                         if (subPst.executeUpdate() > 0) {
-                                            response = InstantResponses.OK;
+                                            response = Responses.OK;
                                         }
                                     }
                                 }
@@ -134,15 +128,15 @@ public class CompanyRepository {
 
                     } catch (SQLIntegrityConstraintViolationException ie) {
                         log.error("Failed to insert user!", ie);
-                        response = InstantResponses.SERVER_ERROR(ie);
+                        response = Responses.DataProblem.INTEGRITY_PROBLEM;
                     } catch (Exception e) {
                         log.error("Failed to insert user", e);
-                        response = InstantResponses.SERVER_ERROR(e);
+                        response = Responses.ServerProblem.EXCEPTION;
                     }
                 }
             }
 
-            if (InstantResponses.OK.equals(response)) {
+            if (Responses.OK.equals(response)) {
                 dbUtils.commit(con);
             } else {
                 dbUtils.rollback(con);
@@ -159,8 +153,6 @@ public class CompanyRepository {
     }
 
     public ServiceResponse update(CompanyDTO companyDTO) {
-        ServiceResponse response;
-
         try (Connection con = dbUtils.getConnection();
             PreparedStatement pst =
                 con.prepareStatement(
@@ -176,18 +168,16 @@ public class CompanyRepository {
             pst.setLong(++i, companyDTO.getId());
             pst.setLong(++i, Context.getAuthUser().getId());
 
-            if (pst.executeUpdate() > 0) {
-                response = InstantResponses.OK;
-            } else {
-                response = InstantResponses.NOT_FOUND("Company");
+            if (pst.executeUpdate() <= 0) {
+                return Responses.NotFound.COMPANY;
             }
 
         } catch (SQLException e) {
             log.error("Failed to update company. " + companyDTO, e);
-            response = InstantResponses.SERVER_ERROR(e);
+            return Responses.ServerProblem.EXCEPTION;
         }
 
-        return response;
+        return Responses.NotFound.COMPANY;
     }
 
     private static Company map(ResultSet rs) {

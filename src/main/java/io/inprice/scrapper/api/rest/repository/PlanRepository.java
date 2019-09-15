@@ -2,11 +2,10 @@ package io.inprice.scrapper.api.rest.repository;
 
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.models.Plan;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +15,7 @@ import java.sql.SQLException;
 public class PlanRepository {
 
     private static final Logger log = LoggerFactory.getLogger(CompanyRepository.class);
-    private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     public int findAllowedProductCount() {
         int result = 0;
@@ -30,19 +29,16 @@ public class PlanRepository {
     }
 
     private ServiceResponse<Plan> findByWorkspaceId() {
-        ServiceResponse<Plan> res = InstantResponses.CRUD_ERROR("");
-
         Plan model =
             dbUtils.findSingle(
             "select p.* from plan as p " +
                     "inner join workspace as ws on p.id = ws.plan_id " +
                     "where ws.id="+ Context.getWorkspaceId(), PlanRepository::map);
         if (model != null) {
-            res.setStatus(HttpStatus.OK_200);
-            res.setModel(model);
+            return new ServiceResponse<>(model);
         }
 
-        return res;
+        return Responses.Invalid.PLAN;
     }
 
     private static Plan map(ResultSet rs) {

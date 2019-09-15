@@ -3,7 +3,7 @@ package io.inprice.scrapper.api.rest.repository;
 import io.inprice.scrapper.api.dto.WorkspaceDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.info.InstantResponses;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.models.Workspace;
@@ -28,9 +28,8 @@ public class WorkspaceRepository {
                 "  and company_id = %d", id, Context.getCompanyId()), this::map);
         if (model != null) {
             return new ServiceResponse<>(model);
-        } else {
-            return InstantResponses.NOT_FOUND("Workspace");
         }
+        return Responses.NotFound.WORKSPACE;
     }
 
     public ServiceResponse<Workspace> getList() {
@@ -43,7 +42,7 @@ public class WorkspaceRepository {
         if (workspaces != null && workspaces.size() > 0) {
             return new ServiceResponse<>(workspaces);
         }
-        return InstantResponses.NOT_FOUND("Workspace");
+        return Responses.NotFound.WORKSPACE;
     }
 
     /**
@@ -66,16 +65,16 @@ public class WorkspaceRepository {
             pst.setLong(++i, Context.getCompanyId());
 
             if (pst.executeUpdate() > 0)
-                return InstantResponses.OK;
+                return Responses.OK;
             else
-                return InstantResponses.CRUD_ERROR("Couldn't insert the workspace. " + workspaceDTO.toString());
+                return Responses.DataProblem.DB_PROBLEM;
 
         } catch (SQLIntegrityConstraintViolationException ie) {
             log.error("Failed to insert workspace: " + ie.getMessage());
-            return InstantResponses.SERVER_ERROR(ie);
+            return Responses.DataProblem.INTEGRITY_PROBLEM;
         } catch (Exception e) {
             log.error("Failed to insert workspace", e);
-            return InstantResponses.SERVER_ERROR(e);
+            return Responses.ServerProblem.EXCEPTION;
         }
     }
 
@@ -93,13 +92,13 @@ public class WorkspaceRepository {
             pst.setLong(++i, Context.getCompanyId());
 
             if (pst.executeUpdate() > 0)
-                return InstantResponses.OK;
+                return Responses.OK;
             else
-                return InstantResponses.NOT_FOUND("Workspace");
+                return Responses.NotFound.WORKSPACE;
 
         } catch (SQLException sqle) {
             log.error("Failed to update workspace", sqle);
-            return InstantResponses.SERVER_ERROR(sqle);
+            return Responses.ServerProblem.EXCEPTION;
         }
     }
 
@@ -109,10 +108,10 @@ public class WorkspaceRepository {
             String.format("Failed to delete workspace. Id: %d", id), 1 //at least one execution must be successful
         );
 
-        if (result)
-            return InstantResponses.OK;
-        else
-            return InstantResponses.NOT_FOUND("Workspace");
+        if (result) {
+            return Responses.OK;
+        }
+        return Responses.NotFound.WORKSPACE;
     }
 
     private Workspace map(ResultSet rs) {

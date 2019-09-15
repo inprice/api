@@ -1,6 +1,7 @@
 package io.inprice.scrapper.api.rest;
 
 import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.helpers.TestHelper;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.After;
@@ -28,12 +29,13 @@ public class ProductSKUImportTest {
         when()
             .post(PATH).
         then()
-            .body("result", equalTo(TYPE + " has been successfully uploaded.")).assertThat()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("totalCount", equalTo(2)).assertThat()
-            .body("insertCount", equalTo(2)).assertThat()
-            .body("duplicateCount", equalTo(0)).assertThat()
-            .body("problemCount", equalTo(0)).assertThat();
+            .body("status", equalTo(Responses.OK.getStatus()))
+            .body("result", equalTo(TYPE + " has been successfully uploaded."))
+            .body("totalCount", equalTo(2))
+            .body("insertCount", equalTo(2))
+            .body("duplicateCount", equalTo(0))
+            .body("problemCount", equalTo(0));
     }
 
     @Test
@@ -43,12 +45,13 @@ public class ProductSKUImportTest {
         when()
             .post(PATH).
         then()
-            .body("result", equalTo(TYPE + " has been successfully uploaded.")).assertThat()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("totalCount", equalTo(3)).assertThat()
-            .body("insertCount", equalTo(2)).assertThat()
-            .body("duplicateCount", equalTo(1)).assertThat()
-            .body("problemCount", equalTo(0)).assertThat();
+            .body("status", equalTo(Responses.OK.getStatus()))
+            .body("result", equalTo(TYPE + " has been successfully uploaded."))
+            .body("totalCount", equalTo(3))
+            .body("insertCount", equalTo(2))
+            .body("duplicateCount", equalTo(1))
+            .body("problemCount", equalTo(0));
     }
 
     @Test
@@ -58,8 +61,9 @@ public class ProductSKUImportTest {
         when()
             .post(PATH).
         then()
-            .body("result", equalTo("Failed to import " + TYPE + ", please see details!")).assertThat()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat();
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.NOT_SUITABLE.getStatus()))
+            .body("result", equalTo("Failed to import " + TYPE + ", please see details!"));
     }
 
     @Test
@@ -67,8 +71,8 @@ public class ProductSKUImportTest {
         when()
             .post(PATH).
         then()
-            .body("result", equalTo(TYPE + " is empty!"))
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat();
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.Invalid.EMPTY_FILE.getStatus()));
     }
 
     @Test
@@ -78,14 +82,15 @@ public class ProductSKUImportTest {
         when()
             .post(PATH).
         then()
-            .body("result", equalTo(TYPE + " has been uploaded. However, some problems occurred. Please see details.")).assertThat()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("totalCount", equalTo(3)).assertThat()
-            .body("insertCount", equalTo(1)).assertThat()
-            .body("duplicateCount", equalTo(0)).assertThat()
-            .body("problemCount", equalTo(2)).assertThat()
-            .body("problemList[0]", equalTo("002: Invalid SKU code!")).assertThat()
-            .body("problemList[1]", equalTo("003: Invalid SKU code!")).assertThat();
+            .body("status", equalTo(Responses.OK.getStatus()))
+            .body("result", equalTo(TYPE + " has been uploaded. However, some problems occurred. Please see details."))
+            .body("totalCount", equalTo(3))
+            .body("insertCount", equalTo(1))
+            .body("duplicateCount", equalTo(0))
+            .body("problemCount", equalTo(2))
+            .body("problemList[0]", equalTo("002: Invalid SKU code!"))
+            .body("problemList[1]", equalTo("003: Invalid SKU code!"));
     }
 
     @Test
@@ -96,11 +101,12 @@ public class ProductSKUImportTest {
         when()
             .post(PATH).
         then()
-            .body("result", equalTo(TYPE + " has been uploaded. However, some problems occurred. Please see details.")).assertThat()
             .statusCode(HttpStatus.OK_200).assertThat()
-            .body("totalCount", equalTo(31)).assertThat()
-            .body("problemCount", equalTo(1)).assertThat()
-            .body("problemList[0]", equalTo("031: You have reached your plan's maximum product limit.")).assertThat();
+            .body("status", equalTo(Responses.OK.getStatus()))
+            .body("result", equalTo(TYPE + " has been uploaded. However, some problems occurred. Please see details."))
+            .body("totalCount", equalTo(31))
+            .body("problemCount", equalTo(1))
+            .body("problemList[0]", equalTo("031: You have reached your plan's maximum product limit."));
 
         //case 2
         given()
@@ -108,8 +114,9 @@ public class ProductSKUImportTest {
         when()
             .post(PATH).
         then()
-            .body("result", equalTo("You have already reached your plan's maximum product limit.")).assertThat()
-            .statusCode(HttpStatus.TOO_MANY_REQUESTS_429).assertThat();
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.ServerProblem.LIMIT_PROBLEM.getStatus()))
+            .body("result", equalTo("You have already reached your plan's maximum product limit."));
     }
 
     @After
