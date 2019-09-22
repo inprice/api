@@ -7,6 +7,7 @@ import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
+import io.inprice.scrapper.common.meta.ImportType;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.Link;
 import org.slf4j.Logger;
@@ -19,7 +20,7 @@ public class LinkRepository {
 
     private static final Logger log = LoggerFactory.getLogger(LinkRepository.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
-    private static final Properties properties = Beans.getSingleton(Properties.class);
+    private static final Properties props = Beans.getSingleton(Properties.class);
 
     private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
 
@@ -52,7 +53,7 @@ public class LinkRepository {
     }
 
     public ServiceResponse insert(LinkDTO linkDTO) {
-        if (properties.isLinkUniqueness()) {
+        if (props.isLinkUniqueness()) {
             boolean alreadyExists = doesExist(linkDTO.getUrl(), linkDTO.getProductId());
             if (alreadyExists) {
                 return Responses.DataProblem.ALREADY_EXISTS;
@@ -201,6 +202,10 @@ public class LinkRepository {
             model.setWorkspaceId(rs.getLong("workspace_id"));
             model.setProductId(rs.getLong("product_id"));
             model.setSiteId(rs.getLong("site_id"));
+
+            //if not null then it is an imported product!
+            model.setImportId(rs.getLong("import_id"));
+            model.setImportRowId(rs.getLong("import_row_id"));
 
             return model;
         } catch (SQLException e) {

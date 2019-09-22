@@ -25,7 +25,6 @@ public class AuthFilter implements Filter {
 
     private final Set<String> allowedURIs;
     private final Set<String> workspaceNeededURIs;
-
     private final Set<String> sensitiveMethodsSet;
 
     public AuthFilter() {

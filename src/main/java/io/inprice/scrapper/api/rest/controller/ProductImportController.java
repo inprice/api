@@ -9,6 +9,7 @@ import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.service.ProductCSVImportService;
 import io.inprice.scrapper.api.rest.service.ProductCodeImportService;
 import io.inprice.scrapper.api.rest.service.ProductImportService;
+import io.inprice.scrapper.api.rest.service.ProductURLImportService;
 import io.inprice.scrapper.common.meta.ImportType;
 import io.inprice.scrapper.common.models.ImportProduct;
 import io.inprice.scrapper.common.utils.NumberUtils;
@@ -23,6 +24,7 @@ public class ProductImportController {
 
     private static final ProductImportService importService = Beans.getSingleton(ProductImportService.class);
     private static final ProductCSVImportService csvImportService = Beans.getSingleton(ProductCSVImportService.class);
+    private static final ProductURLImportService urlImportService = Beans.getSingleton(ProductURLImportService.class);
     private static final ProductCodeImportService asinImportService = Beans.getSingleton(ProductCodeImportService.class);
 
     @Routing
@@ -48,6 +50,11 @@ public class ProductImportController {
             return createResponse(res, uploadCSV(req));
         }, Global.gson::toJson);
 
+        //upload URL list
+        post(Consts.Paths.Product.IMPORT_URL_LIST, "text/csv", (req, res) -> {
+            return createResponse(res, uploadURL(req));
+        }, Global.gson::toJson);
+
         //upload ebay SKU list
         post(Consts.Paths.Product.IMPORT_EBAY_SKU_LIST, "text/plain", (req, res) -> {
             return createResponse(res,  uploadCodeList(ImportType.EBAY_SKU, req));
@@ -67,6 +74,18 @@ public class ProductImportController {
             result.setStatus(Responses.Invalid.EMPTY_FILE.getStatus());
         } else {
             result = csvImportService.upload(req.body());
+        }
+
+        return result;
+    }
+
+    private ImportProduct uploadURL(Request req) {
+        ImportProduct result = new ImportProduct();
+
+        if (StringUtils.isBlank(req.body())) {
+            result.setStatus(Responses.Invalid.EMPTY_FILE.getStatus());
+        } else {
+            result = urlImportService.upload(req.body());
         }
 
         return result;

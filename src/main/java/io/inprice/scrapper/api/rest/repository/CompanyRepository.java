@@ -22,7 +22,7 @@ public class CompanyRepository {
 
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
-    private final Properties properties = Beans.getSingleton(Properties.class);
+    private final Properties props = Beans.getSingleton(Properties.class);
 
     public ServiceResponse<Company> findById(Long id) {
         Company model = dbUtils.findSingle("select * from company where id="+ id, CompanyRepository::map);
@@ -74,7 +74,7 @@ public class CompanyRepository {
                          Statement.RETURN_GENERATED_KEYS)) {
                     int i = 0;
                     pst.setString(++i, "DEFAULT WORKSPACE");
-                    if (properties.isRunningForTests()) {
+                    if (props.isRunningForTests()) {
                         pst.setLong(++i, 1L);
                     } else {
                         pst.setNull(++i, Types.BIGINT);

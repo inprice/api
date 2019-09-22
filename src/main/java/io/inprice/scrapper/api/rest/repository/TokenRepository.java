@@ -10,12 +10,15 @@ import java.util.concurrent.TimeUnit;
 public final class TokenRepository {
 
     private final RedisClient redisClient = Beans.getSingleton(RedisClient.class);
-    private final Properties properties = Beans.getSingleton(Properties.class);
+    private final Properties props = Beans.getSingleton(Properties.class);
 
     private final RSetCache<String> invalidatedTokenSet = redisClient.getInvalidatedTokenSet();
 
     public void invalidateToken(String token) {
-        invalidatedTokenSet.add(token, properties.getTTL_TokensInSeconds() + 60, TimeUnit.SECONDS);
+        long ttlAsSeconds = props.getTTL_Tokens() / 1000;
+        ttlAsSeconds += 60;
+
+        invalidatedTokenSet.add(token, ttlAsSeconds, TimeUnit.SECONDS);
     }
 
     public boolean isTokenInvalidated(String token) {

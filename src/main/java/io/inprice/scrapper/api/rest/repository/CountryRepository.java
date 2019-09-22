@@ -15,7 +15,7 @@ import java.util.Map;
 public class CountryRepository {
 
     private static final Logger log = LoggerFactory.getLogger(CompanyRepository.class);
-    private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     private final List<Country> countries;
     private final Map<Long, Country> countryIdMap;

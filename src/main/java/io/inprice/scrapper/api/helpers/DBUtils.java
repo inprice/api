@@ -16,8 +16,8 @@ import java.util.List;
 public class DBUtils {
 
     private static final Logger log = LoggerFactory.getLogger(DBUtils.class);
+    private final Properties props = Beans.getSingleton(Properties.class);
 
-    private final Properties properties = Beans.getSingleton(Properties.class);
     private HikariDataSource ds;
 
     private DBUtils() {
@@ -25,7 +25,7 @@ public class DBUtils {
     }
 
     public void reset() {
-        if (properties.isRunningForTests()) {
+        if (props.isRunningForTests()) {
             shutdown();
             wakeup();
         }
@@ -35,14 +35,14 @@ public class DBUtils {
         HikariConfig hConf = new HikariConfig();
 
         final String connectionString =
-                String.format("jdbc:%s:%s:%d/%s%s", properties.getDB_Driver(), properties.getDB_Host(),
-                        properties.getDB_Port(), properties.getDB_Database(), properties.getDB_Additions());
+                String.format("jdbc:%s:%s:%d/%s%s", props.getDB_Driver(), props.getDB_Host(),
+                        props.getDB_Port(), props.getDB_Database(), props.getDB_Additions());
 
         log.info(connectionString);
 
         hConf.setJdbcUrl(connectionString);
-        hConf.setUsername(properties.getDB_Username());
-        hConf.setPassword(properties.getDB_Password());
+        hConf.setUsername(props.getDB_Username());
+        hConf.setPassword(props.getDB_Password());
         hConf.addDataSourceProperty("cachePrepStmts", "true");
         hConf.addDataSourceProperty("prepStmtCacheSize", "250");
         hConf.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
@@ -227,7 +227,7 @@ public class DBUtils {
                 commit(con);
             } else {
                 rollback(con);
-                if (! properties.isRunningForTests() && ! errorMessage.contains("to delete")) log.error(errorMessage);
+                if (! props.isRunningForTests() && ! errorMessage.contains("to delete")) log.error(errorMessage);
             }
 
         } catch (SQLException e) {

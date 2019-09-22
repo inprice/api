@@ -22,7 +22,7 @@ import static io.restassured.RestAssured.when;
 
 public class TestHelper {
 
-    private static final Properties properties = Beans.getSingleton(Properties.class);
+    private static final Properties props = Beans.getSingleton(Properties.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     public static void setup(boolean defaultCompanyAndUser, boolean extraUser) {
@@ -36,7 +36,7 @@ public class TestHelper {
             Application.main(null);
         }
 
-        RestAssured.port = properties.getAPP_Port();
+        RestAssured.port = props.getAPP_Port();
 
         if (defaultCompanyAndUser) {
             //insert a default company

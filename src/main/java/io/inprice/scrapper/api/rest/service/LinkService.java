@@ -1,7 +1,9 @@
 package io.inprice.scrapper.api.rest.service;
 
+import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.RabbitMQ;
 import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
@@ -18,6 +20,7 @@ public class LinkService {
 
     private final LinkRepository linkRepository = Beans.getSingleton(LinkRepository.class);
     private final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
+    private final Properties props = Beans.getSingleton(Properties.class);
 
     public ServiceResponse findById(Long id) {
         return linkRepository.findById(id);
@@ -39,9 +42,17 @@ public class LinkService {
         return Responses.Invalid.LINK;
     }
 
-    public ServiceResponse deleteById(Long id) {
-        if (id == null || id < 1) return Responses.NotFound.LINK;
-        return linkRepository.deleteById(id);
+    public ServiceResponse deleteById(Long productId, Long linkId) {
+        if (linkId == null || linkId < 1) return Responses.NotFound.LINK;
+        if (productId == null || productId < 1) return Responses.NotFound.PRODUCT;
+
+        ServiceResponse res = linkRepository.deleteById(linkId);
+        if (res.isOK()) {
+            //inform the product to be refreshed
+            RabbitMQ.publish(props.getMQ_ChangeExchange(), props.getRoutingKey_DeletedLinks(), productId);
+        }
+
+        return res;
     }
 
     public ServiceResponse changeStatus(Long id, Long productId, Status status) {

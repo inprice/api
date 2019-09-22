@@ -20,7 +20,7 @@ import java.util.Date;
 public class TokenService {
 
     private final TokenRepository tokenRepository = Beans.getSingleton(TokenRepository.class);
-    private final Properties properties = Beans.getSingleton(Properties.class);
+    private final Properties props = Beans.getSingleton(Properties.class);
 
     String newToken(AuthUser authUser) {
         final String payload = Global.gson.toJson(authUser);
@@ -36,7 +36,7 @@ public class TokenService {
 
         DefaultClaims claims = new DefaultClaims();
         claims.setIssuedAt(now);
-        claims.setExpiration(new Date(now.getTime() + (properties.getTTL_TokensInSeconds() * 1000L)));
+        claims.setExpiration(new Date(now.getTime() + (props.getTTL_Tokens() * 1000L)));
         claims.put(Consts.Auth.PAYLOAD, payload);
 
         return

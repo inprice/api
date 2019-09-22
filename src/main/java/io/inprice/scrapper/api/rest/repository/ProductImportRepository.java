@@ -50,6 +50,11 @@ public class ProductImportRepository {
     public ServiceResponse deleteById(Long id) {
         boolean result = dbUtils.executeBatchQueries(new String[]{
             String.format(
+                "delete from link where import_id=%d and company_id=%d and workspace_id=%d ",
+                id, Context.getCompanyId(), Context.getWorkspaceId()
+            ),
+
+            String.format(
             "delete from import_product_row where import_id=%d and company_id=%d and workspace_id=%d ",
                 id, Context.getCompanyId(), Context.getWorkspaceId()
             ),

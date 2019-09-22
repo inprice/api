@@ -10,18 +10,18 @@ import org.redisson.config.Config;
 
 public class RedisClient {
 
-	private final Properties properties = Beans.getSingleton(Properties.class);
+	private static final Properties props = Beans.getSingleton(Properties.class);
 
-	private final RedissonClient client;
-	private final RSetCache<String> invalidatedTokens;
+	private static final RedissonClient client;
+	private static final RSetCache<String> invalidatedTokens;
 
-	RedisClient() {
-		final String redisPass = properties.getRedis_Password();
+	static {
+		final String redisPass = props.getRedis_Password();
 
 		Config config = new Config();
 		config
 			.useSingleServer()
-			.setAddress(String.format("redis://%s:%d", properties.getRedis_Host(), properties.getRedis_Port()))
+			.setAddress(String.format("redis://%s:%d", props.getRedis_Host(), props.getRedis_Port()))
 			.setPassword(! StringUtils.isBlank(redisPass) ? redisPass : null);
 
 		client = Redisson.create(config);
@@ -32,7 +32,7 @@ public class RedisClient {
 		return invalidatedTokens;
 	}
 
-	public void shutdown() {
+	public static void shutdown() {
 		client.shutdown();
 	}
 

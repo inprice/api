@@ -7,6 +7,7 @@ import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
+import io.inprice.scrapper.common.meta.ImportType;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.ImportProduct;
 import io.inprice.scrapper.common.models.ImportProductRow;
@@ -15,13 +16,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.Date;
 import java.util.List;
+
+import static io.inprice.scrapper.common.meta.ImportType.AMAZON_ASIN;
 
 public class ProductRepository {
 
     private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
-    private static final Properties properties = Beans.getSingleton(Properties.class);
+    private static final Properties props = Beans.getSingleton(Properties.class);
 
     private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
 
@@ -70,7 +74,7 @@ public class ProductRepository {
         try {
             con = dbUtils.getTransactionalConnection();
 
-            if (properties.isProdUniqueness()) {
+            if (props.isProdUniqueness()) {
                 boolean alreadyExists = doesExist(con, productDTO.getCode(), null);
                 if (alreadyExists) {
                     return Responses.DataProblem.ALREADY_EXISTS;
@@ -102,7 +106,7 @@ public class ProductRepository {
         try {
             con = dbUtils.getTransactionalConnection();
 
-            if (properties.isProdUniqueness()) {
+            if (props.isProdUniqueness()) {
                 boolean alreadyExists = doesExist(con, productDTO.getCode(), productDTO.getId());
                 if (alreadyExists) {
                     return Responses.DataProblem.ALREADY_EXISTS;
@@ -240,38 +244,84 @@ public class ProductRepository {
             if (importId != null) {
                 final String rowQuery =
                     "insert into import_product_row " +
-                    "(import_id, import_type, data, status, description, company_id, workspace_id) " +
+                    "(import_id, import_type, data, status, last_update, description, link_id, company_id, workspace_id) " +
                     "values " +
-                    "(?, ?, ?, ?, ?, ?, ?) ";
-                try (PreparedStatement pst = con.prepareStatement(rowQuery)) {
+                    "(?, ?, ?, ?, ?, ?, ?, ?, ?) ";
+                try (PreparedStatement pst = con.prepareStatement(rowQuery, Statement.RETURN_GENERATED_KEYS)) {
                     for (ImportProductRow importRow: importList) {
 
                         ProductDTO dto = null;
                         boolean found = false;
+                        Long linkId = null;
 
                         if (importRow.getProductDTO() != null) {
                             dto = (ProductDTO) importRow.getProductDTO();
                             found = doesExist(con, dto.getCode(), null);
                         }
 
+                        importRow.setImportId(importId);
+                        importRow.setLastUpdate(new Date());
+
+                        /*
+                            Please note that:
+                                In case of importing CSV files, no need to insert any row in to link table.
+                                Instead, we add a new row only to product table.
+                                We need to track links by their importRowId in order to manage them appropriately.
+                         */
                         if (found) {
                             importRow.setDescription("Already exists!");
                             importRow.setStatus(Status.DUPLICATE);
                             report.incDuplicateCount();
                             report.decInsertCount();
-                        } else if (dto != null) {
+                        } else if (dto != null) { //if is a CSV import, no need to insert any row into link table
                             insertANewProduct(con, dto);
+                        } else { //if not a CSV import, no need to insert any row into product table (this will automatically be done later)
+                            linkId = insertImportedLink(con, importRow);
                         }
 
                         int i = 0;
-                        pst.setLong(++i, importId);
-                        pst.setString(++i, importRow.getImportType().name());
+                        pst.setLong(++i, importRow.getImportId());
+                        pst.setString(++i, report.getImportType().name());
                         pst.setString(++i, importRow.getData());
                         pst.setString(++i, importRow.getStatus().name());
+                        pst.setDate(++i, new java.sql.Date(importRow.getLastUpdate().getTime()));
                         pst.setString(++i, importRow.getDescription());
+                        if (linkId != null)
+                            pst.setLong(++i, linkId);
+                        else
+                            pst.setNull(++i, Types.BIGINT);
                         pst.setLong(++i, Context.getCompanyId());
                         pst.setLong(++i, Context.getWorkspaceId());
-                        pst.executeUpdate();
+
+                        int affected = pst.executeUpdate();
+
+                        if (affected > 0 && linkId != null) { //which means not a CSV import, so link table's importRowId field is set
+                            try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                                if (generatedKeys.next()) {
+                                    long importRowId = generatedKeys.getLong(1);
+
+                                    final String query =
+                                        "update link " +
+                                        "set import_row_id=? " +
+                                        "where id=? " +
+                                        "  and company_id=? " +
+                                        "  and workspace_id=? ";
+
+                                    try (PreparedStatement pst1 = con.prepareStatement(query)) {
+                                        int j = 0;
+                                        pst1.setLong(++j, importRowId);
+                                        pst1.setLong(++j, linkId);
+                                        pst1.setLong(++i, Context.getCompanyId());
+                                        pst1.setLong(++i, Context.getWorkspaceId());
+
+                                        int affected1 = pst1.executeUpdate();
+                                        if(affected1 < 1) {
+                                            log.warn("Setting import_row_id field in link table failed! Link id: {}", linkId);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -372,6 +422,50 @@ public class ProductRepository {
             log.error("Error", e);
         }
         return result;
+    }
+
+    private Long insertImportedLink(Connection con, ImportProductRow importRow) {
+        final String query =
+                "insert into link " +
+                "(url, import_product_id, company_id, workspace_id) " +
+                "values " +
+                "(?, ?, ?, ?) ";
+
+        try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            int i = 0;
+
+            switch (importRow.getImportType()) {
+                case URL: {
+                    pst.setString(++i, importRow.getData());
+                    break;
+                }
+                case EBAY_SKU: {
+                    pst.setString(++i, props.getPrefix_ForSearchingInEbay() + importRow.getData());
+                    break;
+                }
+                case AMAZON_ASIN: {
+                    pst.setString(++i, props.getPrefix_ForSearchingInAmazon() + importRow.getData());
+                    break;
+                }
+            }
+
+            pst.setLong(++i, importRow.getImportId());
+            pst.setLong(++i, Context.getCompanyId());
+            pst.setLong(++i, Context.getWorkspaceId());
+
+            if (pst.executeUpdate() > 0) {
+                try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        return generatedKeys.getLong(1);
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     private boolean insertANewProduct(Connection con, ProductDTO productDTO) throws SQLException {

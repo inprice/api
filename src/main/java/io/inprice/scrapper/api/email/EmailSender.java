@@ -17,7 +17,7 @@ public class EmailSender {
 
     private static final Logger log = LoggerFactory.getLogger(EmailSender.class);
 
-    private final Properties properties = Beans.getSingleton(Properties.class);
+    private final Properties props = Beans.getSingleton(Properties.class);
 
     public void send(String from, String subject, String to, String content) {
         Email emailFrom = new Email(from);
@@ -26,7 +26,7 @@ public class EmailSender {
 
         Mail mail = new Mail(emailFrom, subject, emailTo, emailContent);
 
-        SendGrid sg = new SendGrid(properties.getEmail_APIKey());
+        SendGrid sg = new SendGrid(props.getEmail_APIKey());
         Request request = new Request();
         try {
             request.setMethod(Method.POST);

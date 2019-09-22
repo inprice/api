@@ -5,6 +5,8 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.ConfigScanner;
 import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.helpers.Global;
+import io.inprice.scrapper.api.helpers.RabbitMQ;
+import io.inprice.scrapper.api.helpers.RedisClient;
 import io.inprice.scrapper.api.rest.component.AuthFilter;
 import io.inprice.scrapper.api.rest.component.Context;
 import org.slf4j.Logger;
@@ -24,7 +26,7 @@ public class Application {
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    private static final Properties properties = Beans.getSingleton(Properties.class);
+    private static final Properties props = Beans.getSingleton(Properties.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     public static void main(String[] args) {
@@ -52,11 +54,11 @@ public class Application {
             //log.info(" - Thread pools are shutting down...");
             //ThreadPools.shutdown();
 
-            //log.info(" - Redis connection is closing...");
-            //RedisClient.shutdown();
+            log.info(" - Redis connection is closing...");
+            RedisClient.shutdown();
 
-            //log.info(" - RabbitMQ connection is closing...");
-            //RabbitMQ.closeChannel();
+            log.info(" - RabbitMQ connection is closing...");
+            RabbitMQ.closeChannel();
 
             log.info(" - DB connection is closing...");
             dbUtils.shutdown();
@@ -68,7 +70,7 @@ public class Application {
     }
 
     private static void applySparkSettings() {
-        Spark.port(properties.getAPP_Port());
+        Spark.port(props.getAPP_Port());
 
         Spark.before(new AuthFilter());
         Spark.before((req, res) -> res.type("application/json"));
@@ -89,7 +91,7 @@ public class Application {
         Spark.after((request, response)-> Context.cleanup());
 
         /*
-        if (properties.isRunningForTests()) {
+        if (props.isRunningForTests()) {
             Spark.after((request, response)-> {
                 if (response.status() != HttpStatus.OK_200) {
                     StringBuilder sb = new StringBuilder("Request  -> ");

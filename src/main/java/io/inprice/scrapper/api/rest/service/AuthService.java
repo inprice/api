@@ -37,7 +37,7 @@ public class AuthService {
     private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
     private final TokenService tokenService = Beans.getSingleton(TokenService.class);
     private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
-    private final Properties properties = Beans.getSingleton(Properties.class);
+    private final Properties props = Beans.getSingleton(Properties.class);
     private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
 
     public ServiceResponse login(LoginDTO loginDTO, Response response) {
@@ -81,7 +81,7 @@ public class AuthService {
 
                     final String token = tokenService.newTokenEmailFor(emailDTO.getEmail());
                     try {
-                        if (properties.isRunningForTests()) {
+                        if (props.isRunningForTests()) {
                             return new ServiceResponse(token); //--> for test purposes, we need this info to test some functionality during testing
                         } else {
                             Map<String, Object> dataMap = new HashMap<>(2);
@@ -89,7 +89,7 @@ public class AuthService {
                             dataMap.put("token", token);
 
                             final String message = renderer.renderForgotPassword(dataMap);
-                            emailSender.send(properties.getEmail_Sender(), "Reset your password", found.getModel().getEmail(), message);
+                            emailSender.send(props.getEmail_Sender(), "Reset your password", found.getModel().getEmail(), message);
                             return Responses.OK;
                         }
                     } catch (Exception e) {

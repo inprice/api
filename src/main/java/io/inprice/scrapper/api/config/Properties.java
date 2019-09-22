@@ -1,5 +1,6 @@
 package io.inprice.scrapper.api.config;
 
+import io.inprice.scrapper.common.utils.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,7 @@ public class Properties {
 
 		try (InputStream input = getClass().getClassLoader().getResourceAsStream("config.properties")) {
 			if (input == null) {
-				log.error("Unable to find config.properties in class path!");
+				log.error("Unable to find config.props in class path!");
 				return;
 			}
 			prop.load(input);
@@ -27,7 +28,7 @@ public class Properties {
 	}
 
 	public boolean isRunningForTests() {
-		String runningAt = prop.getProperty("app.running-at", "prod");
+		String runningAt = prop.getProperty("app.running-at", "test");
 		return runningAt.equals("test");
 	}
 
@@ -89,8 +90,32 @@ public class Properties {
 		return prop.getProperty("redis.password", null);
 	}
 
-	public int getTTL_TokensInSeconds() {
-		return getOrDefault("ttl.tokens.in-seconds", 900); //15 minutes
+	public String getMQ_Host() {
+		return prop.getProperty("mq.host", "localhost");
+	}
+
+	public int getMQ_Port() {
+		return getOrDefault("mq.port", 5672);
+	}
+
+	public String getMQ_Username() {
+		return prop.getProperty("mq.username", "guest");
+	}
+
+	public String getMQ_Password() {
+		return prop.getProperty("mq.password", "guest");
+	}
+
+	public String getMQ_ChangeExchange() {
+		return prop.getProperty("mq.exchange.change", "changes");
+	}
+
+	public String getRoutingKey_DeletedLinks() {
+		return prop.getProperty("routingKey.for.deleted-links", "deleted-links");
+	}
+
+	public Long getTTL_Tokens() {
+		return DateUtils.parseTimePeriodAsMillis(prop.getProperty("ttl.for.tokens", "15m"));
 	}
 
 	public String getEmail_Sender() {
@@ -99,6 +124,14 @@ public class Properties {
 
 	public String getEmail_APIKey() {
 		return prop.getProperty("email.sendgrid.api-key", "test");
+	}
+
+	public String getPrefix_ForSearchingInEbay() {
+		return prop.getProperty("prefix.for.searching.in.ebay", "https://www.ebay.com/itm/");
+	}
+
+	public String getPrefix_ForSearchingInAmazon() {
+		return prop.getProperty("prefix.for.searching.in.amazon", "https://www.amazon.com/dp/");
 	}
 
 	private int getOrDefault(String key, int defauld) {

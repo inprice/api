@@ -6,10 +6,10 @@ import jodd.util.BCrypt;
 
 public class CodeGenerator {
 
-    private final Properties properties = Beans.getSingleton(Properties.class);
+    private static final Properties props = Beans.getSingleton(Properties.class);
 
     public String generateSalt() {
-        return BCrypt.gensalt(properties.getAS_SaltRounds());
+        return BCrypt.gensalt(props.getAS_SaltRounds());
     }
 
 }
