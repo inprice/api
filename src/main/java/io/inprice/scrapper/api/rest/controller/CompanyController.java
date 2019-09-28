@@ -22,7 +22,7 @@ public class CompanyController {
     @Routing
     public void routes() {
 
-        post(Consts.Paths.Company.REGISTER, (req, res) -> {
+        post(Consts.Paths.Auth.REGISTER, (req, res) -> {
             return Commons.createResponse(res, service.insert(toCompanyModel(req)));
         }, Global.gson::toJson);
 

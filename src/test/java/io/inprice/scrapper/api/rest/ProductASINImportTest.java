@@ -88,8 +88,8 @@ public class ProductASINImportTest {
             .body("insertCount", equalTo(1)).assertThat()
             .body("duplicateCount", equalTo(0)).assertThat()
             .body("problemCount", equalTo(2)).assertThat()
-            .body("problemList[0]", equalTo("002: Invalid ASIN code!")).assertThat()
-            .body("problemList[1]", equalTo("003: Invalid ASIN code!")).assertThat();
+            .body("problemList[0]", equalTo("2. Invalid ASIN code!")).assertThat()
+            .body("problemList[1]", equalTo("3. Invalid ASIN code!")).assertThat();
     }
 
     @Test
@@ -105,7 +105,7 @@ public class ProductASINImportTest {
             .body("result", equalTo(TYPE + " has been uploaded. However, some problems occurred. Please see details.")).assertThat()
             .body("totalCount", equalTo(31)).assertThat()
             .body("problemCount", equalTo(1)).assertThat()
-            .body("problemList[0]", equalTo("031: You have reached your plan's maximum product limit.")).assertThat();
+            .body("problemList[0]", equalTo("31. You have reached your plan's maximum product limit.")).assertThat();
 
         //case 2
         given()

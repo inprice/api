@@ -126,6 +126,7 @@ public class WorkspaceRepository {
             model.setRetry(rs.getInt("retry"));
             model.setPlanId(rs.getLong("plan_id"));
             model.setCompanyId(rs.getLong("company_id"));
+            model.setCreatedAt(rs.getDate("created_at"));
 
             return model;
         } catch (SQLException e) {

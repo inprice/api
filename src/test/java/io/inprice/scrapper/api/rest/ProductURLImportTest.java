@@ -89,7 +89,7 @@ public class ProductURLImportTest {
             .body("insertCount", equalTo(2))
             .body("duplicateCount", equalTo(0))
             .body("problemCount", equalTo(1))
-            .body("problemList[0]", equalTo("004: Invalid URL!"));
+            .body("problemList[0]", equalTo("4. Invalid URL!"));
     }
 
     @Test
@@ -105,7 +105,7 @@ public class ProductURLImportTest {
             .body("result", equalTo(TYPE + " has been uploaded. However, some problems occurred. Please see details."))
             .body("totalCount", equalTo(31))
             .body("problemCount", equalTo(1))
-            .body("problemList[0]", equalTo("031: You have reached your plan's maximum product limit."));
+            .body("problemList[0]", equalTo("31. You have reached your plan's maximum product limit."));
 
         //case 2
         given()

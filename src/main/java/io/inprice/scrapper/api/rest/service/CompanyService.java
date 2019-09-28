@@ -59,7 +59,7 @@ public class CompanyService {
 
     private ServiceResponse validate(CompanyDTO companyDTO, boolean insert) {
         //only admins can update their companies
-        if (! insert && UserType.ADMIN.equals(Context.getAuthUser().getType())) {
+        if (! insert && (! UserType.ADMIN.equals(Context.getAuthUser().getType()) || ! companyDTO.getId().equals(Context.getCompanyId()))) {
             return Responses.PermissionProblem.UNAUTHORIZED;
         }
 

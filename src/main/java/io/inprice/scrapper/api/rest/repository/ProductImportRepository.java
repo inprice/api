@@ -39,7 +39,7 @@ public class ProductImportRepository {
                 "select * from import_product " +
                     "where company_id = %d " +
                     "  and workspace_id = %d " +
-                    "order by insert_at desc, import_type", Context.getCompanyId(), Context.getWorkspaceId()), this::map);
+                    "order by created_at desc, import_type", Context.getCompanyId(), Context.getWorkspaceId()), this::map);
 
         if (imports != null && imports.size() > 0) {
             return new ServiceResponse<>(imports);

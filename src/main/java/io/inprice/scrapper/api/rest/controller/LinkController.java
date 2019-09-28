@@ -31,8 +31,7 @@ public class LinkController {
         //delete
         delete(Consts.Paths.Link.BASE + "/:id", (req, res) -> {
             final Long id = NumberUtils.toLong(req.params(":id"));
-            final Long productId = NumberUtils.toLong(req.queryParams("product_id"));
-            return Commons.createResponse(res, service.deleteById(productId, id));
+            return Commons.createResponse(res, service.deleteById(id));
         }, Global.gson::toJson);
 
         //find

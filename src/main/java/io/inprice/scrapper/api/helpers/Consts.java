@@ -15,6 +15,7 @@ public class Consts {
     public static class Paths {
 
         public static class Auth {
+            public static final String REGISTER = "/register";
             public static final String LOGIN = "/login";
             public static final String REFRESH_TOKEN = "/refresh-token";
             public static final String RESET_PASSWORD = "/reset-password";
@@ -37,7 +38,6 @@ public class Consts {
 
         public static class Company {
             public static final String BASE = "/company";
-            public static final String REGISTER = BASE + "/register";
         }
 
         public static class Workspace {

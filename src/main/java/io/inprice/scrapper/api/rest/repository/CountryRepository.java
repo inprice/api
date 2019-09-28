@@ -33,7 +33,6 @@ public class CountryRepository {
         return countryIdMap.get(id);
     }
 
-    //TODO: should be fetch from redis first
     public List<Country> getAll() {
         return countries;
     }

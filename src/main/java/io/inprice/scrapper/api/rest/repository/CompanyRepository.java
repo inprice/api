@@ -172,12 +172,12 @@ public class CompanyRepository {
                 return Responses.NotFound.COMPANY;
             }
 
+            return Responses.OK;
+
         } catch (SQLException e) {
             log.error("Failed to update company. " + companyDTO, e);
             return Responses.ServerProblem.EXCEPTION;
         }
-
-        return Responses.NotFound.COMPANY;
     }
 
     private static Company map(ResultSet rs) {
@@ -188,7 +188,7 @@ public class CompanyRepository {
             model.setWebsite(rs.getString("website"));
             model.setAdminId(rs.getLong("admin_id"));
             model.setCountryId(rs.getLong("country_id"));
-            model.setInsertAt(rs.getDate("insert_at"));
+            model.setCreatedAt(rs.getDate("created_at"));
 
             return model;
         } catch (SQLException e) {

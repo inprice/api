@@ -25,7 +25,6 @@ import static spark.Spark.stop;
 public class Application {
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
-
     private static final Properties props = Beans.getSingleton(Properties.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 

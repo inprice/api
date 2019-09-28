@@ -13,6 +13,7 @@ import org.junit.Test;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 
 public class AdminTest {
 
@@ -173,9 +174,9 @@ public class AdminTest {
     }
 
     @Test
-    public void password_length_is_out_of_range_if_less_than_5() {
+    public void password_length_is_out_of_range_if_less_than_4() {
         final PasswordDTO pass = new PasswordDTO(1L);
-        pass.setPassword("pass");
+        pass.setPassword("pas");
 
         given()
             .body(pass).
@@ -184,7 +185,7 @@ public class AdminTest {
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
+            .body("problems.reason", hasItem("Password length must be between 4 and 16 chars!"));
     }
 
     @Test
@@ -199,7 +200,7 @@ public class AdminTest {
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
+            .body("problems.reason[0]", equalTo("Password length must be between 4 and 16 chars!"));
     }
 
     @Test

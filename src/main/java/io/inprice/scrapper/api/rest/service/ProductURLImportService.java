@@ -64,7 +64,7 @@ public class ProductURLImportService {
                                         report.incInsertCount();
                                         insertedURLSet.add(line);
                                     } else {
-                                        importRow.setDescription("Invalid URL !");
+                                        importRow.setDescription("Invalid URL!");
                                         importRow.setStatus(Status.IMPROPER);
                                         report.incProblemCount();
                                     }
@@ -79,7 +79,7 @@ public class ProductURLImportService {
                             report.incTotalCount();
 
                             if (!Status.NEW.equals(importRow.getStatus())) {
-                                report.getProblemList().add(StringUtils.leftPad(""+row, 3, '0') + ": " + importRow.getDescription());
+                                report.getProblemList().add(row + ". " + importRow.getDescription());
                             }
                         }
 

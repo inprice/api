@@ -311,8 +311,8 @@ public class ProductRepository {
                                         int j = 0;
                                         pst1.setLong(++j, importRowId);
                                         pst1.setLong(++j, linkId);
-                                        pst1.setLong(++i, Context.getCompanyId());
-                                        pst1.setLong(++i, Context.getWorkspaceId());
+                                        pst1.setLong(++j, Context.getCompanyId());
+                                        pst1.setLong(++j, Context.getWorkspaceId());
 
                                         int affected1 = pst1.executeUpdate();
                                         if(affected1 < 1) {
@@ -427,7 +427,7 @@ public class ProductRepository {
     private Long insertImportedLink(Connection con, ImportProductRow importRow) {
         final String query =
                 "insert into link " +
-                "(url, import_product_id, company_id, workspace_id) " +
+                "(url, import_id, company_id, workspace_id) " +
                 "values " +
                 "(?, ?, ?, ?) ";
 
@@ -517,6 +517,7 @@ public class ProductRepository {
             model.setLastUpdate(rs.getDate("last_update"));
             model.setCompanyId(rs.getLong("company_id"));
             model.setWorkspaceId(rs.getLong("workspace_id"));
+            model.setCreatedAt(rs.getDate("created_at"));
 
             return model;
         } catch (SQLException e) {

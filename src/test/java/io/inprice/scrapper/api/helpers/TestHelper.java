@@ -43,7 +43,7 @@ public class TestHelper {
             given()
                 .body(TestHelper.getCompanyDTO()).
             when()
-                .post(Consts.Paths.Company.REGISTER).
+                .post(Consts.Paths.Auth.REGISTER).
             then()
                 .statusCode(HttpStatus.OK_200).assertThat();
 

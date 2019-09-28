@@ -11,6 +11,7 @@ import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.repository.LinkRepository;
 import io.inprice.scrapper.api.rest.repository.ProductRepository;
 import io.inprice.scrapper.common.meta.Status;
+import io.inprice.scrapper.common.models.Link;
 import io.inprice.scrapper.common.utils.URLUtils;
 
 import java.util.ArrayList;
@@ -42,14 +43,17 @@ public class LinkService {
         return Responses.Invalid.LINK;
     }
 
-    public ServiceResponse deleteById(Long productId, Long linkId) {
-        if (linkId == null || linkId < 1) return Responses.NotFound.LINK;
-        if (productId == null || productId < 1) return Responses.NotFound.PRODUCT;
+    public ServiceResponse deleteById(Long linkId) {
+        ServiceResponse<Link> res;
 
-        ServiceResponse res = linkRepository.deleteById(linkId);
-        if (res.isOK()) {
-            //inform the product to be refreshed
-            RabbitMQ.publish(props.getMQ_ChangeExchange(), props.getRoutingKey_DeletedLinks(), productId);
+        if (linkId != null && linkId > 0) {
+            res = linkRepository.findById(linkId);
+            if (res.isOK()) {
+                //inform the product to be refreshed
+                RabbitMQ.publish(props.getMQ_ChangeExchange(), props.getRoutingKey_DeletedLinks(), res.getModel().getProductId());
+            }
+        } else {
+            res = Responses.NotFound.LINK;
         }
 
         return res;

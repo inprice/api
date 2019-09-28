@@ -33,20 +33,24 @@ public class UserDTOValidator {
             problems.add(new Problem("fullName", field + " name must be between 2 and 150 chars!"));
         }
 
-        //when it is updated, no need to check for passwords, since they are updated and checked in different service calls
-        if (insert) problems.addAll(PasswordDTOValidator.verify(userDTO, true, false));
+        //when it is being created, no need to check for passwords, since they are updated and checked in different service calls
+        if (insert) {
+            problems.addAll(PasswordDTOValidator.verify(userDTO, true, false));
 
-        boolean verifiedByEmailDTOValidator = EmailDTOValidator.verify(userDTO.getEmail(), problems);
+        //when it is updated, we need to check email field if it is given
+        } else if (! StringUtils.isBlank(userDTO.getEmail())) {
+            boolean verifiedByEmailDTOValidator = EmailDTOValidator.verify(userDTO.getEmail(), problems);
 
-        if (verifiedByEmailDTOValidator) {
-            ServiceResponse<User> found = null;
-            if (insert) {
-                found = userRepository.findByEmail(userDTO.getEmail());
-            } else if (userDTO.getId() != null) {
-                found = userRepository.findByEmailForUpdateCheck(userDTO.getEmail(), userDTO.getId());
-            }
-            if (found != null && found.isOK()) {
-                problems.add(new Problem("email", userDTO.getEmail() + " is already used by another user!"));
+            if (verifiedByEmailDTOValidator) {
+                ServiceResponse<User> found = null;
+                if (insert) {
+                    found = userRepository.findByEmail(userDTO.getEmail());
+                } else if (userDTO.getId() != null) {
+                    found = userRepository.findByEmailForUpdateCheck(userDTO.getEmail(), userDTO.getId());
+                }
+                if (found != null && found.isOK()) {
+                    problems.add(new Problem("email", userDTO.getEmail() + " is already used by another user!"));
+                }
             }
         }
 

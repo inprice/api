@@ -29,7 +29,7 @@ public class AuthFilter implements Filter {
 
     public AuthFilter() {
         allowedURIs = new HashSet<>(5);
-        allowedURIs.add(Consts.Paths.Company.REGISTER);
+        allowedURIs.add(Consts.Paths.Auth.REGISTER);
         allowedURIs.add(Consts.Paths.Auth.LOGIN);
         allowedURIs.add(Consts.Paths.Auth.FORGOT_PASSWORD);
         allowedURIs.add(Consts.Paths.Auth.RESET_PASSWORD);

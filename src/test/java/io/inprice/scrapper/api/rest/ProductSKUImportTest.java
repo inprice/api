@@ -89,8 +89,8 @@ public class ProductSKUImportTest {
             .body("insertCount", equalTo(1))
             .body("duplicateCount", equalTo(0))
             .body("problemCount", equalTo(2))
-            .body("problemList[0]", equalTo("002: Invalid SKU code!"))
-            .body("problemList[1]", equalTo("003: Invalid SKU code!"));
+            .body("problemList[0]", equalTo("2. Invalid SKU code!"))
+            .body("problemList[1]", equalTo("3. Invalid SKU code!"));
     }
 
     @Test
@@ -106,7 +106,7 @@ public class ProductSKUImportTest {
             .body("result", equalTo(TYPE + " has been uploaded. However, some problems occurred. Please see details."))
             .body("totalCount", equalTo(31))
             .body("problemCount", equalTo(1))
-            .body("problemList[0]", equalTo("031: You have reached your plan's maximum product limit."));
+            .body("problemList[0]", equalTo("31. You have reached your plan's maximum product limit."));
 
         //case 2
         given()

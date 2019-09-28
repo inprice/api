@@ -117,6 +117,7 @@ public class AuthService {
                     authUser.setId(found.getModel().getId());
                     authUser.setCompanyId(found.getModel().getCompanyId());
                     res = userRepository.updatePassword(passwordDTO, authUser);
+                    tokenService.revokeToken(passwordDTO.getToken());
                 } else {
                     return Responses.NotFound.EMAIL;
                 }

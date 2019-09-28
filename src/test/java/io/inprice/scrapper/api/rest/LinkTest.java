@@ -90,6 +90,8 @@ public class LinkTest {
 
     @Test
     public void everything_should_be_ok_with_deleting() {
+        TestHelper.loginAsAdmin(true);
+
         final long id = 2;
 
         LinkDTO l1 = TestHelper.getLinkDTO(1L);

@@ -42,9 +42,6 @@ public class UserDTO extends PasswordDTO {
                 ", type=" + type +
                 ", fullName='" + fullName + '\'' +
                 ", email='" + email + '\'' +
-                ", passwordOld='" + getPasswordOld() + '\'' +
-                ", password='" + getPassword() + '\'' +
-                ", passwordAgain='" + getPasswordAgain() + '\'' +
                 '}';
     }
 }

@@ -23,8 +23,8 @@ public class PasswordDTOValidator {
 
         if (StringUtils.isBlank(dto.getPassword())) {
             problems.add(new Problem("password", "Password cannot be null!"));
-        } else if (dto.getPassword().length() < 5 || dto.getPassword().length() > 16) {
-            problems.add(new Problem("password", "Password length must be between 5 and 16 chars!"));
+        } else if (dto.getPassword().length() < 4 || dto.getPassword().length() > 16) {
+            problems.add(new Problem("password", "Password length must be between 4 and 16 chars!"));
         } else if (againPassCheck && ! dto.getPassword().equals(dto.getPasswordAgain())) {
             problems.add(new Problem("password", "Passwords are mismatch!"));
         }

@@ -12,6 +12,7 @@ import io.inprice.scrapper.api.utils.CodeGenerator;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.User;
 import jodd.util.BCrypt;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,7 +128,8 @@ public class UserRepository {
     public ServiceResponse update(UserDTO userDTO, boolean byAdmin, boolean passwordWillBeUpdate) {
         final String query =
             "update user " +
-            "set full_name=?, email=? " +
+            "set full_name=? " +
+            (! StringUtils.isBlank(userDTO.getEmail()) ? ", email=? " : "") +
             (byAdmin ? ", user_type=?" : "") +
             (passwordWillBeUpdate ? ", password_salt=?, password_hash=?" : "") +
             " where id=?" +
@@ -138,7 +140,10 @@ public class UserRepository {
 
             int i = 0;
             pst.setString(++i, userDTO.getFullName());
-            pst.setString(++i, userDTO.getEmail());
+
+            if (! StringUtils.isBlank(userDTO.getEmail())) {
+                pst.setString(++i, userDTO.getEmail());
+            }
 
             if (byAdmin) {
                 UserType ut = userDTO.getType();
@@ -239,7 +244,7 @@ public class UserRepository {
             model.setPasswordHash(rs.getString("password_hash"));
             model.setPasswordSalt(rs.getString("password_salt"));
             model.setCompanyId(rs.getLong("company_id"));
-            model.setInsertAt(rs.getDate("insert_at"));
+            model.setCreatedAt(rs.getDate("created_at"));
             return model;
         } catch (SQLException e) {
             log.error("Failed to set user's properties", e);

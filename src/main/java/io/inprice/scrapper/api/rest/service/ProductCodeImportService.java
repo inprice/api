@@ -84,7 +84,7 @@ public class ProductCodeImportService {
                             report.incTotalCount();
 
                             if (!Status.NEW.equals(importRow.getStatus())) {
-                                report.getProblemList().add(StringUtils.leftPad(""+row, 3, '0') + ": " + importRow.getDescription());
+                                report.getProblemList().add(row + ". " + importRow.getDescription());
                             }
                         }
 

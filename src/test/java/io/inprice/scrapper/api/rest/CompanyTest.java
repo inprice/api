@@ -29,7 +29,44 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("status", equalTo(Responses.OK.getStatus()));
+    }
+
+    @Test
+    public void everything_should_be_ok_with_update() {
+        final CompanyDTO company = TestHelper.getCompanyDTO();
+
+        //insert a default company
+        given()
+            .body(company).
+        when()
+            .post(Consts.Paths.Auth.REGISTER).
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("status", equalTo(Responses.OK.getStatus()));
+
+        Response res =
+            given()
+                .body(TestHelper.getLoginDTO()).
+            when()
+                .post(Consts.Paths.Auth.LOGIN).
+            then()
+                .extract().
+            response();
+
+        final String token = res.header(Consts.Auth.AUTHORIZATION_HEADER);
+
+        company.setId(1L);
+        company.setCountryId(2L);
+
+        given()
+            .header(Consts.Auth.AUTHORIZATION_HEADER, token)
+            .body(company).
+        when()
+            .put(Consts.Paths.Company.BASE).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("status", equalTo(Responses.OK.getStatus()));
@@ -40,7 +77,7 @@ public class CompanyTest {
         given()
             .body("wrong body!").
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.COMPANY.getStatus()));
@@ -54,7 +91,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -70,7 +107,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -86,7 +123,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -96,12 +133,13 @@ public class CompanyTest {
     @Test
     public void user_has_no_permission_to_update_another_company() {
         final CompanyDTO company = TestHelper.getCompanyDTO();
+        company.setEmail("test01@test.com");
 
-        //insert a default company
+        //insert a new company
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.OK_200).assertThat()
             .body("status", equalTo(Responses.OK.getStatus()));
@@ -137,7 +175,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("problems.reason", hasItem("You should pick a country!"));
@@ -151,7 +189,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -166,7 +204,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -181,7 +219,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -196,7 +234,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -211,7 +249,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -227,12 +265,12 @@ public class CompanyTest {
 
         given()
             .body(company)
-        .post(Consts.Paths.Company.REGISTER);
+        .post(Consts.Paths.Auth.REGISTER);
 
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -247,7 +285,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -262,7 +300,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -277,7 +315,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -292,7 +330,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
@@ -300,18 +338,18 @@ public class CompanyTest {
     }
 
     @Test
-    public void password_length_is_out_of_range_if_less_than_5() {
+    public void password_length_is_out_of_range_if_less_than_4() {
         final CompanyDTO company = TestHelper.getCompanyDTO();
-        company.setPassword("pass");
+        company.setPassword("pas");
 
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
+            .body("problems.reason", hasItem("Password length must be between 4 and 16 chars!"));
     }
 
     @Test
@@ -322,11 +360,11 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo("Password length must be between 5 and 16 chars!"));
+            .body("problems.reason[0]", equalTo("Password length must be between 4 and 16 chars!"));
     }
 
     @Test
@@ -337,7 +375,7 @@ public class CompanyTest {
         given()
             .body(company).
         when()
-            .post(Consts.Paths.Company.REGISTER).
+            .post(Consts.Paths.Auth.REGISTER).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
