@@ -11,7 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class WorkspaceRepository {
 
@@ -112,6 +114,22 @@ public class WorkspaceRepository {
             return Responses.OK;
         }
         return Responses.NotFound.WORKSPACE;
+    }
+
+    public Set<Long> findByCompanyId(Long companyId) {
+        List<Workspace> models = dbUtils.findMultiple(
+            String.format(
+                "select * from workspace " +
+                "where active = true " +
+                "  and company_id = %d", companyId), this::map);
+
+        Set<Long> modelSet = new HashSet<>();
+        if (models != null && models.size() > 0) {
+            for (Workspace ws: models) {
+                modelSet.add(ws.getId());
+            }
+        }
+        return modelSet;
     }
 
     private Workspace map(ResultSet rs) {

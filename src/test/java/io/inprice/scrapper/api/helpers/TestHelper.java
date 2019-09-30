@@ -121,6 +121,10 @@ public class TestHelper {
     }
 
     public static void loginAsAdmin(boolean addWorkspaceHeader) {
+        loginAsAdmin(addWorkspaceHeader ? 1L : null);
+    }
+
+    public static void loginAsAdmin(Long workspaceId) {
         RestAssured.requestSpecification = null;
 
         //dont forget, the id 1 is reserved for the admin only during testing
@@ -136,7 +140,7 @@ public class TestHelper {
 
         RestAssured.requestSpecification =
             new RequestSpecBuilder()
-                .addHeader(Consts.Auth.WORKSPACE_HEADER, addWorkspaceHeader ? "1" : "")
+                .addHeader(Consts.Auth.WORKSPACE_HEADER, (workspaceId != null ? ""+workspaceId : ""))
                 .addHeader(Consts.Auth.AUTHORIZATION_HEADER, res.header(Consts.Auth.AUTHORIZATION_HEADER))
             .build();
     }

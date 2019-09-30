@@ -3,6 +3,8 @@ package io.inprice.scrapper.api.info;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.Model;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class AuthUser extends Model {
@@ -13,6 +15,7 @@ public class AuthUser extends Model {
     private UserType type;
     private String fullName;
     private Long companyId;
+    private Set<Long> allowedWorkspaces = new HashSet<>();
 
     public String getSessionId() {
         return sessionId;
@@ -50,4 +53,11 @@ public class AuthUser extends Model {
         this.companyId = companyId;
     }
 
+    public Set<Long> getAllowedWorkspaces() {
+        return allowedWorkspaces;
+    }
+
+    public void setAllowedWorkspaces(Set<Long> allowedWorkspaces) {
+        this.allowedWorkspaces = allowedWorkspaces;
+    }
 }

@@ -83,8 +83,11 @@ public class AuthFilter implements Filter {
                                 //
                             }
                         }
+
                         if (! isWorkspaceSet) {
                             halt(HttpStatus.NOT_ACCEPTABLE_406, "Workspace is missing!");
+                        } else if (! authUser.getAllowedWorkspaces().contains(Context.getWorkspaceId())) {
+                            halt(HttpStatus.NOT_ACCEPTABLE_406, "You are not allowed to work in this workspace!");
                         }
                     }
 

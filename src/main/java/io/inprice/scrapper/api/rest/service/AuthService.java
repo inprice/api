@@ -14,6 +14,7 @@ import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
+import io.inprice.scrapper.api.rest.repository.WorkspaceRepository;
 import io.inprice.scrapper.api.rest.validator.EmailDTOValidator;
 import io.inprice.scrapper.api.rest.validator.LoginDTOValidator;
 import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
@@ -35,6 +36,7 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
+    private final WorkspaceRepository workspaceRepository = Beans.getSingleton(WorkspaceRepository.class);
     private final TokenService tokenService = Beans.getSingleton(TokenService.class);
     private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
     private final Properties props = Beans.getSingleton(Properties.class);
@@ -56,6 +58,7 @@ public class AuthService {
                         authUser.setFullName(user.getFullName());
                         authUser.setType(user.getUserType());
                         authUser.setCompanyId(user.getCompanyId());
+                        authUser.setAllowedWorkspaces(workspaceRepository.findByCompanyId(user.getCompanyId()));
 
                         response.header(Consts.Auth.AUTHORIZATION_HEADER, tokenService.newToken(authUser));
 

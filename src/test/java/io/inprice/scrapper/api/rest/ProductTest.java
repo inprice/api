@@ -135,6 +135,23 @@ public class ProductTest {
     }
 
     @Test
+    public void wrong_workspace_with_inserting() {
+        TestHelper.loginAsAdmin(77L);
+
+        final ProductDTO product = TestHelper.getProductDTO();
+
+        given()
+            .body(product).
+        when()
+            .post(Consts.Paths.Product.BASE).
+        then()
+            .statusCode(HttpStatus.NOT_ACCEPTABLE_406).assertThat()
+            .body(equalTo("You are not allowed to work in this workspace!"));
+
+        TestHelper.loginAsAdmin(true);
+    }
+
+    @Test
     public void missing_workspace_with_finding() {
         TestHelper.loginAsAdmin(false);
 

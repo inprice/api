@@ -56,6 +56,11 @@ public class UserRepository {
                 "order by full_name", UserType.ADMIN, Context.getCompanyId()), this::map);
 
         if (users != null && users.size() > 0) {
+            for (User user: users) {
+                user.setCompanyId(null);
+                user.setPasswordSalt(null);
+                user.setPasswordHash(null);
+            }
             return new ServiceResponse<>(users);
         }
         return Responses.NotFound.USER;
