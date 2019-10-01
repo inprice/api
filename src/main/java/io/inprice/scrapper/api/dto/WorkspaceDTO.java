@@ -7,7 +7,6 @@ public class WorkspaceDTO {
 
     private Long id;
     private String name;
-    private Long planId;
 
     public Long getId() {
         return id;
@@ -23,13 +22,5 @@ public class WorkspaceDTO {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Long getPlanId() {
-        return planId;
-    }
-
-    public void setPlanId(Long planId) {
-        this.planId = planId;
     }
 }

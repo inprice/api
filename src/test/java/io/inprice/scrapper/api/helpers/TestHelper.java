@@ -97,7 +97,6 @@ public class TestHelper {
     public static WorkspaceDTO getWorkspaceDTO() {
         WorkspaceDTO ws = new WorkspaceDTO();
         ws.setName("SECONDARY WS");
-        ws.setPlanId(1L);
         return ws;
     }
 

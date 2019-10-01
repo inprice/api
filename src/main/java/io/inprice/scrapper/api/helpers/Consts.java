@@ -25,11 +25,6 @@ public class Consts {
 
         public static final String ADMIN_BASE = "/admin";
 
-        public static class Admin {
-            public static final String BASE = ADMIN_BASE;
-            public static final String PASSWORD = BASE + "/password";
-        }
-
         public static class AdminUser {
             public static final String BASE = ADMIN_BASE + "/user";
             public static final String PASSWORD = BASE + "/password";
@@ -42,6 +37,7 @@ public class Consts {
 
         public static class Workspace {
             public static final String BASE = ADMIN_BASE + "/workspace";
+            public static final String TOGGLE_STATUS = ADMIN_BASE + "/workspace/toggle";
         }
 
         public static class User {

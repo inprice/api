@@ -11,6 +11,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 
@@ -22,31 +23,80 @@ public class UserTest {
     }
 
     @Test
-    public void everything_should_be_ok_with_updating() {
+    public void email_address_is_invalid() {
         final UserDTO user = TestHelper.getUserDTO();
-        user.setFullName("Jane Doe");
-        user.setEmail("janed@inprice.io");
+        user.setEmail("test@invalid");
 
         given()
             .body(user).
         when()
             .put(Consts.Paths.User.BASE).
         then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("status", equalTo(Responses.OK.getStatus()));
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
+            .body("problems.reason[0]", equalTo("Invalid email address!"));
     }
 
     @Test
-    public void invalid_data_for_user() {
+    public void email_address_cannot_be_null() {
+        final UserDTO user = TestHelper.getUserDTO();
+        user.setEmail(null);
+
         given()
-            .body("wrong body!").
+            .body(user).
         when()
             .put(Consts.Paths.User.BASE).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.Invalid.USER.getStatus()));
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
+            .body("problems.reason[0]", equalTo("Email address cannot be null!"));
     }
 
+    @Test
+    public void email_address_is_already_used_by_another_user() {
+        final UserDTO user = TestHelper.getUserDTO();
+        user.setId(1L);
+        user.setEmail("jdoe@inprice.io");
+
+        given()
+            .body(user).
+        when()
+            .put(Consts.Paths.User.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
+            .body("problems.reason[0]", equalTo(user.getEmail() + " is already used by another user!"));
+    }
+
+    @Test
+    public void email_address_length_is_out_of_range_if_less_than_9() {
+        final UserDTO user = TestHelper.getUserDTO();
+        user.setEmail("jd@in.io");
+
+        given()
+            .body(user).
+        when()
+            .put(Consts.Paths.User.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
+            .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
+    }
+
+    @Test
+    public void email_address_length_is_out_of_range_if_greater_than_250() {
+        final UserDTO user = TestHelper.getUserDTO();
+        user.setEmail(StringUtils.repeat('a', 251));
+
+        given()
+            .body(user).
+        when()
+            .put(Consts.Paths.User.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
+            .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
+    }
     @Test
     public void full_name_cannot_be_null() {
         final UserDTO user = TestHelper.getUserDTO();
@@ -93,93 +143,9 @@ public class UserTest {
     }
 
     @Test
-    public void email_address_cannot_be_null() {
-        final UserDTO user = TestHelper.getUserDTO();
-        user.setEmail(null);
-
-        given()
-            .body(user).
-        when()
-            .put(Consts.Paths.User.BASE).
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo("Email address cannot be null!"));
-    }
-
-    @Test
-    public void email_address_is_already_used_by_another_user() {
-        final String email = "harrietj@inprice.com";
-
-        final UserDTO user = TestHelper.getUserDTO();
-        user.setEmail(email);
-
-        given()
-            .body(user).
-        when()
-            .post(Consts.Paths.AdminUser.BASE).
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("status", equalTo(Responses.OK.getStatus()));
-
-        given()
-            .body(user).
-        when()
-            .put(Consts.Paths.User.BASE).
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo(email + " is already used by another user!"));
-    }
-
-    @Test
-    public void email_address_length_is_out_of_range_if_less_than_9() {
-        final UserDTO user = TestHelper.getUserDTO();
-        user.setEmail("jd@in.io");
-
-        given()
-            .body(user).
-        when()
-            .put(Consts.Paths.User.BASE).
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
-    }
-
-    @Test
-    public void email_address_length_is_out_of_range_if_greater_than_250() {
-        final UserDTO user = TestHelper.getUserDTO();
-        user.setEmail(StringUtils.repeat('a', 251));
-
-        given()
-            .body(user).
-        when()
-            .put(Consts.Paths.User.BASE).
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
-    }
-
-    @Test
-    public void email_address_is_invalid() {
-        final UserDTO user = TestHelper.getUserDTO();
-        user.setEmail("test@invalid");
-
-        given()
-            .body(user).
-        when()
-            .put(Consts.Paths.User.BASE).
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo("Invalid email address!"));
-    }
-
-    @Test
     public void everything_should_be_ok_with_changing_password() {
-        final PasswordDTO pass = new PasswordDTO(1L);
+        final PasswordDTO pass = new PasswordDTO();
+        pass.setId(1L);
         pass.setPasswordOld("p4ssw0rd");
         pass.setPassword("p4ssw0rd-new");
         pass.setPasswordAgain("p4ssw0rd-new");
@@ -271,7 +237,8 @@ public class UserTest {
 
     @Test
     public void old_password_is_incorrect() {
-        final PasswordDTO pass = new PasswordDTO(1L);
+        final PasswordDTO pass = new PasswordDTO();
+        pass.setId(1L);
         pass.setPasswordOld("wrong");
         pass.setPassword("p4ssw0rd");
         pass.setPasswordAgain("p4ssw0rd");
@@ -284,6 +251,40 @@ public class UserTest {
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Old password is incorrect!"));
+    }
+
+    @Test
+    public void invalid_data_for_user() {
+        given()
+            .body("wrong body!").
+        when()
+            .put(Consts.Paths.User.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.Invalid.USER.getStatus()));
+    }
+
+    @Test
+    public void invalid_data_for_password() {
+        given()
+            .body("wrong body!").
+        when()
+            .put(Consts.Paths.User.PASSWORD).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.Invalid.PASSWORD.getStatus()));
+    }
+
+    @Test
+    public void permission_problem_for_a_user_with_changing_admins_password() {
+        TestHelper.loginAsUser();
+
+        when()
+            .put(Consts.Paths.User.PASSWORD).
+        then()
+            .statusCode(HttpStatus.FORBIDDEN_403).assertThat();
+
+        TestHelper.loginAsAdmin();
     }
 
 }

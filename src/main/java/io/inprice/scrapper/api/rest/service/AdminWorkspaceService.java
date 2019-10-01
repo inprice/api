@@ -55,6 +55,11 @@ public class AdminWorkspaceService {
         return repository.deleteById(id);
     }
 
+    public ServiceResponse toggleStatus(Long id) {
+        if (id == null || id < 1) return Responses.NotFound.WORKSPACE;
+        return repository.toggleStatus(id);
+    }
+
     private ServiceResponse validate(WorkspaceDTO workspaceDTO) {
         List<Problem> problems = new ArrayList<>();
 

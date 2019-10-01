@@ -42,6 +42,11 @@ public class AdminWorkspaceController {
             return Commons.createResponse(res, service.getList());
         }, Global.gson::toJson);
 
+        //toggle active status
+        put(Consts.Paths.Workspace.TOGGLE_STATUS + "/:id", (req, res) -> {
+            return Commons.createResponse(res, service.toggleStatus(NumberUtils.toLong(req.params(":id"))));
+        }, Global.gson::toJson);
+
     }
 
 }

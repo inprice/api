@@ -8,6 +8,7 @@ import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.service.UserService;
+import io.inprice.scrapper.common.meta.UserType;
 
 import static spark.Spark.put;
 
@@ -21,14 +22,14 @@ public class UserController {
         //update. a user can edit only his/her data
         put(Consts.Paths.User.BASE, (req, res) -> {
             UserDTO user = Commons.toUserModel(req);
-            if (user != null) user.setId(Context.getUserId());
+            if (user != null && UserType.EDITOR.equals(Context.getAuthUser().getType())) user.setId(Context.getUserId());
             return Commons.createResponse(res, service.update(user));
         }, Global.gson::toJson);
 
         //update password. a user can edit only his/her password
         put(Consts.Paths.User.PASSWORD, (req, res) -> {
             UserDTO user = Commons.toUserModel(req);
-            if (user != null) user.setId(Context.getUserId());
+            if (user != null && UserType.EDITOR.equals(Context.getAuthUser().getType())) user.setId(Context.getUserId());
             return Commons.createResponse(res, service.updatePassword(user));
         }, Global.gson::toJson);
 

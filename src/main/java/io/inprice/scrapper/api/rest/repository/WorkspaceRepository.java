@@ -54,16 +54,15 @@ public class WorkspaceRepository {
     public ServiceResponse insert(WorkspaceDTO workspaceDTO) {
         final String query =
                 "insert into workspace " +
-                "(name, plan_id, company_id) " +
+                "(name, company_id) " +
                 "values " +
-                "(?, ?, ?) ";
+                "(?, ?) ";
 
         try (Connection con = dbUtils.getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
 
             int i = 0;
             pst.setString(++i, workspaceDTO.getName());
-            pst.setLong(++i, workspaceDTO.getPlanId());
             pst.setLong(++i, Context.getCompanyId());
 
             if (pst.executeUpdate() > 0)
@@ -109,6 +108,22 @@ public class WorkspaceRepository {
             bulkDeleteStatements.workspaces(id),
             String.format("Failed to delete workspace. Id: %d", id), 1 //at least one execution must be successful
         );
+
+        if (result) {
+            return Responses.OK;
+        }
+        return Responses.NotFound.WORKSPACE;
+    }
+
+    public ServiceResponse toggleStatus(Long id) {
+        boolean result =
+            dbUtils.executeQuery(
+                String.format(
+                    "update workspace " +
+                    "set active = not active " +
+                    "where id = %d " +
+                    "  and company_id = %d ", id, Context.getCompanyId()),
+    "Failed to toggle workspace status! id: " + id);
 
         if (result) {
             return Responses.OK;
