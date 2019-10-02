@@ -64,6 +64,7 @@ public class Responses {
         public static final ServiceResponse NOT_SUITABLE = new ServiceResponse(BASE + 2);
         public static final ServiceResponse ALREADY_EXISTS = new ServiceResponse(BASE + 3);
         public static final ServiceResponse INTEGRITY_PROBLEM = new ServiceResponse(BASE + 4);
+        public static final ServiceResponse DUPLICATE = new ServiceResponse(BASE + 5);
 
         public static final ServiceResponse FORM_VALIDATION = new ServiceResponse(BASE + 20);
     }

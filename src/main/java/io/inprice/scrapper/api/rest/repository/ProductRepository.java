@@ -81,13 +81,13 @@ public class ProductRepository {
                 }
             }
 
-            boolean result = insertANewProduct(con, productDTO);
-            if (result) {
+            ServiceResponse result = insertANewProduct(con, productDTO);
+            if (result.isOK()) {
                 dbUtils.commit(con);
                 return Responses.OK;
             } else {
                 dbUtils.rollback(con);
-                return Responses.DataProblem.DB_PROBLEM;
+                return result;
             }
 
         } catch (Exception e) {
@@ -468,7 +468,7 @@ public class ProductRepository {
         return null;
     }
 
-    private boolean insertANewProduct(Connection con, ProductDTO productDTO) throws SQLException {
+    private ServiceResponse insertANewProduct(Connection con, ProductDTO productDTO) throws SQLException {
         final String query =
             "insert into product " +
             "(code, name, brand, category, price, company_id, workspace_id) " +
@@ -489,13 +489,23 @@ public class ProductRepository {
                 try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         productDTO.setId(generatedKeys.getLong(1));
-                        return addAPriceHistory(con, productDTO);
+                        boolean ok = addAPriceHistory(con, productDTO);
+                        if (ok) {
+                            return Responses.OK;
+                        } else {
+                            return Responses.DataProblem.DB_PROBLEM;
+                        }
                     }
                 }
             }
+        } catch (SQLIntegrityConstraintViolationException ie) {
+            log.error("Error", ie);
+            return Responses.DataProblem.DUPLICATE;
+        } catch (Exception e) {
+            log.error("Error", e);
         }
 
-        return false;
+        return Responses.DataProblem.DB_PROBLEM;
     }
 
     private Product map(ResultSet rs) {

@@ -15,7 +15,9 @@ import io.inprice.scrapper.common.models.Link;
 import io.inprice.scrapper.common.utils.URLUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class LinkService {
 
@@ -44,25 +46,51 @@ public class LinkService {
     }
 
     public ServiceResponse deleteById(Long linkId) {
-        ServiceResponse<Link> res;
-
         if (linkId != null && linkId > 0) {
-            res = linkRepository.findById(linkId);
+            ServiceResponse<Link> res = linkRepository.findById(linkId);
             if (res.isOK()) {
-                //inform the product to be refreshed
-                RabbitMQ.publish(props.getMQ_ChangeExchange(), props.getRoutingKey_DeletedLinks(), res.getModel().getProductId());
+                ServiceResponse del = linkRepository.deleteById(linkId);
+                if (del.isOK()) {
+                    //inform the product to be refreshed
+                    RabbitMQ.publish(props.getMQ_ChangeExchange(), props.getRoutingKey_DeletedLinks(), res.getModel().getProductId());
+                    return Responses.OK;
+                }
             }
+            return Responses.NotFound.LINK;
         } else {
-            res = Responses.NotFound.LINK;
+            return Responses.Invalid.LINK;
         }
-
-        return res;
     }
 
+    //TODO: buradaki case ler ile ilgili testler yazılmalı!!!
     public ServiceResponse changeStatus(Long id, Long productId, Status status) {
         if (id == null || id < 1) return Responses.NotFound.LINK;
         if (productId == null || productId < 1) return Responses.NotFound.PRODUCT;
-        return linkRepository.changeStatus(id, productId, status);
+
+        ServiceResponse<Link> res = linkRepository.findById(id);
+        if (res.isOK()) {
+            Link link = res.getModel();
+
+            if (! link.getProductId().equals(productId)) return Responses.Invalid.PRODUCT;
+            if (link.getStatus().equals(status)) return Responses.DataProblem.NOT_SUITABLE;
+
+            boolean suitable = false;
+            switch (link.getStatus()) {
+                case AVAILABLE: {
+                    suitable = (status.equals(Status.RENEWED) || status.equals(Status.PAUSED));
+                    break;
+                }
+                case PAUSED: {
+                    suitable = (status.equals(Status.RESUMED));
+                    break;
+                }
+            }
+            if (! suitable) return Responses.DataProblem.NOT_SUITABLE;
+
+            return linkRepository.changeStatus(id, productId, status);
+        }
+
+        return Responses.NotFound.LINK;
     }
 
     private ServiceResponse validate(LinkDTO linkDTO) {

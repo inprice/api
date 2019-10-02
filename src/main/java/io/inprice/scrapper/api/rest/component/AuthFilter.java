@@ -33,7 +33,7 @@ public class AuthFilter implements Filter {
         allowedURIs.add(Consts.Paths.Auth.LOGIN);
         allowedURIs.add(Consts.Paths.Auth.FORGOT_PASSWORD);
         allowedURIs.add(Consts.Paths.Auth.RESET_PASSWORD);
-        allowedURIs.add(Consts.Paths.Auth.LOGOUT);
+        //allowedURIs.add(Consts.Paths.Auth.LOGOUT);
 
         workspaceNeededURIs = new HashSet<>(2);
         workspaceNeededURIs.add(Consts.Paths.Product.BASE);

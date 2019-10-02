@@ -98,7 +98,7 @@ public class LinkRepository {
         if (result)
             return Responses.OK;
         else
-            return Responses.NotFound.PRODUCT;
+            return Responses.NotFound.LINK;
     }
 
     public ServiceResponse changeStatus(Long id, Long productId, Status status) {

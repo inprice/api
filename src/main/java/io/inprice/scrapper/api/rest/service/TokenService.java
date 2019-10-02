@@ -36,7 +36,7 @@ public class TokenService {
 
         DefaultClaims claims = new DefaultClaims();
         claims.setIssuedAt(now);
-        claims.setExpiration(new Date(now.getTime() + (props.getTTL_Tokens() * 1000L)));
+        claims.setExpiration(new Date(now.getTime() + (props.getTTL_Tokens())));
         claims.put(Consts.Auth.PAYLOAD, payload);
 
         return

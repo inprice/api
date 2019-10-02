@@ -53,7 +53,7 @@ public class RabbitMQ {
 
 	public static boolean publish(String exchange, String routingKey, Serializable message) {
 		try {
-			channel.basicPublish(exchange, routingKey, null, Converter.fromObject(message));
+			getChannel().basicPublish(exchange, routingKey, null, Converter.fromObject(message));
 			return true;
 		} catch (Exception e) {
 			log.error("Failed to send a message to queue", e);
