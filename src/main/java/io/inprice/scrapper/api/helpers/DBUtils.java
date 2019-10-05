@@ -152,7 +152,7 @@ public class DBUtils {
              PreparedStatement pst = con.prepareStatement(query)) {
 
             if (props.isShowingSQLQueries()) {
-                System.out.println("  Q -> " + query);
+                log.info(" Q-> " + query);
             }
 
             int affected = pst.executeUpdate();
@@ -207,7 +207,7 @@ public class DBUtils {
             for (String query: queries) {
                 sta.addBatch(query);
                 if (props.isShowingSQLQueries()) {
-                    System.out.println("  Q -> " + query);
+                    log.info(" Q-> " + query);
                 }
             }
 

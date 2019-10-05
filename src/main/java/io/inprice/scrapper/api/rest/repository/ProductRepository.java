@@ -217,8 +217,8 @@ public class ProductRepository {
             Long importId = null;
 
             //these values may change when duplicated codes occur
-            int insertCount = report.getInsertCount();
-            int duplicateCount = report.getDuplicateCount();
+            final int insertCount = report.getInsertCount();
+            final int duplicateCount = report.getDuplicateCount();
 
             try (PreparedStatement pst = con.prepareStatement(headerQuery, Statement.RETURN_GENERATED_KEYS)) {
                 int i = 0;
@@ -335,8 +335,8 @@ public class ProductRepository {
                         "where id=? ";
                     try (PreparedStatement pst = con.prepareStatement(lastUpdateQuery)) {
                         int i = 0;
-                        pst.setInt(++i, insertCount);
-                        pst.setInt(++i, duplicateCount);
+                        pst.setInt(++i, report.getInsertCount());
+                        pst.setInt(++i, report.getDuplicateCount());
                         pst.setLong(++i, importId);
                         pst.executeUpdate();
                     }

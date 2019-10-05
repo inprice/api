@@ -59,7 +59,24 @@ public class ProductImportRepository {
     }
 
     public ServiceResponse deleteById(Long id) {
+        final String subQuery = "(select id from link where import_id=%d and company_id=%d and workspace_id=%d)";
+
         boolean result = dbUtils.executeBatchQueries(new String[]{
+            String.format(
+                "delete from link_price where link_id in " + subQuery,
+                id, Context.getCompanyId(), Context.getWorkspaceId()
+            ),
+
+            String.format(
+                "delete from link_spec where link_id in " + subQuery,
+                id, Context.getCompanyId(), Context.getWorkspaceId()
+            ),
+
+            String.format(
+                "delete from link_history where link_id in " + subQuery,
+                id, Context.getCompanyId(), Context.getWorkspaceId()
+            ),
+
             String.format(
                 "delete from link where import_id=%d and company_id=%d and workspace_id=%d ",
                 id, Context.getCompanyId(), Context.getWorkspaceId()
