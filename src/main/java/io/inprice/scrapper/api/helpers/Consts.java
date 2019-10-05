@@ -64,6 +64,10 @@ public class Consts {
             public static final String RESUME = BASE + "/resume";
         }
 
+        public static class Ticket {
+            public static final String BASE = "/ticket";
+        }
+
     }
 
 }

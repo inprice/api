@@ -11,6 +11,7 @@ public class Responses {
         public static final ServiceResponse COMPANY = new ServiceResponse(BASE + 1);
         public static final ServiceResponse WORKSPACE = new ServiceResponse(BASE + 2);
         public static final ServiceResponse PLAN = new ServiceResponse(BASE + 3);
+        public static final ServiceResponse TICKET = new ServiceResponse(BASE + 4);
 
         public static final ServiceResponse USER = new ServiceResponse(BASE + 10);
         public static final ServiceResponse EMAIL = new ServiceResponse(BASE + 11);
@@ -29,6 +30,7 @@ public class Responses {
         public static final ServiceResponse COMPANY = new ServiceResponse(BASE + 1);
         public static final ServiceResponse WORKSPACE = new ServiceResponse(BASE + 2);
         public static final ServiceResponse PLAN = new ServiceResponse(BASE + 3);
+        public static final ServiceResponse TICKET = new ServiceResponse(BASE + 4);
 
         public static final ServiceResponse USER = new ServiceResponse(BASE + 10);
         public static final ServiceResponse EMAIL = new ServiceResponse(BASE + 11);
@@ -47,9 +49,7 @@ public class Responses {
 
     public static class Missing {
         private static final int BASE = 400;
-        public static final ServiceResponse TOKEN = new ServiceResponse(BASE + 1);
-        public static final ServiceResponse WORKSPACE = new ServiceResponse(BASE + 2);
-        public static final ServiceResponse AUTHORIZATION_HEADER = new ServiceResponse(BASE + 3);
+        public static final ServiceResponse AUTHORIZATION_HEADER = new ServiceResponse(BASE + 1);
     }
 
     public static class PermissionProblem {
