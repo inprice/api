@@ -42,6 +42,11 @@ public class Properties {
 		return uniqueness.equals("true");
 	}
 
+	public boolean isShowingSQLQueries() {
+		String showQueries = prop.getProperty("app.show-queries", "false");
+		return showQueries.equals("true");
+	}
+
 	public int getAPP_Port() {
 		return getOrDefault("app.port", 4567);
 	}

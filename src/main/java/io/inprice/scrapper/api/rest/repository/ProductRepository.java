@@ -274,6 +274,7 @@ public class ProductRepository {
                             report.incDuplicateCount();
                             report.decInsertCount();
                         } else if (dto != null) { //if is a CSV import, no need to insert any row into link table
+                            dto.setImportId(importId);
                             insertANewProduct(con, dto);
                         } else { //if not a CSV import, no need to insert any row into product table (this will automatically be done later)
                             linkId = insertImportedLink(con, importRow);
@@ -468,12 +469,12 @@ public class ProductRepository {
         return null;
     }
 
-    private ServiceResponse insertANewProduct(Connection con, ProductDTO productDTO) throws SQLException {
+    private ServiceResponse insertANewProduct(Connection con, ProductDTO productDTO) {
         final String query =
             "insert into product " +
-            "(code, name, brand, category, price, company_id, workspace_id) " +
+            "(code, name, brand, category, price, import_id, company_id, workspace_id) " +
             "values " +
-            "(?, ?, ?, ?, ?, ?, ?) ";
+            "(?, ?, ?, ?, ?, ?, ?, ?) ";
 
         try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
@@ -482,6 +483,10 @@ public class ProductRepository {
             pst.setString(++i, productDTO.getBrand());
             pst.setString(++i, productDTO.getCode());
             pst.setBigDecimal(++i, productDTO.getPrice());
+            if (productDTO.getImportId() != null)
+                pst.setLong(++i, productDTO.getImportId());
+            else
+                pst.setNull(++i, Types.BIGINT);
             pst.setLong(++i, Context.getCompanyId());
             pst.setLong(++i, Context.getWorkspaceId());
 

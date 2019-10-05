@@ -10,18 +10,22 @@ import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.response.Response;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.http.HttpStatus;
+import org.h2.tools.RunScript;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.Scanner;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 
 public class TestHelper {
 
+    private static final Logger log = LoggerFactory.getLogger(TestHelper.class);
     private static final Properties props = Beans.getSingleton(Properties.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
@@ -58,6 +62,21 @@ public class TestHelper {
                 then()
                     .statusCode(HttpStatus.OK_200).assertThat();
             }
+        }
+    }
+
+    public static void runScript(String fileName) {
+        try {
+            InputStream in = TestHelper.class.getClassLoader().getResourceAsStream(fileName);
+            if (in != null) {
+                Connection con = dbUtils.getConnection();
+                RunScript.execute(con, new InputStreamReader(in));
+                con.close();
+            } else {
+                log.error("Failed to run " + fileName + " script file!");
+            }
+        } catch (SQLException e) {
+            log.error("Failed to run " + fileName + " script file!", e);
         }
     }
 
@@ -186,7 +205,7 @@ public class TestHelper {
             }
             return tempFile;
         } catch (IOException e) {
-            System.err.println(e);
+            log.error("Failed to load " + fileName, e);
         }
         return null;
     }

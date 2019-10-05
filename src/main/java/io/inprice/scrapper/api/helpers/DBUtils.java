@@ -151,6 +151,10 @@ public class DBUtils {
         try (Connection con = getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
 
+            if (props.isShowingSQLQueries()) {
+                System.out.println("  Q -> " + query);
+            }
+
             int affected = pst.executeUpdate();
             return affected > 0;
         } catch (Exception e) {
@@ -202,6 +206,9 @@ public class DBUtils {
 
             for (String query: queries) {
                 sta.addBatch(query);
+                if (props.isShowingSQLQueries()) {
+                    System.out.println("  Q -> " + query);
+                }
             }
 
             int[] affected = sta.executeBatch();

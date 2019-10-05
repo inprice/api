@@ -6,7 +6,9 @@ import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.meta.ImportType;
+import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.ImportProduct;
+import io.inprice.scrapper.common.models.ImportProductRow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +28,16 @@ public class ProductImportRepository {
                 "where id = %d " +
                 "  and company_id = %d " +
                 "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
+
         if (model != null) {
+            //finding rows
+            List<ImportProductRow> rowList = dbUtils.findMultiple(
+                String.format(
+                    "select * from import_product_row " +
+                    "where import_id = %d " +
+                    "  and company_id = %d " +
+                    "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()), this::rowMap);
+            model.setRowList(rowList);
             return new ServiceResponse<>(model);
         }
 
@@ -90,6 +101,27 @@ public class ProductImportRepository {
             return model;
         } catch (SQLException e) {
             log.error("Failed to set import's properties", e);
+        }
+        return null;
+    }
+
+    private ImportProductRow rowMap(ResultSet rs) {
+        try {
+            ImportProductRow model = new ImportProductRow();
+            model.setId(rs.getLong("id"));
+            model.setImportId(rs.getLong("import_id"));
+            model.setImportType(ImportType.valueOf(rs.getString("import_type")));
+            model.setData(rs.getString("data"));
+            model.setStatus(Status.valueOf(rs.getString("status")));
+            model.setLastUpdate(rs.getDate("last_update"));
+            model.setDescription(rs.getString("description"));
+            model.setLinkId(rs.getLong("link_id"));
+            model.setCompanyId(rs.getLong("company_id"));
+            model.setWorkspaceId(rs.getLong("workspace_id"));
+
+            return model;
+        } catch (SQLException e) {
+            log.error("Failed to set import product row's properties", e);
         }
         return null;
     }

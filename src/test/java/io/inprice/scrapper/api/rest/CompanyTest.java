@@ -150,6 +150,8 @@ public class CompanyTest {
             when()
                 .post(Consts.Paths.Auth.LOGIN).
             then()
+                .statusCode(HttpStatus.OK_200).assertThat()
+                .body("status", equalTo(Responses.OK.getStatus()))
                 .extract().
             response();
 

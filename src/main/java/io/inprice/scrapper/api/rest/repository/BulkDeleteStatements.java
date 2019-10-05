@@ -39,6 +39,7 @@ class BulkDeleteStatements {
         //delete by productId
         if (productId != null && linkId == null) {
             where = "where product_id=" + productId;
+            where_1 = where;
         }
 
         //delete by linkId

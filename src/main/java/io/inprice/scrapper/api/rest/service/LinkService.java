@@ -62,7 +62,6 @@ public class LinkService {
         }
     }
 
-    //TODO: buradaki case ler ile ilgili testler yazılmalı!!!
     public ServiceResponse changeStatus(Long id, Long productId, Status status) {
         if (id == null || id < 1) return Responses.NotFound.LINK;
         if (productId == null || productId < 1) return Responses.NotFound.PRODUCT;
@@ -75,6 +74,7 @@ public class LinkService {
             if (link.getStatus().equals(status)) return Responses.DataProblem.NOT_SUITABLE;
 
             boolean suitable = false;
+
             switch (link.getStatus()) {
                 case AVAILABLE: {
                     suitable = (status.equals(Status.RENEWED) || status.equals(Status.PAUSED));
@@ -82,6 +82,19 @@ public class LinkService {
                 }
                 case PAUSED: {
                     suitable = (status.equals(Status.RESUMED));
+                    break;
+                }
+                case NEW:
+                case RENEWED:
+                case BE_IMPLEMENTED:
+                case IMPLEMENTED:
+                case NOT_AVAILABLE:
+                case READ_ERROR:
+                case SOCKET_ERROR:
+                case NETWORK_ERROR:
+                case CLASS_PROBLEM:
+                case INTERNAL_ERROR: {
+                    suitable = (status.equals(Status.PAUSED));
                     break;
                 }
             }

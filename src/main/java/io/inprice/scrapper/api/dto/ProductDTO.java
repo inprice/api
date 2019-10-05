@@ -13,6 +13,7 @@ public class ProductDTO {
     private String brand;
     private String category;
     private BigDecimal price;
+    private Long importId;
 
     public Long getId() {
         return id;
@@ -62,6 +63,14 @@ public class ProductDTO {
         this.price = price;
     }
 
+    public Long getImportId() {
+        return importId;
+    }
+
+    public void setImportId(Long importId) {
+        this.importId = importId;
+    }
+
     @Override
     public String toString() {
         return "ProductDTO{" +
@@ -71,6 +80,7 @@ public class ProductDTO {
                 ", brand='" + brand + '\'' +
                 ", category='" + category + '\'' +
                 ", price=" + price +
+                ", importId=" + importId +
                 '}';
     }
 }

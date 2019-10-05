@@ -56,39 +56,6 @@ public class LinkTest {
     }
 
     @Test
-    public void everything_should_be_ok_with_changing_status_to_PAUSED() {
-        final int id = 1;
-
-        when()
-            .put(Consts.Paths.Link.PAUSE + "/" + id + "?product_id=1").
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("status", equalTo(Responses.OK.getStatus()));
-    }
-
-    @Test
-    public void everything_should_be_ok_with_changing_status_to_RENEWED() {
-        final int id = 1;
-
-        when()
-            .put(Consts.Paths.Link.RENEW + "/" + id + "?product_id=1").
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("status", equalTo(Responses.OK.getStatus()));
-    }
-
-    @Test
-    public void everything_should_be_ok_with_changing_status_to_RESUMED() {
-        final int id = 1;
-
-        when()
-            .put(Consts.Paths.Link.RESUME + "/" + id + "?product_id=1").
-        then()
-            .statusCode(HttpStatus.OK_200).assertThat()
-            .body("status", equalTo(Responses.OK.getStatus()));
-    }
-
-    @Test
     public void everything_should_be_ok_with_deleting() {
         TestHelper.loginAsAdmin(true);
 
@@ -257,7 +224,7 @@ public class LinkTest {
             .delete(Consts.Paths.Link.BASE + "/0").
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.NotFound.LINK.getStatus()));
+            .body("status", equalTo(Responses.Invalid.LINK.getStatus()));
     }
 
     @Test
@@ -416,7 +383,7 @@ public class LinkTest {
             .put(Consts.Paths.Link.PAUSE + "/" + id + "?product_id=" + productId).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
+            .body("status", equalTo(Responses.Invalid.PRODUCT.getStatus()));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -430,7 +397,7 @@ public class LinkTest {
             .put(Consts.Paths.Link.RENEW + "/" + id + "?product_id=" + productId).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
+            .body("status", equalTo(Responses.Invalid.PRODUCT.getStatus()));
 
         TestHelper.loginAsAdmin(true);
     }
@@ -444,7 +411,7 @@ public class LinkTest {
             .put(Consts.Paths.Link.RESUME + "/" + id + "?product_id=" + productId).
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
+            .body("status", equalTo(Responses.Invalid.PRODUCT.getStatus()));
     }
 
 }
