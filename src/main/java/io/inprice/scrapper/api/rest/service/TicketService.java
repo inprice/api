@@ -52,11 +52,11 @@ public class TicketService {
     }
 
     public ServiceResponse deleteById(Long id) {
-        if (id == null || id < 1) return Responses.NotFound.TICKET;
+        if (id == null || id < 1) return Responses.Invalid.TICKET;
         return repository.deleteById(id);
     }
 
-    public ServiceResponse validate(TicketDTO ticketDTO) {
+    private ServiceResponse validate(TicketDTO ticketDTO) {
         List<Problem> problems = new ArrayList<>();
 
         if (StringUtils.isBlank(ticketDTO.getDescription())) {

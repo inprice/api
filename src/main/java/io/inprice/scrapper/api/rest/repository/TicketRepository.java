@@ -9,6 +9,7 @@ import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.meta.TicketSource;
 import io.inprice.scrapper.common.meta.TicketStatus;
 import io.inprice.scrapper.common.meta.TicketType;
+import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.Ticket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,36 +40,81 @@ public class TicketRepository {
     }
 
     public ServiceResponse insert(TicketDTO ticketDTO) {
-        final String query =
-                "insert into ticket " +
-                "(source, ticket_type, description, company_id, " + findField(ticketDTO.getSource()) +
-                " values " +
-                "(?, ?, ?, ?, ?) ";
+        Connection con = null;
+        try {
+            con = dbUtils.getTransactionalConnection();
 
-        try (Connection con = dbUtils.getConnection();
-             PreparedStatement pst = con.prepareStatement(query)) {
+            final String field = findField(ticketDTO.getSource());
+            final boolean isSystemUser = UserType.SYSTEM.equals(Context.getAuthUser().getType());
 
-            int i = 0;
-            pst.setString(++i, ticketDTO.getSource().name());
-            pst.setString(++i, ticketDTO.getType().name());
-            pst.setString(++i, ticketDTO.getDescription());
-            pst.setLong(++i, Context.getCompanyId());
-            pst.setLong(++i, ticketDTO.getSourceId());
+            final String query =
+                    "insert into ticket " +
+                    "(source, ticket_type, status, description, workspace_id, company_id, " + field + ") " +
+                    " values " +
+                    "(?, ?, ?, ?, ?, ?) ";
 
-            if (pst.executeUpdate() > 0)
-                return Responses.OK;
-            else
-                return Responses.DataProblem.DB_PROBLEM;
+            try (PreparedStatement pst = con.prepareStatement(query)) {
+                int i = 0;
+                pst.setString(++i, ticketDTO.getSource().name());
+                pst.setString(++i, ticketDTO.getType().name());
 
-        } catch (Exception e) {
-            log.error("Failed to insert ticket", e);
+                if (isSystemUser)
+                    pst.setString(++i, TicketStatus.ANSWERED.name());
+                else
+                    pst.setString(++i, TicketStatus.NEW.name());
+
+                pst.setString(++i, ticketDTO.getDescription());
+                pst.setLong(++i, Context.getWorkspaceId());
+                pst.setLong(++i, Context.getCompanyId());
+                pst.setLong(++i, ticketDTO.getSourceId());
+
+                final boolean res = (pst.executeUpdate() > 0);
+
+                //if it is an answer to a ticket
+                if (res && isSystemUser) {
+                    try (PreparedStatement
+                         pst1 =
+                             con.prepareStatement(
+                             "update ticket set status=? " +
+                                    "where status=? " +
+                                     "  and source=? " +
+                                     "  and " + field + "=? " +
+                                     "  and workspace_id=? " +
+                                     "  and company_id=? ")) {
+                        int j = 0;
+                        pst.setString(++j, TicketStatus.ANSWERED.name());
+                        pst.setString(++j, TicketStatus.NEW.name());
+                        pst.setString(++j, ticketDTO.getSource().name());
+                        pst.setLong(++j, ticketDTO.getSourceId());
+                        pst.setLong(++j, Context.getWorkspaceId());
+                        pst.setLong(++j, Context.getCompanyId());
+
+                        if (pst1.executeUpdate() < 1) {
+                            log.warn("Previous ticket's of a ticket couldn't be answered by system user! " + ticketDTO.getSourceId());
+                        }
+                    }
+                }
+
+                if (res) {
+                    dbUtils.commit(con);
+                    return Responses.OK;
+                } else {
+                    dbUtils.rollback(con);
+                    return Responses.DataProblem.DB_PROBLEM;
+                }
+            }
+        } catch (SQLException e) {
+            if (con != null) dbUtils.rollback(con);
+            log.error("Failed to insert a new ticket" + ticketDTO.toString(), e);
             return Responses.ServerProblem.EXCEPTION;
+        } finally {
+            if (con != null) dbUtils.close(con);
         }
     }
 
     public ServiceResponse update(TicketDTO ticketDTO) {
         try (Connection con = dbUtils.getConnection();
-             PreparedStatement pst = con.prepareStatement("update workspace set description=? where id=? and company_id=?")) {
+             PreparedStatement pst = con.prepareStatement("update ticket set description=? where id=? and company_id=?")) {
 
             int i = 0;
             pst.setString(++i, ticketDTO.getDescription());
@@ -91,8 +137,7 @@ public class TicketRepository {
             String.format(
                 "delete from ticket where id=%d and status='%s' and company_id=%d",
                 id, TicketStatus.NEW, Context.getCompanyId()
-            ),
-"Failed to delete ticket. Id: " + id
+            ),"Failed to delete ticket. Id: " + id
         );
 
         if (result) {

@@ -33,7 +33,6 @@ public class AuthFilter implements Filter {
         allowedURIs.add(Consts.Paths.Auth.LOGIN);
         allowedURIs.add(Consts.Paths.Auth.FORGOT_PASSWORD);
         allowedURIs.add(Consts.Paths.Auth.RESET_PASSWORD);
-        //allowedURIs.add(Consts.Paths.Auth.LOGOUT);
 
         workspaceNeededURIs = new HashSet<>(2);
         workspaceNeededURIs.add(Consts.Paths.Product.BASE);
@@ -66,7 +65,10 @@ public class AuthFilter implements Filter {
                     } else if (! UserType.ADMIN.equals(authUser.getType()) && request.uri().startsWith(Consts.Paths.ADMIN_BASE)) {
                         halt(HttpStatus.FORBIDDEN_403, "Unauthorized user!");
                     } else if (UserType.READER.equals(authUser.getType()) && sensitiveMethodsSet.contains(request.requestMethod())) {
-                        halt(HttpStatus.FORBIDDEN_403, "Unauthorized user!");
+                        //readers are allowed to update their passwords
+                        if (! request.uri().equals(Consts.Paths.User.PASSWORD)) {
+                            halt(HttpStatus.FORBIDDEN_403, "Unauthorized user!");
+                        }
                     }
 
                     Context.setAuthUser(authUser);

@@ -45,7 +45,7 @@ public class TicketController {
         get(Consts.Paths.Ticket.BASE + "/:source/:id", (req, res) -> {
             TicketSource source;
             try {
-                source = TicketSource.valueOf(req.params(":source"));
+                source = TicketSource.valueOf(req.params(":source").toUpperCase());
             } catch (Exception e) {
                 return Commons.createResponse(res, Responses.DataProblem.NOT_SUITABLE);
             }

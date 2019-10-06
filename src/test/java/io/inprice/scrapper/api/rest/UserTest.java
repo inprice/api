@@ -143,7 +143,7 @@ public class UserTest {
     }
 
     @Test
-    public void everything_should_be_ok_with_changing_password() {
+    public void everything_should_be_ok_with_changing_password_as_an_ADMIN() {
         final PasswordDTO pass = new PasswordDTO();
         pass.setId(1L);
         pass.setPasswordOld("p4ssw0rd");
@@ -276,13 +276,20 @@ public class UserTest {
     }
 
     @Test
-    public void permission_problem_for_a_user_with_changing_admins_password() {
+    public void everything_should_be_ok_with_changing_password_as_a_READER() {
         TestHelper.loginAsUser();
 
+        final PasswordDTO pass = new PasswordDTO();
+        pass.setPasswordOld("p4ssw0rd");
+        pass.setPassword("n3w-p4ssw0rd");
+        pass.setPasswordAgain("n3w-p4ssw0rd");
+
+        given()
+            .body(pass).
         when()
             .put(Consts.Paths.User.PASSWORD).
         then()
-            .statusCode(HttpStatus.FORBIDDEN_403).assertThat();
+            .statusCode(HttpStatus.OK_200).assertThat();
 
         TestHelper.loginAsAdmin();
     }

@@ -16,6 +16,7 @@ public class Context {
         return THREAD_VARIABLES.get().getAuthUser();
     }
 
+    //TODO: for SYSTEM user, this value must be specified by user
     public static Long getCompanyId() {
         return THREAD_VARIABLES.get().getAuthUser().getCompanyId();
     }

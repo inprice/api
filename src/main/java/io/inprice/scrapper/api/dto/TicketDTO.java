@@ -50,4 +50,14 @@ public class TicketDTO {
     public void setSourceId(Long sourceId) {
         this.sourceId = sourceId;
     }
+
+    @Override
+    public String toString() {
+        return "TicketDTO{" +
+                "source=" + source +
+                ", type=" + type +
+                ", description='" + description + '\'' +
+                ", sourceId=" + sourceId +
+                '}';
+    }
 }

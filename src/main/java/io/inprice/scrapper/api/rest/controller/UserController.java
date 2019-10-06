@@ -29,7 +29,9 @@ public class UserController {
         //update password. a user can edit only his/her password
         put(Consts.Paths.User.PASSWORD, (req, res) -> {
             UserDTO user = Commons.toUserModel(req);
-            if (user != null && UserType.EDITOR.equals(Context.getAuthUser().getType())) user.setId(Context.getUserId());
+            if (user != null
+            && (UserType.READER.equals(Context.getAuthUser().getType())
+                || UserType.EDITOR.equals(Context.getAuthUser().getType()))) user.setId(Context.getUserId());
             return Commons.createResponse(res, service.updatePassword(user));
         }, Global.gson::toJson);
 
