@@ -23,6 +23,32 @@ public class TicketTest {
     }
 
     @Test
+    public void everything_should_be_ok_with_inserting_finding_and_deleting() {
+        TicketDTO ticket = getTicketDTO();
+        ticket.setSource(TicketSource.COMPANY);
+
+        given()
+            .body(ticket).
+        when()
+            .post(Consts.Paths.Ticket.BASE).
+        then()
+            .body("status", equalTo(Responses.OK.getStatus()))
+            .statusCode(HttpStatus.OK_200).assertThat();
+
+        when()
+            .get(Consts.Paths.Ticket.BASE + "/1").
+        then()
+            .statusCode(HttpStatus.OK_200).assertThat()
+            .body("status", equalTo(Responses.OK.getStatus()));
+
+        when()
+            .delete(Consts.Paths.Ticket.BASE + "/1").
+        then()
+            .body("status", equalTo(Responses.OK.getStatus()))
+            .statusCode(HttpStatus.OK_200).assertThat();
+    }
+
+    @Test
     public void source_cannot_be_null() {
         TicketDTO ticket = getTicketDTO();
         ticket.setSource(null);
@@ -130,6 +156,80 @@ public class TicketTest {
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.TICKET.getStatus()));
+    }
+
+    @Test
+    public void ticket_not_found_when_updating_with_a_null_id() {
+        TicketDTO ticket = getTicketDTO();
+        ticket.setId(null);
+
+        given()
+            .body(ticket).
+        when()
+            .put(Consts.Paths.Ticket.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.TICKET.getStatus()));
+    }
+
+    @Test
+    public void product_not_found_when_inserting_with_an_invalid_id() {
+        TicketDTO ticket = getTicketDTO();
+        ticket.setSource(TicketSource.PRODUCT);
+        ticket.setSourceId(-1L);
+
+        given()
+            .body(ticket).
+        when()
+            .post(Consts.Paths.Ticket.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
+    }
+
+    @Test
+    public void link_not_found_when_inserting_with_an_invalid_id() {
+        TicketDTO ticket = getTicketDTO();
+        ticket.setSource(TicketSource.LINK);
+        ticket.setSourceId(-1L);
+
+        given()
+            .body(ticket).
+        when()
+            .post(Consts.Paths.Ticket.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.LINK.getStatus()));
+    }
+
+    @Test
+    public void company_not_found_when_inserting_with_an_invalid_id() {
+        TicketDTO ticket = getTicketDTO();
+        ticket.setSource(TicketSource.COMPANY);
+        ticket.setSourceId(-1L);
+
+        given()
+            .body(ticket).
+        when()
+            .post(Consts.Paths.Ticket.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.COMPANY.getStatus()));
+    }
+
+    @Test
+    public void workspace_not_found_when_inserting_with_an_invalid_id() {
+        TicketDTO ticket = getTicketDTO();
+        ticket.setSource(TicketSource.WORKSPACE);
+        ticket.setSourceId(-1L);
+
+        given()
+            .body(ticket).
+        when()
+            .post(Consts.Paths.Ticket.BASE).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.WORKSPACE.getStatus()));
     }
 
     private TicketDTO getTicketDTO() {

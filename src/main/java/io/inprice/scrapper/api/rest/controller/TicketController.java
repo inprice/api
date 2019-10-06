@@ -41,8 +41,13 @@ public class TicketController {
             return Commons.createResponse(res, service.deleteById(NumberUtils.toLong(req.params(":id"))));
         }, Global.gson::toJson);
 
+        //find
+        get(Consts.Paths.Ticket.BASE + "/:id", (req, res) -> {
+            return Commons.createResponse(res, service.findById(NumberUtils.toLong(req.params(":id"))));
+        }, Global.gson::toJson);
+
         //list
-        get(Consts.Paths.Ticket.BASE + "/:source/:id", (req, res) -> {
+        get(Consts.Paths.Ticket.BASE + "s/:source/:id", (req, res) -> {
             TicketSource source;
             try {
                 source = TicketSource.valueOf(req.params(":source").toUpperCase());

@@ -10,6 +10,7 @@ import io.inprice.scrapper.common.meta.TicketSource;
 import io.inprice.scrapper.common.meta.TicketStatus;
 import io.inprice.scrapper.common.meta.TicketType;
 import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.models.Link;
 import io.inprice.scrapper.common.models.Ticket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,18 @@ public class TicketRepository {
 
     private static final Logger log = LoggerFactory.getLogger(TicketRepository.class);
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+
+    public ServiceResponse<Ticket> findById(Long id) {
+        Ticket model = dbUtils.findSingle(
+            String.format(
+            "select * from ticket " +
+                "where id = %d " +
+                "  and reported_by = %d ", id, Context.getUserId()), this::map);
+        if (model != null) {
+            return new ServiceResponse<>(model);
+        }
+        return Responses.NotFound.TICKET;
+    }
 
     public ServiceResponse<Ticket> getList(TicketSource source, Long id) {
         List<Ticket> tickets = dbUtils.findMultiple(
@@ -44,64 +57,61 @@ public class TicketRepository {
         try {
             con = dbUtils.getTransactionalConnection();
 
-            final String field = findField(ticketDTO.getSource());
-            final boolean isSystemUser = UserType.SYSTEM.equals(Context.getAuthUser().getType());
+            boolean result = false;
+            boolean sourceFound;
+            String wherePart = "";
 
-            final String query =
+            if (TicketSource.COMPANY.equals(ticketDTO.getSource())) {
+                if (! ticketDTO.getSourceId().equals(Context.getCompanyId())) {
+                    return Responses.NotFound.COMPANY;
+                }
+            } else {
+                wherePart = "and company_id="+Context.getCompanyId();
+            }
+
+            try (PreparedStatement
+                 pst = con.prepareStatement(
+                    String.format(
+                    "select id from %s where id=%d " + wherePart,
+                        ticketDTO.getSource().name().toLowerCase(), ticketDTO.getSourceId()));
+                ResultSet rs = pst.executeQuery()) {
+                sourceFound = (rs.next());
+            }
+
+            if (sourceFound) {
+                final String field = findField(ticketDTO.getSource());
+
+                final String query =
                     "insert into ticket " +
-                    "(source, ticket_type, status, description, workspace_id, company_id, " + field + ") " +
+                    "(source, ticket_type, description, reported_by, " + field + ") " +
                     " values " +
-                    "(?, ?, ?, ?, ?, ?) ";
+                    "(?, ?, ?, ?, ?) ";
 
-            try (PreparedStatement pst = con.prepareStatement(query)) {
-                int i = 0;
-                pst.setString(++i, ticketDTO.getSource().name());
-                pst.setString(++i, ticketDTO.getType().name());
+                try (PreparedStatement pst = con.prepareStatement(query)) {
+                    int i = 0;
+                    pst.setString(++i, ticketDTO.getSource().name());
+                    pst.setString(++i, ticketDTO.getType().name());
+                    pst.setString(++i, ticketDTO.getDescription());
+                    pst.setLong(++i, Context.getUserId());
+                    pst.setLong(++i, ticketDTO.getSourceId());
 
-                if (isSystemUser)
-                    pst.setString(++i, TicketStatus.ANSWERED.name());
-                else
-                    pst.setString(++i, TicketStatus.NEW.name());
-
-                pst.setString(++i, ticketDTO.getDescription());
-                pst.setLong(++i, Context.getWorkspaceId());
-                pst.setLong(++i, Context.getCompanyId());
-                pst.setLong(++i, ticketDTO.getSourceId());
-
-                final boolean res = (pst.executeUpdate() > 0);
-
-                //if it is an answer to a ticket
-                if (res && isSystemUser) {
-                    try (PreparedStatement
-                         pst1 =
-                             con.prepareStatement(
-                             "update ticket set status=? " +
-                                    "where status=? " +
-                                     "  and source=? " +
-                                     "  and " + field + "=? " +
-                                     "  and workspace_id=? " +
-                                     "  and company_id=? ")) {
-                        int j = 0;
-                        pst.setString(++j, TicketStatus.ANSWERED.name());
-                        pst.setString(++j, TicketStatus.NEW.name());
-                        pst.setString(++j, ticketDTO.getSource().name());
-                        pst.setLong(++j, ticketDTO.getSourceId());
-                        pst.setLong(++j, Context.getWorkspaceId());
-                        pst.setLong(++j, Context.getCompanyId());
-
-                        if (pst1.executeUpdate() < 1) {
-                            log.warn("Previous ticket's of a ticket couldn't be answered by system user! " + ticketDTO.getSourceId());
-                        }
-                    }
+                    result = (pst.executeUpdate() > 0);
                 }
-
-                if (res) {
-                    dbUtils.commit(con);
-                    return Responses.OK;
-                } else {
-                    dbUtils.rollback(con);
-                    return Responses.DataProblem.DB_PROBLEM;
+            } else {
+                switch (ticketDTO.getSource()) {
+                    case PRODUCT: return Responses.NotFound.PRODUCT;
+                    case LINK: return Responses.NotFound.LINK;
+                    case COMPANY: return Responses.NotFound.COMPANY;
+                    case WORKSPACE: return Responses.NotFound.WORKSPACE;
                 }
+            }
+
+            if (result) {
+                dbUtils.commit(con);
+                return Responses.OK;
+            } else {
+                dbUtils.rollback(con);
+                return Responses.DataProblem.DB_PROBLEM;
             }
         } catch (SQLException e) {
             if (con != null) dbUtils.rollback(con);
@@ -113,13 +123,14 @@ public class TicketRepository {
     }
 
     public ServiceResponse update(TicketDTO ticketDTO) {
+        final String wherePart = (UserType.ADMIN.equals(Context.getAuthUser().getType()) ? "" : "and reported_by="+Context.getUserId());
+
         try (Connection con = dbUtils.getConnection();
-             PreparedStatement pst = con.prepareStatement("update ticket set description=? where id=? and company_id=?")) {
+             PreparedStatement pst = con.prepareStatement("update ticket set description=? where id=? " + wherePart)) {
 
             int i = 0;
             pst.setString(++i, ticketDTO.getDescription());
             pst.setLong(++i, ticketDTO.getId());
-            pst.setLong(++i, Context.getCompanyId());
 
             if (pst.executeUpdate() > 0)
                 return Responses.OK;
@@ -133,10 +144,12 @@ public class TicketRepository {
     }
 
     public ServiceResponse deleteById(Long id) {
+        final String wherePart = (UserType.ADMIN.equals(Context.getAuthUser().getType()) ? "" : "and reported_by="+Context.getUserId());
+
         boolean result = dbUtils.executeQuery(
             String.format(
-                "delete from ticket where id=%d and status='%s' and company_id=%d",
-                id, TicketStatus.NEW, Context.getCompanyId()
+                "delete from ticket where id=%d and status='%s' " + wherePart,
+                id, TicketStatus.NEW
             ),"Failed to delete ticket. Id: " + id
         );
 
@@ -162,7 +175,7 @@ public class TicketRepository {
             model.setProductId(rs.getLong("product_id"));
             model.setWorkspaceId(rs.getLong("workspace_id"));
             model.setCompanyId(rs.getLong("company_id"));
-            model.setUserId(rs.getLong("user_id"));
+            model.setReportedBy(rs.getLong("reported_by"));
             model.setCreatedAt(rs.getDate("created_at"));
 
             return model;
