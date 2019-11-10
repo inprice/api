@@ -130,7 +130,8 @@ public class TestHelper {
         company.setPassword(loginDTO.getPassword());
         company.setPasswordAgain(loginDTO.getPassword());
 
-        company.setCountryId(1L);
+        company.setCountry("United States");
+        company.setSector("Music");
         return company;
     }
 

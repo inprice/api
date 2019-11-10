@@ -87,9 +87,10 @@ public class AuthService {
                         if (props.isRunningForTests()) {
                             return new ServiceResponse(token); //--> for test purposes, we need this info to test some functionality during testing
                         } else {
-                            Map<String, Object> dataMap = new HashMap<>(2);
+                            Map<String, Object> dataMap = new HashMap<>(3);
                             dataMap.put("fullName", found.getModel().getFullName());
                             dataMap.put("token", token);
+                            dataMap.put("baseUrl", props.getFrontendBaseUrl());
 
                             final String message = renderer.renderForgotPassword(dataMap);
                             emailSender.send(props.getEmail_Sender(), "Reset your password", found.getModel().getEmail(), message);

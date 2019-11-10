@@ -61,9 +61,8 @@ public class UserRepository {
                 user.setPasswordSalt(null);
                 user.setPasswordHash(null);
             }
-            return new ServiceResponse<>(users);
         }
-        return Responses.NotFound.USER;
+        return new ServiceResponse<>(users);
     }
 
     public ServiceResponse<User> findByEmail(String email) {

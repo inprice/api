@@ -50,6 +50,8 @@ public class AuthFilter implements Filter {
     }
 
     public void handle(Request request, Response response) {
+        if ("options".equals(request.requestMethod().toLowerCase())) return;
+
         if (isAuthenticationNeeded(request)) {
             String authHeader = request.headers(Consts.Auth.AUTHORIZATION_HEADER);
             if (authHeader == null) {

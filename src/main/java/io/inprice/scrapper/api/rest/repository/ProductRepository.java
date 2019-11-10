@@ -63,10 +63,7 @@ public class ProductRepository {
                     "  and workspace_id = %d " +
                     "order by name", Context.getCompanyId(), Context.getWorkspaceId()), this::map);
 
-        if (products != null && products.size() > 0) {
-            return new ServiceResponse<>(products);
-        }
-        return Responses.NotFound.PRODUCT;
+        return new ServiceResponse<>(products);
     }
 
     public ServiceResponse insert(ProductDTO productDTO) {

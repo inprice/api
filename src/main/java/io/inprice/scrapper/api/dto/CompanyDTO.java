@@ -8,7 +8,8 @@ public class CompanyDTO extends UserDTO {
     //company
     private String companyName;
     private String website;
-    private Long countryId;
+    private String country;
+    private String sector;
 
     //security
     private String captcha;
@@ -29,12 +30,20 @@ public class CompanyDTO extends UserDTO {
         this.website = website;
     }
 
-    public Long getCountryId() {
-        return countryId;
+    public String getCountry() {
+        return country;
     }
 
-    public void setCountryId(Long countryId) {
-        this.countryId = countryId;
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public String getSector() {
+        return sector;
+    }
+
+    public void setSector(String sector) {
+        this.sector = sector;
     }
 
     public String getCaptcha() {

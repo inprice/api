@@ -60,7 +60,7 @@ public class CompanyTest {
         final String token = res.header(Consts.Auth.AUTHORIZATION_HEADER);
 
         company.setId(1L);
-        company.setCountryId(2L);
+        company.setCountry("United Kingdom");
 
         given()
             .header(Consts.Auth.AUTHORIZATION_HEADER, token)
@@ -111,7 +111,7 @@ public class CompanyTest {
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo("The length of name field must be between 3 and 250 chars!"));
+            .body("problems.reason[0]", equalTo("Company name must be between 3 and 250 chars!"));
     }
 
     @Test
@@ -127,7 +127,7 @@ public class CompanyTest {
         then()
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo("The length of name field must be between 3 and 250 chars!"));
+            .body("problems.reason[0]", equalTo("Company name must be between 3 and 250 chars!"));
     }
 
     @Test
@@ -172,7 +172,7 @@ public class CompanyTest {
     @Test
     public void you_should_pick_a_country_when_country_not_presented() {
         final CompanyDTO company = TestHelper.getCompanyDTO();
-        company.setCountryId(null);
+        company.setCountry(null);
 
         given()
             .body(company).
@@ -184,9 +184,23 @@ public class CompanyTest {
     }
 
     @Test
-    public void unknown_country_for_a_wrong_id() {
+    public void you_should_pick_a_sector_when_sector_not_presented() {
         final CompanyDTO company = TestHelper.getCompanyDTO();
-        company.setCountryId(9999L);
+        company.setSector(null);
+
+        given()
+            .body(company).
+        when()
+            .post(Consts.Paths.Auth.REGISTER).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("problems.reason", hasItem("You should pick a sector!"));
+    }
+
+    @Test
+    public void unknown_country_for_an_empty_name() {
+        final CompanyDTO company = TestHelper.getCompanyDTO();
+        company.setCountry("    ");
 
         given()
             .body(company).
@@ -196,6 +210,21 @@ public class CompanyTest {
             .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason", hasItem("Unknown country!"));
+    }
+
+    @Test
+    public void unknown_sector_for_an_empty_name() {
+        final CompanyDTO company = TestHelper.getCompanyDTO();
+        company.setSector("    ");
+
+        given()
+            .body(company).
+        when()
+            .post(Consts.Paths.Auth.REGISTER).
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
+            .body("problems.reason", hasItem("Unknown sector!"));
     }
 
     @Test

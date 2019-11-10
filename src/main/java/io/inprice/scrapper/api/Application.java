@@ -75,7 +75,7 @@ public class Application {
         Spark.before((req, res) -> res.type("application/json"));
 
         //Enable CORS
-        Spark.options("/*", (req, res)->{
+        Spark.options("/*", (req, res)-> {
             String acrh = req.headers("Access-Control-Request-Headers");
             if (acrh != null) res.header("Access-Control-Allow-Headers", acrh);
 
@@ -85,7 +85,11 @@ public class Application {
             return "OK";
         });
 
-        Spark.before((request, response)-> response.header("Access-Control-Allow-Origin", "*"));
+        Spark.before((req, res)-> {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Request-Methods", "*");
+            res.header("Access-Control-Expose-Headers", "Authorization");
+        });
 
         Spark.after((request, response)-> Context.cleanup());
 

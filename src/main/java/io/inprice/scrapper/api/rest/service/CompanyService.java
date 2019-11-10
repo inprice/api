@@ -8,7 +8,6 @@ import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.repository.CompanyRepository;
-import io.inprice.scrapper.api.rest.repository.CountryRepository;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
 import io.inprice.scrapper.common.meta.UserType;
 import org.apache.commons.lang3.StringUtils;
@@ -22,7 +21,6 @@ public class CompanyService {
 
     private static final Logger log = LoggerFactory.getLogger(CompanyService.class);
     private static final CompanyRepository repository = Beans.getSingleton(CompanyRepository.class);
-    private static final CountryRepository countryRepository = Beans.getSingleton(CountryRepository.class);
 
     public ServiceResponse findById(Long id) {
         return repository.findById(id);
@@ -72,13 +70,19 @@ public class CompanyService {
         if (StringUtils.isBlank(companyDTO.getCompanyName())) {
             problems.add(new Problem("companyName", "Company name cannot be null!"));
         } else if (companyDTO.getCompanyName().length() < 3 || companyDTO.getCompanyName().length() > 250) {
-            problems.add(new Problem("companyName", "The length of name field must be between 3 and 250 chars!"));
+            problems.add(new Problem("companyName", "Company name must be between 3 and 250 chars!"));
         }
 
-        if (companyDTO.getCountryId() == null) {
+        if (companyDTO.getCountry() == null) {
             problems.add(new Problem("country", "You should pick a country!"));
-        } else if (countryRepository.findById(companyDTO.getCountryId()) == null) {
+        } else  if (StringUtils.isBlank(companyDTO.getCountry())) {
             problems.add(new Problem("country", "Unknown country!"));
+        }
+
+        if (companyDTO.getSector() == null) {
+            problems.add(new Problem("sector", "You should pick a sector!"));
+        } else  if (StringUtils.isBlank(companyDTO.getSector())) {
+            problems.add(new Problem("sector", "Unknown sector!"));
         }
 
         return Commons.createResponse(problems);

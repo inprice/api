@@ -41,10 +41,7 @@ public class WorkspaceRepository {
                 "where company_id = %d " +
                 "order by name", Context.getCompanyId()), this::map);
 
-        if (workspaces != null && workspaces.size() > 0) {
-            return new ServiceResponse<>(workspaces);
-        }
-        return Responses.NotFound.WORKSPACE;
+        return new ServiceResponse<>(workspaces);
     }
 
     /**

@@ -47,6 +47,10 @@ public class Properties {
 		return showQueries.equals("true");
 	}
 
+	public String getFrontendBaseUrl() {
+		return prop.getProperty("frontend.base-url", "http://localhost:8080/#");
+	}
+
 	public int getAPP_Port() {
 		return getOrDefault("app.port", 4567);
 	}

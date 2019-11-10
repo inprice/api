@@ -52,10 +52,7 @@ public class ProductImportRepository {
                     "  and workspace_id = %d " +
                     "order by created_at desc, import_type", Context.getCompanyId(), Context.getWorkspaceId()), this::map);
 
-        if (imports != null && imports.size() > 0) {
-            return new ServiceResponse<>(imports);
-        }
-        return Responses.NotFound.IMPORT;
+        return new ServiceResponse<>(imports);
     }
 
     public ServiceResponse deleteById(Long id) {

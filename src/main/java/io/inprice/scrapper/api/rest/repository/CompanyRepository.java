@@ -49,12 +49,13 @@ public class CompanyRepository {
             Long companyId = null;
 
             try (PreparedStatement pst =
-                 con.prepareStatement("insert into company (name, website, country_id) values (?, ?, ?) ",
+                 con.prepareStatement("insert into company (name, website, country, sector) values (?, ?, ?, ?) ",
                      Statement.RETURN_GENERATED_KEYS)) {
                 int i = 0;
                 pst.setString(++i, companyDTO.getCompanyName());
                 pst.setString(++i, companyDTO.getWebsite());
-                pst.setLong(++i, companyDTO.getCountryId());
+                pst.setString(++i, companyDTO.getCountry());
+                pst.setString(++i, companyDTO.getSector());
 
                 if (pst.executeUpdate() > 0) {
                     try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
@@ -157,14 +158,15 @@ public class CompanyRepository {
             PreparedStatement pst =
                 con.prepareStatement(
                 "update company " +
-                    "set name=?, website=?, country_id=? " +
+                    "set name=?, website=?, country=?, sector=? " +
                     "where id=? " +
                     "  and admin_id=?")) {
 
             int i = 0;
             pst.setString(++i, companyDTO.getCompanyName());
             pst.setString(++i, companyDTO.getWebsite());
-            pst.setLong(++i, companyDTO.getCountryId());
+            pst.setString(++i, companyDTO.getCountry());
+            pst.setString(++i, companyDTO.getSector());
             pst.setLong(++i, companyDTO.getId());
             pst.setLong(++i, Context.getAuthUser().getId());
 
@@ -187,7 +189,8 @@ public class CompanyRepository {
             model.setName(rs.getString("name"));
             model.setWebsite(rs.getString("website"));
             model.setAdminId(rs.getLong("admin_id"));
-            model.setCountryId(rs.getLong("country_id"));
+            model.setCountry(rs.getString("country"));
+            model.setSector(rs.getString("sector"));
             model.setCreatedAt(rs.getDate("created_at"));
 
             return model;
