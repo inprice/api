@@ -43,6 +43,12 @@ public class DBUtils {
         hConf.setJdbcUrl(connectionString);
         hConf.setUsername(props.getDB_Username());
         hConf.setPassword(props.getDB_Password());
+
+        if (props.isRunningForTests())
+            hConf.setConnectionTimeout(3 * 1000); //three seconds
+        else
+            hConf.setConnectionTimeout(10 * 1000); //ten seconds
+
         hConf.addDataSourceProperty("cachePrepStmts", "true");
         hConf.addDataSourceProperty("prepStmtCacheSize", "250");
         hConf.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");

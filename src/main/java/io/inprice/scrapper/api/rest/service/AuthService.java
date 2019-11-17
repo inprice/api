@@ -14,7 +14,6 @@ import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
-import io.inprice.scrapper.api.rest.repository.WorkspaceRepository;
 import io.inprice.scrapper.api.rest.validator.EmailDTOValidator;
 import io.inprice.scrapper.api.rest.validator.LoginDTOValidator;
 import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
@@ -36,7 +35,6 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-    private final WorkspaceRepository workspaceRepository = Beans.getSingleton(WorkspaceRepository.class);
     private final TokenService tokenService = Beans.getSingleton(TokenService.class);
     private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
     private final Properties props = Beans.getSingleton(Properties.class);
@@ -52,16 +50,7 @@ public class AuthService {
                     String salt = user.getPasswordSalt();
                     String hash = BCrypt.hashpw(loginDTO.getPassword(), salt);
                     if (hash.equals(user.getPasswordHash())) {
-                        AuthUser authUser = new AuthUser();
-                        authUser.setId(user.getId());
-                        authUser.setEmail(user.getEmail());
-                        authUser.setFullName(user.getFullName());
-                        authUser.setType(user.getUserType());
-                        authUser.setCompanyId(user.getCompanyId());
-                        authUser.setAllowedWorkspaces(workspaceRepository.findByCompanyId(user.getCompanyId()));
-
-                        response.header(Consts.Auth.AUTHORIZATION_HEADER, tokenService.newToken(authUser));
-
+                        setAuthorizationHeader(user, response);
                         return Responses.OK;
                     } else {
                         return Responses.NotFound.USER;
@@ -120,6 +109,7 @@ public class AuthService {
                     AuthUser authUser = new AuthUser();
                     authUser.setId(found.getModel().getId());
                     authUser.setCompanyId(found.getModel().getCompanyId());
+                    authUser.setWorkspaceId(found.getModel().getWorkspaceId());
                     res = userRepository.updatePassword(passwordDTO, authUser);
                     tokenService.revokeToken(passwordDTO.getToken());
                 } else {
@@ -175,6 +165,19 @@ public class AuthService {
     private ServiceResponse validate(LoginDTO loginDTO) {
         List<Problem> problems = LoginDTOValidator.verify(loginDTO);
         return Commons.createResponse(problems);
+    }
+
+    void setAuthorizationHeader(User user, Response response) {
+        AuthUser authUser = new AuthUser();
+        authUser.setId(user.getId());
+        authUser.setEmail(user.getEmail());
+        authUser.setFullName(user.getFullName());
+        authUser.setType(user.getUserType());
+        authUser.setCompanyId(user.getCompanyId());
+        authUser.setWorkspaceId(user.getWorkspaceId());
+
+        response.header(Consts.Auth.WORKSPACE_HEADER, user.getWorkspaceId().toString());
+        response.header(Consts.Auth.AUTHORIZATION_HEADER, tokenService.newToken(authUser));
     }
 
 }

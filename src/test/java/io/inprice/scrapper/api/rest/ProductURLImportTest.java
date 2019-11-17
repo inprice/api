@@ -19,7 +19,7 @@ public class ProductURLImportTest {
     
     @BeforeClass
     public static void setup() {
-        TestHelper.setup(true, true, true);
+        TestHelper.setup(true, true);
     }
 
     @Test

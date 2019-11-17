@@ -67,6 +67,8 @@ public class Responses {
         public static final ServiceResponse DUPLICATE = new ServiceResponse(BASE + 5);
 
         public static final ServiceResponse FORM_VALIDATION = new ServiceResponse(BASE + 20);
+        public static final ServiceResponse MASTER_WS_CANNOT_BE_DELETED = new ServiceResponse(BASE + 50);
+        public static final ServiceResponse WS_HAS_USERS = new ServiceResponse(BASE + 52);
     }
 
 }

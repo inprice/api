@@ -15,7 +15,7 @@ public class AuthUser extends Model {
     private UserType type;
     private String fullName;
     private Long companyId;
-    private Set<Long> allowedWorkspaces = new HashSet<>();
+    private Long workspaceId;
 
     public String getSessionId() {
         return sessionId;
@@ -53,11 +53,11 @@ public class AuthUser extends Model {
         this.companyId = companyId;
     }
 
-    public Set<Long> getAllowedWorkspaces() {
-        return allowedWorkspaces;
+    public Long getWorkspaceId() {
+        return workspaceId;
     }
 
-    public void setAllowedWorkspaces(Set<Long> allowedWorkspaces) {
-        this.allowedWorkspaces = allowedWorkspaces;
+    public void setWorkspaceId(Long workspaceId) {
+        this.workspaceId = workspaceId;
     }
 }

@@ -33,10 +33,10 @@ public class CompanyRepository {
     }
 
     /**
-     * When a company is created three insert operations happen
+     * Three insert operations happen during a new company creation
      *  - company
      *  - workspace
-     *  - and admin
+     *  - admin user
      */
     public ServiceResponse insert(CompanyDTO companyDTO) {
         ServiceResponse response = new ServiceResponse<>(Responses.DataProblem.DB_PROBLEM.getStatus());
@@ -71,7 +71,7 @@ public class CompanyRepository {
 
                 Long workspaceId = null;
                 try (PreparedStatement pst =
-                     con.prepareStatement("insert into workspace (name, plan_id, company_id) values (?, ?, ?) ",
+                     con.prepareStatement("insert into workspace (master, name, plan_id, company_id) values (true, ?, ?, ?) ",
                          Statement.RETURN_GENERATED_KEYS)) {
                     int i = 0;
                     pst.setString(++i, "DEFAULT WORKSPACE");
@@ -97,9 +97,9 @@ public class CompanyRepository {
                     final String salt = codeGenerator.generateSalt();
                     final String q2 =
                         "insert into user " +
-                        "(user_type, full_name, email, password_salt, password_hash, company_id) " +
+                        "(user_type, full_name, email, password_salt, password_hash, company_id, workspace_id) " +
                         "values " +
-                        "(?, ?, ?, ?, ?, ?) ";
+                        "(?, ?, ?, ?, ?, ?, ?) ";
 
                     try (PreparedStatement pst = con.prepareStatement(q2, Statement.RETURN_GENERATED_KEYS)) {
                         int i = 0;
@@ -109,6 +109,7 @@ public class CompanyRepository {
                         pst.setString(++i, salt);
                         pst.setString(++i, BCrypt.hashpw(companyDTO.getPassword(), salt));
                         pst.setLong(++i, companyId);
+                        pst.setLong(++i, workspaceId);
 
                         if (pst.executeUpdate() > 0) {
                             try (ResultSet generatedKeys = pst.getGeneratedKeys()) {

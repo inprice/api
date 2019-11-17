@@ -11,6 +11,7 @@ import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.utils.CodeGenerator;
 import io.inprice.scrapper.common.meta.UserType;
 import io.inprice.scrapper.common.models.User;
+import io.inprice.scrapper.common.models.Workspace;
 import jodd.util.BCrypt;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ public class UserRepository {
 
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
+    private final WorkspaceRepository wsRepository = Beans.getSingleton(WorkspaceRepository.class);
 
     public ServiceResponse<User> findById(Long id) {
         return findById(id, false);
@@ -58,6 +60,7 @@ public class UserRepository {
         if (users != null && users.size() > 0) {
             for (User user: users) {
                 user.setCompanyId(null);
+                user.setWorkspaceId(null);
                 user.setPasswordSalt(null);
                 user.setPasswordHash(null);
             }
@@ -94,9 +97,11 @@ public class UserRepository {
     public ServiceResponse insert(UserDTO userDTO) {
         final String query =
             "insert into user " +
-            "(user_type, full_name, email, password_salt, password_hash, company_id) " +
+            "(user_type, full_name, email, password_salt, password_hash, company_id, workspace_id) " +
             "values " +
-            "(?, ?, ?, ?, ?, ?) ";
+            "(?, ?, ?, ?, ?, ?, ?) ";
+
+        final Long masterId = wsRepository.findMasterWsId();
 
         try (Connection con = dbUtils.getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
@@ -114,6 +119,7 @@ public class UserRepository {
             pst.setString(++i, salt);
             pst.setString(++i, BCrypt.hashpw(userDTO.getPassword(), salt));
             pst.setLong(++i, Context.getCompanyId());
+            pst.setLong(++i, masterId);
 
             if (pst.executeUpdate() > 0)
                 return Responses.OK;
@@ -204,6 +210,37 @@ public class UserRepository {
         }
     }
 
+    public ServiceResponse setActiveWorkspace(Long workspaceId) {
+        ServiceResponse<Workspace> res = wsRepository.findById(workspaceId);
+        if (res.isOK()) {
+            final String query =
+                "update user " +
+                "set workspace_id=? " +
+                "where id=?" +
+                "  and company_id=?";
+
+            try (Connection con = dbUtils.getConnection();
+                 PreparedStatement pst = con.prepareStatement(query)) {
+
+                int i = 0;
+                pst.setLong(++i, workspaceId);
+                pst.setLong(++i, Context.getUserId());
+                pst.setLong(++i, Context.getCompanyId());
+
+                if (pst.executeUpdate() > 0)
+                    return Responses.OK;
+                else
+                    return Responses.NotFound.WORKSPACE;
+
+            } catch (Exception e) {
+                log.error("Failed to update user's workspace", e);
+                return Responses.ServerProblem.EXCEPTION;
+            }
+        } else {
+            return Responses.NotFound.WORKSPACE;
+        }
+    }
+
     public ServiceResponse deleteById(Long id) {
         boolean result =
             dbUtils.executeQuery(
@@ -248,6 +285,7 @@ public class UserRepository {
             model.setPasswordHash(rs.getString("password_hash"));
             model.setPasswordSalt(rs.getString("password_salt"));
             model.setCompanyId(rs.getLong("company_id"));
+            model.setWorkspaceId(rs.getLong("workspace_id"));
             model.setCreatedAt(rs.getDate("created_at"));
             return model;
         } catch (SQLException e) {

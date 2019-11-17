@@ -9,6 +9,7 @@ import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.service.UserService;
 import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.utils.NumberUtils;
 
 import static spark.Spark.put;
 
@@ -33,6 +34,11 @@ public class UserController {
             && (UserType.READER.equals(Context.getAuthUser().getType())
                 || UserType.EDITOR.equals(Context.getAuthUser().getType()))) user.setId(Context.getUserId());
             return Commons.createResponse(res, service.updatePassword(user));
+        }, Global.gson::toJson);
+
+        //set active workspace
+        put(Consts.Paths.User.SET_WORKSPACE + "/:id", (req, res) -> {
+            return Commons.createResponse(res, service.setActiveWorkspace(NumberUtils.toLong(req.params(":id")), res));
         }, Global.gson::toJson);
 
     }

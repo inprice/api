@@ -70,7 +70,9 @@ public class LinkService {
         if (res.isOK()) {
             Link link = res.getModel();
 
-            if (! link.getProductId().equals(productId)) return Responses.Invalid.PRODUCT;
+            if (! link.getProductId().equals(productId)) {
+                return Responses.Invalid.PRODUCT;
+            }
             if (link.getStatus().equals(status)) return Responses.DataProblem.NOT_SUITABLE;
 
             boolean suitable = false;
@@ -103,7 +105,7 @@ public class LinkService {
             return linkRepository.changeStatus(id, productId, status);
         }
 
-        return Responses.NotFound.LINK;
+        return res;
     }
 
     private ServiceResponse validate(LinkDTO linkDTO) {

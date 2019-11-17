@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,20 @@ public class WorkspaceRepository {
         return Responses.NotFound.WORKSPACE;
     }
 
+    public Long findMasterWsId() {
+        Workspace ws = dbUtils.findSingle(
+            String.format(
+            "select * from workspace " +
+                "where company_id = %d " +
+                "  and master = true", Context.getCompanyId()),
+            this::map
+        );
+        if (ws != null)
+            return ws.getId();
+        else
+            return null;
+    }
+
     public ServiceResponse<Workspace> getList() {
         List<Workspace> workspaces = dbUtils.findMultiple(
             String.format(
@@ -45,7 +60,7 @@ public class WorkspaceRepository {
     }
 
     /**
-     * must be done by an admin
+     * must be committed by an admin
      *
      */
     public ServiceResponse insert(WorkspaceDTO workspaceDTO) {
@@ -101,6 +116,13 @@ public class WorkspaceRepository {
     }
 
     public ServiceResponse deleteById(Long id) {
+        Long masterId = findMasterWsId();
+        if (masterId != null) {
+            if (masterId.equals(id)) return Responses.DataProblem.MASTER_WS_CANNOT_BE_DELETED;
+        }
+        List<String> userList = findUserList(id);
+        if (userList != null && userList.size() > 0) return Responses.DataProblem.WS_HAS_USERS;
+
         boolean result = dbUtils.executeBatchQueries(
             bulkDeleteStatements.workspaces(id),
             String.format("Failed to delete workspace. Id: %d", id), 1 //at least one execution must be successful
@@ -142,6 +164,27 @@ public class WorkspaceRepository {
             }
         }
         return modelSet;
+    }
+
+    private List<String> findUserList(Long wsId) {
+        List<String> result = new ArrayList<>();
+        try (Connection con = dbUtils.getConnection()) {
+            try (PreparedStatement pst = con.prepareStatement("select full_name from user where workspace_id=? and company_id=?")) {
+                pst.setLong(1, wsId);
+                pst.setLong(2, Context.getCompanyId());
+
+                ResultSet rs = pst.executeQuery();
+                while (rs.next()) {
+                    result.add(rs.getString(1));
+                }
+                rs.close();
+            }
+
+            return result;
+        } catch (Exception e) {
+            log.error("Error", e);
+        }
+        return null;
     }
 
     private Workspace map(ResultSet rs) {

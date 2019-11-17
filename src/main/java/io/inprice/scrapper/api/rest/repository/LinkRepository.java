@@ -21,6 +21,7 @@ public class LinkRepository {
     private static final Logger log = LoggerFactory.getLogger(LinkRepository.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private static final Properties props = Beans.getSingleton(Properties.class);
+    private static final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
 
     private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
 
@@ -40,11 +41,11 @@ public class LinkRepository {
     public ServiceResponse<Link> getList(Long productId) {
         List<Link> links = dbUtils.findMultiple(
             String.format(
-                "select * from link " +
-                    "where product_id = %d " +
-                    "  and company_id = %d " +
-                    "  and workspace_id = %d " +
-                    "order by name", productId, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
+            "select * from link " +
+                "where product_id = %d " +
+                "  and company_id = %d " +
+                "  and workspace_id = %d " +
+                "order by name", productId, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
 
         if (links != null && links.size() > 0) {
             return new ServiceResponse<>(links);

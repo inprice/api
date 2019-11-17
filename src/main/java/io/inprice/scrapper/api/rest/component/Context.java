@@ -16,24 +16,20 @@ public class Context {
         return THREAD_VARIABLES.get().getAuthUser();
     }
 
-    //TODO: for SYSTEM user, this value must be specified by user
-    public static Long getCompanyId() {
-        return THREAD_VARIABLES.get().getAuthUser().getCompanyId();
-    }
-
-    public static Long getWorkspaceId() {
-        return THREAD_VARIABLES.get().getWorkspaceId();
+    static void setAuthUser(AuthUser authUser) {
+        THREAD_VARIABLES.get().setAuthUser(authUser);
     }
 
     public static Long getUserId() {
         return THREAD_VARIABLES.get().getAuthUser().getId();
     }
 
-    static void setAuthUser(AuthUser authUser) {
-        THREAD_VARIABLES.get().setAuthUser(authUser);
+    public static Long getWorkspaceId() {
+        return THREAD_VARIABLES.get().getAuthUser().getWorkspaceId();
     }
-    static void setWorkspaceId(Long workspaceId) {
-        THREAD_VARIABLES.get().setWorkspaceId(workspaceId);
+
+    public static Long getCompanyId() {
+        return THREAD_VARIABLES.get().getAuthUser().getCompanyId();
     }
 
     public static void cleanup() {

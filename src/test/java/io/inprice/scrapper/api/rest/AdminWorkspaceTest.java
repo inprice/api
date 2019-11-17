@@ -190,4 +190,13 @@ public class AdminWorkspaceTest {
             .body("status", equalTo(Responses.NotFound.WORKSPACE.getStatus()));
     }
 
+    @Test
+    public void master_ws_cannot_be_deleted() {
+        when()
+            .delete(Consts.Paths.Workspace.BASE + "/1").
+        then()
+            .body("status", equalTo(Responses.DataProblem.MASTER_WS_CANNOT_BE_DELETED.getStatus()))
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat();
+    }
+
 }

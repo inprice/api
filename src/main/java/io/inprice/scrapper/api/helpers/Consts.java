@@ -43,6 +43,7 @@ public class Consts {
         public static class User {
             public static final String BASE = "/user";
             public static final String PASSWORD = BASE + "/password";
+            public static final String SET_WORKSPACE = BASE + "/set-workspace";
         }
 
         public static class Product {

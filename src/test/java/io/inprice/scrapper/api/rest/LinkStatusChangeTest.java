@@ -14,7 +14,7 @@ public class LinkStatusChangeTest {
 
     @BeforeClass
     public static void setup() {
-        TestHelper.setup(true, true, true);
+        TestHelper.setup(true, true);
         TestHelper.runScript("files/fixture/links_in_various_statuses.sql");
     }
 

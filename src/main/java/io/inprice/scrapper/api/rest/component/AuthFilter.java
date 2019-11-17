@@ -24,7 +24,6 @@ public class AuthFilter implements Filter {
     private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
 
     private final Set<String> allowedURIs;
-    private final Set<String> workspaceNeededURIs;
     private final Set<String> sensitiveMethodsSet;
 
     public AuthFilter() {
@@ -33,10 +32,6 @@ public class AuthFilter implements Filter {
         allowedURIs.add(Consts.Paths.Auth.LOGIN);
         allowedURIs.add(Consts.Paths.Auth.FORGOT_PASSWORD);
         allowedURIs.add(Consts.Paths.Auth.RESET_PASSWORD);
-
-        workspaceNeededURIs = new HashSet<>(2);
-        workspaceNeededURIs.add(Consts.Paths.Product.BASE);
-        workspaceNeededURIs.add(Consts.Paths.Link.BASE);
 
         sensitiveMethodsSet = new HashSet<>(2);
         sensitiveMethodsSet.add("DELETE");
@@ -72,29 +67,8 @@ public class AuthFilter implements Filter {
                             halt(HttpStatus.FORBIDDEN_403, "Unauthorized user!");
                         }
                     }
-
+                    //everything is ok!
                     Context.setAuthUser(authUser);
-
-                    if (isWorkspaceNeeded(request)) {
-                        boolean isWorkspaceSet = false;
-                        String workspace = request.headers(Consts.Auth.WORKSPACE_HEADER);
-                        if (workspace != null) {
-                            try {
-                                Long wsId = Long.valueOf(workspace);
-                                Context.setWorkspaceId(wsId);
-                                isWorkspaceSet = true;
-                            } catch (Exception e) {
-                                //
-                            }
-                        }
-
-                        if (! isWorkspaceSet) {
-                            halt(HttpStatus.NOT_ACCEPTABLE_406, "Workspace is missing!");
-                        } else if (! authUser.getAllowedWorkspaces().contains(Context.getWorkspaceId())) {
-                            halt(HttpStatus.NOT_ACCEPTABLE_406, "You are not allowed to work in this workspace!");
-                        }
-                    }
-
                 }
             }
         }
@@ -102,14 +76,6 @@ public class AuthFilter implements Filter {
 
     private boolean isAuthenticationNeeded(Request req) {
         return ! (allowedURIs.contains(req.uri()));
-    }
-
-    private boolean isWorkspaceNeeded(Request req) {
-        if (workspaceNeededURIs.contains(req.uri())) return true;
-        for (String uri: workspaceNeededURIs) {
-            if (req.uri().startsWith(uri)) return true;
-        }
-        return false;
     }
 
 }

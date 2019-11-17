@@ -11,11 +11,14 @@ import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
+import io.inprice.scrapper.common.models.User;
+import spark.Response;
 
 import java.util.List;
 
 public class UserService {
 
+    private final AuthService authService = Beans.getSingleton(AuthService.class);
     private final UserRepository repository = Beans.getSingleton(UserRepository.class);
 
     public ServiceResponse findById(Long id) {
@@ -50,6 +53,26 @@ public class UserService {
             return res;
         }
         return Responses.Invalid.PASSWORD;
+    }
+
+    public ServiceResponse setActiveWorkspace(Long workspaceId, Response response) {
+        if (workspaceId == null || workspaceId < 1) {
+            return Responses.NotFound.WORKSPACE;
+        }
+
+        ServiceResponse res = repository.setActiveWorkspace(workspaceId);
+        if (res.isOK()) {
+            User user = new User();
+            user.setId(Context.getUserId());
+            user.setEmail(Context.getAuthUser().getEmail());
+            user.setFullName(Context.getAuthUser().getFullName());
+            user.setUserType(Context.getAuthUser().getType());
+            user.setCompanyId(Context.getCompanyId());
+            user.setWorkspaceId(workspaceId);
+            authService.setAuthorizationHeader(user, response);
+        }
+
+        return res;
     }
 
     private ServiceResponse validate(UserDTO userDTO) {

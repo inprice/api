@@ -276,6 +276,15 @@ public class UserTest {
     }
 
     @Test
+    public void workspace_not_found_with_wrong_wsid_for_setting_active_ws() {
+        when()
+            .put(Consts.Paths.User.SET_WORKSPACE+ "/99").
+        then()
+            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
+            .body("status", equalTo(Responses.NotFound.WORKSPACE.getStatus()));
+    }
+
+    @Test
     public void everything_should_be_ok_with_changing_password_as_a_READER() {
         TestHelper.loginAsUser();
 

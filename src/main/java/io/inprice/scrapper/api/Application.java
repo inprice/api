@@ -88,7 +88,7 @@ public class Application {
         Spark.before((req, res)-> {
             res.header("Access-Control-Allow-Origin", "*");
             res.header("Access-Control-Request-Methods", "*");
-            res.header("Access-Control-Expose-Headers", "Authorization");
+            res.header("Access-Control-Expose-Headers", "Authorization, workspace");
         });
 
         Spark.after((request, response)-> Context.cleanup());
