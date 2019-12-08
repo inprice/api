@@ -1,10 +1,8 @@
 package io.inprice.scrapper.api.info;
 
-import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.meta.Role;
 import io.inprice.scrapper.common.models.Model;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 public class AuthUser extends Model {
@@ -12,7 +10,7 @@ public class AuthUser extends Model {
     private String sessionId = UUID.randomUUID().toString();
 
     private String email;
-    private UserType type;
+    private Role role;
     private String fullName;
     private Long companyId;
     private Long workspaceId;
@@ -29,12 +27,12 @@ public class AuthUser extends Model {
         this.email = email;
     }
 
-    public UserType getType() {
-        return type;
+    public Role getRole() {
+        return role;
     }
 
-    public void setType(UserType type) {
-        this.type = type;
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     public String getFullName() {

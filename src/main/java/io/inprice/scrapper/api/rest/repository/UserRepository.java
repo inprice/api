@@ -9,7 +9,7 @@ import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.utils.CodeGenerator;
-import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.meta.Role;
 import io.inprice.scrapper.common.models.User;
 import io.inprice.scrapper.common.models.Workspace;
 import jodd.util.BCrypt;
@@ -53,9 +53,9 @@ public class UserRepository {
         List<User> users = dbUtils.findMultiple(
             String.format(
                 "select * from user " +
-                "where user_type != '%s' " +
+                "where role != '%s' " +
                 "  and company_id = %d " +
-                "order by full_name", UserType.ADMIN, Context.getCompanyId()), this::map);
+                "order by full_name", Role.admin, Context.getCompanyId()), this::map);
 
         if (users != null && users.size() > 0) {
             for (User user: users) {
@@ -97,7 +97,7 @@ public class UserRepository {
     public ServiceResponse insert(UserDTO userDTO) {
         final String query =
             "insert into user " +
-            "(user_type, full_name, email, password_salt, password_hash, company_id, workspace_id) " +
+            "(role, full_name, email, password_salt, password_hash, company_id, workspace_id) " +
             "values " +
             "(?, ?, ?, ?, ?, ?, ?) ";
 
@@ -107,8 +107,8 @@ public class UserRepository {
              PreparedStatement pst = con.prepareStatement(query)) {
 
             //never trust client side!!!
-            UserType ut = userDTO.getType();
-            if (ut == null || UserType.ADMIN.equals(ut)) ut = UserType.EDITOR;
+            Role ut = userDTO.getRole();
+            if (ut == null || Role.admin.equals(ut)) ut = Role.editor;
 
             int i = 0;
             final String salt = codeGenerator.generateSalt();
@@ -140,7 +140,7 @@ public class UserRepository {
             "update user " +
             "set full_name=? " +
             (! StringUtils.isBlank(userDTO.getEmail()) ? ", email=? " : "") +
-            (byAdmin ? ", user_type=?" : "") +
+            (byAdmin ? ", role=?" : "") +
             (passwordWillBeUpdate ? ", password_salt=?, password_hash=?" : "") +
             " where id=?" +
             "   and company_id=?";
@@ -156,8 +156,8 @@ public class UserRepository {
             }
 
             if (byAdmin) {
-                UserType ut = userDTO.getType();
-                if (ut == null || UserType.ADMIN.equals(ut)) ut = UserType.EDITOR;
+                Role ut = userDTO.getRole();
+                if (ut == null || Role.admin.equals(ut)) ut = Role.editor;
                 pst.setString(++i, ut.name());
             }
 
@@ -248,7 +248,7 @@ public class UserRepository {
                 "delete from user " +
                     "where id = %d " +
                     "  and company_id = %d " +
-                    "  and user_type != '%s'", id, Context.getCompanyId(), UserType.ADMIN.name()),
+                    "  and role != '%s'", id, Context.getCompanyId(), Role.admin.name()),
             "Failed to delete user with id: " + id);
 
         if (result) {
@@ -265,7 +265,7 @@ public class UserRepository {
                     "set active = not active " +
                     "where id = %d " +
                     "  and company_id = %d " +
-                    "  and user_type != '%s'", id, Context.getCompanyId(), UserType.ADMIN.name()),
+                    "  and role != '%s'", id, Context.getCompanyId(), Role.admin.name()),
         "Failed to toggle user status! id: " + id);
 
         if (result) {
@@ -279,7 +279,7 @@ public class UserRepository {
             User model = new User();
             model.setId(rs.getLong("id"));
             model.setActive(rs.getBoolean("active"));
-            model.setUserType(UserType.valueOf(rs.getString("user_type")));
+            model.setRole(Role.valueOf(rs.getString("role")));
             model.setFullName(rs.getString("full_name"));
             model.setEmail(rs.getString("email"));
             model.setPasswordHash(rs.getString("password_hash"));

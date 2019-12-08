@@ -4,7 +4,7 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.rest.service.TokenService;
-import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.meta.Role;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,9 +59,9 @@ public class AuthFilter implements Filter {
                     AuthUser authUser = tokenService.isTokenExpired(token);
                     if (authUser == null) {
                         halt(HttpStatus.REQUEST_TIMEOUT_408, "Expired token!");
-                    } else if (! UserType.ADMIN.equals(authUser.getType()) && request.uri().startsWith(Consts.Paths.ADMIN_BASE)) {
+                    } else if (! Role.admin.equals(authUser.getRole()) && request.uri().startsWith(Consts.Paths.ADMIN_BASE)) {
                         halt(HttpStatus.FORBIDDEN_403, "Unauthorized user!");
-                    } else if (UserType.READER.equals(authUser.getType()) && sensitiveMethodsSet.contains(request.requestMethod())) {
+                    } else if (Role.reader.equals(authUser.getRole()) && sensitiveMethodsSet.contains(request.requestMethod())) {
                         //readers are allowed to update their passwords
                         if (! request.uri().equals(Consts.Paths.User.PASSWORD)) {
                             halt(HttpStatus.FORBIDDEN_403, "Unauthorized user!");

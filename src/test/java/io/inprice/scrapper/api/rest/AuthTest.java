@@ -226,28 +226,6 @@ public class AuthTest {
         TestHelper.loginAsAdmin();
     }
 
-    /**
-     * This test case is too timely! Please use it if only if really you need!
-     */
-    /*
-    @Test
-    public void token_should_be_expired() {
-        //give some time to make actual token expired
-        try {
-            Thread.sleep(15 * 1000L);
-        } catch (InterruptedException e) {
-            //
-        }
-
-        when()
-            .post(Consts.Paths.Auth.REFRESH_TOKEN).
-        then()
-            .statusCode(HttpStatus.REQUEST_TIMEOUT_408).assertThat();
-
-        TestHelper.loginAsAdmin();
-    }
-    */
-
     @Test
     public void everything_should_be_ok_with_forgot_and_reset_password() {
         EmailDTO email = new EmailDTO();
@@ -271,7 +249,7 @@ public class AuthTest {
         PasswordDTO password = new PasswordDTO();
         password.setToken(token);
         password.setPassword("p4ssw0rd");
-        password.setPasswordAgain("p4ssw0rd");
+        password.setRepeatPassword("p4ssw0rd");
 
         //reset password request
         given()
@@ -354,7 +332,7 @@ public class AuthTest {
     public void token_cannot_be_null_for_reset_password() {
         PasswordDTO password = new PasswordDTO();
         password.setPassword("p4ssw0rd");
-        password.setPasswordAgain("p4ssw0rd");
+        password.setRepeatPassword("p4ssw0rd");
 
         given()
             .body(password).

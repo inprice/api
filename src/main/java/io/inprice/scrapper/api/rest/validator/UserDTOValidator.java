@@ -5,7 +5,7 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
-import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.meta.Role;
 import io.inprice.scrapper.common.models.User;
 import org.apache.commons.lang3.StringUtils;
 
@@ -23,7 +23,7 @@ public class UserDTOValidator {
             problems.add(new Problem("fullName", "User id cannot be null!"));
         }
 
-        if (userDTO.getType() != null && userDTO.getType().equals(UserType.ADMIN)) {
+        if (userDTO.getRole() != null && userDTO.getRole().equals(Role.admin)) {
             problems.add(new Problem("fullName", "Admin user cannot be edited in this way!"));
         }
 

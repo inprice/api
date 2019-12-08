@@ -10,7 +10,7 @@ public class PasswordDTO implements Serializable {
     private Long id;
     private String passwordOld;
     private String password;
-    private String passwordAgain;
+    private String repeatPassword;
     private String token;
 
     public PasswordDTO() {
@@ -44,12 +44,12 @@ public class PasswordDTO implements Serializable {
         this.password = password;
     }
 
-    public String getPasswordAgain() {
-        return passwordAgain;
+    public String getRepeatPassword() {
+        return repeatPassword;
     }
 
-    public void setPasswordAgain(String passwordAgain) {
-        this.passwordAgain = passwordAgain;
+    public void setRepeatPassword(String repeatPassword) {
+        this.repeatPassword = repeatPassword;
     }
 
     public String getToken() {
@@ -66,7 +66,7 @@ public class PasswordDTO implements Serializable {
                 "id=" + id +
                 ", passwordOld='" + passwordOld + '\'' +
                 ", password='" + password + '\'' +
-                ", passwordAgain='" + passwordAgain + '\'' +
+                ", repeatPassword='" + repeatPassword + '\'' +
                 ", token='" + token + '\'' +
                 '}';
     }

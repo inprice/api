@@ -8,7 +8,7 @@ import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.service.UserService;
-import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.meta.Role;
 import io.inprice.scrapper.common.utils.NumberUtils;
 
 import static spark.Spark.put;
@@ -23,7 +23,7 @@ public class UserController {
         //update. a user can edit only his/her data
         put(Consts.Paths.User.BASE, (req, res) -> {
             UserDTO user = Commons.toUserModel(req);
-            if (user != null && UserType.EDITOR.equals(Context.getAuthUser().getType())) user.setId(Context.getUserId());
+            if (user != null && Role.editor.equals(Context.getAuthUser().getRole())) user.setId(Context.getUserId());
             return Commons.createResponse(res, service.update(user));
         }, Global.gson::toJson);
 
@@ -31,8 +31,8 @@ public class UserController {
         put(Consts.Paths.User.PASSWORD, (req, res) -> {
             UserDTO user = Commons.toUserModel(req);
             if (user != null
-            && (UserType.READER.equals(Context.getAuthUser().getType())
-                || UserType.EDITOR.equals(Context.getAuthUser().getType()))) user.setId(Context.getUserId());
+            && (Role.reader.equals(Context.getAuthUser().getRole())
+                || Role.admin.equals(Context.getAuthUser().getRole()))) user.setId(Context.getUserId());
             return Commons.createResponse(res, service.updatePassword(user));
         }, Global.gson::toJson);
 

@@ -4,7 +4,7 @@ import io.inprice.scrapper.api.Application;
 import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.*;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.meta.Role;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.response.Response;
@@ -85,11 +85,11 @@ public class TestHelper {
     public static UserDTO getUserDTO() {
         UserDTO user = new UserDTO();
         user.setId(2L);
-        user.setType(UserType.READER);
+        user.setRole(Role.reader);
         user.setFullName("John Doe");
         user.setEmail("jdoe@inprice.io");
         user.setPassword("p4ssw0rd");
-        user.setPasswordAgain("p4ssw0rd");
+        user.setRepeatPassword("p4ssw0rd");
         return user;
     }
 
@@ -123,7 +123,7 @@ public class TestHelper {
         LoginDTO loginDTO = getLoginDTO();
         company.setEmail(loginDTO.getEmail());
         company.setPassword(loginDTO.getPassword());
-        company.setPasswordAgain(loginDTO.getPassword());
+        company.setRepeatPassword(loginDTO.getPassword());
 
         company.setCountry("United States");
         company.setSector("Music");

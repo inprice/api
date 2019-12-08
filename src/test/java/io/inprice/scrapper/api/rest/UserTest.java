@@ -148,7 +148,7 @@ public class UserTest {
         pass.setId(1L);
         pass.setPasswordOld("p4ssw0rd");
         pass.setPassword("p4ssw0rd-new");
-        pass.setPasswordAgain("p4ssw0rd-new");
+        pass.setRepeatPassword("p4ssw0rd-new");
 
         given()
             .body(pass).
@@ -207,7 +207,7 @@ public class UserTest {
     public void password_are_mismatch() {
         final PasswordDTO pass = new PasswordDTO(1L);
         pass.setPassword("password");
-        pass.setPasswordAgain("p4ssw0rd");
+        pass.setRepeatPassword("p4ssw0rd");
 
         given()
             .body(pass).
@@ -223,7 +223,7 @@ public class UserTest {
     public void old_password_cannot_be_null() {
         final PasswordDTO pass = new PasswordDTO(1L);
         pass.setPassword("p4ssw0rd");
-        pass.setPasswordAgain("p4ssw0rd");
+        pass.setRepeatPassword("p4ssw0rd");
 
         given()
             .body(pass).
@@ -241,7 +241,7 @@ public class UserTest {
         pass.setId(1L);
         pass.setPasswordOld("wrong");
         pass.setPassword("p4ssw0rd");
-        pass.setPasswordAgain("p4ssw0rd");
+        pass.setRepeatPassword("p4ssw0rd");
 
         given()
             .body(pass).
@@ -291,7 +291,7 @@ public class UserTest {
         final PasswordDTO pass = new PasswordDTO();
         pass.setPasswordOld("p4ssw0rd");
         pass.setPassword("n3w-p4ssw0rd");
-        pass.setPasswordAgain("n3w-p4ssw0rd");
+        pass.setRepeatPassword("n3w-p4ssw0rd");
 
         given()
             .body(pass).

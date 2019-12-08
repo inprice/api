@@ -401,7 +401,7 @@ public class CompanyTest {
     @Test
     public void password_are_mismatch() {
         final CompanyDTO company = TestHelper.getCompanyDTO();
-        company.setPasswordAgain("password"); // --> password is p4ssw0rd
+        company.setRepeatPassword("password"); // --> password is p4ssw0rd
 
         given()
             .body(company).

@@ -50,8 +50,7 @@ public class AuthService {
                     String salt = user.getPasswordSalt();
                     String hash = BCrypt.hashpw(loginDTO.getPassword(), salt);
                     if (hash.equals(user.getPasswordHash())) {
-                        setAuthorizationHeader(user, response);
-                        return Responses.OK;
+                        return new ServiceResponse(setAuthorizationHeader(user, response));
                     } else {
                         return Responses.NotFound.USER;
                     }
@@ -167,17 +166,18 @@ public class AuthService {
         return Commons.createResponse(problems);
     }
 
-    void setAuthorizationHeader(User user, Response response) {
+    AuthUser setAuthorizationHeader(User user, Response response) {
         AuthUser authUser = new AuthUser();
         authUser.setId(user.getId());
         authUser.setEmail(user.getEmail());
         authUser.setFullName(user.getFullName());
-        authUser.setType(user.getUserType());
+        authUser.setRole(user.getRole());
         authUser.setCompanyId(user.getCompanyId());
         authUser.setWorkspaceId(user.getWorkspaceId());
 
-        response.header(Consts.Auth.WORKSPACE_HEADER, user.getWorkspaceId().toString());
         response.header(Consts.Auth.AUTHORIZATION_HEADER, tokenService.newToken(authUser));
+
+        return authUser;
     }
 
 }

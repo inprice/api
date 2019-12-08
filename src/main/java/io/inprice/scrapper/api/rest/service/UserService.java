@@ -66,7 +66,7 @@ public class UserService {
             user.setId(Context.getUserId());
             user.setEmail(Context.getAuthUser().getEmail());
             user.setFullName(Context.getAuthUser().getFullName());
-            user.setUserType(Context.getAuthUser().getType());
+            user.setRole(Context.getAuthUser().getRole());
             user.setCompanyId(Context.getCompanyId());
             user.setWorkspaceId(workspaceId);
             authService.setAuthorizationHeader(user, response);

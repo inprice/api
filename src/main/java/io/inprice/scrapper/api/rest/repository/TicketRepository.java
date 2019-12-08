@@ -9,8 +9,7 @@ import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.common.meta.TicketSource;
 import io.inprice.scrapper.common.meta.TicketStatus;
 import io.inprice.scrapper.common.meta.TicketType;
-import io.inprice.scrapper.common.meta.UserType;
-import io.inprice.scrapper.common.models.Link;
+import io.inprice.scrapper.common.meta.Role;
 import io.inprice.scrapper.common.models.Ticket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +122,7 @@ public class TicketRepository {
     }
 
     public ServiceResponse update(TicketDTO ticketDTO) {
-        final String wherePart = (UserType.ADMIN.equals(Context.getAuthUser().getType()) ? "" : "and reported_by="+Context.getUserId());
+        final String wherePart = (Role.admin.equals(Context.getAuthUser().getRole()) ? "" : "and reported_by="+Context.getUserId());
 
         try (Connection con = dbUtils.getConnection();
              PreparedStatement pst = con.prepareStatement("update ticket set description=? where id=? " + wherePart)) {
@@ -144,7 +143,7 @@ public class TicketRepository {
     }
 
     public ServiceResponse deleteById(Long id) {
-        final String wherePart = (UserType.ADMIN.equals(Context.getAuthUser().getType()) ? "" : "and reported_by="+Context.getUserId());
+        final String wherePart = (Role.admin.equals(Context.getAuthUser().getRole()) ? "" : "and reported_by="+Context.getUserId());
 
         boolean result = dbUtils.executeQuery(
             String.format(

@@ -1,22 +1,22 @@
 package io.inprice.scrapper.api.dto;
 
-import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.meta.Role;
 
 /**
  * Used for handling user info from client side
  */
 public class UserDTO extends PasswordDTO {
 
-    private UserType type;
+    private Role role;
     private String fullName;
     private String email;
 
-    public UserType getType() {
-        return type;
+    public Role getRole() {
+        return role;
     }
 
-    public void setType(UserType type) {
-        this.type = type;
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     public String getFullName() {
@@ -39,7 +39,7 @@ public class UserDTO extends PasswordDTO {
     public String toString() {
         return "UserDTO{" +
                 "id=" + getId() +
-                ", type=" + type +
+                ", role=" + role +
                 ", fullName='" + fullName + '\'' +
                 ", email='" + email + '\'' +
                 '}';

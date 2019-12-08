@@ -1,6 +1,7 @@
 package io.inprice.scrapper.api.rest.service;
 
 import io.inprice.scrapper.api.dto.CompanyDTO;
+import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.Problem;
@@ -9,10 +10,11 @@ import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.repository.CompanyRepository;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
-import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.meta.Role;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Response;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,19 +22,25 @@ import java.util.List;
 public class CompanyService {
 
     private static final Logger log = LoggerFactory.getLogger(CompanyService.class);
+
     private static final CompanyRepository repository = Beans.getSingleton(CompanyRepository.class);
+    private static final AuthService authService = Beans.getSingleton(AuthService.class);
 
     public ServiceResponse findById(Long id) {
         return repository.findById(id);
     }
 
-    public ServiceResponse insert(CompanyDTO companyDTO) {
+    public ServiceResponse insert(CompanyDTO companyDTO, Response response) {
         if (companyDTO != null) {
             ServiceResponse res = validate(companyDTO, true);
             if (res.isOK()) {
                 res = repository.insert(companyDTO);
                 if (res.isOK()) {
                     log.info("A new company has been added successfully. " + companyDTO);
+                    LoginDTO loginDTO = new LoginDTO();
+                    loginDTO.setEmail(companyDTO.getEmail());
+                    loginDTO.setPassword(companyDTO.getPassword());
+                    res = authService.login(loginDTO, response);
                 }
             }
             return res;
@@ -57,7 +65,7 @@ public class CompanyService {
 
     private ServiceResponse validate(CompanyDTO companyDTO, boolean insert) {
         //only admins can update their companies
-        if (! insert && (! UserType.ADMIN.equals(Context.getAuthUser().getType()) || ! companyDTO.getId().equals(Context.getCompanyId()))) {
+        if (! insert && (! Role.admin.equals(Context.getAuthUser().getRole()) || ! companyDTO.getId().equals(Context.getCompanyId()))) {
             return Responses.PermissionProblem.UNAUTHORIZED;
         }
 

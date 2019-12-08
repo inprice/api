@@ -7,7 +7,6 @@ public class Consts {
         static final String DATA_SECRET_KEY = "gFn+f3Ksa@YJWEq%8SeaM%MK^e";
 
         public static final String AUTHORIZATION_HEADER = "Authorization";
-        public static final String WORKSPACE_HEADER = "workspace";
         public static final String TOKEN_PREFIX = "Bearer ";
         public static final String PAYLOAD = "payload";
     }
@@ -67,6 +66,11 @@ public class Consts {
 
         public static class Ticket {
             public static final String BASE = "/ticket";
+        }
+
+        public static class Misc {
+            public static final String BASE = "/misc";
+            public static final String DASHBOARD = BASE + "/dashboard";
         }
 
     }

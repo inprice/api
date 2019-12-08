@@ -8,7 +8,7 @@ import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.utils.CodeGenerator;
-import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.meta.Role;
 import io.inprice.scrapper.common.models.Company;
 import jodd.util.BCrypt;
 import org.slf4j.Logger;
@@ -97,13 +97,13 @@ public class CompanyRepository {
                     final String salt = codeGenerator.generateSalt();
                     final String q2 =
                         "insert into user " +
-                        "(user_type, full_name, email, password_salt, password_hash, company_id, workspace_id) " +
+                        "(role, full_name, email, password_salt, password_hash, company_id, workspace_id) " +
                         "values " +
                         "(?, ?, ?, ?, ?, ?, ?) ";
 
                     try (PreparedStatement pst = con.prepareStatement(q2, Statement.RETURN_GENERATED_KEYS)) {
                         int i = 0;
-                        pst.setString(++i, UserType.ADMIN.name());
+                        pst.setString(++i, Role.admin.name());
                         pst.setString(++i, companyDTO.getFullName());
                         pst.setString(++i, companyDTO.getEmail());
                         pst.setString(++i, salt);

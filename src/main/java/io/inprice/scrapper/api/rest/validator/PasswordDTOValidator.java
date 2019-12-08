@@ -6,7 +6,7 @@ import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
-import io.inprice.scrapper.common.meta.UserType;
+import io.inprice.scrapper.common.meta.Role;
 import io.inprice.scrapper.common.models.User;
 import jodd.util.BCrypt;
 import org.apache.commons.lang3.StringUtils;
@@ -25,12 +25,12 @@ public class PasswordDTOValidator {
             problems.add(new Problem("password", "Password cannot be null!"));
         } else if (dto.getPassword().length() < 4 || dto.getPassword().length() > 16) {
             problems.add(new Problem("password", "Password length must be between 4 and 16 chars!"));
-        } else if (againPassCheck && ! dto.getPassword().equals(dto.getPasswordAgain())) {
+        } else if (againPassCheck && ! dto.getPassword().equals(dto.getRepeatPassword())) {
             problems.add(new Problem("password", "Passwords are mismatch!"));
         }
 
         if (oldPassCheck) {
-            if (!UserType.ADMIN.equals(Context.getAuthUser().getType()) && !dto.getId().equals(Context.getAuthUser().getId())) {
+            if (!Role.admin.equals(Context.getAuthUser().getRole()) && !dto.getId().equals(Context.getAuthUser().getId())) {
                 problems.add(new Problem("form", "User has no permission to update password!"));
             } else {
                 if (StringUtils.isBlank(dto.getPasswordOld())) {
