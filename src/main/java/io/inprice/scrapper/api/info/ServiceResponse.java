@@ -1,21 +1,23 @@
 package io.inprice.scrapper.api.info;
 
+import java.util.List;
+
 import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.common.models.Model;
-
-import java.util.List;
 
 public final class ServiceResponse<T extends Model> {
 
     private int status;
+    private String reason;
     private T model;
     private List<T> models;
     private List<Problem> problems;
 
     private String data;
 
-    public ServiceResponse(int status) {
+    public ServiceResponse(int status, String reason) {
         this.status = status;
+        this.reason = reason;
     }
 
     public ServiceResponse(T model) {
@@ -41,7 +43,11 @@ public final class ServiceResponse<T extends Model> {
         return status;
     }
 
-    public T getModel() {
+    public String getReason() {
+		return reason;
+	}
+
+	public T getModel() {
         return model;
     }
 
@@ -58,7 +64,7 @@ public final class ServiceResponse<T extends Model> {
     }
 
     public static ServiceResponse create(List<Problem> problems) {
-        ServiceResponse res = new ServiceResponse(Responses.DataProblem.FORM_VALIDATION.getStatus());
+        ServiceResponse res = new ServiceResponse(Responses.DataProblem.FORM_VALIDATION.getStatus(), "Form validation error!");
         res.problems = problems;
         return res;
     }

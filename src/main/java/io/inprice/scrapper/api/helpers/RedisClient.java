@@ -13,7 +13,9 @@ public class RedisClient {
 	private static final Properties props = Beans.getSingleton(Properties.class);
 
 	private static final RedissonClient client;
+	
 	private static final RSetCache<String> invalidatedTokens;
+	private static final RSetCache<String> forgotPasswordEmails;
 
 	static {
 		final String redisPass = props.getRedis_Password();
@@ -26,10 +28,15 @@ public class RedisClient {
 
 		client = Redisson.create(config);
 		invalidatedTokens = client.getSetCache("TOKENS-INVALIDATED");
+		forgotPasswordEmails = client.getSetCache("EMAILS-FORGOTTEN");
 	}
 
 	public RSetCache<String> getInvalidatedTokenSet() {
 		return invalidatedTokens;
+	}
+
+	public static RSetCache<String> getForgotpasswordemails() {
+		return forgotPasswordEmails;
 	}
 
 	public static void shutdown() {

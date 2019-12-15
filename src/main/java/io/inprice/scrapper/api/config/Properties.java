@@ -51,10 +51,13 @@ public class Properties {
 		return prop.getProperty("frontend.base-url", "http://localhost:8080/#");
 	}
 
-	public int getAPP_Port() {
+	public int getAPP_Port() {	
 		return getOrDefault("app.port", 4567);
 	}
 
+	public int getAPP_WaitingTime() {
+		return getOrDefault("app.waiting-time", 5);
+	}
 	public String getDB_Driver() {
 		return prop.getProperty("db.driver", "mysql");
 	}

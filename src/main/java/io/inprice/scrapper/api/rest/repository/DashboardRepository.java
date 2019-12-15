@@ -15,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 
+//TODO: data must be cached via redis and expired per 5 mins at max
 public class DashboardRepository {
 
     private static final Logger log = LoggerFactory.getLogger(DashboardRepository.class);
@@ -23,9 +24,14 @@ public class DashboardRepository {
 
     public JsonObject getReport() {
         JsonObject dashboard = emptyDashboard();
+        JsonObject user = new JsonObject();
         JsonObject workspace = new JsonObject();
 
         try (Connection con = dbUtils.getConnection()) {
+        	
+        	//user
+        	addUserInfo(con, user);
+        	dashboard.add("user", user);
 
             //workspace
             addWorkspaceInfo(con, workspace);
@@ -54,6 +60,24 @@ public class DashboardRepository {
         }
 
         return dashboard;
+    }
+
+    private void addUserInfo(Connection con, JsonObject parent) throws SQLException {
+        final String query =
+            "select full_name, email, role " +
+            "from user as u " +
+            "where u.id=?";
+        try (PreparedStatement pst = con.prepareStatement(query)) {
+            pst.setLong(1, Context.getUserId());
+
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                	parent.addProperty("fullName", rs.getString(1));
+                	parent.addProperty("email", rs.getString(2));
+                    parent.addProperty("role", rs.getString(3));
+                }
+            }
+        }
     }
 
     private void addWorkspaceInfo(Connection con, JsonObject parent) throws SQLException {

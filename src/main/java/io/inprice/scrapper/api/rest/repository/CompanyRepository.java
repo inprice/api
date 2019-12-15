@@ -39,7 +39,7 @@ public class CompanyRepository {
      *  - admin user
      */
     public ServiceResponse insert(CompanyDTO companyDTO) {
-        ServiceResponse response = new ServiceResponse<>(Responses.DataProblem.DB_PROBLEM.getStatus());
+        ServiceResponse response = new ServiceResponse<>(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
         Connection con = null;
 

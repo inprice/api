@@ -21,7 +21,7 @@ public class Commons {
     private static final Logger log = LoggerFactory.getLogger(Commons.class);
 
     public static ServiceResponse createResponse(Response res, ServiceResponse serviceResponse) {
-        res.status(serviceResponse.getStatus() == 0 ? HttpStatus.OK_200 : HttpStatus.BAD_REQUEST_400);
+        res.status(HttpStatus.OK_200);
         return serviceResponse;
     }
 
