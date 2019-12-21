@@ -61,8 +61,7 @@ public class ProductASINImportTest {
         when()
             .post(PATH).
         then()
-            .body("result", equalTo("Failed to import " + TYPE + ", please see details!")).assertThat()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat();
+            .body("result", equalTo("Failed to import " + TYPE + ", please see details!")).assertThat();
     }
 
     @Test
@@ -70,7 +69,6 @@ public class ProductASINImportTest {
         when()
             .post(PATH).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.EMPTY_FILE.getStatus()));
     }
 
@@ -113,7 +111,6 @@ public class ProductASINImportTest {
         when()
             .post(PATH).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.ServerProblem.LIMIT_PROBLEM.getStatus()))
             .body("result", equalTo("You have already reached your plan's maximum product limit."));
     }

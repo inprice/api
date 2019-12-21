@@ -66,7 +66,6 @@ public class AdminUserTest {
         when()
             .get(Consts.Paths.AdminUser.BASE + "/0").
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.USER.getStatus()));
     }
 
@@ -77,7 +76,6 @@ public class AdminUserTest {
         when()
             .delete(Consts.Paths.AdminUser.BASE + "/" + id).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.USER.getStatus()));
     }
 
@@ -86,7 +84,6 @@ public class AdminUserTest {
         when()
             .delete(Consts.Paths.AdminUser.BASE + "/0").
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.USER.getStatus()));
     }
 
@@ -159,7 +156,6 @@ public class AdminUserTest {
         when()
             .put(Consts.Paths.AdminUser.TOGGLE_STATUS + "/" + userId).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.USER.getStatus()));
 
     }
@@ -186,7 +182,6 @@ public class AdminUserTest {
         when()
             .post(Consts.Paths.AdminUser.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.USER.getStatus()));
     }
 
@@ -200,7 +195,6 @@ public class AdminUserTest {
         when()
             .post(Consts.Paths.AdminUser.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Full name cannot be null!"));
     }
@@ -215,7 +209,6 @@ public class AdminUserTest {
         when()
             .post(Consts.Paths.AdminUser.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Full name must be between 2 and 150 chars!"));
     }
@@ -230,7 +223,6 @@ public class AdminUserTest {
         when()
             .post(Consts.Paths.AdminUser.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Full name must be between 2 and 150 chars!"));
     }
@@ -246,7 +238,6 @@ public class AdminUserTest {
         when()
             .put(Consts.Paths.AdminUser.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.USER.getStatus()));
     }
 
@@ -260,7 +251,6 @@ public class AdminUserTest {
         when()
             .post(Consts.Paths.AdminUser.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address cannot be null!"));
     }
@@ -285,7 +275,6 @@ public class AdminUserTest {
         when()
             .post(Consts.Paths.AdminUser.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo(email + " is already used by another user!"));
     }
@@ -300,7 +289,6 @@ public class AdminUserTest {
         when()
             .post(Consts.Paths.AdminUser.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
     }
@@ -315,7 +303,6 @@ public class AdminUserTest {
         when()
             .post(Consts.Paths.AdminUser.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
     }
@@ -330,7 +317,6 @@ public class AdminUserTest {
         when()
             .post(Consts.Paths.AdminUser.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Invalid email address!"));
     }
@@ -361,7 +347,6 @@ public class AdminUserTest {
         when()
             .put(Consts.Paths.AdminUser.PASSWORD).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password cannot be null!"));
     }
@@ -376,7 +361,6 @@ public class AdminUserTest {
         when()
             .put(Consts.Paths.AdminUser.PASSWORD).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason", hasItem("Password length must be between 4 and 16 chars!"));
     }
@@ -391,7 +375,6 @@ public class AdminUserTest {
         when()
             .put(Consts.Paths.AdminUser.PASSWORD).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password length must be between 4 and 16 chars!"));
     }
@@ -407,7 +390,6 @@ public class AdminUserTest {
         when()
             .put(Consts.Paths.AdminUser.PASSWORD).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Passwords are mismatch!"));
     }
@@ -423,7 +405,6 @@ public class AdminUserTest {
         when()
             .put(Consts.Paths.AdminUser.PASSWORD).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Old password cannot be null!"));
     }
@@ -440,7 +421,6 @@ public class AdminUserTest {
         when()
             .put(Consts.Paths.AdminUser.PASSWORD).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Old password is incorrect!"));
     }

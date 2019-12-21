@@ -41,7 +41,6 @@ public class AuthService {
 	private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
 	private final Properties props = Beans.getSingleton(Properties.class);
 	private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
-	private final RedisClient redisClient = Beans.getSingleton(RedisClient.class);
 
 	public ServiceResponse login(LoginDTO loginDTO, Response response) {
 		if (loginDTO != null) {
@@ -57,18 +56,17 @@ public class AuthService {
 					}
 				}
 			}
-			return res;
 		}
 		return Responses.Invalid.EMAIL_OR_PASSWORD;
 	}
 
 	public ServiceResponse forgotPassword(EmailDTO emailDTO) {
 		if (emailDTO != null) {
-			if (redisClient.getForgotpasswordemails().contains(emailDTO.getEmail())) {
+			if (RedisClient.getForgotpasswordemails().contains(emailDTO.getEmail())) {
 				return Responses.Illegal.TOO_MUCH_REQUEST;
 			}
-			redisClient.getForgotpasswordemails().add(emailDTO.getEmail(), props.getAPP_WaitingTime(),
-					TimeUnit.MINUTES);
+			RedisClient.getForgotpasswordemails().add(emailDTO.getEmail(), props.getAPP_WaitingTime(),
+					TimeUnit.SECONDS);
 
 			ServiceResponse res = validateEmail(emailDTO);
 			if (res.isOK()) {
@@ -98,7 +96,7 @@ public class AuthService {
 			}
 			return res;
 		}
-		return Responses.OK;
+		return Responses.Invalid.EMAIL;
 	}
 
 	public ServiceResponse resetPassword(PasswordDTO passwordDTO) {

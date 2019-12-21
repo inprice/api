@@ -122,7 +122,6 @@ public class ProductTest {
         when()
             .get(Consts.Paths.Product.BASE + "/0").
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
     }
 
@@ -131,7 +130,6 @@ public class ProductTest {
         when()
             .delete(Consts.Paths.Product.BASE + "/0").
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
     }
 
@@ -142,7 +140,6 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.PRODUCT.getStatus()));
     }
 
@@ -156,7 +153,6 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product code must be between 3 and 120 chars!"));
     }
@@ -171,7 +167,6 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product code must be between 3 and 120 chars!"));
     }
@@ -186,7 +181,6 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Brand can be up to 100 chars!"));
     }
@@ -201,7 +195,6 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Category can be up to 100 chars!"));
     }
@@ -216,7 +209,6 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product code cannot be null!"));
     }
@@ -231,7 +223,6 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product name cannot be null!"));
     }
@@ -246,7 +237,6 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product name must be between 3 and 500 chars!"));
     }
@@ -261,7 +251,6 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Product name must be between 3 and 500 chars!"));
     }
@@ -276,7 +265,6 @@ public class ProductTest {
         when()
             .put(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
     }
 
@@ -290,7 +278,6 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Price must be greater than zero!"));
     }
@@ -305,7 +292,6 @@ public class ProductTest {
         when()
             .post(Consts.Paths.Product.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Price must be greater than zero!"));
     }

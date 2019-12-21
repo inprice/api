@@ -38,8 +38,7 @@ public class LinkStatusChangeTest {
             when()
                 .put(Consts.Paths.Link.PAUSE + "/" + i + "?product_id=1").
             then()
-                .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-                .body("status", equalTo(Responses.DataProblem.NOT_SUITABLE.getStatus()));
+                    .body("status", equalTo(Responses.DataProblem.NOT_SUITABLE.getStatus()));
         }
     }
 
@@ -60,8 +59,7 @@ public class LinkStatusChangeTest {
             when()
                 .put(Consts.Paths.Link.RESUME + "/" + i + "?product_id=1").
             then()
-                .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-                .body("status", equalTo(Responses.DataProblem.NOT_SUITABLE.getStatus()));
+                    .body("status", equalTo(Responses.DataProblem.NOT_SUITABLE.getStatus()));
         }
     }
 
@@ -82,8 +80,7 @@ public class LinkStatusChangeTest {
             when()
                 .put(Consts.Paths.Link.RENEW + "/" + i + "?product_id=1").
             then()
-                .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-                .body("status", equalTo(Responses.DataProblem.NOT_SUITABLE.getStatus()));
+                    .body("status", equalTo(Responses.DataProblem.NOT_SUITABLE.getStatus()));
         }
     }
 

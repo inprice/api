@@ -61,7 +61,6 @@ public class ProductSKUImportTest {
         when()
             .post(PATH).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.NOT_SUITABLE.getStatus()))
             .body("result", equalTo("Failed to import " + TYPE + ", please see details!"));
     }
@@ -71,7 +70,6 @@ public class ProductSKUImportTest {
         when()
             .post(PATH).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.EMPTY_FILE.getStatus()));
     }
 
@@ -114,7 +112,6 @@ public class ProductSKUImportTest {
         when()
             .post(PATH).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.ServerProblem.LIMIT_PROBLEM.getStatus()))
             .body("result", equalTo("You have already reached your plan's maximum product limit."));
     }

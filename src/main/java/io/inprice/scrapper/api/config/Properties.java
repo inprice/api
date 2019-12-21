@@ -56,7 +56,7 @@ public class Properties {
 	}
 
 	public int getAPP_WaitingTime() {
-		return getOrDefault("app.waiting-time", 5);
+		return getOrDefault("app.waiting-time", 5*60);
 	}
 	public String getDB_Driver() {
 		return prop.getProperty("db.driver", "mysql");

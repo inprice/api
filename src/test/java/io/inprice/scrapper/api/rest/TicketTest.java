@@ -58,7 +58,6 @@ public class TicketTest {
         when()
             .post(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Source cannot be null!"));
     }
@@ -73,7 +72,6 @@ public class TicketTest {
         when()
             .post(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Type cannot be null!"));
     }
@@ -88,7 +86,6 @@ public class TicketTest {
         when()
             .post(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Unknown source id!"));
     }
@@ -103,7 +100,6 @@ public class TicketTest {
         when()
             .post(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Description cannot be null!"));
     }
@@ -118,7 +114,6 @@ public class TicketTest {
         when()
             .post(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Description must be between 5 and 255 chars!"));
     }
@@ -133,7 +128,6 @@ public class TicketTest {
         when()
             .post(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Description must be between 5 and 255 chars!"));
     }
@@ -145,7 +139,6 @@ public class TicketTest {
         when()
             .post(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.TICKET.getStatus()));
     }
 
@@ -154,7 +147,6 @@ public class TicketTest {
         when()
             .delete(Consts.Paths.Ticket.BASE + "/0").
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.TICKET.getStatus()));
     }
 
@@ -168,7 +160,6 @@ public class TicketTest {
         when()
             .put(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.TICKET.getStatus()));
     }
 
@@ -183,7 +174,6 @@ public class TicketTest {
         when()
             .post(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
     }
 
@@ -198,7 +188,6 @@ public class TicketTest {
         when()
             .post(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.LINK.getStatus()));
     }
 
@@ -213,7 +202,6 @@ public class TicketTest {
         when()
             .post(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.COMPANY.getStatus()));
     }
 
@@ -228,7 +216,6 @@ public class TicketTest {
         when()
             .post(Consts.Paths.Ticket.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.WORKSPACE.getStatus()));
     }
 

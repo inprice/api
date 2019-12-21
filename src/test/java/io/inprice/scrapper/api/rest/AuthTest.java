@@ -63,7 +63,6 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.LOGIN).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.EMAIL_OR_PASSWORD.getStatus()));
     }
 
@@ -77,7 +76,6 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.LOGIN).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address cannot be null!"));
     }
@@ -92,7 +90,6 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.LOGIN).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
     }
@@ -107,7 +104,6 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.LOGIN).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Email address must be between 9 and 250 chars!"));
     }
@@ -122,7 +118,6 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.LOGIN).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Invalid email address!"));
     }
@@ -137,7 +132,6 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.LOGIN).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password cannot be null!"));
     }
@@ -152,7 +146,6 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.LOGIN).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason", hasItem("Password length must be between 4 and 16 chars!"));
     }
@@ -167,7 +160,6 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.LOGIN).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password length must be between 4 and 16 chars!"));
     }
@@ -281,8 +273,7 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.FORGOT_PASSWORD).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.Invalid.PASSWORD.getStatus()));
+            .body("status", equalTo(Responses.Invalid.EMAIL.getStatus()));
     }
 
     @Test
@@ -294,23 +285,7 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.FORGOT_PASSWORD).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
-            .body("problems.reason[0]", equalTo("Email address cannot be null!"));
-    }
-
-    @Test
-    public void email_not_found_for_forgot_password() {
-        EmailDTO email = new EmailDTO();
-        email.setEmail("test@inprice.io");
-
-        given()
-            .body(email).
-        when()
-            .post(Consts.Paths.Auth.FORGOT_PASSWORD).
-        then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
-            .body("status", equalTo(Responses.NotFound.EMAIL.getStatus()));
+        	.body("reason", equalTo("Email address cannot be null!"));
     }
 
     @Test
@@ -323,7 +298,6 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.RESET_PASSWORD).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Passwords are mismatch!"));
     }
@@ -339,7 +313,6 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.RESET_PASSWORD).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Token cannot be null!"));
     }
@@ -354,7 +327,6 @@ public class AuthTest {
         when()
             .post(Consts.Paths.Auth.RESET_PASSWORD).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Password cannot be null!"));
     }

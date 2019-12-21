@@ -68,7 +68,6 @@ public class ProductCSVImportTest {
         when()
             .post(PATH).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.NOT_SUITABLE.getStatus()))
             .body("result", equalTo("Failed to import " + TYPE + ", please see details!"));
     }
@@ -80,7 +79,6 @@ public class ProductCSVImportTest {
         when()
             .post(PATH).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.NOT_SUITABLE.getStatus()))
             .body("result", equalTo("Failed to import " + TYPE + ", please see details!"));
     }
@@ -90,7 +88,6 @@ public class ProductCSVImportTest {
         when()
             .post(PATH).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.EMPTY_FILE.getStatus()));
     }
 
@@ -119,7 +116,6 @@ public class ProductCSVImportTest {
         when()
             .post(PATH).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("result", equalTo("Failed to import " + TYPE + ", please see details!"))
             .body("totalCount", equalTo(2))
             .body("insertCount", equalTo(0))
@@ -150,7 +146,6 @@ public class ProductCSVImportTest {
         when()
             .post(PATH).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.ServerProblem.LIMIT_PROBLEM.getStatus()))
             .body("result", equalTo("You have already reached your plan's maximum product limit."));
     }

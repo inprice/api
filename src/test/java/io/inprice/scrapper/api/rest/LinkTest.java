@@ -113,7 +113,6 @@ public class LinkTest {
         when()
             .get(Consts.Paths.Link.BASE + "/0").
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.LINK.getStatus()));
     }
 
@@ -122,7 +121,6 @@ public class LinkTest {
         when()
             .delete(Consts.Paths.Link.BASE + "/0").
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.LINK.getStatus()));
     }
 
@@ -133,7 +131,6 @@ public class LinkTest {
         when()
             .get(Consts.Paths.Link.BASE + "s/" + id).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.NotFound.PRODUCT.getStatus()));
     }
 
@@ -144,7 +141,6 @@ public class LinkTest {
         when()
             .post(Consts.Paths.Link.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.LINK.getStatus()));
     }
 
@@ -158,7 +154,6 @@ public class LinkTest {
         when()
             .post(Consts.Paths.Link.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Invalid URL!"));
     }
@@ -173,7 +168,6 @@ public class LinkTest {
         when()
             .post(Consts.Paths.Link.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Invalid URL!"));
     }
@@ -188,7 +182,6 @@ public class LinkTest {
         when()
             .post(Consts.Paths.Link.BASE).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.DataProblem.FORM_VALIDATION.getStatus()))
             .body("problems.reason[0]", equalTo("Invalid URL!"));
     }
@@ -281,7 +274,6 @@ public class LinkTest {
         when()
             .put(Consts.Paths.Link.PAUSE + "/" + linkId + "?product_id=" + productId).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.PRODUCT.getStatus()));
 
         TestHelper.loginAsAdmin();
@@ -295,7 +287,6 @@ public class LinkTest {
         when()
             .put(Consts.Paths.Link.RENEW + "/" + id + "?product_id=" + productId).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.PRODUCT.getStatus()));
 
         TestHelper.loginAsAdmin();
@@ -309,7 +300,6 @@ public class LinkTest {
         when()
             .put(Consts.Paths.Link.RESUME + "/" + id + "?product_id=" + productId).
         then()
-            .statusCode(HttpStatus.BAD_REQUEST_400).assertThat()
             .body("status", equalTo(Responses.Invalid.PRODUCT.getStatus()));
     }
 
