@@ -1,25 +1,31 @@
 package io.inprice.scrapper.api.rest.repository;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.Statement;
+import java.sql.Types;
+import java.util.Date;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.inprice.scrapper.api.config.Properties;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
-import io.inprice.scrapper.common.meta.ImportType;
+import io.inprice.scrapper.api.utils.SqlHelper;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.ImportProduct;
 import io.inprice.scrapper.common.models.ImportProductRow;
 import io.inprice.scrapper.common.models.Product;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.sql.*;
-import java.util.Date;
-import java.util.List;
-
-import static io.inprice.scrapper.common.meta.ImportType.AMAZON_ASIN;
 
 public class ProductRepository {
 
@@ -48,22 +54,52 @@ public class ProductRepository {
             "select * from product " +
                 "where code = '%s' " +
                 "  and company_id = %d " +
-                "  and workspace_id = %d ", code, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
+                "  and workspace_id = %d ", SqlHelper.clear(code), Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         if (model != null) {
             return new ServiceResponse<>(model);
         }
         return Responses.NotFound.PRODUCT;
     }
-
+    
     public ServiceResponse<Product> getList() {
-        List<Product> products = dbUtils.findMultiple(
-            String.format(
-                "select * from product " +
-                    "where company_id = %d " +
-                    "  and workspace_id = %d " +
-                    "order by name", Context.getCompanyId(), Context.getWorkspaceId()), this::map);
+    	List<Product> products = dbUtils.findMultiple(
+			String.format(
+				"select * from product " +
+					"where company_id = %d " +
+					"  and workspace_id = %d " +
+					"order by name", Context.getCompanyId(), Context.getWorkspaceId()), this::map);
+    	
+    	return new ServiceResponse<>(products);
+    }
 
-        return new ServiceResponse<>(products);
+    public ServiceResponse search(SearchModel searchModel) {
+    	final String searchQuery = SqlHelper.generateSearchQuery(searchModel, "code", "name");
+    	
+    	final String query =
+            "select count(1) from product " +
+            "where company_id = " + Context.getCompanyId() +
+            "  and workspace_id = " + Context.getWorkspaceId() +
+            searchQuery;
+
+    	int totalRowCount = 0;
+        try (Connection con = dbUtils.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+            	totalRowCount += rs.getInt(1);
+            }
+            rs.close();
+
+            if (totalRowCount > 0) {
+                List<Product> products = dbUtils.findMultiple(con, query.replace("count(1)", "*"), this::map);
+                return new ServiceResponse(totalRowCount, products);
+            }
+
+        } catch (Exception e) {
+            log.error("Error", e);
+        }
+
+        return Responses.NotFound.PRODUCT;
     }
 
     public ServiceResponse insert(ProductDTO productDTO) {

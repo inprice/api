@@ -47,6 +47,8 @@ public class Consts {
 
 		public static class Product {
 			public static final String BASE = "/product";
+			public static final String SEARCH = BASE + "s/search";
+
 			public static final String TOGGLE_STATUS = BASE + "/toggle";
 
 			public static final String IMPORT_BASE = BASE + "/import";

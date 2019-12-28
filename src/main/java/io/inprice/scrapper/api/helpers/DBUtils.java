@@ -116,9 +116,19 @@ public class DBUtils {
     }
 
     public <M extends Model> List<M> findMultiple(String query, ModelMapper<M> mapper) {
+    	List<M> result = new ArrayList<>();
+    	try (Connection con = getConnection()) {
+    		result = findMultiple(con, query, mapper);
+        } catch (Exception e) {
+            log.error("Failed to fetch models", e);
+    	}
+
+        return result;
+    }
+    
+    public <M extends Model> List<M> findMultiple(Connection con, String query, ModelMapper<M> mapper) {
         List<M> result = new ArrayList<>();
-        try (Connection con = getConnection();
-             PreparedStatement pst = con.prepareStatement(query);
+        try (PreparedStatement pst = con.prepareStatement(query);
              ResultSet rs = pst.executeQuery()) {
 
             while (rs.next()) {

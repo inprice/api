@@ -14,6 +14,7 @@ public final class ServiceResponse<T extends Model> {
     private List<Problem> problems;
 
     private String data;
+    private int totalRowCount;
 
     public ServiceResponse(int status, String reason) {
         this.status = status;
@@ -24,9 +25,15 @@ public final class ServiceResponse<T extends Model> {
         this.status = Responses.OK.getStatus();
         this.model = model;
     }
-
+    
     public ServiceResponse(List<T> models) {
+    	this.status = Responses.OK.getStatus();
+    	this.models = models;
+    }
+
+    public ServiceResponse(int totalRowCount, List<T> models) {
         this.status = Responses.OK.getStatus();
+        this.totalRowCount = totalRowCount;
         this.models = models;
     }
 
@@ -63,7 +70,11 @@ public final class ServiceResponse<T extends Model> {
         return data;
     }
 
-    public static ServiceResponse create(List<Problem> problems) {
+    public int getTotalRowCount() {
+		return totalRowCount;
+	}
+
+	public static ServiceResponse create(List<Problem> problems) {
         ServiceResponse res = new ServiceResponse(Responses.DataProblem.FORM_VALIDATION.getStatus(), "Form validation error!");
         res.problems = problems;
         return res;

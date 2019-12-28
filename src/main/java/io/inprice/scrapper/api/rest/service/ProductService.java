@@ -1,11 +1,15 @@
 package io.inprice.scrapper.api.rest.service;
 
+import java.util.Map;
+
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.repository.ProductRepository;
 import io.inprice.scrapper.api.rest.validator.ProductDTOValidator;
+import io.inprice.scrapper.common.models.Product;
 
 public class ProductService {
 
@@ -14,9 +18,14 @@ public class ProductService {
     public ServiceResponse findById(Long id) {
         return repository.findById(id);
     }
-
+    
     public ServiceResponse getList() {
-        return repository.getList();
+    	return repository.getList();
+    }
+
+    public ServiceResponse search(Map<String, String> searchMap) {
+    	SearchModel searchModel = new SearchModel(searchMap, Product.class);
+        return repository.search(searchModel);
     }
 
     public ServiceResponse insert(ProductDTO productDTO) {
