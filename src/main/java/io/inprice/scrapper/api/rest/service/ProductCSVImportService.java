@@ -4,7 +4,6 @@ import com.opencsv.CSVReader;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Responses;
-import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.repository.PlanRepository;
 import io.inprice.scrapper.api.rest.repository.ProductRepository;
@@ -13,7 +12,6 @@ import io.inprice.scrapper.common.meta.ImportType;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.ImportProduct;
 import io.inprice.scrapper.common.models.ImportProductRow;
-import io.inprice.scrapper.common.models.Product;
 import io.inprice.scrapper.common.utils.NumberUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -74,7 +72,7 @@ public class ProductCSVImportService {
                                     importRow.setStatus(Status.DUPLICATE);
                                     report.incDuplicateCount();
                                 } else {
-                                    ServiceResponse<Product> validation = ProductDTOValidator.validate(dto);
+                                    ServiceResponse validation = ProductDTOValidator.validate(dto);
                                     if (validation.isOK()) {
                                         importRow.setProductDTO(dto);
                                         importRow.setDescription("Healthy.");
@@ -84,9 +82,9 @@ public class ProductCSVImportService {
                                         insertedCodeSet.add(dto.getCode());
                                     } else {
                                         StringBuilder sb = new StringBuilder();
-                                        for (Problem problem : validation.getProblems()) {
+                                        for (String problem : validation.getProblems()) {
                                             if (sb.length() != 0) sb.append(" & ");
-                                            sb.append(problem.getReason());
+                                            sb.append(problem);
                                         }
                                         importRow.setDescription(sb.toString());
                                         importRow.setStatus(Status.IMPROPER);

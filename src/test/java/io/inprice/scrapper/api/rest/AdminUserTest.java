@@ -1,19 +1,21 @@
 package io.inprice.scrapper.api.rest;
 
-import io.inprice.scrapper.api.dto.PasswordDTO;
-import io.inprice.scrapper.api.dto.UserDTO;
-import io.inprice.scrapper.api.dto.WorkspaceDTO;
-import io.inprice.scrapper.api.helpers.Consts;
-import io.inprice.scrapper.api.helpers.Responses;
-import io.inprice.scrapper.api.helpers.TestHelper;
+import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasItem;
+
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static io.restassured.RestAssured.given;
-import static io.restassured.RestAssured.when;
-import static org.hamcrest.Matchers.*;
+import io.inprice.scrapper.api.dto.PasswordDTO;
+import io.inprice.scrapper.api.dto.UserDTO;
+import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.helpers.TestHelper;
 
 public class AdminUserTest {
 

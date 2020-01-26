@@ -1,31 +1,33 @@
 package io.inprice.scrapper.api.rest.repository;
 
-import io.inprice.scrapper.api.config.Properties;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.inprice.scrapper.api.config.Props;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.helpers.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
-import io.inprice.scrapper.common.meta.ImportType;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.Link;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.sql.*;
-import java.util.List;
 
 public class LinkRepository {
 
     private static final Logger log = LoggerFactory.getLogger(LinkRepository.class);
-    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
-    private static final Properties props = Beans.getSingleton(Properties.class);
-    private static final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
 
+    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
 
-    public ServiceResponse<Link> findById(Long id) {
+    public ServiceResponse findById(Long id) {
         Link model = dbUtils.findSingle(
             String.format(
             "select * from link " +
@@ -33,12 +35,12 @@ public class LinkRepository {
                 "  and company_id = %d " +
                 "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         if (model != null) {
-            return new ServiceResponse<>(model);
+            return new ServiceResponse(model);
         }
         return Responses.NotFound.LINK;
     }
 
-    public ServiceResponse<Link> getList(Long productId) {
+    public ServiceResponse getList(Long productId) {
         List<Link> links = dbUtils.findMultiple(
             String.format(
             "select * from link " +
@@ -48,13 +50,13 @@ public class LinkRepository {
                 "order by name", productId, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
 
         if (links != null && links.size() > 0) {
-            return new ServiceResponse<>(links);
+            return new ServiceResponse(links);
         }
         return Responses.NotFound.PRODUCT;
     }
 
     public ServiceResponse insert(LinkDTO linkDTO) {
-        if (props.isLinkUniqueness()) {
+        if (Props.isLinkUniqueness()) {
             boolean alreadyExists = doesExist(linkDTO.getUrl(), linkDTO.getProductId());
             if (alreadyExists) {
                 return Responses.DataProblem.ALREADY_EXISTS;

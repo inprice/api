@@ -23,14 +23,14 @@ public class WorkspaceRepository {
 
     private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
 
-    public ServiceResponse<Workspace> findById(Long id) {
+    public ServiceResponse findById(Long id) {
         Workspace model = dbUtils.findSingle(
             String.format(
             "select * from workspace " +
                 "where id = %d " +
                 "  and company_id = %d", id, Context.getCompanyId()), this::map);
         if (model != null) {
-            return new ServiceResponse<>(model);
+            return new ServiceResponse(model);
         }
         return Responses.NotFound.WORKSPACE;
     }
@@ -49,14 +49,14 @@ public class WorkspaceRepository {
             return null;
     }
 
-    public ServiceResponse<Workspace> getList() {
+    public ServiceResponse getList() {
         List<Workspace> workspaces = dbUtils.findMultiple(
             String.format(
             "select * from workspace " +
                 "where company_id = %d " +
                 "order by name", Context.getCompanyId()), this::map);
 
-        return new ServiceResponse<>(workspaces);
+        return new ServiceResponse(workspaces);
     }
 
     /**

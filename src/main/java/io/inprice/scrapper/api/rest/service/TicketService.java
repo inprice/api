@@ -3,7 +3,6 @@ package io.inprice.scrapper.api.rest.service;
 import io.inprice.scrapper.api.dto.TicketDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Responses;
-import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.repository.TicketRepository;
@@ -57,25 +56,25 @@ public class TicketService {
     }
 
     private ServiceResponse validate(TicketDTO ticketDTO, boolean isUpdate) {
-        List<Problem> problems = new ArrayList<>();
+        List<String> problems = new ArrayList<>();
 
         if (StringUtils.isBlank(ticketDTO.getDescription())) {
-            problems.add(new Problem("description", "Description cannot be null!"));
+            problems.add("Description cannot be null!");
         } else if (ticketDTO.getDescription().length() < 5 || ticketDTO.getDescription().length() > 255) {
-            problems.add(new Problem("description", "Description must be between 5 and 255 chars!"));
+            problems.add("Description must be between 5 and 255 chars!");
         }
 
         if (! isUpdate) {
             if (ticketDTO.getSource() == null) {
-                problems.add(new Problem("source", "Source cannot be null!"));
+                problems.add("Source cannot be null!");
             }
 
             if (ticketDTO.getType() == null) {
-                problems.add(new Problem("type", "Type cannot be null!"));
+                problems.add("Type cannot be null!");
             }
 
             if (ticketDTO.getSourceId() == null) {
-                problems.add(new Problem("source", "Unknown source id!"));
+                problems.add("Unknown source id!");
             }
         }
 

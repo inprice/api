@@ -21,7 +21,7 @@ public class Responses {
         public static final ServiceResponse PRODUCT = new ServiceResponse(BASE + 20, "Invalid product!");
         public static final ServiceResponse LINK = new ServiceResponse(BASE + 21, "Invalid link!");
 
-        public static final ServiceResponse TOKEN = new ServiceResponse(BASE + 30, "Your token is expired. Please get a new one!");
+        public static final ServiceResponse TOKEN = new ServiceResponse(BASE + 30, "Invalid token!");
         public static final ServiceResponse EMPTY_FILE = new ServiceResponse(BASE + 40, "Empty file!");
     }
 

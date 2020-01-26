@@ -1,6 +1,12 @@
 package io.inprice.scrapper.api;
 
-import io.inprice.scrapper.api.config.Properties;
+import static spark.Spark.awaitStop;
+import static spark.Spark.stop;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.inprice.scrapper.api.config.Props;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.ConfigScanner;
 import io.inprice.scrapper.api.helpers.DBUtils;
@@ -9,23 +15,12 @@ import io.inprice.scrapper.api.helpers.RabbitMQ;
 import io.inprice.scrapper.api.helpers.RedisClient;
 import io.inprice.scrapper.api.rest.component.AuthFilter;
 import io.inprice.scrapper.api.rest.component.Context;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import spark.ExceptionMapper;
 import spark.Spark;
-import spark.embeddedserver.EmbeddedServer;
-import spark.embeddedserver.EmbeddedServerFactory;
-import spark.embeddedserver.EmbeddedServers;
-import spark.route.Routes;
-import spark.staticfiles.StaticFilesConfiguration;
-
-import static spark.Spark.awaitStop;
-import static spark.Spark.stop;
 
 public class Application {
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
-    private static final Properties props = Beans.getSingleton(Properties.class);
+
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     public static void main(String[] args) {
@@ -69,7 +64,7 @@ public class Application {
     }
 
     private static void applySparkSettings() {
-        Spark.port(props.getAPP_Port());
+        Spark.port(Props.getAPP_Port());
 
         Spark.before(new AuthFilter());
         Spark.before((req, res) -> res.type("application/json"));
@@ -94,7 +89,7 @@ public class Application {
         Spark.after((request, response)-> Context.cleanup());
 
         /*
-        if (props.isRunningForTests()) {
+        if (Props.isRunningForTests()) {
             Spark.after((request, response)-> {
                 if (response.status() != HttpStatus.OK_200) {
                     StringBuilder sb = new StringBuilder("Request  -> ");

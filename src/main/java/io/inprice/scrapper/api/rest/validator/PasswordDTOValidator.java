@@ -2,7 +2,6 @@ package io.inprice.scrapper.api.rest.validator;
 
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
@@ -18,29 +17,30 @@ public class PasswordDTOValidator {
 
     private static final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
 
-    public static List<Problem> verify(PasswordDTO dto, boolean againPassCheck, boolean oldPassCheck) {
-        List<Problem> problems = new ArrayList<>();
+    public static List<String> verify(PasswordDTO dto, boolean againPassCheck, boolean oldPassCheck) {
+        List<String> problems = new ArrayList<>();
 
         if (StringUtils.isBlank(dto.getPassword())) {
-            problems.add(new Problem("password", "Password cannot be null!"));
+            problems.add("Password cannot be null!");
         } else if (dto.getPassword().length() < 4 || dto.getPassword().length() > 16) {
-            problems.add(new Problem("password", "Password length must be between 4 and 16 chars!"));
+            problems.add("Password length must be between 4 and 16 chars!");
         } else if (againPassCheck && ! dto.getPassword().equals(dto.getRepeatPassword())) {
-            problems.add(new Problem("password", "Passwords are mismatch!"));
+            problems.add("Passwords are mismatch!");
         }
 
         if (oldPassCheck) {
             if (!Role.admin.equals(Context.getAuthUser().getRole()) && !dto.getId().equals(Context.getAuthUser().getId())) {
-                problems.add(new Problem("form", "User has no permission to update password!"));
+                problems.add("User has no permission to update password!");
             } else {
                 if (StringUtils.isBlank(dto.getPasswordOld())) {
-                    problems.add(new Problem("passwordOld", "Old password cannot be null!"));
+                    problems.add("Old password cannot be null!");
                 } else if (problems.size() < 1) {
-                    ServiceResponse<User> user = userRepository.findById(dto.getId(), true);
-                    if (user.isOK()) {
-                        final String hash = BCrypt.hashpw(dto.getPasswordOld(), user.getModel().getPasswordSalt());
-                        if (!hash.equals(user.getModel().getPasswordHash())) {
-                            problems.add(new Problem("passwordOld", "Old password is incorrect!"));
+                    ServiceResponse found = userRepository.findById(dto.getId(), true);
+                    User user = found.getData();
+                    if (found.isOK()) {
+                        final String hash = BCrypt.hashpw(dto.getPasswordOld(), user.getPasswordSalt());
+                        if (!hash.equals(user.getPasswordHash())) {
+                            problems.add("Old password is incorrect!");
                         }
                     }
                 }

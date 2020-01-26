@@ -20,22 +20,23 @@ public class PlanRepository {
     public int findAllowedProductCount() {
         int result = 0;
 
-        ServiceResponse<Plan> res = findByWorkspaceId();
+        ServiceResponse res = findByWorkspaceId();
         if (res.isOK()) {
-            result = res.getModel().getRowLimit();
+        	Plan plan = res.getData();
+            result = plan.getRowLimit();
         }
 
         return result;
     }
 
-    private ServiceResponse<Plan> findByWorkspaceId() {
+    private ServiceResponse findByWorkspaceId() {
         Plan model =
             dbUtils.findSingle(
             "select p.* from plan as p " +
                     "inner join workspace as ws on p.id = ws.plan_id " +
                     "where ws.id="+ Context.getWorkspaceId(), PlanRepository::map);
         if (model != null) {
-            return new ServiceResponse<>(model);
+            return new ServiceResponse(model);
         }
 
         return Responses.Invalid.PLAN;

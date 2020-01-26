@@ -1,20 +1,20 @@
 package io.inprice.scrapper.api.helpers;
 
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Connection;
-import com.rabbitmq.client.ConnectionFactory;
-import io.inprice.scrapper.api.config.Properties;
-import io.inprice.scrapper.common.helpers.Beans;
-import io.inprice.scrapper.common.helpers.Converter;
+import java.io.Serializable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
+import io.inprice.scrapper.api.config.Props;
+import io.inprice.scrapper.common.helpers.Converter;
 
 public class RabbitMQ {
 
 	private static final Logger log = LoggerFactory.getLogger(RabbitMQ.class);
-	private static final Properties props = Beans.getSingleton(Properties.class);
 
 	private static Channel channel;
 
@@ -23,20 +23,20 @@ public class RabbitMQ {
 			synchronized (log) {
 				if (!isChannelActive()) {
 					final ConnectionFactory connectionFactory = new ConnectionFactory();
-					connectionFactory.setHost(props.getMQ_Host());
-					connectionFactory.setPort(props.getMQ_Port());
-					connectionFactory.setUsername(props.getMQ_Username());
-					connectionFactory.setPassword(props.getMQ_Password());
+					connectionFactory.setHost(Props.getMQ_Host());
+					connectionFactory.setPort(Props.getMQ_Port());
+					connectionFactory.setUsername(Props.getMQ_Username());
+					connectionFactory.setPassword(Props.getMQ_Password());
 
 					try {
-						final String deletedLinksQueue = props.getRoutingKey_DeletedLinks();
+						final String deletedLinksQueue = Props.getRoutingKey_DeletedLinks();
 
 						Connection connection = connectionFactory.newConnection();
 						channel = connection.createChannel();
 
-						channel.exchangeDeclare(props.getMQ_ChangeExchange(), "topic");
+						channel.exchangeDeclare(Props.getMQ_ChangeExchange(), "topic");
 						channel.queueDeclare(deletedLinksQueue, true, false, false, null);
-						channel.queueBind(deletedLinksQueue, props.getMQ_ChangeExchange(), deletedLinksQueue + ".#");
+						channel.queueBind(deletedLinksQueue, Props.getMQ_ChangeExchange(), deletedLinksQueue + ".#");
 					} catch (Exception e) {
 						log.error("Error in opening RabbitMQ channel", e);
 					}
@@ -48,7 +48,7 @@ public class RabbitMQ {
 	}
 
 	public static boolean publish(String routingKey, Serializable message) {
-		return publish(props.getMQ_ChangeExchange(), routingKey, message);
+		return publish(Props.getMQ_ChangeExchange(), routingKey, message);
 	}
 
 	public static boolean publish(String exchange, String routingKey, Serializable message) {

@@ -1,5 +1,12 @@
 package io.inprice.scrapper.api.rest.repository;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
 import io.inprice.scrapper.api.helpers.Responses;
@@ -9,19 +16,13 @@ import io.inprice.scrapper.common.meta.ImportType;
 import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.ImportProduct;
 import io.inprice.scrapper.common.models.ImportProductRow;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
 
 public class ProductImportRepository {
 
     private static final Logger log = LoggerFactory.getLogger(ProductImportRepository.class);
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
-    public ServiceResponse<ImportProduct> findById(Long id) {
+    public ServiceResponse findById(Long id) {
         ImportProduct model = dbUtils.findSingle(
             String.format(
             "select * from import_product " +
@@ -38,13 +39,13 @@ public class ProductImportRepository {
                     "  and company_id = %d " +
                     "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()), this::rowMap);
             model.setRowList(rowList);
-            return new ServiceResponse<>(model);
+            return new ServiceResponse(model);
         }
 
         return Responses.NotFound.IMPORT;
     }
 
-    public ServiceResponse<ImportProduct> getList() {
+    public ServiceResponse getList() {
         List<ImportProduct> imports = dbUtils.findMultiple(
             String.format(
                 "select * from import_product " +
@@ -52,7 +53,7 @@ public class ProductImportRepository {
                     "  and workspace_id = %d " +
                     "order by created_at desc, import_type", Context.getCompanyId(), Context.getWorkspaceId()), this::map);
 
-        return new ServiceResponse<>(imports);
+        return new ServiceResponse(imports);
     }
 
     public ServiceResponse deleteById(Long id) {

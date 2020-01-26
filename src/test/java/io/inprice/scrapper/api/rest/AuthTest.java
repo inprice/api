@@ -218,7 +218,8 @@ public class AuthTest {
         TestHelper.loginAsAdmin();
     }
 
-    @Test
+	@Test
+    @SuppressWarnings("rawtypes")
     public void everything_should_be_ok_with_forgot_and_reset_password() {
         EmailDTO email = new EmailDTO();
         email.setEmail(TestHelper.getUserDTO().getEmail());

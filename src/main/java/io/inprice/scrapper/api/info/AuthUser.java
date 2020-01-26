@@ -7,7 +7,8 @@ import java.util.UUID;
 
 public class AuthUser extends Model {
 
-    private String sessionId = UUID.randomUUID().toString();
+	private static final long serialVersionUID = 1L;
+	private String sessionId = UUID.randomUUID().toString();
 
     private String email;
     private Role role;

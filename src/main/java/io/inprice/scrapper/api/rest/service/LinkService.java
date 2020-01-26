@@ -1,11 +1,13 @@
 package io.inprice.scrapper.api.rest.service;
 
-import io.inprice.scrapper.api.config.Properties;
+import java.util.ArrayList;
+import java.util.List;
+
+import io.inprice.scrapper.api.config.Props;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.RabbitMQ;
 import io.inprice.scrapper.api.helpers.Responses;
-import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.repository.LinkRepository;
@@ -14,16 +16,10 @@ import io.inprice.scrapper.common.meta.Status;
 import io.inprice.scrapper.common.models.Link;
 import io.inprice.scrapper.common.utils.URLUtils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 public class LinkService {
 
     private final LinkRepository linkRepository = Beans.getSingleton(LinkRepository.class);
     private final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
-    private final Properties props = Beans.getSingleton(Properties.class);
 
     public ServiceResponse findById(Long id) {
         return linkRepository.findById(id);
@@ -47,12 +43,13 @@ public class LinkService {
 
     public ServiceResponse deleteById(Long linkId) {
         if (linkId != null && linkId > 0) {
-            ServiceResponse<Link> res = linkRepository.findById(linkId);
+            ServiceResponse res = linkRepository.findById(linkId);
             if (res.isOK()) {
                 ServiceResponse del = linkRepository.deleteById(linkId);
                 if (del.isOK()) {
                     //inform the product to be refreshed
-                    RabbitMQ.publish(props.getMQ_ChangeExchange(), props.getRoutingKey_DeletedLinks(), res.getModel().getProductId());
+                	Link link = res.getData();
+                    RabbitMQ.publish(Props.getMQ_ChangeExchange(), Props.getRoutingKey_DeletedLinks(), link.getProductId());
                     return Responses.OK;
                 }
             }
@@ -62,13 +59,14 @@ public class LinkService {
         }
     }
 
+    @SuppressWarnings("incomplete-switch")
     public ServiceResponse changeStatus(Long id, Long productId, Status status) {
         if (id == null || id < 1) return Responses.NotFound.LINK;
         if (productId == null || productId < 1) return Responses.NotFound.PRODUCT;
 
-        ServiceResponse<Link> res = linkRepository.findById(id);
+        ServiceResponse res = linkRepository.findById(id);
         if (res.isOK()) {
-            Link link = res.getModel();
+            Link link = res.getData();
 
             if (! link.getProductId().equals(productId)) {
                 return Responses.Invalid.PRODUCT;
@@ -109,18 +107,18 @@ public class LinkService {
     }
 
     private ServiceResponse validate(LinkDTO linkDTO) {
-        List<Problem> problems = new ArrayList<>();
+        List<String> problems = new ArrayList<>();
 
         if (! URLUtils.isAValidURL(linkDTO.getUrl())) {
-            problems.add(new Problem("url", "Invalid URL!"));
+            problems.add("Invalid URL!");
         } else if (linkDTO.getUrl().length() > 2000) {
-            problems.add(new Problem("url", "The length of URL must be less than 2000 chars!"));
+            problems.add("The length of URL must be less than 2000 chars!");
         }
 
         if (linkDTO.getProductId() == null || linkDTO.getProductId() < 1) {
-            problems.add(new Problem("form", "Product cannot be null!"));
+            problems.add("Product cannot be null!");
         } else if (! productRepository.findById(linkDTO.getProductId()).isOK()) {
-            problems.add(new Problem("form", "Unknown product info!"));
+            problems.add("Unknown product info!");
         }
 
         return Commons.createResponse(problems);

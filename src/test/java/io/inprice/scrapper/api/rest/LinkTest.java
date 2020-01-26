@@ -1,23 +1,22 @@
 package io.inprice.scrapper.api.rest;
 
-import io.inprice.scrapper.api.dto.LinkDTO;
-import io.inprice.scrapper.api.helpers.Consts;
-import io.inprice.scrapper.api.helpers.Responses;
-import io.inprice.scrapper.api.helpers.TestHelper;
-import io.inprice.scrapper.common.models.Link;
-import io.restassured.response.Response;
-import org.eclipse.jetty.http.HttpStatus;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+
+import java.util.List;
+import java.util.Map;
+
+import org.eclipse.jetty.http.HttpStatus;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import io.inprice.scrapper.api.dto.LinkDTO;
+import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.helpers.TestHelper;
+import io.restassured.response.Response;
 
 public class LinkTest {
 

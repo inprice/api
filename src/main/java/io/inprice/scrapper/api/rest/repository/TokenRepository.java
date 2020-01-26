@@ -1,23 +1,20 @@
 package io.inprice.scrapper.api.rest.repository;
 
-import io.inprice.scrapper.api.config.Properties;
-import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.RedisClient;
+import java.util.concurrent.TimeUnit;
+
 import org.redisson.api.RSetCache;
 
-import java.util.concurrent.TimeUnit;
+import io.inprice.scrapper.api.config.Props;
+import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.RedisClient;
 
 public final class TokenRepository {
 
     private final RedisClient redisClient = Beans.getSingleton(RedisClient.class);
-    private final Properties props = Beans.getSingleton(Properties.class);
-
     private final RSetCache<String> invalidatedTokenSet = redisClient.getInvalidatedTokenSet();
 
     public void invalidateToken(String token) {
-        long ttlAsSeconds = props.getTTL_Tokens() / 1000;
-        ttlAsSeconds += 60;
-
+        long ttlAsSeconds = (Props.getTTL_RefreshTokens() * 2) / 1000;
         invalidatedTokenSet.add(token, ttlAsSeconds, TimeUnit.SECONDS);
     }
 

@@ -1,5 +1,13 @@
 package io.inprice.scrapper.api.rest.controller;
 
+import static spark.Spark.delete;
+import static spark.Spark.get;
+import static spark.Spark.post;
+import static spark.Spark.put;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
@@ -8,16 +16,6 @@ import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.service.ProductService;
 import io.inprice.scrapper.api.utils.SqlHelper;
 import io.inprice.scrapper.common.utils.NumberUtils;
-
-import static spark.Spark.*;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.lang3.StringEscapeUtils;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 public class ProductController {
 

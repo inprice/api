@@ -38,7 +38,14 @@ public class UserController {
 
         //set active workspace
         put(Consts.Paths.User.SET_WORKSPACE + "/:id", (req, res) -> {
-            return Commons.createResponse(res, service.setActiveWorkspace(NumberUtils.toLong(req.params(":id")), res));
+        	String ip = req.ip();
+        	String userAgent = req.userAgent();
+            return Commons.createResponse(res, 
+        		service.setActiveWorkspace(NumberUtils.toLong(req.params(":id")),
+    				ip,
+    				userAgent
+				)
+    		);
         }, Global.gson::toJson);
 
     }

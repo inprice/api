@@ -1,6 +1,17 @@
 package io.inprice.scrapper.api.rest.repository;
 
-import io.inprice.scrapper.api.config.Properties;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.Statement;
+import java.sql.Types;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.inprice.scrapper.api.config.Props;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
@@ -11,10 +22,6 @@ import io.inprice.scrapper.api.utils.CodeGenerator;
 import io.inprice.scrapper.common.meta.Role;
 import io.inprice.scrapper.common.models.Company;
 import jodd.util.BCrypt;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.sql.*;
 
 public class CompanyRepository {
 
@@ -22,12 +29,11 @@ public class CompanyRepository {
 
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
-    private final Properties props = Beans.getSingleton(Properties.class);
 
-    public ServiceResponse<Company> findById(Long id) {
+    public ServiceResponse findById(Long id) {
         Company model = dbUtils.findSingle("select * from company where id="+ id, CompanyRepository::map);
         if (model != null)
-            return new ServiceResponse<>(model);
+            return new ServiceResponse(model);
         else
             return Responses.DataProblem.DB_PROBLEM;
     }
@@ -39,7 +45,7 @@ public class CompanyRepository {
      *  - admin user
      */
     public ServiceResponse insert(CompanyDTO companyDTO) {
-        ServiceResponse response = new ServiceResponse<>(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+        ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
         Connection con = null;
 
@@ -75,7 +81,7 @@ public class CompanyRepository {
                          Statement.RETURN_GENERATED_KEYS)) {
                     int i = 0;
                     pst.setString(++i, "DEFAULT WORKSPACE");
-                    if (props.isRunningForTests()) {
+                    if (Props.isRunningForTests()) {
                         pst.setLong(++i, 1L);
                     } else {
                         pst.setNull(++i, Types.BIGINT);

@@ -7,6 +7,8 @@ import io.inprice.scrapper.common.meta.Role;
  */
 public class UserDTO extends PasswordDTO {
 
+	private static final long serialVersionUID = 1L;
+
     private Role role;
     private String fullName;
     private String email;

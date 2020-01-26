@@ -1,23 +1,22 @@
 package io.inprice.scrapper.api.email;
 
+import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
-import io.inprice.scrapper.api.config.Properties;
-import io.inprice.scrapper.api.framework.Beans;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import io.inprice.scrapper.api.config.Props;
 
 public class EmailSender {
 
     private static final Logger log = LoggerFactory.getLogger(EmailSender.class);
-
-    private final Properties props = Beans.getSingleton(Properties.class);
 
     public void send(String from, String subject, String to, String content) {
         Email emailFrom = new Email(from);
@@ -26,7 +25,7 @@ public class EmailSender {
 
         Mail mail = new Mail(emailFrom, subject, emailTo, emailContent);
 
-        SendGrid sg = new SendGrid(props.getEmail_APIKey());
+        SendGrid sg = new SendGrid(Props.getEmail_APIKey());
         Request request = new Request();
         try {
             request.setMethod(Method.POST);

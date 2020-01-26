@@ -1,42 +1,48 @@
 package io.inprice.scrapper.api.rest.service;
 
-import io.inprice.scrapper.api.config.Properties;
+import java.util.Base64;
+import java.util.Date;
+
+import org.apache.commons.lang3.StringUtils;
+
+import io.inprice.scrapper.api.config.Props;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Cryptor;
 import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.info.Tokens;
 import io.inprice.scrapper.api.rest.repository.TokenRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClaims;
-import org.apache.commons.lang3.StringUtils;
 import spark.Request;
-
-import java.util.Base64;
-import java.util.Date;
 
 public class TokenService {
 
     private final TokenRepository tokenRepository = Beans.getSingleton(TokenRepository.class);
-    private final Properties props = Beans.getSingleton(Properties.class);
 
-    String newToken(AuthUser authUser) {
-        final String payload = Global.gson.toJson(authUser);
-        return Consts.Auth.TOKEN_PREFIX + generateToken(Cryptor.encrypt(payload));
+    Tokens generateTokens(AuthUser authUser, String ip, String userAgent) {
+        String refresh = authUser.getEmail() + "::"  + ip + "::" + Consts.Auth.APP_SECRET_KEY + "::" + userAgent;
+        String refreshToken = generateToken(false, Cryptor.encrypt(refresh));
+
+    	String access = Global.gson.toJson(authUser);
+    	String accessToken = generateToken(true, Cryptor.encrypt(access));
+
+    	return new Tokens(accessToken, refreshToken);
     }
 
     String newTokenEmailFor(String email) {
-        return generateToken(Cryptor.encrypt(email));
+        return generateToken(true, Cryptor.encrypt(email));
     }
 
-    private String generateToken(byte[] payload) {
+    private String generateToken(boolean isAccessToken, byte[] payload) {
         Date now = new Date();
 
         DefaultClaims claims = new DefaultClaims();
         claims.setIssuedAt(now);
-        //claims.setExpiration(new Date(now.getTime() + (props.getTTL_Tokens())));
+        claims.setExpiration(new Date(now.getTime() + (isAccessToken ? Props.getTTL_AccessTokens() : Props.getTTL_RefreshTokens())));
         claims.put(Consts.Auth.PAYLOAD, payload);
 
         return
@@ -59,19 +65,18 @@ public class TokenService {
     }
 
     public AuthUser getAuthUser(String token) {
-        Claims claims =
-            Jwts.parser()
-                .setSigningKey(Consts.Auth.APP_SECRET_KEY)
-                .parseClaimsJws(token)
-            .getBody();
-
-        final byte[] prePayload = Base64.getDecoder().decode(claims.get(Consts.Auth.PAYLOAD, String.class));
-        final String payload = Cryptor.decrypt(prePayload);
-
-        return Global.gson.fromJson(payload, AuthUser.class);
+        return Global.gson.fromJson(getTokenString(token), AuthUser.class);
+    }
+    
+    public String getEmail(String token) {
+    	return getTokenString(token);
     }
 
-    public String getEmail(String token) {
+	public String getRefreshString(String token) {
+    	return getTokenString(token);
+    }
+
+    private String getTokenString(String token) {
         Claims claims =
             Jwts.parser()
                 .setSigningKey(Consts.Auth.APP_SECRET_KEY)
@@ -90,7 +95,7 @@ public class TokenService {
             return null;
     }
 
-    public AuthUser isTokenExpired(String token) {
+    public AuthUser isAccessTokenExpired(String token) {
         try {
             return getAuthUser(token);
         } catch (Exception e) {
@@ -98,13 +103,25 @@ public class TokenService {
         }
     }
 
-    boolean isEmailTokenExpired(String token) {
+    public boolean isRefreshTokenExpiredOrSuspicious(String token, String ip, String userAgent) {
         try {
-            getEmail(token);
-            return false;
+        	//refresh request must be done from the same ip and device as is it is in the first request
+        	//so ip and user-agent fields are checked for these controls
+            String bareToken = getTokenString(token);
+            String[] tokenParts = bareToken.split("::");
+            return (! ip.equals(tokenParts[1]) || ! userAgent.equals(tokenParts[3]));
         } catch (Exception e) {
             return true;
         }
+    }
+    
+    boolean isEmailTokenExpired(String token) {
+    	try {
+    		getEmail(token);
+    		return false;
+    	} catch (Exception e) {
+    		return true;
+    	}
     }
 
     public boolean isTokenInvalidated(String token) {

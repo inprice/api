@@ -9,6 +9,7 @@ import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.service.AuthService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -25,11 +26,14 @@ public class AuthController {
     public void routes() {
 
         post(Consts.Paths.Auth.LOGIN, (req, res) -> {
-            return Commons.createResponse(res, service.login(toLoginModel(req), res));
+            return Commons.createResponse(res, service.login(toLoginModel(req)));
         }, Global.gson::toJson);
 
         get(Consts.Paths.Auth.REFRESH_TOKEN, (req, res) -> {
-            return Commons.createResponse(res, service.refresh(req, res));
+        	String token = req.body();
+        	String ip = req.ip();
+        	String userAgent = req.userAgent();
+			return Commons.createResponse(res, service.refreshTokens(token, ip, userAgent));
         }, Global.gson::toJson);
 
         post(Consts.Paths.Auth.FORGOT_PASSWORD, (req, res) -> {
@@ -66,7 +70,10 @@ public class AuthController {
 
     private LoginDTO toLoginModel(Request req) {
         try {
-            return Global.gson.fromJson(req.body(), LoginDTO.class);
+        	LoginDTO loginDTO = Global.gson.fromJson(req.body(), LoginDTO.class);
+        	loginDTO.setIp(req.ip());
+        	loginDTO.setUserAgent(req.userAgent());
+        	return loginDTO;
         } catch (Exception e) {
             log.error("IP: {} -> Data conversion error for login. " + req.body(), req.ip());
         }

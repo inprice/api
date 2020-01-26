@@ -1,5 +1,16 @@
 package io.inprice.scrapper.api.rest.repository;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
@@ -11,14 +22,7 @@ import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.utils.CodeGenerator;
 import io.inprice.scrapper.common.meta.Role;
 import io.inprice.scrapper.common.models.User;
-import io.inprice.scrapper.common.models.Workspace;
 import jodd.util.BCrypt;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.sql.*;
-import java.util.List;
 
 public class UserRepository {
 
@@ -28,11 +32,11 @@ public class UserRepository {
     private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
     private final WorkspaceRepository wsRepository = Beans.getSingleton(WorkspaceRepository.class);
 
-    public ServiceResponse<User> findById(Long id) {
+    public ServiceResponse findById(Long id) {
         return findById(id, false);
     }
 
-    public ServiceResponse<User> findById(Long id, boolean passwordFields) {
+    public ServiceResponse findById(Long id, boolean passwordFields) {
         User model =
             dbUtils.findSingle(
                 String.format(
@@ -44,12 +48,12 @@ public class UserRepository {
                 model.setPasswordSalt(null);
                 model.setPasswordHash(null);
             }
-            return new ServiceResponse<>(model);
+            return new ServiceResponse(model);
         }
         return Responses.NotFound.USER;
     }
 
-    public ServiceResponse<User> getList() {
+    public ServiceResponse getList() {
         List<User> users = dbUtils.findMultiple(
             String.format(
                 "select * from user " +
@@ -65,31 +69,31 @@ public class UserRepository {
                 user.setPasswordHash(null);
             }
         }
-        return new ServiceResponse<>(users);
+        return new ServiceResponse(users);
     }
 
-    public ServiceResponse<User> findByEmail(String email) {
+    public ServiceResponse findByEmail(String email) {
         return findByEmail(email, false);
     }
 
-    public ServiceResponse<User> findByEmail(String email, boolean passwordFields) {
+    public ServiceResponse findByEmail(String email, boolean passwordFields) {
         User model = dbUtils.findSingle(String.format("select * from user where email = '%s'", email), this::map);
         if (model != null) {
             if (! passwordFields) {
                 model.setPasswordSalt(null);
                 model.setPasswordHash(null);
             }
-            return new ServiceResponse<>(model);
+            return new ServiceResponse(model);
         }
         return Responses.NotFound.USER;
     }
 
-    public ServiceResponse<User> findByEmailForUpdateCheck(String email, long userId) {
+    public ServiceResponse findByEmailForUpdateCheck(String email, long userId) {
         User model = dbUtils.findSingle(String.format("select * from user where email = '%s' and id != %d", email, userId), this::map);
         if (model != null) {
             model.setPasswordSalt(null);
             model.setPasswordHash(null);
-            return new ServiceResponse<>(model);
+            return new ServiceResponse(model);
         }
         return Responses.NotFound.USER;
     }
@@ -211,7 +215,7 @@ public class UserRepository {
     }
 
     public ServiceResponse setActiveWorkspace(Long workspaceId) {
-        ServiceResponse<Workspace> res = wsRepository.findById(workspaceId);
+        ServiceResponse res = wsRepository.findById(workspaceId);
         if (res.isOK()) {
             final String query =
                 "update user " +

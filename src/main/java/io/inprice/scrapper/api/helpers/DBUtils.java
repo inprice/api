@@ -1,22 +1,26 @@
 package io.inprice.scrapper.api.helpers;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-import io.inprice.scrapper.api.config.Properties;
-import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.common.helpers.ModelMapper;
-import io.inprice.scrapper.common.models.Model;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
+import io.inprice.scrapper.api.config.Props;
+import io.inprice.scrapper.common.helpers.ModelMapper;
+import io.inprice.scrapper.common.models.Model;
 
 public class DBUtils {
 
     private static final Logger log = LoggerFactory.getLogger(DBUtils.class);
-    private final Properties props = Beans.getSingleton(Properties.class);
 
     private HikariDataSource ds;
 
@@ -25,7 +29,7 @@ public class DBUtils {
     }
 
     public void reset() {
-        if (props.isRunningForTests()) {
+        if (Props.isRunningForTests()) {
             shutdown();
             wakeup();
         }
@@ -35,16 +39,16 @@ public class DBUtils {
         HikariConfig hConf = new HikariConfig();
 
         final String connectionString =
-                String.format("jdbc:%s:%s:%d/%s%s", props.getDB_Driver(), props.getDB_Host(),
-                        props.getDB_Port(), props.getDB_Database(), props.getDB_Additions());
+                String.format("jdbc:%s:%s:%d/%s%s", Props.getDB_Driver(), Props.getDB_Host(),
+                        Props.getDB_Port(), Props.getDB_Database(), Props.getDB_Additions());
 
-        log.info(connectionString);
+        log.info("Connection string: " + connectionString);
 
         hConf.setJdbcUrl(connectionString);
-        hConf.setUsername(props.getDB_Username());
-        hConf.setPassword(props.getDB_Password());
+        hConf.setUsername(Props.getDB_Username());
+        hConf.setPassword(Props.getDB_Password());
 
-        if (props.isRunningForTests())
+        if (Props.isRunningForTests())
             hConf.setConnectionTimeout(3 * 1000); //three seconds
         else
             hConf.setConnectionTimeout(10 * 1000); //ten seconds
@@ -167,7 +171,7 @@ public class DBUtils {
         try (Connection con = getConnection();
              PreparedStatement pst = con.prepareStatement(query)) {
 
-            if (props.isShowingSQLQueries()) {
+            if (Props.isShowingSQLQueries()) {
                 log.info(" Q-> " + query);
             }
 
@@ -222,7 +226,7 @@ public class DBUtils {
 
             for (String query: queries) {
                 sta.addBatch(query);
-                if (props.isShowingSQLQueries()) {
+                if (Props.isShowingSQLQueries()) {
                     log.info(" Q-> " + query);
                 }
             }
@@ -250,7 +254,7 @@ public class DBUtils {
                 commit(con);
             } else {
                 rollback(con);
-                if (! props.isRunningForTests() && ! errorMessage.contains("to delete")) log.error(errorMessage);
+                if (! Props.isRunningForTests() && ! errorMessage.contains("to delete")) log.error(errorMessage);
             }
 
         } catch (SQLException e) {

@@ -5,6 +5,8 @@ package io.inprice.scrapper.api.dto;
  */
 public class CompanyDTO extends UserDTO {
 
+	private static final long serialVersionUID = 1L;
+	
     //company
     private String companyName;
     private String website;
@@ -53,4 +55,5 @@ public class CompanyDTO extends UserDTO {
     public void setCaptcha(String captcha) {
         this.captcha = captcha;
     }
+
 }

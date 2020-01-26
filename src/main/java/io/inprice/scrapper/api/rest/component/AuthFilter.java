@@ -47,18 +47,28 @@ public class AuthFilter implements Filter {
     public void handle(Request request, Response response) {
         if ("options".equals(request.requestMethod().toLowerCase())) return;
 
-        if (isAuthenticationNeeded(request)) {
+        if (isRefreshTokenRequest(request.uri())) {
+        	final String token = request.body();
+            if (tokenService.isTokenInvalidated(token)) {
+                halt(HttpStatus.UNAUTHORIZED_401, "Invalidated token!");
+            } else {
+                boolean expired = tokenService.isRefreshTokenExpiredOrSuspicious(token, request.ip(), request.userAgent());
+                if (expired) {
+                    halt(HttpStatus.UNAUTHORIZED_401, "Expired refresh token!");
+                }
+            }
+        } else if (isAuthenticationNeeded(request)) {
             String authHeader = request.headers(Consts.Auth.AUTHORIZATION_HEADER);
             if (authHeader == null) {
-                halt(HttpStatus.UNAUTHORIZED_401, "Missing authentication header!");
+                halt(HttpStatus.UNAUTHORIZED_401, "Missing authentication!");
             } else {
                 String token = tokenService.getToken(request);
                 if (tokenService.isTokenInvalidated(token)) {
-                    halt(HttpStatus.NOT_ACCEPTABLE_406, "Invalidated token!");
+                    halt(HttpStatus.UNAUTHORIZED_401, "Invalidated token!");
                 } else {
-                    AuthUser authUser = tokenService.isTokenExpired(token);
+                    AuthUser authUser = tokenService.isAccessTokenExpired(token);
                     if (authUser == null) {
-                        halt(HttpStatus.REQUEST_TIMEOUT_408, "Expired token!");
+                        halt(HttpStatus.UNAUTHORIZED_401, "Expired access token!");
                     } else if (! Role.admin.equals(authUser.getRole()) && request.uri().startsWith(Consts.Paths.ADMIN_BASE)) {
                         halt(HttpStatus.FORBIDDEN_403, "Unauthorized user!");
                     } else if (Role.reader.equals(authUser.getRole()) && sensitiveMethodsSet.contains(request.requestMethod())) {
@@ -72,6 +82,10 @@ public class AuthFilter implements Filter {
                 }
             }
         }
+    }
+    
+    private boolean isRefreshTokenRequest(String uri) {
+    	return uri.startsWith("/refresh-token");
     }
 
     private boolean isAuthenticationNeeded(Request req) {

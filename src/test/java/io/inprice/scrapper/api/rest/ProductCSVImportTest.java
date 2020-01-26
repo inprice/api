@@ -151,7 +151,8 @@ public class ProductCSVImportTest {
     }
 
 
-    @After
+	@After
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void clearAllProducts() {
         Response res =
             when()

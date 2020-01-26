@@ -1,20 +1,20 @@
 package io.inprice.scrapper.api.rest.component;
 
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.dto.WorkspaceDTO;
 import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.helpers.Responses;
-import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.http.HttpStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
-
-import java.util.List;
 
 public class Commons {
 
@@ -25,9 +25,9 @@ public class Commons {
         return serviceResponse;
     }
 
-    public static ServiceResponse createResponse(List<Problem> problems) {
+    public static ServiceResponse createResponse(List<String> problems) {
         if (problems.size() > 0) {
-            return ServiceResponse.create(problems);
+            return new ServiceResponse(problems);
         } else {
             return Responses.OK;
         }

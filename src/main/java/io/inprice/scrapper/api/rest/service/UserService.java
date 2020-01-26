@@ -4,17 +4,18 @@ import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Responses;
-import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.info.Tokens;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.component.Context;
 import io.inprice.scrapper.api.rest.repository.UserRepository;
 import io.inprice.scrapper.api.rest.validator.PasswordDTOValidator;
 import io.inprice.scrapper.api.rest.validator.UserDTOValidator;
 import io.inprice.scrapper.common.models.User;
-import spark.Response;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class UserService {
 
@@ -55,7 +56,7 @@ public class UserService {
         return Responses.Invalid.PASSWORD;
     }
 
-    public ServiceResponse setActiveWorkspace(Long workspaceId, Response response) {
+    public ServiceResponse setActiveWorkspace(Long workspaceId, String ip, String userAgent) {
         if (workspaceId == null || workspaceId < 1) {
             return Responses.NotFound.WORKSPACE;
         }
@@ -69,19 +70,24 @@ public class UserService {
             user.setRole(Context.getAuthUser().getRole());
             user.setCompanyId(Context.getCompanyId());
             user.setWorkspaceId(workspaceId);
-            authService.setAuthorizationHeader(user, response);
+           
+            Tokens tokens = authService.createTokens(user, ip, userAgent);
+            Map<String, Object> data = new HashMap<>(2);
+            data.put("user", user);
+            data.put("tokens", tokens);
+        	return new ServiceResponse(data);
         }
 
         return res;
     }
 
     private ServiceResponse validate(UserDTO userDTO) {
-        List<Problem> problems = UserDTOValidator.verify(userDTO, false, "Full");
+        List<String> problems = UserDTOValidator.verify(userDTO, false, "Full");
         return Commons.createResponse(problems);
     }
 
     private ServiceResponse validate(PasswordDTO passwordDTO) {
-        List<Problem> problems = PasswordDTOValidator.verify(passwordDTO, true, true);
+        List<String> problems = PasswordDTOValidator.verify(passwordDTO, true, true);
         return Commons.createResponse(problems);
     }
 

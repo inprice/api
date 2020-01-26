@@ -1,31 +1,41 @@
 package io.inprice.scrapper.api.helpers;
 
-import io.inprice.scrapper.api.Application;
-import io.inprice.scrapper.api.config.Properties;
-import io.inprice.scrapper.api.dto.*;
-import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.common.meta.Role;
-import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
-import io.restassured.response.Response;
+import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
+
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.h2.tools.RunScript;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.SQLException;
-
-import static io.restassured.RestAssured.given;
-import static io.restassured.RestAssured.when;
+import io.inprice.scrapper.api.Application;
+import io.inprice.scrapper.api.config.Props;
+import io.inprice.scrapper.api.dto.CompanyDTO;
+import io.inprice.scrapper.api.dto.LinkDTO;
+import io.inprice.scrapper.api.dto.LoginDTO;
+import io.inprice.scrapper.api.dto.ProductDTO;
+import io.inprice.scrapper.api.dto.UserDTO;
+import io.inprice.scrapper.api.dto.WorkspaceDTO;
+import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.common.meta.Role;
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.response.Response;
 
 public class TestHelper {
 
     private static final Logger log = LoggerFactory.getLogger(TestHelper.class);
-    private static final Properties props = Beans.getSingleton(Properties.class);
+
     private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
     public static void setup(boolean defaultCompanyAndUser, boolean extraUser) {
@@ -35,7 +45,7 @@ public class TestHelper {
             Application.main(null);
         }
 
-        RestAssured.port = props.getAPP_Port();
+        RestAssured.port = Props.getAPP_Port();
 
         if (defaultCompanyAndUser) {
             //insert a default company

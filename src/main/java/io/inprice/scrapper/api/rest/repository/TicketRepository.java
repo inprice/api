@@ -25,19 +25,19 @@ public class TicketRepository {
     private static final Logger log = LoggerFactory.getLogger(TicketRepository.class);
     private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
 
-    public ServiceResponse<Ticket> findById(Long id) {
+    public ServiceResponse findById(Long id) {
         Ticket model = dbUtils.findSingle(
             String.format(
             "select * from ticket " +
                 "where id = %d " +
                 "  and reported_by = %d ", id, Context.getUserId()), this::map);
         if (model != null) {
-            return new ServiceResponse<>(model);
+            return new ServiceResponse(model);
         }
         return Responses.NotFound.TICKET;
     }
 
-    public ServiceResponse<Ticket> getList(TicketSource source, Long id) {
+    public ServiceResponse getList(TicketSource source, Long id) {
         List<Ticket> tickets = dbUtils.findMultiple(
             String.format(
                 "select * from ticket " +
@@ -46,7 +46,7 @@ public class TicketRepository {
             ), this::map);
 
         if (tickets != null && tickets.size() > 0) {
-            return new ServiceResponse<>(tickets);
+            return new ServiceResponse(tickets);
         }
         return Responses.NotFound.TICKET;
     }

@@ -4,7 +4,6 @@ import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Responses;
-import io.inprice.scrapper.api.info.Problem;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.component.Context;
@@ -91,12 +90,12 @@ public class AdminUserService {
     }
 
     private ServiceResponse validateUser(UserDTO userDTO, boolean insert) {
-        List<Problem> problems = UserDTOValidator.verify(userDTO, insert, "Full");
+        List<String> problems = UserDTOValidator.verify(userDTO, insert, "Full");
         return Commons.createResponse(problems);
     }
 
     private ServiceResponse validatePassword(PasswordDTO passwordDTO) {
-        List<Problem> problems = PasswordDTOValidator.verify(passwordDTO, true, true);
+        List<String> problems = PasswordDTOValidator.verify(passwordDTO, true, true);
         return Commons.createResponse(problems);
     }
 

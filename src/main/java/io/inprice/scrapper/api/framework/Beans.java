@@ -13,7 +13,8 @@ public class Beans {
 
     private static Map<Class<?>, Object> singletonMap = new HashMap<>();
 
-    public synchronized static <T> T getSingleton(Class<?> clazz) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	public synchronized static <T> T getSingleton(Class<?> clazz) {
         T obj = (T) singletonMap.get(clazz);
 
         if (obj == null) {

@@ -13,7 +13,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.config.Properties;
+import io.inprice.scrapper.api.config.Props;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.DBUtils;
@@ -30,12 +30,11 @@ import io.inprice.scrapper.common.models.Product;
 public class ProductRepository {
 
     private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
-    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
-    private static final Properties props = Beans.getSingleton(Properties.class);
 
+    private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
     private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
 
-    public ServiceResponse<Product> findById(Long id) {
+    public ServiceResponse findById(Long id) {
         Product model = dbUtils.findSingle(
             String.format(
             "select * from product " +
@@ -43,12 +42,12 @@ public class ProductRepository {
                 "  and company_id = %d " +
                 "  and workspace_id = %d ", id, Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         if (model != null) {
-            return new ServiceResponse<>(model);
+            return new ServiceResponse(model);
         }
         return Responses.NotFound.PRODUCT;
     }
 
-    public ServiceResponse<Product> findByCode(String code) {
+    public ServiceResponse findByCode(String code) {
         Product model = dbUtils.findSingle(
             String.format(
             "select * from product " +
@@ -56,12 +55,12 @@ public class ProductRepository {
                 "  and company_id = %d " +
                 "  and workspace_id = %d ", SqlHelper.clear(code), Context.getCompanyId(), Context.getWorkspaceId()), this::map);
         if (model != null) {
-            return new ServiceResponse<>(model);
+            return new ServiceResponse(model);
         }
         return Responses.NotFound.PRODUCT;
     }
     
-    public ServiceResponse<Product> getList() {
+    public ServiceResponse getList() {
     	List<Product> products = dbUtils.findMultiple(
 			String.format(
 				"select * from product " +
@@ -69,10 +68,11 @@ public class ProductRepository {
 					"  and workspace_id = %d " +
 					"order by name", Context.getCompanyId(), Context.getWorkspaceId()), this::map);
     	
-    	return new ServiceResponse<>(products);
+    	return new ServiceResponse(products);
     }
 
-    public ServiceResponse search(SearchModel searchModel) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+	public ServiceResponse search(SearchModel searchModel) {
     	final String searchQuery = SqlHelper.generateSearchQuery(searchModel, "code", "name");
     	
     	final String query =
@@ -91,8 +91,8 @@ public class ProductRepository {
             rs.close();
 
             if (totalRowCount > 0) {
-                List<Product> products = dbUtils.findMultiple(con, query.replace("count(1)", "*"), this::map);
-                return new ServiceResponse(totalRowCount, products);
+                List products = dbUtils.findMultiple(con, query.replace("count(1)", "*"), this::map);
+                return new ServiceResponse(products);
             }
 
         } catch (Exception e) {
@@ -107,7 +107,7 @@ public class ProductRepository {
         try {
             con = dbUtils.getTransactionalConnection();
 
-            if (props.isProdUniqueness()) {
+            if (Props.isProdUniqueness()) {
                 boolean alreadyExists = doesExist(con, productDTO.getCode(), null);
                 if (alreadyExists) {
                     return Responses.DataProblem.ALREADY_EXISTS;
@@ -139,7 +139,7 @@ public class ProductRepository {
         try {
             con = dbUtils.getTransactionalConnection();
 
-            if (props.isProdUniqueness()) {
+            if (Props.isProdUniqueness()) {
                 boolean alreadyExists = doesExist(con, productDTO.getCode(), productDTO.getId());
                 if (alreadyExists) {
                     return Responses.DataProblem.ALREADY_EXISTS;
@@ -458,7 +458,8 @@ public class ProductRepository {
         return result;
     }
 
-    private Long insertImportedLink(Connection con, ImportProductRow importRow) {
+    @SuppressWarnings("incomplete-switch")
+	private Long insertImportedLink(Connection con, ImportProductRow importRow) {
         final String query =
                 "insert into link " +
                 "(url, import_id, company_id, workspace_id) " +
@@ -474,11 +475,11 @@ public class ProductRepository {
                     break;
                 }
                 case EBAY_SKU: {
-                    pst.setString(++i, props.getPrefix_ForSearchingInEbay() + importRow.getData());
+                    pst.setString(++i, Props.getPrefix_ForSearchingInEbay() + importRow.getData());
                     break;
                 }
                 case AMAZON_ASIN: {
-                    pst.setString(++i, props.getPrefix_ForSearchingInAmazon() + importRow.getData());
+                    pst.setString(++i, Props.getPrefix_ForSearchingInAmazon() + importRow.getData());
                     break;
                 }
             }
@@ -538,7 +539,7 @@ public class ProductRepository {
             }
         } catch (SQLIntegrityConstraintViolationException ie) {
             log.error("Error", ie);
-            return Responses.DataProblem.DUPLICATE;
+            return new ServiceResponse(Responses.DataProblem.DUPLICATE.getStatus(), productDTO.getCode() + " is already defined!");
         } catch (Exception e) {
             log.error("Error", e);
         }
