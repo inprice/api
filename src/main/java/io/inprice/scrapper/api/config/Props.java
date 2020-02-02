@@ -30,7 +30,7 @@ public class Props {
 	}
 
 	public static int getAPP_WaitingTime() {
-		return new Integer(System.getenv().getOrDefault(PropName.APP_WAITING_TIME.name(), "300"));
+		return new Integer(System.getenv().getOrDefault(PropName.APP_WAITING_TIME.name(), "5"));
 	}
 	public static String getDB_Driver() {
 		String def = isRunningForTests() ? "h2": "mysql";

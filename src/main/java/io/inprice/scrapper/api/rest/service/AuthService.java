@@ -54,10 +54,10 @@ public class AuthService {
 						user.setPasswordHash(null);
 
 						Tokens tokens = createTokens(user, loginDTO.getIp(), loginDTO.getUserAgent());
-			            Map<String, Object> data = new HashMap<>(2);
-			            data.put("user", user);
-			            data.put("tokens", tokens);
-			        	return new ServiceResponse(data);
+						Map<String, Object> data = new HashMap<>(2);
+						data.put("user", user);
+						data.put("tokens", tokens);
+						return new ServiceResponse(data);
 					}
 				}
 			}
@@ -70,7 +70,7 @@ public class AuthService {
 			if (RedisClient.getForgotpasswordemails().contains(emailDTO.getEmail())) {
 				return Responses.Illegal.TOO_MUCH_REQUEST;
 			}
-			RedisClient.getForgotpasswordemails().add(emailDTO.getEmail(), Props.getAPP_WaitingTime(), TimeUnit.SECONDS);
+			RedisClient.getForgotpasswordemails().add(emailDTO.getEmail(), Props.getAPP_WaitingTime(), TimeUnit.MINUTES);
 
 			ServiceResponse res = validateEmail(emailDTO);
 			if (res.isOK()) {
@@ -107,9 +107,9 @@ public class AuthService {
 		if (passwordDTO != null) {
 			ServiceResponse res = validatePassword(passwordDTO);
 			if (res.isOK()) {
-				if (! tokenService.isTokenInvalidated(passwordDTO.getToken())) {
+				if (!tokenService.isTokenInvalidated(passwordDTO.getToken())) {
 					final String email = tokenService.getEmail(passwordDTO.getToken());
-	
+
 					ServiceResponse found = userRepository.findByEmail(email);
 					if (found.isOK()) {
 						User user = found.getData();
@@ -133,7 +133,7 @@ public class AuthService {
 	}
 
 	public ServiceResponse refreshTokens(String token, String ip, String userAgent) {
-		if (! StringUtils.isBlank(token) && ! tokenService.isTokenInvalidated(token)) {
+		if (!StringUtils.isBlank(token) && !tokenService.isTokenInvalidated(token)) {
 			tokenService.revokeToken(token);
 			String bareRefreshToken = tokenService.getRefreshString(token);
 			String[] tokenParts = bareRefreshToken.split("::");
@@ -163,7 +163,7 @@ public class AuthService {
 		if (StringUtils.isBlank(passwordDTO.getToken())) {
 			problems.add("Token cannot be null!");
 		} else if (tokenService.isEmailTokenExpired(passwordDTO.getToken())) {
-			problems.add("Expired token!");
+			problems.add("Your token has expired!");
 		}
 
 		return Commons.createResponse(problems);
@@ -173,7 +173,7 @@ public class AuthService {
 		List<String> problems = LoginDTOValidator.verify(loginDTO);
 		return Commons.createResponse(problems);
 	}
-	
+
 	Tokens createTokens(User user, String ip, String userToken) {
 		AuthUser authUser = new AuthUser();
 		authUser.setId(user.getId());
@@ -182,7 +182,7 @@ public class AuthService {
 		authUser.setRole(user.getRole());
 		authUser.setCompanyId(user.getCompanyId());
 		authUser.setWorkspaceId(user.getWorkspaceId());
-		
+
 		return createTokens(authUser, ip, userToken);
 	}
 
