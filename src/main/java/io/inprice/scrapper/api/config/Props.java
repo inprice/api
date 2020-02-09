@@ -109,13 +109,13 @@ public class Props {
 	}
 
 	public static Long getTTL_AccessTokens() {
-		String def = isRunningForTests() ? "1m": "10s";
+		String def = isRunningForTests() ? "1m": "15m";
 		String ttl = System.getenv().getOrDefault(PropName.TTL_ACCESS_TOKENS.name(), def);
 		return DateUtils.parseTimePeriodAsMillis(ttl);
 	}
 
 	public static Long getTTL_RefreshTokens() {
-		String def = isRunningForTests() ? "5m": "1h";
+		String def = isRunningForTests() ? "3m": "1h";
 		String ttl = System.getenv().getOrDefault(PropName.TTL_REFRESH_TOKENS.name(), def);
 		return DateUtils.parseTimePeriodAsMillis(ttl);
 	}

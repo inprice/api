@@ -12,6 +12,8 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
+import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.service.AuthService;
 import spark.Request;
@@ -32,7 +34,11 @@ public class AuthController {
         	String token = req.body();
         	String ip = req.ip();
         	String userAgent = req.userAgent();
-			return Commons.createResponse(res, service.refreshTokens(token, ip, userAgent));
+        	ServiceResponse serres = service.refreshTokens(token, ip, userAgent);
+        	if (serres.isOK())
+        		return Commons.createResponse(res, serres);
+        	else
+        		return Responses._401;
         }, Global.gson::toJson);
 
         post(Consts.Paths.Auth.FORGOT_PASSWORD, (req, res) -> {

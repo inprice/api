@@ -131,10 +131,12 @@ public class AuthService {
 		if (!StringUtils.isBlank(token) && !tokenService.isTokenInvalidated(token)) {
 			tokenService.revokeToken(token);
 			String bareRefreshToken = tokenService.getRefreshString(token);
-			String[] tokenParts = bareRefreshToken.split("::");
-			ServiceResponse found = userRepository.findByEmail(tokenParts[0]);
-			if (found.isOK()) {
-				return authenticatedResponse(found.getData(), ip, userAgent);
+			if (bareRefreshToken != null) {
+				String[] tokenParts = bareRefreshToken.split("::");
+				ServiceResponse found = userRepository.findByEmail(tokenParts[0]);
+				if (found.isOK()) {
+					return authenticatedResponse(found.getData(), ip, userAgent);
+				}
 			}
 		}
 		return Responses.Invalid.TOKEN;

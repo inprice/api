@@ -14,6 +14,7 @@ import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.Tokens;
 import io.inprice.scrapper.api.rest.repository.TokenRepository;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClaims;
@@ -77,14 +78,18 @@ public class TokenService {
     }
 
     private String getTokenString(String token) {
-        Claims claims =
-            Jwts.parser()
-                .setSigningKey(Consts.Auth.APP_SECRET_KEY)
-                .parseClaimsJws(token)
-            .getBody();
-
-        final byte[] prePayload = Base64.getDecoder().decode(claims.get(Consts.Auth.PAYLOAD, String.class));
-        return Cryptor.decrypt(prePayload);
+    	try {
+	        Claims claims =
+	            Jwts.parser()
+	                .setSigningKey(Consts.Auth.APP_SECRET_KEY)
+	                .parseClaimsJws(token)
+	            .getBody();
+	
+	        final byte[] prePayload = Base64.getDecoder().decode(claims.get(Consts.Auth.PAYLOAD, String.class));
+	        return Cryptor.decrypt(prePayload);
+    	} catch (ExpiredJwtException ignored) {
+    		return null;
+    	}
     }
 
     public String getToken(Request request) {
