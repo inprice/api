@@ -52,12 +52,7 @@ public class AuthService {
 					if (hash.equals(user.getPasswordHash())) {
 						user.setPasswordSalt(null);
 						user.setPasswordHash(null);
-
-						Tokens tokens = createTokens(user, loginDTO.getIp(), loginDTO.getUserAgent());
-						Map<String, Object> data = new HashMap<>(2);
-						data.put("user", user);
-						data.put("tokens", tokens);
-						return new ServiceResponse(data);
+						return authenticatedResponse(user, loginDTO.getIp(), loginDTO.getUserAgent());
 					}
 				}
 			}
@@ -65,12 +60,12 @@ public class AuthService {
 		return Responses.Invalid.EMAIL_OR_PASSWORD;
 	}
 
-	public ServiceResponse forgotPassword(EmailDTO emailDTO) {
+	public ServiceResponse forgotPassword(EmailDTO emailDTO, String ipAddress) {
 		if (emailDTO != null) {
-			if (RedisClient.getForgotpasswordemails().contains(emailDTO.getEmail())) {
+			if (RedisClient.getForgotpasswordemails().contains(ipAddress)) {
 				return Responses.Illegal.TOO_MUCH_REQUEST;
 			}
-			RedisClient.getForgotpasswordemails().add(emailDTO.getEmail(), Props.getAPP_WaitingTime(), TimeUnit.MINUTES);
+			RedisClient.getForgotpasswordemails().add(ipAddress, Props.getAPP_WaitingTime(), TimeUnit.MINUTES);
 
 			ServiceResponse res = validateEmail(emailDTO);
 			if (res.isOK()) {
@@ -139,8 +134,7 @@ public class AuthService {
 			String[] tokenParts = bareRefreshToken.split("::");
 			ServiceResponse found = userRepository.findByEmail(tokenParts[0]);
 			if (found.isOK()) {
-				User user = found.getData();
-				return new ServiceResponse(createTokens(user, ip, userAgent));
+				return authenticatedResponse(found.getData(), ip, userAgent);
 			}
 		}
 		return Responses.Invalid.TOKEN;
@@ -198,4 +192,12 @@ public class AuthService {
 		return tokenService.generateTokens(authUser, ip, userToken);
 	}
 
+	private ServiceResponse authenticatedResponse(User user, String ip, String userAgent) {
+		Tokens tokens = createTokens(user, ip, userAgent);
+		Map<String, Object> data = new HashMap<>(2);
+		data.put("user", user);
+		data.put("tokens", tokens);
+		return new ServiceResponse(data);
+	}
+	
 }

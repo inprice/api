@@ -12,6 +12,7 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Routing;
 import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.service.ProductService;
 import io.inprice.scrapper.api.utils.SqlHelper;
@@ -26,31 +27,37 @@ public class ProductController {
 
 		// insert
 		post(Consts.Paths.Product.BASE, (req, res) -> {
+        	if (res.status() >= 400) return new ServiceResponse(res.status());
 			return Commons.createResponse(res, service.insert(Commons.toProductModel(req)));
 		}, Global.gson::toJson);
 
 		// update
 		put(Consts.Paths.Product.BASE, (req, res) -> {
+        	if (res.status() >= 400) return new ServiceResponse(res.status());
 			return Commons.createResponse(res, service.update(Commons.toProductModel(req)));
 		}, Global.gson::toJson);
 
 		// delete
 		delete(Consts.Paths.Product.BASE + "/:id", (req, res) -> {
+        	if (res.status() >= 400) return new ServiceResponse(res.status());
 			return Commons.createResponse(res, service.deleteById(NumberUtils.toLong(req.params(":id"))));
 		}, Global.gson::toJson);
 
 		// find
 		get(Consts.Paths.Product.BASE + "/:id", (req, res) -> {
+        	if (res.status() >= 400) return new ServiceResponse(res.status());
 			return Commons.createResponse(res, service.findById(NumberUtils.toLong(req.params(":id"))));
 		}, Global.gson::toJson);
 
 		// list
 		get(Consts.Paths.Product.BASE + "s", (req, res) -> {
+        	if (res.status() >= 400) return new ServiceResponse(res.status());
 			return Commons.createResponse(res, service.getList());
 		}, Global.gson::toJson);
 
 		// search
 		get(Consts.Paths.Product.SEARCH, (req, res) -> {
+        	if (res.status() >= 400) return new ServiceResponse(res.status());
 			Map<String, String> searchMap = new HashMap<>(SqlHelper.STANDARD_SEARCH_MAP);
 			if (req.queryMap().hasKeys()) {
 				Map<String, String[]> queryMap = req.queryMap().toMap();
@@ -65,6 +72,7 @@ public class ProductController {
 
 		// toggle active status
 		put(Consts.Paths.Product.TOGGLE_STATUS + "/:id", (req, res) -> {
+        	if (res.status() >= 400) return new ServiceResponse(res.status());
 			return Commons.createResponse(res, service.toggleStatus(NumberUtils.toLong(req.params(":id"))));
 		}, Global.gson::toJson);
 

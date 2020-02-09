@@ -4,7 +4,9 @@ import io.inprice.scrapper.api.info.ServiceResponse;
 
 public class Responses {
 
-    public static final ServiceResponse OK = new ServiceResponse(0, "OK");
+	public static final ServiceResponse OK = new ServiceResponse(0, "OK");
+	public static final ServiceResponse _401 = new ServiceResponse(401, "Unauthorized!");
+    public static final ServiceResponse _403 = new ServiceResponse(401, "Forbidden!");
 
     public static class Invalid {
         private static final int BASE = 100;
@@ -73,7 +75,7 @@ public class Responses {
 
     public static class Illegal {
         private static final int BASE = 700;
-        public static final ServiceResponse TOO_MUCH_REQUEST = new ServiceResponse(BASE + 1, "You are trying too much, please wait five minutes!");
+        public static final ServiceResponse TOO_MUCH_REQUEST = new ServiceResponse(BASE + 1, "You are trying too much, please wait some time!");
     }
 
 }

@@ -16,4 +16,5 @@ class ThreadVariables {
     void setAuthUser(AuthUser authUser) {
         this.authUser = authUser;
     }
+
 }

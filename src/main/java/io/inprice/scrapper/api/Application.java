@@ -65,25 +65,25 @@ public class Application {
 
     private static void applySparkSettings() {
         Spark.port(Props.getAPP_Port());
-
+        
         Spark.before(new AuthFilter());
-        Spark.before((req, res) -> res.type("application/json"));
 
         //Enable CORS
         Spark.options("/*", (req, res)-> {
-            String acrh = req.headers("Access-Control-Request-Headers");
-            if (acrh != null) res.header("Access-Control-Allow-Headers", acrh);
-
-            String acrm = req.headers("Access-Control-Request-Method");
-            if(acrm != null) res.header("Access-Control-Allow-Methods", acrm);
-
-            return "OK";
+        	String acrh = req.headers("Access-Control-Request-Headers");
+        	if (acrh != null) res.header("Access-Control-Allow-Headers", acrh);
+        	
+        	String acrm = req.headers("Access-Control-Request-Method");
+        	if(acrm != null) res.header("Access-Control-Allow-Methods", acrm);
+        	
+        	return "OK";
         });
-
+        
         Spark.before((req, res)-> {
-            res.header("Access-Control-Allow-Origin", "*");
-            res.header("Access-Control-Request-Methods", "*");
-            res.header("Access-Control-Expose-Headers", "Authorization, workspace");
+        	res.header("Access-Control-Allow-Origin", "*");
+        	res.header("Access-Control-Request-Methods", "*");
+        	res.header("Access-Control-Expose-Headers", "Authorization, workspace");
+        	res.type("application/json");
         });
 
         Spark.after((request, response)-> Context.cleanup());

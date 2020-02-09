@@ -21,7 +21,6 @@ public class LinkStatusChangeTest {
     @Test
     public void ok_with_ALL_SUITABLE_STATUSES_tobe_PAUSED() {
         for (int i = 1; i < 12; i++) {
-            //System.out.println(i);
             when()
                 .put(Consts.Paths.Link.PAUSE + "/" + i + "?product_id=1").
             then()

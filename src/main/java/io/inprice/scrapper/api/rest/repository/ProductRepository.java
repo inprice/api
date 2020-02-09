@@ -538,7 +538,6 @@ public class ProductRepository {
                 }
             }
         } catch (SQLIntegrityConstraintViolationException ie) {
-            log.error("Error", ie);
             return new ServiceResponse(Responses.DataProblem.DUPLICATE.getStatus(), productDTO.getCode() + " is already defined!");
         } catch (Exception e) {
             log.error("Error", e);

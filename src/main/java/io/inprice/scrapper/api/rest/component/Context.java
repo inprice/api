@@ -11,9 +11,9 @@ public class Context {
             return new ThreadVariables();
         }
     };
-
+    
     public static AuthUser getAuthUser() {
-        return THREAD_VARIABLES.get().getAuthUser();
+    	return THREAD_VARIABLES.get().getAuthUser();
     }
 
     static void setAuthUser(AuthUser authUser) {

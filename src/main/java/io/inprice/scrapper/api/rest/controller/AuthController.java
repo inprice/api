@@ -1,5 +1,10 @@
 package io.inprice.scrapper.api.rest.controller;
 
+import static spark.Spark.post;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.inprice.scrapper.api.dto.EmailDTO;
 import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.dto.PasswordDTO;
@@ -9,13 +14,7 @@ import io.inprice.scrapper.api.helpers.Consts;
 import io.inprice.scrapper.api.helpers.Global;
 import io.inprice.scrapper.api.rest.component.Commons;
 import io.inprice.scrapper.api.rest.service.AuthService;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import spark.Request;
-
-import static spark.Spark.get;
-import static spark.Spark.post;
 
 public class AuthController {
 
@@ -29,7 +28,7 @@ public class AuthController {
             return Commons.createResponse(res, service.login(toLoginModel(req)));
         }, Global.gson::toJson);
 
-        get(Consts.Paths.Auth.REFRESH_TOKEN, (req, res) -> {
+        post(Consts.Paths.Auth.REFRESH_TOKEN, (req, res) -> {
         	String token = req.body();
         	String ip = req.ip();
         	String userAgent = req.userAgent();
@@ -37,7 +36,7 @@ public class AuthController {
         }, Global.gson::toJson);
 
         post(Consts.Paths.Auth.FORGOT_PASSWORD, (req, res) -> {
-            return Commons.createResponse(res, service.forgotPassword(toEmailModel(req)));
+            return Commons.createResponse(res, service.forgotPassword(toEmailModel(req), req.ip()));
         }, Global.gson::toJson);
 
         post(Consts.Paths.Auth.RESET_PASSWORD, (req, res) -> {
