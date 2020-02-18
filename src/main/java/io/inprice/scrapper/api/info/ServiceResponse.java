@@ -6,45 +6,50 @@ import io.inprice.scrapper.api.helpers.Responses;
 
 public final class ServiceResponse {
 
-    private int status;
-    private String reason;
-    private Object data;
-    private List<String> problems;
+   private int status;
+   private String reason;
+   private Object data;
+   private List<String> problems;
 
-    public ServiceResponse(int status, String reason) {
-        this.status = status;
-        this.reason = reason;
-    }
+   public ServiceResponse(String reason) {
+      this.status = 0;
+      this.reason = reason;
+   }
 
-    public ServiceResponse(Object data) {
-        this.status = Responses.OK.getStatus();
-        this.data = data;
-    }
-    
-    public ServiceResponse(List<String> problems) {
-    	this.status = Responses.DataProblem.FORM_VALIDATION.getStatus();
-		this.problems = problems;
-	}
+   public ServiceResponse(int status, String reason) {
+      this.status = status;
+      this.reason = reason;
+   }
 
-	public boolean isOK() {
-        return (status == Responses.OK.getStatus());
-    }
+   public ServiceResponse(Object data) {
+      this.status = Responses.OK.getStatus();
+      this.data = data;
+   }
 
-    public int getStatus() {
-        return status;
-    }
+   public ServiceResponse(List<String> problems) {
+      this.status = Responses.DataProblem.FORM_VALIDATION.getStatus();
+      this.problems = problems;
+   }
 
-    public String getReason() {
-		return reason;
-	}
+   public boolean isOK() {
+      return (status == Responses.OK.getStatus());
+   }
 
-	@SuppressWarnings("unchecked")
-	public <T> T getData() {
-        return (T) data;
-    }
+   public int getStatus() {
+      return status;
+   }
 
-	public List<String> getProblems() {
-		return problems;
-	}
+   public String getReason() {
+      return reason;
+   }
+
+   @SuppressWarnings("unchecked")
+   public <T> T getData() {
+      return (T) data;
+   }
+
+   public List<String> getProblems() {
+      return problems;
+   }
 
 }

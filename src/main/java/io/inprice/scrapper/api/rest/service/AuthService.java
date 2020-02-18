@@ -33,173 +33,173 @@ import spark.Request;
 
 public class AuthService {
 
-	private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+   private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
-	private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-	private final TokenService tokenService = Beans.getSingleton(TokenService.class);
-	private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
-	private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
+   private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
+   private final TokenService tokenService = Beans.getSingleton(TokenService.class);
+   private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
+   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
 
-	public ServiceResponse login(LoginDTO loginDTO) {
-		if (loginDTO != null) {
-			ServiceResponse res = validate(loginDTO);
-			if (res.isOK()) {
-				ServiceResponse findingRes = userRepository.findByEmail(loginDTO.getEmail(), true);
-				if (findingRes.isOK()) {
-					User user = findingRes.getData();
-					String salt = user.getPasswordSalt();
-					String hash = BCrypt.hashpw(loginDTO.getPassword(), salt);
-					if (hash.equals(user.getPasswordHash())) {
-						user.setPasswordSalt(null);
-						user.setPasswordHash(null);
-						return authenticatedResponse(user, loginDTO.getIp(), loginDTO.getUserAgent());
-					}
-				}
-			}
-		}
-		return Responses.Invalid.EMAIL_OR_PASSWORD;
-	}
+   public ServiceResponse login(LoginDTO loginDTO) {
+      if (loginDTO != null) {
+         ServiceResponse res = validate(loginDTO);
+         if (res.isOK()) {
+            ServiceResponse findingRes = userRepository.findByEmail(loginDTO.getEmail(), true);
+            if (findingRes.isOK()) {
+               User user = findingRes.getData();
+               String salt = user.getPasswordSalt();
+               String hash = BCrypt.hashpw(loginDTO.getPassword(), salt);
+               if (hash.equals(user.getPasswordHash())) {
+                  user.setPasswordSalt(null);
+                  user.setPasswordHash(null);
+                  return authenticatedResponse(user, loginDTO.getIp(), loginDTO.getUserAgent());
+               }
+            }
+         }
+      }
+      return Responses.Invalid.EMAIL_OR_PASSWORD;
+   }
 
-	public ServiceResponse forgotPassword(EmailDTO emailDTO, String ipAddress) {
-		if (emailDTO != null) {
-			if (RedisClient.getForgotpasswordemails().contains(ipAddress)) {
-				return Responses.Illegal.TOO_MUCH_REQUEST;
-			}
-			RedisClient.getForgotpasswordemails().add(ipAddress, Props.getAPP_WaitingTime(), TimeUnit.MINUTES);
+   public ServiceResponse forgotPassword(EmailDTO emailDTO, String ipAddress) {
+      if (emailDTO != null) {
+         if (RedisClient.getForgotpasswordemails().contains(ipAddress)) {
+            return Responses.Illegal.TOO_MUCH_REQUEST;
+         }
+         RedisClient.getForgotpasswordemails().add(ipAddress, Props.getAPP_WaitingTime(), TimeUnit.MINUTES);
 
-			ServiceResponse res = validateEmail(emailDTO);
-			if (res.isOK()) {
-				ServiceResponse found = userRepository.findByEmail(emailDTO.getEmail());
-				if (found.isOK()) {
+         ServiceResponse res = validateEmail(emailDTO);
+         if (res.isOK()) {
+            ServiceResponse found = userRepository.findByEmail(emailDTO.getEmail());
+            if (found.isOK()) {
 
-					final String token = tokenService.newTokenEmailFor(emailDTO.getEmail());
-					try {
-						if (Props.isRunningForTests()) {
-							return new ServiceResponse(token); // --> for test purposes, we need this info to test some
-																// functionality during testing
-						} else {
-							User user = found.getData();
-							Map<String, Object> dataMap = new HashMap<>(3);
-							dataMap.put("fullName", user.getFullName());
-							dataMap.put("token", token);
-							dataMap.put("baseUrl", Props.getFrontendBaseUrl());
+               final String token = tokenService.newTokenEmailFor(emailDTO.getEmail());
+               try {
+                  if (Props.isRunningForTests()) {
+                     return new ServiceResponse(token); // --> for test purposes, we need this info to test some
+                                                        // functionality during testing
+                  } else {
+                     User user = found.getData();
+                     Map<String, Object> dataMap = new HashMap<>(3);
+                     dataMap.put("fullName", user.getFullName());
+                     dataMap.put("token", token);
+                     dataMap.put("baseUrl", Props.getFrontendBaseUrl());
 
-							final String message = renderer.renderForgotPassword(dataMap);
-							emailSender.send(Props.getEmail_Sender(), "Reset your password", user.getEmail(), message);
-						}
-					} catch (Exception e) {
-						log.error("An error occurred in rendering email for forgetting password", e);
-						return Responses.ServerProblem.EXCEPTION;
-					}
-				}
-			}
-			return res;
-		}
-		return Responses.Invalid.EMAIL;
-	}
+                     final String message = renderer.renderForgotPassword(dataMap);
+                     emailSender.send(Props.getEmail_Sender(), "Reset your password", user.getEmail(), message);
+                  }
+               } catch (Exception e) {
+                  log.error("An error occurred in rendering email for forgetting password", e);
+                  return Responses.ServerProblem.EXCEPTION;
+               }
+            }
+         }
+         return res;
+      }
+      return Responses.Invalid.EMAIL;
+   }
 
-	public ServiceResponse resetPassword(PasswordDTO passwordDTO) {
-		if (passwordDTO != null) {
-			ServiceResponse res = validatePassword(passwordDTO);
-			if (res.isOK()) {
-				if (!tokenService.isTokenInvalidated(passwordDTO.getToken())) {
-					final String email = tokenService.getEmail(passwordDTO.getToken());
+   public ServiceResponse resetPassword(PasswordDTO passwordDTO) {
+      if (passwordDTO != null) {
+         ServiceResponse res = validatePassword(passwordDTO);
+         if (res.isOK()) {
+            if (!tokenService.isTokenInvalidated(passwordDTO.getToken())) {
+               final String email = tokenService.getEmail(passwordDTO.getToken());
 
-					ServiceResponse found = userRepository.findByEmail(email);
-					if (found.isOK()) {
-						User user = found.getData();
-						AuthUser authUser = new AuthUser();
-						authUser.setId(user.getId());
-						authUser.setCompanyId(user.getCompanyId());
-						authUser.setWorkspaceId(user.getWorkspaceId());
-						res = userRepository.updatePassword(passwordDTO, authUser);
-						tokenService.revokeToken(passwordDTO.getToken());
-					} else {
-						return Responses.NotFound.EMAIL;
-					}
-				} else {
-					return Responses.Invalid.TOKEN;
-				}
-			}
-			return res;
-		}
+               ServiceResponse found = userRepository.findByEmail(email);
+               if (found.isOK()) {
+                  User user = found.getData();
+                  AuthUser authUser = new AuthUser();
+                  authUser.setId(user.getId());
+                  authUser.setCompanyId(user.getCompanyId());
+                  authUser.setWorkspaceId(user.getWorkspaceId());
+                  res = userRepository.updatePassword(passwordDTO, authUser);
+                  tokenService.revokeToken(passwordDTO.getToken());
+               } else {
+                  return Responses.NotFound.EMAIL;
+               }
+            } else {
+               return Responses.Invalid.TOKEN;
+            }
+         }
+         return res;
+      }
 
-		return Responses.Invalid.PASSWORD;
-	}
+      return Responses.Invalid.PASSWORD;
+   }
 
-	public ServiceResponse refreshTokens(String token, String ip, String userAgent) {
-		if (!StringUtils.isBlank(token) && !tokenService.isTokenInvalidated(token)) {
-			tokenService.revokeToken(token);
-			String bareRefreshToken = tokenService.getRefreshString(token);
-			if (bareRefreshToken != null) {
-				String[] tokenParts = bareRefreshToken.split("::");
-				ServiceResponse found = userRepository.findByEmail(tokenParts[0]);
-				if (found.isOK()) {
-					return authenticatedResponse(found.getData(), ip, userAgent);
-				}
-			}
-		}
-		return Responses.Invalid.TOKEN;
-	}
+   public ServiceResponse refreshTokens(String token, String ip, String userAgent) {
+      if (!StringUtils.isBlank(token) && !tokenService.isTokenInvalidated(token)) {
+         tokenService.revokeToken(token);
+         String bareRefreshToken = tokenService.getRefreshString(token);
+         if (bareRefreshToken != null) {
+            String[] tokenParts = bareRefreshToken.split("::");
+            ServiceResponse found = userRepository.findByEmail(tokenParts[0]);
+            if (found.isOK()) {
+               return authenticatedResponse(found.getData(), ip, userAgent);
+            }
+         }
+      }
+      return Responses.Invalid.TOKEN;
+   }
 
-	public ServiceResponse logout(Request req) {
-		tokenService.revokeToken(tokenService.getToken(req));
-		return Responses.OK;
-	}
+   public ServiceResponse logout(Request req) {
+      tokenService.revokeToken(tokenService.getToken(req));
+      return Responses.OK;
+   }
 
-	private ServiceResponse validateEmail(EmailDTO emailDTO) {
-		List<String> problems = new ArrayList<>();
-		EmailDTOValidator.verify(emailDTO.getEmail(), problems);
-		return Commons.createResponse(problems);
-	}
+   private ServiceResponse validateEmail(EmailDTO emailDTO) {
+      List<String> problems = new ArrayList<>();
+      EmailDTOValidator.verify(emailDTO.getEmail(), problems);
+      return Commons.createResponse(problems);
+   }
 
-	private ServiceResponse validatePassword(PasswordDTO passwordDTO) {
-		List<String> problems = PasswordDTOValidator.verify(passwordDTO, true, false);
+   private ServiceResponse validatePassword(PasswordDTO passwordDTO) {
+      List<String> problems = PasswordDTOValidator.verify(passwordDTO, true, false);
 
-		if (StringUtils.isBlank(passwordDTO.getToken())) {
-			problems.add("Token cannot be null!");
-		} else if (tokenService.isEmailTokenExpired(passwordDTO.getToken())) {
-			problems.add("Your token has expired!");
-		}
+      if (StringUtils.isBlank(passwordDTO.getToken())) {
+         problems.add("Token cannot be null!");
+      } else if (tokenService.isEmailTokenExpired(passwordDTO.getToken())) {
+         problems.add("Your token has expired!");
+      }
 
-		return Commons.createResponse(problems);
-	}
+      return Commons.createResponse(problems);
+   }
 
-	private ServiceResponse validate(LoginDTO loginDTO) {
-		List<String> problems = LoginDTOValidator.verify(loginDTO);
-		return Commons.createResponse(problems);
-	}
+   private ServiceResponse validate(LoginDTO loginDTO) {
+      List<String> problems = LoginDTOValidator.verify(loginDTO);
+      return Commons.createResponse(problems);
+   }
 
-	Tokens createTokens(User user, String ip, String userToken) {
-		AuthUser authUser = new AuthUser();
-		authUser.setId(user.getId());
-		authUser.setEmail(user.getEmail());
-		authUser.setFullName(user.getFullName());
-		authUser.setRole(user.getRole());
-		authUser.setCompanyId(user.getCompanyId());
-		authUser.setWorkspaceId(user.getWorkspaceId());
+   Tokens createTokens(User user, String ip, String userToken) {
+      AuthUser authUser = new AuthUser();
+      authUser.setId(user.getId());
+      authUser.setEmail(user.getEmail());
+      authUser.setFullName(user.getFullName());
+      authUser.setRole(user.getRole());
+      authUser.setCompanyId(user.getCompanyId());
+      authUser.setWorkspaceId(user.getWorkspaceId());
 
-		return createTokens(authUser, ip, userToken);
-	}
+      return createTokens(authUser, ip, userToken);
+   }
 
-	Tokens createTokens(AuthUser user, String ip, String userToken) {
-		AuthUser authUser = new AuthUser();
-		authUser.setId(user.getId());
-		authUser.setEmail(user.getEmail());
-		authUser.setFullName(user.getFullName());
-		authUser.setRole(user.getRole());
-		authUser.setCompanyId(user.getCompanyId());
-		authUser.setWorkspaceId(user.getWorkspaceId());
+   Tokens createTokens(AuthUser user, String ip, String userToken) {
+      AuthUser authUser = new AuthUser();
+      authUser.setId(user.getId());
+      authUser.setEmail(user.getEmail());
+      authUser.setFullName(user.getFullName());
+      authUser.setRole(user.getRole());
+      authUser.setCompanyId(user.getCompanyId());
+      authUser.setWorkspaceId(user.getWorkspaceId());
 
-		return tokenService.generateTokens(authUser, ip, userToken);
-	}
+      return tokenService.generateTokens(authUser, ip, userToken);
+   }
 
-	private ServiceResponse authenticatedResponse(User user, String ip, String userAgent) {
-		Tokens tokens = createTokens(user, ip, userAgent);
-		Map<String, Object> data = new HashMap<>(2);
-		data.put("user", user);
-		data.put("tokens", tokens);
-		return new ServiceResponse(data);
-	}
-	
+   private ServiceResponse authenticatedResponse(User user, String ip, String userAgent) {
+      Tokens tokens = createTokens(user, ip, userAgent);
+      Map<String, Object> data = new HashMap<>(2);
+      data.put("user", user);
+      data.put("tokens", tokens);
+      return new ServiceResponse(data);
+   }
+
 }
