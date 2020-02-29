@@ -8,7 +8,9 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,16 +67,39 @@ public class ProductRepository {
    }
 
    public ServiceResponse search(SearchModel searchModel) {
-      final String searchQuery = SqlHelper.generateSearchQuery(searchModel, "code", "name");
+      final String searchQueryForRowCount = SqlHelper.generateSearchQueryCountPart("product", searchModel, "code",
+            "name");
 
-      final String query = "select * from product where company_id = " + Context.getCompanyId()
-            + "  and workspace_id = " + Context.getWorkspaceId() + searchQuery;
+      int totalRowCount = 0;
+      try (Connection con = dbUtils.getConnection();
+            PreparedStatement pst = con.prepareStatement(searchQueryForRowCount)) {
 
-      List<Product> products = dbUtils.findMultiple(query, this::map);
-      if (products.size() > 0)
-         return new ServiceResponse(products);
-      else
-         return Responses.NotFound.PRODUCT;
+         ResultSet rs = pst.executeQuery();
+         if (rs.next()) {
+            totalRowCount = rs.getInt(1);
+         }
+         rs.close();
+
+         if (totalRowCount > 0) {
+            final String searchQueryForSelection = SqlHelper.generateSearchQuerySelectPart("product", searchModel,
+                  totalRowCount, "code", "name");
+            List<Product> rows = dbUtils.findMultiple(con, searchQueryForSelection, this::map);
+            Map<String, Object> data = new HashMap<>(2);
+            data.put("rows", rows);
+            data.put("totalRowCount", totalRowCount);
+            data.put("totalPageCount", 1);
+            if (totalRowCount > searchModel.getRowLimit()) {
+               data.put("totalPageCount", Math.ceil((double) totalRowCount / searchModel.getRowLimit()));
+            }
+            return new ServiceResponse(data);
+         }
+
+      } catch (Exception e) {
+         log.error("Failed to search product. ", e);
+         return Responses.ServerProblem.EXCEPTION;
+      }
+
+      return Responses.NotFound.PRODUCT;
    }
 
    public ServiceResponse insert(ProductDTO productDTO) {
@@ -413,18 +438,18 @@ public class ProductRepository {
          int i = 0;
 
          switch (importRow.getImportType()) {
-         case URL: {
-            pst.setString(++i, importRow.getData());
-            break;
-         }
-         case EBAY_SKU: {
-            pst.setString(++i, Props.getPrefix_ForSearchingInEbay() + importRow.getData());
-            break;
-         }
-         case AMAZON_ASIN: {
-            pst.setString(++i, Props.getPrefix_ForSearchingInAmazon() + importRow.getData());
-            break;
-         }
+            case URL: {
+               pst.setString(++i, importRow.getData());
+               break;
+            }
+            case EBAY_SKU: {
+               pst.setString(++i, Props.getPrefix_ForSearchingInEbay() + importRow.getData());
+               break;
+            }
+            case AMAZON_ASIN: {
+               pst.setString(++i, Props.getPrefix_ForSearchingInAmazon() + importRow.getData());
+               break;
+            }
          }
 
          pst.setLong(++i, importRow.getImportId());

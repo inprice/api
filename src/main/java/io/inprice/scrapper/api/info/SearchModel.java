@@ -7,14 +7,14 @@ import io.inprice.scrapper.api.utils.SqlHelper;
 public class SearchModel {
 
    private String term;
-   private int rowCount;
+   private int rowLimit;
    private int pageNo;
    private String orderBy;
    private String orderDir;
 
    public SearchModel(Map<String, String> map, Class<?> clazz) {
       term = SqlHelper.clear(map.getOrDefault("term", "").trim());
-      rowCount = Integer.parseInt(map.getOrDefault("rowCount", "10"));
+      rowLimit = Integer.parseInt(map.getOrDefault("rowLimit", "10"));
       pageNo = Integer.parseInt(map.getOrDefault("pageNo", "1"));
       orderBy = SqlHelper.clear(map.getOrDefault("orderBy", "id").trim());
       orderDir = SqlHelper.clear(map.getOrDefault("orderDir", "asc").trim());
@@ -22,10 +22,10 @@ public class SearchModel {
       // clearance
       if (term.length() > 500)
          term = term.substring(0, 500);
-      if (rowCount < 10 || rowCount > 100)
-         rowCount = 10;
+      if (rowLimit < 10 || rowLimit > 250)
+         rowLimit = 10;
       if (pageNo < 1)
-         rowCount = 1;
+         rowLimit = 1;
       if (!orderDir.matches("(a|de)sc"))
          orderDir = "asc";
 
@@ -40,8 +40,8 @@ public class SearchModel {
       return term;
    }
 
-   public int getRowCount() {
-      return rowCount;
+   public int getRowLimit() {
+      return rowLimit;
    }
 
    public int getPageNo() {
@@ -54,6 +54,12 @@ public class SearchModel {
 
    public String getOrderDir() {
       return orderDir;
+   }
+
+   @Override
+   public String toString() {
+      return "SearchModel [orderBy=" + orderBy + ", orderDir=" + orderDir + ", pageNo=" + pageNo + ", rowLimit="
+            + rowLimit + ", term=" + term + "]";
    }
 
 }

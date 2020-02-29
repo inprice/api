@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.inprice.scrapper.api.info.SearchModel;
+import io.inprice.scrapper.api.rest.component.Context;
 
 public class SqlHelper {
 
@@ -12,8 +13,8 @@ public class SqlHelper {
    static {
       STANDARD_SEARCH_MAP = new HashMap<>();
       STANDARD_SEARCH_MAP.put("term", "");
-      STANDARD_SEARCH_MAP.put("page", "1");
-      STANDARD_SEARCH_MAP.put("rowCount", "10");
+      STANDARD_SEARCH_MAP.put("pageNo", "1");
+      STANDARD_SEARCH_MAP.put("rowLimit", "10");
       STANDARD_SEARCH_MAP.put("orderBy", "id");
       STANDARD_SEARCH_MAP.put("orderDir", "asc");
    }
@@ -28,13 +29,13 @@ public class SqlHelper {
       for (int i = 0; i < length; i++) {
          char c = val.charAt(i);
          switch (c) {
-         case '\\':
-         case '\"':
-         case '\'':
-         case '\0': {
-            newLength += 1;
-         }
-            break;
+            case '\\':
+            case '\"':
+            case '\'':
+            case '\0': {
+               newLength += 1;
+            }
+               break;
          }
       }
       if (length == newLength) {
@@ -45,32 +46,66 @@ public class SqlHelper {
       for (int i = 0; i < length; i++) {
          char c = val.charAt(i);
          switch (c) {
-         case '\\': {
-            sb.append("\\\\");
-         }
-            break;
-         case '\"': {
-            sb.append("\\\"");
-         }
-            break;
-         case '\'': {
-            sb.append("\\\'");
-         }
-            break;
-         case '\0': {
-            sb.append("\\0");
-         }
-            break;
-         default: {
-            sb.append(c);
-         }
+            case '\\': {
+               sb.append("\\\\");
+            }
+               break;
+            case '\"': {
+               sb.append("\\\"");
+            }
+               break;
+            case '\'': {
+               sb.append("\\\'");
+            }
+               break;
+            case '\0': {
+               sb.append("\\0");
+            }
+               break;
+            default: {
+               sb.append(c);
+            }
          }
       }
       return sb.toString();
    }
 
-   public static String generateSearchQuery(SearchModel searchModel, String... queryingFields) {
-      StringBuilder sql = new StringBuilder("");
+   public static String generateSearchQueryCountPart(String tableName, SearchModel searchModel,
+         String... queryingFields) {
+      StringBuilder sql = new StringBuilder("select count(1) from ");
+      sql.append(tableName);
+      sql.append(" where workspace_id = ");
+      sql.append(Context.getWorkspaceId());
+      sql.append(" and company_id = ");
+      sql.append(Context.getCompanyId());
+
+      // query string part
+      if (!searchModel.getTerm().isEmpty()) {
+         sql.append(" and (");
+         for (int i = 0; i < queryingFields.length; i++) {
+            String field = queryingFields[i];
+            sql.append(field);
+            sql.append(" like '%");
+            sql.append(searchModel.getTerm());
+            sql.append("%' ");
+            if (i < queryingFields.length - 1) {
+               sql.append(" OR ");
+            }
+         }
+         sql.append(") ");
+      }
+
+      return sql.toString();
+   }
+
+   public static String generateSearchQuerySelectPart(String tableName, SearchModel searchModel, int count,
+         String... queryingFields) {
+      StringBuilder sql = new StringBuilder("select * from ");
+      sql.append(tableName);
+      sql.append(" where workspace_id = ");
+      sql.append(Context.getWorkspaceId());
+      sql.append(" and company_id = ");
+      sql.append(Context.getCompanyId());
 
       // query string part
       if (!searchModel.getTerm().isEmpty()) {
@@ -97,13 +132,15 @@ public class SqlHelper {
       }
 
       // limiting part
-      int page = (searchModel.getPageNo() - 1) * searchModel.getRowCount();
-      sql.append(" limit ");
-      if (page > 0) {
-         sql.append(page);
-         sql.append(", ");
+      if (count > searchModel.getRowLimit()) {
+         int page = (searchModel.getPageNo() - 1) * searchModel.getRowLimit();
+         sql.append(" limit ");
+         if (page > 0) {
+            sql.append(page);
+            sql.append(", ");
+         }
+         sql.append(searchModel.getRowLimit());
       }
-      sql.append(page + searchModel.getRowCount());
 
       return sql.toString();
    }

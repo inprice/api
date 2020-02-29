@@ -196,10 +196,10 @@ public class AuthService {
 
    private ServiceResponse authenticatedResponse(User user, String ip, String userAgent) {
       Tokens tokens = createTokens(user, ip, userAgent);
-      Map<String, Object> data = new HashMap<>(2);
-      data.put("user", user);
-      data.put("tokens", tokens);
-      return new ServiceResponse(data);
+      Map<String, Object> payload = new HashMap<>(2);
+      payload.put("user", user);
+      payload.put("tokens", tokens);
+      return new ServiceResponse(payload);
    }
 
 }
