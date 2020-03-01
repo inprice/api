@@ -173,6 +173,12 @@ public class ProductRepository {
                return Responses.DataProblem.DB_PROBLEM;
             }
          }
+      } catch (SQLIntegrityConstraintViolationException duperr) {
+         if (con != null)
+            dbUtils.rollback(con);
+         log.error("Code duplication error " + productDTO.getCode(), duperr.getMessage());
+         return new ServiceResponse(Responses.DataProblem.DUPLICATE.getStatus(),
+               productDTO.getCode() + " is already used for another product!");
       } catch (Exception e) {
          if (con != null)
             dbUtils.rollback(con);

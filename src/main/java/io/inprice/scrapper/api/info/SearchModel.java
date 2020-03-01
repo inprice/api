@@ -28,12 +28,6 @@ public class SearchModel {
          pageLimit = 1;
       if (!orderDir.matches("(a|de)sc"))
          orderDir = "asc";
-
-      try {
-         clazz.getField(orderBy);
-      } catch (NoSuchFieldException e) {
-         orderBy = "id";
-      }
    }
 
    public String getTerm() {
