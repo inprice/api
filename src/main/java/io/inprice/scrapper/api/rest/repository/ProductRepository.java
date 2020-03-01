@@ -88,8 +88,8 @@ public class ProductRepository {
             data.put("rows", rows);
             data.put("totalRowCount", totalRowCount);
             data.put("totalPageCount", 1);
-            if (totalRowCount > searchModel.getRowLimit()) {
-               data.put("totalPageCount", Math.ceil((double) totalRowCount / searchModel.getRowLimit()));
+            if (totalRowCount > searchModel.getPageLimit()) {
+               data.put("totalPageCount", Math.ceil((double) totalRowCount / searchModel.getPageLimit()));
             }
             return new ServiceResponse(data);
          }

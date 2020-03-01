@@ -14,7 +14,7 @@ public class SqlHelper {
       STANDARD_SEARCH_MAP = new HashMap<>();
       STANDARD_SEARCH_MAP.put("term", "");
       STANDARD_SEARCH_MAP.put("pageNo", "1");
-      STANDARD_SEARCH_MAP.put("rowLimit", "10");
+      STANDARD_SEARCH_MAP.put("pageLimit", "10");
       STANDARD_SEARCH_MAP.put("orderBy", "id");
       STANDARD_SEARCH_MAP.put("orderDir", "asc");
    }
@@ -132,14 +132,14 @@ public class SqlHelper {
       }
 
       // limiting part
-      if (count > searchModel.getRowLimit()) {
-         int page = (searchModel.getPageNo() - 1) * searchModel.getRowLimit();
+      if (count > searchModel.getPageLimit()) {
+         int page = (searchModel.getPageNo() - 1) * searchModel.getPageLimit();
          sql.append(" limit ");
          if (page > 0) {
             sql.append(page);
             sql.append(", ");
          }
-         sql.append(searchModel.getRowLimit());
+         sql.append(searchModel.getPageLimit());
       }
 
       return sql.toString();
