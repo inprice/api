@@ -99,7 +99,7 @@ public class ProductRepository {
          return Responses.ServerProblem.EXCEPTION;
       }
 
-      return Responses.NotFound.PRODUCT;
+      return Responses.NotFound.SEARCH_NOT_FOUND;
    }
 
    public ServiceResponse insert(ProductDTO productDTO) {

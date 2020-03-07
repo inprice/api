@@ -66,20 +66,26 @@ public class Responses {
       private static final int BASE = 700;
       public static final ServiceResponse TOO_MUCH_REQUEST = new ServiceResponse(BASE + 1,
             "You are trying too much, please wait some time!");
+      public static final ServiceResponse TIMED_OUT_FORGOT_PASSWORD = new ServiceResponse(BASE + 2,
+            "Your session seems to expire, please send us a new forgot password request again!");
    }
 
    public static class NotFound {
-      public static final ServiceResponse COMPANY = new ServiceResponse("Company not found!");
-      public static final ServiceResponse WORKSPACE = new ServiceResponse("Workspace not found!");
-      public static final ServiceResponse PLAN = new ServiceResponse("Plan not found!");
-      public static final ServiceResponse TICKET = new ServiceResponse("Ticket not found!");
+      private static final int BASE = 404;
 
-      public static final ServiceResponse USER = new ServiceResponse("User not found!");
-      public static final ServiceResponse EMAIL = new ServiceResponse("Email not found!");
+      public static final ServiceResponse SEARCH_NOT_FOUND = new ServiceResponse("Nothing found!"); // not an error!
 
-      public static final ServiceResponse PRODUCT = new ServiceResponse("Product not found!");
-      public static final ServiceResponse LINK = new ServiceResponse("Link not found!");
-      public static final ServiceResponse IMPORT = new ServiceResponse("Import not found!");
+      public static final ServiceResponse COMPANY = new ServiceResponse(BASE, "Company not found!");
+      public static final ServiceResponse WORKSPACE = new ServiceResponse(BASE, "Workspace not found!");
+      public static final ServiceResponse PLAN = new ServiceResponse(BASE, "Plan not found!");
+      public static final ServiceResponse TICKET = new ServiceResponse(BASE, "Ticket not found!");
+
+      public static final ServiceResponse USER = new ServiceResponse(BASE, "User not found!");
+      public static final ServiceResponse EMAIL = new ServiceResponse(BASE, "Email not found!");
+
+      public static final ServiceResponse PRODUCT = new ServiceResponse(BASE, "Product not found!");
+      public static final ServiceResponse LINK = new ServiceResponse(BASE, "Link not found!");
+      public static final ServiceResponse IMPORT = new ServiceResponse(BASE, "Import not found!");
    }
 
 }

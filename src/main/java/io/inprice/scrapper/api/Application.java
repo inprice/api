@@ -78,7 +78,6 @@ public class Application {
          if (acrm != null)
             res.header("Access-Control-Allow-Methods", acrm);
 
-         res.header("Access-Control-Max-Age", "600");
          return "OK";
       });
 
@@ -86,6 +85,9 @@ public class Application {
          res.header("Access-Control-Allow-Origin", "*");
          res.header("Access-Control-Request-Methods", "*");
          res.header("Access-Control-Expose-Headers", "Authorization, workspace");
+         if (req.requestMethod().equals("OPTIONS")) {
+            res.header("Access-Control-Max-Age", "86400");
+         }
          res.type("application/json");
       });
 

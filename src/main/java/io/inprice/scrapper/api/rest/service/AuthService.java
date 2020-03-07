@@ -105,17 +105,21 @@ public class AuthService {
             if (!tokenService.isTokenInvalidated(passwordDTO.getToken())) {
                final String email = tokenService.getEmail(passwordDTO.getToken());
 
-               ServiceResponse found = userRepository.findByEmail(email);
-               if (found.isOK()) {
-                  User user = found.getData();
-                  AuthUser authUser = new AuthUser();
-                  authUser.setId(user.getId());
-                  authUser.setCompanyId(user.getCompanyId());
-                  authUser.setWorkspaceId(user.getWorkspaceId());
-                  res = userRepository.updatePassword(passwordDTO, authUser);
-                  tokenService.revokeToken(passwordDTO.getToken());
+               if (email != null) {
+                  ServiceResponse found = userRepository.findByEmail(email);
+                  if (found.isOK()) {
+                     User user = found.getData();
+                     AuthUser authUser = new AuthUser();
+                     authUser.setId(user.getId());
+                     authUser.setCompanyId(user.getCompanyId());
+                     authUser.setWorkspaceId(user.getWorkspaceId());
+                     res = userRepository.updatePassword(passwordDTO, authUser);
+                     tokenService.revokeToken(passwordDTO.getToken());
+                  } else {
+                     return Responses.NotFound.EMAIL;
+                  }
                } else {
-                  return Responses.NotFound.EMAIL;
+                  return Responses.Illegal.TIMED_OUT_FORGOT_PASSWORD;
                }
             } else {
                return Responses.Invalid.TOKEN;
