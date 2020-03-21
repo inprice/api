@@ -1,0 +1,58 @@
+package io.inprice.scrapper.api.app.plan;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.inprice.scrapper.api.app.company.CompanyRepository;
+import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.DBUtils;
+import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.info.ServiceResponse;
+
+public class PlanRepository {
+
+   private static final Logger log = LoggerFactory.getLogger(CompanyRepository.class);
+   private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+
+   public int findAllowedProductCount() {
+      int result = 0;
+
+      ServiceResponse res = findByWorkspaceId();
+      if (res.isOK()) {
+         Plan plan = res.getData();
+         result = plan.getRowLimit();
+      }
+
+      return result;
+   }
+
+   private ServiceResponse findByWorkspaceId() {
+      Plan model = dbUtils.findSingle("select p.* from plan as p " + "inner join workspace as ws on p.id = ws.plan_id "
+            + "where ws.id=" + Context.getWorkspaceId(), PlanRepository::map);
+      if (model != null) {
+         return new ServiceResponse(model);
+      }
+
+      return Responses.Invalid.PLAN;
+   }
+
+   private static Plan map(ResultSet rs) {
+      try {
+         Plan model = new Plan();
+         model.setId(rs.getLong("id"));
+         model.setName(rs.getString("name"));
+         model.setPrice(rs.getBigDecimal("price"));
+         model.setRowLimit(rs.getInt("row_limit"));
+         model.setOrderNo(rs.getInt("order_no"));
+
+         return model;
+      } catch (SQLException e) {
+         log.error("Failed to set plan's properties", e);
+      }
+      return null;
+   }
+
+}

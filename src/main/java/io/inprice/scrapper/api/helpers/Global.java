@@ -5,8 +5,8 @@ import com.google.gson.GsonBuilder;
 
 public class Global {
 
-    public static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+   public static final Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 
-    public static volatile boolean isApplicationRunning = false;
+   public static volatile boolean isApplicationRunning = false;
 
 }

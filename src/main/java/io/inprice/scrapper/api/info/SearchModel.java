@@ -14,7 +14,7 @@ public class SearchModel {
 
    public SearchModel(Map<String, String> map, Class<?> clazz) {
       term = SqlHelper.clear(map.getOrDefault("term", "").trim());
-      pageLimit = Integer.parseInt(map.getOrDefault("pageLimit", "10"));
+      pageLimit = Integer.parseInt(map.getOrDefault("pageLimit", "250"));
       pageNo = Integer.parseInt(map.getOrDefault("pageNo", "1"));
       orderBy = SqlHelper.clear(map.getOrDefault("orderBy", "id").trim());
       orderDir = SqlHelper.clear(map.getOrDefault("orderDir", "asc").trim());

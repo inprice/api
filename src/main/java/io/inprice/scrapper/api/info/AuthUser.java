@@ -1,62 +1,57 @@
 package io.inprice.scrapper.api.info;
 
-import io.inprice.scrapper.common.meta.Role;
-import io.inprice.scrapper.common.models.Model;
+import java.io.Serializable;
 
-import java.util.UUID;
+import io.inprice.scrapper.api.app.user.UserRole;
 
-public class AuthUser extends Model {
+public class AuthUser implements Serializable {
 
-	private static final long serialVersionUID = 1L;
-	private String sessionId = UUID.randomUUID().toString();
+   private static final long serialVersionUID = 5763780271600754333L;
 
-    private String email;
-    private Role role;
-    private String fullName;
-    private Long companyId;
-    private Long workspaceId;
+   private Long id;
+   private String email;
+   private String name;
+   private UserRole role;
+   private Long companyId;
 
-    public String getSessionId() {
-        return sessionId;
-    }
+   public Long getId() {
+      return id;
+   }
 
-    public String getEmail() {
-        return email;
-    }
+   public void setId(Long id) {
+      this.id = id;
+   }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+   public String getEmail() {
+      return email;
+   }
 
-    public Role getRole() {
-        return role;
-    }
+   public void setEmail(String email) {
+      this.email = email;
+   }
 
-    public void setRole(Role role) {
-        this.role = role;
-    }
+   public String getName() {
+      return name;
+   }
 
-    public String getFullName() {
-        return fullName;
-    }
+   public void setName(String name) {
+      this.name = name;
+   }
 
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
-    }
+   public UserRole getRole() {
+      return role;
+   }
 
-    public Long getCompanyId() {
-        return companyId;
-    }
+   public void setRole(UserRole role) {
+      this.role = role;
+   }
 
-    public void setCompanyId(Long companyId) {
-        this.companyId = companyId;
-    }
+   public Long getCompanyId() {
+      return companyId;
+   }
 
-    public Long getWorkspaceId() {
-        return workspaceId;
-    }
+   public void setCompanyId(Long companyId) {
+      this.companyId = companyId;
+   }
 
-    public void setWorkspaceId(Long workspaceId) {
-        this.workspaceId = workspaceId;
-    }
 }

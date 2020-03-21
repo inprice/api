@@ -9,7 +9,36 @@
       "name": "Debug API",
       "request": "launch",
       "projectName": "api",
-      "mainClass": "io.inprice.scrapper.api.Application"
+      "mainClass": "io.inprice.scrapper.api.Application",
+      "env": {
+        "APP_PORT": 4567,
+        "APP_RUNNING_AT": "prod",
+        "APP_PROD_UNIQUENESS": false,
+        "APP_LINK_UNIQUENESS": false,
+        "APP_SHOWING_SQL_QUERIES": true,
+        "APP_WAITING_TIME": 5,
+        "DB_DRIVER": "mysql",
+        "DB_HOST": "//localhost",
+        "DB_PORT": 3306,
+        "DB_USERNAME": "root",
+        "DB_PASSWORD": "1234",
+        "DB_DATABASE": "inprice",
+        "DB_ADDITIONS": "",
+        "MQ_HOST": "localhost",
+        "MQ_PORT": 5672,
+        "MQ_USERNAME": "guest",
+        "MQ_PASSWORD": "guest",
+        "MQ_EXCHANGE_CHANGES": "changes",
+        "MQ_ROUTING_DELETED_LINKS": "deleted-links",
+        "REDIS_HOST": "localhost",
+        "REDIS_PORT": 6379,
+        "TTL_ACCESS_TOKENS": "15m",
+        "TTL_REFRESH_TOKENS": "1h",
+        "OTHER_SENDER_EMAIL": "support@inprice.io",
+        "PREFIX_FOR_SEARCH_EBAY": "https://www.ebay.com/itm/",
+        "PREFIX_FOR_SEARCH_AMAZON": "https://www.amazon.com/dp/",
+        "SECURITY_SALT_ROUNDS": "12"
+      }
     }
   ]
 }
