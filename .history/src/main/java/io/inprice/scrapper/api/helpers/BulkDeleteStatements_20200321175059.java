@@ -4,13 +4,13 @@ import java.util.Arrays;
 
 import io.inprice.scrapper.api.component.UserInfo;
 
-public class BulkDeleteStatements {
+class BulkDeleteStatements {
 
    private String[] linksByProductId(Long productId) {
       return links(productId, null);
    }
 
-   public String[] linksByLinkIdId(Long linkId) {
+   String[] linksByLinkIdId(Long linkId) {
       return links(null, linkId);
    }
 
@@ -47,7 +47,7 @@ public class BulkDeleteStatements {
     *
     * @return delete statements
     */
-   public String[] products(Long productId) {
+   String[] products(Long productId) {
       String where = "where company_id=" + UserInfo.getCompanyId();
       String where_1 = where;
 

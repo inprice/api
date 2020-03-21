@@ -20,7 +20,7 @@ public class Link implements Serializable {
    private Date lastUpdate;
    private Date lastCheck;
    private LinkStatus status = LinkStatus.NEW;
-   private LinkStatus preStatus = LinkStatus.NEW;
+   private LinkStatus previousStatus = LinkStatus.NEW;
    private Integer retry;
    private Integer httpStatus;
    private String websiteClassName;
@@ -136,16 +136,16 @@ public class Link implements Serializable {
    }
 
    public void setStatus(LinkStatus status) {
-      this.preStatus = this.status;
+      this.previousStatus = this.status;
       this.status = status;
    }
 
-   public LinkStatus getPreStatus() {
-      return preStatus;
+   public LinkStatus getPreviousStatus() {
+      return previousStatus;
    }
 
-   public void setPreStatus(LinkStatus preStatus) {
-      this.preStatus = preStatus;
+   public void setPreviousStatus(LinkStatus previousStatus) {
+      this.previousStatus = previousStatus;
    }
 
    public Integer getRetry() {

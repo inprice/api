@@ -1,16 +1,16 @@
-package io.inprice.scrapper.api.helpers;
+package io.inprice.scrapper.api.rest.repository;
+
+import io.inprice.scrapper.api.rest.component.UserInfo;
 
 import java.util.Arrays;
 
-import io.inprice.scrapper.api.component.UserInfo;
-
-public class BulkDeleteStatements {
+class BulkDeleteStatements {
 
    private String[] linksByProductId(Long productId) {
       return links(productId, null);
    }
 
-   public String[] linksByLinkIdId(Long linkId) {
+   String[] linksByLinkIdId(Long linkId) {
       return links(null, linkId);
    }
 
@@ -34,12 +34,8 @@ public class BulkDeleteStatements {
          where_1 += " and id=" + linkId;
       }
 
-      return new String[] { 
-         "delete from link_price " + where, 
-         "delete from link_history " + where,
-         "delete from link_spec " + where, 
-         "delete from link " + where_1 
-      };
+      return new String[] { "delete from link_price " + where, "delete from link_history " + where,
+            "delete from link_spec " + where, "delete from link " + where_1 };
    }
 
    /**
@@ -47,7 +43,7 @@ public class BulkDeleteStatements {
     *
     * @return delete statements
     */
-   public String[] products(Long productId) {
+   String[] products(Long productId) {
       String where = "where company_id=" + UserInfo.getCompanyId();
       String where_1 = where;
 
@@ -60,10 +56,7 @@ public class BulkDeleteStatements {
          linkDeletions = linksByProductId(productId);
       }
 
-      String[] productDeletions = { 
-         "delete from product_price " + where, 
-         "delete from product " + where_1 
-      };
+      String[] productDeletions = { "delete from product_price " + where, "delete from product " + where_1 };
 
       return concatenate(linkDeletions, productDeletions);
    }

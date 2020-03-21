@@ -87,9 +87,8 @@ public class LinkRepository {
    }
 
    public ServiceResponse deleteById(Long id) {
-      boolean result = dbUtils.executeBatchQueries(
-         bulkDeleteStatements.linksByLinkIdId(id),
-         String.format("Failed to delete link. Id: %d", id), 1 // at least one execution must be successful
+      boolean result = dbUtils.executeBatchQueries(bulkDeleteStatements.linksByLinkIdId(id),
+            String.format("Failed to delete link. Id: %d", id), 1 // at least one execution must be successful
       );
 
       if (result)
@@ -98,18 +97,13 @@ public class LinkRepository {
          return Responses.NotFound.LINK;
    }
 
-   public ServiceResponse changeStatus(Long id, Long productId, LinkStatus status) {
+   public ServiceResponse changeStatus(Long id, Long productId, Status status) {
       Connection con = null;
       try {
          con = dbUtils.getTransactionalConnection();
 
-         final String q1 = 
-            "update link " + 
-            "set pre_status=status, status=?, last_update=now() " + 
-            "where id=? " + 
-            "  and status != ? " + 
-            "  and product_id=? " + 
-            "  and company_id=? ";
+         final String q1 = "update link " + "set previous_status=status, status=?, last_update=now() " + "where id=? "
+               + "  and status != ? " + "  and product_id=? " + "  and company_id=? " + "  and workspace_id=? ";
 
          boolean res1;
          boolean res2 = false;
@@ -121,19 +115,21 @@ public class LinkRepository {
             pst.setString(++i, status.name());
             pst.setLong(++i, productId);
             pst.setLong(++i, UserInfo.getCompanyId());
+            pst.setLong(++i, UserInfo.getWorkspaceId());
 
             res1 = (pst.executeUpdate() > 0);
          }
 
          if (res1) {
             try (PreparedStatement pst = con
-                  .prepareStatement("insert into link_history (link_id, status, product_id, company_id) "
-                        + "values (?, ?, ?, ?)")) {
+                  .prepareStatement("insert into link_history (link_id, status, product_id, company_id, workspace_id) "
+                        + "values (?, ?, ?, ?, ?)")) {
                int i = 0;
                pst.setLong(++i, id);
                pst.setString(++i, status.name());
                pst.setLong(++i, productId);
                pst.setLong(++i, UserInfo.getCompanyId());
+               pst.setLong(++i, UserInfo.getWorkspaceId());
 
                res2 = (pst.executeUpdate() > 0);
             }
@@ -166,11 +162,10 @@ public class LinkRepository {
 
    private boolean doesExist(String url, Long productId) {
       Link model = dbUtils
-         .findSingle(String.format(
-            "select * from link " + 
-            "where url = '%s' " + 
-            "  and product_id = %d " + 
-            "  and company_id = %d ", url, productId, UserInfo.getCompanyId()), this::map);
+            .findSingle(String.format(
+                  "select * from link " + "where url = '%s' " + "  and product_id = %d " + "  and company_id = %d "
+                        + "  and workspace_id = %d ",
+                  url, productId, UserInfo.getCompanyId(), UserInfo.getWorkspaceId()), this::map);
       return (model != null);
    }
 
@@ -185,14 +180,15 @@ public class LinkRepository {
          model.setSeller(rs.getString("seller"));
          model.setShipment(rs.getString("shipment"));
          model.setPrice(rs.getBigDecimal("price"));
-         model.setPreStatus(LinkStatus.valueOf(rs.getString("pre_status")));
-         model.setStatus(LinkStatus.valueOf(rs.getString("status")));
+         model.setStatus(Status.valueOf(rs.getString("status")));
+         model.setPreviousStatus(Status.valueOf(rs.getString("previous_status")));
          model.setLastCheck(rs.getDate("last_check"));
          model.setLastUpdate(rs.getDate("last_update"));
          model.setRetry(rs.getInt("retry"));
          model.setHttpStatus(rs.getInt("http_status"));
          model.setWebsiteClassName(rs.getString("website_class_name"));
          model.setCompanyId(rs.getLong("company_id"));
+         model.setWorkspaceId(rs.getLong("workspace_id"));
          model.setProductId(rs.getLong("product_id"));
          model.setSiteId(rs.getLong("site_id"));
 

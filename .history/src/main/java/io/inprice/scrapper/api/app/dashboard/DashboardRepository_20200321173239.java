@@ -34,7 +34,7 @@ public class DashboardRepository {
          addUserInfo(con, user);
          dashboard.add("user", user);
 
-         // company
+         // workspace
          addCompanyInfo(con, company);
          dashboard.add("company", company);
 
@@ -164,9 +164,9 @@ public class DashboardRepository {
    }
 
    private void addProductCounts(Connection con, JsonObject parent) throws SQLException {
-      final String query = "select active, count(1) from product where company_id=? group by active";
+      final String query = "select active, count(1) from product where workspace_id=? group by active";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, UserInfo.getWorkspaceId());
 
          JsonObject pc = new JsonObject();
          try (ResultSet rs = pst.executeQuery()) {
@@ -185,9 +185,9 @@ public class DashboardRepository {
     */
    private void addMRUTenProducts(Connection con, JsonObject parent) throws SQLException {
       final String query = "select code, name, price, position, last_update, min_seller, max_seller, min_price, avg_price, max_price "
-            + "from product where company_id=? order by last_update desc limit 10";
+            + "from product " + "where workspace_id=? " + "order by last_update desc " + "limit 10";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, UserInfo.getWorkspaceId());
 
          JsonObject mruTenProducts = new JsonObject();
          try (ResultSet rs = pst.executeQuery()) {
@@ -197,7 +197,7 @@ public class DashboardRepository {
                prod.addProperty("name", rs.getString(index++));
                prod.addProperty("price", rs.getBigDecimal(index++));
                prod.addProperty("position", rs.getInt(index++));
-               prod.addProperty("lastUpdate", rs.getDate(index++).toString());
+               prod.addProperty("lastUpdate", DateUtils.formatLongDateForDB(rs.getDate(index++)));
                prod.addProperty("minSeller", rs.getString(index++));
                prod.addProperty("maxSeller", rs.getString(index++));
                prod.addProperty("minPrice", rs.getBigDecimal(index++));
@@ -212,9 +212,9 @@ public class DashboardRepository {
    }
 
    private void addProductPositionDistributions(Connection con, JsonObject parent) throws SQLException {
-      final String query = "select position, count(1) from product where company_id=? and active=true group by position";
+      final String query = "select position, count(1) from product where workspace_id=? and active=true group by position";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, UserInfo.getWorkspaceId());
 
          JsonObject pd = new JsonObject();
          for (int i = 1; i < 8; i++) {
@@ -245,9 +245,10 @@ public class DashboardRepository {
 
    private void addMinMaxProductNumbersOfYou(Connection con, JsonObject sellerCounts, String indicator)
          throws SQLException {
-      final String query = "select count(1) from product where company_id=? and active=true and " + indicator + "_seller='You'";
+      final String query = "select count(1) from product where workspace_id=? and active=true and " + indicator
+            + "_seller='You'";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, UserInfo.getWorkspaceId());
 
          try (ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {
@@ -258,50 +259,14 @@ public class DashboardRepository {
    }
 
    private JsonObject emptyDashboard() {
-      final String val = "{" + 
-         "'product': {" + 
-               "'counts': {" + 
-                  "'active': 0," + 
-                  "'passive': 0" + 
-               "},"
-            + "'positions': {" + 
-                  "'1': 0," + 
-                  "'2': 0," + 
-                  "'3': 0," + 
-                  "'4': 0," + 
-                  "'5': 0" + 
-               "},"
-            + "'sellerCounts': {" + 
-                  "'min': 0," + 
-                  "'max': 0" + 
-               "}," + 
-               "'mruTen': {}" + 
-            "}," + 
-         "'link': {"
-            + "'counts': 0," 
-            + "'statuses': {" + 
-                  "'NEW': 0," + 
-                  "'AVAILABLE': 0," + 
-                  "'RENEWED': 0," + 
-                  "'BE_IMPLEMENTED': 0," + 
-                  "'IMPLEMENTED': 0," + 
-                  "'DUPLICATE': 0," + 
-                  "'WONT_BE_IMPLEMENTED': 0," + 
-                  "'IMPROPER': 0," + 
-                  "'NOT_A_PRODUCT_PAGE': 0," + 
-                  "'NO_DATA': 0," + 
-                  "'NOT_AVAILABLE': 0," + 
-                  "'READ_ERROR': 0," + 
-                  "'SOCKET_ERROR': 0," + 
-                  "'NETWORK_ERROR': 0," + 
-                  "'CLASS_PROBLEM': 0," + 
-                  "'INTERNAL_ERROR': 0," + 
-                  "'PAUSED': 0," + 
-                  "'RESUMED': 0" + 
-               "}," 
-            + "'mruTen': {}" + 
-            "}" + 
-         "}";
+      final String val = "{" + "'product': {" + "'counts': {" + "'active': 0," + "'passive': 0" + "},"
+            + "'positions': {" + "'1': 0," + "'2': 0," + "'3': 0," + "'4': 0," + "'5': 0," + "'6': 0," + "'7': 0" + "},"
+            + "'sellerCounts': {" + "'min': 0," + "'max': 0" + "}," + "'mruTen': {}" + "}," + "'link': {"
+            + "'counts': 0," + "'statuses': {" + "'NEW': 0," + "'AVAILABLE': 0," + "'RENEWED': 0,"
+            + "'BE_IMPLEMENTED': 0," + "'IMPLEMENTED': 0," + "'DUPLICATE': 0," + "'WONT_BE_IMPLEMENTED': 0,"
+            + "'IMPROPER': 0," + "'NOT_A_PRODUCT_PAGE': 0," + "'NO_DATA': 0," + "'NOT_AVAILABLE': 0,"
+            + "'READ_ERROR': 0," + "'SOCKET_ERROR': 0," + "'NETWORK_ERROR': 0," + "'CLASS_PROBLEM': 0,"
+            + "'INTERNAL_ERROR': 0," + "'PAUSED': 0," + "'RESUMED': 0" + "}," + "'mruTen': {}" + "}" + "}";
 
       return Global.gson.fromJson(val, JsonObject.class);
    }

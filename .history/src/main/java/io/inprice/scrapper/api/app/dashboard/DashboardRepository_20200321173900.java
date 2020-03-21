@@ -34,7 +34,7 @@ public class DashboardRepository {
          addUserInfo(con, user);
          dashboard.add("user", user);
 
-         // company
+         // workspace
          addCompanyInfo(con, company);
          dashboard.add("company", company);
 

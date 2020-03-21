@@ -10,7 +10,7 @@ public class BulkDeleteStatements {
       return links(productId, null);
    }
 
-   public String[] linksByLinkIdId(Long linkId) {
+   String[] linksByLinkIdId(Long linkId) {
       return links(null, linkId);
    }
 
@@ -47,7 +47,7 @@ public class BulkDeleteStatements {
     *
     * @return delete statements
     */
-   public String[] products(Long productId) {
+   String[] products(Long productId) {
       String where = "where company_id=" + UserInfo.getCompanyId();
       String where_1 = where;
 
