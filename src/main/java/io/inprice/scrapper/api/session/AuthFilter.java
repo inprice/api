@@ -28,6 +28,7 @@ public class AuthFilter implements Handler {
       allowedURIs = new HashSet<>(5);
       allowedURIs.add(Consts.Paths.Auth.REGISTER_REQUEST);
       allowedURIs.add(Consts.Paths.Auth.REGISTER);
+      allowedURIs.add(Consts.Paths.Auth.INVITATION);
       allowedURIs.add(Consts.Paths.Auth.LOGIN);
       allowedURIs.add(Consts.Paths.Auth.FORGOT_PASSWORD);
       allowedURIs.add(Consts.Paths.Auth.RESET_PASSWORD);
@@ -50,7 +51,9 @@ public class AuthFilter implements Handler {
          return;
       }
 
-      if (isAuthenticationNeeded(ctx.contextPath())) {
+      final String URI = ctx.req.getRequestURI().toLowerCase();
+
+      if (isAuthenticationNeeded(URI)) {
          String accessToken = ctx.header(Consts.Auth.AUTHORIZATION_HEADER);
          if (accessToken == null) {
             ctx.status(HttpStatus.UNAUTHORIZED_401);
@@ -59,7 +62,7 @@ public class AuthFilter implements Handler {
                ctx.status(HttpStatus.UNAUTHORIZED_401);
             } else {
 
-               if (isRefreshTokenRequest(ctx.contextPath())) {
+               if (isRefreshTokenRequest(URI)) {
                   final String token = ctx.body();
                   if (tokenService.isTokenInvalidated(token)) {
                      ctx.status(HttpStatus.UNAUTHORIZED_401);
@@ -74,11 +77,11 @@ public class AuthFilter implements Handler {
                   if (authUser == null) {
                      ctx.status(HttpStatus.UNAUTHORIZED_401);
                   } else if (!MemberRole.ADMIN.equals(authUser.getRole())
-                        && ctx.contextPath().startsWith(Consts.Paths.ADMIN_BASE)) {
+                        && URI.startsWith(Consts.Paths.ADMIN_BASE)) {
                      ctx.res.setStatus(HttpStatus.FORBIDDEN_403);
                   } else if (MemberRole.READER.equals(authUser.getRole()) && sensitiveMethodsSet.contains(ctx.method())) {
                      // readers are allowed to update their passwords
-                     if (!ctx.contextPath().equals(Consts.Paths.User.PASSWORD)) {
+                     if (!URI.equals(Consts.Paths.User.PASSWORD)) {
                         ctx.status(HttpStatus.FORBIDDEN_403);
                      }
                   }
@@ -91,12 +94,12 @@ public class AuthFilter implements Handler {
          }
       }
       if (ctx.status() >= 400) {
-         throw new Exception("Unauthorized.");
+         ctx.res.sendError(ctx.status(), "Unauthorized.");
       }
    }
 
    private boolean isRefreshTokenRequest(String uri) {
-      return uri.startsWith("/refresh-token");
+      return uri.startsWith(Consts.Paths.Auth.REFRESH_TOKEN);
    }
 
    private boolean isAuthenticationNeeded(String uri) {

@@ -36,6 +36,11 @@ public class MemberController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.changeStatus(dto)));
       });
 
+      // handles confirmed and rejected invitations
+      app.get(Consts.Paths.Member.BASE + "/:token", (ctx) -> {
+         ctx.json(Commons.createResponse(ctx, service.handleInvitation(ctx.pathParam("token"))));
+      });
+
       // list
       app.get(Consts.Paths.Member.BASE + "s", (ctx) -> {
          ctx.json(Commons.createResponse(ctx, service.getList()));

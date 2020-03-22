@@ -23,6 +23,7 @@ import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
+import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.ServiceResponse;
@@ -110,7 +111,7 @@ public class AuthService {
                Map<String, Object> dataMap = new HashMap<>(3);
                dataMap.put("name", user.getName());
                dataMap.put("token", token);
-               dataMap.put("baseUrl", Props.getFrontendBaseUrl());
+               dataMap.put("url", Props.getBaseUrl() + Consts.Paths.Auth.RESET_PASSWORD);
 
                final String message = renderer.renderForgotPassword(dataMap);
                emailSender.send(Props.getEmail_Sender(), "Reset your password", user.getEmail(), message);

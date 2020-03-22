@@ -13,6 +13,7 @@
       "env": {
         "APP_ENV": "dev",
         "APP_PORT": 4567,
+        "APP_BASE_URL": "http://localhost:4567",
         "APP_PROD_UNIQUENESS": false,
         "APP_LINK_UNIQUENESS": false,
         "APP_SHOWING_SQL_QUERIES": true,

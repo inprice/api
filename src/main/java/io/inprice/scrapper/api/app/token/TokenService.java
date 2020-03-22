@@ -120,6 +120,14 @@ public class TokenService {
       return null;
    }
 
+   public MemberDTO extractMemberDTO(String encryptedToken) {
+      String json = decryptToken(encryptedToken);
+      if (json != null) {
+         return Global.gson.fromJson(json, MemberDTO.class);
+      }
+      return null;
+   }
+
    public String decryptToken(String encryptedToken) {
       try {
          Claims claims = Jwts.parser().setSigningKey(Consts.Auth.APP_SECRET_KEY).parseClaimsJws(encryptedToken).getBody();

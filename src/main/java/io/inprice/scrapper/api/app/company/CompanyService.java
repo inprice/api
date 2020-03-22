@@ -21,6 +21,7 @@ import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
+import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
@@ -42,7 +43,7 @@ public class CompanyService {
       }
       RedisClient.addIpToRateLimiter(RateLimiterType.REGISTER, ip);
 
-      ServiceResponse res = validate(dto);
+      ServiceResponse res = validateRegisterDTO(dto);
       if (res.isOK()) {
 
          ServiceResponse found = userRepository.findByEmail(dto.getEmail());
@@ -59,7 +60,7 @@ public class CompanyService {
             dataMap.put("userName", dto.getUserName());
             dataMap.put("companyName", dto.getCompanyName());
             dataMap.put("token", token);
-            dataMap.put("baseUrl", Props.getFrontendBaseUrl());
+            dataMap.put("url", Props.getBaseUrl() + Consts.Paths.Auth.REGISTER);
 
             final String message = renderer.renderRegisterActivationLink(dataMap);
             emailSender.send(Props.getEmail_Sender(), "About " + dto.getCompanyName() + " registration on inprice.io", dto.getEmail(), message);
@@ -73,13 +74,13 @@ public class CompanyService {
       return Responses.Invalid.COMPANY;
    }
 
-   public ServiceResponse register(String encryptedRegisterRequesToken, String ip) {
-      if (StringUtils.isNotBlank(encryptedRegisterRequesToken)) {
-         if (!tokenService.isTokenInvalidated(encryptedRegisterRequesToken)) {
+   public ServiceResponse register(String encryptedToken, String ip) {
+      if (StringUtils.isNotBlank(encryptedToken)) {
+         if (!tokenService.isTokenInvalidated(encryptedToken)) {
             
-            final RegisterDTO dto = tokenService.extractRegisterDTO(encryptedRegisterRequesToken);
+            final RegisterDTO dto = tokenService.extractRegisterDTO(encryptedToken);
             if (dto != null) {
-               tokenService.revokeToken(TokenType.REGISTER_REQUEST, encryptedRegisterRequesToken);
+               tokenService.revokeToken(TokenType.REGISTER_REQUEST, encryptedToken);
                return companyRepository.insert(dto);
             } else {
                return Responses.Invalid.DATA;
@@ -90,7 +91,7 @@ public class CompanyService {
    }
 
    public ServiceResponse update(CompanyDTO dto) {
-      ServiceResponse res = validate(dto);
+      ServiceResponse res = validateCompanyDTO(dto);
       if (res.isOK()) {
          return companyRepository.update(dto);
       } else {
@@ -102,8 +103,8 @@ public class CompanyService {
       return companyRepository.findById(id);
    }
 
-   private ServiceResponse validate(RegisterDTO dto) {
-      ServiceResponse res = validate(dto);
+   private ServiceResponse validateRegisterDTO(RegisterDTO dto) {
+      ServiceResponse res = validateCompanyDTO(dto);
 
       if (res.isOK()) {
          String problem = NameAndEmailValidator.verify(dto.getUserName(), dto.getEmail());
@@ -124,7 +125,7 @@ public class CompanyService {
       }
    }
 
-   private ServiceResponse validate(CompanyDTO dto) {
+   private ServiceResponse validateCompanyDTO(CompanyDTO dto) {
       String problem = null;
 
       if (dto == null) {

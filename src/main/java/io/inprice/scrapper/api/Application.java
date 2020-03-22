@@ -1,5 +1,7 @@
 package io.inprice.scrapper.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +15,7 @@ import io.inprice.scrapper.api.consts.Global;
 import io.inprice.scrapper.api.session.AuthFilter;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.javalin.Javalin;
+import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.openapi.annotations.ContentType;
 
 public class Application {
@@ -62,6 +65,7 @@ public class Application {
          config.enforceSsl = !Props.isRunningForTests();
          config.logIfServerNotStarted = true;
          config.showJavalinBanner = true;
+         JavalinJackson.getObjectMapper().setSerializationInclusion(Include.NON_NULL);
       }).start(Props.getAPP_Port());
 
       app.before(new AuthFilter());

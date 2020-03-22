@@ -3,6 +3,7 @@ package io.inprice.scrapper.api.app.member;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +20,7 @@ import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.external.Props;
+import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 
@@ -50,6 +52,26 @@ public class MemberService {
       return res;
    }
 
+   public ServiceResponse handleInvitation(String encryptedToken) {
+      if (StringUtils.isNotBlank(encryptedToken)) {
+         if (!tokenService.isTokenInvalidated(encryptedToken)) {
+            
+            final MemberDTO dto = tokenService.extractMemberDTO(encryptedToken);
+            if (dto != null) {
+               tokenService.revokeToken(dto.getTokenType(), encryptedToken);
+               if (dto.getTokenType().equals(TokenType.INVITATION_CONFIRM)) {
+                  return memberRepository.insert(dto);
+               } else {
+                  return Responses.OK;
+               }
+            } else {
+               return Responses.Invalid.DATA;
+            }
+         }
+      }
+      return Responses.Invalid.TOKEN;
+   }
+
    public ServiceResponse resend(long memberId) {
       ServiceResponse res = memberRepository.findById(memberId);
 
@@ -78,7 +100,7 @@ public class MemberService {
             dataMap.put("adminName", CurrentUser.getName());
             dataMap.put("confirmToken", tokensMap.get(TokenType.INVITATION_CONFIRM));
             dataMap.put("rejectToken", tokensMap.get(TokenType.INVITATION_REJECT));
-            dataMap.put("baseUrl", Props.getFrontendBaseUrl());
+            dataMap.put("url", Props.getBaseUrl() + Consts.Paths.Member.BASE);
 
             String message = null;
             String templateName = null;
