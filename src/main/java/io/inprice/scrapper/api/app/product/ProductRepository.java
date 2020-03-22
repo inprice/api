@@ -15,39 +15,30 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.scrapper.api.app.link.LinkStatus;
+import io.inprice.scrapper.api.app.product_import.ImportProduct;
+import io.inprice.scrapper.api.app.product_import.ImportProductRow;
+import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.helpers.Props;
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.helpers.BulkDeleteStatements;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.external.Props;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.rest.component.UserInfo;
-import io.inprice.scrapper.api.utils.SqlHelper;
-import io.inprice.scrapper.common.models.ImportProduct;
-import io.inprice.scrapper.common.models.ImportProductRow;
+import io.inprice.scrapper.api.helpers.SqlHelper;
 
 public class ProductRepository {
 
    private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
 
-   private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+   private static final Database db = Beans.getSingleton(Database.class);
    private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
 
    public ServiceResponse findById(Long id) {
-      Product model = dbUtils
-            .findSingle(String.format("select * from product where id = %d and company_id = %d and workspace_id = %d ",
-                  id, UserInfo.getCompanyId(), UserInfo.getWorkspaceId()), this::map);
-      if (model != null) {
-         return new ServiceResponse(model);
-      }
-      return Responses.NotFound.PRODUCT;
-   }
-
-   public ServiceResponse findByCode(String code) {
-      Product model = dbUtils.findSingle(
-            String.format("select * from product where code = '%s' and company_id = %d and workspace_id = %d ",
-                  SqlHelper.clear(code), UserInfo.getCompanyId(), UserInfo.getWorkspaceId()),
+      Product model = db.findSingle(
+            String.format("select * from product where id = %d and company_id = %d ", id, CurrentUser.getCompanyId()),
             this::map);
       if (model != null) {
          return new ServiceResponse(model);
@@ -55,10 +46,18 @@ public class ProductRepository {
       return Responses.NotFound.PRODUCT;
    }
 
+   public ServiceResponse findByCode(String code) {
+      Product model = db.findSingle(String.format("select * from product where code = '%s' and company_id = %d ",
+            SqlHelper.clear(code), CurrentUser.getCompanyId()), this::map);
+      if (model != null) {
+         return new ServiceResponse(model);
+      }
+      return Responses.NotFound.PRODUCT;
+   }
+
    public ServiceResponse getList() {
-      List<Product> products = dbUtils.findMultiple(
-            String.format("select * from product where company_id = %d and workspace_id = %d order by name",
-                  UserInfo.getCompanyId(), UserInfo.getWorkspaceId()),
+      List<Product> products = db.findMultiple(
+            String.format("select * from product where company_id = %d order by name", CurrentUser.getCompanyId()),
             this::map);
 
       return new ServiceResponse(products);
@@ -69,7 +68,7 @@ public class ProductRepository {
             "name");
 
       int totalRowCount = 0;
-      try (Connection con = dbUtils.getConnection();
+      try (Connection con = db.getConnection();
             PreparedStatement pst = con.prepareStatement(searchQueryForRowCount)) {
 
          ResultSet rs = pst.executeQuery();
@@ -81,7 +80,7 @@ public class ProductRepository {
          if (totalRowCount > 0) {
             final String searchQueryForSelection = SqlHelper.generateSearchQuerySelectPart("product", searchModel,
                   totalRowCount, "code", "name");
-            List<Product> rows = dbUtils.findMultiple(con, searchQueryForSelection, this::map);
+            List<Product> rows = db.findMultiple(con, searchQueryForSelection, this::map);
             Map<String, Object> data = new HashMap<>(4);
             data.put("rows", rows);
             data.put("totalRowCount", totalRowCount);
@@ -100,96 +99,95 @@ public class ProductRepository {
       return Responses.NotFound.SEARCH_NOT_FOUND;
    }
 
-   public ServiceResponse insert(ProductDTO productDTO) {
+   public ServiceResponse insert(ProductDTO dto) {
       Connection con = null;
       try {
-         con = dbUtils.getTransactionalConnection();
+         con = db.getTransactionalConnection();
 
          if (Props.isProdUniqueness()) {
-            boolean alreadyExists = doesExist(con, productDTO.getCode(), null);
+            boolean alreadyExists = doesExist(con, dto.getCode(), null);
             if (alreadyExists) {
                return Responses.DataProblem.ALREADY_EXISTS;
             }
          }
 
-         ServiceResponse result = insertANewProduct(con, productDTO);
+         ServiceResponse result = insertANewProduct(con, dto);
          if (result.isOK()) {
-            dbUtils.commit(con);
+            db.commit(con);
             return Responses.OK;
          } else {
-            dbUtils.rollback(con);
+            db.rollback(con);
             return result;
          }
 
       } catch (Exception e) {
          if (con != null)
-            dbUtils.rollback(con);
-         log.error("Failed to insert a new product. " + productDTO, e);
+            db.rollback(con);
+         log.error("Failed to insert a new product. " + dto, e);
          return Responses.ServerProblem.EXCEPTION;
       } finally {
          if (con != null)
-            dbUtils.close(con);
+            db.close(con);
       }
    }
 
-   public ServiceResponse update(ProductDTO productDTO) {
+   public ServiceResponse update(ProductDTO dto) {
       Connection con = null;
       boolean result = false;
 
       try {
-         con = dbUtils.getTransactionalConnection();
+         con = db.getTransactionalConnection();
 
          if (Props.isProdUniqueness()) {
-            boolean alreadyExists = doesExist(con, productDTO.getCode(), productDTO.getId());
+            boolean alreadyExists = doesExist(con, dto.getCode(), dto.getId());
             if (alreadyExists) {
                return Responses.DataProblem.ALREADY_EXISTS;
             }
          }
 
-         final String query = "update product set code=?, name=?, brand=?, category=?, price=? where id=? and company_id=? and workspace_id=? ";
+         final String query = "update product set code=?, name=?, brand=?, category=?, price=? where id=? and company_id=? ";
 
          try (PreparedStatement pst = con.prepareStatement(query)) {
             int i = 0;
-            pst.setString(++i, productDTO.getCode());
-            pst.setString(++i, productDTO.getName());
-            pst.setString(++i, productDTO.getBrand());
-            pst.setString(++i, productDTO.getCategory());
-            pst.setBigDecimal(++i, productDTO.getPrice());
-            pst.setLong(++i, productDTO.getId());
-            pst.setLong(++i, UserInfo.getCompanyId());
-            pst.setLong(++i, UserInfo.getWorkspaceId());
+            pst.setString(++i, dto.getCode());
+            pst.setString(++i, dto.getName());
+            pst.setString(++i, dto.getBrand());
+            pst.setString(++i, dto.getCategory());
+            pst.setBigDecimal(++i, dto.getPrice());
+            pst.setLong(++i, dto.getId());
+            pst.setLong(++i, CurrentUser.getCompanyId());
 
             if (pst.executeUpdate() > 0) {
-               result = addAPriceHistory(con, productDTO);
+               result = addAPriceHistory(con, dto);
             }
 
             if (result) {
-               dbUtils.commit(con);
+               db.commit(con);
                return Responses.OK;
             } else {
-               dbUtils.rollback(con);
+               db.rollback(con);
                return Responses.DataProblem.DB_PROBLEM;
             }
          }
       } catch (SQLIntegrityConstraintViolationException duperr) {
          if (con != null)
-            dbUtils.rollback(con);
-         log.error("Code duplication error " + productDTO.getCode(), duperr.getMessage());
+            db.rollback(con);
+         log.error("Code duplication error " + dto.getCode(), duperr.getMessage());
          return new ServiceResponse(Responses.DataProblem.DUPLICATE.getStatus(),
-               productDTO.getCode() + " is already used for another product!");
+               dto.getCode() + " is already used for another product!");
       } catch (Exception e) {
          if (con != null)
-            dbUtils.rollback(con);
-         log.error("Failed to update a product. " + productDTO, e);
+            db.rollback(con);
+         log.error("Failed to update a product. " + dto, e);
          return Responses.ServerProblem.EXCEPTION;
       } finally {
          if (con != null)
-            dbUtils.close(con);
+            db.close(con);
       }
    }
 
    public ServiceResponse deleteById(Long id) {
-      boolean result = dbUtils.executeBatchQueries(bulkDeleteStatements.productsByProductId(id),
+      boolean result = db.executeBatchQueries(bulkDeleteStatements.products(id),
             String.format("Failed to delete product. Id: %d", id), 2 // at least two executions must be successful
       );
 
@@ -200,9 +198,9 @@ public class ProductRepository {
    }
 
    public ServiceResponse toggleStatus(Long id) {
-      boolean result = dbUtils.executeQuery(String.format(
-            "update product set active = not active where id = %d and company_id = %d and workspace_id = %d ", id,
-            UserInfo.getCompanyId(), UserInfo.getWorkspaceId()), "Failed to toggle product status! id: " + id);
+      boolean result = db
+            .executeQuery(String.format("update product set active = not active where id = %d and company_id = %d ", id,
+                  CurrentUser.getCompanyId()), "Failed to toggle product status! id: " + id);
 
       if (result) {
          return Responses.OK;
@@ -210,15 +208,14 @@ public class ProductRepository {
       return Responses.NotFound.PRODUCT;
    }
 
-   private boolean addAPriceHistory(Connection con, ProductDTO productDTO) {
-      final String query = "insert into product_price (product_id, price, company_id, workspace_id) values (?, ?, ?, ?) ";
+   private boolean addAPriceHistory(Connection con, ProductDTO dto) {
+      final String query = "insert into product_price (product_id, price, company_id) values (?, ?, ?) ";
 
       try (PreparedStatement pst = con.prepareStatement(query)) {
          int i = 0;
-         pst.setLong(++i, productDTO.getId());
-         pst.setBigDecimal(++i, productDTO.getPrice());
-         pst.setLong(++i, UserInfo.getCompanyId());
-         pst.setLong(++i, UserInfo.getWorkspaceId());
+         pst.setLong(++i, dto.getId());
+         pst.setBigDecimal(++i, dto.getPrice());
+         pst.setLong(++i, CurrentUser.getCompanyId());
 
          return (pst.executeUpdate() > 0);
       } catch (Exception e) {
@@ -231,11 +228,11 @@ public class ProductRepository {
    public ServiceResponse bulkInsert(ImportProduct report, List<ImportProductRow> importList) {
       Connection con = null;
       try {
-         con = dbUtils.getTransactionalConnection();
+         con = db.getTransactionalConnection();
 
          final String headerQuery = "insert into import_product "
-               + "(import_type, status, result, total_count, insert_count, duplicate_count, problem_count, company_id, workspace_id) "
-               + "values " + "(?, ?, ?, ?, ?, ?, ?, ?, ?) ";
+               + "(import_type, status, result, total_count, insert_count, duplicate_count, problem_count, company_id) "
+               + "values " + "(?, ?, ?, ?, ?, ?, ?, ?) ";
 
          Long importId = null;
 
@@ -252,8 +249,7 @@ public class ProductRepository {
             pst.setInt(++i, report.getInsertCount());
             pst.setInt(++i, report.getDuplicateCount());
             pst.setInt(++i, report.getProblemCount());
-            pst.setLong(++i, UserInfo.getCompanyId());
-            pst.setLong(++i, UserInfo.getWorkspaceId());
+            pst.setLong(++i, CurrentUser.getCompanyId());
 
             if (pst.executeUpdate() > 0) {
                try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
@@ -266,8 +262,8 @@ public class ProductRepository {
 
          if (importId != null) {
             final String rowQuery = "insert into import_product_row "
-                  + "(import_id, import_type, data, status, last_update, description, link_id, company_id, workspace_id) "
-                  + "values " + "(?, ?, ?, ?, ?, ?, ?, ?, ?) ";
+                  + "(import_id, import_type, data, status, last_update, description, link_id, company_id) " + "values "
+                  + "(?, ?, ?, ?, ?, ?, ?, ?) ";
             try (PreparedStatement pst = con.prepareStatement(rowQuery, Statement.RETURN_GENERATED_KEYS)) {
                for (ImportProductRow importRow : importList) {
 
@@ -290,9 +286,9 @@ public class ProductRepository {
                    */
                   if (found) {
                      importRow.setDescription("Already exists!");
-                     importRow.setStatus(Status.DUPLICATE);
-                     report.incDuplicateCount();
-                     report.decInsertCount();
+                     importRow.setStatus(LinkStatus.DUPLICATE);
+                     report.setDuplicateCount(report.getDuplicateCount() + 1);
+                     report.setInsertCount(report.getInsertCount() + 1);
                   } else if (dto != null) { // if is a CSV import, no need to insert any row into link table
                      dto.setImportId(importId);
                      insertANewProduct(con, dto);
@@ -312,8 +308,7 @@ public class ProductRepository {
                      pst.setLong(++i, linkId);
                   else
                      pst.setNull(++i, Types.BIGINT);
-                  pst.setLong(++i, UserInfo.getCompanyId());
-                  pst.setLong(++i, UserInfo.getWorkspaceId());
+                  pst.setLong(++i, CurrentUser.getCompanyId());
 
                   int affected = pst.executeUpdate();
 
@@ -323,15 +318,12 @@ public class ProductRepository {
                         if (generatedKeys.next()) {
                            long importRowId = generatedKeys.getLong(1);
 
-                           final String query = "update link " + "set import_row_id=? " + "where id=? "
-                                 + "  and company_id=? " + "  and workspace_id=? ";
-
-                           try (PreparedStatement pst1 = con.prepareStatement(query)) {
+                           try (PreparedStatement pst1 = con
+                                 .prepareStatement("update link set import_row_id=? where id=? and company_id=?")) {
                               int j = 0;
                               pst1.setLong(++j, importRowId);
                               pst1.setLong(++j, linkId);
-                              pst1.setLong(++j, UserInfo.getCompanyId());
-                              pst1.setLong(++j, UserInfo.getWorkspaceId());
+                              pst1.setLong(++j, CurrentUser.getCompanyId());
 
                               int affected1 = pst1.executeUpdate();
                               if (affected1 < 1) {
@@ -358,33 +350,32 @@ public class ProductRepository {
                }
             }
 
-            dbUtils.commit(con);
+            db.commit(con);
             return Responses.OK;
          } else {
-            dbUtils.rollback(con);
+            db.rollback(con);
             return Responses.ServerProblem.FAILED;
          }
 
       } catch (Exception e) {
          if (con != null)
-            dbUtils.rollback(con);
+            db.rollback(con);
          log.error("Failed to import new products. ", e);
          return Responses.ServerProblem.EXCEPTION;
       } finally {
          if (con != null)
-            dbUtils.close(con);
+            db.close(con);
       }
    }
 
    private boolean doesExist(Connection con, String code, Long id) {
-      final String query = "select id from product " + "where code=? " + (id != null ? " and id != " + id : "")
-            + "  and company_id=? " + "  and workspace_id=? ";
+      final String query = "select id from product where code=? " + (id != null ? " and id != " + id : "")
+            + "  and company_id=? ";
 
       try (PreparedStatement pst = con.prepareStatement(query)) {
          int i = 0;
          pst.setString(++i, code);
-         pst.setLong(++i, UserInfo.getCompanyId());
-         pst.setLong(++i, UserInfo.getWorkspaceId());
+         pst.setLong(++i, CurrentUser.getCompanyId());
 
          ResultSet rs = pst.executeQuery();
          return rs.next();
@@ -397,13 +388,11 @@ public class ProductRepository {
    public int findProductCount() {
       int result = 0;
 
-      try (Connection con = dbUtils.getConnection()) {
+      try (Connection con = db.getConnection()) {
 
          // from product definition
-         final String q1 = "select count(id) from product " + "where company_id=? " + "  and workspace_id=? ";
-         try (PreparedStatement pst = con.prepareStatement(q1)) {
-            pst.setLong(1, UserInfo.getCompanyId());
-            pst.setLong(2, UserInfo.getWorkspaceId());
+         try (PreparedStatement pst = con.prepareStatement("select count(id) from product where company_id=? ")) {
+            pst.setLong(1, CurrentUser.getCompanyId());
 
             ResultSet rs = pst.executeQuery();
             if (rs.next()) {
@@ -413,12 +402,10 @@ public class ProductRepository {
          }
 
          // from product imports
-         final String q2 = "select count(id) from import_product_row " + "where status=? " + "  and company_id=? "
-               + "  and workspace_id=? ";
-         try (PreparedStatement pst = con.prepareStatement(q2)) {
-            pst.setString(1, Status.NEW.name());
-            pst.setLong(2, UserInfo.getCompanyId());
-            pst.setLong(3, UserInfo.getWorkspaceId());
+         try (PreparedStatement pst = con
+               .prepareStatement("select count(id) from import_product_row where status=? and company_id=?")) {
+            pst.setString(1, LinkStatus.NEW.name());
+            pst.setLong(2, CurrentUser.getCompanyId());
 
             ResultSet rs = pst.executeQuery();
             if (rs.next()) {
@@ -435,9 +422,8 @@ public class ProductRepository {
 
    @SuppressWarnings("incomplete-switch")
    private Long insertImportedLink(Connection con, ImportProductRow importRow) {
-      final String query = "insert into link " + "(url, import_id, company_id, workspace_id) " + "values "
-            + "(?, ?, ?, ?) ";
 
+      final String query = "insert into link (url, import_id, company_id) values (?, ?, ?)";
       try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
          int i = 0;
 
@@ -457,8 +443,7 @@ public class ProductRepository {
          }
 
          pst.setLong(++i, importRow.getImportId());
-         pst.setLong(++i, UserInfo.getCompanyId());
-         pst.setLong(++i, UserInfo.getWorkspaceId());
+         pst.setLong(++i, CurrentUser.getCompanyId());
 
          if (pst.executeUpdate() > 0) {
             try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
@@ -475,30 +460,28 @@ public class ProductRepository {
       return null;
    }
 
-   private ServiceResponse insertANewProduct(Connection con, ProductDTO productDTO) {
-      final String query = "insert into product "
-            + "(code, name, brand, category, price, import_id, company_id, workspace_id) " + "values "
-            + "(?, ?, ?, ?, ?, ?, ?, ?) ";
+   private ServiceResponse insertANewProduct(Connection con, ProductDTO dto) {
 
+      final String query = "insert into product "
+            + "(code, name, brand, category, price, import_id, company_id) values (?, ?, ?, ?, ?, ?)";
       try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
          int i = 0;
-         pst.setString(++i, productDTO.getCode());
-         pst.setString(++i, productDTO.getName());
-         pst.setString(++i, productDTO.getBrand());
-         pst.setString(++i, productDTO.getCode());
-         pst.setBigDecimal(++i, productDTO.getPrice());
-         if (productDTO.getImportId() != null)
-            pst.setLong(++i, productDTO.getImportId());
+         pst.setString(++i, dto.getCode());
+         pst.setString(++i, dto.getName());
+         pst.setString(++i, dto.getBrand());
+         pst.setString(++i, dto.getCode());
+         pst.setBigDecimal(++i, dto.getPrice());
+         if (dto.getImportId() != null)
+            pst.setLong(++i, dto.getImportId());
          else
             pst.setNull(++i, Types.BIGINT);
-         pst.setLong(++i, UserInfo.getCompanyId());
-         pst.setLong(++i, UserInfo.getWorkspaceId());
+         pst.setLong(++i, CurrentUser.getCompanyId());
 
          if (pst.executeUpdate() > 0) {
             try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
                if (generatedKeys.next()) {
-                  productDTO.setId(generatedKeys.getLong(1));
-                  boolean ok = addAPriceHistory(con, productDTO);
+                  dto.setId(generatedKeys.getLong(1));
+                  boolean ok = addAPriceHistory(con, dto);
                   if (ok) {
                      return Responses.OK;
                   } else {
@@ -509,7 +492,7 @@ public class ProductRepository {
          }
       } catch (SQLIntegrityConstraintViolationException ie) {
          return new ServiceResponse(Responses.DataProblem.DUPLICATE.getStatus(),
-               productDTO.getCode() + " is already defined!");
+               dto.getCode() + " is already defined!");
       } catch (Exception e) {
          log.error("Error", e);
       }
@@ -533,9 +516,8 @@ public class ProductRepository {
          model.setMinPrice(rs.getBigDecimal("min_price"));
          model.setAvgPrice(rs.getBigDecimal("avg_price"));
          model.setMaxPrice(rs.getBigDecimal("max_price"));
-         model.setLastUpdate(rs.getDate("last_update"));
          model.setCompanyId(rs.getLong("company_id"));
-         model.setWorkspaceId(rs.getLong("workspace_id"));
+         model.setUpdatedAt(rs.getDate("updated_at"));
          model.setCreatedAt(rs.getDate("created_at"));
 
          return model;

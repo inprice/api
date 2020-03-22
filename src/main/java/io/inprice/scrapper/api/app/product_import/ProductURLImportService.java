@@ -14,7 +14,7 @@ import io.inprice.scrapper.api.app.link.LinkStatus;
 import io.inprice.scrapper.api.app.plan.PlanRepository;
 import io.inprice.scrapper.api.app.product.ProductRepository;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.utils.URLUtils;
 
@@ -38,7 +38,8 @@ public class ProductURLImportService implements IProductImportService {
             Set<String> insertedURLSet = new HashSet<>();
 
             List<ImportProductRow> importList = new ArrayList<>();
-            try (Scanner scanner = new Scanner(file)) {
+            //TODO: scanner performas açısından berbat, baos kullanılmalı
+            try (Scanner scanner = new Scanner(content)) {
 
                int row = 1;
                while (scanner.hasNext()) {
@@ -56,29 +57,29 @@ public class ProductURLImportService implements IProductImportService {
                         if (found) {
                            importRow.setDescription("Already exists!");
                            importRow.setStatus(LinkStatus.DUPLICATE);
-                           report.incDuplicateCount();
+                           report.setDuplicateCount(report.getDuplicateCount() + 1);
                         } else {
                            boolean isValid = URLUtils.isAValidURL(line);
                            if (isValid) {
                               importRow.setDescription("Healthy.");
                               importRow.setStatus(LinkStatus.NEW);
                               actualProdCount++;
-                              report.incInsertCount();
+                              report.setInsertCount(report.getInsertCount() + 1);
                               insertedURLSet.add(line);
                            } else {
                               importRow.setDescription("Invalid URL!");
                               importRow.setStatus(LinkStatus.IMPROPER);
-                              report.incProblemCount();
+                              report.setProblemCount(report.getProblemCount() + 1);
                            }
                         }
                      } else {
                         importRow.setDescription("You have reached your plan's maximum product limit.");
                         importRow.setStatus(LinkStatus.WONT_BE_IMPLEMENTED);
-                        report.incProblemCount();
+                        report.setProblemCount(report.getProblemCount() + 1);
                      }
                      importList.add(importRow);
 
-                     report.incTotalCount();
+                     report.setTotalCount(report.getTotalCount() + 1);
 
                      if (!LinkStatus.NEW.equals(importRow.getStatus())) {
                         report.getProblemList().add(row + ". " + importRow.getDescription());

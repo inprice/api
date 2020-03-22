@@ -1,12 +1,12 @@
 package io.inprice.scrapper.api.dto;
 
 import io.inprice.scrapper.api.app.token.TokenType;
-import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.api.app.member.MemberRole;
 
 public class MemberDTO {
 
    private String email;
-   private UserRole role;
+   private MemberRole role;
    private TokenType tokenType;
 
    public String getEmail() {
@@ -17,11 +17,11 @@ public class MemberDTO {
       this.email = email;
    }
 
-   public UserRole getRole() {
+   public MemberRole getRole() {
       return role;
    }
 
-   public void setRole(UserRole role) {
+   public void setRole(MemberRole role) {
       this.role = role;
    }
 

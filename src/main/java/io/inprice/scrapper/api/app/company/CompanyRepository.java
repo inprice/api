@@ -9,31 +9,31 @@ import java.sql.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.scrapper.api.app.member.MemberRole;
+import io.inprice.scrapper.api.app.member.MemberStatus;
 import io.inprice.scrapper.api.app.plan.PlanStatus;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
-import io.inprice.scrapper.api.app.user.UserRole;
-import io.inprice.scrapper.api.app.user.UserStatus;
-import io.inprice.scrapper.api.component.UserInfo;
+import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.dto.RegisterDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.utils.CodeGenerator;
+import io.inprice.scrapper.api.helpers.CodeGenerator;
 import jodd.util.BCrypt;
 
 public class CompanyRepository {
 
    private static final Logger log = LoggerFactory.getLogger(CompanyRepository.class);
 
-   private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+   private final Database db = Beans.getSingleton(Database.class);
    private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
    private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
    public ServiceResponse findById(Long id) {
-      Company model = dbUtils.findSingle("select * from company where id=" + id, CompanyRepository::map);
+      Company model = db.findSingle("select * from company where id=" + id, CompanyRepository::map);
       if (model != null)
          return new ServiceResponse(model);
       else
@@ -41,7 +41,7 @@ public class CompanyRepository {
    }
 
    public ServiceResponse findByAdminId(Long adminId) {
-      Company model = dbUtils.findSingle("select * from company where admin_id=" + adminId, CompanyRepository::map);
+      Company model = db.findSingle("select * from company where admin_id=" + adminId, CompanyRepository::map);
       if (model != null)
          return new ServiceResponse(model);
       else
@@ -59,7 +59,7 @@ public class CompanyRepository {
 
       // admin user insertion
       try {
-         con = dbUtils.getTransactionalConnection();
+         con = db.getTransactionalConnection();
 
          if (dto.getUserId() == null) {
             //last control to prevent duplication
@@ -121,8 +121,8 @@ public class CompanyRepository {
                   int i = 0;
                   pst.setString(++i, dto.getEmail());
                   pst.setLong(++i, companyId);
-                  pst.setString(++i, UserRole.ADMIN.name());
-                  pst.setString(++i, UserStatus.JOINED.name());
+                  pst.setString(++i, MemberRole.ADMIN.name());
+                  pst.setString(++i, MemberStatus.JOINED.name());
 
                   if (pst.executeUpdate() > 0) {
                      response = Responses.OK;
@@ -134,19 +134,19 @@ public class CompanyRepository {
          }
 
          if (Responses.OK.equals(response)) {
-            dbUtils.commit(con);
+            db.commit(con);
          } else {
-            dbUtils.rollback(con);
+            db.rollback(con);
          }
 
       } catch (SQLException e) {
          if (con != null) {
-            dbUtils.rollback(con);
+            db.rollback(con);
          }
          log.error("Failed to register a new company. " + dto, e);
       } finally {
          if (con != null) {
-            dbUtils.close(con);
+            db.close(con);
          }
       }
 
@@ -154,7 +154,7 @@ public class CompanyRepository {
    }
 
    public ServiceResponse update(CompanyDTO dto) {
-      try (Connection con = dbUtils.getConnection();
+      try (Connection con = db.getConnection();
             PreparedStatement pst = con
                   .prepareStatement("update company set name=?, website=?, sector=?, country=? where id=? and admin_id=?")) {
 
@@ -163,8 +163,8 @@ public class CompanyRepository {
          pst.setString(++i, dto.getWebsite());
          pst.setString(++i, dto.getSector());
          pst.setString(++i, dto.getCountry());
-         pst.setLong(++i, UserInfo.getCompanyId());
-         pst.setLong(++i, UserInfo.getId());
+         pst.setLong(++i, CurrentUser.getCompanyId());
+         pst.setLong(++i, CurrentUser.getId());
 
          if (pst.executeUpdate() <= 0) {
             return Responses.NotFound.COMPANY;

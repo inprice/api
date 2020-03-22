@@ -11,16 +11,15 @@ import io.inprice.scrapper.api.app.company.CompanyRepository;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.UserRepository;
-import io.inprice.scrapper.api.app.user.UserRole;
-import io.inprice.scrapper.api.component.UserInfo;
+import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.dto.EmailValidator;
 import io.inprice.scrapper.api.dto.MemberChangeFieldDTO;
 import io.inprice.scrapper.api.dto.MemberDTO;
 import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.Props;
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.external.Props;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 
 public class MemberService {
@@ -36,7 +35,7 @@ public class MemberService {
    private final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
 
    public ServiceResponse getList() {
-      return memberRepository.getList();
+      return memberRepository.getListByCompany();
    }
 
    public ServiceResponse invite(MemberDTO memberDTO) {
@@ -69,14 +68,14 @@ public class MemberService {
    }
 
    private ServiceResponse sendMail(MemberDTO memberDTO) {
-      ServiceResponse res = companyRepository.findByAdminId(UserInfo.getCompanyId());
+      ServiceResponse res = companyRepository.findByAdminId(CurrentUser.getCompanyId());
       if (res.isOK()) {
          Company company = res.getData();
-         if (company.getId().equals(UserInfo.getCompanyId())) {
+         if (company.getId().equals(CurrentUser.getCompanyId())) {
             final Map<TokenType, String> tokensMap = tokenService.getInvitationTokens(memberDTO);
             Map<String, Object> dataMap = new HashMap<>(3);
             dataMap.put("companyName", company.getName());
-            dataMap.put("adminName", UserInfo.getName());
+            dataMap.put("adminName", CurrentUser.getName());
             dataMap.put("confirmToken", tokensMap.get(TokenType.INVITATION_CONFIRM));
             dataMap.put("rejectToken", tokensMap.get(TokenType.INVITATION_REJECT));
             dataMap.put("baseUrl", Props.getFrontendBaseUrl());
@@ -96,7 +95,7 @@ public class MemberService {
             if (message != null) {
                emailSender.send(Props.getEmail_Sender(),
                      "About your invitation for " + company.getName() + " at inprice.io", memberDTO.getEmail(), message);
-               log.info("{} is invited as {} to {} ", memberDTO.getEmail(), memberDTO.getRole(), UserInfo.getCompanyId());
+               log.info("{} is invited as {} to {} ", memberDTO.getEmail(), memberDTO.getRole(), CurrentUser.getCompanyId());
             } else {
                log.error("Template error for " + templateName + " --> " + memberDTO);
             }
@@ -112,7 +111,7 @@ public class MemberService {
       if (res.isOK()) {
 
          Member member = res.getData();
-         if (! member.getRole().equals(UserRole.ADMIN)) {
+         if (! member.getRole().equals(MemberRole.ADMIN)) {
             res = memberRepository.changeRole(changeRoleDTO);
             if (res.isOK()) {
                log.info("{} role is changed from {} to {} ", changeRoleDTO.getMemberId(), member.getRole(),
@@ -125,12 +124,13 @@ public class MemberService {
       return res;
    }
 
+   @SuppressWarnings("incomplete-switch")
    public ServiceResponse changeStatus(MemberChangeFieldDTO changeStatusDTO) {
       ServiceResponse res = validate(changeStatusDTO);
       if (res.isOK()) {
 
          Member member = res.getData();
-         if (! member.getRole().equals(UserRole.ADMIN)) {
+         if (! member.getRole().equals(MemberRole.ADMIN)) {
             boolean isSuitable = false;
 
             switch (member.getStatus()) {
@@ -142,7 +142,7 @@ public class MemberService {
                   break;
                case PAUSED:
                   isSuitable = true;
-                  changeStatusDTO.setPaused(true);
+                  changeStatusDTO.setUndo(true);
                   break;
             }
 
@@ -168,7 +168,7 @@ public class MemberService {
          return new ServiceResponse("Member Id field cannot be empty!");
       }
 
-      if (! UserInfo.getRole().equals(UserRole.ADMIN)) {
+      if (! CurrentUser.getRole().equals(MemberRole.ADMIN)) {
          return Responses.PermissionProblem.ADMIN_ONLY;
       }
 
@@ -176,7 +176,7 @@ public class MemberService {
          if (changeFieldDTO.getStatus() == null) {
             return new ServiceResponse("Status field cannot be empty!");
          }
-         if (changeFieldDTO.getRole().equals(UserRole.ADMIN)) {
+         if (changeFieldDTO.getRole().equals(MemberRole.ADMIN)) {
             return new ServiceResponse("Not in this way!");
          }
       }
@@ -193,7 +193,7 @@ public class MemberService {
          return Responses.Invalid.INVITATION;
       }
 
-      if (memberDTO.getRole() == null || memberDTO.getRole().equals(UserRole.ADMIN)) {
+      if (memberDTO.getRole() == null || memberDTO.getRole().equals(MemberRole.ADMIN)) {
          return new ServiceResponse("Role must be either EDITOR or READER!");
       }
 
@@ -202,7 +202,7 @@ public class MemberService {
          return new ServiceResponse(checkIfItHasAProblem);
       }
 
-      ServiceResponse found = memberRepository.findByEmailAndCompanyId(memberDTO.getEmail(), UserInfo.getCompanyId());
+      ServiceResponse found = memberRepository.findByEmailAndCompanyId(memberDTO.getEmail(), CurrentUser.getCompanyId());
       if (found.isOK()) {
          return new ServiceResponse("A user with " + memberDTO.getEmail() + " address is already added to this company!");
       }

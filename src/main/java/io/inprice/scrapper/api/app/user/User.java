@@ -3,6 +3,8 @@ package io.inprice.scrapper.api.app.user;
 import java.io.Serializable;
 import java.util.Date;
 
+import io.inprice.scrapper.api.app.member.MemberRole;
+
 public class User implements Serializable {
 
    private static final long serialVersionUID = 1753526228909974777L;
@@ -16,7 +18,7 @@ public class User implements Serializable {
    private Date createdAt;
 
    //transient
-   private UserRole role;
+   private MemberRole role;
 
    public Long getId() {
       return id;
@@ -74,11 +76,11 @@ public class User implements Serializable {
       this.createdAt = createdAt;
    }
 
-   public UserRole getRole() {
+   public MemberRole getRole() {
       return role;
    }
 
-   public void setRole(UserRole role) {
+   public void setRole(MemberRole role) {
       this.role = role;
    }
 

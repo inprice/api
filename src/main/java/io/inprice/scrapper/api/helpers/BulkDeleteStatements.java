@@ -2,7 +2,7 @@ package io.inprice.scrapper.api.helpers;
 
 import java.util.Arrays;
 
-import io.inprice.scrapper.api.component.UserInfo;
+import io.inprice.scrapper.api.session.CurrentUser;
 
 public class BulkDeleteStatements {
 
@@ -20,7 +20,7 @@ public class BulkDeleteStatements {
     * @return delete statements
     */
    private String[] links(Long productId, Long linkId) {
-      String where = "where company_id=" + UserInfo.getCompanyId();
+      String where = "where company_id=" + CurrentUser.getCompanyId();
       String where_1 = where;
 
       // delete by productId
@@ -48,7 +48,7 @@ public class BulkDeleteStatements {
     * @return delete statements
     */
    public String[] products(Long productId) {
-      String where = "where company_id=" + UserInfo.getCompanyId();
+      String where = "where company_id=" + CurrentUser.getCompanyId();
       String where_1 = where;
 
       String[] linkDeletions = null;
@@ -78,13 +78,13 @@ public class BulkDeleteStatements {
     * 
     *         String[] companyDeletions = { String.format("delete from
     *         import_product_row where workspace_id=%d and company_id=%d",
-    *         workspaceId, UserInfo.getCompanyId()), String.format("delete from
+    *         workspaceId, CurrentUser.getCompanyId()), String.format("delete from
     *         import_product where workspace_id=%d and company_id=%d", workspaceId,
-    *         UserInfo.getCompanyId()), String.format("delete from
+    *         CurrentUser.getCompanyId()), String.format("delete from
     *         workspace_history where workspace_id=%d and company_id=%d",
-    *         workspaceId, UserInfo.getCompanyId()), String.format("delete from
+    *         workspaceId, CurrentUser.getCompanyId()), String.format("delete from
     *         workspace where id=%d and company_id=%d", workspaceId,
-    *         UserInfo.getCompanyId()) };
+    *         CurrentUser.getCompanyId()) };
     * 
     *         return concatenate(productDeletions, companyDeletions); }
     */

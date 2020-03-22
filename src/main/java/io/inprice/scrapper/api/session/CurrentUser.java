@@ -1,9 +1,9 @@
-package io.inprice.scrapper.api.component;
+package io.inprice.scrapper.api.session;
 
-import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.api.app.member.MemberRole;
 import io.inprice.scrapper.api.info.AuthUser;
 
-public class UserInfo {
+public class CurrentUser {
 
    private final static ThreadLocal<ThreadVariables> THREAD_VARIABLES = new ThreadLocal<ThreadVariables>() {
       @Override
@@ -24,8 +24,12 @@ public class UserInfo {
       return THREAD_VARIABLES.get().getAuthUser().getName();
    }
 
-   public static UserRole getRole() {
+   public static MemberRole getRole() {
       return THREAD_VARIABLES.get().getAuthUser().getRole();
+   }
+
+   public static String getEmail() {
+      return THREAD_VARIABLES.get().getAuthUser().getEmail();
    }
 
    public static Long getCompanyId() {

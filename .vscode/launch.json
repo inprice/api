@@ -11,8 +11,8 @@
       "projectName": "api",
       "mainClass": "io.inprice.scrapper.api.Application",
       "env": {
+        "APP_ENV": "dev",
         "APP_PORT": 4567,
-        "APP_RUNNING_AT": "prod",
         "APP_PROD_UNIQUENESS": false,
         "APP_LINK_UNIQUENESS": false,
         "APP_SHOWING_SQL_QUERIES": true,

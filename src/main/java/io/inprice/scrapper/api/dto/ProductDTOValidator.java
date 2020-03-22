@@ -1,13 +1,13 @@
-package io.inprice.scrapper.api.rest.validator;
-
-import io.inprice.scrapper.api.dto.ProductDTO;
-import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.rest.component.Commons;
-import org.apache.commons.lang3.StringUtils;
+package io.inprice.scrapper.api.dto;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
+import io.inprice.scrapper.api.helpers.Commons;
+import io.inprice.scrapper.api.info.ServiceResponse;
 
 public class ProductDTOValidator {
 

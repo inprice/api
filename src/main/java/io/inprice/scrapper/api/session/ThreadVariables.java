@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.rest.component;
+package io.inprice.scrapper.api.session;
 
 import io.inprice.scrapper.api.info.AuthUser;
 

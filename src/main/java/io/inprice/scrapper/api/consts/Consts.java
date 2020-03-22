@@ -1,10 +1,10 @@
-package io.inprice.scrapper.api.helpers;
+package io.inprice.scrapper.api.consts;
 
 public class Consts {
 
    public static class Auth {
       public static final String APP_SECRET_KEY = "-8'fq{>As@njcx.U*$=P]#Z5wY+";
-      static final String DATA_SECRET_KEY = "gFn+f3Ksa@YJWEq%8SeaM%MK^e";
+      public static final String DATA_SECRET_KEY = "gFn+f3Ksa@YJWEq%8SeaM%MK^e";
 
       public static final String AUTHORIZATION_HEADER = "Authorization";
       public static final String TOKEN_PREFIX = "Bearer ";
@@ -45,7 +45,7 @@ public class Consts {
       public static class User {
          public static final String BASE = "/user";
          public static final String PASSWORD = BASE + "/password";
-         public static final String SET_WORKSPACE = BASE + "/set-workspace";
+         public static final String CHANGE_COMPANY = BASE + "/change-company";
       }
 
       public static class Member {

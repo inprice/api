@@ -9,10 +9,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.scrapper.api.dto.MemberDTO;
 import io.inprice.scrapper.api.dto.RegisterDTO;
-import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.helpers.Cryptor;
-import io.inprice.scrapper.api.helpers.Global;
+import io.inprice.scrapper.api.consts.Global;
+import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.javalin.http.Context;
 import io.jsonwebtoken.Claims;
@@ -22,8 +22,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClaims;
 
 public class TokenService {
-
-   private final TokenRepository tokenRepository = Beans.getSingleton(TokenRepository.class);
 
    public Map<TokenType, String> getAccessTokens(AuthUser authUser, String ip, String userAgent) {
       String refresh = authUser.getEmail() + "::" + ip + "::" + Consts.Auth.APP_SECRET_KEY + "::" + userAgent;
@@ -105,12 +103,12 @@ public class TokenService {
    }
 
    public boolean isTokenInvalidated(String token) {
-      return tokenRepository.isTokenInvalidated(token);
+      return RedisClient.isTokenInvalidated(token);
    }
 
    public void revokeToken(TokenType tokenType, String token) {
       if (StringUtils.isNotBlank(token)) {
-         tokenRepository.invalidateToken(tokenType, token);
+         RedisClient.addInvalidateToken(tokenType, token);
       }
    }
 

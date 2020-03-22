@@ -17,10 +17,11 @@ import io.inprice.scrapper.api.app.link.LinkStatus;
 import io.inprice.scrapper.api.app.plan.PlanRepository;
 import io.inprice.scrapper.api.app.product.ProductRepository;
 import io.inprice.scrapper.api.dto.ProductDTO;
+import io.inprice.scrapper.api.dto.ProductDTOValidator;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.rest.validator.ProductDTOValidator;
+import io.inprice.scrapper.api.utils.NumberUtils;
 
 public class ProductCSVImportService implements IProductImportService {
 
@@ -44,7 +45,7 @@ public class ProductCSVImportService implements IProductImportService {
             Set<String> insertedCodeSet = new HashSet<>();
 
             List<ImportProductRow> importList = new ArrayList<>();
-            try (CSVReader csvReader = new CSVReader(new StringReader(file))) {
+            try (CSVReader csvReader = new CSVReader(new StringReader(content))) {
 
                String[] values;
                while ((values = csvReader.readNext()) != null) {
@@ -68,7 +69,7 @@ public class ProductCSVImportService implements IProductImportService {
                         if (found) {
                            importRow.setDescription("Already exists!");
                            importRow.setStatus(LinkStatus.DUPLICATE);
-                           report.incDuplicateCount();
+                           report.setDuplicateCount(report.getDuplicateCount() + 1);
                         } else {
                            ServiceResponse validation = ProductDTOValidator.validate(dto);
                            if (validation.isOK()) {
@@ -76,7 +77,7 @@ public class ProductCSVImportService implements IProductImportService {
                               importRow.setDescription("Healthy.");
                               importRow.setStatus(LinkStatus.AVAILABLE);
                               actualProdCount++;
-                              report.incInsertCount();
+                              report.setInsertCount(report.getInsertCount() + 1);
                               insertedCodeSet.add(dto.getCode());
                            } else {
                               StringBuilder sb = new StringBuilder();
@@ -87,7 +88,7 @@ public class ProductCSVImportService implements IProductImportService {
                               }
                               importRow.setDescription(sb.toString());
                               importRow.setStatus(LinkStatus.IMPROPER);
-                              report.incProblemCount();
+                              report.setProblemCount(report.getProblemCount() + 1);
                            }
                         }
 
@@ -95,16 +96,16 @@ public class ProductCSVImportService implements IProductImportService {
                         importRow.setDescription(
                               "There must be " + COLUMN_COUNT + " columns in each row!. Column separator is comma ,");
                         importRow.setStatus(LinkStatus.IMPROPER);
-                        report.incProblemCount();
+                        report.setProblemCount(report.getProblemCount() + 1);
                      }
                   } else {
                      importRow.setDescription("You have reached your plan's maximum product limit.");
                      importRow.setStatus(LinkStatus.WONT_BE_IMPLEMENTED);
-                     report.incProblemCount();
+                     report.setProblemCount(report.getProblemCount() + 1);
                   }
                   importList.add(importRow);
 
-                  report.incTotalCount();
+                  report.setTotalCount(report.getTotalCount() + 1);
 
                   if (!LinkStatus.AVAILABLE.equals(importRow.getStatus())) {
                      report.getProblemList().add(StringUtils.leftPad("" + report.getTotalCount(), 3, '0') + ": "

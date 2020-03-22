@@ -9,20 +9,20 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.component.UserInfo;
+import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.utils.CodeGenerator;
+import io.inprice.scrapper.api.helpers.CodeGenerator;
 import jodd.util.BCrypt;
 
 public class UserRepository {
 
    private static final Logger log = LoggerFactory.getLogger(UserRepository.class);
 
-   private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+   private final Database db = Beans.getSingleton(Database.class);
    private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
    public ServiceResponse findById(Long id) {
@@ -30,8 +30,8 @@ public class UserRepository {
    }
 
    public ServiceResponse findById(Long id, boolean passwordFields) {
-      User model = dbUtils.findSingle(String.format("select * from user where id = %d and company_id = %d",
-            id, UserInfo.getCompanyId()), this::map);
+      User model = db.findSingle(String.format("select * from user where id = %d and company_id = %d",
+            id, CurrentUser.getCompanyId()), this::map);
       if (model != null) {
          if (!passwordFields) {
             model.setPasswordSalt(null);
@@ -47,7 +47,7 @@ public class UserRepository {
    }
 
    public ServiceResponse findByEmail(Connection con, String email) {
-      User model = dbUtils.findSingle(con, String.format("select * from user where email = '%s'", email), this::map);
+      User model = db.findSingle(con, String.format("select * from user where email = '%s'", email), this::map);
       if (model != null) {
          model.setPasswordSalt(null);
          model.setPasswordHash(null);
@@ -57,7 +57,7 @@ public class UserRepository {
    }
 
    public ServiceResponse findByEmail(String email, boolean passwordFields) {
-      User model = dbUtils.findSingle(String.format("select * from user where email = '%s'", email), this::map);
+      User model = db.findSingle(String.format("select * from user where email = '%s'", email), this::map);
       if (model != null) {
          if (!passwordFields) {
             model.setPasswordSalt(null);
@@ -73,7 +73,7 @@ public class UserRepository {
             + "(email, name, last_company_id, password_salt, password_hash) values "
             + "(?, ?, ?, ?, ?) ";
 
-      try (Connection con = dbUtils.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
          final String salt = codeGenerator.generateSalt();
          
          int i = 0;
@@ -100,11 +100,11 @@ public class UserRepository {
    public ServiceResponse updateName(String name) {
       final String query = "update user set name=? where id=?";
 
-      try (Connection con = dbUtils.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
 
          int i = 0;
          pst.setString(++i, name);
-         pst.setLong(++i, UserInfo.getId());
+         pst.setLong(++i, CurrentUser.getId());
 
          if (pst.executeUpdate() > 0)
             return Responses.OK;
@@ -118,20 +118,20 @@ public class UserRepository {
    }
 
    public ServiceResponse updatePassword(String password) {
-      return updatePassword(UserInfo.getId(), password);
+      return updatePassword(CurrentUser.getId(), password);
    }
 
    public ServiceResponse updatePassword(Long userId, String password) {
       final String query = "update user set password_salt=?, password_hash=? where id=?";
 
-      try (Connection con = dbUtils.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
 
          int i = 0;
          final String salt = codeGenerator.generateSalt();
 
          pst.setString(++i, salt);
          pst.setString(++i, BCrypt.hashpw(password, salt));
-         pst.setLong(++i, UserInfo.getId());
+         pst.setLong(++i, CurrentUser.getId());
 
          if (pst.executeUpdate() > 0)
             return Responses.OK;
@@ -145,13 +145,13 @@ public class UserRepository {
    }
 
    public ServiceResponse updateLastCompany(Long companyId) {
-      return updateLastCompany(UserInfo.getId(), companyId);
+      return updateLastCompany(CurrentUser.getId(), companyId);
    }
 
    public ServiceResponse updateLastCompany(Long userId, Long companyId) {
       final String query = "update user set last_company_id=? where id=?";
 
-      try (Connection con = dbUtils.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
 
          int i = 0;
          pst.setLong(++i, companyId);
@@ -163,7 +163,7 @@ public class UserRepository {
             return Responses.NotFound.WORKSPACE;
 
       } catch (Exception e) {
-         log.error("Failed to set users's last company. UserId: " + UserInfo.getId() + ", CompanyId: " + companyId, e);
+         log.error("Failed to set users's last company. UserId: " + CurrentUser.getId() + ", CompanyId: " + companyId, e);
          return Responses.ServerProblem.EXCEPTION;
       }
    }

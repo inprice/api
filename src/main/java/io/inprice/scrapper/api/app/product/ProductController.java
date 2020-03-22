@@ -2,19 +2,21 @@ package io.inprice.scrapper.api.app.product;
 
 import java.util.Map;
 
+import io.inprice.scrapper.api.helpers.Commons;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.framework.Routing;
-import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.framework.Controller;
+import io.inprice.scrapper.api.framework.Router;
+import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.helpers.ControllerHelper;
-import io.inprice.scrapper.api.rest.component.Commons;
 import io.javalin.Javalin;
 
-public class ProductController {
+@Router
+public class ProductController implements Controller {
 
    private static final ProductService service = Beans.getSingleton(ProductService.class);
 
-   @Routing
+   @Override
    public void addRoutes(Javalin app) {
 
       // insert

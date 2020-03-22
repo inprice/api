@@ -1,13 +1,13 @@
 package io.inprice.scrapper.api.dto;
 
 import io.inprice.scrapper.api.app.member.MemberStatus;
-import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.api.app.member.MemberRole;
 
 public class MemberChangeFieldDTO {
 
    private boolean isStatusChange;
    private Long memberId;
-   private UserRole role;
+   private MemberRole role;
    private MemberStatus status;
    private boolean undo;
 
@@ -27,11 +27,11 @@ public class MemberChangeFieldDTO {
       this.memberId = memberId;
    }
 
-   public UserRole getRole() {
+   public MemberRole getRole() {
       return role;
    }
 
-   public void setRole(UserRole role) {
+   public void setRole(MemberRole role) {
       this.role = role;
    }
 

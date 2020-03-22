@@ -19,9 +19,9 @@ import io.inprice.scrapper.api.dto.RegisterDTO;
 import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.Props;
-import io.inprice.scrapper.api.helpers.RedisClient;
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.external.Props;
+import io.inprice.scrapper.api.external.RedisClient;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
 

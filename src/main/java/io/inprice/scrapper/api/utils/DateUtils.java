@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.info.TimePeriod;
+import io.inprice.scrapper.api.meta.TimePeriod;
 
 /**
  * Utility class to provide functionality for date formatting operations

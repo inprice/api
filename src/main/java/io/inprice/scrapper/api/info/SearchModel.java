@@ -2,7 +2,7 @@ package io.inprice.scrapper.api.info;
 
 import java.util.Map;
 
-import io.inprice.scrapper.api.utils.SqlHelper;
+import io.inprice.scrapper.api.helpers.SqlHelper;
 
 public class SearchModel {
 

@@ -2,10 +2,10 @@ package io.inprice.scrapper.api.app.dashboard;
 
 import com.google.gson.JsonObject;
 
-import io.inprice.scrapper.api.component.UserInfo;
+import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.helpers.Global;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.consts.Global;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,17 +21,17 @@ public class DashboardRepository {
 
    private static final Logger log = LoggerFactory.getLogger(DashboardRepository.class);
 
-   private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+   private final Database db = Beans.getSingleton(Database.class);
 
    public JsonObject getReport() {
       JsonObject dashboard = emptyDashboard();
       JsonObject user = new JsonObject();
       JsonObject company = new JsonObject();
 
-      try (Connection con = dbUtils.getConnection()) {
+      try (Connection con = db.getConnection()) {
 
          // user
-         addUserInfo(con, user);
+         addSession(con, user);
          dashboard.add("user", user);
 
          // company
@@ -63,10 +63,10 @@ public class DashboardRepository {
       return dashboard;
    }
 
-   private void addUserInfo(Connection con, JsonObject parent) throws SQLException {
+   private void addSession(Connection con, JsonObject parent) throws SQLException {
       final String query = "select name, email from user as u where u.id=?";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getId());
+         pst.setLong(1, CurrentUser.getId());
 
          try (ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {
@@ -81,7 +81,7 @@ public class DashboardRepository {
       final String query = "select c.last_collecting_time, c.last_collecting_status, p.name, c.name, c.due_date "
             + "from company as c left join plan as p on c.plan_id = p.id where w.id=?";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, CurrentUser.getCompanyId());
 
          try (ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {
@@ -107,7 +107,7 @@ public class DashboardRepository {
    private void addLinkCounts(Connection con, JsonObject parent) throws SQLException {
       final String query = "select count(1) from link where company_id=?";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, CurrentUser.getCompanyId());
 
          try (ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {
@@ -121,7 +121,7 @@ public class DashboardRepository {
    private void addLinkStatusDistributions(Connection con, JsonObject parent) throws SQLException {
       final String query = "select status, count(1) from link where company_id=? group by status";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, CurrentUser.getCompanyId());
 
          JsonObject sd = new JsonObject();
          try (ResultSet rs = pst.executeQuery()) {
@@ -142,7 +142,7 @@ public class DashboardRepository {
       final String query = "select sku, name, seller, price, status, last_update, website_class_name from link "
             + "where company_id=? order by last_update desc limit 10";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, CurrentUser.getCompanyId());
 
          JsonObject mruTenLinks = new JsonObject();
          try (ResultSet rs = pst.executeQuery()) {
@@ -166,7 +166,7 @@ public class DashboardRepository {
    private void addProductCounts(Connection con, JsonObject parent) throws SQLException {
       final String query = "select active, count(1) from product where company_id=? group by active";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, CurrentUser.getCompanyId());
 
          JsonObject pc = new JsonObject();
          try (ResultSet rs = pst.executeQuery()) {
@@ -187,7 +187,7 @@ public class DashboardRepository {
       final String query = "select code, name, price, position, last_update, min_seller, max_seller, min_price, avg_price, max_price "
             + "from product where company_id=? order by last_update desc limit 10";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, CurrentUser.getCompanyId());
 
          JsonObject mruTenProducts = new JsonObject();
          try (ResultSet rs = pst.executeQuery()) {
@@ -214,7 +214,7 @@ public class DashboardRepository {
    private void addProductPositionDistributions(Connection con, JsonObject parent) throws SQLException {
       final String query = "select position, count(1) from product where company_id=? and active=true group by position";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, CurrentUser.getCompanyId());
 
          JsonObject pd = new JsonObject();
          for (int i = 1; i < 8; i++) {
@@ -247,7 +247,7 @@ public class DashboardRepository {
          throws SQLException {
       final String query = "select count(1) from product where company_id=? and active=true and " + indicator + "_seller='You'";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, UserInfo.getCompanyId());
+         pst.setLong(1, CurrentUser.getCompanyId());
 
          try (ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {

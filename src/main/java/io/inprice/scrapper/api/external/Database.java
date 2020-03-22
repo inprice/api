@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.helpers;
+package io.inprice.scrapper.api.external;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,14 +15,16 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DBUtils {
+import io.inprice.scrapper.api.helpers.ModelMapper;
 
-   private static final Logger log = LoggerFactory.getLogger(DBUtils.class);
+public class Database {
+
+   private static final Logger log = LoggerFactory.getLogger(Database.class);
 
    private HikariDataSource ds;
    private final String conString;
 
-   private DBUtils() {
+   private Database() {
       this.conString = String.format("jdbc:%s:%s:%d/%s%s", Props.getDB_Driver(), Props.getDB_Host(), Props.getDB_Port(),
             Props.getDB_Database(), Props.getDB_Additions());
       log.info("Connection string: " + conString);

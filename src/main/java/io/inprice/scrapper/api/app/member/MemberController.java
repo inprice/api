@@ -1,18 +1,20 @@
 package io.inprice.scrapper.api.app.member;
 
-import io.inprice.scrapper.api.component.Commons;
+import io.inprice.scrapper.api.helpers.Commons;
 import io.inprice.scrapper.api.dto.MemberChangeFieldDTO;
 import io.inprice.scrapper.api.dto.MemberDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.framework.Routing;
-import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.framework.Controller;
+import io.inprice.scrapper.api.framework.Router;
+import io.inprice.scrapper.api.consts.Consts;
 import io.javalin.Javalin;
 
-public class MemberController {
+@Router
+public class MemberController implements Controller {
 
    private static final MemberService service = Beans.getSingleton(MemberService.class);
 
-   @Routing
+   @Override
    public void addRoutes(Javalin app) {
 
       // add a new invitation

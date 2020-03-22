@@ -12,10 +12,10 @@ public class ImportProduct implements Serializable {
    private ImportType importType;
    private int status;
    private String result;
-   private int totalCount;
-   private int insertCount;
-   private int duplicateCount;
-   private int problemCount;
+   private int totalCount = 0;
+   private int insertCount = 0;
+   private int duplicateCount = 0;
+   private int problemCount = 0;
    private Long companyId;
    private Date createdAt;
 

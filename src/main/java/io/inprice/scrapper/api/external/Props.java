@@ -1,11 +1,11 @@
-package io.inprice.scrapper.api.helpers;
+package io.inprice.scrapper.api.external;
 
 import io.inprice.scrapper.api.utils.DateUtils;
 
 public class Props {
 
-   private static boolean isRunningForTests() {
-      return "test".equals(System.getenv().getOrDefault("APP_RUNNING_AT", "prod").toLowerCase());
+   public static boolean isRunningForTests() {
+      return ! "prod".equals(System.getenv().getOrDefault("APP_ENV", "prod").toLowerCase());
    }
 
    public static boolean isProdUniqueness() {
@@ -106,7 +106,7 @@ public class Props {
       return System.getenv().getOrDefault("MQ_EXCHANGE_CHANGES", "changes");
    }
 
-   public static String getRoutingKey_DeletedLinks() {
+   public static String getRouterKey_DeletedLinks() {
       return System.getenv().getOrDefault("MQ_ROUTING_DELETED_LINKS", "deleted-links");
    }
 

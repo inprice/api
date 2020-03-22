@@ -1,15 +1,13 @@
-package io.inprice.scrapper.api.rest.validator;
-
-import io.inprice.scrapper.api.dto.LoginDTO;
-
-import java.util.List;
+package io.inprice.scrapper.api.dto;
 
 public class LoginDTOValidator {
 
-    public static List<String> verify(LoginDTO loginDTO) {
-        List<String> problems = PasswordDTOValidator.verify(loginDTO, false, false);
-        EmailDTOValidator.verify(loginDTO.getEmail(), problems);
-        return problems;
-    }
+   public static String verify(LoginDTO dto) {
+      String problem = PasswordValidator.verify(dto, false, false);
+      if (problem == null) {
+         problem = EmailValidator.verify(dto.getEmail());
+      }
+      return problem;
+   }
 
 }

@@ -3,15 +3,15 @@ package io.inprice.scrapper.api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.scrapper.api.external.Props;
+import io.inprice.scrapper.api.external.RabbitMQ;
+import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.ConfigScanner;
-import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.helpers.Global;
-import io.inprice.scrapper.api.helpers.Props;
-import io.inprice.scrapper.api.helpers.RabbitMQ;
-import io.inprice.scrapper.api.helpers.RedisClient;
-import io.inprice.scrapper.api.rest.component.AuthFilter;
-import io.inprice.scrapper.api.rest.component.UserInfo;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.consts.Global;
+import io.inprice.scrapper.api.session.AuthFilter;
+import io.inprice.scrapper.api.session.CurrentUser;
 import io.javalin.Javalin;
 import io.javalin.plugin.openapi.annotations.ContentType;
 
@@ -20,14 +20,14 @@ public class Application {
    private static final Logger log = LoggerFactory.getLogger(Application.class);
 
    private static Javalin app;
-   private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+   private static final Database db = Beans.getSingleton(Database.class);
 
    public static void main(String[] args) {
       new Thread(() -> {
          log.info("APPLICATION IS STARTING...");
 
          createServer();
-         ConfigScanner.scan(app);
+         ConfigScanner.scanControllers(app);
 
          Global.isApplicationRunning = true;
 
@@ -47,7 +47,7 @@ public class Application {
          RabbitMQ.closeChannel();
 
          log.info(" - DB connection is closing...");
-         dbUtils.shutdown();
+         db.shutdown();
 
          log.info("ALL SERVICES IS DONE.");
 
@@ -65,7 +65,7 @@ public class Application {
       }).start(Props.getAPP_Port());
 
       app.before(new AuthFilter());
-      app.after(ctx -> UserInfo.cleanup());
+      app.after(ctx -> CurrentUser.cleanup());
    }
 
 }

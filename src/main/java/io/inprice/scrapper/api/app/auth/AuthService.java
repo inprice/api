@@ -1,7 +1,6 @@
 package io.inprice.scrapper.api.app.auth;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -14,7 +13,6 @@ import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
-import io.inprice.scrapper.api.component.Commons;
 import io.inprice.scrapper.api.dto.EmailValidator;
 import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.dto.LoginDTOValidator;
@@ -23,9 +21,9 @@ import io.inprice.scrapper.api.dto.PasswordValidator;
 import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.Props;
-import io.inprice.scrapper.api.helpers.RedisClient;
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.external.Props;
+import io.inprice.scrapper.api.external.RedisClient;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
@@ -45,8 +43,8 @@ public class AuthService {
    public ServiceResponse login(LoginDTO loginDTO) {
       if (loginDTO != null) {
 
-         ServiceResponse res = validate(loginDTO);
-         if (res.isOK()) {
+         String problem = LoginDTOValidator.verify(loginDTO);
+         if (problem == null) {
 
             ServiceResponse found = userRepository.findByEmail(loginDTO.getEmail(), true);
             if (found.isOK()) {
@@ -63,6 +61,8 @@ public class AuthService {
                   }
                }
             }
+         } else {
+            return new ServiceResponse(problem);
          }
       }
       return Responses.Invalid.EMAIL_OR_PASSWORD;
@@ -193,11 +193,6 @@ public class AuthService {
          return Responses.OK;
       else
          return new ServiceResponse(problem);
-   }
-
-   private ServiceResponse validate(LoginDTO loginDTO) {
-      List<String> problems = LoginDTOValidator.verify(loginDTO);
-      return Commons.createResponse(problems);
    }
 
    private ServiceResponse authenticatedResponse(User user, String ip, String userAgent) {

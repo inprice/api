@@ -3,8 +3,6 @@ package io.inprice.scrapper.api.app.member;
 import java.io.Serializable;
 import java.util.Date;
 
-import io.inprice.scrapper.api.app.user.UserRole;
-
 public class Member implements Serializable {
 
    private static final long serialVersionUID = -7793356216234713734L;
@@ -12,11 +10,15 @@ public class Member implements Serializable {
    private Long id;
    private String email;
    private Long companyId;
-   private UserRole role;
+   private MemberRole role;
    private MemberStatus status = MemberStatus.PENDING;
    private MemberStatus preStatus = MemberStatus.PENDING;
    private Integer retry = 1;
+   private Date updatedAt;
    private Date createdAt = new Date();
+
+   // transient
+   private String companyName;
 
    public Long getId() {
       return id;
@@ -42,11 +44,11 @@ public class Member implements Serializable {
       this.companyId = companyId;
    }
 
-   public UserRole getRole() {
+   public MemberRole getRole() {
       return role;
    }
 
-   public void setRole(UserRole role) {
+   public void setRole(MemberRole role) {
       this.role = role;
    }
 
@@ -74,12 +76,28 @@ public class Member implements Serializable {
       this.retry = retry;
    }
 
+   public Date getUpdatedAt() {
+      return updatedAt;
+   }
+
+   public void setUpdatedAt(Date updatedAt) {
+      this.updatedAt = updatedAt;
+   }
+
    public Date getCreatedAt() {
       return createdAt;
    }
 
    public void setCreatedAt(Date createdAt) {
       this.createdAt = createdAt;
+   }
+
+   public String getCompanyName() {
+      return companyName;
+   }
+
+   public void setCompanyName(String companyName) {
+      this.companyName = companyName;
    }
 
 }

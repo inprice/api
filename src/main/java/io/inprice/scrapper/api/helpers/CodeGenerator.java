@@ -1,6 +1,6 @@
-package io.inprice.scrapper.api.utils;
+package io.inprice.scrapper.api.helpers;
 
-import io.inprice.scrapper.api.helpers.Props;
+import io.inprice.scrapper.api.external.Props;
 import jodd.util.BCrypt;
 
 public class CodeGenerator {

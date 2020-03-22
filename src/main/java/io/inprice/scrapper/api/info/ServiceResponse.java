@@ -2,7 +2,7 @@ package io.inprice.scrapper.api.info;
 
 import java.util.List;
 
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.consts.Responses;
 
 public final class ServiceResponse {
 

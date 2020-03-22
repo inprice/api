@@ -11,6 +11,7 @@ public class Product implements Serializable {
    private Long id;
    private Boolean active = Boolean.TRUE;
    private String code;
+   private String name;
    private String brand;
    private String category;
    private BigDecimal price;
@@ -46,6 +47,14 @@ public class Product implements Serializable {
 
    public void setCode(String code) {
       this.code = code;
+   }
+
+   public String getName() {
+      return name;
+   }
+
+   public void setName(String name) {
+      this.name = name;
    }
 
    public String getBrand() {

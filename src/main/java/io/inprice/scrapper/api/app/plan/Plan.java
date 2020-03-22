@@ -10,6 +10,9 @@ public class Plan implements Serializable {
 
    private Long id;
    private Boolean active = Boolean.TRUE;
+   private String name;
+   private String description;
+   private String css;
    private BigDecimal price;
    private Integer rowLimit;
    private Integer orderNo;
@@ -29,6 +32,30 @@ public class Plan implements Serializable {
 
    public void setActive(Boolean active) {
       this.active = active;
+   }
+
+   public String getName() {
+      return name;
+   }
+
+   public void setName(String name) {
+      this.name = name;
+   }
+
+   public String getDescription() {
+      return description;
+   }
+
+   public void setDescription(String description) {
+      this.description = description;
+   }
+
+   public String getCss() {
+      return css;
+   }
+
+   public void setCss(String css) {
+      this.css = css;
    }
 
    public BigDecimal getPrice() {

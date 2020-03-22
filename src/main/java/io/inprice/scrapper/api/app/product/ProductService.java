@@ -3,11 +3,11 @@ package io.inprice.scrapper.api.app.product;
 import java.util.Map;
 
 import io.inprice.scrapper.api.dto.ProductDTO;
+import io.inprice.scrapper.api.dto.ProductDTOValidator;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.rest.validator.ProductDTOValidator;
 
 public class ProductService {
 
@@ -26,26 +26,26 @@ public class ProductService {
       return repository.search(searchModel);
    }
 
-   public ServiceResponse insert(ProductDTO productDTO) {
-      if (productDTO != null) {
-         ServiceResponse res = ProductDTOValidator.validate(productDTO);
+   public ServiceResponse insert(ProductDTO dto) {
+      if (dto != null) {
+         ServiceResponse res = ProductDTOValidator.validate(dto);
          if (res.isOK()) {
-            res = repository.insert(productDTO);
+            res = repository.insert(dto);
          }
          return res;
       }
       return Responses.Invalid.PRODUCT;
    }
 
-   public ServiceResponse update(ProductDTO productDTO) {
-      if (productDTO != null) {
-         if (productDTO.getId() == null || productDTO.getId() < 1) {
+   public ServiceResponse update(ProductDTO dto) {
+      if (dto != null) {
+         if (dto.getId() == null || dto.getId() < 1) {
             return Responses.NotFound.PRODUCT;
          }
 
-         ServiceResponse res = ProductDTOValidator.validate(productDTO);
+         ServiceResponse res = ProductDTOValidator.validate(dto);
          if (res.isOK()) {
-            res = repository.update(productDTO);
+            res = repository.update(dto);
          }
          return res;
       }

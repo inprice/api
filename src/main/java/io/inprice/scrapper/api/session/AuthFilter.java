@@ -1,19 +1,17 @@
-package io.inprice.scrapper.api.component;
+package io.inprice.scrapper.api.session;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import org.eclipse.jetty.client.HttpResponseException;
-import org.eclipse.jetty.client.api.Response;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.scrapper.api.app.member.MemberRole;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.Consts;
+import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.info.AuthUser;
-import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 
@@ -75,10 +73,10 @@ public class AuthFilter implements Handler {
                   AuthUser authUser = tokenService.checkAccessToken(accessToken);
                   if (authUser == null) {
                      ctx.status(HttpStatus.UNAUTHORIZED_401);
-                  } else if (!Role.ADMIN.equals(authUser.getRole())
+                  } else if (!MemberRole.ADMIN.equals(authUser.getRole())
                         && ctx.contextPath().startsWith(Consts.Paths.ADMIN_BASE)) {
                      ctx.res.setStatus(HttpStatus.FORBIDDEN_403);
-                  } else if (Role.USER.equals(authUser.getRole()) && sensitiveMethodsSet.contains(ctx.method())) {
+                  } else if (MemberRole.READER.equals(authUser.getRole()) && sensitiveMethodsSet.contains(ctx.method())) {
                      // readers are allowed to update their passwords
                      if (!ctx.contextPath().equals(Consts.Paths.User.PASSWORD)) {
                         ctx.status(HttpStatus.FORBIDDEN_403);
@@ -86,7 +84,7 @@ public class AuthFilter implements Handler {
                   }
                   // everything is OK!
                   if (ctx.status() < 400) {
-                     UserInfo.setAuthUser(authUser);
+                     CurrentUser.setAuthUser(authUser);
                   }
                }
             }

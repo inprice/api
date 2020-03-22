@@ -1,21 +1,19 @@
 package io.inprice.scrapper.api.app.link;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import io.inprice.scrapper.api.helpers.Commons;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.framework.Routing;
-import io.inprice.scrapper.api.helpers.Consts;
-import io.inprice.scrapper.api.rest.component.Commons;
+import io.inprice.scrapper.api.framework.Controller;
+import io.inprice.scrapper.api.framework.Router;
+import io.inprice.scrapper.api.consts.Consts;
 import io.javalin.Javalin;
 
-public class LinkController {
+@Router
+public class LinkController implements Controller {
 
-   private static final Logger log = LoggerFactory.getLogger(LinkController.class);
    private static final LinkService service = Beans.getSingleton(LinkService.class);
 
-   @Routing
+   @Override
    public void addRoutes(Javalin app) {
 
       // insert
@@ -45,21 +43,21 @@ public class LinkController {
       app.put(Consts.Paths.Link.RENEW + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          Long productId = ctx.queryParam("product_id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, Status.RENEWED)));
+         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, LinkStatus.RENEWED)));
       });
 
       // change status to PAUSED
-      app.put(Consts.Paths.Link.RENEW + "/:id", (ctx) -> {
+      app.put(Consts.Paths.Link.PAUSE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          Long productId = ctx.queryParam("product_id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, Status.PAUSED)));
+         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, LinkStatus.PAUSED)));
       });
 
       // change status to RESUMED
       app.put(Consts.Paths.Link.RESUME + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          Long productId = ctx.queryParam("product_id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, Status.PAUSED)));
+         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, LinkStatus.PAUSED)));
       });
 
    }

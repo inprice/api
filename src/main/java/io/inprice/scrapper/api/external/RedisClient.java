@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.helpers;
+package io.inprice.scrapper.api.external;
 
 import java.util.concurrent.TimeUnit;
 
@@ -30,12 +30,12 @@ public class RedisClient {
       rateLimitingSet = client.getSetCache("api:rate-limiting:ips");
    }
 
-   public static boolean invalidateToken(TokenType tokenType, String token) {
-      return invalidatedTokens.add(token, System.currentTimeMillis() + tokenType.ttl(), TimeUnit.MILLISECONDS);
+   public static void addInvalidateToken(TokenType tokenType, String token) {
+      invalidatedTokens.add(token, System.currentTimeMillis() + tokenType.ttl(), TimeUnit.MILLISECONDS);
    }
 
-   public static boolean addIpToRateLimiter(RateLimiterType type, String ip) {
-      return rateLimitingSet.add(type.name() + ip, System.currentTimeMillis() + type.ttl(), TimeUnit.MILLISECONDS);
+   public static void addIpToRateLimiter(RateLimiterType type, String ip) {
+      rateLimitingSet.add(type.name() + ip, System.currentTimeMillis() + type.ttl(), TimeUnit.MILLISECONDS);
    }
 
    public static boolean isIpRateLimited(RateLimiterType type, String ip) {

@@ -9,24 +9,25 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.app.user.UserRole;
-import io.inprice.scrapper.api.app.user.UserStatus;
-import io.inprice.scrapper.api.component.UserInfo;
+import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.dto.MemberChangeFieldDTO;
 import io.inprice.scrapper.api.dto.MemberDTO;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.helpers.SqlHelper;
 
 public class MemberRepository {
 
    private static final Logger log = LoggerFactory.getLogger(MemberRepository.class);
+   private static final String COMPANY_SELECT_STANDARD_QUERY = "select m.*, c.name as company_name from member as m inner join company as c on c.id = m.company_id";
 
-   private final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+   private final Database db = Beans.getSingleton(Database.class);
 
-   public ServiceResponse findById(long id) {
-      Member model = dbUtils.findSingle("select * from member where id=" + id, this::map);
+   public ServiceResponse findById(long memberId) {
+      Member model = db.findSingle(String.format(COMPANY_SELECT_STANDARD_QUERY + " where m.id=%d", memberId),
+            this::map);
       if (model != null)
          return new ServiceResponse(model);
       else
@@ -34,26 +35,33 @@ public class MemberRepository {
    }
 
    public ServiceResponse findByEmailAndCompanyId(String email, long companyId) {
-      Member model = dbUtils.findSingle("select * from member where email='" + email + "' and company_id = " + companyId, this::map);
+      Member model = db
+            .findSingle(String.format(COMPANY_SELECT_STANDARD_QUERY + " where m.email='%s' and m.company_id=%d",
+                  SqlHelper.clear(email), companyId), this::map);
       if (model != null)
          return new ServiceResponse(model);
       else
          return Responses.NotFound.MEMBER;
    }
 
-   public ServiceResponse getList() {
-      List<Member> members = dbUtils
-            .findMultiple(String.format("select * from member where company_id = %d order by role created_at desc, name",
-                  UserInfo.getCompanyId()), this::map);
+   public ServiceResponse getListByUser() {
+      List<Member> members = db.findMultiple(String.format(
+            COMPANY_SELECT_STANDARD_QUERY + " where m.email = '%s' order by m.role, c.name, m.created_at desc",
+            SqlHelper.clear(CurrentUser.getEmail())), this::map);
+      return new ServiceResponse(members);
+   }
 
-      // since there must be at least admin in the member list
+   public ServiceResponse getListByCompany() {
+      List<Member> members = db.findMultiple(String.format(
+            COMPANY_SELECT_STANDARD_QUERY + " where m.company_id = %d order by m.role, c.name, m.created_at desc",
+            CurrentUser.getCompanyId()), this::map);
       return new ServiceResponse(members);
    }
 
    public ServiceResponse findASuitableCompanyId(String email) {
-      List<Member> members = dbUtils.findMultiple(String
-            .format("select * from member where email = %s and status = %s order by role, company_id", email, UserStatus.JOINED),
-            this::map);
+      List<Member> members = db.findMultiple(String.format(
+            COMPANY_SELECT_STANDARD_QUERY + " where m.email = '%s' and m.status = '%s' order by m.role, m.company_id",
+            SqlHelper.clear(email), MemberStatus.JOINED), this::map);
 
       if (members != null && members.size() > 0) {
          return new ServiceResponse(members.get(0));
@@ -65,13 +73,13 @@ public class MemberRepository {
       ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
       // company is inserted
-      try (Connection con = dbUtils.getConnection();
+      try (Connection con = db.getConnection();
             PreparedStatement pst = con
                   .prepareStatement("insert into member (email, role, company_id) values (?, ?, ?) ")) {
          int i = 0;
          pst.setString(++i, memberDTO.getEmail());
          pst.setString(++i, memberDTO.getRole().name());
-         pst.setLong(++i, UserInfo.getCompanyId());
+         pst.setLong(++i, CurrentUser.getCompanyId());
 
          if (pst.executeUpdate() > 0) {
             response = Responses.OK;
@@ -86,13 +94,13 @@ public class MemberRepository {
    public ServiceResponse changeRole(MemberChangeFieldDTO changeRoleDTO) {
       ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
-      try (Connection con = dbUtils.getConnection();
-         PreparedStatement pstUpdate = con
-               .prepareStatement("update member set role = ? where id = ? and company_id = ?")) {
+      try (Connection con = db.getConnection();
+            PreparedStatement pstUpdate = con
+                  .prepareStatement("update member set role=? where id=? and company_id=?")) {
          int i = 0;
          pstUpdate.setString(++i, changeRoleDTO.getRole().name());
          pstUpdate.setLong(++i, changeRoleDTO.getMemberId());
-         pstUpdate.setLong(++i, UserInfo.getCompanyId());
+         pstUpdate.setLong(++i, CurrentUser.getCompanyId());
 
          if (pstUpdate.executeUpdate() > 0) {
             response = Responses.OK;
@@ -104,26 +112,26 @@ public class MemberRepository {
       return response;
    }
 
-
    public ServiceResponse changeStatus(MemberChangeFieldDTO changeDTO) {
       ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
-      try (Connection con = dbUtils.getConnection()) {
+      try (Connection con = db.getConnection()) {
 
          MemberStatus newStatus = changeDTO.getStatus();
          if (changeDTO.isUndo()) {
-            Member member = dbUtils.findSingle(con, "select * from member where id=" + changeDTO.getMemberId(), this::map);
+            Member member = db.findSingle(con, "select * from member where id=" + changeDTO.getMemberId(),
+                  this::map);
             if (member != null) {
                newStatus = member.getPreStatus();
             }
          }
 
-         try (PreparedStatement pstUpdate = con
-               .prepareStatement("update member set pre_status = status, status = ? where id = ? and company_id = ?")) {
+         try (PreparedStatement pstUpdate = con.prepareStatement(
+               "update member set pre_status=status, status=?, updated_at=now() where id=? and company_id=?")) {
             int i = 0;
             pstUpdate.setLong(++i, changeDTO.getMemberId());
             pstUpdate.setString(++i, newStatus.name());
-            pstUpdate.setLong(++i, UserInfo.getCompanyId());
+            pstUpdate.setLong(++i, CurrentUser.getCompanyId());
 
             if (pstUpdate.executeUpdate() > 0) {
                response = Responses.OK;
@@ -140,13 +148,13 @@ public class MemberRepository {
       ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
       // company is inserted
-      try (Connection con = dbUtils.getConnection();
+      try (Connection con = db.getConnection();
             PreparedStatement pst = con.prepareStatement(
-                  "update member set retry = retry + 1 where id = ? and retry < 3 and status = ? and company_id = ?")) {
+                  "update member set retry=retry+1 where id=? and retry<3 and status=? and company_id=?")) {
          int i = 0;
          pst.setLong(++i, memberId);
          pst.setString(++i, MemberStatus.PENDING.name());
-         pst.setLong(++i, UserInfo.getCompanyId());
+         pst.setLong(++i, CurrentUser.getCompanyId());
 
          if (pst.executeUpdate() > 0) {
             response = Responses.OK;
@@ -164,7 +172,8 @@ public class MemberRepository {
          model.setId(rs.getLong("id"));
          model.setEmail(rs.getString("email"));
          model.setCompanyId(rs.getLong("company_id"));
-         model.setRole(UserRole.valueOf(rs.getString("role")));
+         model.setCompanyName(rs.getString("company_name")); // transient
+         model.setRole(MemberRole.valueOf(rs.getString("role")));
          model.setStatus(MemberStatus.valueOf(rs.getString("status")));
          model.setRetry(rs.getInt("retry"));
          model.setCreatedAt(rs.getDate("created_at"));

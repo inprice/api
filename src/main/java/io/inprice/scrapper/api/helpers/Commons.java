@@ -1,10 +1,10 @@
-package io.inprice.scrapper.api.component;
+package io.inprice.scrapper.api.helpers;
 
 import java.util.List;
 
 import org.eclipse.jetty.http.HttpStatus;
 
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.javalin.http.Context;
 

@@ -10,18 +10,20 @@ create table site (
   logo_url                  varchar(250),
   created_at                timestamp not null default current_timestamp,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 create unique index ix1 on site (name);
 
 create table plan (
   id                        bigint auto_increment not null,
   active                    boolean default true,
   name                      varchar(30) not null,
+  description               varchar(70),
+  css                       varchar(50),
   price                     double default 0,
   row_limit                 smallint,
   order_no                  smallint,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 create unique index ix1 on plan (name);
 
 create table plan_rows (
@@ -30,7 +32,19 @@ create table plan_rows (
   order_no                  smallint,
   plan_id                   bigint not null,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
+
+create table user (
+  id                        bigint auto_increment not null,
+  email                     varchar(100) not null,
+  name                      varchar(70) not null,
+  last_company_id           bigint,
+  password_hash             varchar(255) not null,
+  password_salt             varchar(255) not null,
+  created_at                timestamp not null default current_timestamp,
+  primary key (id)
+) engine=innodb;
+create unique index ix1 on user (email);
 
 create table company (
   id                        bigint auto_increment not null,
@@ -47,22 +61,10 @@ create table company (
   last_collecting_status    boolean default false,
   created_at                timestamp not null default current_timestamp,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 create index ix1 on company (name);
 alter table company add foreign key (admin_id) references user (id);
 alter table company add foreign key (plan_id) references plan (id);
-
-create table user (
-  id                        bigint auto_increment not null,
-  email                     varchar(100) not null,
-  name                      varchar(70) not null,
-  last_company_id           bigint,
-  password_hash             varchar(255) not null,
-  password_salt             varchar(255) not null,
-  created_at                timestamp not null default current_timestamp,
-  primary key (id)
-) engine=innodb default charset=utf8;
-create unique index ix1 on user (email);
 
 create table member (
   id                        bigint auto_increment not null,
@@ -72,9 +74,10 @@ create table member (
   pre_status                enum('PENDING', 'JOINED', 'LEFT', 'REJECTED', 'CANCELLED', 'PUASED') not null default 'PENDING',
   status                    enum('PENDING', 'JOINED', 'LEFT', 'REJECTED', 'CANCELLED', 'PUASED') not null default 'PENDING',
   retry                     smallint default 1,
+  updated_at                timestamp,
   created_at                timestamp not null default current_timestamp,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 create index ix1 on member (email);
 alter table member add foreign key (company_id) references company (id);
 
@@ -97,7 +100,7 @@ create table product (
   updated_at                datetime,
   created_at                timestamp not null default current_timestamp,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 create unique index ix1 on product (company_id, code);
 create index ix2 on product (company_id, name);
 alter table product add foreign key (company_id) references company (id);
@@ -115,7 +118,7 @@ create table product_price (
   company_id                bigint not null,
   created_at                timestamp not null default current_timestamp,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 create index ix1 on product_price (created_at);
 alter table product_price add foreign key (product_id) references product (id);
 
@@ -141,7 +144,7 @@ create table link (
   import_id                 bigint,
   import_row_id             bigint,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 create index ix1 on link (status);
 create index ix2 on link (name);
 create index ix3 on link (last_update);
@@ -158,7 +161,7 @@ create table link_price (
   company_id                bigint not null,
   created_at                timestamp not null default current_timestamp,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 create index ix1 on link_price (created_at);
 alter table link_price add foreign key (link_id) references link (id);
 
@@ -170,7 +173,7 @@ create table link_spec (
   workspace_id              bigint not null,
   company_id                bigint not null,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 alter table link_spec add foreign key (link_id) references link (id);
 
 create table link_history (
@@ -182,7 +185,7 @@ create table link_history (
   company_id                bigint not null,
   created_at                timestamp not null default current_timestamp,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 create index ix1 on link_history (created_at);
 alter table link_history add foreign key (link_id) references link (id);
 
@@ -198,7 +201,7 @@ create table import_product (
   company_id                bigint not null,
   created_at                timestamp not null default current_timestamp,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 alter table import_product add foreign key (company_id) references company (id);
 alter table link add foreign key (import_id) references import_product (id);
 alter table product add foreign key (import_id) references import_product (id);
@@ -214,5 +217,5 @@ create table import_product_row (
   link_id                   bigint,
   company_id                bigint not null,
   primary key (id)
-) engine=innodb default charset=utf8;
+) engine=innodb;
 alter table link add foreign key (import_row_id) references import_product_row (id);

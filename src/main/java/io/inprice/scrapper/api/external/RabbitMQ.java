@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.helpers;
+package io.inprice.scrapper.api.external;
 
 import java.io.Serializable;
 
@@ -27,7 +27,7 @@ public class RabbitMQ {
                connectionFactory.setPassword(Props.getMQ_Password());
 
                try {
-                  final String deletedLinksQueue = Props.getRoutingKey_DeletedLinks();
+                  final String deletedLinksQueue = Props.getRouterKey_DeletedLinks();
 
                   Connection connection = connectionFactory.newConnection();
                   channel = connection.createChannel();

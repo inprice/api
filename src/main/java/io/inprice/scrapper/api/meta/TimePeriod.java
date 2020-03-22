@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.info;
+package io.inprice.scrapper.api.meta;
 
 import java.util.concurrent.TimeUnit;
 

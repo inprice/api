@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.helpers;
+package io.inprice.scrapper.api.consts;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

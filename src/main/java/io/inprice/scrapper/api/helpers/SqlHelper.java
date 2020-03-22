@@ -1,10 +1,10 @@
-package io.inprice.scrapper.api.utils;
+package io.inprice.scrapper.api.helpers;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.info.SearchModel;
-import io.inprice.scrapper.api.rest.component.Context;
 
 public class SqlHelper {
 
@@ -74,10 +74,8 @@ public class SqlHelper {
          String... queryingFields) {
       StringBuilder sql = new StringBuilder("select count(1) from ");
       sql.append(tableName);
-      sql.append(" where workspace_id = ");
-      sql.append(Context.getWorkspaceId());
-      sql.append(" and company_id = ");
-      sql.append(Context.getCompanyId());
+      sql.append(" where company_id = ");
+      sql.append(CurrentUser.getCompanyId());
 
       // query string part
       if (!searchModel.getTerm().isEmpty()) {
@@ -102,10 +100,8 @@ public class SqlHelper {
          String... queryingFields) {
       StringBuilder sql = new StringBuilder("select * from ");
       sql.append(tableName);
-      sql.append(" where workspace_id = ");
-      sql.append(Context.getWorkspaceId());
-      sql.append(" and company_id = ");
-      sql.append(Context.getCompanyId());
+      sql.append(" where company_id = ");
+      sql.append(CurrentUser.getCompanyId());
 
       // query string part
       if (!searchModel.getTerm().isEmpty()) {

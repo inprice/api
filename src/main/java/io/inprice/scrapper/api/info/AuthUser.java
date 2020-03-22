@@ -2,7 +2,7 @@ package io.inprice.scrapper.api.info;
 
 import java.io.Serializable;
 
-import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.api.app.member.MemberRole;
 
 public class AuthUser implements Serializable {
 
@@ -11,7 +11,7 @@ public class AuthUser implements Serializable {
    private Long id;
    private String email;
    private String name;
-   private UserRole role;
+   private MemberRole role;
    private Long companyId;
 
    public Long getId() {
@@ -38,11 +38,11 @@ public class AuthUser implements Serializable {
       this.name = name;
    }
 
-   public UserRole getRole() {
+   public MemberRole getRole() {
       return role;
    }
 
-   public void setRole(UserRole role) {
+   public void setRole(MemberRole role) {
       this.role = role;
    }
 

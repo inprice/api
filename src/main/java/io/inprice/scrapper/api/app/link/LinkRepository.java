@@ -10,28 +10,28 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.component.UserInfo;
+import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.BulkDeleteStatements;
-import io.inprice.scrapper.api.helpers.DBUtils;
-import io.inprice.scrapper.api.helpers.Props;
-import io.inprice.scrapper.api.helpers.Responses;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.external.Props;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 
 public class LinkRepository {
 
    private static final Logger log = LoggerFactory.getLogger(LinkRepository.class);
 
-   private static final DBUtils dbUtils = Beans.getSingleton(DBUtils.class);
+   private static final Database db = Beans.getSingleton(Database.class);
    private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
 
    public ServiceResponse findById(Long id) {
-      Link model = dbUtils.findSingle(
+      Link model = db.findSingle(
          String.format(
             "select * from link " + 
             "where id = %d " + 
-            "  and company_id = %d ", id, UserInfo.getCompanyId()), this::map);
+            "  and company_id = %d ", id, CurrentUser.getCompanyId()), this::map);
       if (model != null) {
          return new ServiceResponse(model);
       }
@@ -39,12 +39,12 @@ public class LinkRepository {
    }
 
    public ServiceResponse getList(Long productId) {
-      List<Link> links = dbUtils.findMultiple(
+      List<Link> links = db.findMultiple(
             String.format(
                "select * from link " + 
                "where product_id = %d " + 
                "  and company_id = %d " + 
-               "order by name", productId, UserInfo.getCompanyId()), this::map);
+               "order by name", productId, CurrentUser.getCompanyId()), this::map);
 
       if (links != null && links.size() > 0) {
          return new ServiceResponse(links);
@@ -65,12 +65,12 @@ public class LinkRepository {
          "(url, product_id, company_id) " +
          "values  (?, ?, ?) ";
 
-      try (Connection con = dbUtils.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
 
          int i = 0;
          pst.setString(++i, linkDTO.getUrl());
          pst.setLong(++i, linkDTO.getProductId());
-         pst.setLong(++i, UserInfo.getCompanyId());
+         pst.setLong(++i, CurrentUser.getCompanyId());
 
          if (pst.executeUpdate() > 0)
             return Responses.OK;
@@ -87,7 +87,7 @@ public class LinkRepository {
    }
 
    public ServiceResponse deleteById(Long id) {
-      boolean result = dbUtils.executeBatchQueries(
+      boolean result = db.executeBatchQueries(
          bulkDeleteStatements.linksByLinkIdId(id),
          String.format("Failed to delete link. Id: %d", id), 1 // at least one execution must be successful
       );
@@ -101,7 +101,7 @@ public class LinkRepository {
    public ServiceResponse changeStatus(Long id, Long productId, LinkStatus status) {
       Connection con = null;
       try {
-         con = dbUtils.getTransactionalConnection();
+         con = db.getTransactionalConnection();
 
          final String q1 = 
             "update link " + 
@@ -120,7 +120,7 @@ public class LinkRepository {
             pst.setLong(++i, id);
             pst.setString(++i, status.name());
             pst.setLong(++i, productId);
-            pst.setLong(++i, UserInfo.getCompanyId());
+            pst.setLong(++i, CurrentUser.getCompanyId());
 
             res1 = (pst.executeUpdate() > 0);
          }
@@ -133,7 +133,7 @@ public class LinkRepository {
                pst.setLong(++i, id);
                pst.setString(++i, status.name());
                pst.setLong(++i, productId);
-               pst.setLong(++i, UserInfo.getCompanyId());
+               pst.setLong(++i, CurrentUser.getCompanyId());
 
                res2 = (pst.executeUpdate() > 0);
             }
@@ -143,10 +143,10 @@ public class LinkRepository {
 
          if (res1) {
             if (res2) {
-               dbUtils.commit(con);
+               db.commit(con);
                return Responses.OK;
             } else {
-               dbUtils.rollback(con);
+               db.rollback(con);
                return Responses.DataProblem.DB_PROBLEM;
             }
          } else {
@@ -155,22 +155,22 @@ public class LinkRepository {
 
       } catch (SQLException e) {
          if (con != null)
-            dbUtils.rollback(con);
+            db.rollback(con);
          log.error("Failed to change link's status. Link Id: " + id, e);
          return Responses.ServerProblem.EXCEPTION;
       } finally {
          if (con != null)
-            dbUtils.close(con);
+            db.close(con);
       }
    }
 
    private boolean doesExist(String url, Long productId) {
-      Link model = dbUtils
+      Link model = db
          .findSingle(String.format(
             "select * from link " + 
             "where url = '%s' " + 
             "  and product_id = %d " + 
-            "  and company_id = %d ", url, productId, UserInfo.getCompanyId()), this::map);
+            "  and company_id = %d ", url, productId, CurrentUser.getCompanyId()), this::map);
       return (model != null);
    }
 

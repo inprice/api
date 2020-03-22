@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.helpers;
+package io.inprice.scrapper.api.consts;
 
 import io.inprice.scrapper.api.info.ServiceResponse;
 
@@ -20,6 +20,7 @@ public class Responses {
       public static final ServiceResponse PASSWORD = new ServiceResponse(BASE + 12, "Wrong password!");
       public static final ServiceResponse EMAIL_OR_PASSWORD = new ServiceResponse(BASE + 13,
       "Invalid email or password!");
+      public static final ServiceResponse NAME = new ServiceResponse(BASE + 14, "Invalid name!");
       
       public static final ServiceResponse PRODUCT = new ServiceResponse(BASE + 20, "Invalid product!");
       public static final ServiceResponse LINK = new ServiceResponse(BASE + 21, "Invalid link!");
