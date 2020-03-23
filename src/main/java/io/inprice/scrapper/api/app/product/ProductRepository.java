@@ -8,9 +8,7 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,17 +16,17 @@ import org.slf4j.LoggerFactory;
 import io.inprice.scrapper.api.app.link.LinkStatus;
 import io.inprice.scrapper.api.app.product_import.ImportProduct;
 import io.inprice.scrapper.api.app.product_import.ImportProductRow;
-import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.ProductDTO;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.BulkDeleteStatements;
 import io.inprice.scrapper.api.helpers.RepositoryHelper;
-import io.inprice.scrapper.api.external.Database;
-import io.inprice.scrapper.api.external.Props;
-import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.helpers.SqlHelper;
 import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.helpers.SqlHelper;
+import io.inprice.scrapper.api.session.CurrentUser;
 
 public class ProductRepository {
 
@@ -56,45 +54,16 @@ public class ProductRepository {
       return Responses.NotFound.PRODUCT;
    }
 
-   public ServiceResponse getList() {
-      List<Product> products = db.findMultiple(
-            String.format("select * from product where company_id = %d order by name", CurrentUser.getCompanyId()),
-            this::map);
-
-      return new ServiceResponse(products);
-   }
-
    public ServiceResponse search(SearchModel searchModel) {
-      final String searchQueryForRowCount = SqlHelper.generateSearchQueryCountPart("product", searchModel, "code",
-            "name");
+      final String searchQuery = SqlHelper.generateSearchQuery(searchModel);
 
-      int totalRowCount = 0;
-      try (Connection con = db.getConnection();
-            PreparedStatement pst = con.prepareStatement(searchQueryForRowCount)) {
-
-         ResultSet rs = pst.executeQuery();
-         if (rs.next()) {
-            totalRowCount = rs.getInt(1);
-         }
-         rs.close();
-
-         if (totalRowCount > 0) {
-            final String searchQueryForSelection = SqlHelper.generateSearchQuerySelectPart("product", searchModel,
-                  totalRowCount, "code", "name");
-            List<Product> rows = db.findMultiple(con, searchQueryForSelection, this::map);
-            Map<String, Object> data = new HashMap<>(3);
-            data.put("rows", rows);
-            data.put("lastRowNo", searchModel.getLastRowNo() + searchModel.ROW_LIMIT);
-            data.put("totalRowCount", totalRowCount);
-            return new ServiceResponse(data);
-         }
-
+      try {
+         List<Product> rows = db.findMultiple(searchQuery, this::map);
+         return new ServiceResponse(rows);
       } catch (Exception e) {
          log.error("Failed to search products. ", e);
          return Responses.ServerProblem.EXCEPTION;
       }
-
-      return Responses.NotFound.SEARCH_NOT_FOUND;
    }
 
    public ServiceResponse insert(ProductDTO dto) {
@@ -461,7 +430,7 @@ public class ProductRepository {
    private ServiceResponse insertANewProduct(Connection con, ProductDTO dto) {
 
       final String query = "insert into product "
-            + "(code, name, brand, category, price, import_id, company_id) values (?, ?, ?, ?, ?, ?)";
+            + "(code, name, brand, category, price, import_id, company_id) values (?, ?, ?, ?, ?, ?, ?)";
       try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
          int i = 0;
          pst.setString(++i, dto.getCode());

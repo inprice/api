@@ -13,7 +13,7 @@ public class SqlHelper {
    static {
       STANDARD_SEARCH_MAP = new HashMap<>();
       STANDARD_SEARCH_MAP.put("term", "");
-      STANDARD_SEARCH_MAP.put("lastRowNo", "1");
+      STANDARD_SEARCH_MAP.put("lastRowNo", "0");
       STANDARD_SEARCH_MAP.put("orderBy", "id");
       STANDARD_SEARCH_MAP.put("orderDir", "asc");
    }
@@ -69,49 +69,22 @@ public class SqlHelper {
       return sb.toString();
    }
 
-   public static String generateSearchQueryCountPart(String tableName, SearchModel searchModel,
-         String... queryingFields) {
-      StringBuilder sql = new StringBuilder("select count(1) from ");
-      sql.append(tableName);
-      sql.append(" where company_id = ");
-      sql.append(CurrentUser.getCompanyId());
-
-      // query string part
-      if (!searchModel.getTerm().isEmpty()) {
-         sql.append(" and (");
-         for (int i = 0; i < queryingFields.length; i++) {
-            String field = queryingFields[i];
-            sql.append(field);
-            sql.append(" like '%");
-            sql.append(searchModel.getTerm());
-            sql.append("%' ");
-            if (i < queryingFields.length - 1) {
-               sql.append(" OR ");
-            }
-         }
-         sql.append(") ");
-      }
-
-      return sql.toString();
-   }
-
-   public static String generateSearchQuerySelectPart(String tableName, SearchModel searchModel, int count,
-         String... queryingFields) {
+   public static String generateSearchQuery(SearchModel searchModel) {
       StringBuilder sql = new StringBuilder("select * from ");
-      sql.append(tableName);
+      sql.append(searchModel.getTable());
       sql.append(" where company_id = ");
       sql.append(CurrentUser.getCompanyId());
 
       // query string part
       if (!searchModel.getTerm().isEmpty()) {
          sql.append(" and (");
-         for (int i = 0; i < queryingFields.length; i++) {
-            String field = queryingFields[i];
+         for (int i=0; i<searchModel.getFields().size(); i++) {
+            String field = searchModel.getFields().get(i);
             sql.append(field);
             sql.append(" like '%");
             sql.append(searchModel.getTerm());
             sql.append("%' ");
-            if (i < queryingFields.length - 1) {
+            if (i < searchModel.getFields().size() - 1) {
                sql.append(" OR ");
             }
          }
@@ -128,10 +101,8 @@ public class SqlHelper {
 
       // limiting part
       sql.append(" limit ");
-      if (count > searchModel.ROW_LIMIT) {
-         sql.append(searchModel.getLastRowNo());
-         sql.append(", ");
-      }
+      sql.append(searchModel.getLastRowNo());
+      sql.append(", ");
       sql.append(searchModel.ROW_LIMIT);
 
       return sql.toString();

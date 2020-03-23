@@ -32,7 +32,7 @@ public class Database {
    }
 
    public void reset() {
-      if (Props.isRunningForTests()) {
+      if (Props.isRunningForDev()) {
          shutdown();
          connect();
       }
@@ -52,7 +52,7 @@ public class Database {
       hConf.setUsername(Props.getDB_Username());
       hConf.setPassword(Props.getDB_Password());
 
-      if (Props.isRunningForTests())
+      if (Props.isRunningForDev())
          hConf.setConnectionTimeout(3 * 1000); // three seconds
       else
          hConf.setConnectionTimeout(10 * 1000); // ten seconds
@@ -282,7 +282,7 @@ public class Database {
             commit(con);
          } else {
             rollback(con);
-            if (!Props.isRunningForTests() && !errorMessage.contains("to delete"))
+            if (!Props.isRunningForDev() && !errorMessage.contains("to delete"))
                log.error(errorMessage);
          }
 

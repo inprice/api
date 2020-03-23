@@ -53,11 +53,6 @@ public class ProductController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.search(searchMap)));
       });
 
-      // list
-      app.get(Consts.Paths.Product.BASE + "s", (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.getList()));
-      });
-
    }
 
 }

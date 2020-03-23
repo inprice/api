@@ -69,7 +69,7 @@ public class Application {
          config.logIfServerNotStarted = true;
          config.showJavalinBanner = false;
          
-         if (Props.isRunningForTests()) {
+         if (Props.isRunningForDev()) {
             config.registerPlugin(new RouteOverviewPlugin("/routes"));
          } else {
             config.enforceSsl = true;

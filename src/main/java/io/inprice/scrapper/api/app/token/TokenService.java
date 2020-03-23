@@ -80,7 +80,7 @@ public class TokenService {
 
    public AuthUser checkAccessToken(String token) {
       try {
-         return Global.gson.fromJson(decryptToken(token), AuthUser.class);
+         return Global.gson.fromJson(decryptToken(token.replace(Consts.Auth.TOKEN_PREFIX, "")), AuthUser.class);
       } catch (Exception e) {
          return null;
       }

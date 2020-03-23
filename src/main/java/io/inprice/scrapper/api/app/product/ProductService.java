@@ -1,5 +1,6 @@
 package io.inprice.scrapper.api.app.product;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import io.inprice.scrapper.api.dto.ProductDTO;
@@ -17,13 +18,11 @@ public class ProductService {
       return repository.findById(id);
    }
 
-   public ServiceResponse getList() {
-      return repository.getList();
-   }
-
    public ServiceResponse search(Map<String, String> searchMap) {
-      SearchModel searchModel = new SearchModel(searchMap, Product.class);
-      return repository.search(searchModel);
+      SearchModel sm = new SearchModel(searchMap, Product.class);
+      sm.setTable("product");
+      sm.setFields(Arrays.asList("code", "name"));
+      return repository.search(sm);
    }
 
    public ServiceResponse insert(ProductDTO dto) {

@@ -37,7 +37,7 @@ public class AuthFilter implements Handler {
       allowedURIs.add(Consts.Paths.Auth.FORGOT_PASSWORD);
       allowedURIs.add(Consts.Paths.Auth.RESET_PASSWORD);
 
-      if (Props.isRunningForTests()) {
+      if (Props.isRunningForDev()) {
          allowedURIs.add("/routes");
       }
 
@@ -96,7 +96,7 @@ public class AuthFilter implements Handler {
          }
       }
       if (ctx.status() >= 400) {
-         String reason = "";
+         String reason = "Bad request";
          if (ctx.status() == HttpStatus.UNAUTHORIZED_401) reason = "Unauthorized";
          if (ctx.status() == HttpStatus.FORBIDDEN_403) reason = "Forbidden";
          throw new HandlerInterruptException(ctx.status(), reason);

@@ -4,7 +4,7 @@ import io.inprice.scrapper.api.utils.DateUtils;
 
 public class Props {
 
-   public static boolean isRunningForTests() {
+   public static boolean isRunningForDev() {
       return ! "prod".equals(System.getenv().getOrDefault("APP_ENV", "prod").toLowerCase());
    }
 
@@ -25,7 +25,7 @@ public class Props {
    }
 
    public static int getAPP_Port() {
-      String def = isRunningForTests() ? "8901" : "4567";
+      String def = isRunningForDev() ? "8901" : "4567";
       return new Integer(System.getenv().getOrDefault("APP_PORT", def));
    }
 
@@ -34,12 +34,12 @@ public class Props {
    }
 
    public static String getDB_Driver() {
-      String def = isRunningForTests() ? "h2" : "mysql";
+      String def = isRunningForDev() ? "h2" : "mysql";
       return System.getenv().getOrDefault("DB_DRIVER", def);
    }
 
    public static String getDB_Host() {
-      String def = isRunningForTests() ? "mem" : "//localhost";
+      String def = isRunningForDev() ? "mem" : "//localhost";
       return System.getenv().getOrDefault("DB_HOST", def);
    }
 
@@ -48,29 +48,29 @@ public class Props {
    }
 
    public static String getDB_Database() {
-      String def = isRunningForTests() ? "test" : "inprice";
+      String def = isRunningForDev() ? "test" : "inprice";
       return System.getenv().getOrDefault("DB_DATABASE", def);
    }
 
    public static String getDB_Username() {
-      String def = isRunningForTests() ? "sa" : "root";
+      String def = isRunningForDev() ? "sa" : "root";
       return System.getenv().getOrDefault("DB_USERNAME", def);
    }
 
    public static String getDB_Password() {
-      String def = isRunningForTests() ? "" : "1234";
+      String def = isRunningForDev() ? "" : "1234";
       return System.getenv().getOrDefault("DB_PASSWORD", def);
    }
 
    public static String getDB_Additions() {
-      String def = isRunningForTests()
+      String def = isRunningForDev()
             ? ";init=runscript from 'classpath:db/schema.sql'; runscript from 'classpath:db/data.sql'"
             : "";
       return System.getenv().getOrDefault("DB_ADDITIONS", def);
    }
 
    public static int getAS_SaltRounds() {
-      String def = isRunningForTests() ? "4" : "12";
+      String def = isRunningForDev() ? "4" : "12";
       return new Integer(System.getenv().getOrDefault("SECURITY_SALT_ROUNDS", def));
    }
 
@@ -111,13 +111,13 @@ public class Props {
    }
 
    public static Long getTTL_AccessTokens() {
-      String def = isRunningForTests() ? "1m" : "15m";
+      String def = isRunningForDev() ? "1m" : "15m";
       String ttl = System.getenv().getOrDefault("TTL_ACCESS_TOKENS", def);
       return DateUtils.parseTimePeriodAsMillis(ttl);
    }
 
    public static Long getTTL_RefreshTokens() {
-      String def = isRunningForTests() ? "3m" : "1h";
+      String def = isRunningForDev() ? "3m" : "1h";
       String ttl = System.getenv().getOrDefault("TTL_REFRESH_TOKENS", def);
       return DateUtils.parseTimePeriodAsMillis(ttl);
    }
