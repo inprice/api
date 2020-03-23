@@ -11,7 +11,7 @@ public final class ServiceResponse {
    private List<String> problems;
 
    public ServiceResponse(String reason) {
-      this.status = 0;
+      this.status = 400;
       this.reason = reason;
    }
 

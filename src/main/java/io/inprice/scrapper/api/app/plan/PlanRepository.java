@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.scrapper.api.app.company.CompanyRepository;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
@@ -43,7 +44,7 @@ public class PlanRepository {
    private static Plan map(ResultSet rs) {
       try {
          Plan model = new Plan();
-         model.setId(rs.getLong("id"));
+         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
          model.setActive(rs.getBoolean("active"));
          model.setName(rs.getString("name"));
          model.setDescription(rs.getString("description"));

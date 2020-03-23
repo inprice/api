@@ -16,6 +16,7 @@ import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.helpers.CodeGenerator;
+import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import jodd.util.BCrypt;
 
 public class UserRepository {
@@ -131,7 +132,7 @@ public class UserRepository {
 
          pst.setString(++i, salt);
          pst.setString(++i, BCrypt.hashpw(password, salt));
-         pst.setLong(++i, CurrentUser.getId());
+         pst.setLong(++i, userId);
 
          if (pst.executeUpdate() > 0)
             return Responses.OK;
@@ -171,10 +172,10 @@ public class UserRepository {
    private User map(ResultSet rs) {
       try {
          User model = new User();
-         model.setId(rs.getLong("id"));
+         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
          model.setEmail(rs.getString("email"));
          model.setName(rs.getString("name"));
-         model.setLastCompanyId(rs.getLong("last_company_id"));
+         model.setLastCompanyId(RepositoryHelper.nullLongHandler(rs, "last_company_id"));
          model.setPasswordHash(rs.getString("password_hash"));
          model.setPasswordSalt(rs.getString("password_salt"));
          model.setCreatedAt(rs.getDate("created_at"));

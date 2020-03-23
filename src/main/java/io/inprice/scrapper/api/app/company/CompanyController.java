@@ -22,8 +22,8 @@ public class CompanyController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.registerRequest(dto, ctx.ip())));
       });
 
-      app.get(Consts.Paths.Auth.REGISTER + "/:token", (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.register(ctx.pathParam("token"), ctx.ip())));
+      app.get(Consts.Paths.Auth.REGISTER, (ctx) -> {
+         ctx.json(Commons.createResponse(ctx, service.register(ctx.queryParam("token"), ctx.ip())));
       });
 
       app.put(Consts.Paths.Company.BASE, (ctx) -> {

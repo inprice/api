@@ -7,6 +7,9 @@ import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
+
+import org.eclipse.jetty.http.HttpStatus;
+
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.javalin.Javalin;
@@ -42,7 +45,7 @@ public class AuthController implements Controller {
          if (serres.isOK())
             ctx.json(Commons.createResponse(ctx, serres));
          else
-            ctx.status(401);
+            ctx.status(HttpStatus.UNAUTHORIZED_401);
       });
 
       app.post(Consts.Paths.Auth.LOGOUT, (ctx) -> {

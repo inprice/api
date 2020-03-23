@@ -6,7 +6,8 @@ package io.inprice.scrapper.api.meta;
 public enum RateLimiterType {
 
    REGISTER(RateLimiterType.FIVE_MINUTES),
-   FORGOT_PASSWORD(RateLimiterType.FIVE_MINUTES);
+   FORGOT_PASSWORD(RateLimiterType.FIVE_MINUTES),
+   HANDLE_INVITATION(RateLimiterType.FIVE_MINUTES);
 
    private static final int FIVE_MINUTES = 5 * 60 * 1000;
 

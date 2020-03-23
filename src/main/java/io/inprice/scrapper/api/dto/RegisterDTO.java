@@ -53,4 +53,11 @@ public class RegisterDTO extends CompanyDTO {
       this.repeatPassword = repeatPassword;
    }
 
+   @Override
+   public String toString() {
+      return "[email=" + email + ", user=" + userName + ", company=" + getCompanyName() +
+         ", sector=" + getSector() + ", website=" + getWebsite() + ", country=" + getCountry()
+      + "]";
+   }
+
 }

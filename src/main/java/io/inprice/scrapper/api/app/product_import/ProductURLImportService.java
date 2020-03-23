@@ -122,7 +122,7 @@ public class ProductURLImportService implements IProductImportService {
       } else {
          report.setStatus(Responses.PermissionProblem.DONT_HAVE_A_PLAN.getStatus());
          report.setResult(
-               "Seems you haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
+               "Seems that you haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
       }
 
       return report;

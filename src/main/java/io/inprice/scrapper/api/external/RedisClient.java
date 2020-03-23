@@ -9,6 +9,8 @@ import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 
 import io.inprice.scrapper.api.app.token.TokenType;
+import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
 
 public class RedisClient {
@@ -34,12 +36,13 @@ public class RedisClient {
       invalidatedTokens.add(token, System.currentTimeMillis() + tokenType.ttl(), TimeUnit.MILLISECONDS);
    }
 
-   public static void addIpToRateLimiter(RateLimiterType type, String ip) {
+   public static ServiceResponse isIpRateLimited(RateLimiterType type, String ip) {
+      boolean exists = rateLimitingSet.contains(type.name() + ip);
+      if (exists) {
+         return Responses.Illegal.TOO_MUCH_REQUEST;
+      }
       rateLimitingSet.add(type.name() + ip, System.currentTimeMillis() + type.ttl(), TimeUnit.MILLISECONDS);
-   }
-
-   public static boolean isIpRateLimited(RateLimiterType type, String ip) {
-      return rateLimitingSet.contains(type.name() + ip);
+      return Responses.OK;
    }
 
    public static boolean isTokenInvalidated(String token) {

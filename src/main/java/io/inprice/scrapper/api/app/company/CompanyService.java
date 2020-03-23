@@ -38,12 +38,10 @@ public class CompanyService {
    private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
 
    public ServiceResponse registerRequest(RegisterDTO dto, String ip) {
-      if (RedisClient.isIpRateLimited(RateLimiterType.REGISTER, ip)) {
-         return Responses.Illegal.TOO_MUCH_REQUEST;
-      }
-      RedisClient.addIpToRateLimiter(RateLimiterType.REGISTER, ip);
+      ServiceResponse res = RedisClient.isIpRateLimited(RateLimiterType.REGISTER, ip);
+      if (! res.isOK()) return res;
 
-      ServiceResponse res = validateRegisterDTO(dto);
+      res = validateRegisterDTO(dto);
       if (res.isOK()) {
 
          ServiceResponse found = userRepository.findByEmail(dto.getEmail());
@@ -77,10 +75,10 @@ public class CompanyService {
    public ServiceResponse register(String encryptedToken, String ip) {
       if (StringUtils.isNotBlank(encryptedToken)) {
          if (!tokenService.isTokenInvalidated(encryptedToken)) {
+            tokenService.revokeToken(TokenType.REGISTER_REQUEST, encryptedToken);
             
             final RegisterDTO dto = tokenService.extractRegisterDTO(encryptedToken);
             if (dto != null) {
-               tokenService.revokeToken(TokenType.REGISTER_REQUEST, encryptedToken);
                return companyRepository.insert(dto);
             } else {
                return Responses.Invalid.DATA;

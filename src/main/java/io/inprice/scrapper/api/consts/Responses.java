@@ -1,12 +1,14 @@
 package io.inprice.scrapper.api.consts;
 
+import org.eclipse.jetty.http.HttpStatus;
+
 import io.inprice.scrapper.api.info.ServiceResponse;
 
 public class Responses {
 
    public static final ServiceResponse OK = new ServiceResponse(0, "OK");
-   public static final ServiceResponse _401 = new ServiceResponse(401, "Unauthorized!");
-   public static final ServiceResponse _403 = new ServiceResponse(401, "Forbidden!");
+   public static final ServiceResponse _401 = new ServiceResponse(HttpStatus.UNAUTHORIZED_401, "Unauthorized");
+   public static final ServiceResponse _403 = new ServiceResponse(HttpStatus.FORBIDDEN_403, "Forbidden");
 
    public static class Invalid {
       private static final int BASE = 100;
@@ -52,7 +54,7 @@ public class Responses {
       public static final ServiceResponse DONT_HAVE_A_PLAN = new ServiceResponse(BASE + 3,
             "You need to buy a new plan!");
       public static final ServiceResponse NO_COMPANY = new ServiceResponse(BASE + 5,
-            "You have no active company! Please either create a new one or participate in an existing one!");
+            "You have no active company! Please either create a new one or participate in an existing!");
    }
 
    public static class DataProblem {
@@ -77,8 +79,13 @@ public class Responses {
             "Your session seems to expire, please send us a new forgot password request again!");
    }
 
-   public static class Upload {
+   public static class Already {
       private static final int BASE = 800;
+      public static final ServiceResponse LOGGED_OUT = new ServiceResponse(BASE + 1, "Seems that you are already logged out!");
+   }
+
+   public static class Upload {
+      private static final int BASE = 900;
       public static final ServiceResponse EMPTY = new ServiceResponse(BASE + 1, "File is empty!");
       public static final ServiceResponse MUST_BE_CSV = new ServiceResponse(BASE + 2, "Please upload a CSV file!");
       public static final ServiceResponse MUST_BE_TXT = new ServiceResponse(BASE + 3, "Please upload a text file!");

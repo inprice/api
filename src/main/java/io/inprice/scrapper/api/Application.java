@@ -10,11 +10,14 @@ import io.inprice.scrapper.api.external.RabbitMQ;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.ConfigScanner;
+import io.inprice.scrapper.api.framework.HandlerInterruptException;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.consts.Global;
 import io.inprice.scrapper.api.session.AuthFilter;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.javalin.Javalin;
+import io.javalin.core.util.RouteOverviewPlugin;
 import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.openapi.annotations.ContentType;
 
@@ -32,12 +35,14 @@ public class Application {
          createServer();
          ConfigScanner.scanControllers(app);
 
+         log.info("APPLICATION STARTED.");
          Global.isApplicationRunning = true;
 
-         log.info("APPLICATION STARTED.");
       }, "app-starter").start();
 
       Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+
+         Global.isApplicationRunning = false;
          log.info("APPLICATION IS TERMINATING...");
 
          log.info(" - Web server is shutting down...");
@@ -54,7 +59,6 @@ public class Application {
 
          log.info("ALL SERVICES IS DONE.");
 
-         Global.isApplicationRunning = false;
       }, "shutdown-hook"));
    }
 
@@ -62,14 +66,24 @@ public class Application {
       app = Javalin.create((config) -> {
          config.defaultContentType = ContentType.JSON;
          config.enableCorsForAllOrigins();
-         config.enforceSsl = !Props.isRunningForTests();
          config.logIfServerNotStarted = true;
-         config.showJavalinBanner = true;
+         config.showJavalinBanner = false;
+         
+         if (Props.isRunningForTests()) {
+            config.registerPlugin(new RouteOverviewPlugin("/routes"));
+         } else {
+            config.enforceSsl = true;
+         }
+
          JavalinJackson.getObjectMapper().setSerializationInclusion(Include.NON_NULL);
       }).start(Props.getAPP_Port());
 
       app.before(new AuthFilter());
       app.after(ctx -> CurrentUser.cleanup());
+
+      app.exception(HandlerInterruptException.class, (e, ctx) -> {
+         ctx.json(new ServiceResponse(e.getStatus(), e.getMessage()));
+      });
    }
 
 }

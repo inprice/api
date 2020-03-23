@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.dto.MemberDTO;
 import io.inprice.scrapper.api.dto.RegisterDTO;
@@ -19,9 +21,12 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.impl.DefaultClaims;
 
 public class TokenService {
+
+   private static Logger log = LoggerFactory.getLogger(TokenService.class);
 
    public Map<TokenType, String> getAccessTokens(AuthUser authUser, String ip, String userAgent) {
       String refresh = authUser.getEmail() + "::" + ip + "::" + Consts.Auth.APP_SECRET_KEY + "::" + userAgent;
@@ -134,9 +139,11 @@ public class TokenService {
 
          final byte[] prePayload = Base64.getDecoder().decode(claims.get(Consts.Auth.PAYLOAD, String.class));
          return Cryptor.decrypt(prePayload);
-      } catch (ExpiredJwtException ignored) {
-         return null;
+      } catch (SignatureException malformedsign) {
+         log.error("Malformed signature error!");
+      } catch (ExpiredJwtException expired) {
       }
+      return null;
    }
 
    private String generateToken(TokenType tokenType, byte[] payload) {

@@ -22,6 +22,7 @@ import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.helpers.CodeGenerator;
+import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import jodd.util.BCrypt;
 
 public class CompanyRepository {
@@ -125,7 +126,16 @@ public class CompanyRepository {
                   pst.setString(++i, MemberStatus.JOINED.name());
 
                   if (pst.executeUpdate() > 0) {
-                     response = Responses.OK;
+                     try (PreparedStatement updateCompanyPst = con.prepareStatement("update user set last_company_id=? where id=?")) {
+                        int j = 0;
+                        updateCompanyPst.setLong(++j, companyId);
+                        updateCompanyPst.setLong(++j, dto.getUserId());
+
+                        if (updateCompanyPst.executeUpdate() > 0) {
+                           response = Responses.OK;
+                           log.info("A new company registered -> " + dto.toString());
+                        }
+                     }
                   }
                }
             }
@@ -181,11 +191,11 @@ public class CompanyRepository {
    private static Company map(ResultSet rs) {
       try {
          Company model = new Company();
-         model.setId(rs.getLong("id"));
+         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
          model.setName(rs.getString("name"));
          model.setCountry(rs.getString("country"));
-         model.setAdminId(rs.getLong("admin_id"));
-         model.setPlanId(rs.getLong("plan_id"));
+         model.setAdminId(RepositoryHelper.nullLongHandler(rs, "admin_id"));
+         model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
          model.setPlanStatus(PlanStatus.valueOf(rs.getString("plan_status")));
          model.setDueDate(rs.getDate("due_date"));
          model.setRetry(rs.getInt("retry"));

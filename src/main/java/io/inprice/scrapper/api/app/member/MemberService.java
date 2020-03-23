@@ -20,9 +20,11 @@ import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.external.Props;
+import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.meta.RateLimiterType;
 
 public class MemberService {
 
@@ -40,7 +42,7 @@ public class MemberService {
       return memberRepository.getListByCompany();
    }
 
-   public ServiceResponse invite(MemberDTO memberDTO) {
+   public ServiceResponse sendInvitation(MemberDTO memberDTO) {
       ServiceResponse res = validate(memberDTO);
 
       if (res.isOK()) {
@@ -52,13 +54,17 @@ public class MemberService {
       return res;
    }
 
-   public ServiceResponse handleInvitation(String encryptedToken) {
+   public ServiceResponse handleInvitation(String encryptedToken, String ip) {
+      ServiceResponse res = RedisClient.isIpRateLimited(RateLimiterType.HANDLE_INVITATION, ip);
+      if (! res.isOK()) return res;
+
       if (StringUtils.isNotBlank(encryptedToken)) {
          if (!tokenService.isTokenInvalidated(encryptedToken)) {
             
             final MemberDTO dto = tokenService.extractMemberDTO(encryptedToken);
             if (dto != null) {
                tokenService.revokeToken(dto.getTokenType(), encryptedToken);
+
                if (dto.getTokenType().equals(TokenType.INVITATION_CONFIRM)) {
                   return memberRepository.insert(dto);
                } else {
@@ -216,7 +222,7 @@ public class MemberService {
       }
 
       if (memberDTO.getRole() == null || memberDTO.getRole().equals(MemberRole.ADMIN)) {
-         return new ServiceResponse("Role must be either EDITOR or READER!");
+         return new ServiceResponse(String.format("Role must be either %s or %s!", MemberRole.EDITOR.name(), MemberRole.READER.name()));
       }
 
       String checkIfItHasAProblem = EmailValidator.verify(memberDTO.getEmail());

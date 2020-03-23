@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.scrapper.api.app.link.LinkStatus;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
@@ -73,7 +74,7 @@ public class ProductImportRepository {
    private ImportProduct map(ResultSet rs) {
       try {
          ImportProduct model = new ImportProduct();
-         model.setId(rs.getLong("id"));
+         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
          model.setImportType(ImportType.valueOf(rs.getString("import_type")));
          model.setStatus(rs.getInt("status"));
          model.setResult(rs.getString("result"));
@@ -81,7 +82,7 @@ public class ProductImportRepository {
          model.setInsertCount(rs.getInt("insert_count"));
          model.setDuplicateCount(rs.getInt("duplicate_count"));
          model.setProblemCount(rs.getInt("problem_count"));
-         model.setCompanyId(rs.getLong("company_id"));
+         model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
 
          return model;
       } catch (SQLException e) {
@@ -93,15 +94,15 @@ public class ProductImportRepository {
    private ImportProductRow rowMap(ResultSet rs) {
       try {
          ImportProductRow model = new ImportProductRow();
-         model.setId(rs.getLong("id"));
-         model.setImportId(rs.getLong("import_id"));
+         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
+         model.setImportId(RepositoryHelper.nullLongHandler(rs, "import_id"));
          model.setImportType(ImportType.valueOf(rs.getString("import_type")));
          model.setData(rs.getString("data"));
          model.setStatus(LinkStatus.valueOf(rs.getString("status")));
          model.setLastUpdate(rs.getDate("last_update"));
          model.setDescription(rs.getString("description"));
-         model.setLinkId(rs.getLong("link_id"));
-         model.setCompanyId(rs.getLong("company_id"));
+         model.setLinkId(RepositoryHelper.nullLongHandler(rs, "link_id"));
+         model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
 
          return model;
       } catch (SQLException e) {

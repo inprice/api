@@ -16,6 +16,7 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
 
 public class MemberRepository {
@@ -169,9 +170,9 @@ public class MemberRepository {
    private Member map(ResultSet rs) {
       try {
          Member model = new Member();
-         model.setId(rs.getLong("id"));
+         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
          model.setEmail(rs.getString("email"));
-         model.setCompanyId(rs.getLong("company_id"));
+         model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
          model.setCompanyName(rs.getString("company_name")); // transient
          model.setRole(MemberRole.valueOf(rs.getString("role")));
          model.setStatus(MemberStatus.valueOf(rs.getString("status")));

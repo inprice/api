@@ -22,6 +22,7 @@ import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.BulkDeleteStatements;
+import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.consts.Responses;
@@ -81,13 +82,10 @@ public class ProductRepository {
             final String searchQueryForSelection = SqlHelper.generateSearchQuerySelectPart("product", searchModel,
                   totalRowCount, "code", "name");
             List<Product> rows = db.findMultiple(con, searchQueryForSelection, this::map);
-            Map<String, Object> data = new HashMap<>(4);
+            Map<String, Object> data = new HashMap<>(3);
             data.put("rows", rows);
+            data.put("lastRowNo", searchModel.getLastRowNo() + searchModel.ROW_LIMIT);
             data.put("totalRowCount", totalRowCount);
-            data.put("totalPageCount", 1);
-            if (totalRowCount > searchModel.getPageLimit()) {
-               data.put("totalPageCount", Math.ceil((double) totalRowCount / searchModel.getPageLimit()));
-            }
             return new ServiceResponse(data);
          }
 
@@ -503,7 +501,7 @@ public class ProductRepository {
    private Product map(ResultSet rs) {
       try {
          Product model = new Product();
-         model.setId(rs.getLong("id"));
+         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
          model.setActive(rs.getBoolean("active"));
          model.setCode(rs.getString("code"));
          model.setName(rs.getString("name"));
@@ -516,7 +514,7 @@ public class ProductRepository {
          model.setMinPrice(rs.getBigDecimal("min_price"));
          model.setAvgPrice(rs.getBigDecimal("avg_price"));
          model.setMaxPrice(rs.getBigDecimal("max_price"));
-         model.setCompanyId(rs.getLong("company_id"));
+         model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
          model.setUpdatedAt(rs.getDate("updated_at"));
          model.setCreatedAt(rs.getDate("created_at"));
 

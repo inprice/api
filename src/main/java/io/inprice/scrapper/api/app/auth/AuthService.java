@@ -93,10 +93,8 @@ public class AuthService {
    }
 
    public ServiceResponse forgotPassword(String email, String ip) {
-      if (RedisClient.isIpRateLimited(RateLimiterType.FORGOT_PASSWORD, ip)) {
-         return Responses.Illegal.TOO_MUCH_REQUEST;
-      }
-      RedisClient.addIpToRateLimiter(RateLimiterType.FORGOT_PASSWORD, ip);
+      ServiceResponse res = RedisClient.isIpRateLimited(RateLimiterType.FORGOT_PASSWORD, ip);
+      if (! res.isOK()) return res;
 
       String problem = EmailValidator.verify(email);
       if (problem == null) {
@@ -134,18 +132,21 @@ public class AuthService {
    
             ServiceResponse valid = validatePassword(dto);
             if (valid.isOK()) {
-
+               
                final String email = tokenService.decryptToken(dto.getToken());
                ServiceResponse found = userRepository.findByEmail(email);
-
+               
                if (found.isOK()) {
-                  tokenService.revokeToken(TokenType.PASSWORD_RESET, dto.getToken());
                   User user = found.getData();
-                  return userRepository.updatePassword(user.getId(), dto.getPassword());
+                  ServiceResponse res = userRepository.updatePassword(user.getId(), dto.getPassword());
+                  if (res.isOK()) {
+                     tokenService.revokeToken(TokenType.PASSWORD_RESET, dto.getToken());
+                     return Responses.OK;
+                  }
                } else {
+                  tokenService.revokeToken(TokenType.PASSWORD_RESET, dto.getToken());
                   return Responses.NotFound.EMAIL;
                }
-
             } else {
                return valid;
             }
@@ -153,7 +154,6 @@ public class AuthService {
             return Responses.Invalid.TOKEN;
          }
       }
-
       return Responses.Invalid.DATA;
    }
 
@@ -174,6 +174,9 @@ public class AuthService {
    }
 
    public ServiceResponse logout(String refreshToken, String accessToken) {
+      if (tokenService.isTokenInvalidated(refreshToken) || tokenService.isTokenInvalidated(accessToken)) {
+         return Responses.Already.LOGGED_OUT;
+      }
       tokenService.revokeToken(TokenType.REFRESH, refreshToken);
       tokenService.revokeToken(TokenType.ACCESS, accessToken);
       return Responses.OK;

@@ -14,6 +14,7 @@ import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.BulkDeleteStatements;
+import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.consts.Responses;
@@ -177,7 +178,7 @@ public class LinkRepository {
    private Link map(ResultSet rs) {
       try {
          Link model = new Link();
-         model.setId(rs.getLong("id"));
+         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
          model.setUrl(rs.getString("url"));
          model.setSku(rs.getString("sku"));
          model.setName(rs.getString("name"));
@@ -192,13 +193,13 @@ public class LinkRepository {
          model.setRetry(rs.getInt("retry"));
          model.setHttpStatus(rs.getInt("http_status"));
          model.setWebsiteClassName(rs.getString("website_class_name"));
-         model.setCompanyId(rs.getLong("company_id"));
-         model.setProductId(rs.getLong("product_id"));
-         model.setSiteId(rs.getLong("site_id"));
+         model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
+         model.setProductId(RepositoryHelper.nullLongHandler(rs, "product_id"));
+         model.setSiteId(RepositoryHelper.nullLongHandler(rs, "site_id"));
 
          // if not null then it is an imported product!
-         model.setImportId(rs.getLong("import_id"));
-         model.setImportRowId(rs.getLong("import_row_id"));
+         model.setImportId(RepositoryHelper.nullLongHandler(rs, "import_id"));
+         model.setImportRowId(RepositoryHelper.nullLongHandler(rs, "import_row_id"));
 
          return model;
       } catch (SQLException e) {

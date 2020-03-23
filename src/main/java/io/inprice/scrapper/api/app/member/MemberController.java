@@ -17,9 +17,14 @@ public class MemberController implements Controller {
    @Override
    public void addRoutes(Javalin app) {
 
-      // add a new invitation
+      // send a new invitation
       app.post(Consts.Paths.Member.BASE, (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.invite(ctx.bodyAsClass(MemberDTO.class))));
+         ctx.json(Commons.createResponse(ctx, service.sendInvitation(ctx.bodyAsClass(MemberDTO.class))));
+      });
+
+      // handles confirmed and rejected invitations
+      app.get(Consts.Paths.Auth.INVITATION, (ctx) -> {
+         ctx.json(Commons.createResponse(ctx, service.handleInvitation(ctx.queryParam("token"), ctx.ip())));
       });
 
       // change role
@@ -34,11 +39,6 @@ public class MemberController implements Controller {
          MemberChangeFieldDTO dto = ctx.bodyAsClass(MemberChangeFieldDTO.class);
          dto.setStatusChange(true);
          ctx.json(Commons.createResponse(ctx, service.changeStatus(dto)));
-      });
-
-      // handles confirmed and rejected invitations
-      app.get(Consts.Paths.Member.BASE + "/:token", (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.handleInvitation(ctx.pathParam("token"))));
       });
 
       // list
