@@ -170,7 +170,7 @@ create table link_spec (
   link_id                   bigint not null,
   _key                      varchar(100),
   _value                    varchar(500),
-  workspace_id              bigint not null,
+  product_id                bigint not null,
   company_id                bigint not null,
   primary key (id)
 ) engine=innodb;

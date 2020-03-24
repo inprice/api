@@ -38,11 +38,6 @@ public class Consts {
          public static final String BASE = "/company";
       }
 
-      public static class Workspace {
-         public static final String BASE = ADMIN_BASE + "/workspace";
-         public static final String TOGGLE_STATUS = ADMIN_BASE + "/workspace/toggle";
-      }
-
       public static class User {
          public static final String BASE = "/user";
          public static final String PASSWORD = BASE + "/password";

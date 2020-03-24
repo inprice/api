@@ -66,9 +66,6 @@ public class Responses {
       public static final ServiceResponse DUPLICATE = new ServiceResponse(BASE + 5, "Duplicate error!");
 
       public static final ServiceResponse FORM_VALIDATION = new ServiceResponse(BASE + 20, "Validation error!");
-      public static final ServiceResponse MASTER_WS_CANNOT_BE_DELETED = new ServiceResponse(BASE + 50,
-            "Master workspace cannot be deleted!");
-      public static final ServiceResponse WS_HAS_USERS = new ServiceResponse(BASE + 52, "This workspace has users!");
    }
 
    public static class Illegal {
@@ -97,7 +94,6 @@ public class Responses {
       public static final ServiceResponse SEARCH_NOT_FOUND = new ServiceResponse("Nothing found!"); // not an error!
 
       public static final ServiceResponse COMPANY = new ServiceResponse(BASE, "Company not found!");
-      public static final ServiceResponse WORKSPACE = new ServiceResponse(BASE, "Workspace not found!");
       public static final ServiceResponse PLAN = new ServiceResponse(BASE, "Plan not found!");
       public static final ServiceResponse TICKET = new ServiceResponse(BASE, "Ticket not found!");
 

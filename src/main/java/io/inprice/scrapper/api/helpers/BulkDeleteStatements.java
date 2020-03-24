@@ -21,7 +21,7 @@ public class BulkDeleteStatements {
     */
    private String[] links(Long productId, Long linkId) {
       String where = "where company_id=" + CurrentUser.getCompanyId();
-      String where_1 = where;
+      String where_1 = null;
 
       // delete by productId
       if (productId != null) {
@@ -31,7 +31,9 @@ public class BulkDeleteStatements {
       // delete by linkId
       if (linkId != null) {
          where += " and link_id=" + linkId;
-         where_1 += " and id=" + linkId;
+         where_1 = where + " and id=" + linkId;
+      } else {
+         where_1 = where;
       }
 
       return new String[] { 
@@ -67,27 +69,6 @@ public class BulkDeleteStatements {
 
       return concatenate(linkDeletions, productDeletions);
    }
-
-   /**
-    * Generates necessary delete statements for a company
-    *
-    * @return delete statements String[] companies(Long companyId) { if (companyId
-    *         == null) { return null; }
-    * 
-    *         String[] productDeletions = productsByCompanyId(companyId);
-    * 
-    *         String[] companyDeletions = { String.format("delete from
-    *         import_product_row where workspace_id=%d and company_id=%d",
-    *         workspaceId, CurrentUser.getCompanyId()), String.format("delete from
-    *         import_product where workspace_id=%d and company_id=%d", workspaceId,
-    *         CurrentUser.getCompanyId()), String.format("delete from
-    *         workspace_history where workspace_id=%d and company_id=%d",
-    *         workspaceId, CurrentUser.getCompanyId()), String.format("delete from
-    *         workspace where id=%d and company_id=%d", workspaceId,
-    *         CurrentUser.getCompanyId()) };
-    * 
-    *         return concatenate(productDeletions, companyDeletions); }
-    */
 
    private String[] concatenate(String[] first, String[] second) {
       String[] both = Arrays.copyOf(first, first.length + second.length);

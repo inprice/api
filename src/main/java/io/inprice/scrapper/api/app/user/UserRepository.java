@@ -161,7 +161,7 @@ public class UserRepository {
          if (pst.executeUpdate() > 0)
             return Responses.OK;
          else
-            return Responses.NotFound.WORKSPACE;
+            return Responses.NotFound.COMPANY;
 
       } catch (Exception e) {
          log.error("Failed to set users's last company. UserId: " + CurrentUser.getId() + ", CompanyId: " + companyId, e);

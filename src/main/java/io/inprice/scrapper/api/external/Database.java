@@ -39,7 +39,10 @@ public class Database {
    }
 
    private void doMigrations() {
-      Flyway flyway = Flyway.configure().dataSource(this.conString, Props.getDB_Username(), Props.getDB_Password())
+      Flyway flyway = 
+         Flyway
+            .configure()
+            .dataSource(this.conString, Props.getDB_Username(), Props.getDB_Password())
             .load();
       flyway.migrate();
    }

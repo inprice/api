@@ -35,7 +35,7 @@ public class ProductController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.deleteById(id)));
       });
 
-      // find
+      // find by id
       app.get(Consts.Paths.Product.BASE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, service.findById(id)));
