@@ -31,8 +31,7 @@ public class UserRepository {
    }
 
    public ServiceResponse findById(Long id, boolean passwordFields) {
-      User model = db.findSingle(String.format("select * from user where id = %d and company_id = %d",
-            id, CurrentUser.getCompanyId()), this::map);
+      User model = db.findSingle(String.format("select * from user where id = %d", id), this::map);
       if (model != null) {
          if (!passwordFields) {
             model.setPasswordSalt(null);

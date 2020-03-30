@@ -184,7 +184,8 @@ public class DashboardRepository {
     *
     */
    private void addMRUTenProducts(Connection con, JsonObject parent) throws SQLException {
-      final String query = "select code, name, price, position, last_update, min_seller, max_seller, min_price, avg_price, max_price "
+      final String query = "select code, name, position, price, avg_price, min_platform, min_seller, min_price "
+            + ", max_platform, max_seller, max_price, updated_at "
             + "from product where company_id=? order by last_update desc limit 10";
       try (PreparedStatement pst = con.prepareStatement(query)) {
          pst.setLong(1, CurrentUser.getCompanyId());

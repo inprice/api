@@ -10,12 +10,14 @@ public class ProductPrice implements Serializable {
 
    private Long id;
    private Long productId;
-   private String minSeller;
-   private String maxSeller;
    private BigDecimal price;
-   private Integer position;
-   private BigDecimal minPrice;
    private BigDecimal avgPrice;
+   private Integer position;
+   private String minPlatform;
+   private String minSeller;
+   private BigDecimal minPrice;
+   private String maxPlatform;
+   private String maxSeller;
    private BigDecimal maxPrice;
    private Long companyId;
    private Date createdAt;
@@ -36,28 +38,20 @@ public class ProductPrice implements Serializable {
       this.productId = productId;
    }
 
-   public String getMinSeller() {
-      return minSeller;
-   }
-
-   public void setMinSeller(String minSeller) {
-      this.minSeller = minSeller;
-   }
-
-   public String getMaxSeller() {
-      return maxSeller;
-   }
-
-   public void setMaxSeller(String maxSeller) {
-      this.maxSeller = maxSeller;
-   }
-
    public BigDecimal getPrice() {
       return price;
    }
 
    public void setPrice(BigDecimal price) {
       this.price = price;
+   }
+
+   public BigDecimal getAvgPrice() {
+      return avgPrice;
+   }
+
+   public void setAvgPrice(BigDecimal avgPrice) {
+      this.avgPrice = avgPrice;
    }
 
    public Integer getPosition() {
@@ -68,6 +62,22 @@ public class ProductPrice implements Serializable {
       this.position = position;
    }
 
+   public String getMinPlatform() {
+      return minPlatform;
+   }
+
+   public void setMinPlatform(String minPlatform) {
+      this.minPlatform = minPlatform;
+   }
+
+   public String getMinSeller() {
+      return minSeller;
+   }
+
+   public void setMinSeller(String minSeller) {
+      this.minSeller = minSeller;
+   }
+
    public BigDecimal getMinPrice() {
       return minPrice;
    }
@@ -76,12 +86,20 @@ public class ProductPrice implements Serializable {
       this.minPrice = minPrice;
    }
 
-   public BigDecimal getAvgPrice() {
-      return avgPrice;
+   public String getMaxPlatform() {
+      return maxPlatform;
    }
 
-   public void setAvgPrice(BigDecimal avgPrice) {
-      this.avgPrice = avgPrice;
+   public void setMaxPlatform(String maxPlatform) {
+      this.maxPlatform = maxPlatform;
+   }
+
+   public String getMaxSeller() {
+      return maxSeller;
+   }
+
+   public void setMaxSeller(String maxSeller) {
+      this.maxSeller = maxSeller;
    }
 
    public BigDecimal getMaxPrice() {

@@ -1,8 +1,10 @@
 package io.inprice.scrapper.api.app.company;
 
 import io.inprice.scrapper.api.helpers.Commons;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.dto.RegisterDTO;
+import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
@@ -23,7 +25,12 @@ public class CompanyController implements Controller {
       });
 
       app.get(Consts.Paths.Auth.REGISTER, (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.register(ctx.queryParam("token"), ctx.ip())));
+         ServiceResponse res = service.register(ctx.queryParam("token"), ctx.ip());
+         if (res.isOK()) {
+            ctx.redirect(Props.getWebUrl() + "/login/?message=2");
+         } else {
+            ctx.redirect(Props.getWebUrl() + "/login/?message=3");
+         }
       });
 
       app.put(Consts.Paths.Company.BASE, (ctx) -> {

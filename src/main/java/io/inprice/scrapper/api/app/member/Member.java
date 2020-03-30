@@ -8,6 +8,7 @@ public class Member implements Serializable {
    private static final long serialVersionUID = -7793356216234713734L;
 
    private Long id;
+   private Boolean active;
    private String email;
    private Long companyId;
    private MemberRole role;
@@ -26,6 +27,14 @@ public class Member implements Serializable {
 
    public void setId(Long id) {
       this.id = id;
+   }
+
+   public Boolean getActive() {
+      return active;
+   }
+
+   public void setActive(Boolean active) {
+      this.active = active;
    }
 
    public String getEmail() {

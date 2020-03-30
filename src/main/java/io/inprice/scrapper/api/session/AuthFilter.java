@@ -54,6 +54,8 @@ public class AuthFilter implements Handler {
 
    @Override
    public void handle(Context ctx) throws Exception {
+      if ("OPTIONS".equals(ctx.method())) return;
+
       String URI = ctx.req.getRequestURI().toLowerCase();
       if (URI.charAt(URI.length()-1) == '/') URI = URI.substring(0, URI.length()-1);
 

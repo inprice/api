@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.session.CurrentUser;
-import io.inprice.scrapper.api.dto.MemberChangeFieldDTO;
+import io.inprice.scrapper.api.dto.MemberChangeRoleDTO;
 import io.inprice.scrapper.api.dto.MemberDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.external.Database;
@@ -92,54 +92,33 @@ public class MemberRepository {
       return response;
    }
 
-   public ServiceResponse changeRole(MemberChangeFieldDTO changeRoleDTO) {
+   public ServiceResponse toggleStatus(Long memberId) {
+      boolean result = db
+         .executeQuery(String.format("update member set active = not active where id = %d and company_id = %d ", memberId,
+            CurrentUser.getCompanyId()), "Failed to toggle product status! id: " + memberId);
+
+      if (result) {
+         return Responses.OK;
+      }
+      return Responses.NotFound.MEMBER;
+   }
+
+   public ServiceResponse changeRole(MemberChangeRoleDTO dto) {
       ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
       try (Connection con = db.getConnection();
             PreparedStatement pstUpdate = con
                   .prepareStatement("update member set role=? where id=? and company_id=?")) {
          int i = 0;
-         pstUpdate.setString(++i, changeRoleDTO.getRole().name());
-         pstUpdate.setLong(++i, changeRoleDTO.getMemberId());
+         pstUpdate.setString(++i, dto.getRole().name());
+         pstUpdate.setLong(++i, dto.getMemberId());
          pstUpdate.setLong(++i, CurrentUser.getCompanyId());
 
          if (pstUpdate.executeUpdate() > 0) {
             response = Responses.OK;
          }
       } catch (SQLException e) {
-         log.error("Failed to change role of a member. " + changeRoleDTO, e);
-      }
-
-      return response;
-   }
-
-   public ServiceResponse changeStatus(MemberChangeFieldDTO changeDTO) {
-      ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
-
-      try (Connection con = db.getConnection()) {
-
-         MemberStatus newStatus = changeDTO.getStatus();
-         if (changeDTO.isUndo()) {
-            Member member = db.findSingle(con, "select * from member where id=" + changeDTO.getMemberId(),
-                  this::map);
-            if (member != null) {
-               newStatus = member.getPreStatus();
-            }
-         }
-
-         try (PreparedStatement pstUpdate = con.prepareStatement(
-               "update member set pre_status=status, status=?, updated_at=now() where id=? and company_id=?")) {
-            int i = 0;
-            pstUpdate.setLong(++i, changeDTO.getMemberId());
-            pstUpdate.setString(++i, newStatus.name());
-            pstUpdate.setLong(++i, CurrentUser.getCompanyId());
-
-            if (pstUpdate.executeUpdate() > 0) {
-               response = Responses.OK;
-            }
-         }
-      } catch (SQLException e) {
-         log.error("Failed to change status of a member. " + changeDTO, e);
+         log.error("Failed to change role of a member. " + dto, e);
       }
 
       return response;
@@ -171,6 +150,7 @@ public class MemberRepository {
       try {
          Member model = new Member();
          model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
+         model.setActive(rs.getBoolean("active"));
          model.setEmail(rs.getString("email"));
          model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
          model.setCompanyName(rs.getString("company_name")); // transient

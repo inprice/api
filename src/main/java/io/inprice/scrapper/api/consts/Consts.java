@@ -40,13 +40,14 @@ public class Consts {
 
       public static class User {
          public static final String BASE = "/user";
-         public static final String PASSWORD = BASE + "/password";
+         public static final String PASSWORD = BASE + "/change-password";
          public static final String CHANGE_COMPANY = BASE + "/change-company";
       }
 
       public static class Member {
          public static final String BASE = ADMIN_BASE + "/invitation";
          public static final String RESEND = BASE + "/resend";
+         public static final String TOGGLE_STATUS = BASE + "/toggle";
          public static final String CHANGE_ROLE = BASE + "/change-role";
          public static final String CHANGE_STATUS = BASE + "/change-status";
       }

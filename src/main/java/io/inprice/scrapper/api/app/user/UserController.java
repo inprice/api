@@ -16,10 +16,11 @@ public class UserController implements Controller {
    @Override
    public void addRoutes(Javalin app) {
 
-      // update name
+      /* update name
       app.put(Consts.Paths.User.BASE + "/:name", (ctx) -> {
          ctx.json(Commons.createResponse(ctx, service.updateName(ctx.pathParam("name"))));
       });
+      */
 
       // update password
       app.put(Consts.Paths.User.PASSWORD, (ctx) -> {

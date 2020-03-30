@@ -58,7 +58,7 @@ public class CompanyService {
             dataMap.put("userName", dto.getUserName());
             dataMap.put("companyName", dto.getCompanyName());
             dataMap.put("token", token);
-            dataMap.put("url", Props.getBaseUrl() + Consts.Paths.Auth.REGISTER);
+            dataMap.put("url", Props.getApiUrl() + Consts.Paths.Auth.REGISTER);
 
             final String message = renderer.renderRegisterActivationLink(dataMap);
             emailSender.send(Props.getEmail_Sender(), "About " + dto.getCompanyName() + " registration on inprice.io", dto.getEmail(), message);
@@ -69,7 +69,7 @@ public class CompanyService {
             return Responses.ServerProblem.EXCEPTION;
          }
       }
-      return Responses.Invalid.COMPANY;
+      return res;
    }
 
    public ServiceResponse register(String encryptedToken, String ip) {
@@ -134,7 +134,7 @@ public class CompanyService {
          if (StringUtils.isBlank(dto.getCompanyName())) {
             problem = "Company name cannot be null!";
          } else if (dto.getCompanyName().length() < 3 || dto.getCompanyName().length() > 70) {
-            problem = "Company name must be between 3 and 70 chars!";
+            problem = "Company name must be between 3 - 70 chars";
          }
       }
 

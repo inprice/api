@@ -10,7 +10,7 @@ public class PasswordDTO implements Serializable {
    private static final long serialVersionUID = -326743507759919356L;
 
    private Long id;
-   private String passwordOld;
+   private String oldPassword;
    private String password;
    private String repeatPassword;
    private String token;
@@ -30,12 +30,12 @@ public class PasswordDTO implements Serializable {
       this.id = id;
    }
 
-   public String getPasswordOld() {
-      return passwordOld;
+   public String getOldPassword() {
+      return oldPassword;
    }
 
-   public void setPasswordOld(String passwordOld) {
-      this.passwordOld = passwordOld;
+   public void setOldPassword(String oldPassword) {
+      this.oldPassword = oldPassword;
    }
 
    public String getPassword() {

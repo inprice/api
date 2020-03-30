@@ -20,8 +20,12 @@ public class Props {
       return "true".equals(System.getenv().getOrDefault("APP_SHOWING_SQL_QUERIES", "false").toLowerCase());
    }
 
-   public static String getBaseUrl() {
-      return System.getenv().getOrDefault("APP_BASE_URL", "http://localhost:4567");
+   public static String getWebUrl() {
+      return System.getenv().getOrDefault("APP_WEB_URL", "http://localhost:8080");
+   }
+
+   public static String getApiUrl() {
+      return System.getenv().getOrDefault("APP_API_URL", "http://localhost:4567");
    }
 
    public static int getAPP_Port() {

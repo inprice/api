@@ -476,12 +476,14 @@ public class ProductRepository {
          model.setName(rs.getString("name"));
          model.setBrand(rs.getString("brand"));
          model.setCategory(rs.getString("category"));
-         model.setPrice(rs.getBigDecimal("price"));
          model.setPosition(rs.getInt("position"));
-         model.setMinSeller(rs.getString("min_seller"));
-         model.setMaxSeller(rs.getString("max_seller"));
-         model.setMinPrice(rs.getBigDecimal("min_price"));
+         model.setPrice(rs.getBigDecimal("price"));
          model.setAvgPrice(rs.getBigDecimal("avg_price"));
+         model.setMinPlatform(rs.getString("min_platform"));
+         model.setMinSeller(rs.getString("min_seller"));
+         model.setMinPrice(rs.getBigDecimal("min_price"));
+         model.setMaxPlatform(rs.getString("max_platform"));
+         model.setMaxSeller(rs.getString("max_seller"));
          model.setMaxPrice(rs.getBigDecimal("max_price"));
          model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
          model.setUpdatedAt(rs.getDate("updated_at"));

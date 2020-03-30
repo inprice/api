@@ -14,7 +14,7 @@ import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.dto.EmailValidator;
-import io.inprice.scrapper.api.dto.MemberChangeFieldDTO;
+import io.inprice.scrapper.api.dto.MemberChangeRoleDTO;
 import io.inprice.scrapper.api.dto.MemberDTO;
 import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
@@ -106,7 +106,7 @@ public class MemberService {
             dataMap.put("adminName", CurrentUser.getName());
             dataMap.put("confirmToken", tokensMap.get(TokenType.INVITATION_CONFIRM));
             dataMap.put("rejectToken", tokensMap.get(TokenType.INVITATION_REJECT));
-            dataMap.put("url", Props.getBaseUrl() + Consts.Paths.Member.BASE);
+            dataMap.put("url", Props.getWebUrl() + Consts.Paths.Member.BASE);
 
             String message = null;
             String templateName = null;
@@ -134,16 +134,21 @@ public class MemberService {
       return res;
    }
 
-   public ServiceResponse changeRole(MemberChangeFieldDTO changeRoleDTO) {
-      ServiceResponse res = validate(changeRoleDTO);
+   public ServiceResponse toggleStatus(Long memberId) {
+      if (memberId == null || memberId < 1)
+         return Responses.NotFound.MEMBER;
+      return memberRepository.toggleStatus(memberId);
+   }
+
+   public ServiceResponse changeRole(MemberChangeRoleDTO dto) {
+      ServiceResponse res = validate(dto);
       if (res.isOK()) {
 
          Member member = res.getData();
          if (! member.getRole().equals(MemberRole.ADMIN)) {
-            res = memberRepository.changeRole(changeRoleDTO);
+            res = memberRepository.changeRole(dto);
             if (res.isOK()) {
-               log.info("{} role is changed from {} to {} ", changeRoleDTO.getMemberId(), member.getRole(),
-                     changeRoleDTO.getStatus());
+               log.info("{} role is changed to {} ", dto.getMemberId(), member.getRole());
             }
          } else {
             res = new ServiceResponse("Admin's role cannot be changed!");
@@ -152,47 +157,8 @@ public class MemberService {
       return res;
    }
 
-   @SuppressWarnings("incomplete-switch")
-   public ServiceResponse changeStatus(MemberChangeFieldDTO changeStatusDTO) {
-      ServiceResponse res = validate(changeStatusDTO);
-      if (res.isOK()) {
-
-         Member member = res.getData();
-         if (! member.getRole().equals(MemberRole.ADMIN)) {
-            boolean isSuitable = false;
-
-            switch (member.getStatus()) {
-               case PENDING:
-                  isSuitable = (changeStatusDTO.getStatus().equals(MemberStatus.CANCELLED));
-                  break;
-               case JOINED:
-                  isSuitable = (changeStatusDTO.getStatus().equals(MemberStatus.PAUSED));
-                  break;
-               case PAUSED:
-                  isSuitable = true;
-                  changeStatusDTO.setUndo(true);
-                  break;
-            }
-
-            if (isSuitable) {
-               res = memberRepository.changeStatus(changeStatusDTO);
-               if (res.isOK()) {
-                  log.info("{} status is changed from {} to {} ", changeStatusDTO.getMemberId(), member.getStatus(),
-                        changeStatusDTO.getStatus());
-               }
-            } else {
-               res = new ServiceResponse("You cannot change " + changeStatusDTO.getMemberId() + " status from "
-                     + member.getStatus() + " to " + changeStatusDTO.getStatus());
-            }
-         } else {
-            res = new ServiceResponse("Admin's status cannot be changed!");
-         }
-      }
-      return res;
-   }
-
-   private ServiceResponse validate(MemberChangeFieldDTO changeFieldDTO) {
-      if (changeFieldDTO == null || changeFieldDTO.getMemberId() == null) {
+   private ServiceResponse validate(MemberChangeRoleDTO dto) {
+      if (dto == null || dto.getMemberId() == null) {
          return new ServiceResponse("Member Id field cannot be empty!");
       }
 
@@ -200,20 +166,11 @@ public class MemberService {
          return Responses.PermissionProblem.ADMIN_ONLY;
       }
 
-      if (changeFieldDTO.isStatusChange()) {
-         if (changeFieldDTO.getStatus() == null) {
-            return new ServiceResponse("Status field cannot be empty!");
-         }
-         if (changeFieldDTO.getRole().equals(MemberRole.ADMIN)) {
-            return new ServiceResponse("Not in this way!");
-         }
-      }
-
-      if (! changeFieldDTO.isStatusChange() && changeFieldDTO.getRole() == null) {
+      if (dto.getRole() == null) {
          return new ServiceResponse("Role field cannot be empty!");
       }
 
-      return memberRepository.findById(changeFieldDTO.getMemberId());
+      return memberRepository.findById(dto.getMemberId());
    }
 
    private ServiceResponse validate(MemberDTO memberDTO) {

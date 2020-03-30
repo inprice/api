@@ -109,7 +109,7 @@ public class AuthService {
                Map<String, Object> dataMap = new HashMap<>(3);
                dataMap.put("name", user.getName());
                dataMap.put("token", token);
-               dataMap.put("url", Props.getBaseUrl() + Consts.Paths.Auth.RESET_PASSWORD);
+               dataMap.put("url", Props.getWebUrl() + Consts.Paths.Auth.RESET_PASSWORD);
 
                final String message = renderer.renderForgotPassword(dataMap);
                emailSender.send(Props.getEmail_Sender(), "Reset your password", user.getEmail(), message);

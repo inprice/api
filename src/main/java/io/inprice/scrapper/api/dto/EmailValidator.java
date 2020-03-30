@@ -13,8 +13,8 @@ public class EmailValidator {
       final Matcher matcher = pattern.matcher(email);
       if (StringUtils.isBlank(email)) {
          return "Email address cannot be empty!";
-      } else if (email.length() < 9 || email.length() > 250) {
-         return "Email address must be between 9 and 250 chars!";
+      } else if (email.length() < 9 || email.length() > 100) {
+         return "Email address must be between 9 and 100 chars!";
       } else if (!matcher.matches()) {
          return "Invalid email address!";
       }

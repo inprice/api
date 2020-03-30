@@ -22,13 +22,13 @@ public class PasswordValidator {
       }
 
       if (oldPassCheck) {
-         if (StringUtils.isBlank(dto.getPasswordOld())) {
+         if (StringUtils.isBlank(dto.getOldPassword())) {
             return "Old password cannot be null!";
          } else {
             ServiceResponse found = userRepository.findById(dto.getId(), true);
             User user = found.getData();
             if (found.isOK()) {
-               final String hash = BCrypt.hashpw(dto.getPasswordOld(), user.getPasswordSalt());
+               final String hash = BCrypt.hashpw(dto.getOldPassword(), user.getPasswordSalt());
                if (! hash.equals(user.getPasswordHash())) {
                   return "Old password is incorrect!";
                }

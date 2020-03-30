@@ -41,6 +41,7 @@ public class AuthController implements Controller {
       app.post(Consts.Paths.Auth.REFRESH_TOKEN, (ctx) -> {
          String refreshToken = ctx.body();
          String accessToken = ctx.header(Consts.Auth.AUTHORIZATION_HEADER);
+
          ServiceResponse serres = service.refreshTokens(refreshToken, accessToken, ctx.ip(), ctx.userAgent());
          if (serres.isOK())
             ctx.json(Commons.createResponse(ctx, serres));
