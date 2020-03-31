@@ -46,7 +46,7 @@ public class MemberService {
       ServiceResponse res = validate(memberDTO);
 
       if (res.isOK()) {
-         res = memberRepository.insert(memberDTO);
+         res = memberRepository.invite(memberDTO);
          if (res.isOK()) {
             res = sendMail(memberDTO);
          }
@@ -54,7 +54,7 @@ public class MemberService {
       return res;
    }
 
-   public ServiceResponse handleInvitation(String encryptedToken, String ip) {
+   public ServiceResponse acceptInvitation(String encryptedToken, String ip) {
       ServiceResponse res = RedisClient.isIpRateLimited(RateLimiterType.HANDLE_INVITATION, ip);
       if (! res.isOK()) return res;
 
@@ -63,13 +63,8 @@ public class MemberService {
             
             final MemberDTO dto = tokenService.extractMemberDTO(encryptedToken);
             if (dto != null) {
-               tokenService.revokeToken(dto.getTokenType(), encryptedToken);
-
-               if (dto.getTokenType().equals(TokenType.INVITATION_CONFIRM)) {
-                  return memberRepository.insert(dto);
-               } else {
-                  return Responses.OK;
-               }
+               tokenService.revokeToken(TokenType.INVITATION_CONFIRM, encryptedToken);
+               return memberRepository.accept(dto);
             } else {
                return Responses.Invalid.DATA;
             }
@@ -88,7 +83,6 @@ public class MemberService {
             MemberDTO memberDTO = new MemberDTO();
             memberDTO.setEmail(member.getEmail());
             memberDTO.setRole(member.getRole());
-            memberDTO.setTokenType(TokenType.INVITATION_CONFIRM);
             res = sendMail(memberDTO);
          }
       }
@@ -100,12 +94,11 @@ public class MemberService {
       if (res.isOK()) {
          Company company = res.getData();
          if (company.getId().equals(CurrentUser.getCompanyId())) {
-            final Map<TokenType, String> tokensMap = tokenService.getInvitationTokens(memberDTO);
-            Map<String, Object> dataMap = new HashMap<>(3);
+            final String token = tokenService.getInvitationToken(memberDTO);
+            Map<String, Object> dataMap = new HashMap<>(4);
             dataMap.put("companyName", company.getName());
             dataMap.put("adminName", CurrentUser.getName());
-            dataMap.put("confirmToken", tokensMap.get(TokenType.INVITATION_CONFIRM));
-            dataMap.put("rejectToken", tokensMap.get(TokenType.INVITATION_REJECT));
+            dataMap.put("token", token);
             dataMap.put("url", Props.getWebUrl() + Consts.Paths.Member.BASE);
 
             String message = null;

@@ -30,7 +30,7 @@ public class AuthFilter implements Handler {
       allowedURIs = new HashSet<>(5);
       allowedURIs.add(Consts.Paths.Auth.REGISTER_REQUEST);
       allowedURIs.add(Consts.Paths.Auth.REGISTER);
-      allowedURIs.add(Consts.Paths.Auth.INVITATION);
+      allowedURIs.add(Consts.Paths.Auth.ACCEPT_INVITATION);
 
       allowedURIs.add(Consts.Paths.Auth.LOGIN);
       allowedURIs.add(Consts.Paths.Auth.LOGOUT);

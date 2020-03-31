@@ -27,9 +27,9 @@ public class CompanyController implements Controller {
       app.get(Consts.Paths.Auth.REGISTER, (ctx) -> {
          ServiceResponse res = service.register(ctx.queryParam("token"), ctx.ip());
          if (res.isOK()) {
-            ctx.redirect(Props.getWebUrl() + "/login/?message=2");
+            ctx.redirect(Props.getWebUrl() + Consts.Paths.Auth.LOGIN + "/?m=2");
          } else {
-            ctx.redirect(Props.getWebUrl() + "/login/?message=3");
+            ctx.redirect(Props.getWebUrl() + Consts.Paths.Auth.LOGIN + "/?m=3");
          }
       });
 

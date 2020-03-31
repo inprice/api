@@ -108,4 +108,10 @@ public class Responses {
       public static final ServiceResponse HISTORY = new ServiceResponse(BASE, "History not found!");
    }
 
+   public static class NotActive {
+      private static final int BASE = 505;
+
+      public static final ServiceResponse MEMBER = new ServiceResponse(BASE, "Member is not active!");
+   }
+
 }

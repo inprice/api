@@ -3,10 +3,12 @@ package io.inprice.scrapper.api.app.member;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.dto.MemberChangeRoleDTO;
 import io.inprice.scrapper.api.dto.MemberDTO;
+import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
 import io.inprice.scrapper.api.helpers.Commons;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.javalin.Javalin;
 
 @Router
@@ -22,9 +24,14 @@ public class MemberController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.sendInvitation(ctx.bodyAsClass(MemberDTO.class))));
       });
 
-      // handles confirmed and rejected invitations
-      app.get(Consts.Paths.Auth.INVITATION, (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.handleInvitation(ctx.queryParam("token"), ctx.ip())));
+      // handles confirmed invitations
+      app.get(Consts.Paths.Auth.ACCEPT_INVITATION, (ctx) -> {
+         ServiceResponse res = service.acceptInvitation(ctx.queryParam("token"), ctx.ip());
+         if (res.isOK()) {
+            ctx.redirect(Props.getWebUrl() + Consts.Paths.Auth.LOGIN + "/?m=4");
+         } else {
+            ctx.redirect(Props.getWebUrl() + Consts.Paths.Auth.LOGIN + "/?m=5");
+         }
       });
 
       // toggle active status

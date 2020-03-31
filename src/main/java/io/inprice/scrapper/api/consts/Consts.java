@@ -16,7 +16,7 @@ public class Consts {
       public static class Auth {
          public static final String REGISTER_REQUEST = "/register-request";
          public static final String REGISTER = "/register";
-         public static final String INVITATION = "/invitation";
+         public static final String ACCEPT_INVITATION = "/invitation";
 
          public static final String LOGIN = "/login";
          public static final String REFRESH_TOKEN = "/refresh-token";

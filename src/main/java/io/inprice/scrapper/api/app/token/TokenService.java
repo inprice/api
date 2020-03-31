@@ -42,20 +42,11 @@ public class TokenService {
       return tokensMap;
    }
 
-   public Map<TokenType, String> getInvitationTokens(MemberDTO memberDTO) {
-      memberDTO.setTokenType(TokenType.INVITATION_CONFIRM);
+   public String getInvitationToken(MemberDTO memberDTO) {
       String confirm = Global.gson.toJson(memberDTO);
       String confirmToken = generateToken(TokenType.INVITATION_CONFIRM, Cryptor.encrypt(confirm));
 
-      memberDTO.setTokenType(TokenType.INVITATION_REJECT);
-      String reject = Global.gson.toJson(memberDTO);
-      String rejectToken = generateToken(TokenType.INVITATION_REJECT, Cryptor.encrypt(reject));
-
-      Map<TokenType, String> tokensMap = new HashMap<>(2);
-      tokensMap.put(TokenType.INVITATION_CONFIRM, confirmToken);
-      tokensMap.put(TokenType.INVITATION_REJECT, rejectToken);
-
-      return tokensMap;
+      return confirmToken;
    }
 
    public String getResetPasswordToken(String email) {

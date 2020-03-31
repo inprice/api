@@ -8,8 +8,7 @@ public enum TokenType {
    PASSWORD_RESET(3 * TokenType.ONE_HOUR),
    REGISTER_REQUEST(3 * TokenType.ONE_HOUR),
 
-   INVITATION_CONFIRM(3 * TokenType.ONE_DAY),
-   INVITATION_REJECT(3 * TokenType.ONE_DAY);
+   INVITATION_CONFIRM(3 * TokenType.ONE_DAY);
 
    private static final int ONE_MINUTE = 60 * 1000;
    private static final int ONE_HOUR = 60 * ONE_MINUTE;

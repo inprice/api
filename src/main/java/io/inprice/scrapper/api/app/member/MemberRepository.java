@@ -29,39 +29,49 @@ public class MemberRepository {
    public ServiceResponse findById(long memberId) {
       Member model = db.findSingle(String.format(COMPANY_SELECT_STANDARD_QUERY + " where m.id=%d", memberId),
             this::map);
-      if (model != null)
-         return new ServiceResponse(model);
-      else
+      if (model != null) {
+         if (model.getActive()) {
+            return new ServiceResponse(model);
+         } else {
+            return Responses.NotActive.MEMBER;
+         }
+      } else {
          return Responses.NotFound.MEMBER;
+      }
    }
 
    public ServiceResponse findByEmailAndCompanyId(String email, long companyId) {
       Member model = db
             .findSingle(String.format(COMPANY_SELECT_STANDARD_QUERY + " where m.email='%s' and m.company_id=%d",
                   SqlHelper.clear(email), companyId), this::map);
-      if (model != null)
-         return new ServiceResponse(model);
-      else
+      if (model != null) {
+         if (model.getActive()) {
+            return new ServiceResponse(model);
+         } else {
+            return Responses.NotActive.MEMBER;
+         }
+      } else {
          return Responses.NotFound.MEMBER;
+      }
    }
 
    public ServiceResponse getListByUser() {
       List<Member> members = db.findMultiple(String.format(
-            COMPANY_SELECT_STANDARD_QUERY + " where m.email = '%s' order by m.role, c.name, m.created_at desc",
+            COMPANY_SELECT_STANDARD_QUERY + " where m.active = true and m.email = '%s' order by m.role, c.name, m.created_at desc",
             SqlHelper.clear(CurrentUser.getEmail())), this::map);
       return new ServiceResponse(members);
    }
 
    public ServiceResponse getListByCompany() {
       List<Member> members = db.findMultiple(String.format(
-            COMPANY_SELECT_STANDARD_QUERY + " where m.company_id = %d order by m.role, c.name, m.created_at desc",
+            COMPANY_SELECT_STANDARD_QUERY + " where m.active = true and m.company_id = %d order by m.role, c.name, m.created_at desc",
             CurrentUser.getCompanyId()), this::map);
       return new ServiceResponse(members);
    }
 
    public ServiceResponse findASuitableCompanyId(String email) {
       List<Member> members = db.findMultiple(String.format(
-            COMPANY_SELECT_STANDARD_QUERY + " where m.email = '%s' and m.status = '%s' order by m.role, m.company_id",
+            COMPANY_SELECT_STANDARD_QUERY + " where m.active = true and m.email = '%s' and m.status = '%s' order by m.role, m.company_id",
             SqlHelper.clear(email), MemberStatus.JOINED), this::map);
 
       if (members != null && members.size() > 0) {
@@ -70,23 +80,62 @@ public class MemberRepository {
       return Responses.NotFound.COMPANY;
    }
 
-   public ServiceResponse insert(MemberDTO memberDTO) {
+   public ServiceResponse invite(MemberDTO dto) {
       ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
-      // company is inserted
+      // member is inserted
       try (Connection con = db.getConnection();
             PreparedStatement pst = con
                   .prepareStatement("insert into member (email, role, company_id) values (?, ?, ?) ")) {
          int i = 0;
-         pst.setString(++i, memberDTO.getEmail());
-         pst.setString(++i, memberDTO.getRole().name());
+         pst.setString(++i, dto.getEmail());
+         pst.setString(++i, dto.getRole().name());
          pst.setLong(++i, CurrentUser.getCompanyId());
 
          if (pst.executeUpdate() > 0) {
             response = Responses.OK;
          }
       } catch (SQLException e) {
-         log.error("Failed to insert a new member. " + memberDTO, e);
+         log.error("Failed to insert a new member. " + dto, e);
+      }
+
+      return response;
+   }
+
+   public ServiceResponse accept(MemberDTO dto) {
+      ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+
+      // member is inserted
+      try (Connection con = db.getConnection()) {
+
+         Member model = 
+            db.findSingle(
+               con,
+               String.format("select * from member where email=%s and company_id=%d",
+               dto.getEmail(), CurrentUser.getCompanyId()), this::map);
+         
+         if (model != null) {
+            if (model.getActive()) {
+
+               try (PreparedStatement pst = con.prepareStatement("update member set status=? where email=? and company_id=?")) {
+                  int i = 0;
+                  pst.setString(++i, MemberStatus.JOINED.name());
+                  pst.setString(++i, dto.getEmail());
+                  pst.setLong(++i, CurrentUser.getCompanyId());
+         
+                  if (pst.executeUpdate() > 0) {
+                     response = Responses.OK;
+                  }
+               }
+            } else {
+               response = Responses.NotActive.MEMBER;
+            }
+         } else {
+            response = Responses.NotFound.MEMBER;
+         }
+
+      } catch (SQLException e) {
+         log.error("Failed to confirm a new member. " + dto, e);
       }
 
       return response;
@@ -130,7 +179,7 @@ public class MemberRepository {
       // company is inserted
       try (Connection con = db.getConnection();
             PreparedStatement pst = con.prepareStatement(
-                  "update member set retry=retry+1 where id=? and retry<3 and status=? and company_id=?")) {
+                  "update member set retry=retry+1 where active = true and id=? and retry<3 and status=? and company_id=?")) {
          int i = 0;
          pst.setLong(++i, memberId);
          pst.setString(++i, MemberStatus.PENDING.name());
