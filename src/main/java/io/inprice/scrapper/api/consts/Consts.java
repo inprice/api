@@ -2,21 +2,13 @@ package io.inprice.scrapper.api.consts;
 
 public class Consts {
 
-   public static class Auth {
-      public static final String APP_SECRET_KEY = "-8'fq{>As@njcx.U*$=P]#Z5wY+";
-      public static final String DATA_SECRET_KEY = "gFn+f3Ksa@YJWEq%8SeaM%MK^e";
-
-      public static final String AUTHORIZATION_HEADER = "Authorization";
-      public static final String TOKEN_PREFIX = "Bearer ";
-      public static final String PAYLOAD = "payload";
-   }
+   public static final String AUTHORIZATION_HEADER = "Authorization";
 
    public static class Paths {
 
       public static class Auth {
          public static final String REGISTER_REQUEST = "/register-request";
          public static final String REGISTER = "/register";
-         public static final String ACCEPT_INVITATION = "/invitation";
 
          public static final String LOGIN = "/login";
          public static final String REFRESH_TOKEN = "/refresh-token";
@@ -44,9 +36,17 @@ public class Consts {
          public static final String CHANGE_COMPANY = BASE + "/change-company";
       }
 
-      public static class Member {
-         public static final String BASE = ADMIN_BASE + "/invitation";
+      public static class Invitation {
+         public static final String BASE = "/invitation";
+         public static final String SEND = BASE + "/send";
          public static final String RESEND = BASE + "/resend";
+         public static final String ACCEPT_NEW = BASE + "/accept-new";
+         public static final String ACCEPT_EXISTING = BASE + "/accept";
+         public static final String REJECT_EXISTING = BASE + "/reject";
+      }
+
+      public static class Member {
+         public static final String BASE = "/member";
          public static final String TOGGLE_STATUS = BASE + "/toggle";
          public static final String CHANGE_ROLE = BASE + "/change-role";
          public static final String CHANGE_STATUS = BASE + "/change-status";
@@ -55,11 +55,9 @@ public class Consts {
       public static class Product {
          public static final String BASE = "/product";
          public static final String SEARCH = BASE + "s/search";
-
          public static final String TOGGLE_STATUS = BASE + "/toggle";
 
          public static final String IMPORT_BASE = BASE + "/import";
-
          public static final String IMPORT_CSV = IMPORT_BASE + "/csv";
          public static final String IMPORT_URL_LIST = IMPORT_BASE + "/url";
          public static final String IMPORT_EBAY_SKU_LIST = IMPORT_BASE + "/ebay";

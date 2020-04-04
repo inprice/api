@@ -25,11 +25,6 @@ public final class ServiceResponse {
       this.data = data;
    }
 
-   public ServiceResponse(List<String> problems) {
-      this.status = Responses.DataProblem.FORM_VALIDATION.getStatus();
-      this.problems = problems;
-   }
-
    public boolean isOK() {
       return (status == Responses.OK.getStatus());
    }

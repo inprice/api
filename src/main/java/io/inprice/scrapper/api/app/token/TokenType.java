@@ -5,12 +5,13 @@ public enum TokenType {
    ACCESS(20 * TokenType.ONE_MINUTE),
    REFRESH(TokenType.ONE_HOUR),
 
-   PASSWORD_RESET(3 * TokenType.ONE_HOUR),
+   FORGOT_PASSWORD(3 * TokenType.ONE_HOUR),
    REGISTER_REQUEST(3 * TokenType.ONE_HOUR),
 
-   INVITATION_CONFIRM(3 * TokenType.ONE_DAY);
+   INVITATION(3 * TokenType.ONE_DAY);
 
-   private static final int ONE_MINUTE = 60 * 1000;
+   private static final int ONE_SECOND = 1000;
+   private static final int ONE_MINUTE = 60 * ONE_SECOND;
    private static final int ONE_HOUR = 60 * ONE_MINUTE;
    private static final int ONE_DAY = 24 * ONE_HOUR;
 

@@ -69,11 +69,20 @@ public class UserRepository {
    }
 
    public ServiceResponse insert(UserDTO dto) {
+      try (Connection con = db.getConnection()) {
+         return insert(con, dto);
+      } catch (SQLException e) {
+         log.error("Failed to insert user", e);
+         return Responses.ServerProblem.EXCEPTION;
+      }
+   }
+
+   public ServiceResponse insert(Connection con, UserDTO dto) {
       final String query = "insert into user "
             + "(email, name, last_company_id, password_salt, password_hash) values "
             + "(?, ?, ?, ?, ?) ";
 
-      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+      try (PreparedStatement pst = con.prepareStatement(query)) {
          final String salt = codeGenerator.generateSalt();
          
          int i = 0;
@@ -91,7 +100,7 @@ public class UserRepository {
       } catch (SQLIntegrityConstraintViolationException ie) {
          log.error("Failed to insert user: " + ie.getMessage());
          return Responses.DataProblem.INTEGRITY_PROBLEM;
-      } catch (Exception e) {
+      } catch (SQLException e) {
          log.error("Failed to insert user", e);
          return Responses.ServerProblem.EXCEPTION;
       }

@@ -11,6 +11,8 @@ import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
+import io.inprice.scrapper.api.consts.Consts;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.dto.NameAndEmailValidator;
 import io.inprice.scrapper.api.dto.PasswordDTO;
@@ -18,11 +20,9 @@ import io.inprice.scrapper.api.dto.PasswordValidator;
 import io.inprice.scrapper.api.dto.RegisterDTO;
 import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
-import io.inprice.scrapper.api.consts.Consts;
-import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
 
@@ -32,10 +32,9 @@ public class CompanyService {
 
    private final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
    private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-   private final TokenService tokenService = Beans.getSingleton(TokenService.class);
 
-   private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
    private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
+   private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
 
    public ServiceResponse registerRequest(RegisterDTO dto, String ip) {
       ServiceResponse res = RedisClient.isIpRateLimited(RateLimiterType.REGISTER, ip);
@@ -51,13 +50,11 @@ public class CompanyService {
             dto.setUserName(user.getName());
          }
 
-         final String token = tokenService.getRegisterRequestToken(dto);
-
          try {
             Map<String, Object> dataMap = new HashMap<>(4);
-            dataMap.put("userName", dto.getUserName());
-            dataMap.put("companyName", dto.getCompanyName());
-            dataMap.put("token", token);
+            dataMap.put("user", dto.getUserName());
+            dataMap.put("company", dto.getCompanyName());
+            dataMap.put("token", TokenService.add(TokenType.REGISTER_REQUEST, dto));
             dataMap.put("url", Props.getApiUrl() + Consts.Paths.Auth.REGISTER);
 
             final String message = renderer.renderRegisterActivationLink(dataMap);
@@ -72,18 +69,10 @@ public class CompanyService {
       return res;
    }
 
-   public ServiceResponse register(String encryptedToken, String ip) {
-      if (StringUtils.isNotBlank(encryptedToken)) {
-         if (!tokenService.isTokenInvalidated(encryptedToken)) {
-            tokenService.revokeToken(TokenType.REGISTER_REQUEST, encryptedToken);
-            
-            final RegisterDTO dto = tokenService.extractRegisterDTO(encryptedToken);
-            if (dto != null) {
-               return companyRepository.insert(dto);
-            } else {
-               return Responses.Invalid.DATA;
-            }
-         }
+   public ServiceResponse register(String token, String ip) {
+      RegisterDTO dto = TokenService.get(TokenType.REGISTER_REQUEST, token);
+      if (dto != null) {
+         return companyRepository.insert(dto, token);
       }
       return Responses.Invalid.TOKEN;
    }

@@ -1,9 +1,9 @@
 package io.inprice.scrapper.api.app.auth;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +13,8 @@ import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
+import io.inprice.scrapper.api.consts.Consts;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.EmailValidator;
 import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.dto.LoginDTOValidator;
@@ -20,13 +22,12 @@ import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.PasswordValidator;
 import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
-import io.inprice.scrapper.api.consts.Consts;
-import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.info.SessionTokens;
 import io.inprice.scrapper.api.meta.RateLimiterType;
 import jodd.util.BCrypt;
 
@@ -36,27 +37,25 @@ public class AuthService {
 
    private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
    private final MemberRepository memberRepository = Beans.getSingleton(MemberRepository.class);
-   private final TokenService tokenService = Beans.getSingleton(TokenService.class);
-
    private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
    private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
 
-   public ServiceResponse login(LoginDTO loginDTO) {
-      if (loginDTO != null) {
+   public ServiceResponse login(LoginDTO dto) {
+      if (dto != null) {
 
-         String problem = LoginDTOValidator.verify(loginDTO);
+         String problem = LoginDTOValidator.verify(dto);
          if (problem == null) {
 
-            ServiceResponse found = userRepository.findByEmail(loginDTO.getEmail(), true);
+            ServiceResponse found = userRepository.findByEmail(dto.getEmail(), true);
             if (found.isOK()) {
                User user = found.getData();
                String salt = user.getPasswordSalt();
-               String hash = BCrypt.hashpw(loginDTO.getPassword(), salt);
+               String hash = BCrypt.hashpw(dto.getPassword(), salt);
                if (hash.equals(user.getPasswordHash())) {
                   if (checkCompany(user)) {
                      user.setPasswordSalt(null);
                      user.setPasswordHash(null);
-                     return authenticatedResponse(user, loginDTO.getIp(), loginDTO.getUserAgent());
+                     return createTokens(user);
                   } else {
                      return Responses.PermissionProblem.NO_COMPANY;
                   }
@@ -77,18 +76,19 @@ public class AuthService {
             user.setRole(member.getRole());
             return true;
          }
-      } else {
-         ServiceResponse found = memberRepository.findASuitableCompanyId(user.getEmail());
-         if (found.isOK()) {
-            Member member = found.getData();
-            ServiceResponse updated = userRepository.updateLastCompany(user.getId(), member.getCompanyId());
-            if (updated.isOK()) {
-               user.setRole(member.getRole());
-               user.setLastCompanyId(member.getCompanyId());
-               return true;
-            }
+      }
+
+      ServiceResponse found = memberRepository.findASuitableCompanyId(user.getEmail());
+      if (found.isOK()) {
+         Member member = found.getData();
+         ServiceResponse updated = userRepository.updateLastCompany(user.getId(), member.getCompanyId());
+         if (updated.isOK()) {
+            user.setRole(member.getRole());
+            user.setLastCompanyId(member.getCompanyId());
+            return true;
          }
       }
+
       return false;
    }
 
@@ -103,12 +103,10 @@ public class AuthService {
          if (found.isOK()) {
 
             User user = found.getData();
-            final String token = tokenService.getResetPasswordToken(email);
-
             try {
                Map<String, Object> dataMap = new HashMap<>(3);
-               dataMap.put("name", user.getName());
-               dataMap.put("token", token);
+               dataMap.put("user", user.getName());
+               dataMap.put("token", TokenService.add(TokenType.FORGOT_PASSWORD, email));
                dataMap.put("url", Props.getWebUrl() + Consts.Paths.Auth.RESET_PASSWORD);
 
                final String message = renderer.renderForgotPassword(dataMap);
@@ -128,86 +126,51 @@ public class AuthService {
 
    public ServiceResponse resetPassword(PasswordDTO dto) {
       if (dto != null) {
-         if (!tokenService.isTokenInvalidated(dto.getToken())) {
-   
-            ServiceResponse valid = validatePassword(dto);
-            if (valid.isOK()) {
-               
-               final String email = tokenService.decryptToken(dto.getToken());
-               ServiceResponse found = userRepository.findByEmail(email);
-               
-               if (found.isOK()) {
-                  User user = found.getData();
-                  ServiceResponse res = userRepository.updatePassword(user.getId(), dto.getPassword());
-                  if (res.isOK()) {
-                     tokenService.revokeToken(TokenType.PASSWORD_RESET, dto.getToken());
-                     return Responses.OK;
-                  }
-               } else {
-                  tokenService.revokeToken(TokenType.PASSWORD_RESET, dto.getToken());
-                  return Responses.NotFound.EMAIL;
+
+         String problem = PasswordValidator.verify(dto, true, false);
+         if (problem == null) {
+            
+            final String email = TokenService.get(TokenType.FORGOT_PASSWORD, dto.getToken());
+            ServiceResponse found = userRepository.findByEmail(email);
+            
+            if (found.isOK()) {
+               User user = found.getData();
+               ServiceResponse res = userRepository.updatePassword(user.getId(), dto.getPassword());
+               if (res.isOK()) {
+                  TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
+                  return Responses.OK;
                }
             } else {
-               return valid;
+               TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
+               return Responses.NotFound.EMAIL;
             }
          } else {
-            return Responses.Invalid.TOKEN;
+            return new ServiceResponse(problem);
          }
       }
       return Responses.Invalid.DATA;
    }
 
-   public ServiceResponse refreshTokens(String refreshToken, String accessToken, String ip, String userAgent) {
-      if (StringUtils.isNotBlank(refreshToken) && !tokenService.isTokenInvalidated(refreshToken)) {
-         tokenService.revokeToken(TokenType.REFRESH, refreshToken);
-         tokenService.revokeToken(TokenType.ACCESS, accessToken);
-         String bareRefreshToken = tokenService.decryptToken(refreshToken);
-         if (bareRefreshToken != null) {
-            String[] tokenParts = bareRefreshToken.split("::");
-            ServiceResponse found = userRepository.findByEmail(tokenParts[0]);
-            if (found.isOK()) {
-               return authenticatedResponse(found.getData(), ip, userAgent);
-            }
-         }
+   public ServiceResponse refreshTokens(String refreshToken) {
+      AuthUser found = TokenService.get(TokenType.REFRESH, refreshToken);
+      if (found != null) {
+         return createTokens(found);
       }
       return Responses.Invalid.TOKEN;
    }
 
-   public ServiceResponse logout(String refreshToken, String accessToken) {
-      if (tokenService.isTokenInvalidated(refreshToken) || tokenService.isTokenInvalidated(accessToken)) {
-         return Responses.Already.LOGGED_OUT;
+   public ServiceResponse logout(String accessToken) {
+      if (TokenService.isTokenValid(accessToken)) {
+         AuthUser user = TokenService.get(TokenType.ACCESS, accessToken);
+         if (user != null) {
+            closeSession(user.getEmail());
+            return Responses.OK;
+         }
       }
-      tokenService.revokeToken(TokenType.REFRESH, refreshToken);
-      tokenService.revokeToken(TokenType.ACCESS, accessToken);
-      return Responses.OK;
+      return Responses.Already.LOGGED_OUT;
    }
 
-   private ServiceResponse validatePassword(PasswordDTO dto) {
-      String problem = PasswordValidator.verify(dto, true, false);
-
-      if (problem == null && StringUtils.isBlank(dto.getToken())) {
-         problem = "Token cannot be null!";
-      }
-      
-      if (problem == null && tokenService.isTokenExpired(dto.getToken())) {
-         problem = "Your token has expired!";
-      }
-
-      if (problem == null)
-         return Responses.OK;
-      else
-         return new ServiceResponse(problem);
-   }
-
-   private ServiceResponse authenticatedResponse(User user, String ip, String userAgent) {
-      Map<TokenType, String> tokens = createTokens(user, ip, userAgent);
-      Map<String, Object> payload = new HashMap<>(2);
-      payload.put("user", user);
-      payload.put("tokens", tokens);
-      return new ServiceResponse(payload);
-   }
-
-   Map<TokenType, String> createTokens(User user, String ip, String userToken) {
+   ServiceResponse createTokens(User user) {
       AuthUser authUser = new AuthUser();
       authUser.setId(user.getId());
       authUser.setEmail(user.getEmail());
@@ -215,18 +178,36 @@ public class AuthService {
       authUser.setRole(user.getRole());
       authUser.setCompanyId(user.getLastCompanyId());
 
-      return createTokens(authUser, ip, userToken);
+      return createTokens(authUser);
    }
 
-   Map<TokenType, String> createTokens(AuthUser user, String ip, String userToken) {
-      AuthUser authUser = new AuthUser();
-      authUser.setId(user.getId());
-      authUser.setEmail(user.getEmail());
-      authUser.setName(user.getName());
-      authUser.setRole(user.getRole());
-      authUser.setCompanyId(user.getCompanyId());
+   ServiceResponse createTokens(AuthUser user) {
+      // old ones must be remevoed first, if any
+      closeSession(user.getEmail());
 
-      return tokenService.getAccessTokens(authUser, ip, userToken);
+      // creates new tokens
+      String access = TokenService.add(TokenType.ACCESS, user);
+      String refresh = TokenService.add(TokenType.REFRESH, user);
+
+      // creates session info
+      SessionTokens tokens = new SessionTokens(access, refresh);
+      TokenService.addSessionTokens(user.getEmail(), tokens);
+
+      // establishes returning object
+      Map<String, Serializable> data = new HashMap<>(3);
+      data.put(TokenType.ACCESS.name(), tokens.getAccess());
+      data.put(TokenType.REFRESH.name(), tokens.getRefresh());
+      data.put("user", user);
+      return new ServiceResponse(data);
+   }
+
+   public void closeSession(String email) {
+      SessionTokens tokens = TokenService.getSessionTokens(email);
+      if (tokens != null) {
+         TokenService.remove(TokenType.ACCESS, tokens.getAccess());
+         TokenService.remove(TokenType.REFRESH, tokens.getRefresh());
+      }
+      TokenService.removeSessionTokens(email);
    }
 
 }

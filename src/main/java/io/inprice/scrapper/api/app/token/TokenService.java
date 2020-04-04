@@ -1,151 +1,74 @@
 package io.inprice.scrapper.api.app.token;
 
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.Serializable;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.redisson.api.RMapCache;
 
-import io.inprice.scrapper.api.dto.MemberDTO;
-import io.inprice.scrapper.api.dto.RegisterDTO;
-import io.inprice.scrapper.api.consts.Consts;
-import io.inprice.scrapper.api.helpers.Cryptor;
-import io.inprice.scrapper.api.consts.Global;
 import io.inprice.scrapper.api.external.RedisClient;
-import io.inprice.scrapper.api.info.AuthUser;
-import io.javalin.http.Context;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.SignatureException;
-import io.jsonwebtoken.impl.DefaultClaims;
+import io.inprice.scrapper.api.info.SessionTokens;
 
 public class TokenService {
 
-   private static Logger log = LoggerFactory.getLogger(TokenService.class);
+   private static final RMapCache<String, Serializable> tokensMap;
+   private static final RMapCache<String, SessionTokens> sessionTokensMap;
 
-   public Map<TokenType, String> getAccessTokens(AuthUser authUser, String ip, String userAgent) {
-      String refresh = authUser.getEmail() + "::" + ip + "::" + Consts.Auth.APP_SECRET_KEY + "::" + userAgent;
-      String refreshToken = generateToken(TokenType.REFRESH, Cryptor.encrypt(refresh));
-
-      String access = Global.gson.toJson(authUser);
-      String accessToken = generateToken(TokenType.ACCESS, Cryptor.encrypt(access));
-
-      Map<TokenType, String> tokensMap = new HashMap<>(2);
-      tokensMap.put(TokenType.ACCESS, accessToken);
-      tokensMap.put(TokenType.REFRESH, refreshToken);
-
-      return tokensMap;
+   static {
+      tokensMap = RedisClient.getClient().getMapCache("api:tokens");
+      sessionTokensMap = RedisClient.getClient().getMapCache("api:session_tokens");
    }
 
-   public String getInvitationToken(MemberDTO memberDTO) {
-      String confirm = Global.gson.toJson(memberDTO);
-      String confirmToken = generateToken(TokenType.INVITATION_CONFIRM, Cryptor.encrypt(confirm));
-
-      return confirmToken;
+   public static String add(TokenType tokenType, Serializable object) {
+      final String token = generateToken();
+      tokensMap.put(getKey(tokenType, token), object, tokenType.ttl(), TimeUnit.MILLISECONDS);
+      return token;
    }
 
-   public String getResetPasswordToken(String email) {
-      return generateToken(TokenType.PASSWORD_RESET, Cryptor.encrypt(email));
-   }
-
-   public String getRegisterRequestToken(RegisterDTO dto) {
-      String registerRequest = Global.gson.toJson(dto);
-      return generateToken(TokenType.REGISTER_REQUEST, Cryptor.encrypt(registerRequest));
-   }
-
-   public AuthUser extractAuthUserFromContext(Context ctx) {
-      final String header = ctx.header(Consts.Auth.AUTHORIZATION_HEADER);
-      if (header != null && header.length() > 0) {
-         String token = header.replace(Consts.Auth.TOKEN_PREFIX, "");
-         if (token != null) {
-            return checkAccessToken(token);
-         }
+   @SuppressWarnings("unchecked")
+   public static <T extends Serializable> T get(TokenType tokenType, String token) {
+      if (isTokenValid(token)) {
+         Serializable seri = tokensMap.get(getKey(tokenType, token));
+         if (seri != null) return (T) seri;
       }
       return null;
    }
 
-   public AuthUser checkAccessToken(String token) {
-      try {
-         return Global.gson.fromJson(decryptToken(token.replace(Consts.Auth.TOKEN_PREFIX, "")), AuthUser.class);
-      } catch (Exception e) {
-         return null;
+   public static boolean remove(TokenType tokenType, String token) {
+      return (tokensMap.remove(getKey(tokenType, token)) != null);
+   }
+
+   public static void addSessionTokens(String email, SessionTokens tokens) {
+      sessionTokensMap.put(email, tokens, 10, TimeUnit.HOURS);
+   }
+
+   public static SessionTokens getSessionTokens(String email) {
+      return sessionTokensMap.get(email);
+   }
+
+   public static boolean removeSessionTokens(String email) {
+      return (sessionTokensMap.remove(email) != null);
+   }
+
+   private static String getKey(TokenType tokenType, String token) {
+      return tokenType.name() + "-" + token;
+   }
+
+   private static String generateToken() {
+      return UUID.randomUUID().toString();
+   }
+
+   private static final String SAMPLE_TOKEN = generateToken();
+
+   public static boolean isTokenValid(String token) {
+      if (StringUtils.isNotBlank(token) && token.length() == SAMPLE_TOKEN.length()) {
+         try {
+            UUID.fromString(token);
+            return true;
+         } catch (IllegalArgumentException ignored) { }
       }
-   }
-
-   public boolean isRefreshTokenExpired(String token, String ip, String userAgent) {
-      try {
-         // refresh request must be done from the same ip and device as is it is in the
-         // first request so ip and user-agent fields are checked for these controls
-         String bareToken = decryptToken(token);
-         String[] tokenParts = bareToken.split("::");
-         return (!ip.equals(tokenParts[1]) || !userAgent.equals(tokenParts[3]));
-      } catch (Exception e) {
-         return true;
-      }
-   }
-
-   public boolean isTokenExpired(String token) {
-      try {
-         decryptToken(token);
-         return false;
-      } catch (Exception e) {
-         return true;
-      }
-   }
-
-   public boolean isTokenInvalidated(String token) {
-      return RedisClient.isTokenInvalidated(token);
-   }
-
-   public void revokeToken(TokenType tokenType, String token) {
-      if (StringUtils.isNotBlank(token)) {
-         RedisClient.addInvalidateToken(tokenType, token);
-      }
-   }
-
-   public RegisterDTO extractRegisterDTO(String encryptedToken) {
-      String json = decryptToken(encryptedToken);
-      if (json != null) {
-         return Global.gson.fromJson(json, RegisterDTO.class);
-      }
-      return null;
-   }
-
-   public MemberDTO extractMemberDTO(String encryptedToken) {
-      String json = decryptToken(encryptedToken);
-      if (json != null) {
-         return Global.gson.fromJson(json, MemberDTO.class);
-      }
-      return null;
-   }
-
-   public String decryptToken(String encryptedToken) {
-      try {
-         Claims claims = Jwts.parser().setSigningKey(Consts.Auth.APP_SECRET_KEY).parseClaimsJws(encryptedToken).getBody();
-
-         final byte[] prePayload = Base64.getDecoder().decode(claims.get(Consts.Auth.PAYLOAD, String.class));
-         return Cryptor.decrypt(prePayload);
-      } catch (SignatureException malformedsign) {
-         log.error("Malformed signature error!");
-      } catch (ExpiredJwtException expired) {
-      }
-      return null;
-   }
-
-   private String generateToken(TokenType tokenType, byte[] payload) {
-      Date now = new Date();
-
-      DefaultClaims claims = new DefaultClaims();
-      claims.setIssuedAt(now);
-      claims.setExpiration(new Date(now.getTime() + tokenType.ttl()));
-      claims.put(Consts.Auth.PAYLOAD, payload);
-
-      return Jwts.builder().setClaims(claims).signWith(SignatureAlgorithm.HS512, Consts.Auth.APP_SECRET_KEY).compact();
+      return false;
    }
 
 }

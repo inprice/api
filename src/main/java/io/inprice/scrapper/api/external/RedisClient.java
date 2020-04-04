@@ -33,7 +33,7 @@ public class RedisClient {
    }
 
    public static void addInvalidateToken(TokenType tokenType, String token) {
-      invalidatedTokens.add(token, System.currentTimeMillis() + tokenType.ttl(), TimeUnit.MILLISECONDS);
+      invalidatedTokens.add(token, tokenType.ttl(), TimeUnit.MILLISECONDS);
    }
 
    public static ServiceResponse isIpRateLimited(RateLimiterType type, String ip) {
@@ -41,12 +41,16 @@ public class RedisClient {
       if (exists) {
          return Responses.Illegal.TOO_MUCH_REQUEST;
       }
-      rateLimitingSet.add(type.name() + ip, System.currentTimeMillis() + type.ttl(), TimeUnit.MILLISECONDS);
+      rateLimitingSet.add(type.name() + ip, type.ttl(), TimeUnit.MILLISECONDS);
       return Responses.OK;
    }
 
    public static boolean isTokenInvalidated(String token) {
       return invalidatedTokens.contains(token);
+   }
+
+   public static RedissonClient getClient() {
+      return client;
    }
 
    public static void shutdown() {

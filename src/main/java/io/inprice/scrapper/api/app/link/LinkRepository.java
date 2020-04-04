@@ -53,9 +53,9 @@ public class LinkRepository {
       return Responses.NotFound.PRODUCT;
    }
 
-   public ServiceResponse insert(LinkDTO linkDTO) {
+   public ServiceResponse insert(LinkDTO dto) {
       if (Props.isLinkUniqueness()) {
-         boolean alreadyExists = doesExist(linkDTO.getUrl(), linkDTO.getProductId());
+         boolean alreadyExists = doesExist(dto.getUrl(), dto.getProductId());
          if (alreadyExists) {
             return Responses.DataProblem.ALREADY_EXISTS;
          }
@@ -69,8 +69,8 @@ public class LinkRepository {
       try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
 
          int i = 0;
-         pst.setString(++i, linkDTO.getUrl());
-         pst.setLong(++i, linkDTO.getProductId());
+         pst.setString(++i, dto.getUrl());
+         pst.setLong(++i, dto.getProductId());
          pst.setLong(++i, CurrentUser.getCompanyId());
 
          if (pst.executeUpdate() > 0)

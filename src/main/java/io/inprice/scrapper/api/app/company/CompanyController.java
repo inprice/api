@@ -8,6 +8,9 @@ import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
+
+import org.eclipse.jetty.http.HttpStatus;
+
 import io.inprice.scrapper.api.consts.Consts;
 import io.javalin.Javalin;
 
@@ -25,11 +28,12 @@ public class CompanyController implements Controller {
       });
 
       app.get(Consts.Paths.Auth.REGISTER, (ctx) -> {
+         ctx.status(HttpStatus.MOVED_TEMPORARILY_302);
          ServiceResponse res = service.register(ctx.queryParam("token"), ctx.ip());
          if (res.isOK()) {
-            ctx.redirect(Props.getWebUrl() + Consts.Paths.Auth.LOGIN + "/?m=2");
+            ctx.redirect(Props.getWebUrl() + Consts.Paths.Auth.LOGIN + "?m=ax37");
          } else {
-            ctx.redirect(Props.getWebUrl() + Consts.Paths.Auth.LOGIN + "/?m=3");
+            ctx.redirect(Props.getWebUrl() + Consts.Paths.Auth.LOGIN + "?m=qb41");
          }
       });
 

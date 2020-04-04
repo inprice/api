@@ -9,10 +9,10 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.app.member.MemberRole;
 import io.inprice.scrapper.api.app.token.TokenService;
-import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.framework.HandlerInterruptException;
+import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.external.Props;
+import io.inprice.scrapper.api.framework.HandlerInterruptException;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
@@ -21,8 +21,6 @@ public class AuthFilter implements Handler {
 
    private static final Logger log = LoggerFactory.getLogger(AuthFilter.class);
 
-   private static final TokenService tokenService = Beans.getSingleton(TokenService.class);
-
    private final Set<String> allowedURIs;
    private final Set<String> sensitiveMethodsSet;
 
@@ -30,7 +28,7 @@ public class AuthFilter implements Handler {
       allowedURIs = new HashSet<>(5);
       allowedURIs.add(Consts.Paths.Auth.REGISTER_REQUEST);
       allowedURIs.add(Consts.Paths.Auth.REGISTER);
-      allowedURIs.add(Consts.Paths.Auth.ACCEPT_INVITATION);
+      allowedURIs.add(Consts.Paths.Invitation.ACCEPT_NEW);
 
       allowedURIs.add(Consts.Paths.Auth.LOGIN);
       allowedURIs.add(Consts.Paths.Auth.LOGOUT);
@@ -60,26 +58,26 @@ public class AuthFilter implements Handler {
       if (URI.charAt(URI.length()-1) == '/') URI = URI.substring(0, URI.length()-1);
 
       if (isAuthenticationNeeded(URI)) {
-         String accessToken = ctx.header(Consts.Auth.AUTHORIZATION_HEADER);
+         String accessToken = ctx.header(Consts.AUTHORIZATION_HEADER);
          if (accessToken == null) {
             ctx.status(HttpStatus.UNAUTHORIZED_401);
          } else {
-            if (tokenService.isTokenInvalidated(accessToken)) {
+            if (! TokenService.isTokenValid(accessToken)) {
                ctx.status(HttpStatus.UNAUTHORIZED_401);
             } else {
 
                if (isRefreshTokenRequest(URI)) {
-                  final String token = ctx.body();
-                  if (tokenService.isTokenInvalidated(token)) {
+                  final String refreshToken = ctx.body();
+                  if (! TokenService.isTokenValid(refreshToken)) {
                      ctx.status(HttpStatus.UNAUTHORIZED_401);
                   } else {
-                     boolean expired = tokenService.isRefreshTokenExpired(token, ctx.ip(), ctx.userAgent());
-                     if (expired) {
+                     AuthUser authUser = TokenService.get(TokenType.REFRESH, refreshToken);
+                     if (authUser == null) {
                         ctx.status(HttpStatus.UNAUTHORIZED_401);
                      }
                   }
                } else {
-                  AuthUser authUser = tokenService.checkAccessToken(accessToken);
+                  AuthUser authUser = TokenService.get(TokenType.ACCESS, accessToken);
                   if (authUser == null) {
                      ctx.status(HttpStatus.UNAUTHORIZED_401);
                   } else if (!MemberRole.ADMIN.equals(authUser.getRole())

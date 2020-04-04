@@ -1,16 +1,15 @@
 package io.inprice.scrapper.api.app.auth;
 
-import io.inprice.scrapper.api.helpers.Commons;
+import org.eclipse.jetty.http.HttpStatus;
+
+import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.dto.EmailDTO;
 import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
-
-import org.eclipse.jetty.http.HttpStatus;
-
-import io.inprice.scrapper.api.consts.Consts;
+import io.inprice.scrapper.api.helpers.Commons;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.javalin.Javalin;
 
@@ -23,10 +22,10 @@ public class AuthController implements Controller {
    public void addRoutes(Javalin app) {
 
       app.post(Consts.Paths.Auth.LOGIN, (ctx) -> {
-         LoginDTO loginDTO = ctx.bodyAsClass(LoginDTO.class);
-         loginDTO.setIp(ctx.ip());
-         loginDTO.setUserAgent(ctx.userAgent());
-         ctx.json(Commons.createResponse(ctx, service.login(loginDTO)));
+         LoginDTO dto = ctx.bodyAsClass(LoginDTO.class);
+         dto.setIp(ctx.ip());
+         dto.setUserAgent(ctx.userAgent());
+         ctx.json(Commons.createResponse(ctx, service.login(dto)));
       });
 
       app.post(Consts.Paths.Auth.FORGOT_PASSWORD, (ctx) -> {
@@ -35,14 +34,12 @@ public class AuthController implements Controller {
       });
 
       app.post(Consts.Paths.Auth.RESET_PASSWORD, (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.resetPassword(ctx.bodyAsClass(PasswordDTO.class))));
+         PasswordDTO dto = ctx.bodyAsClass(PasswordDTO.class);
+         ctx.json(Commons.createResponse(ctx, service.resetPassword(dto)));
       });
 
       app.post(Consts.Paths.Auth.REFRESH_TOKEN, (ctx) -> {
-         String refreshToken = ctx.body();
-         String accessToken = ctx.header(Consts.Auth.AUTHORIZATION_HEADER);
-
-         ServiceResponse serres = service.refreshTokens(refreshToken, accessToken, ctx.ip(), ctx.userAgent());
+         ServiceResponse serres = service.refreshTokens(ctx.body());
          if (serres.isOK())
             ctx.json(Commons.createResponse(ctx, serres));
          else
@@ -50,9 +47,8 @@ public class AuthController implements Controller {
       });
 
       app.post(Consts.Paths.Auth.LOGOUT, (ctx) -> {
-         String refreshToken = ctx.body();
-         String accessToken = ctx.header(Consts.Auth.AUTHORIZATION_HEADER);
-         ctx.json(Commons.createResponse(ctx, service.logout(refreshToken, accessToken)));
+         String accessToken = ctx.header(Consts.AUTHORIZATION_HEADER);
+         ctx.json(Commons.createResponse(ctx, service.logout(accessToken)));
       });
 
    }

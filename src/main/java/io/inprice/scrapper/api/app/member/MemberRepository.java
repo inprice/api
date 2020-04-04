@@ -9,15 +9,14 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.session.CurrentUser;
-import io.inprice.scrapper.api.dto.MemberChangeRoleDTO;
-import io.inprice.scrapper.api.dto.MemberDTO;
-import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.dto.MemberChangeRoleDTO;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
+import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.session.CurrentUser;
 
 public class MemberRepository {
 
@@ -29,21 +28,6 @@ public class MemberRepository {
    public ServiceResponse findById(long memberId) {
       Member model = db.findSingle(String.format(COMPANY_SELECT_STANDARD_QUERY + " where m.id=%d", memberId),
             this::map);
-      if (model != null) {
-         if (model.getActive()) {
-            return new ServiceResponse(model);
-         } else {
-            return Responses.NotActive.MEMBER;
-         }
-      } else {
-         return Responses.NotFound.MEMBER;
-      }
-   }
-
-   public ServiceResponse findByEmailAndCompanyId(String email, long companyId) {
-      Member model = db
-            .findSingle(String.format(COMPANY_SELECT_STANDARD_QUERY + " where m.email='%s' and m.company_id=%d",
-                  SqlHelper.clear(email), companyId), this::map);
       if (model != null) {
          if (model.getActive()) {
             return new ServiceResponse(model);
@@ -80,65 +64,35 @@ public class MemberRepository {
       return Responses.NotFound.COMPANY;
    }
 
-   public ServiceResponse invite(MemberDTO dto) {
-      ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
-
-      // member is inserted
-      try (Connection con = db.getConnection();
-            PreparedStatement pst = con
-                  .prepareStatement("insert into member (email, role, company_id) values (?, ?, ?) ")) {
-         int i = 0;
-         pst.setString(++i, dto.getEmail());
-         pst.setString(++i, dto.getRole().name());
-         pst.setLong(++i, CurrentUser.getCompanyId());
-
-         if (pst.executeUpdate() > 0) {
-            response = Responses.OK;
-         }
-      } catch (SQLException e) {
-         log.error("Failed to insert a new member. " + dto, e);
-      }
-
-      return response;
+   public Member getById(long memberId) {
+      return db.findSingle(String.format("select * from member where id=%d and company_id=%d", memberId, CurrentUser.getCompanyId()), this::map);
    }
 
-   public ServiceResponse accept(MemberDTO dto) {
-      ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
-
-      // member is inserted
-      try (Connection con = db.getConnection()) {
-
-         Member model = 
-            db.findSingle(
-               con,
-               String.format("select * from member where email=%s and company_id=%d",
-               dto.getEmail(), CurrentUser.getCompanyId()), this::map);
-         
-         if (model != null) {
-            if (model.getActive()) {
-
-               try (PreparedStatement pst = con.prepareStatement("update member set status=? where email=? and company_id=?")) {
-                  int i = 0;
-                  pst.setString(++i, MemberStatus.JOINED.name());
-                  pst.setString(++i, dto.getEmail());
-                  pst.setLong(++i, CurrentUser.getCompanyId());
-         
-                  if (pst.executeUpdate() > 0) {
-                     response = Responses.OK;
-                  }
-               }
-            } else {
-               response = Responses.NotActive.MEMBER;
-            }
+   public ServiceResponse findByEmailAndCompanyId(String email, long companyId) {
+      Member model = db
+            .findSingle(String.format(COMPANY_SELECT_STANDARD_QUERY + " where m.email='%s' and m.company_id=%d",
+                  SqlHelper.clear(email), companyId), this::map);
+      if (model != null) {
+         if (model.getActive()) {
+            return new ServiceResponse(model);
          } else {
-            response = Responses.NotFound.MEMBER;
+            return Responses.NotActive.MEMBER;
          }
-
-      } catch (SQLException e) {
-         log.error("Failed to confirm a new member. " + dto, e);
+      } else {
+         return Responses.NotFound.MEMBER;
       }
+   }
 
-      return response;
+   public ServiceResponse deleteById(Long id) {
+      boolean result = 
+         db.executeQuery(
+            String.format("delete from member where id=%d and company_id=%d", id, CurrentUser.getCompanyId()),
+            "Failed to delete member! id: " + id);
+
+      if (result)
+         return Responses.OK;
+      else
+         return Responses.NotFound.PRODUCT;
    }
 
    public ServiceResponse toggleStatus(Long memberId) {
@@ -168,28 +122,6 @@ public class MemberRepository {
          }
       } catch (SQLException e) {
          log.error("Failed to change role of a member. " + dto, e);
-      }
-
-      return response;
-   }
-
-   public ServiceResponse increaseSendingCount(long memberId) {
-      ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
-
-      // company is inserted
-      try (Connection con = db.getConnection();
-            PreparedStatement pst = con.prepareStatement(
-                  "update member set retry=retry+1 where active = true and id=? and retry<3 and status=? and company_id=?")) {
-         int i = 0;
-         pst.setLong(++i, memberId);
-         pst.setString(++i, MemberStatus.PENDING.name());
-         pst.setLong(++i, CurrentUser.getCompanyId());
-
-         if (pst.executeUpdate() > 0) {
-            response = Responses.OK;
-         }
-      } catch (SQLException e) {
-         log.error("Failed to increase retry count. Member Id: " + memberId, e);
       }
 
       return response;

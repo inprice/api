@@ -49,9 +49,9 @@ public class UserService {
             Member member = found.getData();
             if (MemberStatus.JOINED.equals(member.getStatus())) {
                return userRepository.updateLastCompany(companyId);
-            } else {
-               return new ServiceResponse("Your membership to this company has not been activated yet. Please confirm it first!");
             }
+         } else {
+            return new ServiceResponse("Your membership to this company seems not activated yet. Please confirm it first!");
          }
       }
       return Responses.NotFound.COMPANY;

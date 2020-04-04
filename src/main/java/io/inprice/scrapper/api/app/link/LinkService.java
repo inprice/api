@@ -24,11 +24,11 @@ public class LinkService {
       return linkRepository.getList(productId);
    }
 
-   public ServiceResponse insert(LinkDTO linkDTO) {
-      if (linkDTO != null) {
-         ServiceResponse res = validate(linkDTO);
+   public ServiceResponse insert(LinkDTO dto) {
+      if (dto != null) {
+         ServiceResponse res = validate(dto);
          if (res.isOK()) {
-            res = linkRepository.insert(linkDTO);
+            res = linkRepository.insert(dto);
          }
          return res;
       }
@@ -104,19 +104,19 @@ public class LinkService {
       return res;
    }
 
-   private ServiceResponse validate(LinkDTO linkDTO) {
+   private ServiceResponse validate(LinkDTO dto) {
       String problem = null;
 
-      if (!URLUtils.isAValidURL(linkDTO.getUrl())) {
+      if (!URLUtils.isAValidURL(dto.getUrl())) {
          problem = "Invalid URL!";
-      } else if (linkDTO.getUrl().length() > 2000) {
+      } else if (dto.getUrl().length() > 2000) {
          problem = "The length of URL must be less than 2000 chars!";
       }
 
       if (problem == null) {
-         if (linkDTO.getProductId() == null || linkDTO.getProductId() < 1) {
+         if (dto.getProductId() == null || dto.getProductId() < 1) {
             problem = "Product cannot be null!";
-         } else if (!productRepository.findById(linkDTO.getProductId()).isOK()) {
+         } else if (!productRepository.findById(dto.getProductId()).isOK()) {
             problem = "Unknown product info!";
          }
       }

@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import io.inprice.scrapper.api.app.member.MemberRole;
 import io.inprice.scrapper.api.app.member.MemberStatus;
 import io.inprice.scrapper.api.app.plan.PlanStatus;
+import io.inprice.scrapper.api.app.token.TokenService;
+import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.session.CurrentUser;
@@ -53,7 +55,7 @@ public class CompanyRepository {
     * Three insert operations happen during a new company creation:
     * admin user, company and member
     */
-   public ServiceResponse insert(RegisterDTO dto) {
+   public ServiceResponse insert(RegisterDTO dto, String token) {
       ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
       Connection con = null;
@@ -62,13 +64,15 @@ public class CompanyRepository {
       try {
          con = db.getTransactionalConnection();
 
-         if (dto.getUserId() == null) {
+         boolean isANewUser = (dto.getUserId() == null);
+         if (isANewUser) {
             //last control to prevent duplication
             ServiceResponse found = userRepository.findByEmail(con, dto.getEmail());
             if (found.isOK()) {
                User user = found.getData();
                dto.setUserId(user.getId());
                dto.setUserName(user.getName());
+               isANewUser = false;
             } else {
                final String salt = codeGenerator.generateSalt();
                final String userInsertQuery = "insert into user "
@@ -117,26 +121,31 @@ public class CompanyRepository {
 
             // mamber insertion
             if (companyId != null) {
-               try (PreparedStatement pst = con.prepareStatement(
-                     "insert into member (email, company_id, role, status) values (?, ?, ?, ?) ")) {
-                  int i = 0;
-                  pst.setString(++i, dto.getEmail());
-                  pst.setLong(++i, companyId);
-                  pst.setString(++i, MemberRole.ADMIN.name());
-                  pst.setString(++i, MemberStatus.JOINED.name());
+               if (isANewUser) {
+                  try (PreparedStatement pst = con.prepareStatement(
+                        "insert into member (email, company_id, role, status) values (?, ?, ?, ?) ")) {
+                     int i = 0;
+                     pst.setString(++i, dto.getEmail());
+                     pst.setLong(++i, companyId);
+                     pst.setString(++i, MemberRole.ADMIN.name());
+                     pst.setString(++i, MemberStatus.JOINED.name());
 
-                  if (pst.executeUpdate() > 0) {
-                     try (PreparedStatement updateCompanyPst = con.prepareStatement("update user set last_company_id=? where id=?")) {
-                        int j = 0;
-                        updateCompanyPst.setLong(++j, companyId);
-                        updateCompanyPst.setLong(++j, dto.getUserId());
+                     if (pst.executeUpdate() > 0) {
+                        try (PreparedStatement updateCompanyPst = con.prepareStatement("update user set last_company_id=? where id=?")) {
+                           int j = 0;
+                           updateCompanyPst.setLong(++j, companyId);
+                           updateCompanyPst.setLong(++j, dto.getUserId());
 
-                        if (updateCompanyPst.executeUpdate() > 0) {
-                           response = Responses.OK;
-                           log.info("A new company registered -> " + dto.toString());
+                           if (updateCompanyPst.executeUpdate() > 0) {
+                              response = Responses.OK;
+                              log.info("An new user just registered a new company -> " + dto.toString());
+                           }
                         }
                      }
                   }
+               } else {
+                  response = Responses.OK;
+                  log.info("An old user just registered a new company -> " + dto.toString());
                }
             }
          } else {
@@ -144,6 +153,7 @@ public class CompanyRepository {
          }
 
          if (Responses.OK.equals(response)) {
+            TokenService.remove(TokenType.REGISTER_REQUEST, token);
             db.commit(con);
          } else {
             db.rollback(con);
