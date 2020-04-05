@@ -99,7 +99,7 @@ public class ProductImportRepository {
          model.setImportType(ImportType.valueOf(rs.getString("import_type")));
          model.setData(rs.getString("data"));
          model.setStatus(LinkStatus.valueOf(rs.getString("status")));
-         model.setLastUpdate(rs.getDate("last_update"));
+         model.setLastUpdate(rs.getTimestamp("last_update"));
          model.setDescription(rs.getString("description"));
          model.setLinkId(RepositoryHelper.nullLongHandler(rs, "link_id"));
          model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));

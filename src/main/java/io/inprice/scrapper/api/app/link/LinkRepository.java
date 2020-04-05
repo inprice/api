@@ -188,8 +188,8 @@ public class LinkRepository {
          model.setPrice(rs.getBigDecimal("price"));
          model.setPreStatus(LinkStatus.valueOf(rs.getString("pre_status")));
          model.setStatus(LinkStatus.valueOf(rs.getString("status")));
-         model.setLastCheck(rs.getDate("last_check"));
-         model.setLastUpdate(rs.getDate("last_update"));
+         model.setLastCheck(rs.getTimestamp("last_check"));
+         model.setLastUpdate(rs.getTimestamp("last_update"));
          model.setRetry(rs.getInt("retry"));
          model.setHttpStatus(rs.getInt("http_status"));
          model.setWebsiteClassName(rs.getString("website_class_name"));

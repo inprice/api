@@ -34,8 +34,6 @@
         "MQ_ROUTING_DELETED_LINKS": "deleted-links",
         "REDIS_HOST": "localhost",
         "REDIS_PORT": 6379,
-        "TTL_ACCESS_TOKENS": "15m",
-        "TTL_REFRESH_TOKENS": "1h",
         "OTHER_SENDER_EMAIL": "support@inprice.io",
         "PREFIX_FOR_SEARCH_EBAY": "https://www.ebay.com/itm/",
         "PREFIX_FOR_SEARCH_AMAZON": "https://www.amazon.com/dp/",

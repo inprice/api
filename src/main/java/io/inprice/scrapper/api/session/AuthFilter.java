@@ -57,26 +57,27 @@ public class AuthFilter implements Handler {
       String URI = ctx.req.getRequestURI().toLowerCase();
       if (URI.charAt(URI.length()-1) == '/') URI = URI.substring(0, URI.length()-1);
 
-      if (isAuthenticationNeeded(URI)) {
-         String accessToken = ctx.header(Consts.AUTHORIZATION_HEADER);
-         if (accessToken == null) {
-            ctx.status(HttpStatus.UNAUTHORIZED_401);
+      if (isRefreshTokenRequest(URI)) {
+         final String refreshToken = ctx.body();
+         if (TokenService.isTokenValid(refreshToken)) {
+            AuthUser authUser = TokenService.get(TokenType.REFRESH, refreshToken);
+            if (authUser == null) {
+               ctx.status(HttpStatus.UNAUTHORIZED_401);
+            }
          } else {
-            if (! TokenService.isTokenValid(accessToken)) {
+            ctx.status(HttpStatus.UNAUTHORIZED_401);
+         }
+      } else {
+
+         if (isAuthenticationNeeded(URI)) {
+            String accessToken = ctx.header(Consts.AUTHORIZATION_HEADER);
+            if (accessToken == null) {
                ctx.status(HttpStatus.UNAUTHORIZED_401);
             } else {
-
-               if (isRefreshTokenRequest(URI)) {
-                  final String refreshToken = ctx.body();
-                  if (! TokenService.isTokenValid(refreshToken)) {
-                     ctx.status(HttpStatus.UNAUTHORIZED_401);
-                  } else {
-                     AuthUser authUser = TokenService.get(TokenType.REFRESH, refreshToken);
-                     if (authUser == null) {
-                        ctx.status(HttpStatus.UNAUTHORIZED_401);
-                     }
-                  }
+               if (! TokenService.isTokenValid(accessToken)) {
+                  ctx.status(HttpStatus.UNAUTHORIZED_401);
                } else {
+
                   AuthUser authUser = TokenService.get(TokenType.ACCESS, accessToken);
                   if (authUser == null) {
                      ctx.status(HttpStatus.UNAUTHORIZED_401);

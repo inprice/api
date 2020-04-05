@@ -85,7 +85,7 @@ public class DashboardRepository {
 
          try (ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {
-               Date lastCollectionTime = rs.getDate(1);
+               Date lastCollectionTime = rs.getTimestamp(1);
 
                if (lastCollectionTime != null) {
                   parent.addProperty("lastCollectingTime", lastCollectionTime.toString());
@@ -97,7 +97,7 @@ public class DashboardRepository {
                }
 
                parent.addProperty("name", rs.getString(4));
-               parent.addProperty("dueDate", rs.getDate(5).toString());
+               parent.addProperty("dueDate", rs.getTimestamp(5).toString());
             }
          }
 
@@ -153,7 +153,7 @@ public class DashboardRepository {
                link.addProperty("seller", rs.getString(index++));
                link.addProperty("price", rs.getBigDecimal(index++));
                link.addProperty("status", rs.getString(index++));
-               link.addProperty("lastUpdate", rs.getDate(index++).toString());
+               link.addProperty("lastUpdate", rs.getTimestamp(index++).toString());
                link.addProperty("website", rs.getString(index));
                mruTenLinks.add(rs.getString(1), link);
             }
@@ -198,7 +198,7 @@ public class DashboardRepository {
                prod.addProperty("name", rs.getString(index++));
                prod.addProperty("price", rs.getBigDecimal(index++));
                prod.addProperty("position", rs.getInt(index++));
-               prod.addProperty("lastUpdate", rs.getDate(index++).toString());
+               prod.addProperty("lastUpdate", rs.getTimestamp(index++).toString());
                prod.addProperty("minSeller", rs.getString(index++));
                prod.addProperty("maxSeller", rs.getString(index++));
                prod.addProperty("minPrice", rs.getBigDecimal(index++));

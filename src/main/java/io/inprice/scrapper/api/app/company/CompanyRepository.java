@@ -233,9 +233,9 @@ public class CompanyRepository {
          model.setAdminId(RepositoryHelper.nullLongHandler(rs, "admin_id"));
          model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
          model.setPlanStatus(PlanStatus.valueOf(rs.getString("plan_status")));
-         model.setDueDate(rs.getDate("due_date"));
+         model.setDueDate(rs.getTimestamp("due_date"));
          model.setRetry(rs.getInt("retry"));
-         model.setLastCollectingTime(rs.getDate("last_collecting_time"));
+         model.setLastCollectingTime(rs.getTimestamp("last_collecting_time"));
          model.setLastCollectingStatus(rs.getBoolean("last_collecting_status"));
          model.setCreatedAt(rs.getTimestamp("created_at"));
 
