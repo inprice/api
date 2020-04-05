@@ -1,8 +1,12 @@
 package io.inprice.scrapper.api.dto;
 
-public class EmailDTO {
+import java.io.Serializable;
 
-    private String email;
+public class EmailDTO implements Serializable {
+
+   private static final long serialVersionUID = 5884990803032543745L;
+
+   private String email;
 
     public String getEmail() {
         return email;

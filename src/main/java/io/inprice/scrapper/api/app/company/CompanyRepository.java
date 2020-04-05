@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.helpers.CodeGenerator;
 import io.inprice.scrapper.api.helpers.RepositoryHelper;
+import io.inprice.scrapper.api.helpers.SqlHelper;
 import jodd.util.BCrypt;
 
 public class CompanyRepository {
@@ -51,6 +53,16 @@ public class CompanyRepository {
          return Responses.NotFound.COMPANY;
    }
 
+   public ServiceResponse findByCompanyNameAndAdminId(String name, Long adminId) {
+      Company model = 
+         db.findSingle(
+            String.format("select * from company where name='%s' and admin_id=%d", SqlHelper.clear(name), adminId), CompanyRepository::map);
+      if (model != null)
+         return new ServiceResponse(model);
+      else
+         return Responses.NotFound.COMPANY;
+   }
+
    /**
     * Three insert operations happen during a new company creation:
     * admin user, company and member
@@ -63,21 +75,19 @@ public class CompanyRepository {
       // admin user insertion
       try {
          con = db.getTransactionalConnection();
+         User user = null;
 
-         boolean isANewUser = (dto.getUserId() == null);
-         if (isANewUser) {
-            //last control to prevent duplication
+         if (dto.getUserId() == null) {
+            // last duplication control
             ServiceResponse found = userRepository.findByEmail(con, dto.getEmail());
             if (found.isOK()) {
-               User user = found.getData();
+               user = found.getData();
                dto.setUserId(user.getId());
                dto.setUserName(user.getName());
-               isANewUser = false;
-            } else {
+            } else {           
+
                final String salt = codeGenerator.generateSalt();
-               final String userInsertQuery = "insert into user "
-                     + "(email, name, password_salt, password_hash) "
-                     + "values (?, ?, ?, ?) ";
+               final String userInsertQuery = "insert into user (email, name, password_salt, password_hash) values (?, ?, ?, ?) ";
 
                try (PreparedStatement pst = con.prepareStatement(userInsertQuery, Statement.RETURN_GENERATED_KEYS)) {
                   int i = 0;
@@ -98,30 +108,34 @@ public class CompanyRepository {
          }
 
          if (dto.getUserId() != null) {
-            Long companyId = null;
-            //company insertion
-            try (PreparedStatement pst = con.prepareStatement(
-                  "insert into company (admin_id, name, sector, website, country) values (?, ?, ?, ?, ?) ",
-                  Statement.RETURN_GENERATED_KEYS)) {
-               int i = 0;
-               pst.setLong(++i, dto.getUserId());
-               pst.setString(++i, dto.getCompanyName());
-               pst.setString(++i, dto.getSector());
-               pst.setString(++i, dto.getWebsite());
-               pst.setString(++i, dto.getCountry());
 
-               if (pst.executeUpdate() > 0) {
-                  try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
-                     if (generatedKeys.next()) {
-                        companyId = generatedKeys.getLong(1);
+            ServiceResponse found = findByCompanyNameAndAdminId(dto.getCompanyName().trim(), dto.getUserId());
+            if (! found.isOK()) {
+            
+               Long companyId = null;
+
+               //company insertion
+               try (PreparedStatement pst = con.prepareStatement(
+                     "insert into company (admin_id, name, sector, website, country) values (?, ?, ?, ?, ?) ",
+                     Statement.RETURN_GENERATED_KEYS)) {
+                  int i = 0;
+                  pst.setLong(++i, dto.getUserId());
+                  pst.setString(++i, dto.getCompanyName().trim());
+                  pst.setString(++i, dto.getSector());
+                  pst.setString(++i, dto.getWebsite());
+                  pst.setString(++i, dto.getCountry());
+
+                  if (pst.executeUpdate() > 0) {
+                     try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                           companyId = generatedKeys.getLong(1);
+                        }
                      }
                   }
                }
-            }
 
-            // mamber insertion
-            if (companyId != null) {
-               if (isANewUser) {
+               // mamber insertion
+               if (companyId != null) {
                   try (PreparedStatement pst = con.prepareStatement(
                         "insert into member (email, company_id, role, status) values (?, ?, ?, ?) ")) {
                      int i = 0;
@@ -143,20 +157,32 @@ public class CompanyRepository {
                         }
                      }
                   }
-               } else {
-                  response = Responses.OK;
-                  log.info("An old user just registered a new company -> " + dto.toString());
                }
+
+               if (Responses.OK.equals(response)) {
+                  TokenService.remove(TokenType.REGISTER_REQUEST, token);
+                  //returning user for auto login
+                  if (user == null) {
+                     user = new User();
+                     user.setId(dto.getUserId());
+                     user.setEmail(dto.getEmail());
+                     user.setName(dto.getUserName());
+                     user.setRole(MemberRole.ADMIN);
+                     user.setLastCompanyId(companyId);
+                     user.setCreatedAt(new Date());
+                  }
+                  response = new ServiceResponse(user);
+
+                  db.commit(con);
+               } else {
+                  db.rollback(con);
+               }
+
+            } else {
+               response = Responses.Already.Defined.COMPANY;
             }
          } else {
             response = Responses.NotFound.USER;
-         }
-
-         if (Responses.OK.equals(response)) {
-            TokenService.remove(TokenType.REGISTER_REQUEST, token);
-            db.commit(con);
-         } else {
-            db.rollback(con);
          }
 
       } catch (SQLException e) {

@@ -84,7 +84,7 @@ public class InvitationRepository {
          Member member = 
             db.findSingle(
                con,
-               String.format("select * from member where email=%s and company_id=%d",
+               String.format("select * from member where email='%s' and company_id=%d",
                invitationDTO.getEmail(), invitationDTO.getCompanyId()), this::map);
 
          res = checkMembership(member);
@@ -108,6 +108,12 @@ public class InvitationRepository {
                      res = userRepository.insert(con, dto);
                   } else {
                      res = Responses.OK;
+                  }
+
+                  if (Responses.OK.equals(res)) {
+                     db.commit(con);
+                  } else {
+                     db.rollback(con);
                   }
                }
             }
@@ -135,7 +141,7 @@ public class InvitationRepository {
          Member member = 
             db.findSingle(
                con,
-               String.format("select * from member where id=%d and email=%s", memberId, CurrentUser.getEmail()), this::map);
+               String.format("select * from member where id=%d and email='%s'", memberId, CurrentUser.getEmail()), this::map);
 
          res = checkMembership(member);
          if (res.isOK()) {

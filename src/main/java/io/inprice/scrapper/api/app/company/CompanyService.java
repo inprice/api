@@ -7,11 +7,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.scrapper.api.app.auth.AuthService;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
-import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.dto.NameAndEmailValidator;
@@ -30,13 +30,14 @@ public class CompanyService {
 
    private static final Logger log = LoggerFactory.getLogger(CompanyService.class);
 
+   private final AuthService authService = Beans.getSingleton(AuthService.class);
    private final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
    private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
 
    private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
    private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
 
-   public ServiceResponse registerRequest(RegisterDTO dto, String ip) {
+   public ServiceResponse requestRegistration(RegisterDTO dto, String ip) {
       ServiceResponse res = RedisClient.isIpRateLimited(RateLimiterType.REGISTER, ip);
       if (! res.isOK()) return res;
 
@@ -48,14 +49,19 @@ public class CompanyService {
             User user = found.getData();
             dto.setUserId(user.getId());
             dto.setUserName(user.getName());
+
+            // checks if the user has already defined the same company
+            found = companyRepository.findByCompanyNameAndAdminId(dto.getCompanyName().trim(), dto.getUserId());
+            if (found.isOK()) {
+               return Responses.Already.Defined.COMPANY;
+            }
          }
 
          try {
-            Map<String, Object> dataMap = new HashMap<>(4);
+            Map<String, Object> dataMap = new HashMap<>(3);
             dataMap.put("user", dto.getUserName());
             dataMap.put("company", dto.getCompanyName());
             dataMap.put("token", TokenService.add(TokenType.REGISTER_REQUEST, dto));
-            dataMap.put("url", Props.getApiUrl() + Consts.Paths.Auth.REGISTER);
 
             final String message = renderer.renderRegisterActivationLink(dataMap);
             emailSender.send(Props.getEmail_Sender(), "About " + dto.getCompanyName() + " registration on inprice.io", dto.getEmail(), message);
@@ -69,10 +75,17 @@ public class CompanyService {
       return res;
    }
 
-   public ServiceResponse register(String token, String ip) {
+   public ServiceResponse completeRegistration(String token) {
       RegisterDTO dto = TokenService.get(TokenType.REGISTER_REQUEST, token);
       if (dto != null) {
-         return companyRepository.insert(dto, token);
+         ServiceResponse res = companyRepository.insert(dto, token);
+         if (res.isOK()) {
+            User user = res.getData();
+            return authService.createTokens(user);
+         }
+         return res;
+      } else if (token != null) {
+         TokenService.get(TokenType.REGISTER_REQUEST, token);
       }
       return Responses.Invalid.TOKEN;
    }

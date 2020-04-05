@@ -25,9 +25,9 @@ public class AuthFilter implements Handler {
    private final Set<String> sensitiveMethodsSet;
 
    public AuthFilter() {
-      allowedURIs = new HashSet<>(5);
-      allowedURIs.add(Consts.Paths.Auth.REGISTER_REQUEST);
-      allowedURIs.add(Consts.Paths.Auth.REGISTER);
+      allowedURIs = new HashSet<>(7);
+      allowedURIs.add(Consts.Paths.Auth.REQUEST_REGISTRATION);
+      allowedURIs.add(Consts.Paths.Auth.COMPLETE_REGISTRATION);
       allowedURIs.add(Consts.Paths.Invitation.ACCEPT_NEW);
 
       allowedURIs.add(Consts.Paths.Auth.LOGIN);

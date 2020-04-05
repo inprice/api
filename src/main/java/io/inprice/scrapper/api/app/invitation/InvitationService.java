@@ -81,7 +81,7 @@ public class InvitationService {
                TokenService.remove(TokenType.INVITATION, acceptDTO.getToken());
             }
          } else {
-            return Responses.Invalid.DATA;
+            return Responses.Invalid.TOKEN;
          }
       }
       return res;
@@ -124,10 +124,14 @@ public class InvitationService {
             }
 
             if (message != null) {
-               emailSender.send(Props.getEmail_Sender(),
+               emailSender.send(
+                  Props.getEmail_Sender(),
                      "About your invitation for " + company.getName() + " at inprice.io", dto.getEmail(), message);
+
+               res = Responses.OK;
                log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getCompanyId());
             } else {
+               res = Responses.ServerProblem.FAILED;
                log.error("Template error for " + templateName + " --> " + dto);
             }
          } else {

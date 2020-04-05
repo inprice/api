@@ -7,14 +7,15 @@ public class Consts {
    public static class Paths {
 
       public static class Auth {
-         public static final String REGISTER_REQUEST = "/register-request";
-         public static final String REGISTER = "/register";
-
          public static final String LOGIN = "/login";
-         public static final String REFRESH_TOKEN = "/refresh-token";
-         public static final String RESET_PASSWORD = "/reset-password";
-         public static final String FORGOT_PASSWORD = "/forgot-password";
          public static final String LOGOUT = "/logout";
+
+         public static final String REQUEST_REGISTRATION = "/request-registration";
+         public static final String COMPLETE_REGISTRATION = "/complete-registration";
+
+         public static final String FORGOT_PASSWORD = "/forgot-password";
+         public static final String RESET_PASSWORD = "/reset-password";
+         public static final String REFRESH_TOKEN = "/refresh-token";
       }
 
       public static final String ADMIN_BASE = "/admin";

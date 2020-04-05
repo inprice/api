@@ -40,7 +40,7 @@ public class TokenService {
    }
 
    public static void addSessionTokens(String email, SessionTokens tokens) {
-      sessionTokensMap.put(email, tokens, 10, TimeUnit.HOURS);
+      sessionTokensMap.put(email, tokens, TokenType.REFRESH.ttl(), TimeUnit.MILLISECONDS);
    }
 
    public static SessionTokens getSessionTokens(String email) {

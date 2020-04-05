@@ -53,8 +53,6 @@ public class AuthService {
                String hash = BCrypt.hashpw(dto.getPassword(), salt);
                if (hash.equals(user.getPasswordHash())) {
                   if (checkCompany(user)) {
-                     user.setPasswordSalt(null);
-                     user.setPasswordHash(null);
                      return createTokens(user);
                   } else {
                      return Responses.PermissionProblem.NO_COMPANY;
@@ -138,7 +136,7 @@ public class AuthService {
                ServiceResponse res = userRepository.updatePassword(user.getId(), dto.getPassword());
                if (res.isOK()) {
                   TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
-                  return Responses.OK;
+                  return createTokens(user);
                }
             } else {
                TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
@@ -155,22 +153,23 @@ public class AuthService {
       AuthUser found = TokenService.get(TokenType.REFRESH, refreshToken);
       if (found != null) {
          return createTokens(found);
+      } else if (refreshToken != null) {
+         TokenService.remove(TokenType.REFRESH, refreshToken);
+         return Responses._401;
       }
       return Responses.Invalid.TOKEN;
    }
 
-   public ServiceResponse logout(String accessToken) {
-      if (TokenService.isTokenValid(accessToken)) {
-         AuthUser user = TokenService.get(TokenType.ACCESS, accessToken);
-         if (user != null) {
-            closeSession(user.getEmail());
-            return Responses.OK;
-         }
+   public ServiceResponse logout(String email) {
+      String problem = EmailValidator.verify(email);
+      if (problem == null) {
+         closeSession(email);
+         return Responses.OK;
       }
       return Responses.Already.LOGGED_OUT;
    }
 
-   ServiceResponse createTokens(User user) {
+   public ServiceResponse createTokens(User user) {
       AuthUser authUser = new AuthUser();
       authUser.setId(user.getId());
       authUser.setEmail(user.getEmail());
@@ -198,6 +197,9 @@ public class AuthService {
       data.put(TokenType.ACCESS.name(), tokens.getAccess());
       data.put(TokenType.REFRESH.name(), tokens.getRefresh());
       data.put("user", user);
+
+      log.info(user.getEmail() + " has just logged in.");
+
       return new ServiceResponse(data);
    }
 
@@ -206,6 +208,7 @@ public class AuthService {
       if (tokens != null) {
          TokenService.remove(TokenType.ACCESS, tokens.getAccess());
          TokenService.remove(TokenType.REFRESH, tokens.getRefresh());
+         log.info(email + " has just logged out.");
       }
       TokenService.removeSessionTokens(email);
    }
