@@ -2,8 +2,8 @@ package io.inprice.scrapper.api.app.token;
 
 public enum TokenType {
 
-   ACCESS(10 * TokenType.ONE_SECOND),
-   REFRESH(10 * TokenType.ONE_MINUTE),
+   ACCESS(20 * TokenType.ONE_MINUTE),
+   REFRESH(TokenType.ONE_HOUR),
 
    FORGOT_PASSWORD(3 * TokenType.ONE_HOUR),
    REGISTER_REQUEST(3 * TokenType.ONE_HOUR),

@@ -1,6 +1,10 @@
 package io.inprice.scrapper.api;
 
+import java.text.SimpleDateFormat;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,7 +79,14 @@ public class Application {
             config.enforceSsl = true;
          }
 
-         JavalinJackson.getObjectMapper().setSerializationInclusion(Include.NON_NULL);
+         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+         ObjectMapper om = 
+            new ObjectMapper()
+               .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+               .setSerializationInclusion(Include.NON_NULL)
+               .setDateFormat(sdf);
+         JavalinJackson.configure(om);
       }).start(Props.getAPP_Port());
 
       app.before(new AuthFilter());

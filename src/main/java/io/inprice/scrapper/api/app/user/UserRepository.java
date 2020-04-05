@@ -186,7 +186,7 @@ public class UserRepository {
          model.setLastCompanyId(RepositoryHelper.nullLongHandler(rs, "last_company_id"));
          model.setPasswordHash(rs.getString("password_hash"));
          model.setPasswordSalt(rs.getString("password_salt"));
-         model.setCreatedAt(rs.getDate("created_at"));
+         model.setCreatedAt(rs.getTimestamp("created_at"));
          return model;
       } catch (SQLException e) {
          log.error("Failed to set user's properties", e);

@@ -138,7 +138,7 @@ public class MemberRepository {
          model.setRole(MemberRole.valueOf(rs.getString("role")));
          model.setStatus(MemberStatus.valueOf(rs.getString("status")));
          model.setRetry(rs.getInt("retry"));
-         model.setCreatedAt(rs.getDate("created_at"));
+         model.setCreatedAt(rs.getTimestamp("created_at"));
 
          return model;
       } catch (SQLException e) {

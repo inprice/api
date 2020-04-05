@@ -194,8 +194,8 @@ public class AuthService {
 
       // establishes returning object
       Map<String, Serializable> data = new HashMap<>(3);
-      data.put(TokenType.ACCESS.name(), tokens.getAccess());
-      data.put(TokenType.REFRESH.name(), tokens.getRefresh());
+      data.put(TokenType.ACCESS.name().toLowerCase(), tokens.getAccess());
+      data.put(TokenType.REFRESH.name().toLowerCase(), tokens.getRefresh());
       data.put("user", user);
 
       log.info(user.getEmail() + " has just logged in.");

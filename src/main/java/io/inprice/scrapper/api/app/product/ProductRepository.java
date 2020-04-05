@@ -10,6 +10,8 @@ import java.sql.Types;
 import java.util.Date;
 import java.util.List;
 
+import com.google.common.collect.Maps;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,7 @@ public class ProductRepository {
 
       try {
          List<Product> rows = db.findMultiple(searchQuery, this::map);
-         return new ServiceResponse(rows);
+         return new ServiceResponse(Maps.immutableEntry("rows", rows));
       } catch (Exception e) {
          log.error("Failed to search products. ", e);
          return Responses.ServerProblem.EXCEPTION;
@@ -486,8 +488,8 @@ public class ProductRepository {
          model.setMaxSeller(rs.getString("max_seller"));
          model.setMaxPrice(rs.getBigDecimal("max_price"));
          model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
-         model.setUpdatedAt(rs.getDate("updated_at"));
-         model.setCreatedAt(rs.getDate("created_at"));
+         model.setUpdatedAt(rs.getTimestamp("updated_at"));
+         model.setCreatedAt(rs.getTimestamp("created_at"));
 
          return model;
       } catch (SQLException e) {

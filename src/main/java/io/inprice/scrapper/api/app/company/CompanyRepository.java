@@ -237,7 +237,7 @@ public class CompanyRepository {
          model.setRetry(rs.getInt("retry"));
          model.setLastCollectingTime(rs.getDate("last_collecting_time"));
          model.setLastCollectingStatus(rs.getBoolean("last_collecting_status"));
-         model.setCreatedAt(rs.getDate("created_at"));
+         model.setCreatedAt(rs.getTimestamp("created_at"));
 
          return model;
       } catch (SQLException e) {
