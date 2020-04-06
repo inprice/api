@@ -36,7 +36,8 @@ public class AuthController implements Controller {
       });
 
       app.post(Consts.Paths.Auth.REFRESH_TOKEN, (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.refreshTokens(ctx.body())));
+         String refreshToken = ctx.header(Consts.AUTHORIZATION_HEADER);
+         ctx.json(Commons.createResponse(ctx, service.refreshTokens(refreshToken)));
       });
 
       app.post(Consts.Paths.Auth.LOGOUT, (ctx) -> {

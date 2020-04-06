@@ -58,7 +58,7 @@ public class AuthFilter implements Handler {
       if (URI.charAt(URI.length()-1) == '/') URI = URI.substring(0, URI.length()-1);
 
       if (isRefreshTokenRequest(URI)) {
-         final String refreshToken = ctx.body();
+         String refreshToken = ctx.header(Consts.AUTHORIZATION_HEADER);
          if (TokenService.isTokenValid(refreshToken)) {
             AuthUser authUser = TokenService.get(TokenType.REFRESH, refreshToken);
             if (authUser == null) {
