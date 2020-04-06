@@ -58,19 +58,12 @@ public class UserService {
    }
 
    public ServiceResponse updatePassword(PasswordDTO dto) {
-      if (dto != null) {
-         if (dto.getId() == null || dto.getId() < 1) {
-            return Responses.NotFound.USER;
-         }
-
-         String problem = PasswordValidator.verify(dto, true, true);
-         if (problem == null) {
-            return userRepository.updatePassword(dto.getPassword());
-         } else {
-            return new ServiceResponse(problem);
-         }
+      String problem = PasswordValidator.verify(dto, true, true);
+      if (problem == null) {
+         return userRepository.updatePassword(dto.getPassword());
+      } else {
+         return new ServiceResponse(problem);
       }
-      return Responses.Invalid.PASSWORD;
    }
 
    public ServiceResponse getCompanyList() {

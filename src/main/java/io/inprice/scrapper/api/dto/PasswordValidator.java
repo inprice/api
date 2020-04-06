@@ -26,12 +26,14 @@ public class PasswordValidator {
             return "Old password cannot be null!";
          } else {
             ServiceResponse found = userRepository.findById(dto.getId(), true);
-            User user = found.getData();
             if (found.isOK()) {
+               User user = found.getData();
                final String hash = BCrypt.hashpw(dto.getOldPassword(), user.getPasswordSalt());
                if (! hash.equals(user.getPasswordHash())) {
                   return "Old password is incorrect!";
                }
+            } else {
+               return found.getReason();
             }
          }
       }
