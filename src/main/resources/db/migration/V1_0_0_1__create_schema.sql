@@ -66,6 +66,21 @@ create index ix1 on company (name);
 alter table company add foreign key (admin_id) references user (id);
 alter table company add foreign key (plan_id) references plan (id);
 
+create table user_session (
+  token_hash                varchar(32) not null,
+  user_id                   bigint not null,
+  company_id                bigint not null,
+  ip                        varchar(255) not null,
+  os                        varchar(50) not null,
+  browser                   varchar(50),
+  device                    varchar(500),
+  updated_at                timestamp not null default current_timestamp,
+  primary key (token_hash)
+) engine=innodb;
+alter table user_session add foreign key (user_id) references user (id);
+alter table user_session add foreign key (company_id) references company (id);
+create index ix1 on user_session (updated_at);
+
 create table member (
   id                        bigint auto_increment not null,
   active                    boolean default true,

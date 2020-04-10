@@ -21,6 +21,7 @@ import io.inprice.scrapper.api.consts.Global;
 import io.inprice.scrapper.api.session.AuthFilter;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.javalin.Javalin;
+import io.javalin.core.util.Header;
 import io.javalin.core.util.RouteOverviewPlugin;
 import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.openapi.annotations.ContentType;
@@ -88,6 +89,12 @@ public class Application {
                .setDateFormat(sdf);
          JavalinJackson.configure(om);
       }).start(Props.getAPP_Port());
+
+      app.before(ctx -> {
+         if (ctx.method() == "OPTIONS") {
+            ctx.header(Header.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
+         }
+      });
 
       app.before(new AuthFilter());
       app.after(ctx -> CurrentUser.cleanup());

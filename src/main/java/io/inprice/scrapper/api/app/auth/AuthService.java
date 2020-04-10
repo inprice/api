@@ -15,6 +15,7 @@ import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.dto.EmailDTO;
 import io.inprice.scrapper.api.dto.EmailValidator;
 import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.dto.LoginDTOValidator;
@@ -53,7 +54,8 @@ public class AuthService {
                String hash = BCrypt.hashpw(dto.getPassword(), salt);
                if (hash.equals(user.getPasswordHash())) {
                   if (checkCompany(user)) {
-                     return createTokens(user);
+                     terminateSession(user.getEmail());
+                     return createTokens(user, dto.getIp(), dto.getUserAgent());
                   } else {
                      return Responses.PermissionProblem.NO_COMPANY;
                   }
@@ -122,7 +124,7 @@ public class AuthService {
       return Responses.Invalid.EMAIL;
    }
 
-   public ServiceResponse resetPassword(PasswordDTO dto) {
+   public ServiceResponse resetPassword(PasswordDTO dto, String ip, String userAgent) {
       if (dto != null) {
 
          String problem = PasswordValidator.verify(dto, true, false);
@@ -136,7 +138,8 @@ public class AuthService {
                ServiceResponse res = userRepository.updatePassword(user.getId(), dto.getPassword());
                if (res.isOK()) {
                   TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
-                  return createTokens(user);
+                  terminateSession(user.getEmail());
+                  return createTokens(user, ip, userAgent);
                }
             } else {
                TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
@@ -149,10 +152,10 @@ public class AuthService {
       return Responses.Invalid.DATA;
    }
 
-   public ServiceResponse refreshTokens(String refreshToken) {
+   public ServiceResponse refreshTokens(String refreshToken, String ip, String userAgent) {
       AuthUser found = TokenService.get(TokenType.REFRESH, refreshToken);
       if (found != null) {
-         return createTokens(found);
+         return createTokens(found, ip, userAgent);
       } else if (refreshToken != null) {
          TokenService.remove(TokenType.REFRESH, refreshToken);
          return Responses._401;
@@ -160,16 +163,23 @@ public class AuthService {
       return Responses.Invalid.TOKEN;
    }
 
-   public ServiceResponse logout(String email) {
-      String problem = EmailValidator.verify(email);
+   public ServiceResponse logout(EmailDTO dto, String ip, String userAgent) {
+      String problem = EmailValidator.verify(dto.getEmail());
       if (problem == null) {
-         closeSession(email);
-         return Responses.OK;
+         SessionTokens tokens = TokenService.getSessionTokens(dto.getEmail());
+         if (tokens != null) {
+            if (dto.getCompanyId() != null && tokens.getCompanyId().equals(dto.getCompanyId())
+            && tokens.getIp().equals(ip) && tokens.getUserAgent().equals(userAgent)) {
+               terminateSession(dto.getEmail());
+               log.info("{} has just logged out.", dto.getEmail());
+               return Responses.OK;
+            }
+         }
       }
       return Responses.Already.LOGGED_OUT;
    }
 
-   public ServiceResponse createTokens(User user) {
+   public ServiceResponse createTokens(User user, String ip, String userAgent) {
       AuthUser authUser = new AuthUser();
       authUser.setId(user.getId());
       authUser.setEmail(user.getEmail());
@@ -177,19 +187,16 @@ public class AuthService {
       authUser.setRole(user.getRole());
       authUser.setCompanyId(user.getLastCompanyId());
 
-      return createTokens(authUser);
+      return createTokens(authUser, ip, userAgent);
    }
 
-   ServiceResponse createTokens(AuthUser user) {
-      // old ones must be remevoed first, if any
-      closeSession(user.getEmail());
-
+   ServiceResponse createTokens(AuthUser user, String ip, String userAgent) {
       // creates new tokens
       String access = TokenService.add(TokenType.ACCESS, user);
       String refresh = TokenService.add(TokenType.REFRESH, user);
 
       // creates session info
-      SessionTokens tokens = new SessionTokens(access, refresh);
+      SessionTokens tokens = new SessionTokens(access, refresh, ip, userAgent, user.getCompanyId());
       TokenService.addSessionTokens(user.getEmail(), tokens);
 
       // establishes returning object
@@ -203,14 +210,13 @@ public class AuthService {
       return new ServiceResponse(data);
    }
 
-   public void closeSession(String email) {
+   public void terminateSession(String email) {
       SessionTokens tokens = TokenService.getSessionTokens(email);
       if (tokens != null) {
          TokenService.remove(TokenType.ACCESS, tokens.getAccess());
          TokenService.remove(TokenType.REFRESH, tokens.getRefresh());
-         log.info(email + " has just logged out.");
+         TokenService.removeSessionTokens(email);
       }
-      TokenService.removeSessionTokens(email);
    }
 
 }

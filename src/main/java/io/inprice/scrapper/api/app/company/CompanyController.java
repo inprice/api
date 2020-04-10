@@ -23,7 +23,7 @@ public class CompanyController implements Controller {
       });
 
       app.post(Consts.Paths.Auth.COMPLETE_REGISTRATION, (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.completeRegistration(ctx.queryParam("token"))));
+         ctx.json(Commons.createResponse(ctx, service.completeRegistration(ctx.queryParam("token"), ctx.ip(), ctx.userAgent())));
       });
 
       app.put(Consts.Paths.Company.BASE, (ctx) -> {

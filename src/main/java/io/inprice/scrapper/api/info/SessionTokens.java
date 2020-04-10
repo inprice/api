@@ -8,13 +8,19 @@ public class SessionTokens implements Serializable {
 
    private String access;
    private String refresh;
-
-   public SessionTokens(String access, String refresh) {
-      this.access = access;
-      this.refresh = refresh;
-   }
+   private String ip;
+   private String userAgent;
+   private Long companyId;
 
    public SessionTokens() {
+   }
+
+   public SessionTokens(String access, String refresh, String ip, String userAgent, Long companyId) {
+      this.access = access;
+      this.refresh = refresh;
+      this.ip = ip;
+      this.userAgent = userAgent;
+      this.companyId = companyId;
    }
 
    public String getAccess() {
@@ -31,6 +37,30 @@ public class SessionTokens implements Serializable {
 
    public void setRefresh(String refresh) {
       this.refresh = refresh;
+   }
+
+   public String getIp() {
+      return ip;
+   }
+
+   public void setIp(String ip) {
+      this.ip = ip;
+   }
+
+   public String getUserAgent() {
+      return userAgent;
+   }
+
+   public void setUserAgent(String userAgent) {
+      this.userAgent = userAgent;
+   }
+
+   public Long getCompanyId() {
+      return companyId;
+   }
+
+   public void setCompanyId(Long companyId) {
+      this.companyId = companyId;
    }
 
 }

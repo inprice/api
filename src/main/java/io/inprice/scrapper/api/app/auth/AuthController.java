@@ -32,17 +32,17 @@ public class AuthController implements Controller {
 
       app.post(Consts.Paths.Auth.RESET_PASSWORD, (ctx) -> {
          PasswordDTO dto = ctx.bodyAsClass(PasswordDTO.class);
-         ctx.json(Commons.createResponse(ctx, service.resetPassword(dto)));
+         ctx.json(Commons.createResponse(ctx, service.resetPassword(dto, ctx.ip(), ctx.userAgent())));
       });
 
       app.post(Consts.Paths.Auth.REFRESH_TOKEN, (ctx) -> {
          String refreshToken = ctx.header(Consts.AUTHORIZATION_HEADER);
-         ctx.json(Commons.createResponse(ctx, service.refreshTokens(refreshToken)));
+         ctx.json(Commons.createResponse(ctx, service.refreshTokens(refreshToken, ctx.ip(), ctx.userAgent())));
       });
 
       app.post(Consts.Paths.Auth.LOGOUT, (ctx) -> {
          EmailDTO dto = ctx.bodyAsClass(EmailDTO.class);
-         ctx.json(Commons.createResponse(ctx, service.logout(dto.getEmail())));
+         ctx.json(Commons.createResponse(ctx, service.logout(dto, ctx.ip(), ctx.userAgent())));
       });
 
    }

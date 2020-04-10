@@ -75,13 +75,14 @@ public class CompanyService {
       return res;
    }
 
-   public ServiceResponse completeRegistration(String token) {
+   public ServiceResponse completeRegistration(String token, String ip, String userAgent) {
       RegisterDTO dto = TokenService.get(TokenType.REGISTER_REQUEST, token);
       if (dto != null) {
          ServiceResponse res = companyRepository.insert(dto, token);
          if (res.isOK()) {
             User user = res.getData();
-            return authService.createTokens(user);
+            authService.terminateSession(user.getEmail());
+            return authService.createTokens(user, ip, userAgent);
          }
          return res;
       } else if (token != null) {
