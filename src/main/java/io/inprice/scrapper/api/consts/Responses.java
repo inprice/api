@@ -60,10 +60,11 @@ public class Responses {
    public static class DataProblem {
       private static final int BASE = 600;
       public static final ServiceResponse DB_PROBLEM = new ServiceResponse(BASE + 1, "Database error!");
-      public static final ServiceResponse NOT_SUITABLE = new ServiceResponse(BASE + 2, "Not suitable!");
-      public static final ServiceResponse ALREADY_EXISTS = new ServiceResponse(BASE + 3, "Already exists!");
-      public static final ServiceResponse INTEGRITY_PROBLEM = new ServiceResponse(BASE + 4, "Integrity problem!");
-      public static final ServiceResponse DUPLICATE = new ServiceResponse(BASE + 5, "Duplicate error!");
+      public static final ServiceResponse REDIS_PROBLEM = new ServiceResponse(BASE + 2, "Redis error!");
+      public static final ServiceResponse NOT_SUITABLE = new ServiceResponse(BASE + 10, "Not suitable!");
+      public static final ServiceResponse ALREADY_EXISTS = new ServiceResponse(BASE + 11, "Already exists!");
+      public static final ServiceResponse INTEGRITY_PROBLEM = new ServiceResponse(BASE + 12, "Integrity problem!");
+      public static final ServiceResponse DUPLICATE = new ServiceResponse(BASE + 13, "Duplicate error!");
 
       public static final ServiceResponse FORM_VALIDATION = new ServiceResponse(BASE + 20, "Validation error!");
    }
@@ -110,6 +111,8 @@ public class Responses {
       public static final ServiceResponse IMPORT = new ServiceResponse(BASE, "Import not found!");
 
       public static final ServiceResponse HISTORY = new ServiceResponse(BASE, "History not found!");
+
+      public static final ServiceResponse DATA = new ServiceResponse(BASE, "Nothing found!");
    }
 
    public static class NotActive {

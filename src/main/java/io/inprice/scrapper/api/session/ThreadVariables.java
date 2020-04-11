@@ -4,17 +4,17 @@ import io.inprice.scrapper.api.info.AuthUser;
 
 class ThreadVariables {
 
-    private AuthUser authUser;
+   private AuthUser authUser;
 
-    ThreadVariables() {
-    }
+   ThreadVariables() {
+   }
 
-    public AuthUser getAuthUser() {
-        return authUser;
-    }
+   public void setAuthUser(AuthUser authUser) {
+      this.authUser = authUser;
+   }
 
-    void setAuthUser(AuthUser authUser) {
-        this.authUser = authUser;
-    }
+   public AuthUser getAuthUser() {
+      return authUser;
+   }
 
 }

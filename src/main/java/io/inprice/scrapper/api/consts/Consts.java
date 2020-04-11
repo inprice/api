@@ -2,20 +2,21 @@ package io.inprice.scrapper.api.consts;
 
 public class Consts {
 
-   public static final String AUTHORIZATION_HEADER = "Authorization";
+   public static final String SESSION_NO = "Session-No";
+
+   public static class Cookie {
+      public static final String SESSIONS = "SESSIONS";
+   }
 
    public static class Paths {
 
       public static class Auth {
          public static final String LOGIN = "/login";
          public static final String LOGOUT = "/logout";
-
-         public static final String REQUEST_REGISTRATION = "/request-registration";
-         public static final String COMPLETE_REGISTRATION = "/complete-registration";
-
          public static final String FORGOT_PASSWORD = "/forgot-password";
          public static final String RESET_PASSWORD = "/reset-password";
-         public static final String REFRESH_TOKEN = "/refresh-token";
+         public static final String REQUEST_REGISTRATION = "/request-registration";
+         public static final String COMPLETE_REGISTRATION = "/complete-registration";
       }
 
       public static final String ADMIN_BASE = "/admin";
@@ -34,7 +35,7 @@ public class Consts {
       public static class User {
          public static final String BASE = "/user";
          public static final String PASSWORD = BASE + "/change-password";
-         public static final String CHANGE_COMPANY = BASE + "/change-company";
+         public static final String SWITCH_COMPANY = BASE + "/switch-company";
       }
 
       public static class Invitation {

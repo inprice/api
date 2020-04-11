@@ -1,12 +1,15 @@
 package io.inprice.scrapper.api.app.auth;
 
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eu.bitwalker.useragentutils.UserAgent;
 import io.inprice.scrapper.api.app.member.Member;
 import io.inprice.scrapper.api.app.member.MemberRepository;
 import io.inprice.scrapper.api.app.token.TokenService;
@@ -15,7 +18,6 @@ import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.dto.EmailDTO;
 import io.inprice.scrapper.api.dto.EmailValidator;
 import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.dto.LoginDTOValidator;
@@ -28,8 +30,8 @@ import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.info.SessionTokens;
 import io.inprice.scrapper.api.meta.RateLimiterType;
+import io.javalin.http.Context;
 import jodd.util.BCrypt;
 
 public class AuthService {
@@ -38,12 +40,12 @@ public class AuthService {
 
    private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
    private final MemberRepository memberRepository = Beans.getSingleton(MemberRepository.class);
+   private final AuthRepository authRepository = Beans.getSingleton(AuthRepository.class);
    private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
    private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
 
-   public ServiceResponse login(LoginDTO dto) {
+   public ServiceResponse login(Context ctx, LoginDTO dto) {
       if (dto != null) {
-
          String problem = LoginDTOValidator.verify(dto);
          if (problem == null) {
 
@@ -54,8 +56,7 @@ public class AuthService {
                String hash = BCrypt.hashpw(dto.getPassword(), salt);
                if (hash.equals(user.getPasswordHash())) {
                   if (checkCompany(user)) {
-                     terminateSession(user.getEmail());
-                     return createTokens(user, dto.getIp(), dto.getUserAgent());
+                     return createSession(ctx, user);
                   } else {
                      return Responses.PermissionProblem.NO_COMPANY;
                   }
@@ -74,6 +75,7 @@ public class AuthService {
          if (found.isOK()) {
             Member member = found.getData();
             user.setRole(member.getRole());
+            user.setCompanyName(member.getCompanyName());
             return true;
          }
       }
@@ -85,6 +87,7 @@ public class AuthService {
          if (updated.isOK()) {
             user.setRole(member.getRole());
             user.setLastCompanyId(member.getCompanyId());
+            user.setCompanyName(member.getCompanyName());
             return true;
          }
       }
@@ -124,7 +127,7 @@ public class AuthService {
       return Responses.Invalid.EMAIL;
    }
 
-   public ServiceResponse resetPassword(PasswordDTO dto, String ip, String userAgent) {
+   public ServiceResponse resetPassword(Context ctx, PasswordDTO dto) {
       if (dto != null) {
 
          String problem = PasswordValidator.verify(dto, true, false);
@@ -138,8 +141,8 @@ public class AuthService {
                ServiceResponse res = userRepository.updatePassword(user.getId(), dto.getPassword());
                if (res.isOK()) {
                   TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
-                  terminateSession(user.getEmail());
-                  return createTokens(user, ip, userAgent);
+                  authRepository.deleteByUserId(user.getId());
+                  return createSession(ctx, user);
                }
             } else {
                TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
@@ -152,71 +155,45 @@ public class AuthService {
       return Responses.Invalid.DATA;
    }
 
-   public ServiceResponse refreshTokens(String refreshToken, String ip, String userAgent) {
-      AuthUser found = TokenService.get(TokenType.REFRESH, refreshToken);
-      if (found != null) {
-         return createTokens(found, ip, userAgent);
-      } else if (refreshToken != null) {
-         TokenService.remove(TokenType.REFRESH, refreshToken);
-         return Responses._401;
-      }
-      return Responses.Invalid.TOKEN;
-   }
-
-   public ServiceResponse logout(EmailDTO dto, String ip, String userAgent) {
-      String problem = EmailValidator.verify(dto.getEmail());
-      if (problem == null) {
-         SessionTokens tokens = TokenService.getSessionTokens(dto.getEmail());
-         if (tokens != null) {
-            if (dto.getCompanyId() != null && tokens.getCompanyId().equals(dto.getCompanyId())
-            && tokens.getIp().equals(ip) && tokens.getUserAgent().equals(userAgent)) {
-               terminateSession(dto.getEmail());
-               log.info("{} has just logged out.", dto.getEmail());
-               return Responses.OK;
-            }
-         }
+   public ServiceResponse logout(Context ctx) {
+      List<String> tokens = ctx.cookieStore(Consts.Cookie.SESSIONS);
+      if (tokens != null && tokens.size() > 0) {
+         boolean result = authRepository.deleteByTokenHashes(tokens);
+         ctx.clearCookieStore();
+         if (result) return Responses.OK;
       }
       return Responses.Already.LOGGED_OUT;
    }
 
-   public ServiceResponse createTokens(User user, String ip, String userAgent) {
+   public ServiceResponse createSession(Context ctx, User user) {
       AuthUser authUser = new AuthUser();
-      authUser.setId(user.getId());
+      authUser.setUserId(user.getId());
       authUser.setEmail(user.getEmail());
-      authUser.setName(user.getName());
-      authUser.setRole(user.getRole());
+      authUser.setUserName(user.getName());
       authUser.setCompanyId(user.getLastCompanyId());
+      authUser.setCompanyName(user.getCompanyName());
+      authUser.setRole(user.getRole().name());
 
-      return createTokens(authUser, ip, userAgent);
-   }
+      String token = SessionHelper.toToken(authUser);
+      UserAgent ua = UserAgent.parseUserAgentString(ctx.userAgent());
 
-   ServiceResponse createTokens(AuthUser user, String ip, String userAgent) {
-      // creates new tokens
-      String access = TokenService.add(TokenType.ACCESS, user);
-      String refresh = TokenService.add(TokenType.REFRESH, user);
+      UserSession session = new UserSession();
+      session.setTokenHash(DigestUtils.md5Hex(token));
+      session.setUserId(user.getId());
+      session.setCompanyId(user.getLastCompanyId());
+      session.setIp(ctx.ip());
+      session.setOs(ua.getOperatingSystem().getName());
+      session.setBrowser(ua.getBrowser().getName());
+      session.setUserAgent(ctx.userAgent());
 
-      // creates session info
-      SessionTokens tokens = new SessionTokens(access, refresh, ip, userAgent, user.getCompanyId());
-      TokenService.addSessionTokens(user.getEmail(), tokens);
-
-      // establishes returning object
-      Map<String, Serializable> data = new HashMap<>(3);
-      data.put(TokenType.ACCESS.name().toLowerCase(), tokens.getAccess());
-      data.put(TokenType.REFRESH.name().toLowerCase(), tokens.getRefresh());
-      data.put("user", user);
-
-      log.info(user.getEmail() + " has just logged in.");
-
-      return new ServiceResponse(data);
-   }
-
-   public void terminateSession(String email) {
-      SessionTokens tokens = TokenService.getSessionTokens(email);
-      if (tokens != null) {
-         TokenService.remove(TokenType.ACCESS, tokens.getAccess());
-         TokenService.remove(TokenType.REFRESH, tokens.getRefresh());
-         TokenService.removeSessionTokens(email);
+      ServiceResponse res = authRepository.saveSession(session);
+      if (res.isOK()) {
+         List<String> tokens = ctx.cookieStore(Consts.Cookie.SESSIONS);
+         if (tokens == null) tokens = new ArrayList<>(1);
+         tokens.add(token);
+         ctx.cookieStore(Consts.Cookie.SESSIONS, tokens);
       }
+      return res;
    }
 
 }

@@ -66,7 +66,7 @@ public class DashboardRepository {
    private void addSession(Connection con, JsonObject parent) throws SQLException {
       final String query = "select name, email from user as u where u.id=?";
       try (PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setLong(1, CurrentUser.getId());
+         pst.setLong(1, CurrentUser.getUserId());
 
          try (ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {

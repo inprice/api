@@ -10,6 +10,7 @@ public class Member implements Serializable {
    private Long id;
    private Boolean active;
    private String email;
+   private Long userId;
    private Long companyId;
    private MemberRole role;
    private MemberStatus status = MemberStatus.PENDING;
@@ -43,6 +44,14 @@ public class Member implements Serializable {
 
    public void setEmail(String email) {
       this.email = email;
+   }
+
+   public Long getUserId() {
+      return userId;
+   }
+
+   public void setUserId(Long userId) {
+      this.userId = userId;
    }
 
    public Long getCompanyId() {

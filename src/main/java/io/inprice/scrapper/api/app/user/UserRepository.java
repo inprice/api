@@ -113,7 +113,7 @@ public class UserRepository {
 
          int i = 0;
          pst.setString(++i, name);
-         pst.setLong(++i, CurrentUser.getId());
+         pst.setLong(++i, CurrentUser.getUserId());
 
          if (pst.executeUpdate() > 0)
             return Responses.OK;
@@ -127,7 +127,7 @@ public class UserRepository {
    }
 
    public ServiceResponse updatePassword(String password) {
-      return updatePassword(CurrentUser.getId(), password);
+      return updatePassword(CurrentUser.getUserId(), password);
    }
 
    public ServiceResponse updatePassword(Long userId, String password) {
@@ -154,7 +154,7 @@ public class UserRepository {
    }
 
    public ServiceResponse updateLastCompany(Long companyId) {
-      return updateLastCompany(CurrentUser.getId(), companyId);
+      return updateLastCompany(CurrentUser.getUserId(), companyId);
    }
 
    public ServiceResponse updateLastCompany(Long userId, Long companyId) {
@@ -172,7 +172,7 @@ public class UserRepository {
             return Responses.NotFound.COMPANY;
 
       } catch (Exception e) {
-         log.error("Failed to set users's last company. UserId: " + CurrentUser.getId() + ", CompanyId: " + companyId, e);
+         log.error("Failed to set users's last company. UserId: " + CurrentUser.getUserId() + ", CompanyId: " + companyId, e);
          return Responses.ServerProblem.EXCEPTION;
       }
    }

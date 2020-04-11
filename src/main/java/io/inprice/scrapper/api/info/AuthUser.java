@@ -2,24 +2,23 @@ package io.inprice.scrapper.api.info;
 
 import java.io.Serializable;
 
-import io.inprice.scrapper.api.app.member.MemberRole;
-
 public class AuthUser implements Serializable {
 
    private static final long serialVersionUID = 5763780271600754333L;
 
-   private Long id;
+   private Long userId;
    private String email;
-   private String name;
-   private MemberRole role;
+   private String userName;
    private Long companyId;
+   private String companyName;
+   private String role;
 
-   public Long getId() {
-      return id;
+   public Long getUserId() {
+      return userId;
    }
 
-   public void setId(Long id) {
-      this.id = id;
+   public void setUserId(Long userId) {
+      this.userId = userId;
    }
 
    public String getEmail() {
@@ -30,20 +29,12 @@ public class AuthUser implements Serializable {
       this.email = email;
    }
 
-   public String getName() {
-      return name;
+   public String getUserName() {
+      return userName;
    }
 
-   public void setName(String name) {
-      this.name = name;
-   }
-
-   public MemberRole getRole() {
-      return role;
-   }
-
-   public void setRole(MemberRole role) {
-      this.role = role;
+   public void setUserName(String userName) {
+      this.userName = userName;
    }
 
    public Long getCompanyId() {
@@ -52,6 +43,28 @@ public class AuthUser implements Serializable {
 
    public void setCompanyId(Long companyId) {
       this.companyId = companyId;
+   }
+
+   public String getCompanyName() {
+      return companyName;
+   }
+
+   public void setCompanyName(String companyName) {
+      this.companyName = companyName;
+   }
+
+   public String getRole() {
+      return role;
+   }
+
+   public void setRole(String role) {
+      this.role = role;
+   }
+
+   @Override
+   public String toString() {
+      return "[companyId=" + companyId + ", companyName=" + companyName + ", email=" + email + ", role=" + role
+            + ", userId=" + userId + ", userName=" + userName + "]";
    }
 
 }

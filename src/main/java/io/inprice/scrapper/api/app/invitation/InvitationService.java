@@ -7,8 +7,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.app.company.Company;
-import io.inprice.scrapper.api.app.company.CompanyRepository;
 import io.inprice.scrapper.api.app.member.Member;
 import io.inprice.scrapper.api.app.member.MemberRole;
 import io.inprice.scrapper.api.app.token.TokenService;
@@ -35,7 +33,6 @@ public class InvitationService {
 
    private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
    private final InvitationRepository invitationRepository = Beans.getSingleton(InvitationRepository.class);
-   private final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
 
    private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
    private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
@@ -96,49 +93,40 @@ public class InvitationService {
    }
 
    private ServiceResponse sendMail(InvitationDTO dto) {
-      ServiceResponse res = companyRepository.findByAdminId(CurrentUser.getCompanyId());
-      if (res.isOK()) {
-         Company company = res.getData();
-         if (company.getId().equals(CurrentUser.getCompanyId())) {
-            Map<String, Object> dataMap = new HashMap<>(5);
-            dataMap.put("company", company.getName());
-            dataMap.put("admin", CurrentUser.getName());
+      Map<String, Object> dataMap = new HashMap<>(5);
+      dataMap.put("company", CurrentUser.getCompanyName());
+      dataMap.put("admin", CurrentUser.getUserName());
 
-            String message = null;
-            String templateName = null;
+      String message = null;
+      String templateName = null;
 
-            ServiceResponse found = userRepository.findByEmail(dto.getEmail(), false);
-            if (found.isOK()) {
-               User user = found.getData();
-               dataMap.put("user", user.getName());
+      ServiceResponse found = userRepository.findByEmail(dto.getEmail(), false);
+      if (found.isOK()) {
+         User user = found.getData();
+         dataMap.put("user", user.getName());
 
-               templateName = "invitation-for-existing-users";
-               message = renderer.renderInvitationForExistingUsers(dataMap);
-            } else {
-               dataMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')-1));
-               dataMap.put("token", TokenService.add(TokenType.INVITATION, dto));
-               dataMap.put("url", Props.getWebUrl() + "/accept-invitation");
-   
-               templateName = "invitation-for-new-users";
-               message = renderer.renderInvitationForNewUsers(dataMap);
-            }
+         templateName = "invitation-for-existing-users";
+         message = renderer.renderInvitationForExistingUsers(dataMap);
+      } else {
+         dataMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')-1));
+         dataMap.put("token", TokenService.add(TokenType.INVITATION, dto));
+         dataMap.put("url", Props.getWebUrl() + "/accept-invitation");
 
-            if (message != null) {
-               emailSender.send(
-                  Props.getEmail_Sender(),
-                     "About your invitation for " + company.getName() + " at inprice.io", dto.getEmail(), message);
-
-               res = Responses.OK;
-               log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getCompanyId());
-            } else {
-               res = Responses.ServerProblem.FAILED;
-               log.error("Template error for " + templateName + " --> " + dto);
-            }
-         } else {
-            res = new ServiceResponse("Seems that you are not the admin of this company!");
-         }
+         templateName = "invitation-for-new-users";
+         message = renderer.renderInvitationForNewUsers(dataMap);
       }
-      return res;
+
+      if (message != null) {
+         emailSender.send(
+            Props.getEmail_Sender(),
+               "About your invitation for " + CurrentUser.getCompanyName() + " at inprice.io", dto.getEmail(), message);
+
+         log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getCompanyId());
+         return Responses.OK;
+      } else {
+         log.error("Template error for " + templateName + " --> " + dto);
+         return Responses.ServerProblem.FAILED;
+      }
    }
 
    private ServiceResponse validate(InvitationDTO dto) {
@@ -146,8 +134,12 @@ public class InvitationService {
          return Responses.Invalid.INVITATION;
       }
 
+      if (CurrentUser.getRole().equals(MemberRole.ADMIN)) {
+         return new ServiceResponse("Only admins can send an invitation!");
+      }
+
       if (dto.getRole() == null || dto.getRole().equals(MemberRole.ADMIN)) {
-         return new ServiceResponse(String.format("Role must be either %s or %s!", MemberRole.EDITOR.name(), MemberRole.READER.name()));
+         return new ServiceResponse(String.format("Role must be either %s or %s!", MemberRole.EDITOR.name(), MemberRole.VIEWER.name()));
       }
 
       String checkIfItHasAProblem = EmailValidator.verify(dto.getEmail());

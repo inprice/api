@@ -132,6 +132,7 @@ public class MemberRepository {
          Member model = new Member();
          model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
          model.setActive(rs.getBoolean("active"));
+         model.setUserId(RepositoryHelper.nullLongHandler(rs, "user_id"));
          model.setEmail(rs.getString("email"));
          model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
          model.setCompanyName(rs.getString("company_name")); // transient

@@ -1,5 +1,6 @@
 package io.inprice.scrapper.api.app.company;
 
+import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,11 +21,13 @@ import io.inprice.scrapper.api.dto.PasswordValidator;
 import io.inprice.scrapper.api.dto.RegisterDTO;
 import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
+import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
+import io.javalin.http.Context;
 
 public class CompanyService {
 
@@ -33,6 +36,7 @@ public class CompanyService {
    private final AuthService authService = Beans.getSingleton(AuthService.class);
    private final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
    private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
+   private final Database db = Beans.getSingleton(Database.class);
 
    private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
    private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
@@ -44,20 +48,20 @@ public class CompanyService {
       res = validateRegisterDTO(dto);
       if (res.isOK()) {
 
-         ServiceResponse found = userRepository.findByEmail(dto.getEmail());
-         if (found.isOK()) {
-            User user = found.getData();
-            dto.setUserId(user.getId());
-            dto.setUserName(user.getName());
-
-            // checks if the user has already defined the same company
-            found = companyRepository.findByCompanyNameAndAdminId(dto.getCompanyName().trim(), dto.getUserId());
+         try (Connection con = db.getConnection()) {
+            ServiceResponse found = userRepository.findByEmail(con, dto.getEmail());
             if (found.isOK()) {
-               return Responses.Already.Defined.COMPANY;
-            }
-         }
+               User user = found.getData();
+               dto.setUserId(user.getId());
+               dto.setUserName(user.getName());
 
-         try {
+               // checks if the user has already defined the same company
+               found = companyRepository.findByCompanyNameAndAdminId(con, dto.getCompanyName().trim(), dto.getUserId());
+               if (found.isOK()) {
+                  return Responses.Already.Defined.COMPANY;
+               }
+            }
+
             Map<String, Object> dataMap = new HashMap<>(3);
             dataMap.put("user", dto.getUserName());
             dataMap.put("company", dto.getCompanyName());
@@ -75,14 +79,13 @@ public class CompanyService {
       return res;
    }
 
-   public ServiceResponse completeRegistration(String token, String ip, String userAgent) {
+   public ServiceResponse completeRegistration(Context ctx, String token) {
       RegisterDTO dto = TokenService.get(TokenType.REGISTER_REQUEST, token);
       if (dto != null) {
          ServiceResponse res = companyRepository.insert(dto, token);
          if (res.isOK()) {
             User user = res.getData();
-            authService.terminateSession(user.getEmail());
-            return authService.createTokens(user, ip, userAgent);
+            return authService.createSession(ctx, user);
          }
          return res;
       } else if (token != null) {

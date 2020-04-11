@@ -18,12 +18,12 @@ public class MemberController implements Controller {
 
       app.delete(Consts.Paths.Member.BASE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.deleteById(id, ctx.ip(), ctx.userAgent())));
+         ctx.json(Commons.createResponse(ctx, service.deleteById(id)));
       });
 
       app.put(Consts.Paths.Member.TOGGLE_STATUS + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.toggleStatus(id, ctx.ip(), ctx.userAgent())));
+         ctx.json(Commons.createResponse(ctx, service.toggleStatus(id)));
       });
 
       app.put(Consts.Paths.Member.CHANGE_ROLE, (ctx) -> {

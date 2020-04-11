@@ -16,24 +16,28 @@ public class CurrentUser {
       THREAD_VARIABLES.get().setAuthUser(authUser);
    }
 
-   public static Long getId() {
-      return THREAD_VARIABLES.get().getAuthUser().getId();
-   }
-
-   public static String getName() {
-      return THREAD_VARIABLES.get().getAuthUser().getName();
-   }
-
-   public static MemberRole getRole() {
-      return THREAD_VARIABLES.get().getAuthUser().getRole();
+   public static Long getUserId() {
+      return THREAD_VARIABLES.get().getAuthUser().getUserId();
    }
 
    public static String getEmail() {
       return THREAD_VARIABLES.get().getAuthUser().getEmail();
    }
 
+   public static String getUserName() {
+      return THREAD_VARIABLES.get().getAuthUser().getUserName();
+   }
+
    public static Long getCompanyId() {
       return THREAD_VARIABLES.get().getAuthUser().getCompanyId();
+   }
+
+   public static String getCompanyName() {
+      return THREAD_VARIABLES.get().getAuthUser().getCompanyName();
+   }
+
+   public static MemberRole getRole() {
+      return MemberRole.valueOf(THREAD_VARIABLES.get().getAuthUser().getRole());
    }
 
    public static void cleanup() {

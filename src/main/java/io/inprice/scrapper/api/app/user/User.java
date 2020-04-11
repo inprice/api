@@ -18,6 +18,7 @@ public class User implements Serializable {
    private Date createdAt;
 
    //transient
+   private String companyName;
    private MemberRole role;
 
    public Long getId() {
@@ -74,6 +75,14 @@ public class User implements Serializable {
 
    public void setCreatedAt(Date createdAt) {
       this.createdAt = createdAt;
+   }
+
+   public String getCompanyName() {
+      return companyName;
+   }
+
+   public void setCompanyName(String companyName) {
+      this.companyName = companyName;
    }
 
    public MemberRole getRole() {

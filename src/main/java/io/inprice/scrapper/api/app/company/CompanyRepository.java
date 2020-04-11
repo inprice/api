@@ -53,9 +53,10 @@ public class CompanyRepository {
          return Responses.NotFound.COMPANY;
    }
 
-   public ServiceResponse findByCompanyNameAndAdminId(String name, Long adminId) {
+   public ServiceResponse findByCompanyNameAndAdminId(Connection con, String name, Long adminId) {
       Company model = 
          db.findSingle(
+            con,
             String.format("select * from company where name='%s' and admin_id=%d", SqlHelper.clear(name), adminId), CompanyRepository::map);
       if (model != null)
          return new ServiceResponse(model);
@@ -109,7 +110,7 @@ public class CompanyRepository {
 
          if (dto.getUserId() != null) {
 
-            ServiceResponse found = findByCompanyNameAndAdminId(dto.getCompanyName().trim(), dto.getUserId());
+            ServiceResponse found = findByCompanyNameAndAdminId(con, dto.getCompanyName().trim(), dto.getUserId());
             if (! found.isOK()) {
             
                Long companyId = null;
@@ -137,8 +138,9 @@ public class CompanyRepository {
                // mamber insertion
                if (companyId != null) {
                   try (PreparedStatement pst = con.prepareStatement(
-                        "insert into member (email, company_id, role, status) values (?, ?, ?, ?) ")) {
+                        "insert into member (user_id, email, company_id, role, status) values (?, ?, ?, ?, ?) ")) {
                      int i = 0;
+                     pst.setLong(++i, dto.getUserId());
                      pst.setString(++i, dto.getEmail());
                      pst.setLong(++i, companyId);
                      pst.setString(++i, MemberRole.ADMIN.name());
@@ -151,8 +153,8 @@ public class CompanyRepository {
                            updateCompanyPst.setLong(++j, dto.getUserId());
 
                            if (updateCompanyPst.executeUpdate() > 0) {
+                              log.info("A new user just registered a new company -> " + dto.toString());
                               response = Responses.OK;
-                              log.info("An new user just registered a new company -> " + dto.toString());
                            }
                         }
                      }
@@ -210,7 +212,7 @@ public class CompanyRepository {
          pst.setString(++i, dto.getSector());
          pst.setString(++i, dto.getCountry());
          pst.setLong(++i, CurrentUser.getCompanyId());
-         pst.setLong(++i, CurrentUser.getId());
+         pst.setLong(++i, CurrentUser.getUserId());
 
          if (pst.executeUpdate() <= 0) {
             return Responses.NotFound.COMPANY;

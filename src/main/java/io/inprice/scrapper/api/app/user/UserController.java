@@ -19,13 +19,8 @@ public class UserController implements Controller {
 
       app.put(Consts.Paths.User.PASSWORD, (ctx) -> {
          PasswordDTO dto = ctx.bodyAsClass(PasswordDTO.class);
-         dto.setId(CurrentUser.getId());
+         dto.setId(CurrentUser.getUserId());
          ctx.json(Commons.createResponse(ctx, service.updatePassword(dto)));
-      });
-
-      app.put(Consts.Paths.User.CHANGE_COMPANY + "/:id", (ctx) -> {
-         Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.changeActiveCompany(id)));
       });
 
    }

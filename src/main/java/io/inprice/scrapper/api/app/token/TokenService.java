@@ -8,16 +8,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RMapCache;
 
 import io.inprice.scrapper.api.external.RedisClient;
-import io.inprice.scrapper.api.info.SessionTokens;
 
 public class TokenService {
 
    private static final RMapCache<String, Serializable> tokensMap;
-   private static final RMapCache<String, SessionTokens> sessionTokensMap;
 
    static {
       tokensMap = RedisClient.getClient().getMapCache("api:tokens");
-      sessionTokensMap = RedisClient.getClient().getMapCache("api:session_tokens");
    }
 
    public static String add(TokenType tokenType, Serializable object) {
@@ -37,18 +34,6 @@ public class TokenService {
 
    public static boolean remove(TokenType tokenType, String token) {
       return (tokensMap.remove(getKey(tokenType, token)) != null);
-   }
-
-   public static void addSessionTokens(String email, SessionTokens tokens) {
-      sessionTokensMap.put(email, tokens, TokenType.REFRESH.ttl(), TimeUnit.MILLISECONDS);
-   }
-
-   public static SessionTokens getSessionTokens(String email) {
-      return sessionTokensMap.get(email);
-   }
-
-   public static boolean removeSessionTokens(String email) {
-      return (sessionTokensMap.remove(email) != null);
    }
 
    private static String getKey(TokenType tokenType, String token) {

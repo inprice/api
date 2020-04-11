@@ -3,9 +3,8 @@ package io.inprice.scrapper.api.app.member;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.app.auth.AuthService;
+import io.inprice.scrapper.api.app.auth.AuthRepository;
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.dto.EmailDTO;
 import io.inprice.scrapper.api.dto.MemberChangeRoleDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
@@ -15,20 +14,20 @@ public class MemberService {
 
    private static final Logger log = LoggerFactory.getLogger(MemberService.class);
 
-   private final AuthService authService = Beans.getSingleton(AuthService.class);
+   private final AuthRepository authRepository = Beans.getSingleton(AuthRepository.class);
    private final MemberRepository memberRepository = Beans.getSingleton(MemberRepository.class);
 
    public ServiceResponse getList() {
       return memberRepository.getListByCompany();
    }
 
-   public ServiceResponse deleteById(Long id, String ip, String userAgent) {
+   public ServiceResponse deleteById(Long id) {
       if (id != null && id > 0) {
          Member member = memberRepository.getById(id);
          if (member != null) {
             ServiceResponse res = memberRepository.deleteById(member.getId());
             if (res.isOK()) {
-               logoutTheMember(member.getEmail(), ip, userAgent);
+               authRepository.deleteByUserAndCompanyId(member.getUserId(), member.getCompanyId());
                return Responses.OK;
             }
          }
@@ -36,14 +35,14 @@ public class MemberService {
       return Responses.NotFound.MEMBER;
    }
 
-   public ServiceResponse toggleStatus(Long id, String ip, String userAgent) {
+   public ServiceResponse toggleStatus(Long id) {
       if (id != null && id > 0) {
          Member member = memberRepository.getById(id);
          if (member != null) {
             ServiceResponse res = memberRepository.toggleStatus(id);
             if (res.isOK()) {
                if (member.getActive().equals(Boolean.TRUE)) {
-                  logoutTheMember(member.getEmail(), ip, userAgent);
+                  authRepository.deleteByUserAndCompanyId(member.getUserId(), CurrentUser.getCompanyId());
                }
                return Responses.OK;
             }
@@ -60,7 +59,7 @@ public class MemberService {
          if (! member.getRole().equals(MemberRole.ADMIN)) {
             res = memberRepository.changeRole(dto);
             if (res.isOK()) {
-               logoutTheMember(member.getEmail(), ip, userAgent);
+               authRepository.deleteByUserAndCompanyId(member.getUserId(), CurrentUser.getCompanyId());
                log.info("{} role is changed to {} ", dto.getMemberId(), member.getRole());
             }
          } else {
@@ -84,13 +83,6 @@ public class MemberService {
       }
 
       return memberRepository.findById(dto.getMemberId());
-   }
-
-   private void logoutTheMember(String email, String ip, String userAgent) {
-      EmailDTO dto = new EmailDTO();
-      dto.setEmail(email);
-      dto.setCompanyId(CurrentUser.getCompanyId());
-      authService.logout(dto, ip, userAgent);
    }
 
 }

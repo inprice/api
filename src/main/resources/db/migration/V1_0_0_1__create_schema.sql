@@ -66,27 +66,13 @@ create index ix1 on company (name);
 alter table company add foreign key (admin_id) references user (id);
 alter table company add foreign key (plan_id) references plan (id);
 
-create table user_session (
-  token_hash                varchar(32) not null,
-  user_id                   bigint not null,
-  company_id                bigint not null,
-  ip                        varchar(255) not null,
-  os                        varchar(50) not null,
-  browser                   varchar(50),
-  device                    varchar(500),
-  updated_at                timestamp not null default current_timestamp,
-  primary key (token_hash)
-) engine=innodb;
-alter table user_session add foreign key (user_id) references user (id);
-alter table user_session add foreign key (company_id) references company (id);
-create index ix1 on user_session (updated_at);
-
 create table member (
   id                        bigint auto_increment not null,
   active                    boolean default true,
   email                     varchar(100) not null,
+  user_id                   bigint,
   company_id                bigint not null,
-  role                      enum('ADMIN', 'EDITOR', 'READER') not null default 'EDITOR',
+  role                      enum('ADMIN', 'EDITOR', 'VIEWER') not null default 'EDITOR',
   pre_status                enum('PENDING', 'JOINED', 'LEFT') not null default 'PENDING',
   status                    enum('PENDING', 'JOINED', 'LEFT') not null default 'PENDING',
   retry                     smallint default 1,
@@ -96,6 +82,21 @@ create table member (
 ) engine=innodb;
 create index ix1 on member (email);
 alter table member add foreign key (company_id) references company (id);
+
+create table user_session (
+  token_hash                varchar(32) not null,
+  user_id                   bigint not null,
+  company_id                bigint not null,
+  ip                        varchar(255),
+  os                        varchar(30),
+  browser                   varchar(100),
+  user_agent                varchar(700),
+  accessed_at               timestamp not null default current_timestamp,
+  primary key (token_hash)
+) engine=innodb;
+alter table user_session add foreign key (user_id) references user (id);
+alter table user_session add foreign key (company_id) references company (id);
+create index ix1 on user_session (accessed_at);
 
 create table product (
   id                        bigint auto_increment not null,

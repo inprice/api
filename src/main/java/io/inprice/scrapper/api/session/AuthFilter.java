@@ -1,19 +1,20 @@
 package io.inprice.scrapper.api.session;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.scrapper.api.app.auth.SessionHelper;
 import io.inprice.scrapper.api.app.member.MemberRole;
-import io.inprice.scrapper.api.app.token.TokenService;
-import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.HandlerInterruptException;
 import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.utils.NumberUtils;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
 
@@ -57,45 +58,29 @@ public class AuthFilter implements Handler {
       String URI = ctx.req.getRequestURI().toLowerCase();
       if (URI.charAt(URI.length()-1) == '/') URI = URI.substring(0, URI.length()-1);
 
-      if (isRefreshTokenRequest(URI)) {
-         String refreshToken = ctx.header(Consts.AUTHORIZATION_HEADER);
-         if (TokenService.isTokenValid(refreshToken)) {
-            AuthUser authUser = TokenService.get(TokenType.REFRESH, refreshToken);
+      if (isAuthenticationNeeded(URI)) {
+         String token = extractToken(ctx);
+         if (token == null) {
+            ctx.status(HttpStatus.UNAUTHORIZED_401);
+         } else {
+            AuthUser authUser = SessionHelper.fromToken(token);
             if (authUser == null) {
                ctx.status(HttpStatus.UNAUTHORIZED_401);
-            }
-         } else {
-            ctx.status(HttpStatus.UNAUTHORIZED_401);
-         }
-      } else {
-
-         if (isAuthenticationNeeded(URI)) {
-            String accessToken = ctx.header(Consts.AUTHORIZATION_HEADER);
-            if (accessToken == null) {
-               ctx.status(HttpStatus.UNAUTHORIZED_401);
             } else {
-               if (! TokenService.isTokenValid(accessToken)) {
-                  ctx.status(HttpStatus.UNAUTHORIZED_401);
-               } else {
-
-                  AuthUser authUser = TokenService.get(TokenType.ACCESS, accessToken);
-                  if (authUser == null) {
-                     ctx.status(HttpStatus.UNAUTHORIZED_401);
-                  } else if (!MemberRole.ADMIN.equals(authUser.getRole())
-                        && URI.startsWith(Consts.Paths.ADMIN_BASE)) {
-                           ctx.status(HttpStatus.FORBIDDEN_403);
-                  } else if (MemberRole.READER.equals(authUser.getRole()) && sensitiveMethodsSet.contains(ctx.method())) {
-                     // readers are allowed to update their passwords
-                     if (!URI.equals(Consts.Paths.User.PASSWORD)) {
-                        ctx.status(HttpStatus.FORBIDDEN_403);
-                     }
+               if (!MemberRole.ADMIN.name().equals(authUser.getRole()) && URI.startsWith(Consts.Paths.ADMIN_BASE)) {
+                  ctx.status(HttpStatus.FORBIDDEN_403);
+               } else
+               // viewers should be able to update their passwords
+               if (MemberRole.VIEWER.name().equals(authUser.getRole()) && sensitiveMethodsSet.contains(ctx.method())) {
+                  if (URI.indexOf(Consts.Paths.User.BASE + "/") < 0) {
+                     ctx.status(HttpStatus.FORBIDDEN_403);
                   }
-                  //everything is ok
-                  CurrentUser.setAuthUser(authUser);
                }
             }
+            if (ctx.status() < 400) CurrentUser.setAuthUser(authUser);
          }
       }
+
       if (ctx.status() >= 400) {
          String reason = "Bad request";
          if (ctx.status() == HttpStatus.UNAUTHORIZED_401) reason = "Unauthorized";
@@ -104,12 +89,22 @@ public class AuthFilter implements Handler {
       }
    }
 
-   private boolean isRefreshTokenRequest(String uri) {
-      return uri.startsWith(Consts.Paths.Auth.REFRESH_TOKEN);
-   }
-
    private boolean isAuthenticationNeeded(String uri) {
       return !(allowedURIs.contains(uri));
+   }
+
+   private String extractToken(Context ctx) {
+      String token = null;
+      try {
+         int sesNo = NumberUtils.toInteger(ctx.header(Consts.SESSION_NO));
+         if (sesNo > -1) {
+            List<String> tokens = ctx.cookieStore(Consts.Cookie.SESSIONS);
+            if (tokens != null && tokens.size() > sesNo) {
+               return tokens.get(sesNo);
+            }
+         }
+      } catch (Exception ignored) {}
+      return token;
    }
 
 }

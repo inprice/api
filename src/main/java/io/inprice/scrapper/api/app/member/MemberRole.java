@@ -7,6 +7,8 @@ package io.inprice.scrapper.api.app.member;
  */
 public enum MemberRole {
 
-   ADMIN, EDITOR, READER;
+   ADMIN,
+   EDITOR,
+   VIEWER;
 
 }
