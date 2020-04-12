@@ -2,8 +2,7 @@ package io.inprice.scrapper.api.app.user;
 
 import java.io.Serializable;
 import java.util.Date;
-
-import io.inprice.scrapper.api.app.member.MemberRole;
+import java.util.List;
 
 public class User implements Serializable {
 
@@ -12,14 +11,12 @@ public class User implements Serializable {
    private Long id;
    private String email;
    private String name;
-   private Long lastCompanyId;
    private String passwordHash;
    private String passwordSalt;
    private Date createdAt;
 
    //transient
-   private String companyName;
-   private MemberRole role;
+   private List<Membership> memberships;
 
    public Long getId() {
       return id;
@@ -43,14 +40,6 @@ public class User implements Serializable {
 
    public void setName(String name) {
       this.name = name;
-   }
-
-   public Long getLastCompanyId() {
-      return lastCompanyId;
-   }
-
-   public void setLastCompanyId(Long lastCompanyId) {
-      this.lastCompanyId = lastCompanyId;
    }
 
    public String getPasswordHash() {
@@ -77,20 +66,12 @@ public class User implements Serializable {
       this.createdAt = createdAt;
    }
 
-   public String getCompanyName() {
-      return companyName;
+   public List<Membership> getMemberships() {
+      return memberships;
    }
 
-   public void setCompanyName(String companyName) {
-      this.companyName = companyName;
-   }
-
-   public MemberRole getRole() {
-      return role;
-   }
-
-   public void setRole(MemberRole role) {
-      this.role = role;
+   public void setMemberships(List<Membership> memberships) {
+      this.memberships = memberships;
    }
 
 }

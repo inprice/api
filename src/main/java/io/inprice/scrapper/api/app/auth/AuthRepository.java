@@ -1,22 +1,22 @@
 package io.inprice.scrapper.api.app.auth;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.scrapper.api.app.user.Membership;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.ServiceResponse;
 
 public class AuthRepository {
@@ -26,13 +26,12 @@ public class AuthRepository {
    private final Database db = Beans.getSingleton(Database.class);
 
    public ServiceResponse findByToken(String token) {
-      String md5Hash = DigestUtils.md5Hex(token);
-      UserSession ses = RedisClient.getSession(md5Hash);
+      UserSession ses = RedisClient.getSession(token);
       if (ses != null) {
          long diffInMillies = Math.abs(System.currentTimeMillis() - ses.getAccessedAt().getTime());
          long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-         if (diff > 7 && RedisClient.refreshSesion(ses.getTokenHash())) {
-            return refreshAccessedAt(ses.getTokenHash());
+         if (diff > 7 && RedisClient.refreshSesion(ses.getToken())) {
+            return refreshAccessedAt(ses.getToken());
          } else {
             return Responses.OK;
          }
@@ -40,22 +39,21 @@ public class AuthRepository {
       return Responses.NotFound.DATA;
    }
 
-   public boolean deleteByTokenHashes(List<String> tokens) {
-      List<String> hashList = new ArrayList<>(tokens.size());
-      for (String token : tokens) {
-         if (StringUtils.isNotBlank(token)) {
-            String md5Hash = DigestUtils.md5Hex(token);
-            if (RedisClient.removeSesion(md5Hash)) {
-               hashList.add(md5Hash);
-            }
+   public boolean deleteSession(AuthUser authUser) {
+      List<String> deletedList = new ArrayList<>(authUser.getMemberships().size());
+
+      for (Membership ms : authUser.getMemberships().values()) {
+         if (RedisClient.removeSesion(ms.getToken())) {
+            deletedList.add(ms.getToken());
          }
       }
-      if (hashList.size() > 0) {
-         String inClause = StringUtils.join(hashList, "', '");
+
+      if (deletedList.size() > 0) {
+         String inClause = StringUtils.join(deletedList, "', '");
          return
             db.executeQuery(
-               String.format("delete from user_session where token_hash in ('%s')", inClause),
-                  String.format("Failed to delete user session info by token hashes ('%s')", inClause)
+               String.format("delete from user_session where token in ('%s')", inClause),
+                  String.format("Failed to delete user session info by token ('%s')", inClause)
             );
       }
       return false;
@@ -75,7 +73,7 @@ public class AuthRepository {
             db.findMultiple(con, String.format("select * from user_session where user_id=%d", userId), AuthRepository::map);
          if (sessions != null && sessions.size() > 0) {
             for (UserSession ses : sessions) {
-               RedisClient.removeSesion(ses.getTokenHash());
+               RedisClient.removeSesion(ses.getToken());
             }
             return
                db.executeQuery(
@@ -96,7 +94,7 @@ public class AuthRepository {
             db.findMultiple(con, String.format("select * from user_session where user_id=%d and company_id=%d", userId, companyId), AuthRepository::map);
          if (sessions != null && sessions.size() > 0) {
             for (UserSession ses : sessions) {
-               RedisClient.removeSesion(ses.getTokenHash());
+               RedisClient.removeSesion(ses.getToken());
             }
             return
                db.executeQuery(
@@ -111,29 +109,24 @@ public class AuthRepository {
       return false;
    }
 
-   public ServiceResponse saveSession(UserSession session) {
-      boolean isAdded = RedisClient.addSesion(session);
+   public ServiceResponse saveSessions(List<UserSession> sessions) {
+      boolean isAdded = RedisClient.addSesions(sessions);
 
       if (isAdded) {
-         String query = "insert into user_session "
-               + "(token_hash, user_id, company_id, ip, os, browser) values (?, ?, ?, ?, ?, ?)";
-         try (Connection con = db.getConnection();
-            PreparedStatement pst = con.prepareStatement(query)) {
-            int i = 0;
-            pst.setString(++i, session.getTokenHash());
-            pst.setLong(++i, session.getUserId());
-            pst.setLong(++i, session.getCompanyId());
-            pst.setString(++i, session.getIp());
-            pst.setString(++i, session.getOs());
-            pst.setString(++i, session.getBrowser());
-
-            if (pst.executeUpdate() > 0) {
-               return Responses.OK;
-            }
-         } catch (Exception e) {
-            log.error(session.toString());
-            log.error("Failed to insert a session", e);
+         String[] queries = new String[sessions.size()];
+         for (int i = 0; i < sessions.size(); i++) {
+            UserSession uses = sessions.get(i);
+            queries[i] = String.format(
+               "insert into user_session (token, user_id, company_id, ip, os, browser) values ('%s', %d, %d, '%s', '%s', '%s')",
+               uses.getToken(), uses.getUserId(), uses.getCompanyId(), uses.getIp(), uses.getOs(), uses.getBrowser()
+            );
          }
+         boolean result = 
+            db.executeBatchQueries(
+               queries, "Failed to add new sessions for: " + sessions.get(0).getUserId(), sessions.size()
+         );
+
+         if (result) return Responses.OK;
       } else {
          return Responses.DataProblem.REDIS_PROBLEM;
       }
@@ -141,10 +134,10 @@ public class AuthRepository {
       return Responses.DataProblem.DB_PROBLEM;
    }
 
-   private ServiceResponse refreshAccessedAt(String md5Hash) {
+   private ServiceResponse refreshAccessedAt(String token) {
       boolean result =
          db.executeQuery(
-            "update user_session set accessed_at = now() where token_hash = '" + md5Hash + "'", 
+            "update user_session set accessed_at = now() where token = '" + token + "'", 
             "Failed to refresh a session"
          );
 
@@ -157,7 +150,6 @@ public class AuthRepository {
    private static UserSession map(ResultSet rs) {
       try {
          UserSession model = new UserSession();
-         model.setTokenHash(rs.getString("token_hash"));
          model.setUserId(rs.getLong("user_id"));
          model.setCompanyId(rs.getLong("company_id"));
          model.setIp(rs.getString("ip"));

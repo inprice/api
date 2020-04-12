@@ -2,10 +2,11 @@ package io.inprice.scrapper.api.consts;
 
 public class Consts {
 
-   public static final String SESSION_NO = "Session-No";
+   public static final String USER_ID = "User";
+   public static final String COMPANY_ID = "Company";
 
    public static class Cookie {
-      public static final String SESSIONS = "SESSIONS";
+      public static final String SESSION = "INPRICE_AT_";
    }
 
    public static class Paths {

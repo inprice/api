@@ -9,19 +9,16 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.scrapper.api.app.member.Member;
 import io.inprice.scrapper.api.app.member.MemberRepository;
-import io.inprice.scrapper.api.app.member.MemberStatus;
-import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.PasswordValidator;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 
 /**
  * TODO:
  * Eklenmesi gereken fonksiyonlar
- * 1- updateLastCompany metodu icinde yeni refresh ve access token lar uretilip kullaniciya donulmeli
- * 2- Bir davete internal olarak confirm ya da reject verilebilmeli
+ * 1- Bir davete internal olarak confirm ya da reject verilebilmeli
  */
 public class UserService {
 
@@ -36,25 +33,6 @@ public class UserService {
       }
 
       return userRepository.updateName(name);
-   }
-
-   public ServiceResponse changeActiveCompany(Long companyId) {
-      if (companyId != null) {
-         if (companyId == null || companyId < 1) {
-            return Responses.NotFound.COMPANY;
-         }
-
-         ServiceResponse found = memberRepository.findByEmailAndCompanyId(CurrentUser.getEmail(), companyId);
-         if (found.isOK()) {
-            Member member = found.getData();
-            if (MemberStatus.JOINED.equals(member.getStatus())) {
-               return userRepository.updateLastCompany(companyId);
-            }
-         } else {
-            return new ServiceResponse("Your membership to this company seems not activated yet. Please confirm it first!");
-         }
-      }
-      return Responses.NotFound.COMPANY;
    }
 
    public ServiceResponse updatePassword(PasswordDTO dto) {

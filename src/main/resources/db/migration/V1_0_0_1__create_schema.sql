@@ -38,7 +38,6 @@ create table user (
   id                        bigint auto_increment not null,
   email                     varchar(100) not null,
   name                      varchar(70) not null,
-  last_company_id           bigint,
   password_hash             varchar(255) not null,
   password_salt             varchar(255) not null,
   created_at                timestamp not null default current_timestamp,
@@ -81,18 +80,19 @@ create table member (
   primary key (id)
 ) engine=innodb;
 create index ix1 on member (email);
+alter table member add foreign key (user_id) references user (id);
 alter table member add foreign key (company_id) references company (id);
 
 create table user_session (
-  token_hash                varchar(32) not null,
+  token                     varchar(32) not null,
   user_id                   bigint not null,
   company_id                bigint not null,
   ip                        varchar(255),
   os                        varchar(30),
   browser                   varchar(100),
-  user_agent                varchar(700),
+  user_agent                varchar(500),
   accessed_at               timestamp not null default current_timestamp,
-  primary key (token_hash)
+  primary key (token)
 ) engine=innodb;
 alter table user_session add foreign key (user_id) references user (id);
 alter table user_session add foreign key (company_id) references company (id);

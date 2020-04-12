@@ -1,6 +1,10 @@
 package io.inprice.scrapper.api.info;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
+import io.inprice.scrapper.api.app.user.Membership;
 
 public class AuthUser implements Serializable {
 
@@ -9,9 +13,7 @@ public class AuthUser implements Serializable {
    private Long userId;
    private String email;
    private String userName;
-   private Long companyId;
-   private String companyName;
-   private String role;
+   private Map<Long, Membership> memberships = new HashMap<>();
 
    public Long getUserId() {
       return userId;
@@ -37,34 +39,17 @@ public class AuthUser implements Serializable {
       this.userName = userName;
    }
 
-   public Long getCompanyId() {
-      return companyId;
+   public Map<Long, Membership> getMemberships() {
+      return memberships;
    }
 
-   public void setCompanyId(Long companyId) {
-      this.companyId = companyId;
-   }
-
-   public String getCompanyName() {
-      return companyName;
-   }
-
-   public void setCompanyName(String companyName) {
-      this.companyName = companyName;
-   }
-
-   public String getRole() {
-      return role;
-   }
-
-   public void setRole(String role) {
-      this.role = role;
+   public void setMemberships(Map<Long, Membership> memberships) {
+      this.memberships = memberships;
    }
 
    @Override
    public String toString() {
-      return "[companyId=" + companyId + ", companyName=" + companyName + ", email=" + email + ", role=" + role
-            + ", userId=" + userId + ", userName=" + userName + "]";
+      return "[email=" + email + ", userId=" + userId + ", userName=" + userName + "]";
    }
 
 }

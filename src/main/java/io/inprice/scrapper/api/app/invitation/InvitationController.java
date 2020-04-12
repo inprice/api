@@ -21,6 +21,7 @@ public class InvitationController implements Controller {
          InvitationDTO dto = ctx.bodyAsClass(InvitationDTO.class);
          ctx.json(Commons.createResponse(ctx, service.send(dto)));
       });
+
       app.post(Consts.Paths.Invitation.ACCEPT_NEW, (ctx) -> {
          InvitationAcceptDTO dto = ctx.bodyAsClass(InvitationAcceptDTO.class);
          ctx.json(Commons.createResponse(ctx, service.acceptNewUser(dto)));

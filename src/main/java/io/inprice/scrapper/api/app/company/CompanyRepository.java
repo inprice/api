@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Date;
 
 import org.slf4j.Logger;
@@ -15,18 +16,19 @@ import io.inprice.scrapper.api.app.member.MemberStatus;
 import io.inprice.scrapper.api.app.plan.PlanStatus;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
+import io.inprice.scrapper.api.app.user.Membership;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
-import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.dto.RegisterDTO;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.external.Database;
-import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.CodeGenerator;
 import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
+import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.session.CurrentUser;
 import jodd.util.BCrypt;
 
 public class CompanyRepository {
@@ -147,16 +149,8 @@ public class CompanyRepository {
                      pst.setString(++i, MemberStatus.JOINED.name());
 
                      if (pst.executeUpdate() > 0) {
-                        try (PreparedStatement updateCompanyPst = con.prepareStatement("update user set last_company_id=? where id=?")) {
-                           int j = 0;
-                           updateCompanyPst.setLong(++j, companyId);
-                           updateCompanyPst.setLong(++j, dto.getUserId());
-
-                           if (updateCompanyPst.executeUpdate() > 0) {
-                              log.info("A new user just registered a new company -> " + dto.toString());
-                              response = Responses.OK;
-                           }
-                        }
+                        log.info("A new user just registered a new company -> " + dto.toString());
+                        response = Responses.OK;
                      }
                   }
                }
@@ -169,9 +163,12 @@ public class CompanyRepository {
                      user.setId(dto.getUserId());
                      user.setEmail(dto.getEmail());
                      user.setName(dto.getUserName());
-                     user.setRole(MemberRole.ADMIN);
-                     user.setLastCompanyId(companyId);
                      user.setCreatedAt(new Date());
+                     user.setMemberships(
+                        Arrays.asList(
+                           new Membership(companyId, dto.getCompanyName(), MemberRole.ADMIN)
+                        )
+                     );
                   }
                   response = new ServiceResponse(user);
 

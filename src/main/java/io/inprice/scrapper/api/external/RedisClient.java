@@ -1,6 +1,7 @@
 package io.inprice.scrapper.api.external;
 
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -43,8 +44,10 @@ public class RedisClient {
       return Responses.OK;
    }
 
-   public static boolean addSesion(UserSession session) {
-      sessionMap.put(session.getTokenHash(), session);
+   public static boolean addSesions(List<UserSession> sessions) {
+      for (UserSession uses : sessions) {
+         sessionMap.put(uses.getToken(), uses);
+      }
       return true;
    }
 
@@ -58,10 +61,10 @@ public class RedisClient {
    }
 
    public static boolean refreshSesion(String md5Hash) {
-      UserSession session = sessionMap.get(md5Hash);
-      if (session != null) {
-         session.setAccessedAt(new Date());
-         addSesion(session);
+      UserSession uses = sessionMap.get(md5Hash);
+      if (uses != null) {
+         uses.setAccessedAt(new Date());
+         sessionMap.put(uses.getToken(), uses);
          return true;
       }
       return false;

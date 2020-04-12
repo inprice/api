@@ -12,8 +12,8 @@ public class CurrentUser {
       }
    };
 
-   static void setAuthUser(AuthUser authUser) {
-      THREAD_VARIABLES.get().setAuthUser(authUser);
+   static void set(AuthUser authUser, Long companyId) {
+      THREAD_VARIABLES.get().setAuthUser(authUser, companyId);
    }
 
    public static Long getUserId() {
@@ -29,15 +29,15 @@ public class CurrentUser {
    }
 
    public static Long getCompanyId() {
-      return THREAD_VARIABLES.get().getAuthUser().getCompanyId();
+      return THREAD_VARIABLES.get().getMembership().getCompanyId();
    }
 
    public static String getCompanyName() {
-      return THREAD_VARIABLES.get().getAuthUser().getCompanyName();
+      return THREAD_VARIABLES.get().getMembership().getCompanyName();
    }
 
    public static MemberRole getRole() {
-      return MemberRole.valueOf(THREAD_VARIABLES.get().getAuthUser().getRole());
+      return THREAD_VARIABLES.get().getMembership().getRole();
    }
 
    public static void cleanup() {

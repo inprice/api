@@ -78,9 +78,7 @@ public class UserRepository {
    }
 
    public ServiceResponse insert(Connection con, UserDTO dto) {
-      final String query = "insert into user "
-            + "(email, name, last_company_id, password_salt, password_hash) values "
-            + "(?, ?, ?, ?, ?) ";
+      final String query = "insert into user (email, name, password_salt, password_hash) values (?, ?, ?, ?) ";
 
       try (PreparedStatement pst = con.prepareStatement(query)) {
          final String salt = codeGenerator.generateSalt();
@@ -88,7 +86,6 @@ public class UserRepository {
          int i = 0;
          pst.setString(++i, dto.getEmail());
          pst.setString(++i, dto.getName());
-         pst.setLong(++i, dto.getCompanyId());
          pst.setString(++i, salt);
          pst.setString(++i, BCrypt.hashpw(dto.getPassword(), salt));
 
@@ -153,37 +150,12 @@ public class UserRepository {
       }
    }
 
-   public ServiceResponse updateLastCompany(Long companyId) {
-      return updateLastCompany(CurrentUser.getUserId(), companyId);
-   }
-
-   public ServiceResponse updateLastCompany(Long userId, Long companyId) {
-      final String query = "update user set last_company_id=? where id=?";
-
-      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
-
-         int i = 0;
-         pst.setLong(++i, companyId);
-         pst.setLong(++i, userId);
-
-         if (pst.executeUpdate() > 0)
-            return Responses.OK;
-         else
-            return Responses.NotFound.COMPANY;
-
-      } catch (Exception e) {
-         log.error("Failed to set users's last company. UserId: " + CurrentUser.getUserId() + ", CompanyId: " + companyId, e);
-         return Responses.ServerProblem.EXCEPTION;
-      }
-   }
-
    private User map(ResultSet rs) {
       try {
          User model = new User();
          model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
          model.setEmail(rs.getString("email"));
          model.setName(rs.getString("name"));
-         model.setLastCompanyId(RepositoryHelper.nullLongHandler(rs, "last_company_id"));
          model.setPasswordHash(rs.getString("password_hash"));
          model.setPasswordSalt(rs.getString("password_salt"));
          model.setCreatedAt(rs.getTimestamp("created_at"));

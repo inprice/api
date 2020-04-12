@@ -4,16 +4,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import eu.bitwalker.useragentutils.UserAgent;
-import io.inprice.scrapper.api.app.member.Member;
 import io.inprice.scrapper.api.app.member.MemberRepository;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
+import io.inprice.scrapper.api.app.user.Membership;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.consts.Consts;
@@ -55,7 +55,9 @@ public class AuthService {
                String salt = user.getPasswordSalt();
                String hash = BCrypt.hashpw(dto.getPassword(), salt);
                if (hash.equals(user.getPasswordHash())) {
-                  if (checkCompany(user)) {
+                  found = memberRepository.getMembershipByEmail(user.getEmail());
+                  if (found.isOK()) {
+                     user.setMemberships(found.getData());
                      return createSession(ctx, user);
                   } else {
                      return Responses.PermissionProblem.NO_COMPANY;
@@ -67,32 +69,6 @@ public class AuthService {
          }
       }
       return Responses.Invalid.EMAIL_OR_PASSWORD;
-   }
-
-   private boolean checkCompany(User user) {
-      if (user.getLastCompanyId() != null) {
-         ServiceResponse found = memberRepository.findByEmailAndCompanyId(user.getEmail(), user.getLastCompanyId());
-         if (found.isOK()) {
-            Member member = found.getData();
-            user.setRole(member.getRole());
-            user.setCompanyName(member.getCompanyName());
-            return true;
-         }
-      }
-
-      ServiceResponse found = memberRepository.findASuitableCompanyId(user.getEmail());
-      if (found.isOK()) {
-         Member member = found.getData();
-         ServiceResponse updated = userRepository.updateLastCompany(user.getId(), member.getCompanyId());
-         if (updated.isOK()) {
-            user.setRole(member.getRole());
-            user.setLastCompanyId(member.getCompanyId());
-            user.setCompanyName(member.getCompanyName());
-            return true;
-         }
-      }
-
-      return false;
    }
 
    public ServiceResponse forgotPassword(String email, String ip) {
@@ -156,13 +132,24 @@ public class AuthService {
    }
 
    public ServiceResponse logout(Context ctx) {
-      List<String> tokens = ctx.cookieStore(Consts.Cookie.SESSIONS);
-      if (tokens != null && tokens.size() > 0) {
-         boolean result = authRepository.deleteByTokenHashes(tokens);
-         ctx.clearCookieStore();
-         if (result) return Responses.OK;
+      boolean result = false;
+      for (Entry<String, String> entry : ctx.cookieMap().entrySet()) {
+         if (entry.getKey().startsWith(Consts.Cookie.SESSION)) {
+
+            AuthUser authUser = SessionHelper.fromToken(entry.getValue());
+            if (authUser != null) {
+               result = true;
+               authRepository.deleteSession(authUser);
+               ctx.removeCookie(entry.getKey());
+               log.info("Logout {}", authUser.toString());
+            }
+         }
       }
-      return Responses.Already.LOGGED_OUT;
+      if (result) {
+         return Responses.OK;
+      } else {
+         return Responses.Already.LOGGED_OUT;
+      }
    }
 
    public ServiceResponse createSession(Context ctx, User user) {
@@ -170,30 +157,33 @@ public class AuthService {
       authUser.setUserId(user.getId());
       authUser.setEmail(user.getEmail());
       authUser.setUserName(user.getName());
-      authUser.setCompanyId(user.getLastCompanyId());
-      authUser.setCompanyName(user.getCompanyName());
-      authUser.setRole(user.getRole().name());
+      for (Membership ms : user.getMemberships()) {
+         authUser.getMemberships().put(ms.getCompanyId(), ms);
+      }
 
       String token = SessionHelper.toToken(authUser);
       UserAgent ua = UserAgent.parseUserAgentString(ctx.userAgent());
 
-      UserSession session = new UserSession();
-      session.setTokenHash(DigestUtils.md5Hex(token));
-      session.setUserId(user.getId());
-      session.setCompanyId(user.getLastCompanyId());
-      session.setIp(ctx.ip());
-      session.setOs(ua.getOperatingSystem().getName());
-      session.setBrowser(ua.getBrowser().getName());
-      session.setUserAgent(ctx.userAgent());
-
-      ServiceResponse res = authRepository.saveSession(session);
-      if (res.isOK()) {
-         List<String> tokens = ctx.cookieStore(Consts.Cookie.SESSIONS);
-         if (tokens == null) tokens = new ArrayList<>(1);
-         tokens.add(token);
-         ctx.cookieStore(Consts.Cookie.SESSIONS, tokens);
+      List<UserSession> sessions = new ArrayList<>();
+      for (Membership ms : user.getMemberships()) {
+         UserSession uses = new UserSession();
+         uses.setToken(ms.getToken());
+         uses.setUserId(user.getId());
+         uses.setCompanyId(ms.getCompanyId());
+         uses.setIp(ctx.ip());
+         uses.setOs(ua.getOperatingSystem().getName());
+         uses.setBrowser(ua.getBrowser().getName());
+         uses.setUserAgent(ctx.userAgent());
+         sessions.add(uses);
       }
-      return res;
+      if (sessions.size() > 0) {
+         ServiceResponse res = authRepository.saveSessions(sessions);
+         if (res.isOK()) {
+            ctx.cookie(Consts.Cookie.SESSION + user.getId(), token);
+         }
+         return res;
+      }
+      return Responses.PermissionProblem.UNAUTHORIZED;
    }
 
 }

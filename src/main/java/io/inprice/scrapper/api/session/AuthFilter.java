@@ -1,7 +1,6 @@
 package io.inprice.scrapper.api.session;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.eclipse.jetty.http.HttpStatus;
@@ -10,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.app.auth.SessionHelper;
 import io.inprice.scrapper.api.app.member.MemberRole;
+import io.inprice.scrapper.api.app.user.Membership;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.HandlerInterruptException;
@@ -59,25 +59,40 @@ public class AuthFilter implements Handler {
       if (URI.charAt(URI.length()-1) == '/') URI = URI.substring(0, URI.length()-1);
 
       if (isAuthenticationNeeded(URI)) {
-         String token = extractToken(ctx);
-         if (token == null) {
-            ctx.status(HttpStatus.UNAUTHORIZED_401);
-         } else {
-            AuthUser authUser = SessionHelper.fromToken(token);
-            if (authUser == null) {
-               ctx.status(HttpStatus.UNAUTHORIZED_401);
-            } else {
-               if (!MemberRole.ADMIN.name().equals(authUser.getRole()) && URI.startsWith(Consts.Paths.ADMIN_BASE)) {
-                  ctx.status(HttpStatus.FORBIDDEN_403);
-               } else
-               // viewers should be able to update their passwords
-               if (MemberRole.VIEWER.name().equals(authUser.getRole()) && sensitiveMethodsSet.contains(ctx.method())) {
-                  if (URI.indexOf(Consts.Paths.User.BASE + "/") < 0) {
-                     ctx.status(HttpStatus.FORBIDDEN_403);
+
+         Long userId = NumberUtils.toLong(ctx.header(Consts.USER_ID));
+         Long companyId = NumberUtils.toLong(ctx.header(Consts.COMPANY_ID));
+
+         ctx.status(HttpStatus.UNAUTHORIZED_401);
+
+         if (userId != null && userId > 0 && companyId != null && companyId > 0) {
+
+            String token = ctx.cookie(Consts.Cookie.SESSION + userId);
+            if (token != null) {
+
+               AuthUser authUser = SessionHelper.fromToken(token);
+               if (authUser != null) {
+
+                  Membership membership = authUser.getMemberships().get(companyId);
+                  if (membership != null) {
+
+                     if (URI.startsWith(Consts.Paths.ADMIN_BASE)
+                     && !MemberRole.ADMIN.equals(membership.getRole())) {
+                        ctx.status(HttpStatus.FORBIDDEN_403);
+
+                     } else 
+                     if (MemberRole.VIEWER.equals(membership.getRole())
+                     && sensitiveMethodsSet.contains(ctx.method())
+                     && URI.indexOf(Consts.Paths.User.BASE + "/") < 0) {
+                        ctx.status(HttpStatus.FORBIDDEN_403);
+
+                     } else {
+                        ctx.status(HttpStatus.OK_200);
+                        CurrentUser.set(authUser, companyId);
+                     }
                   }
                }
             }
-            if (ctx.status() < 400) CurrentUser.setAuthUser(authUser);
          }
       }
 
@@ -91,20 +106,6 @@ public class AuthFilter implements Handler {
 
    private boolean isAuthenticationNeeded(String uri) {
       return !(allowedURIs.contains(uri));
-   }
-
-   private String extractToken(Context ctx) {
-      String token = null;
-      try {
-         int sesNo = NumberUtils.toInteger(ctx.header(Consts.SESSION_NO));
-         if (sesNo > -1) {
-            List<String> tokens = ctx.cookieStore(Consts.Cookie.SESSIONS);
-            if (tokens != null && tokens.size() > sesNo) {
-               return tokens.get(sesNo);
-            }
-         }
-      } catch (Exception ignored) {}
-      return token;
    }
 
 }
