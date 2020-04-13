@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,7 @@ public class AuthService {
                if (hash.equals(user.getPasswordHash())) {
                   found = memberRepository.getUserCompanies(user.getEmail());
                   if (found.isOK()) {
+                     terminateSession(ctx, user.getId()); //if already logged in
                      user.setCompanies(found.getData());
                      return createSession(ctx, user);
                   } else {
@@ -132,23 +134,37 @@ public class AuthService {
    }
 
    public ServiceResponse logout(Context ctx) {
-      boolean result = false;
+      int successfulCounter = 0;
       for (Entry<String, String> entry : ctx.cookieMap().entrySet()) {
          if (entry.getKey().startsWith(Consts.Cookie.SESSION)) {
 
-            AuthUser authUser = SessionHelper.fromToken(entry.getValue());
-            if (authUser != null) {
-               result = true;
-               authRepository.deleteSession(authUser);
-               ctx.removeCookie(entry.getKey());
-               log.info("Logout {}", authUser.toString());
+            if (StringUtils.isNotBlank(entry.getValue())) {
+               AuthUser authUser = SessionHelper.fromToken(entry.getValue());
+               if (authUser != null) {
+                  if (authRepository.deleteSession(authUser)) successfulCounter++;
+                  ctx.removeCookie(entry.getKey());
+                  log.info("Logout {}", authUser.toString());
+               }
             }
          }
       }
-      if (result) {
+      if (successfulCounter > 0) {
          return Responses.OK;
       } else {
          return Responses.Already.LOGGED_OUT;
+      }
+   }
+
+   public void terminateSession(Context ctx, Long userId) {
+      String key = Consts.Cookie.SESSION + userId;
+      String token = ctx.cookieMap().get(key);
+      if (StringUtils.isNotBlank(token)) {
+         AuthUser authUser = SessionHelper.fromToken(token);
+         if (authUser != null) {
+            authRepository.deleteSession(authUser);
+            ctx.removeCookie(key);
+            log.info("Logout {}", authUser.toString());
+         }
       }
    }
 

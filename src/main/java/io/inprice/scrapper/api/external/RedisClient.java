@@ -18,21 +18,28 @@ import io.inprice.scrapper.api.meta.RateLimiterType;
 
 public class RedisClient {
 
-   private static final RedissonClient client;
+   private static RedissonClient client;
 
-   private static final RSetCache<String> limitedIpsSet;
-   private static final RMapCache<String, UserSession> sessionMap;
+   private static RSetCache<String> limitedIpsSet;
+   private static RMapCache<String, UserSession> sessionMap;
 
    static {
       final String redisPass = Props.getRedis_Password();
 
       Config config = new Config();
-      config.useSingleServer().setAddress(String.format("redis://%s:%d", Props.getRedis_Host(), Props.getRedis_Port()))
-            .setPassword(!StringUtils.isBlank(redisPass) ? redisPass : null);
+      config
+         .useSingleServer()
+         .setAddress(String.format("redis://%s:%d", Props.getRedis_Host(), Props.getRedis_Port()))
+         .setPassword(!StringUtils.isBlank(redisPass) ? redisPass : null);
 
       client = Redisson.create(config);
+      client.getNodesGroup().pingAll();
       limitedIpsSet = client.getSetCache("api:limited:ips");
       sessionMap = client.getMapCache("api:token:sessions");
+   }
+
+   public static void shutdown() {
+      client.shutdown();
    }
 
    public static ServiceResponse isIpRateLimited(RateLimiterType type, String ip) {
@@ -72,10 +79,6 @@ public class RedisClient {
 
    public static RedissonClient getClient() {
       return client;
-   }
-
-   public static void shutdown() {
-      client.shutdown();
    }
 
 }

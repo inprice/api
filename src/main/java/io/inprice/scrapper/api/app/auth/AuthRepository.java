@@ -43,9 +43,8 @@ public class AuthRepository {
       List<String> deletedList = new ArrayList<>(authUser.getCompanies().size());
 
       for (UserCompany ms : authUser.getCompanies().values()) {
-         if (RedisClient.removeSesion(ms.getToken())) {
-            deletedList.add(ms.getToken());
-         }
+         RedisClient.removeSesion(ms.getToken());
+         deletedList.add(ms.getToken());
       }
 
       if (deletedList.size() > 0) {
