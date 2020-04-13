@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.info;
+package io.inprice.scrapper.api.app.auth;
 
 import java.io.Serializable;
 import java.util.Map;

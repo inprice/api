@@ -13,7 +13,7 @@ import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.HandlerInterruptException;
-import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.app.auth.AuthUser;
 import io.inprice.scrapper.api.utils.NumberUtils;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;

@@ -16,7 +16,6 @@ import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.ServiceResponse;
 
 public class AuthRepository {

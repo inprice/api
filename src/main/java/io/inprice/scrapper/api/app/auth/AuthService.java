@@ -29,7 +29,6 @@ import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.info.AuthUser;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
 import io.javalin.http.Context;
@@ -56,12 +55,16 @@ public class AuthService {
                String salt = user.getPasswordSalt();
                String hash = BCrypt.hashpw(dto.getPassword(), salt);
                if (hash.equals(user.getPasswordHash())) {
-                  found = memberRepository.getUserCompanies(user.getEmail());
-                  if (found.isOK()) {
-                     terminateSession(ctx, user.getId()); //if already logged in
-                     user.setCompanies(found.getData());
-                     return createSession(ctx, user);
+                  Map<String, Long> oldSession = findSession(ctx, user.getId()); //if already logged in
+                  if (oldSession != null) {
+                     return new ServiceResponse(oldSession);
                   } else {
+                     found = memberRepository.getUserCompanies(user.getEmail());
+                     if (found.isOK()) {
+                        user.setCompanies(found.getData());
+                        Map<String, Long> newSession = createSession(ctx, user);
+                        if (newSession != null) return new ServiceResponse(newSession);
+                     }
                      return Responses.PermissionProblem.NO_COMPANY;
                   }
                }
@@ -120,7 +123,8 @@ public class AuthService {
                if (res.isOK()) {
                   TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
                   authRepository.deleteByUserId(user.getId());
-                  return createSession(ctx, user);
+                  Map<String, Long> newSession = createSession(ctx, user);
+                  if (newSession != null) return new ServiceResponse(newSession);
                }
             } else {
                TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
@@ -155,31 +159,33 @@ public class AuthService {
       }
    }
 
-   public void terminateSession(Context ctx, Long userId) {
+   public Map<String, Long> findSession(Context ctx, Long userId) {
       String key = Consts.Cookie.SESSION + userId;
       String token = ctx.cookieMap().get(key);
       if (StringUtils.isNotBlank(token)) {
          AuthUser authUser = SessionHelper.fromToken(token);
          if (authUser != null) {
-            authRepository.deleteSession(authUser);
-            ctx.removeCookie(key);
-            log.info("Logout {}", authUser.toString());
+            Long companyId = authUser.getCompanies().entrySet().iterator().next().getKey();
+            return buildSession(userId, companyId);
          }
       }
+      return null;
    }
 
-   public ServiceResponse createSession(Context ctx, User user) {
+   public Map<String, Long> createSession(Context ctx, User user) {
       AuthUser authUser = new AuthUser();
       authUser.setId(user.getId());
       authUser.setEmail(user.getEmail());
       authUser.setName(user.getName());
       authUser.setCompanies(user.getCompanies());
 
+      Long companyId = null;
       String token = SessionHelper.toToken(authUser);
       UserAgent ua = UserAgent.parseUserAgentString(ctx.userAgent());
 
       List<UserSession> sessions = new ArrayList<>();
       for (Entry<Long, UserCompany> entry : user.getCompanies().entrySet()) {
+         if (companyId == null) companyId = entry.getKey();
          UserSession uses = new UserSession();
          uses.setToken(entry.getValue().getToken());
          uses.setUserId(user.getId());
@@ -194,10 +200,17 @@ public class AuthService {
          ServiceResponse res = authRepository.saveSessions(sessions);
          if (res.isOK()) {
             ctx.cookie(Consts.Cookie.SESSION + user.getId(), token);
+            return buildSession(user.getId(), companyId);
          }
-         return res;
       }
-      return Responses.PermissionProblem.UNAUTHORIZED;
+      return null;
+   }
+
+   private Map<String, Long> buildSession(Long userId, Long companyId) {
+      Map<String, Long> session = new HashMap<>(2);
+      session.put("userId", userId);
+      session.put("companyId", companyId);
+      return session;
    }
 
 }

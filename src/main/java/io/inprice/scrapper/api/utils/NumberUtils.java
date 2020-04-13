@@ -1,5 +1,7 @@
 package io.inprice.scrapper.api.utils;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class NumberUtils {
 
    public static String extractPrice(String numString) {
@@ -28,25 +30,29 @@ public class NumberUtils {
    }
 
    public static Integer toInteger(String val) {
-      if (val != null && !val.trim().isEmpty()) {
-         try {
-            return Integer.parseInt(val);
-         } catch (Exception e) {
-            //
-         }
-      }
-      return null;
+      return toInteger(val, null);
    }
 
    public static Long toLong(String val) {
-      if (val != null && !val.trim().isEmpty()) {
+      return toLong(val, null);
+   }
+
+   public static Integer toInteger(String val, Integer defauld) {
+      if (StringUtils.isNotBlank(val)) {
+         try {
+            return Integer.parseInt(val);
+         } catch (Exception ignored) { }
+      }
+      return defauld;
+   }
+
+   public static Long toLong(String val, Long defauld) {
+      if (StringUtils.isNotBlank(val)) {
          try {
             return Long.parseLong(val);
-         } catch (Exception e) {
-            //
-         }
+         } catch (Exception ignored) { }
       }
-      return null;
+      return defauld;
    }
 
 }

@@ -1,7 +1,7 @@
 package io.inprice.scrapper.api.session;
 
 import io.inprice.scrapper.api.app.user.UserCompany;
-import io.inprice.scrapper.api.info.AuthUser;
+import io.inprice.scrapper.api.app.auth.AuthUser;
 
 class ThreadVariables {
 

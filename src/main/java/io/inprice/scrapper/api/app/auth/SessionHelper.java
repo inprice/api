@@ -4,7 +4,6 @@ import java.util.Date;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.inprice.scrapper.api.info.AuthUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
