@@ -1,7 +1,8 @@
 package io.inprice.scrapper.api.session;
 
-import io.inprice.scrapper.api.app.member.MemberRole;
 import io.inprice.scrapper.api.app.auth.AuthUser;
+import io.inprice.scrapper.api.app.member.MemberRole;
+import io.inprice.scrapper.api.app.user.UserCompany;
 
 public class CurrentUser {
 
@@ -12,8 +13,8 @@ public class CurrentUser {
       }
    };
 
-   static void set(AuthUser authUser, Long companyId) {
-      THREAD_VARIABLES.get().setAuthUser(authUser, companyId);
+   static void set(AuthUser authUser, UserCompany uc) {
+      THREAD_VARIABLES.get().setAuthUser(authUser, uc);
    }
 
    public static Long getUserId() {
@@ -29,7 +30,7 @@ public class CurrentUser {
    }
 
    public static Long getCompanyId() {
-      return THREAD_VARIABLES.get().getCompanyId();
+      return THREAD_VARIABLES.get().getCompany().getId();
    }
 
    public static String getCompanyName() {

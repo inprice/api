@@ -1,20 +1,19 @@
 package io.inprice.scrapper.api.session;
 
-import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.app.auth.AuthUser;
+import io.inprice.scrapper.api.app.user.UserCompany;
 
 class ThreadVariables {
 
    private AuthUser authUser;
    private UserCompany company;
-   private Long companyId;
 
    ThreadVariables() {
    }
 
-   public void setAuthUser(AuthUser authUser, Long companyId) {
+   public void setAuthUser(AuthUser authUser, UserCompany userCompany) {
       this.authUser = authUser;
-      this.company = authUser.getCompanies().get(companyId);
+      this.company = userCompany;
    }
 
    public AuthUser getAuthUser() {
@@ -23,10 +22,6 @@ class ThreadVariables {
 
    public UserCompany getCompany() {
       return company;
-   }
-
-   public Long getCompanyId() {
-      return companyId;
    }
 
 }

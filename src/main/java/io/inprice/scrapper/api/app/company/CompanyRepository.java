@@ -5,9 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -166,9 +165,9 @@ public class CompanyRepository {
                      user.setName(dto.getUserName());
                      user.setCreatedAt(new Date());
 
-                     Map<Long, UserCompany> companies = new HashMap<>(1);
-                     companies.put(companyId, new UserCompany(dto.getCompanyName(), MemberRole.ADMIN));
-                     user.setCompanies(companies);
+                     user.setCompanies(
+                        Arrays.asList(new UserCompany(companyId, dto.getCompanyName(), MemberRole.ADMIN))
+                     );
                   }
                   response = new ServiceResponse(user);
 

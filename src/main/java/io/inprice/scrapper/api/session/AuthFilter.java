@@ -7,13 +7,16 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.scrapper.api.app.auth.AuthRepository;
+import io.inprice.scrapper.api.app.auth.AuthUser;
 import io.inprice.scrapper.api.app.auth.SessionHelper;
 import io.inprice.scrapper.api.app.member.MemberRole;
 import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.external.Props;
+import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.HandlerInterruptException;
-import io.inprice.scrapper.api.app.auth.AuthUser;
+import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.utils.NumberUtils;
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
@@ -21,6 +24,7 @@ import io.javalin.http.Handler;
 public class AuthFilter implements Handler {
 
    private static final Logger log = LoggerFactory.getLogger(AuthFilter.class);
+   private final AuthRepository authRepository = Beans.getSingleton(AuthRepository.class);
 
    private final Set<String> allowedURIs;
    private final Set<String> sensitiveMethodsSet;
@@ -60,12 +64,12 @@ public class AuthFilter implements Handler {
 
       if (isAuthenticationNeeded(URI)) {
 
-         Long userId = NumberUtils.toLong(ctx.header(Consts.USER_ID));
-         Long companyId = NumberUtils.toLong(ctx.header(Consts.COMPANY_ID));
-
          ctx.status(HttpStatus.UNAUTHORIZED_401);
 
-         if (userId != null && userId > 0 && companyId != null && companyId > 0) {
+         Long userId = NumberUtils.toLong(ctx.header(Consts.USER_ID), 0L);
+         Integer companyNo = NumberUtils.toInteger(ctx.header(Consts.COMPANY_NO), -1);
+
+         if (userId > 0 && companyNo > -1) {
 
             String token = ctx.cookie(Consts.Cookie.SESSION + userId);
             if (token != null) {
@@ -73,25 +77,31 @@ public class AuthFilter implements Handler {
                AuthUser authUser = SessionHelper.fromToken(token);
                if (authUser != null) {
 
-                  UserCompany membership = authUser.getCompanies().get(companyId);
-                  if (membership != null) {
+                  UserCompany uc = authUser.getCompanies().get(companyNo);
+                  if (uc != null) {
 
-                     if (URI.startsWith(Consts.Paths.ADMIN_BASE)
-                     && !MemberRole.ADMIN.equals(membership.getRole())) {
-                        ctx.status(HttpStatus.FORBIDDEN_403);
+                     ServiceResponse res = authRepository.findByToken(uc.getToken());
+                     if (res.isOK()) {
 
-                     } else 
-                     if (MemberRole.VIEWER.equals(membership.getRole())
-                     && sensitiveMethodsSet.contains(ctx.method())
-                     && URI.indexOf(Consts.Paths.User.BASE + "/") < 0) {
-                        ctx.status(HttpStatus.FORBIDDEN_403);
+                        if (URI.startsWith(Consts.Paths.ADMIN_BASE)
+                        && !MemberRole.ADMIN.equals(uc.getRole())) {
+                           ctx.status(HttpStatus.FORBIDDEN_403);
 
-                     } else {
-                        ctx.status(HttpStatus.OK_200);
-                        CurrentUser.set(authUser, companyId);
+                        } else 
+                        if (MemberRole.VIEWER.equals(uc.getRole())
+                        && sensitiveMethodsSet.contains(ctx.method())
+                        && URI.indexOf(Consts.Paths.User.BASE + "/") < 0) {
+                           ctx.status(HttpStatus.FORBIDDEN_403);
+
+                        } else {
+                           CurrentUser.set(authUser, uc);
+                        }
                      }
                   }
                }
+            }
+            if (ctx.status() >= 400) {
+               ctx.removeCookie(Consts.Cookie.SESSION + userId);
             }
          }
       }

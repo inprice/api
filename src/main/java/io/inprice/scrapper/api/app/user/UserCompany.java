@@ -9,6 +9,7 @@ public class UserCompany implements Serializable {
 
    private static final long serialVersionUID = -3674182848805470673L;
 
+   private Long id;
    private String name;
    private MemberRole role;
    private String token;
@@ -16,10 +17,19 @@ public class UserCompany implements Serializable {
    public UserCompany() {
    }
 
-   public UserCompany(String name, MemberRole role) {
+   public UserCompany(Long id, String name, MemberRole role) {
+      this.id = id;
       this.name = name;
       this.role = role;
       this.token = UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
+   }
+
+   public Long getId() {
+      return id;
+   }
+
+   public void setId(Long id) {
+      this.id = id;
    }
 
    public String getName() {
@@ -44,7 +54,7 @@ public class UserCompany implements Serializable {
 
    @Override
    public String toString() {
-      return "[name=" + name + ", role=" + role + ", token=" + token + "]";
+      return "[id=" + id + ", name=" + name + ", role=" + role + ", token=" + token + "]";
    }
 
 }

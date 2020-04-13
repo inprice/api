@@ -165,7 +165,7 @@ public class AuthService {
       if (StringUtils.isNotBlank(token)) {
          AuthUser authUser = SessionHelper.fromToken(token);
          if (authUser != null) {
-            Long companyId = authUser.getCompanies().entrySet().iterator().next().getKey();
+            Long companyId = authUser.getCompanies().get(0).getId();
             return buildSession(userId, companyId);
          }
       }
@@ -179,17 +179,15 @@ public class AuthService {
       authUser.setName(user.getName());
       authUser.setCompanies(user.getCompanies());
 
-      Long companyId = null;
       String token = SessionHelper.toToken(authUser);
       UserAgent ua = UserAgent.parseUserAgentString(ctx.userAgent());
 
       List<UserSession> sessions = new ArrayList<>();
-      for (Entry<Long, UserCompany> entry : user.getCompanies().entrySet()) {
-         if (companyId == null) companyId = entry.getKey();
+      for (UserCompany uc: user.getCompanies()) {
          UserSession uses = new UserSession();
-         uses.setToken(entry.getValue().getToken());
+         uses.setToken(uc.getToken());
          uses.setUserId(user.getId());
-         uses.setCompanyId(entry.getKey());
+         uses.setCompanyId(uc.getId());
          uses.setIp(ctx.ip());
          uses.setOs(ua.getOperatingSystem().getName());
          uses.setBrowser(ua.getBrowser().getName());
@@ -200,7 +198,7 @@ public class AuthService {
          ServiceResponse res = authRepository.saveSessions(sessions);
          if (res.isOK()) {
             ctx.cookie(Consts.Cookie.SESSION + user.getId(), token);
-            return buildSession(user.getId(), companyId);
+            return buildSession(user.getId(), user.getCompanies().get(0).getId());
          }
       }
       return null;

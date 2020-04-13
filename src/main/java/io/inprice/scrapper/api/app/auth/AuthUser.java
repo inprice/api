@@ -1,7 +1,7 @@
 package io.inprice.scrapper.api.app.auth;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.List;
 
 import io.inprice.scrapper.api.app.user.UserCompany;
 
@@ -12,7 +12,7 @@ public class AuthUser implements Serializable {
    private Long id;
    private String email;
    private String name;
-   private Map<Long, UserCompany> companies;
+   private List<UserCompany> companies;
 
    public Long getId() {
       return id;
@@ -38,11 +38,11 @@ public class AuthUser implements Serializable {
       this.name = name;
    }
 
-   public Map<Long, UserCompany> getCompanies() {
+   public List<UserCompany> getCompanies() {
       return companies;
    }
 
-   public void setCompanies(Map<Long, UserCompany> companies) {
+   public void setCompanies(List<UserCompany> companies) {
       this.companies = companies;
    }
 

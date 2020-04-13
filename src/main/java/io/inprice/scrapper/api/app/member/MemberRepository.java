@@ -4,9 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,9 +60,11 @@ public class MemberRepository {
             COMPANY_SELECT_STANDARD_QUERY + " where m.active = true and m.email = '%s' and m.status = '%s' order by m.role, m.company_id",
             SqlHelper.clear(email), MemberStatus.JOINED), this::map);
       if (members != null && members.size() > 0) {
-         Map<Long, UserCompany> companies = new HashMap<>(members.size());
-         for (Member member : members) {
-            companies.put(member.getCompanyId(), new UserCompany(member.getCompanyName(), member.getRole()));
+         List<UserCompany> companies = new ArrayList<>(members.size());
+         for (Member mem: members) {
+            companies.add(
+               new UserCompany(mem.getCompanyId(), mem.getCompanyName(), mem.getRole())
+            );
          }
          return new ServiceResponse(companies);
       }
