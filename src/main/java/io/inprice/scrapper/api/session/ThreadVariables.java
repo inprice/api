@@ -1,27 +1,32 @@
 package io.inprice.scrapper.api.session;
 
-import io.inprice.scrapper.api.app.user.Membership;
+import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.info.AuthUser;
 
 class ThreadVariables {
 
    private AuthUser authUser;
-   private Membership membership;
+   private UserCompany company;
+   private Long companyId;
 
    ThreadVariables() {
    }
 
    public void setAuthUser(AuthUser authUser, Long companyId) {
       this.authUser = authUser;
-      this.membership = authUser.getMemberships().get(companyId);
+      this.company = authUser.getCompanies().get(companyId);
    }
 
    public AuthUser getAuthUser() {
       return authUser;
    }
 
-   public Membership getMembership() {
-      return membership;
+   public UserCompany getCompany() {
+      return company;
+   }
+
+   public Long getCompanyId() {
+      return companyId;
    }
 
 }

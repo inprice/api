@@ -5,8 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +17,8 @@ import io.inprice.scrapper.api.app.member.MemberStatus;
 import io.inprice.scrapper.api.app.plan.PlanStatus;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
-import io.inprice.scrapper.api.app.user.Membership;
 import io.inprice.scrapper.api.app.user.User;
+import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.CompanyDTO;
@@ -164,11 +165,10 @@ public class CompanyRepository {
                      user.setEmail(dto.getEmail());
                      user.setName(dto.getUserName());
                      user.setCreatedAt(new Date());
-                     user.setMemberships(
-                        Arrays.asList(
-                           new Membership(companyId, dto.getCompanyName(), MemberRole.ADMIN)
-                        )
-                     );
+
+                     Map<Long, UserCompany> companies = new HashMap<>(1);
+                     companies.put(companyId, new UserCompany(dto.getCompanyName(), MemberRole.ADMIN));
+                     user.setCompanies(companies);
                   }
                   response = new ServiceResponse(user);
 

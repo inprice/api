@@ -1,26 +1,25 @@
 package io.inprice.scrapper.api.info;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 
-import io.inprice.scrapper.api.app.user.Membership;
+import io.inprice.scrapper.api.app.user.UserCompany;
 
 public class AuthUser implements Serializable {
 
    private static final long serialVersionUID = 5763780271600754333L;
 
-   private Long userId;
+   private Long id;
    private String email;
-   private String userName;
-   private Map<Long, Membership> memberships = new HashMap<>();
+   private String name;
+   private Map<Long, UserCompany> companies;
 
-   public Long getUserId() {
-      return userId;
+   public Long getId() {
+      return id;
    }
 
-   public void setUserId(Long userId) {
-      this.userId = userId;
+   public void setId(Long id) {
+      this.id = id;
    }
 
    public String getEmail() {
@@ -31,25 +30,25 @@ public class AuthUser implements Serializable {
       this.email = email;
    }
 
-   public String getUserName() {
-      return userName;
+   public String getName() {
+      return name;
    }
 
-   public void setUserName(String userName) {
-      this.userName = userName;
+   public void setName(String name) {
+      this.name = name;
    }
 
-   public Map<Long, Membership> getMemberships() {
-      return memberships;
+   public Map<Long, UserCompany> getCompanies() {
+      return companies;
    }
 
-   public void setMemberships(Map<Long, Membership> memberships) {
-      this.memberships = memberships;
+   public void setCompanies(Map<Long, UserCompany> companies) {
+      this.companies = companies;
    }
 
    @Override
    public String toString() {
-      return "[email=" + email + ", userId=" + userId + ", userName=" + userName + "]";
+      return "[id=" + id + ", email=" + email + ", name=" + name + "]";
    }
 
 }

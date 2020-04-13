@@ -17,7 +17,7 @@ public class CurrentUser {
    }
 
    public static Long getUserId() {
-      return THREAD_VARIABLES.get().getAuthUser().getUserId();
+      return THREAD_VARIABLES.get().getAuthUser().getId();
    }
 
    public static String getEmail() {
@@ -25,19 +25,19 @@ public class CurrentUser {
    }
 
    public static String getUserName() {
-      return THREAD_VARIABLES.get().getAuthUser().getUserName();
+      return THREAD_VARIABLES.get().getAuthUser().getName();
    }
 
    public static Long getCompanyId() {
-      return THREAD_VARIABLES.get().getMembership().getCompanyId();
+      return THREAD_VARIABLES.get().getCompanyId();
    }
 
    public static String getCompanyName() {
-      return THREAD_VARIABLES.get().getMembership().getCompanyName();
+      return THREAD_VARIABLES.get().getCompany().getName();
    }
 
    public static MemberRole getRole() {
-      return THREAD_VARIABLES.get().getMembership().getRole();
+      return THREAD_VARIABLES.get().getCompany().getRole();
    }
 
    public static void cleanup() {

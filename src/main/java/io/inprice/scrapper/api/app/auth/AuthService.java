@@ -13,7 +13,7 @@ import eu.bitwalker.useragentutils.UserAgent;
 import io.inprice.scrapper.api.app.member.MemberRepository;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
-import io.inprice.scrapper.api.app.user.Membership;
+import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.consts.Consts;
@@ -55,9 +55,9 @@ public class AuthService {
                String salt = user.getPasswordSalt();
                String hash = BCrypt.hashpw(dto.getPassword(), salt);
                if (hash.equals(user.getPasswordHash())) {
-                  found = memberRepository.getMembershipByEmail(user.getEmail());
+                  found = memberRepository.getUserCompanies(user.getEmail());
                   if (found.isOK()) {
-                     user.setMemberships(found.getData());
+                     user.setCompanies(found.getData());
                      return createSession(ctx, user);
                   } else {
                      return Responses.PermissionProblem.NO_COMPANY;
@@ -154,22 +154,20 @@ public class AuthService {
 
    public ServiceResponse createSession(Context ctx, User user) {
       AuthUser authUser = new AuthUser();
-      authUser.setUserId(user.getId());
+      authUser.setId(user.getId());
       authUser.setEmail(user.getEmail());
-      authUser.setUserName(user.getName());
-      for (Membership ms : user.getMemberships()) {
-         authUser.getMemberships().put(ms.getCompanyId(), ms);
-      }
+      authUser.setName(user.getName());
+      authUser.setCompanies(user.getCompanies());
 
       String token = SessionHelper.toToken(authUser);
       UserAgent ua = UserAgent.parseUserAgentString(ctx.userAgent());
 
       List<UserSession> sessions = new ArrayList<>();
-      for (Membership ms : user.getMemberships()) {
+      for (Entry<Long, UserCompany> entry : user.getCompanies().entrySet()) {
          UserSession uses = new UserSession();
-         uses.setToken(ms.getToken());
+         uses.setToken(entry.getValue().getToken());
          uses.setUserId(user.getId());
-         uses.setCompanyId(ms.getCompanyId());
+         uses.setCompanyId(entry.getKey());
          uses.setIp(ctx.ip());
          uses.setOs(ua.getOperatingSystem().getName());
          uses.setBrowser(ua.getBrowser().getName());

@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.app.user.Membership;
+import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.RedisClient;
@@ -40,9 +40,9 @@ public class AuthRepository {
    }
 
    public boolean deleteSession(AuthUser authUser) {
-      List<String> deletedList = new ArrayList<>(authUser.getMemberships().size());
+      List<String> deletedList = new ArrayList<>(authUser.getCompanies().size());
 
-      for (Membership ms : authUser.getMemberships().values()) {
+      for (UserCompany ms : authUser.getCompanies().values()) {
          if (RedisClient.removeSesion(ms.getToken())) {
             deletedList.add(ms.getToken());
          }

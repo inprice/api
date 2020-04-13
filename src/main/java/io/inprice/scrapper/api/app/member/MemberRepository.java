@@ -4,13 +4,14 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.app.user.Membership;
+import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.MemberChangeRoleDTO;
 import io.inprice.scrapper.api.external.Database;
@@ -55,16 +56,16 @@ public class MemberRepository {
       return new ServiceResponse(members);
    }
 
-   public ServiceResponse getMembershipByEmail(String email) {
+   public ServiceResponse getUserCompanies(String email) {
       List<Member> members = db.findMultiple(String.format(
             COMPANY_SELECT_STANDARD_QUERY + " where m.active = true and m.email = '%s' and m.status = '%s' order by m.role, m.company_id",
             SqlHelper.clear(email), MemberStatus.JOINED), this::map);
       if (members != null && members.size() > 0) {
-         List<Membership> memberships = new ArrayList<>(members.size());
+         Map<Long, UserCompany> companies = new HashMap<>(members.size());
          for (Member member : members) {
-            memberships.add(new Membership(member.getCompanyId(), member.getCompanyName(), member.getRole()));
+            companies.put(member.getCompanyId(), new UserCompany(member.getCompanyName(), member.getRole()));
          }
-         return new ServiceResponse(memberships);
+         return new ServiceResponse(companies);
       }
       return Responses.NotFound.MEMBER;
    }

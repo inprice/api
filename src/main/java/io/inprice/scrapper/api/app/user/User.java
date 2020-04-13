@@ -2,7 +2,7 @@ package io.inprice.scrapper.api.app.user;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
+import java.util.Map;
 
 public class User implements Serializable {
 
@@ -16,7 +16,7 @@ public class User implements Serializable {
    private Date createdAt;
 
    //transient
-   private List<Membership> memberships;
+   private Map<Long, UserCompany> companies;
 
    public Long getId() {
       return id;
@@ -66,12 +66,12 @@ public class User implements Serializable {
       this.createdAt = createdAt;
    }
 
-   public List<Membership> getMemberships() {
-      return memberships;
+   public Map<Long, UserCompany> getCompanies() {
+      return companies;
    }
 
-   public void setMemberships(List<Membership> memberships) {
-      this.memberships = memberships;
+   public void setCompanies(Map<Long, UserCompany> companies) {
+      this.companies = companies;
    }
 
 }

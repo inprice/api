@@ -87,7 +87,7 @@ public class InvitationRepository {
                String.format("select * from member where email='%s' and company_id=%d",
                invitationDTO.getEmail(), invitationDTO.getCompanyId()), this::map);
 
-         res = checkMembership(member);
+         res = checkUserCompany(member);
          if (res.isOK()) {
 
             try (PreparedStatement pst = con.prepareStatement("update member set status=? where email=? and company_id=?")) {
@@ -143,7 +143,7 @@ public class InvitationRepository {
                con,
                String.format("select * from member where id=%d and email='%s'", memberId, CurrentUser.getEmail()), this::map);
 
-         res = checkMembership(member);
+         res = checkUserCompany(member);
          if (res.isOK()) {
 
             try (PreparedStatement pst = con.prepareStatement("update member set status=? where id=?")) {
@@ -190,7 +190,7 @@ public class InvitationRepository {
       return res;
    }
 
-   private ServiceResponse checkMembership(Member member) {
+   private ServiceResponse checkUserCompany(Member member) {
       ServiceResponse res = Responses.OK;
       if (member != null) {
          if (member.getActive() && MemberStatus.PENDING.equals(member.getStatus())) {

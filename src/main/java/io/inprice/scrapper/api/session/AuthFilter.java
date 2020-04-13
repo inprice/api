@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.app.auth.SessionHelper;
 import io.inprice.scrapper.api.app.member.MemberRole;
-import io.inprice.scrapper.api.app.user.Membership;
+import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.HandlerInterruptException;
@@ -73,7 +73,7 @@ public class AuthFilter implements Handler {
                AuthUser authUser = SessionHelper.fromToken(token);
                if (authUser != null) {
 
-                  Membership membership = authUser.getMemberships().get(companyId);
+                  UserCompany membership = authUser.getCompanies().get(companyId);
                   if (membership != null) {
 
                      if (URI.startsWith(Consts.Paths.ADMIN_BASE)
