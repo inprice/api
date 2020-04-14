@@ -2,7 +2,6 @@ package io.inprice.scrapper.api.app.user;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.List;
 
 public class User implements Serializable {
 
@@ -14,9 +13,6 @@ public class User implements Serializable {
    private String passwordHash;
    private String passwordSalt;
    private Date createdAt;
-
-   //transient
-   private List<UserCompany> companies;
 
    public Long getId() {
       return id;
@@ -64,14 +60,6 @@ public class User implements Serializable {
 
    public void setCreatedAt(Date createdAt) {
       this.createdAt = createdAt;
-   }
-
-   public List<UserCompany> getCompanies() {
-      return companies;
-   }
-
-   public void setCompanies(List<UserCompany> companies) {
-      this.companies = companies;
    }
 
 }

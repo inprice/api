@@ -1,8 +1,8 @@
 package io.inprice.scrapper.api.session;
 
 import io.inprice.scrapper.api.app.auth.AuthUser;
+import io.inprice.scrapper.api.app.auth.UserSession;
 import io.inprice.scrapper.api.app.member.MemberRole;
-import io.inprice.scrapper.api.app.user.UserCompany;
 
 public class CurrentUser {
 
@@ -13,12 +13,12 @@ public class CurrentUser {
       }
    };
 
-   static void set(AuthUser authUser, UserCompany uc) {
-      THREAD_VARIABLES.get().setAuthUser(authUser, uc);
+   static void set(AuthUser authUser, UserSession session, String companyName, MemberRole role) {
+      THREAD_VARIABLES.get().set(authUser, session, companyName, role);
    }
 
    public static Long getUserId() {
-      return THREAD_VARIABLES.get().getAuthUser().getId();
+      return THREAD_VARIABLES.get().getSession().getUserId();
    }
 
    public static String getEmail() {
@@ -30,15 +30,15 @@ public class CurrentUser {
    }
 
    public static Long getCompanyId() {
-      return THREAD_VARIABLES.get().getCompany().getId();
+      return THREAD_VARIABLES.get().getSession().getCompanyId();
    }
 
    public static String getCompanyName() {
-      return THREAD_VARIABLES.get().getCompany().getName();
+      return THREAD_VARIABLES.get().getCompanyName();
    }
 
    public static MemberRole getRole() {
-      return THREAD_VARIABLES.get().getCompany().getRole();
+      return THREAD_VARIABLES.get().getRole();
    }
 
    public static void cleanup() {

@@ -3,16 +3,19 @@ package io.inprice.scrapper.api.app.user;
 import java.io.Serializable;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.inprice.scrapper.api.app.member.MemberRole;
 
+@JsonIgnoreProperties(value = { "id" })
 public class UserCompany implements Serializable {
 
    private static final long serialVersionUID = -3674182848805470673L;
 
    private Long id;
+   private String hash;
    private String name;
    private MemberRole role;
-   private String token;
 
    public UserCompany() {
    }
@@ -21,15 +24,11 @@ public class UserCompany implements Serializable {
       this.id = id;
       this.name = name;
       this.role = role;
-      this.token = UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
+      this.hash = UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
    }
 
    public Long getId() {
       return id;
-   }
-
-   public void setId(Long id) {
-      this.id = id;
    }
 
    public String getName() {
@@ -48,13 +47,13 @@ public class UserCompany implements Serializable {
       this.role = role;
    }
 
-   public String getToken() {
-      return token;
+   public String getHash() {
+      return hash;
    }
 
    @Override
    public String toString() {
-      return "[id=" + id + ", name=" + name + ", role=" + role + ", token=" + token + "]";
+      return "[hash=" + hash + ", name=" + name + ", role=" + role + "]";
    }
 
 }

@@ -9,18 +9,9 @@ public class AuthUser implements Serializable {
 
    private static final long serialVersionUID = 5763780271600754333L;
 
-   private Long id;
    private String email;
    private String name;
    private List<UserCompany> companies;
-
-   public Long getId() {
-      return id;
-   }
-
-   public void setId(Long id) {
-      this.id = id;
-   }
 
    public String getEmail() {
       return email;
@@ -48,7 +39,7 @@ public class AuthUser implements Serializable {
 
    @Override
    public String toString() {
-      return "[id=" + id + ", email=" + email + ", name=" + name + "]";
+      return "[email=" + email + ", name=" + name + "]";
    }
 
 }

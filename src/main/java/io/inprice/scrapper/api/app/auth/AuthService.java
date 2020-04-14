@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.http.Cookie;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,13 +60,8 @@ public class AuthService {
                   if (oldSessionNo != null) {
                      return new ServiceResponse(oldSessionNo);
                   } else {
-                     found = memberRepository.getUserCompanies(user.getEmail());
-                     if (found.isOK()) {
-                        user.setCompanies(found.getData());
-                        Integer newSessionNo = createSession(ctx, user);
-                        if (newSessionNo != null) return new ServiceResponse(newSessionNo);
-                     }
-                     return Responses.PermissionProblem.NO_COMPANY;
+                     Integer newSessionNo = createSession(ctx, user);
+                     if (newSessionNo != null) return new ServiceResponse(newSessionNo);
                   }
                }
             }
@@ -150,14 +147,14 @@ public class AuthService {
                if (authUser != null) {
                   if (authRepository.deleteSession(authUser)) successfulCounter++;
                }
-               ctx.removeCookie(key);
                log.info("Logout {}", authUser.toString());
             }
+            ctx.removeCookie(key);
          } else {
             break;
          }
       }
-
+      
       if (successfulCounter > 0) {
          return Responses.OK;
       } else {
@@ -173,7 +170,12 @@ public class AuthService {
             String token = ctx.cookie(key);
             if (StringUtils.isNotBlank(token)) {
                AuthUser authUser = SessionHelper.fromToken(token);
-               if (authUser != null && authUser.getId().equals(userId)) return i;
+               if (authUser != null) {
+                  for (UserCompany uc: authUser.getCompanies()) {
+                     UserSession us = RedisClient.getSession(uc.getHash());
+                     if (us != null && us.getUserId().equals(userId)) return i;
+                  }
+               }
             }
          } else {
             break;
@@ -183,35 +185,40 @@ public class AuthService {
    }
 
    public Integer createSession(Context ctx, User user) {
-      AuthUser authUser = new AuthUser();
-      authUser.setId(user.getId());
-      authUser.setEmail(user.getEmail());
-      authUser.setName(user.getName());
-      authUser.setCompanies(user.getCompanies());
+      ServiceResponse found = memberRepository.getUserCompanies(user.getEmail());
+      if (found.isOK()) {
 
-      String token = SessionHelper.toToken(authUser);
-      UserAgent ua = UserAgent.parseUserAgentString(ctx.userAgent());
+         List<UserCompany> companies = found.getData();
 
-      List<UserSession> sessions = new ArrayList<>();
-      for (UserCompany uc: user.getCompanies()) {
-         UserSession uses = new UserSession();
-         uses.setToken(uc.getToken());
-         uses.setUserId(user.getId());
-         uses.setCompanyId(uc.getId());
-         uses.setIp(ctx.ip());
-         uses.setOs(ua.getOperatingSystem().getName());
-         uses.setBrowser(ua.getBrowser().getName());
-         uses.setUserAgent(ctx.userAgent());
-         sessions.add(uses);
-      }
-      if (sessions.size() > 0) {
-         ServiceResponse res = authRepository.saveSessions(sessions);
-         if (res.isOK()) {
-            for (int i = 0; i < Consts.Cookie.LIMIT; i++) {
-               String key = Consts.Cookie.SESSION + i;
-               if (! ctx.cookieMap().containsKey(key)) {
-                  ctx.cookie(key, token);
-                  return i;
+         AuthUser authUser = new AuthUser();
+         authUser.setEmail(user.getEmail());
+         authUser.setName(user.getName());
+         authUser.setCompanies(companies);
+
+         String token = SessionHelper.toToken(authUser);
+         UserAgent ua = UserAgent.parseUserAgentString(ctx.userAgent());
+
+         List<UserSession> sessions = new ArrayList<>();
+         for (UserCompany uc: companies) {
+            UserSession uses = new UserSession();
+            uses.setHash(uc.getHash());
+            uses.setUserId(user.getId());
+            uses.setCompanyId(uc.getId());
+            uses.setIp(ctx.ip());
+            uses.setOs(ua.getOperatingSystem().getName());
+            uses.setBrowser(ua.getBrowser().getName());
+            uses.setUserAgent(ctx.userAgent());
+            sessions.add(uses);
+         }
+         if (sessions.size() > 0) {
+            ServiceResponse res = authRepository.saveSessions(sessions);
+            if (res.isOK()) {
+               for (int i = 0; i < Consts.Cookie.LIMIT; i++) {
+                  String key = Consts.Cookie.SESSION + i;
+                  if (! ctx.cookieMap().containsKey(key) || StringUtils.isBlank(ctx.cookieMap().get(key))) {
+                     ctx.cookie(key, token);
+                     return i;
+                  }
                }
             }
          }

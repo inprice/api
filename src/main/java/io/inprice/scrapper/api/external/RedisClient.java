@@ -53,25 +53,25 @@ public class RedisClient {
 
    public static boolean addSesions(List<UserSession> sessions) {
       for (UserSession uses : sessions) {
-         sessionMap.put(uses.getToken(), uses);
+         sessionMap.put(uses.getHash(), uses);
       }
       return true;
    }
 
-   public static UserSession getSession(String md5Hash) {
-      return sessionMap.get(md5Hash);
+   public static UserSession getSession(String hash) {
+      return sessionMap.get(hash);
    }
 
-   public static boolean removeSesion(String md5Hash) {
-      UserSession ses = sessionMap.remove(md5Hash);
+   public static boolean removeSesion(String hash) {
+      UserSession ses = sessionMap.remove(hash);
       return ses != null;
    }
 
-   public static boolean refreshSesion(String md5Hash) {
-      UserSession uses = sessionMap.get(md5Hash);
+   public static boolean refreshSesion(String hash) {
+      UserSession uses = sessionMap.get(hash);
       if (uses != null) {
          uses.setAccessedAt(new Date());
-         sessionMap.put(uses.getToken(), uses);
+         sessionMap.put(uses.getHash(), uses);
          return true;
       }
       return false;

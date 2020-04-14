@@ -3,6 +3,7 @@ package io.inprice.scrapper.api.session;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.scrapper.api.app.auth.AuthRepository;
 import io.inprice.scrapper.api.app.auth.AuthUser;
 import io.inprice.scrapper.api.app.auth.SessionHelper;
+import io.inprice.scrapper.api.app.auth.UserSession;
 import io.inprice.scrapper.api.app.member.MemberRole;
 import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.consts.Consts;
@@ -79,7 +81,7 @@ public class AuthFilter implements Handler {
 
                if (ctx.cookieMap().containsKey(Consts.Cookie.SESSION + 0)) {
                   token = ctx.cookie(Consts.Cookie.SESSION + 0);
-                  if (token != null) {
+                  if (StringUtils.isNotBlank(token)) {
                      userNo = 0;
                      companyNo = 0;
                   } else {
@@ -90,14 +92,14 @@ public class AuthFilter implements Handler {
                token = ctx.cookie(Consts.Cookie.SESSION + 0);
             }
 
-            if (token != null) {
+            if (StringUtils.isNotBlank(token)) {
                AuthUser authUser = SessionHelper.fromToken(token);
                if (authUser != null) {
 
                   UserCompany uc = authUser.getCompanies().get(companyNo);
                   if (uc != null) {
 
-                     ServiceResponse res = authRepository.findByToken(uc.getToken());
+                     ServiceResponse res = authRepository.findByHash(uc.getHash());
                      if (res.isOK()) {
 
                         if (URI.startsWith(Consts.Paths.ADMIN_BASE)
@@ -111,13 +113,14 @@ public class AuthFilter implements Handler {
                            ctx.status(HttpStatus.FORBIDDEN_403);
 
                         } else {
-                           CurrentUser.set(authUser, uc);
+                           UserSession session = res.getData();
+                           CurrentUser.set(authUser, session, uc.getName(), uc.getRole());
                         }
                      }
                   }
                }
             }
-            if (ctx.status() >= 400 || token == null) {
+            if (ctx.status() >= 400 || StringUtils.isBlank(token)) {
                ctx.removeCookie(Consts.Cookie.SESSION + userNo);
             }
          }

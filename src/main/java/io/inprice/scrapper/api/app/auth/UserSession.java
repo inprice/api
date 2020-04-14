@@ -7,7 +7,7 @@ public class UserSession implements Serializable {
 
    private static final long serialVersionUID = 5073154009606337304L;
 
-   private String token;
+   private String hash;
    private Long userId;
    private Long companyId;
    private String ip;
@@ -16,12 +16,12 @@ public class UserSession implements Serializable {
    private String userAgent;
    private Date accessedAt = new Date();
 
-   public String getToken() {
-      return token;
+   public String getHash() {
+      return hash;
    }
 
-   public void setToken(String token) {
-      this.token = token;
+   public void setHash(String hash) {
+      this.hash = hash;
    }
 
    public Long getUserId() {

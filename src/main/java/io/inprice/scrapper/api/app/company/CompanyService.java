@@ -89,7 +89,7 @@ public class CompanyService {
             if (newSessionNo != null) return new ServiceResponse(newSessionNo);
          }
          return res;
-      } else if (token != null) {
+      } else if (StringUtils.isNotBlank(token)) {
          TokenService.get(TokenType.REGISTER_REQUEST, token);
       }
       return Responses.Invalid.TOKEN;

@@ -24,13 +24,13 @@ public class AuthRepository {
 
    private final Database db = Beans.getSingleton(Database.class);
 
-   public ServiceResponse findByToken(String token) {
-      UserSession ses = RedisClient.getSession(token);
+   public ServiceResponse findByHash(String hash) {
+      UserSession ses = RedisClient.getSession(hash);
       if (ses != null) {
          long diffInMillies = Math.abs(System.currentTimeMillis() - ses.getAccessedAt().getTime());
          long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
-         if (diff > 7 && RedisClient.refreshSesion(ses.getToken())) {
-            return refreshAccessedAt(ses.getToken());
+         if (diff > 7 && RedisClient.refreshSesion(ses.getHash())) {
+            return refreshAccessedAt(ses.getHash());
          } else {
             return Responses.OK;
          }
@@ -42,16 +42,16 @@ public class AuthRepository {
       List<String> deletedList = new ArrayList<>(authUser.getCompanies().size());
 
       for (UserCompany uc: authUser.getCompanies()) {
-         RedisClient.removeSesion(uc.getToken());
-         deletedList.add(uc.getToken());
+         RedisClient.removeSesion(uc.getHash());
+         deletedList.add(uc.getHash());
       }
 
       if (deletedList.size() > 0) {
          String inClause = StringUtils.join(deletedList, "', '");
          return
             db.executeQuery(
-               String.format("delete from user_session where token in ('%s')", inClause),
-                  String.format("Failed to delete user session info by token ('%s')", inClause)
+               String.format("delete from user_session where _hash in ('%s')", inClause),
+                  String.format("Failed to delete user session info by hash ('%s')", inClause)
             );
       }
       return false;
@@ -71,7 +71,7 @@ public class AuthRepository {
             db.findMultiple(con, String.format("select * from user_session where user_id=%d", userId), AuthRepository::map);
          if (sessions != null && sessions.size() > 0) {
             for (UserSession ses : sessions) {
-               RedisClient.removeSesion(ses.getToken());
+               RedisClient.removeSesion(ses.getHash());
             }
             return
                db.executeQuery(
@@ -92,7 +92,7 @@ public class AuthRepository {
             db.findMultiple(con, String.format("select * from user_session where user_id=%d and company_id=%d", userId, companyId), AuthRepository::map);
          if (sessions != null && sessions.size() > 0) {
             for (UserSession ses : sessions) {
-               RedisClient.removeSesion(ses.getToken());
+               RedisClient.removeSesion(ses.getHash());
             }
             return
                db.executeQuery(
@@ -115,8 +115,8 @@ public class AuthRepository {
          for (int i = 0; i < sessions.size(); i++) {
             UserSession uses = sessions.get(i);
             queries[i] = String.format(
-               "insert into user_session (token, user_id, company_id, ip, os, browser) values ('%s', %d, %d, '%s', '%s', '%s')",
-               uses.getToken(), uses.getUserId(), uses.getCompanyId(), uses.getIp(), uses.getOs(), uses.getBrowser()
+               "insert into user_session (_hash, user_id, company_id, ip, os, browser) values ('%s', %d, %d, '%s', '%s', '%s')",
+               uses.getHash(), uses.getUserId(), uses.getCompanyId(), uses.getIp(), uses.getOs(), uses.getBrowser()
             );
          }
          boolean result = 
@@ -132,10 +132,10 @@ public class AuthRepository {
       return Responses.DataProblem.DB_PROBLEM;
    }
 
-   private ServiceResponse refreshAccessedAt(String token) {
+   private ServiceResponse refreshAccessedAt(String hash) {
       boolean result =
          db.executeQuery(
-            "update user_session set accessed_at = now() where token = '" + token + "'", 
+            "update user_session set accessed_at = now() where _hash = '" + hash + "'", 
             "Failed to refresh a session"
          );
 
@@ -148,6 +148,7 @@ public class AuthRepository {
    private static UserSession map(ResultSet rs) {
       try {
          UserSession model = new UserSession();
+         model.setHash(rs.getString("_hash"));
          model.setUserId(rs.getLong("user_id"));
          model.setCompanyId(rs.getLong("company_id"));
          model.setIp(rs.getString("ip"));

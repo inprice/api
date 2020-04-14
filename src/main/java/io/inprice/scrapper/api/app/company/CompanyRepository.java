@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
 import java.util.Date;
 
 import org.slf4j.Logger;
@@ -17,7 +16,6 @@ import io.inprice.scrapper.api.app.plan.PlanStatus;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
-import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.CompanyDTO;
@@ -164,10 +162,6 @@ public class CompanyRepository {
                      user.setEmail(dto.getEmail());
                      user.setName(dto.getUserName());
                      user.setCreatedAt(new Date());
-
-                     user.setCompanies(
-                        Arrays.asList(new UserCompany(companyId, dto.getCompanyName(), MemberRole.ADMIN))
-                     );
                   }
                   response = new ServiceResponse(user);
 
