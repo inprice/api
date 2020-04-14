@@ -24,6 +24,7 @@ import io.javalin.http.Handler;
 public class AuthFilter implements Handler {
 
    private static final Logger log = LoggerFactory.getLogger(AuthFilter.class);
+
    private final AuthRepository authRepository = Beans.getSingleton(AuthRepository.class);
 
    private final Set<String> allowedURIs;
@@ -66,14 +67,30 @@ public class AuthFilter implements Handler {
 
          ctx.status(HttpStatus.UNAUTHORIZED_401);
 
-         Long userId = NumberUtils.toLong(ctx.header(Consts.USER_ID), 0L);
-         Integer companyNo = NumberUtils.toInteger(ctx.header(Consts.COMPANY_NO), -1);
+         Integer userNo = NumberUtils.toInteger(ctx.header(Consts.USER_NO));
+         Integer companyNo = NumberUtils.toInteger(ctx.header(Consts.COMPANY_NO));
 
-         if (userId > 0 && companyNo > -1) {
+         if (userNo != null && companyNo != null) {
 
-            String token = ctx.cookie(Consts.Cookie.SESSION + userId);
+            String token = null;
+
+            if (! ctx.cookieMap().containsKey(Consts.Cookie.SESSION + userNo)) {
+               ctx.removeCookie(Consts.Cookie.SESSION + userNo);
+
+               if (ctx.cookieMap().containsKey(Consts.Cookie.SESSION + 0)) {
+                  token = ctx.cookie(Consts.Cookie.SESSION + 0);
+                  if (token != null) {
+                     userNo = 0;
+                     companyNo = 0;
+                  } else {
+                     ctx.removeCookie(Consts.Cookie.SESSION + 0);
+                  }
+               }
+            } else {
+               token = ctx.cookie(Consts.Cookie.SESSION + 0);
+            }
+
             if (token != null) {
-
                AuthUser authUser = SessionHelper.fromToken(token);
                if (authUser != null) {
 
@@ -100,8 +117,8 @@ public class AuthFilter implements Handler {
                   }
                }
             }
-            if (ctx.status() >= 400) {
-               ctx.removeCookie(Consts.Cookie.SESSION + userId);
+            if (ctx.status() >= 400 || token == null) {
+               ctx.removeCookie(Consts.Cookie.SESSION + userNo);
             }
          }
       }

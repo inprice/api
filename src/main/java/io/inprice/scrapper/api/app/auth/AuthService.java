@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -14,8 +13,8 @@ import eu.bitwalker.useragentutils.UserAgent;
 import io.inprice.scrapper.api.app.member.MemberRepository;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
-import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.app.user.User;
+import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
@@ -55,15 +54,15 @@ public class AuthService {
                String salt = user.getPasswordSalt();
                String hash = BCrypt.hashpw(dto.getPassword(), salt);
                if (hash.equals(user.getPasswordHash())) {
-                  Map<String, Long> oldSession = findSession(ctx, user.getId()); //if already logged in
-                  if (oldSession != null) {
-                     return new ServiceResponse(oldSession);
+                  Integer oldSessionNo = findSessionNo(ctx, user.getId());
+                  if (oldSessionNo != null) {
+                     return new ServiceResponse(oldSessionNo);
                   } else {
                      found = memberRepository.getUserCompanies(user.getEmail());
                      if (found.isOK()) {
                         user.setCompanies(found.getData());
-                        Map<String, Long> newSession = createSession(ctx, user);
-                        if (newSession != null) return new ServiceResponse(newSession);
+                        Integer newSessionNo = createSession(ctx, user);
+                        if (newSessionNo != null) return new ServiceResponse(newSessionNo);
                      }
                      return Responses.PermissionProblem.NO_COMPANY;
                   }
@@ -123,8 +122,8 @@ public class AuthService {
                if (res.isOK()) {
                   TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
                   authRepository.deleteByUserId(user.getId());
-                  Map<String, Long> newSession = createSession(ctx, user);
-                  if (newSession != null) return new ServiceResponse(newSession);
+                  Integer newSessionNo = createSession(ctx, user);
+                  if (newSessionNo != null) return new ServiceResponse(newSessionNo);
                }
             } else {
                TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
@@ -139,19 +138,26 @@ public class AuthService {
 
    public ServiceResponse logout(Context ctx) {
       int successfulCounter = 0;
-      for (Entry<String, String> entry : ctx.cookieMap().entrySet()) {
-         if (entry.getKey().startsWith(Consts.Cookie.SESSION)) {
 
-            if (StringUtils.isNotBlank(entry.getValue())) {
-               AuthUser authUser = SessionHelper.fromToken(entry.getValue());
+      for (int i = 0; i < Consts.Cookie.LIMIT; i++) {
+         String key = Consts.Cookie.SESSION + i;
+
+         if (ctx.cookieMap().containsKey(key)) {
+            String token = ctx.cookie(key);
+            if (StringUtils.isNotBlank(token)) {
+
+               AuthUser authUser = SessionHelper.fromToken(token);
                if (authUser != null) {
                   if (authRepository.deleteSession(authUser)) successfulCounter++;
-                  ctx.removeCookie(entry.getKey());
-                  log.info("Logout {}", authUser.toString());
                }
+               ctx.removeCookie(key);
+               log.info("Logout {}", authUser.toString());
             }
+         } else {
+            break;
          }
       }
+
       if (successfulCounter > 0) {
          return Responses.OK;
       } else {
@@ -159,20 +165,24 @@ public class AuthService {
       }
    }
 
-   public Map<String, Long> findSession(Context ctx, Long userId) {
-      String key = Consts.Cookie.SESSION + userId;
-      String token = ctx.cookieMap().get(key);
-      if (StringUtils.isNotBlank(token)) {
-         AuthUser authUser = SessionHelper.fromToken(token);
-         if (authUser != null) {
-            Long companyId = authUser.getCompanies().get(0).getId();
-            return buildSession(userId, companyId);
+   public Integer findSessionNo(Context ctx, Long userId) {
+      for (int i = 0; i < Consts.Cookie.LIMIT; i++) {
+         String key = Consts.Cookie.SESSION + i;
+
+         if (ctx.cookieMap().containsKey(key)) {
+            String token = ctx.cookie(key);
+            if (StringUtils.isNotBlank(token)) {
+               AuthUser authUser = SessionHelper.fromToken(token);
+               if (authUser != null && authUser.getId().equals(userId)) return i;
+            }
+         } else {
+            break;
          }
       }
       return null;
    }
 
-   public Map<String, Long> createSession(Context ctx, User user) {
+   public Integer createSession(Context ctx, User user) {
       AuthUser authUser = new AuthUser();
       authUser.setId(user.getId());
       authUser.setEmail(user.getEmail());
@@ -197,18 +207,16 @@ public class AuthService {
       if (sessions.size() > 0) {
          ServiceResponse res = authRepository.saveSessions(sessions);
          if (res.isOK()) {
-            ctx.cookie(Consts.Cookie.SESSION + user.getId(), token);
-            return buildSession(user.getId(), user.getCompanies().get(0).getId());
+            for (int i = 0; i < Consts.Cookie.LIMIT; i++) {
+               String key = Consts.Cookie.SESSION + i;
+               if (! ctx.cookieMap().containsKey(key)) {
+                  ctx.cookie(key, token);
+                  return i;
+               }
+            }
          }
       }
       return null;
-   }
-
-   private Map<String, Long> buildSession(Long userId, Long companyId) {
-      Map<String, Long> session = new HashMap<>(2);
-      session.put("userId", userId);
-      session.put("companyId", companyId);
-      return session;
    }
 
 }
