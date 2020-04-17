@@ -2,13 +2,8 @@ package io.inprice.scrapper.api.consts;
 
 public class Consts {
 
-   public static final String USER_NO = "User";
-   public static final String COMPANY_NO = "Company";
-
-   public static class Cookie {
-      public static final int LIMIT = 32;
-      public static final String SESSION = "INPRICE_AT_";
-   }
+   public static final String SESSION = "INPRICE_AT";
+   public static final String SESSION_NO_HEADER = "X-Session-No";
 
    public static class Paths {
 
@@ -40,6 +35,13 @@ public class Consts {
          public static final String SWITCH_COMPANY = BASE + "/switch-company";
       }
 
+      public static class UserCompany {
+         public static final String BASE = "/ucompany";
+         public static final String TOGGLE_STATUS = BASE + "/toggle";
+         public static final String CHANGE_ROLE = BASE + "/change-role";
+         public static final String CHANGE_STATUS = BASE + "/change-status";
+      }
+
       public static class Invitation {
          public static final String BASE = "/invitation";
          public static final String SEND = BASE + "/send";
@@ -47,13 +49,6 @@ public class Consts {
          public static final String ACCEPT_NEW = BASE + "/accept-new";
          public static final String ACCEPT_EXISTING = BASE + "/accept";
          public static final String REJECT_EXISTING = BASE + "/reject";
-      }
-
-      public static class Member {
-         public static final String BASE = "/member";
-         public static final String TOGGLE_STATUS = BASE + "/toggle";
-         public static final String CHANGE_ROLE = BASE + "/change-role";
-         public static final String CHANGE_STATUS = BASE + "/change-status";
       }
 
       public static class Product {

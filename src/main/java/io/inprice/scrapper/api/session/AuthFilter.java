@@ -1,6 +1,7 @@
 package io.inprice.scrapper.api.session;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -9,11 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.app.auth.AuthRepository;
-import io.inprice.scrapper.api.app.auth.AuthUser;
 import io.inprice.scrapper.api.app.auth.SessionHelper;
-import io.inprice.scrapper.api.app.auth.UserSession;
-import io.inprice.scrapper.api.app.member.MemberRole;
-import io.inprice.scrapper.api.app.user.UserCompany;
+import io.inprice.scrapper.api.app.auth.SessionInfoForToken;
+import io.inprice.scrapper.api.app.user.UserRole;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.Beans;
@@ -69,59 +68,40 @@ public class AuthFilter implements Handler {
 
          ctx.status(HttpStatus.UNAUTHORIZED_401);
 
-         Integer userNo = NumberUtils.toInteger(ctx.header(Consts.USER_NO));
-         Integer companyNo = NumberUtils.toInteger(ctx.header(Consts.COMPANY_NO));
+         Integer sessionNo = NumberUtils.toInteger(ctx.header(Consts.SESSION_NO_HEADER));
 
-         if (userNo != null && companyNo != null) {
+         if (sessionNo != null && sessionNo > -1) {
 
-            String token = null;
-
-            if (! ctx.cookieMap().containsKey(Consts.Cookie.SESSION + userNo)) {
-               ctx.removeCookie(Consts.Cookie.SESSION + userNo);
-
-               if (ctx.cookieMap().containsKey(Consts.Cookie.SESSION + 0)) {
-                  token = ctx.cookie(Consts.Cookie.SESSION + 0);
-                  if (StringUtils.isNotBlank(token)) {
-                     userNo = 0;
-                     companyNo = 0;
-                  } else {
-                     ctx.removeCookie(Consts.Cookie.SESSION + 0);
-                  }
-               }
-            } else {
-               token = ctx.cookie(Consts.Cookie.SESSION + 0);
-            }
-
+            String token = ctx.cookieMap().get(Consts.SESSION);
             if (StringUtils.isNotBlank(token)) {
-               AuthUser authUser = SessionHelper.fromToken(token);
-               if (authUser != null) {
 
-                  UserCompany uc = authUser.getCompanies().get(companyNo);
-                  if (uc != null) {
+               List<SessionInfoForToken> sessionTokens = SessionHelper.fromToken(token);
+               if (sessionTokens != null && sessionTokens.size() > 0) {
+                  if (sessionNo >= sessionTokens.size()) sessionNo = 0;
 
-                     ServiceResponse res = authRepository.findByHash(uc.getHash());
-                     if (res.isOK()) {
+                  SessionInfoForToken sestok = sessionTokens.get(sessionNo);
+                  ServiceResponse res = authRepository.findByHash(sestok.getHash());
 
-                        if (URI.startsWith(Consts.Paths.ADMIN_BASE)
-                        && !MemberRole.ADMIN.equals(uc.getRole())) {
-                           ctx.status(HttpStatus.FORBIDDEN_403);
+                  if (res.isOK()) {
 
-                        } else 
-                        if (MemberRole.VIEWER.equals(uc.getRole())
-                        && sensitiveMethodsSet.contains(ctx.method())
-                        && URI.indexOf(Consts.Paths.User.BASE + "/") < 0) {
-                           ctx.status(HttpStatus.FORBIDDEN_403);
+                     if (URI.startsWith(Consts.Paths.ADMIN_BASE)
+                     && !UserRole.ADMIN.equals(sestok.getRole())) {
+                        ctx.status(HttpStatus.FORBIDDEN_403);
 
-                        } else {
-                           UserSession session = res.getData();
-                           CurrentUser.set(authUser, session, uc.getName(), uc.getRole());
-                        }
+                     } else 
+                     if (UserRole.VIEWER.equals(sestok.getRole())
+                     && sensitiveMethodsSet.contains(ctx.method())
+                     && URI.indexOf(Consts.Paths.User.BASE + "/") < 0) {
+                        ctx.status(HttpStatus.FORBIDDEN_403);
+
+                     } else {
+                        CurrentUser.set(sestok, res.getData());
                      }
                   }
                }
             }
-            if (ctx.status() >= 400 || StringUtils.isBlank(token)) {
-               ctx.removeCookie(Consts.Cookie.SESSION + userNo);
+            if (ctx.status() == HttpStatus.UNAUTHORIZED_401 || StringUtils.isBlank(token)) {
+               ctx.removeCookie(Consts.SESSION);
             }
          }
       }

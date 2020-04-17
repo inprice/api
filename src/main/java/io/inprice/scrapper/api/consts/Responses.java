@@ -103,8 +103,8 @@ public class Responses {
       public static final ServiceResponse TICKET = new ServiceResponse(BASE, "Ticket not found!");
 
       public static final ServiceResponse USER = new ServiceResponse(BASE, "User not found!");
-      public static final ServiceResponse MEMBER = new ServiceResponse(BASE, "Member not found!");
       public static final ServiceResponse EMAIL = new ServiceResponse(BASE, "Email not found!");
+      public static final ServiceResponse INVITATION = new ServiceResponse(BASE, "Member not found!");
 
       public static final ServiceResponse PRODUCT = new ServiceResponse(BASE, "Product not found!");
       public static final ServiceResponse LINK = new ServiceResponse(BASE, "Link not found!");
@@ -118,7 +118,7 @@ public class Responses {
    public static class NotActive {
       private static final int BASE = 505;
 
-      public static final ServiceResponse MEMBER = new ServiceResponse(BASE, "Member is not active!");
+      public static final ServiceResponse INVITATION = new ServiceResponse(BASE, "Invitation is not active!");
    }
 
 }

@@ -203,9 +203,7 @@ public class Database {
          if (Props.isShowingSQLQueries()) {
             log.info(" Q-> " + query);
          }
-
-         int affected = pst.executeUpdate();
-         return affected > 0;
+         return pst.executeUpdate() > 0;
       } catch (Exception e) {
          log.error(errorMessage, e);
       }

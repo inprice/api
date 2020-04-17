@@ -1,14 +1,10 @@
 package io.inprice.scrapper.api;
 
-import java.text.SimpleDateFormat;
-
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.scrapper.api.consts.Global;
+import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RabbitMQ;
 import io.inprice.scrapper.api.external.RedisClient;
@@ -16,8 +12,6 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.ConfigScanner;
 import io.inprice.scrapper.api.framework.HandlerInterruptException;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.external.Database;
-import io.inprice.scrapper.api.consts.Global;
 import io.inprice.scrapper.api.session.AuthFilter;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.javalin.Javalin;
@@ -80,14 +74,7 @@ public class Application {
             config.enforceSsl = true;
          }
 
-         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-         ObjectMapper om = 
-            new ObjectMapper()
-               .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-               .setSerializationInclusion(Include.NON_NULL)
-               .setDateFormat(sdf);
-         JavalinJackson.configure(om);
+         JavalinJackson.configure(Global.getObjectMapper());
       }).start(Props.getAPP_Port());
 
       app.before(ctx -> {

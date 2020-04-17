@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.app.member;
+package io.inprice.scrapper.api.app.user;
 
 /**
  * InvitationStatus: when a user (invitor) invites another user (invitee)
@@ -7,8 +7,10 @@ package io.inprice.scrapper.api.app.member;
  * the invitee may leave from the company then status becomes LEFT
  * 
  */
-public enum MemberStatus {
+public enum UserStatus {
 
-   PENDING, JOINED, LEFT;
+   PENDING,
+   JOINED,
+   LEFT;
 
 }

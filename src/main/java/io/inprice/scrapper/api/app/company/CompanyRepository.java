@@ -10,13 +10,13 @@ import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.app.member.MemberRole;
-import io.inprice.scrapper.api.app.member.MemberStatus;
 import io.inprice.scrapper.api.app.plan.PlanStatus;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
+import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.api.app.user.UserStatus;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.dto.RegisterDTO;
@@ -138,13 +138,13 @@ public class CompanyRepository {
                // mamber insertion
                if (companyId != null) {
                   try (PreparedStatement pst = con.prepareStatement(
-                        "insert into member (user_id, email, company_id, role, status) values (?, ?, ?, ?, ?) ")) {
+                        "insert into user_company (user_id, email, company_id, role, status) values (?, ?, ?, ?, ?) ")) {
                      int i = 0;
                      pst.setLong(++i, dto.getUserId());
                      pst.setString(++i, dto.getEmail());
                      pst.setLong(++i, companyId);
-                     pst.setString(++i, MemberRole.ADMIN.name());
-                     pst.setString(++i, MemberStatus.JOINED.name());
+                     pst.setString(++i, UserRole.ADMIN.name());
+                     pst.setString(++i, UserStatus.JOINED.name());
 
                      if (pst.executeUpdate() > 0) {
                         log.info("A new user just registered a new company -> " + dto.toString());

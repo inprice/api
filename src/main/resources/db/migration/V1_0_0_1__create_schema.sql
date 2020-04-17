@@ -65,7 +65,7 @@ create index ix1 on company (name);
 alter table company add foreign key (admin_id) references user (id);
 alter table company add foreign key (plan_id) references plan (id);
 
-create table member (
+create table user_company (
   id                        bigint auto_increment not null,
   active                    boolean default true,
   email                     varchar(100) not null,
@@ -79,9 +79,9 @@ create table member (
   created_at                timestamp not null default current_timestamp,
   primary key (id)
 ) engine=innodb;
-create index ix1 on member (email);
-alter table member add foreign key (user_id) references user (id);
-alter table member add foreign key (company_id) references company (id);
+create index ix1 on user_company (email);
+alter table user_company add foreign key (user_id) references user (id);
+alter table user_company add foreign key (company_id) references company (id);
 
 create table user_session (
   _hash                     varchar(32) not null,

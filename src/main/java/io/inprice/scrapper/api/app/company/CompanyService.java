@@ -84,9 +84,7 @@ public class CompanyService {
       if (dto != null) {
          ServiceResponse res = companyRepository.insert(dto, token);
          if (res.isOK()) {
-            User user = res.getData();
-            Integer newSessionNo = authService.createSession(ctx, user);
-            if (newSessionNo != null) return new ServiceResponse(newSessionNo);
+            return authService.createSession(ctx, res.getData());
          }
          return res;
       } else if (StringUtils.isNotBlank(token)) {

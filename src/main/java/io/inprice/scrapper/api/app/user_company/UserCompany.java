@@ -1,9 +1,12 @@
-package io.inprice.scrapper.api.app.member;
+package io.inprice.scrapper.api.app.user_company;
 
 import java.io.Serializable;
 import java.util.Date;
 
-public class Member implements Serializable {
+import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.api.app.user.UserStatus;
+
+public class UserCompany implements Serializable {
 
    private static final long serialVersionUID = -7793356216234713734L;
 
@@ -12,9 +15,9 @@ public class Member implements Serializable {
    private String email;
    private Long userId;
    private Long companyId;
-   private MemberRole role;
-   private MemberStatus status = MemberStatus.PENDING;
-   private MemberStatus preStatus = MemberStatus.PENDING;
+   private UserRole role;
+   private UserStatus status = UserStatus.PENDING;
+   private UserStatus preStatus = UserStatus.PENDING;
    private Integer retry = 1;
    private Date updatedAt;
    private Date createdAt = new Date();
@@ -62,27 +65,27 @@ public class Member implements Serializable {
       this.companyId = companyId;
    }
 
-   public MemberRole getRole() {
+   public UserRole getRole() {
       return role;
    }
 
-   public void setRole(MemberRole role) {
+   public void setRole(UserRole role) {
       this.role = role;
    }
 
-   public MemberStatus getStatus() {
+   public UserStatus getStatus() {
       return status;
    }
 
-   public void setStatus(MemberStatus status) {
+   public void setStatus(UserStatus status) {
       this.status = status;
    }
 
-   public MemberStatus getPreStatus() {
+   public UserStatus getPreStatus() {
       return preStatus;
    }
 
-   public void setPreStatus(MemberStatus preStatus) {
+   public void setPreStatus(UserStatus preStatus) {
       this.preStatus = preStatus;
    }
 

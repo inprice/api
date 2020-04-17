@@ -1,20 +1,19 @@
 package io.inprice.scrapper.api.app.dashboard;
 
-import com.google.gson.JsonObject;
-
-import io.inprice.scrapper.api.session.CurrentUser;
-import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.external.Database;
-import io.inprice.scrapper.api.consts.Global;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
+
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.inprice.scrapper.api.consts.Global;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.session.CurrentUser;
 
 //TODO: data must be cached via redis and expired per 5 mins at max
 public class DashboardRepository {
@@ -23,37 +22,37 @@ public class DashboardRepository {
 
    private final Database db = Beans.getSingleton(Database.class);
 
-   public JsonObject getReport() {
-      JsonObject dashboard = emptyDashboard();
-      JsonObject user = new JsonObject();
-      JsonObject company = new JsonObject();
+   public JSONObject getReport() {
+      JSONObject dashboard = emptyDashboard();
+      JSONObject user = new JSONObject();
+      JSONObject company = new JSONObject();
 
       try (Connection con = db.getConnection()) {
 
          // user
          addSession(con, user);
-         dashboard.add("user", user);
+         dashboard.put("user", user);
 
          // company
          addCompanyInfo(con, company);
-         dashboard.add("company", company);
+         dashboard.put("company", company);
 
          if (company.get("lastCollectingTime") != null) {
 
             // product
-            JsonObject product = new JsonObject();
+            JSONObject product = new JSONObject();
             addProductCounts(con, product);
             addProductPositionDistributions(con, product);
             addMinMaxProductNumbersOf_YouAsTheSeller(con, product);
             addMRUTenProducts(con, product);
-            dashboard.add("product", product);
+            dashboard.put("product", product);
 
             // link
-            JsonObject link = new JsonObject();
+            JSONObject link = new JSONObject();
             addLinkCounts(con, link);
             addLinkStatusDistributions(con, link);
             addMRUTenLinks(con, link);
-            dashboard.add("link", link);
+            dashboard.put("link", link);
          }
 
       } catch (Exception e) {
@@ -63,21 +62,21 @@ public class DashboardRepository {
       return dashboard;
    }
 
-   private void addSession(Connection con, JsonObject parent) throws SQLException {
+   private void addSession(Connection con, JSONObject parent) throws SQLException {
       final String query = "select name, email from user as u where u.id=?";
       try (PreparedStatement pst = con.prepareStatement(query)) {
          pst.setLong(1, CurrentUser.getUserId());
 
          try (ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {
-               parent.addProperty("name", rs.getString(1));
-               parent.addProperty("email", rs.getString(2));
+               parent.put("name", rs.getString(1));
+               parent.put("email", rs.getString(2));
             }
          }
       }
    }
 
-   private void addCompanyInfo(Connection con, JsonObject parent) throws SQLException {
+   private void addCompanyInfo(Connection con, JSONObject parent) throws SQLException {
       final String query = "select c.last_collecting_time, c.last_collecting_status, p.name, c.name, c.due_date "
             + "from company as c left join plan as p on c.plan_id = p.id where w.id=?";
       try (PreparedStatement pst = con.prepareStatement(query)) {
@@ -88,49 +87,49 @@ public class DashboardRepository {
                Date lastCollectionTime = rs.getTimestamp(1);
 
                if (lastCollectionTime != null) {
-                  parent.addProperty("lastCollectingTime", lastCollectionTime.toString());
-                  parent.addProperty("lastCollectingStatus", (rs.getBoolean(2) ? "Successful" : "Failed"));
-                  parent.addProperty("planName", rs.getString(3));
+                  parent.put("lastCollectingTime", lastCollectionTime.toString());
+                  parent.put("lastCollectingStatus", (rs.getBoolean(2) ? "Successful" : "Failed"));
+                  parent.put("planName", rs.getString(3));
                } else {
-                  parent.addProperty("lastCollectingStatus", "Waiting");
-                  parent.addProperty("planName", "Please select one!");
+                  parent.put("lastCollectingStatus", "Waiting");
+                  parent.put("planName", "Please select one!");
                }
 
-               parent.addProperty("name", rs.getString(4));
-               parent.addProperty("dueDate", rs.getTimestamp(5).toString());
+               parent.put("name", rs.getString(4));
+               parent.put("dueDate", rs.getTimestamp(5).toString());
             }
          }
 
       }
    }
 
-   private void addLinkCounts(Connection con, JsonObject parent) throws SQLException {
+   private void addLinkCounts(Connection con, JSONObject parent) throws SQLException {
       final String query = "select count(1) from link where company_id=?";
       try (PreparedStatement pst = con.prepareStatement(query)) {
          pst.setLong(1, CurrentUser.getCompanyId());
 
          try (ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {
-               parent.addProperty("counts", rs.getInt(1));
+               parent.put("counts", rs.getInt(1));
             }
          }
 
       }
    }
 
-   private void addLinkStatusDistributions(Connection con, JsonObject parent) throws SQLException {
+   private void addLinkStatusDistributions(Connection con, JSONObject parent) throws SQLException {
       final String query = "select status, count(1) from link where company_id=? group by status";
       try (PreparedStatement pst = con.prepareStatement(query)) {
          pst.setLong(1, CurrentUser.getCompanyId());
 
-         JsonObject sd = new JsonObject();
+         JSONObject sd = new JSONObject();
          try (ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
-               sd.addProperty(rs.getString(1), rs.getInt(2));
+               sd.put(rs.getString(1), rs.getInt(2));
             }
          }
-         if (sd.size() > 0)
-            parent.add("statuses", sd);
+         if (sd.length() > 0)
+            parent.put("statuses", sd);
       }
    }
 
@@ -138,44 +137,44 @@ public class DashboardRepository {
     * MRU - Most Recently Updated
     *
     */
-   private void addMRUTenLinks(Connection con, JsonObject parent) throws SQLException {
+   private void addMRUTenLinks(Connection con, JSONObject parent) throws SQLException {
       final String query = "select sku, name, seller, price, status, last_update, website_class_name from link "
             + "where company_id=? order by last_update desc limit 10";
       try (PreparedStatement pst = con.prepareStatement(query)) {
          pst.setLong(1, CurrentUser.getCompanyId());
 
-         JsonObject mruTenLinks = new JsonObject();
+         JSONObject mruTenLinks = new JSONObject();
          try (ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
                int index = 2;
-               JsonObject link = new JsonObject();
-               link.addProperty("name", rs.getString(index++));
-               link.addProperty("seller", rs.getString(index++));
-               link.addProperty("price", rs.getBigDecimal(index++));
-               link.addProperty("status", rs.getString(index++));
-               link.addProperty("lastUpdate", rs.getTimestamp(index++).toString());
-               link.addProperty("website", rs.getString(index));
-               mruTenLinks.add(rs.getString(1), link);
+               JSONObject link = new JSONObject();
+               link.put("name", rs.getString(index++));
+               link.put("seller", rs.getString(index++));
+               link.put("price", rs.getBigDecimal(index++));
+               link.put("status", rs.getString(index++));
+               link.put("lastUpdate", rs.getTimestamp(index++).toString());
+               link.put("website", rs.getString(index));
+               mruTenLinks.put(rs.getString(1), link);
             }
          }
-         if (mruTenLinks.size() > 0)
-            parent.add("mruTen", mruTenLinks);
+         if (mruTenLinks.length() > 0)
+            parent.put("mruTen", mruTenLinks);
       }
    }
 
-   private void addProductCounts(Connection con, JsonObject parent) throws SQLException {
+   private void addProductCounts(Connection con, JSONObject parent) throws SQLException {
       final String query = "select active, count(1) from product where company_id=? group by active";
       try (PreparedStatement pst = con.prepareStatement(query)) {
          pst.setLong(1, CurrentUser.getCompanyId());
 
-         JsonObject pc = new JsonObject();
+         JSONObject pc = new JSONObject();
          try (ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
-               pc.addProperty(rs.getBoolean(1) ? "active" : "passive", rs.getInt(2));
+               pc.put(rs.getBoolean(1) ? "active" : "passive", rs.getInt(2));
             }
          }
-         if (pc.size() > 0)
-            parent.add("counts", pc);
+         if (pc.length() > 0)
+            parent.put("counts", pc);
       }
    }
 
@@ -183,51 +182,51 @@ public class DashboardRepository {
     * MRU - Most Recently Updated
     *
     */
-   private void addMRUTenProducts(Connection con, JsonObject parent) throws SQLException {
+   private void addMRUTenProducts(Connection con, JSONObject parent) throws SQLException {
       final String query = "select code, name, position, price, avg_price, min_platform, min_seller, min_price "
             + ", max_platform, max_seller, max_price, updated_at "
             + "from product where company_id=? order by last_update desc limit 10";
       try (PreparedStatement pst = con.prepareStatement(query)) {
          pst.setLong(1, CurrentUser.getCompanyId());
 
-         JsonObject mruTenProducts = new JsonObject();
+         JSONObject mruTenProducts = new JSONObject();
          try (ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
                int index = 2;
-               JsonObject prod = new JsonObject();
-               prod.addProperty("name", rs.getString(index++));
-               prod.addProperty("price", rs.getBigDecimal(index++));
-               prod.addProperty("position", rs.getInt(index++));
-               prod.addProperty("lastUpdate", rs.getTimestamp(index++).toString());
-               prod.addProperty("minSeller", rs.getString(index++));
-               prod.addProperty("maxSeller", rs.getString(index++));
-               prod.addProperty("minPrice", rs.getBigDecimal(index++));
-               prod.addProperty("avgPrice", rs.getBigDecimal(index++));
-               prod.addProperty("maxPrice", rs.getBigDecimal(index));
-               mruTenProducts.add(rs.getString(1), prod);
+               JSONObject prod = new JSONObject();
+               prod.put("name", rs.getString(index++));
+               prod.put("price", rs.getBigDecimal(index++));
+               prod.put("position", rs.getInt(index++));
+               prod.put("lastUpdate", rs.getTimestamp(index++).toString());
+               prod.put("minSeller", rs.getString(index++));
+               prod.put("maxSeller", rs.getString(index++));
+               prod.put("minPrice", rs.getBigDecimal(index++));
+               prod.put("avgPrice", rs.getBigDecimal(index++));
+               prod.put("maxPrice", rs.getBigDecimal(index));
+               mruTenProducts.put(rs.getString(1), prod);
             }
          }
-         if (mruTenProducts.size() > 0)
-            parent.add("mruTen", mruTenProducts);
+         if (mruTenProducts.length() > 0)
+            parent.put("mruTen", mruTenProducts);
       }
    }
 
-   private void addProductPositionDistributions(Connection con, JsonObject parent) throws SQLException {
+   private void addProductPositionDistributions(Connection con, JSONObject parent) throws SQLException {
       final String query = "select position, count(1) from product where company_id=? and active=true group by position";
       try (PreparedStatement pst = con.prepareStatement(query)) {
          pst.setLong(1, CurrentUser.getCompanyId());
 
-         JsonObject pd = new JsonObject();
+         JSONObject pd = new JSONObject();
          for (int i = 1; i < 8; i++) {
-            pd.addProperty("" + i, 0);
+            pd.put("" + i, 0);
          }
          try (ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
-               pd.addProperty("" + rs.getInt(1), rs.getInt(2));
+               pd.put("" + rs.getInt(1), rs.getInt(2));
             }
          }
-         if (pd.size() > 0)
-            parent.add("positions", pd);
+         if (pd.length() > 0)
+            parent.put("positions", pd);
       }
    }
 
@@ -236,15 +235,15 @@ public class DashboardRepository {
     * expensive
     *
     */
-   private void addMinMaxProductNumbersOf_YouAsTheSeller(Connection con, JsonObject parent) throws SQLException {
-      JsonObject sellerCounts = new JsonObject();
+   private void addMinMaxProductNumbersOf_YouAsTheSeller(Connection con, JSONObject parent) throws SQLException {
+      JSONObject sellerCounts = new JSONObject();
       addMinMaxProductNumbersOfYou(con, sellerCounts, "min");
       addMinMaxProductNumbersOfYou(con, sellerCounts, "max");
-      if (sellerCounts.size() > 0)
-         parent.add("sellerCounts", sellerCounts);
+      if (sellerCounts.length() > 0)
+         parent.put("sellerCounts", sellerCounts);
    }
 
-   private void addMinMaxProductNumbersOfYou(Connection con, JsonObject sellerCounts, String indicator)
+   private void addMinMaxProductNumbersOfYou(Connection con, JSONObject sellerCounts, String indicator)
          throws SQLException {
       final String query = "select count(1) from product where company_id=? and active=true and " + indicator + "_seller='You'";
       try (PreparedStatement pst = con.prepareStatement(query)) {
@@ -252,13 +251,13 @@ public class DashboardRepository {
 
          try (ResultSet rs = pst.executeQuery()) {
             if (rs.next()) {
-               sellerCounts.addProperty(indicator, rs.getInt(1));
+               sellerCounts.put(indicator, rs.getInt(1));
             }
          }
       }
    }
 
-   private JsonObject emptyDashboard() {
+   private JSONObject emptyDashboard() {
       final String val = "{" + 
          "'product': {" + 
                "'counts': {" + 
@@ -304,7 +303,7 @@ public class DashboardRepository {
             "}" + 
          "}";
 
-      return Global.gson.fromJson(val, JsonObject.class);
+      return Global.fromJson(val, JSONObject.class);
    }
 
 }

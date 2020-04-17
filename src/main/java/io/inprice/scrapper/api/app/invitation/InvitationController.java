@@ -27,19 +27,19 @@ public class InvitationController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.acceptNewUser(dto)));
       });
 
-      app.put(Consts.Paths.Invitation.ACCEPT_EXISTING + "/:member_id", (ctx) -> {
-         Long memberId = ctx.pathParam("member_id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.acceptExisting(memberId)));
+      app.put(Consts.Paths.Invitation.ACCEPT_EXISTING + "/:invitation_id", (ctx) -> {
+         Long invitationId = ctx.pathParam("invitation_id", Long.class).check(it -> it > 0).getValue();
+         ctx.json(Commons.createResponse(ctx, service.acceptExisting(invitationId)));
       });
 
-      app.put(Consts.Paths.Invitation.REJECT_EXISTING + "/:member_id", (ctx) -> {
-         Long memberId = ctx.pathParam("member_id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.rejectExisting(memberId)));
+      app.put(Consts.Paths.Invitation.REJECT_EXISTING + "/:invitation_id", (ctx) -> {
+         Long invitationId = ctx.pathParam("invitation_id", Long.class).check(it -> it > 0).getValue();
+         ctx.json(Commons.createResponse(ctx, service.rejectExisting(invitationId)));
       });
 
-      app.post(Consts.Paths.Invitation.RESEND + "/:member_id", (ctx) -> {
-         Long memberId = ctx.pathParam("member_id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.resend(memberId)));
+      app.post(Consts.Paths.Invitation.RESEND + "/:invitation_id", (ctx) -> {
+         Long invitationId = ctx.pathParam("invitation_id", Long.class).check(it -> it > 0).getValue();
+         ctx.json(Commons.createResponse(ctx, service.resend(invitationId)));
       });
 
 

@@ -11,7 +11,7 @@ import org.redisson.api.RSetCache;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 
-import io.inprice.scrapper.api.app.auth.UserSession;
+import io.inprice.scrapper.api.app.auth.SessionInfoForDB;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
@@ -21,7 +21,7 @@ public class RedisClient {
    private static RedissonClient client;
 
    private static RSetCache<String> limitedIpsSet;
-   private static RMapCache<String, UserSession> sessionMap;
+   private static RMapCache<String, SessionInfoForDB> sessionMap;
 
    static {
       final String redisPass = Props.getRedis_Password();
@@ -51,24 +51,24 @@ public class RedisClient {
       return Responses.OK;
    }
 
-   public static boolean addSesions(List<UserSession> sessions) {
-      for (UserSession uses : sessions) {
+   public static boolean addSesions(List<SessionInfoForDB> sessions) {
+      for (SessionInfoForDB uses : sessions) {
          sessionMap.put(uses.getHash(), uses);
       }
       return true;
    }
 
-   public static UserSession getSession(String hash) {
+   public static SessionInfoForDB getSession(String hash) {
       return sessionMap.get(hash);
    }
 
    public static boolean removeSesion(String hash) {
-      UserSession ses = sessionMap.remove(hash);
+      SessionInfoForDB ses = sessionMap.remove(hash);
       return ses != null;
    }
 
    public static boolean refreshSesion(String hash) {
-      UserSession uses = sessionMap.get(hash);
+      SessionInfoForDB uses = sessionMap.get(hash);
       if (uses != null) {
          uses.setAccessedAt(new Date());
          sessionMap.put(uses.getHash(), uses);

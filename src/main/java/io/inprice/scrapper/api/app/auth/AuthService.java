@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.servlet.http.Cookie;
 
@@ -12,12 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import eu.bitwalker.useragentutils.UserAgent;
-import io.inprice.scrapper.api.app.member.MemberRepository;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
-import io.inprice.scrapper.api.app.user.UserCompany;
 import io.inprice.scrapper.api.app.user.UserRepository;
+import io.inprice.scrapper.api.app.user_company.UserCompany;
+import io.inprice.scrapper.api.app.user_company.UserCompanyRepository;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.EmailValidator;
@@ -40,7 +41,7 @@ public class AuthService {
    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
    private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-   private final MemberRepository memberRepository = Beans.getSingleton(MemberRepository.class);
+   private final UserCompanyRepository userCompanyRepository = Beans.getSingleton(UserCompanyRepository.class);
    private final AuthRepository authRepository = Beans.getSingleton(AuthRepository.class);
    private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
    private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
@@ -56,12 +57,11 @@ public class AuthService {
                String salt = user.getPasswordSalt();
                String hash = BCrypt.hashpw(dto.getPassword(), salt);
                if (hash.equals(user.getPasswordHash())) {
-                  Integer oldSessionNo = findSessionNo(ctx, user.getId());
+                  Integer oldSessionNo = findSessionNo(ctx, user.getEmail());
                   if (oldSessionNo != null) {
                      return new ServiceResponse(oldSessionNo);
                   } else {
-                     Integer newSessionNo = createSession(ctx, user);
-                     if (newSessionNo != null) return new ServiceResponse(newSessionNo);
+                     return createSession(ctx, user);
                   }
                }
             }
@@ -119,8 +119,7 @@ public class AuthService {
                if (res.isOK()) {
                   TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
                   authRepository.deleteByUserId(user.getId());
-                  Integer newSessionNo = createSession(ctx, user);
-                  if (newSessionNo != null) return new ServiceResponse(newSessionNo);
+                  return createSession(ctx, user);
                }
             } else {
                TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
@@ -134,96 +133,103 @@ public class AuthService {
    }
 
    public ServiceResponse logout(Context ctx) {
-      int successfulCounter = 0;
+      if (ctx.cookieMap().containsKey(Consts.SESSION)) {
+         String token = ctx.cookie(Consts.SESSION);
+         ctx.removeCookie(Consts.SESSION);
+         if (StringUtils.isNotBlank(token)) {
 
-      for (int i = 0; i < Consts.Cookie.LIMIT; i++) {
-         String key = Consts.Cookie.SESSION + i;
-
-         if (ctx.cookieMap().containsKey(key)) {
-            String token = ctx.cookie(key);
-            if (StringUtils.isNotBlank(token)) {
-
-               AuthUser authUser = SessionHelper.fromToken(token);
-               if (authUser != null) {
-                  if (authRepository.deleteSession(authUser)) successfulCounter++;
-               }
-               log.info("Logout {}", authUser.toString());
+            List<SessionInfoForToken> sessionTokens = SessionHelper.fromToken(token);
+            if (sessionTokens != null && sessionTokens.size() > 0) {
+               authRepository.deleteSession(sessionTokens);
+               return Responses.OK;
             }
-            ctx.removeCookie(key);
-         } else {
-            break;
          }
       }
-      
-      if (successfulCounter > 0) {
-         return Responses.OK;
-      } else {
-         return Responses.Already.LOGGED_OUT;
-      }
+      return Responses.Already.LOGGED_OUT;
    }
 
-   public Integer findSessionNo(Context ctx, Long userId) {
-      for (int i = 0; i < Consts.Cookie.LIMIT; i++) {
-         String key = Consts.Cookie.SESSION + i;
-
-         if (ctx.cookieMap().containsKey(key)) {
-            String token = ctx.cookie(key);
-            if (StringUtils.isNotBlank(token)) {
-               AuthUser authUser = SessionHelper.fromToken(token);
-               if (authUser != null) {
-                  for (UserCompany uc: authUser.getCompanies()) {
-                     UserSession us = RedisClient.getSession(uc.getHash());
-                     if (us != null && us.getUserId().equals(userId)) return i;
+   public Integer findSessionNo(Context ctx, String email) {
+      Integer sessionNo = null;
+      if (ctx.cookieMap().containsKey(Consts.SESSION)) {
+         String token = ctx.cookie(Consts.SESSION);
+         if (StringUtils.isNotBlank(token)) {
+            List<SessionInfoForToken> sessionTokens = SessionHelper.fromToken(token);
+            if (sessionTokens != null && sessionTokens.size() > 0) {
+               for (int i=0; i<sessionTokens.size(); i++) {
+                  SessionInfoForToken sestok = sessionTokens.get(i);
+                  if (sestok.getEmail().equals(email)) {
+                     sessionNo = i;
+                     break;
                   }
                }
             }
-         } else {
-            break;
          }
       }
-      return null;
+      return sessionNo;
    }
 
-   public Integer createSession(Context ctx, User user) {
-      ServiceResponse found = memberRepository.getUserCompanies(user.getEmail());
-      if (found.isOK()) {
+   public ServiceResponse createSession(Context ctx, User user) {
+      Integer sessionNo = null;
 
-         List<UserCompany> companies = found.getData();
+      ServiceResponse res = userCompanyRepository.getUserCompanies(user.getEmail());
+      if (res.isOK()) {
 
-         AuthUser authUser = new AuthUser();
-         authUser.setEmail(user.getEmail());
-         authUser.setName(user.getName());
-         authUser.setCompanies(companies);
+         List<UserCompany> userCompanies = res.getData();
+         List<SessionInfoForDB> sessionsForDB = new ArrayList<>();
+         List<SessionInfoForToken> sessionsForToken = null;
 
-         String token = SessionHelper.toToken(authUser);
-         UserAgent ua = UserAgent.parseUserAgentString(ctx.userAgent());
-
-         List<UserSession> sessions = new ArrayList<>();
-         for (UserCompany uc: companies) {
-            UserSession uses = new UserSession();
-            uses.setHash(uc.getHash());
-            uses.setUserId(user.getId());
-            uses.setCompanyId(uc.getId());
-            uses.setIp(ctx.ip());
-            uses.setOs(ua.getOperatingSystem().getName());
-            uses.setBrowser(ua.getBrowser().getName());
-            uses.setUserAgent(ctx.userAgent());
-            sessions.add(uses);
+         if (ctx.cookieMap().containsKey(Consts.SESSION)) {
+            String token = ctx.cookie(Consts.SESSION);
+            if (StringUtils.isNotBlank(token)) {
+               sessionsForToken = SessionHelper.fromToken(token);
+            }
          }
-         if (sessions.size() > 0) {
-            ServiceResponse res = authRepository.saveSessions(sessions);
+         if (sessionsForToken == null) sessionsForToken = new ArrayList<>();
+         sessionNo = sessionsForToken.size();
+
+         UserAgent ua = new UserAgent(ctx.userAgent());
+         for (UserCompany uc: userCompanies) {
+            SessionInfoForDB ses = new SessionInfoForDB();
+            ses.setHash(UUID.randomUUID().toString().replaceAll("-", "").toUpperCase());
+            ses.setUserId(uc.getUserId());
+            ses.setCompanyId(uc.getCompanyId());
+            ses.setIp(ctx.ip());
+            ses.setOs(ua.getOperatingSystem().getName());
+            ses.setBrowser(ua.getBrowser().getName());
+            ses.setUserAgent(ctx.userAgent());
+            sessionsForDB.add(ses);
+
+            sessionsForToken.add(
+               new SessionInfoForToken(
+                  user.getName(),
+                  user.getEmail(),
+                  uc.getCompanyName(),
+                  uc.getRole()
+               )
+            );
+         }
+
+         if (sessionsForDB.size() > 0) {
+            res = authRepository.saveSessions(sessionsForDB);
+
             if (res.isOK()) {
-               for (int i = 0; i < Consts.Cookie.LIMIT; i++) {
-                  String key = Consts.Cookie.SESSION + i;
-                  if (! ctx.cookieMap().containsKey(key) || StringUtils.isBlank(ctx.cookieMap().get(key))) {
-                     ctx.cookie(key, token);
-                     return i;
-                  }
-               }
+               String token = SessionHelper.toToken(sessionsForToken);
+               Cookie serverCookie = new Cookie(Consts.SESSION, token);
+               serverCookie.setHttpOnly(true);
+               serverCookie.setSecure(! Props.isRunningForDev());
+               ctx.cookie(serverCookie);
+
+               // response
+               Map<String, Object> data = new HashMap<>(2);
+               data.put("sessionNo", sessionNo);
+               data.put("sessions", sessionsForToken);
+               res = new ServiceResponse(data);
             }
+         } else {
+            res = Responses.ServerProblem.EXCEPTION;
          }
       }
-      return null;
+      return res;
    }
 
 }

@@ -7,12 +7,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.app.member.Member;
-import io.inprice.scrapper.api.app.member.MemberRole;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
+import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.api.app.user_company.UserCompany;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.EmailValidator;
 import io.inprice.scrapper.api.dto.InvitationAcceptDTO;
@@ -50,17 +50,17 @@ public class InvitationService {
       return res;
    }
 
-   public ServiceResponse resend(long memberId) {
-      ServiceResponse res = invitationRepository.findById(memberId);
+   public ServiceResponse resend(long invitationId) {
+      ServiceResponse res = invitationRepository.findById(invitationId);
 
       if (res.isOK()) {
-         Member member = res.getData();
-         res = invitationRepository.increaseSendingCount(memberId);
+         UserCompany userCoompany = res.getData();
+         res = invitationRepository.increaseSendingCount(invitationId);
          if (res.isOK()) {
             InvitationDTO dto = new InvitationDTO();
             dto.setCompanyId(CurrentUser.getCompanyId());
-            dto.setEmail(member.getEmail());
-            dto.setRole(member.getRole());
+            dto.setEmail(userCoompany.getEmail());
+            dto.setRole(userCoompany.getRole());
             res = sendMail(dto);
          }
       }
@@ -84,12 +84,12 @@ public class InvitationService {
       return res;
    }
 
-   public ServiceResponse acceptExisting(Long memberId) {
-      return invitationRepository.handleExisting(memberId, true);
+   public ServiceResponse acceptExisting(Long invitationId) {
+      return invitationRepository.handleExisting(invitationId, true);
    }
 
-   public ServiceResponse rejectExisting(Long memberId) {
-      return invitationRepository.handleExisting(memberId, false);
+   public ServiceResponse rejectExisting(Long invitationId) {
+      return invitationRepository.handleExisting(invitationId, false);
    }
 
    private ServiceResponse sendMail(InvitationDTO dto) {
@@ -134,12 +134,12 @@ public class InvitationService {
          return Responses.Invalid.INVITATION;
       }
 
-      if (CurrentUser.getRole().equals(MemberRole.ADMIN)) {
+      if (CurrentUser.getRole().equals(UserRole.ADMIN)) {
          return new ServiceResponse("Only admins can send an invitation!");
       }
 
-      if (dto.getRole() == null || dto.getRole().equals(MemberRole.ADMIN)) {
-         return new ServiceResponse(String.format("Role must be either %s or %s!", MemberRole.EDITOR.name(), MemberRole.VIEWER.name()));
+      if (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN)) {
+         return new ServiceResponse(String.format("Role must be either %s or %s!", UserRole.EDITOR.name(), UserRole.VIEWER.name()));
       }
 
       String checkIfItHasAProblem = EmailValidator.verify(dto.getEmail());

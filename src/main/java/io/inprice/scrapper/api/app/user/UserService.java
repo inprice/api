@@ -7,8 +7,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import io.inprice.scrapper.api.app.member.Member;
-import io.inprice.scrapper.api.app.member.MemberRepository;
+import io.inprice.scrapper.api.app.user_company.UserCompany;
+import io.inprice.scrapper.api.app.user_company.UserCompanyRepository;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.PasswordValidator;
@@ -23,7 +23,7 @@ import io.inprice.scrapper.api.info.ServiceResponse;
 public class UserService {
 
    private static final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-   private static final MemberRepository memberRepository = Beans.getSingleton(MemberRepository.class);
+   private static final UserCompanyRepository userCompanyRepository = Beans.getSingleton(UserCompanyRepository.class);
 
    public ServiceResponse updateName(String name) {
       if (StringUtils.isNotBlank(name)) {
@@ -45,12 +45,12 @@ public class UserService {
    }
 
    public ServiceResponse getCompanyList() {
-      ServiceResponse res = memberRepository.getListByUser();
+      ServiceResponse res = userCompanyRepository.getListByUser();
       if (res.isOK()) {
-         List<Member> members = res.getData();
+         List<UserCompany> members = res.getData();
          if (members != null && members.size() > 0) {
             List<Map<String, Object>> data = new ArrayList<>();
-            for (Member member: members) {
+            for (UserCompany member: members) {
                Map<String, Object> props = new HashMap<>(6);
                props.put("id", member.getId());
                props.put("companyName", member.getCompanyName());

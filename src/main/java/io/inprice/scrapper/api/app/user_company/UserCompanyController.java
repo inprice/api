@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.app.member;
+package io.inprice.scrapper.api.app.user_company;
 
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.dto.MemberChangeRoleDTO;
@@ -9,29 +9,29 @@ import io.inprice.scrapper.api.helpers.Commons;
 import io.javalin.Javalin;
 
 @Router
-public class MemberController implements Controller {
+public class UserCompanyController implements Controller {
 
-   private static final MemberService service = Beans.getSingleton(MemberService.class);
+   private static final UserCompanyService service = Beans.getSingleton(UserCompanyService.class);
 
    @Override
    public void addRoutes(Javalin app) {
 
-      app.delete(Consts.Paths.Member.BASE + "/:id", (ctx) -> {
+      app.delete(Consts.Paths.UserCompany.BASE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, service.deleteById(id)));
       });
 
-      app.put(Consts.Paths.Member.TOGGLE_STATUS + "/:id", (ctx) -> {
+      app.put(Consts.Paths.UserCompany.TOGGLE_STATUS + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, service.toggleStatus(id)));
       });
 
-      app.put(Consts.Paths.Member.CHANGE_ROLE, (ctx) -> {
+      app.put(Consts.Paths.UserCompany.CHANGE_ROLE, (ctx) -> {
          MemberChangeRoleDTO dto = ctx.bodyAsClass(MemberChangeRoleDTO.class);
          ctx.json(Commons.createResponse(ctx, service.changeRole(dto, ctx.ip(), ctx.userAgent())));
       });
 
-      app.get(Consts.Paths.Member.BASE + "s", (ctx) -> {
+      app.get(Consts.Paths.UserCompany.BASE + "s", (ctx) -> {
          ctx.json(Commons.createResponse(ctx, service.getList()));
       });
 

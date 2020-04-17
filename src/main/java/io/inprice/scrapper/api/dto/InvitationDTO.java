@@ -3,7 +3,7 @@ package io.inprice.scrapper.api.dto;
 import java.io.Serializable;
 import java.util.Date;
 
-import io.inprice.scrapper.api.app.member.MemberRole;
+import io.inprice.scrapper.api.app.user.UserRole;
 
 public class InvitationDTO implements Serializable {
 
@@ -11,7 +11,7 @@ public class InvitationDTO implements Serializable {
 
    private Long companyId;
    private String email;
-   private MemberRole role;
+   private UserRole role;
    private Date createdAt = new Date();
 
    public Long getCompanyId() {
@@ -30,11 +30,11 @@ public class InvitationDTO implements Serializable {
       this.email = email;
    }
 
-   public MemberRole getRole() {
+   public UserRole getRole() {
       return role;
    }
 
-   public void setRole(MemberRole role) {
+   public void setRole(UserRole role) {
       this.role = role;
    }
 

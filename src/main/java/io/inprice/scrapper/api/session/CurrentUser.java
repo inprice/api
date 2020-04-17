@@ -1,8 +1,8 @@
 package io.inprice.scrapper.api.session;
 
-import io.inprice.scrapper.api.app.auth.AuthUser;
-import io.inprice.scrapper.api.app.auth.UserSession;
-import io.inprice.scrapper.api.app.member.MemberRole;
+import io.inprice.scrapper.api.app.auth.SessionInfoForDB;
+import io.inprice.scrapper.api.app.auth.SessionInfoForToken;
+import io.inprice.scrapper.api.app.user.UserRole;
 
 public class CurrentUser {
 
@@ -13,32 +13,32 @@ public class CurrentUser {
       }
    };
 
-   static void set(AuthUser authUser, UserSession session, String companyName, MemberRole role) {
-      THREAD_VARIABLES.get().set(authUser, session, companyName, role);
+   static void set(SessionInfoForToken sestok, SessionInfoForDB sesdb) {
+      THREAD_VARIABLES.get().set(sestok, sesdb);
    }
 
    public static Long getUserId() {
-      return THREAD_VARIABLES.get().getSession().getUserId();
+      return THREAD_VARIABLES.get().getFromDatabase().getUserId();
    }
 
    public static String getEmail() {
-      return THREAD_VARIABLES.get().getAuthUser().getEmail();
+      return THREAD_VARIABLES.get().getFromToken().getEmail();
    }
 
    public static String getUserName() {
-      return THREAD_VARIABLES.get().getAuthUser().getName();
+      return THREAD_VARIABLES.get().getFromToken().getUser();
    }
 
    public static Long getCompanyId() {
-      return THREAD_VARIABLES.get().getSession().getCompanyId();
+      return THREAD_VARIABLES.get().getFromDatabase().getCompanyId();
    }
 
    public static String getCompanyName() {
-      return THREAD_VARIABLES.get().getCompanyName();
+      return THREAD_VARIABLES.get().getFromToken().getCompany();
    }
 
-   public static MemberRole getRole() {
-      return THREAD_VARIABLES.get().getRole();
+   public static UserRole getRole() {
+      return THREAD_VARIABLES.get().getFromToken().getRole();
    }
 
    public static void cleanup() {

@@ -1,40 +1,27 @@
 package io.inprice.scrapper.api.session;
 
-import io.inprice.scrapper.api.app.auth.AuthUser;
-import io.inprice.scrapper.api.app.auth.UserSession;
-import io.inprice.scrapper.api.app.member.MemberRole;
+import io.inprice.scrapper.api.app.auth.SessionInfoForDB;
+import io.inprice.scrapper.api.app.auth.SessionInfoForToken;
 
 class ThreadVariables {
 
-   private AuthUser authUser;
-   private UserSession session;
-   private String companyName;
-   private MemberRole role;
+   private SessionInfoForToken sestok;
+   private SessionInfoForDB sesdb;
 
    ThreadVariables() {
    }
 
-   void set(AuthUser authUser, UserSession session, String companyName, MemberRole role) {
-      this.authUser = authUser;
-      this.session = session;
-      this.companyName = companyName;
-      this.role = role;
+   void set(SessionInfoForToken sestok, SessionInfoForDB sesdb) {
+      this.sestok = sestok;
+      this.sesdb = sesdb;
    }
 
-   AuthUser getAuthUser() {
-      return authUser;
+   SessionInfoForToken getFromToken() {
+      return sestok;
    }
 
-   UserSession getSession() {
-      return session;
-   }
-
-   String getCompanyName() {
-      return companyName;
-   }
-
-   MemberRole getRole() {
-      return role;
+   SessionInfoForDB getFromDatabase() {
+      return sesdb;
    }
 
 }
