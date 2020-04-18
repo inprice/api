@@ -1,7 +1,5 @@
 package io.inprice.scrapper.api.session;
 
-import io.inprice.scrapper.api.app.auth.SessionInfoForDB;
-import io.inprice.scrapper.api.app.auth.SessionInfoForToken;
 import io.inprice.scrapper.api.app.user.UserRole;
 
 public class CurrentUser {
@@ -13,7 +11,7 @@ public class CurrentUser {
       }
    };
 
-   static void set(SessionInfoForToken sestok, SessionInfoForDB sesdb) {
+   static void set(SessionInToken sestok, SessionInDB sesdb) {
       THREAD_VARIABLES.get().set(sestok, sesdb);
    }
 

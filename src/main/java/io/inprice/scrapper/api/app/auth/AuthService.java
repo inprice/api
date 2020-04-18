@@ -31,8 +31,11 @@ import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.SessionHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
+import io.inprice.scrapper.api.session.SessionInDB;
+import io.inprice.scrapper.api.session.SessionInToken;
 import io.javalin.http.Context;
 import jodd.util.BCrypt;
 
@@ -134,13 +137,13 @@ public class AuthService {
 
    public ServiceResponse logout(Context ctx) {
       if (ctx.cookieMap().containsKey(Consts.SESSION)) {
-         String token = ctx.cookie(Consts.SESSION);
+         String tokenString = ctx.cookie(Consts.SESSION);
          ctx.removeCookie(Consts.SESSION);
-         if (StringUtils.isNotBlank(token)) {
+         if (StringUtils.isNotBlank(tokenString)) {
 
-            List<SessionInfoForToken> sessionTokens = SessionHelper.fromToken(token);
-            if (sessionTokens != null && sessionTokens.size() > 0) {
-               authRepository.deleteSession(sessionTokens);
+            List<SessionInToken> tokenList = SessionHelper.fromToken(tokenString);
+            if (tokenList != null && tokenList.size() > 0) {
+               authRepository.deleteSession(tokenList);
                return Responses.OK;
             }
          }
@@ -151,13 +154,16 @@ public class AuthService {
    public Integer findSessionNo(Context ctx, String email) {
       Integer sessionNo = null;
       if (ctx.cookieMap().containsKey(Consts.SESSION)) {
-         String token = ctx.cookie(Consts.SESSION);
-         if (StringUtils.isNotBlank(token)) {
-            List<SessionInfoForToken> sessionTokens = SessionHelper.fromToken(token);
-            if (sessionTokens != null && sessionTokens.size() > 0) {
-               for (int i=0; i<sessionTokens.size(); i++) {
-                  SessionInfoForToken sestok = sessionTokens.get(i);
-                  if (sestok.getEmail().equals(email)) {
+
+         String tokenString = ctx.cookie(Consts.SESSION);
+         if (StringUtils.isNotBlank(tokenString)) {
+
+            List<SessionInToken> tokenList = SessionHelper.fromToken(tokenString);
+            if (tokenList != null && tokenList.size() > 0) {
+
+               for (int i=0; i<tokenList.size(); i++) {
+                  SessionInToken token = tokenList.get(i);
+                  if (token.getEmail().equals(email)) {
                      sessionNo = i;
                      break;
                   }
@@ -174,22 +180,22 @@ public class AuthService {
       ServiceResponse res = userCompanyRepository.getUserCompanies(user.getEmail());
       if (res.isOK()) {
 
-         List<UserCompany> userCompanies = res.getData();
-         List<SessionInfoForDB> sessionsForDB = new ArrayList<>();
-         List<SessionInfoForToken> sessionsForToken = null;
+         List<UserCompany> userCompaniyList = res.getData();
+         List<SessionInDB> dbSessionList = new ArrayList<>();
+         List<SessionInToken> tokenList = null;
 
          if (ctx.cookieMap().containsKey(Consts.SESSION)) {
-            String token = ctx.cookie(Consts.SESSION);
-            if (StringUtils.isNotBlank(token)) {
-               sessionsForToken = SessionHelper.fromToken(token);
+            String tokenString = ctx.cookie(Consts.SESSION);
+            if (StringUtils.isNotBlank(tokenString)) {
+               tokenList = SessionHelper.fromToken(tokenString);
             }
          }
-         if (sessionsForToken == null) sessionsForToken = new ArrayList<>();
-         sessionNo = sessionsForToken.size();
+         if (tokenList == null) tokenList = new ArrayList<>();
+         sessionNo = tokenList.size();
 
          UserAgent ua = new UserAgent(ctx.userAgent());
-         for (UserCompany uc: userCompanies) {
-            SessionInfoForDB ses = new SessionInfoForDB();
+         for (UserCompany uc: userCompaniyList) {
+            SessionInDB ses = new SessionInDB();
             ses.setHash(UUID.randomUUID().toString().replaceAll("-", "").toUpperCase());
             ses.setUserId(uc.getUserId());
             ses.setCompanyId(uc.getCompanyId());
@@ -197,10 +203,10 @@ public class AuthService {
             ses.setOs(ua.getOperatingSystem().getName());
             ses.setBrowser(ua.getBrowser().getName());
             ses.setUserAgent(ctx.userAgent());
-            sessionsForDB.add(ses);
+            dbSessionList.add(ses);
 
-            sessionsForToken.add(
-               new SessionInfoForToken(
+            tokenList.add(
+               new SessionInToken(
                   user.getName(),
                   user.getEmail(),
                   uc.getCompanyName(),
@@ -209,12 +215,12 @@ public class AuthService {
             );
          }
 
-         if (sessionsForDB.size() > 0) {
-            res = authRepository.saveSessions(sessionsForDB);
+         if (dbSessionList.size() > 0) {
+            res = authRepository.saveSessions(dbSessionList);
 
             if (res.isOK()) {
-               String token = SessionHelper.toToken(sessionsForToken);
-               Cookie serverCookie = new Cookie(Consts.SESSION, token);
+               String tokenString = SessionHelper.toToken(tokenList);
+               Cookie serverCookie = new Cookie(Consts.SESSION, tokenString);
                serverCookie.setHttpOnly(true);
                serverCookie.setSecure(! Props.isRunningForDev());
                ctx.cookie(serverCookie);
@@ -222,7 +228,7 @@ public class AuthService {
                // response
                Map<String, Object> data = new HashMap<>(2);
                data.put("sessionNo", sessionNo);
-               data.put("sessions", sessionsForToken);
+               data.put("sessions", tokenList);
                res = new ServiceResponse(data);
             }
          } else {

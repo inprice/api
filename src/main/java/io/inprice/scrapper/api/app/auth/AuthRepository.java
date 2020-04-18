@@ -16,6 +16,8 @@ import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.session.SessionInDB;
+import io.inprice.scrapper.api.session.SessionInToken;
 
 public class AuthRepository {
 
@@ -24,7 +26,7 @@ public class AuthRepository {
    private final Database db = Beans.getSingleton(Database.class);
 
    public ServiceResponse findByHash(String hash) {
-      SessionInfoForDB ses = RedisClient.getSession(hash);
+      SessionInDB ses = RedisClient.getSession(hash);
       if (ses != null) {
          long diffInMillies = Math.abs(System.currentTimeMillis() - ses.getAccessedAt().getTime());
          long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
@@ -37,10 +39,10 @@ public class AuthRepository {
       return Responses.NotFound.DATA;
    }
 
-   public boolean deleteSession(List<SessionInfoForToken> sessions) {
+   public boolean deleteSession(List<SessionInToken> sessions) {
       List<String> deletedList = new ArrayList<>(sessions.size());
 
-      for (SessionInfoForToken ases: sessions) {
+      for (SessionInToken ases: sessions) {
          RedisClient.removeSesion(ases.getHash());
          deletedList.add(ases.getHash());
          log.info("Logout {}", ases.toString());
@@ -58,7 +60,7 @@ public class AuthRepository {
    }
 
    public ServiceResponse findByUserId(Long userId) {
-      List<SessionInfoForDB> models = db.findMultiple(String.format("select * from user_session where user_id=%d", userId), AuthRepository::map);
+      List<SessionInDB> models = db.findMultiple(String.format("select * from user_session where user_id=%d", userId), AuthRepository::map);
       if (models != null)
          return new ServiceResponse(models);
       else
@@ -67,10 +69,10 @@ public class AuthRepository {
 
    public boolean deleteByUserId(Long userId) {
       try (Connection con = db.getConnection()) {
-         List<SessionInfoForDB> sessions = 
+         List<SessionInDB> sessions = 
             db.findMultiple(con, String.format("select * from user_session where user_id=%d", userId), AuthRepository::map);
          if (sessions != null && sessions.size() > 0) {
-            for (SessionInfoForDB ses : sessions) {
+            for (SessionInDB ses : sessions) {
                RedisClient.removeSesion(ses.getHash());
             }
             return
@@ -88,10 +90,10 @@ public class AuthRepository {
 
    public boolean deleteByUserAndCompanyId(Long userId, Long companyId) {
       try (Connection con = db.getConnection()) {
-         List<SessionInfoForDB> sessions = 
+         List<SessionInDB> sessions = 
             db.findMultiple(con, String.format("select * from user_session where user_id=%d and company_id=%d", userId, companyId), AuthRepository::map);
          if (sessions != null && sessions.size() > 0) {
-            for (SessionInfoForDB ses : sessions) {
+            for (SessionInDB ses : sessions) {
                RedisClient.removeSesion(ses.getHash());
             }
             return
@@ -107,13 +109,13 @@ public class AuthRepository {
       return false;
    }
 
-   public ServiceResponse saveSessions(List<SessionInfoForDB> sessions) {
+   public ServiceResponse saveSessions(List<SessionInDB> sessions) {
       boolean isAdded = RedisClient.addSesions(sessions);
 
       if (isAdded) {
          String[] queries = new String[sessions.size()];
          for (int i = 0; i < sessions.size(); i++) {
-            SessionInfoForDB uses = sessions.get(i);
+            SessionInDB uses = sessions.get(i);
             queries[i] = String.format(
                "insert into user_session (_hash, user_id, company_id, ip, os, browser, user_agent) values ('%s', %d, %d, '%s', '%s', '%s', '%s')",
                uses.getHash(), uses.getUserId(), uses.getCompanyId(), uses.getIp(), uses.getOs(), uses.getBrowser(), uses.getUserAgent()
@@ -145,9 +147,9 @@ public class AuthRepository {
       return Responses.DataProblem.DB_PROBLEM;
    }
 
-   private static SessionInfoForDB map(ResultSet rs) {
+   private static SessionInDB map(ResultSet rs) {
       try {
-         SessionInfoForDB model = new SessionInfoForDB();
+         SessionInDB model = new SessionInDB();
          model.setHash(rs.getString("_hash"));
          model.setUserId(rs.getLong("user_id"));
          model.setCompanyId(rs.getLong("company_id"));

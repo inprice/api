@@ -1,26 +1,23 @@
 package io.inprice.scrapper.api.session;
 
-import io.inprice.scrapper.api.app.auth.SessionInfoForDB;
-import io.inprice.scrapper.api.app.auth.SessionInfoForToken;
-
 class ThreadVariables {
 
-   private SessionInfoForToken sestok;
-   private SessionInfoForDB sesdb;
+   private SessionInToken sestok;
+   private SessionInDB sesdb;
 
    ThreadVariables() {
    }
 
-   void set(SessionInfoForToken sestok, SessionInfoForDB sesdb) {
+   void set(SessionInToken sestok, SessionInDB sesdb) {
       this.sestok = sestok;
       this.sesdb = sesdb;
    }
 
-   SessionInfoForToken getFromToken() {
+   SessionInToken getFromToken() {
       return sestok;
    }
 
-   SessionInfoForDB getFromDatabase() {
+   SessionInDB getFromDatabase() {
       return sesdb;
    }
 

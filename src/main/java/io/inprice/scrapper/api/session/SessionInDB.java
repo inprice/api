@@ -1,9 +1,9 @@
-package io.inprice.scrapper.api.app.auth;
+package io.inprice.scrapper.api.session;
 
 import java.io.Serializable;
 import java.util.Date;
 
-public class SessionInfoForDB implements Serializable {
+public class SessionInDB implements Serializable {
 
    private static final long serialVersionUID = 5073154009606337304L;
 

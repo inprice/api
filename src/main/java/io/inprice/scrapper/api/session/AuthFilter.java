@@ -10,13 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.app.auth.AuthRepository;
-import io.inprice.scrapper.api.app.auth.SessionHelper;
-import io.inprice.scrapper.api.app.auth.SessionInfoForToken;
 import io.inprice.scrapper.api.app.user.UserRole;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.HandlerInterruptException;
+import io.inprice.scrapper.api.helpers.SessionHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.utils.NumberUtils;
 import io.javalin.http.Context;
@@ -67,40 +66,39 @@ public class AuthFilter implements Handler {
       if (isAuthenticationNeeded(URI)) {
 
          ctx.status(HttpStatus.UNAUTHORIZED_401);
-
          Integer sessionNo = NumberUtils.toInteger(ctx.header(Consts.SESSION_NO_HEADER));
 
          if (sessionNo != null && sessionNo > -1) {
 
-            String token = ctx.cookieMap().get(Consts.SESSION);
-            if (StringUtils.isNotBlank(token)) {
+            String tokenString = ctx.cookieMap().get(Consts.SESSION);
+            if (StringUtils.isNotBlank(tokenString)) {
 
-               List<SessionInfoForToken> sessionTokens = SessionHelper.fromToken(token);
+               List<SessionInToken> sessionTokens = SessionHelper.fromToken(tokenString);
                if (sessionTokens != null && sessionTokens.size() > 0) {
                   if (sessionNo >= sessionTokens.size()) sessionNo = 0;
 
-                  SessionInfoForToken sestok = sessionTokens.get(sessionNo);
-                  ServiceResponse res = authRepository.findByHash(sestok.getHash());
+                  SessionInToken token = sessionTokens.get(sessionNo);
 
-                  if (res.isOK()) {
+                  if (URI.startsWith(Consts.Paths.ADMIN_BASE)
+                  && !UserRole.ADMIN.equals(token.getRole())) {
+                     ctx.status(HttpStatus.FORBIDDEN_403);
 
-                     if (URI.startsWith(Consts.Paths.ADMIN_BASE)
-                     && !UserRole.ADMIN.equals(sestok.getRole())) {
-                        ctx.status(HttpStatus.FORBIDDEN_403);
+                  } else 
 
-                     } else 
-                     if (UserRole.VIEWER.equals(sestok.getRole())
-                     && sensitiveMethodsSet.contains(ctx.method())
-                     && URI.indexOf(Consts.Paths.User.BASE + "/") < 0) {
-                        ctx.status(HttpStatus.FORBIDDEN_403);
+                  if (UserRole.VIEWER.equals(token.getRole())
+                  && sensitiveMethodsSet.contains(ctx.method())
+                  && URI.indexOf(Consts.Paths.User.BASE + "/") < 0) {
+                     ctx.status(HttpStatus.FORBIDDEN_403);
 
-                     } else {
-                        CurrentUser.set(sestok, res.getData());
+                  } else {
+                     ServiceResponse res = authRepository.findByHash(token.getHash());
+                     if (res.isOK()) {
+                        CurrentUser.set(token, res.getData());
                      }
                   }
                }
             }
-            if (ctx.status() == HttpStatus.UNAUTHORIZED_401 || StringUtils.isBlank(token)) {
+            if (ctx.status() == HttpStatus.UNAUTHORIZED_401 || StringUtils.isBlank(tokenString)) {
                ctx.removeCookie(Consts.SESSION);
             }
          }

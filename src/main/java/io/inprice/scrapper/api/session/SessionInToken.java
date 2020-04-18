@@ -1,11 +1,11 @@
-package io.inprice.scrapper.api.app.auth;
+package io.inprice.scrapper.api.session;
 
 import java.io.Serializable;
 import java.util.UUID;
 
 import io.inprice.scrapper.api.app.user.UserRole;
 
-public class SessionInfoForToken implements Serializable {
+public class SessionInToken implements Serializable {
 
    private static final long serialVersionUID = 8351087616755687271L;
 
@@ -15,10 +15,10 @@ public class SessionInfoForToken implements Serializable {
    private String company;
    private UserRole role;
 
-   public SessionInfoForToken() {
+   public SessionInToken() {
    }
 
-   public SessionInfoForToken(String user, String email, String company, UserRole role) {
+   public SessionInToken(String user, String email, String company, UserRole role) {
       this.email = email;
       this.user = user;
       this.company = company;
