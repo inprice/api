@@ -12,7 +12,7 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.ConfigScanner;
 import io.inprice.scrapper.api.framework.HandlerInterruptException;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.session.AuthFilter;
+import io.inprice.scrapper.api.session.AccessGuard;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.javalin.Javalin;
 import io.javalin.core.util.Header;
@@ -74,6 +74,8 @@ public class Application {
             config.enforceSsl = true;
          }
 
+         config.accessManager(new AccessGuard());
+
          JavalinJackson.configure(Global.getObjectMapper());
       }).start(Props.getAPP_Port());
 
@@ -83,7 +85,6 @@ public class Application {
          }
       });
 
-      app.before(new AuthFilter());
       app.after(ctx -> CurrentUser.cleanup());
 
       app.exception(HandlerInterruptException.class, (e, ctx) -> {

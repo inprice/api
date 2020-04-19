@@ -3,7 +3,7 @@ package io.inprice.scrapper.api.consts;
 public class Consts {
 
    public static final String SESSION = "INPRICE_AT";
-   public static final String SESSION_NO_HEADER = "X-Session-No";
+   public static final String SESSION_NO = "X-Session";
 
    public static class Paths {
 

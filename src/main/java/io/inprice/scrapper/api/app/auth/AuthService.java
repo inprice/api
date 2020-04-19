@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.servlet.http.Cookie;
 
@@ -60,12 +59,14 @@ public class AuthService {
                String salt = user.getPasswordSalt();
                String hash = BCrypt.hashpw(dto.getPassword(), salt);
                if (hash.equals(user.getPasswordHash())) {
-                  Integer oldSessionNo = findSessionNo(ctx, user.getEmail());
-                  if (oldSessionNo != null) {
-                     return new ServiceResponse(oldSessionNo);
+
+                  found = findSessionNo(ctx, user.getEmail());
+                  if (found.isOK()) {
+                     return found;
                   } else {
                      return createSession(ctx, user);
                   }
+
                }
             }
          } else {
@@ -151,8 +152,7 @@ public class AuthService {
       return Responses.Already.LOGGED_OUT;
    }
 
-   public Integer findSessionNo(Context ctx, String email) {
-      Integer sessionNo = null;
+   public ServiceResponse findSessionNo(Context ctx, String email) {
       if (ctx.cookieMap().containsKey(Consts.SESSION)) {
 
          String tokenString = ctx.cookie(Consts.SESSION);
@@ -164,14 +164,16 @@ public class AuthService {
                for (int i=0; i<tokenList.size(); i++) {
                   SessionInToken token = tokenList.get(i);
                   if (token.getEmail().equals(email)) {
-                     sessionNo = i;
-                     break;
+                     Map<String, Object> data = new HashMap<>(2);
+                     data.put("sessionNo", i);
+                     data.put("sessions", tokenList);
+                     return new ServiceResponse(data);
                   }
                }
             }
          }
       }
-      return sessionNo;
+      return Responses.NotFound.DATA;
    }
 
    public ServiceResponse createSession(Context ctx, User user) {
@@ -195,8 +197,16 @@ public class AuthService {
 
          UserAgent ua = new UserAgent(ctx.userAgent());
          for (UserCompany uc: userCompaniyList) {
+            SessionInToken sestok = new SessionInToken(
+               user.getName(),
+               user.getEmail(),
+               uc.getCompanyName(),
+               uc.getRole()
+            );
+            tokenList.add(sestok);
+
             SessionInDB ses = new SessionInDB();
-            ses.setHash(UUID.randomUUID().toString().replaceAll("-", "").toUpperCase());
+            ses.setHash(sestok.getHash());
             ses.setUserId(uc.getUserId());
             ses.setCompanyId(uc.getCompanyId());
             ses.setIp(ctx.ip());
@@ -204,15 +214,6 @@ public class AuthService {
             ses.setBrowser(ua.getBrowser().getName());
             ses.setUserAgent(ctx.userAgent());
             dbSessionList.add(ses);
-
-            tokenList.add(
-               new SessionInToken(
-                  user.getName(),
-                  user.getEmail(),
-                  uc.getCompanyName(),
-                  uc.getRole()
-               )
-            );
          }
 
          if (dbSessionList.size() > 0) {

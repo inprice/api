@@ -7,12 +7,13 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.helpers.Commons;
+import io.inprice.scrapper.api.consts.Consts;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
-import io.inprice.scrapper.api.consts.Consts;
-import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.helpers.AccessRoles;
+import io.inprice.scrapper.api.helpers.Commons;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
@@ -34,38 +35,38 @@ public class ProductImportController implements Controller {
       app.get(Consts.Paths.Product.IMPORT_BASE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, importService.findById(id)));
-      });
+      }, AccessRoles.ANYONE());
 
       // list
       app.get(Consts.Paths.Product.IMPORT_BASE + "s", (ctx) -> {
          ctx.json(Commons.createResponse(ctx, importService.getList()));
-      });
+      }, AccessRoles.ANYONE());
 
       // delete
       app.delete(Consts.Paths.Product.IMPORT_BASE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, importService.deleteById(id)));
-      });
+      }, AccessRoles.EDITOR());
 
       // upload csv
       app.post(Consts.Paths.Product.IMPORT_CSV, (ctx) -> {
          upload(ctx, "text/csv", csvImportService);
-      });
+      }, AccessRoles.EDITOR());
 
       // upload URL list
       app.post(Consts.Paths.Product.IMPORT_URL_LIST, (ctx) -> {
          upload(ctx, "text/plain", urlImportService);
-      });
+      }, AccessRoles.EDITOR());
 
       // upload ebay SKU list
       app.post(Consts.Paths.Product.IMPORT_EBAY_SKU_LIST, (ctx) -> {
          upload(ctx, "text/plain", codeImportService, ImportType.EBAY_SKU);
-      });
+      }, AccessRoles.EDITOR());
 
       // upload amazon ASIN list
       app.post(Consts.Paths.Product.IMPORT_AMAZON_ASIN_LIST, (ctx) -> {
          upload(ctx, "text/plain", codeImportService, ImportType.AMAZON_ASIN);
-      });
+      }, AccessRoles.EDITOR());
 
    }
 

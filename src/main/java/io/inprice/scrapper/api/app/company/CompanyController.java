@@ -6,6 +6,7 @@ import io.inprice.scrapper.api.dto.RegisterDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
+import io.inprice.scrapper.api.helpers.AccessRoles;
 import io.inprice.scrapper.api.helpers.Commons;
 import io.javalin.Javalin;
 
@@ -29,7 +30,7 @@ public class CompanyController implements Controller {
       app.put(Consts.Paths.Company.BASE, (ctx) -> {
          CompanyDTO dto = ctx.bodyAsClass(CompanyDTO.class);
          ctx.json(Commons.createResponse(ctx, service.update(dto)));
-      });
+      }, AccessRoles.ADMIN_ONLY());
 
    }
 

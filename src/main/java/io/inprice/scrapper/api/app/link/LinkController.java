@@ -1,11 +1,12 @@
 package io.inprice.scrapper.api.app.link;
 
-import io.inprice.scrapper.api.helpers.Commons;
+import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
-import io.inprice.scrapper.api.consts.Consts;
+import io.inprice.scrapper.api.helpers.AccessRoles;
+import io.inprice.scrapper.api.helpers.Commons;
 import io.javalin.Javalin;
 
 @Router
@@ -19,46 +20,46 @@ public class LinkController implements Controller {
       // insert
       app.post(Consts.Paths.Link.BASE, (ctx) -> {
          ctx.json(Commons.createResponse(ctx, service.insert(ctx.bodyAsClass(LinkDTO.class))));
-      });
+      }, AccessRoles.EDITOR());
 
       // delete
       app.delete(Consts.Paths.Link.BASE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, service.deleteById(id)));
-      });
+      }, AccessRoles.EDITOR());
 
       // find
       app.get(Consts.Paths.Link.BASE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, service.findById(id)));
-      });
+      }, AccessRoles.ANYONE());
 
       // list
       app.get(Consts.Paths.Link.BASE + "s/:product_id", (ctx) -> {
          Long productId = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, service.getList(productId)));
-      });
+      }, AccessRoles.ANYONE());
 
       // change status to RENEWED
       app.put(Consts.Paths.Link.RENEW + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          Long productId = ctx.queryParam("product_id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, LinkStatus.RENEWED)));
-      });
+      }, AccessRoles.EDITOR());
 
       // change status to PAUSED
       app.put(Consts.Paths.Link.PAUSE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          Long productId = ctx.queryParam("product_id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, LinkStatus.PAUSED)));
-      });
+      }, AccessRoles.EDITOR());
 
       // change status to RESUMED
       app.put(Consts.Paths.Link.RESUME + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          Long productId = ctx.queryParam("product_id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, LinkStatus.PAUSED)));
-      });
+      }, AccessRoles.EDITOR());
 
    }
 
