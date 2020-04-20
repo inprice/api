@@ -30,7 +30,7 @@ public class AccessGuard implements AccessManager {
 
       Integer sessionNo = NumberUtils.toInteger(ctx.header(Consts.SESSION_NO));
       if (sessionNo != null && sessionNo > -1) {
-         boolean isAuthed = false;
+         boolean isDone = false;
 
          String tokenString = ctx.cookieMap().get(Consts.SESSION);
          if (StringUtils.isNotBlank(tokenString)) {
@@ -43,17 +43,17 @@ public class AccessGuard implements AccessManager {
 
                   ServiceResponse res = authRepository.findByHash(token.getHash());
                   if (res.isOK()) {
-                     isAuthed = true;
+                     isDone = true;
                      CurrentUser.set(token, res.getData());
                      handler.handle(ctx);
                   }
                } else {
-                  isAuthed = true;
+                  isDone = true;
                   ctx.status(HttpStatus.FORBIDDEN_403).result("Forbidden");
                }
             }
          }
-         if (! isAuthed) {
+         if (! isDone) {
             ctx.removeCookie(Consts.SESSION);
             ctx.status(HttpStatus.UNAUTHORIZED_401).result("Invalid token");
          }
