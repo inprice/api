@@ -163,14 +163,25 @@ public class AuthService {
             List<ForCookie> cookieSesList = SessionHelper.fromToken(tokenString);
             if (cookieSesList != null && cookieSesList.size() > 0) {
 
+               Integer sessionNo = null;
+
+               List<ForResponse> responseSesList = new ArrayList<>();
                for (int i=0; i<cookieSesList.size(); i++) {
-                  ForCookie token = cookieSesList.get(i);
-                  if (token.getEmail().equals(email)) {
-                     Map<String, Object> data = new HashMap<>(2);
-                     data.put("sessionNo", i);
-                     data.put("sessions", cookieSesList);
-                     return new ServiceResponse(data);
+                  ForCookie cookieSes = cookieSesList.get(i);
+                  if (cookieSes.getEmail().equals(email)) {
+                     ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
+                     if (redisSes != null) {
+                        if (sessionNo == null) sessionNo = i;
+                        responseSesList.add(new ForResponse(cookieSes, redisSes.getUser(), redisSes.getCompany()));
+                     }
                   }
+               }
+
+               if (sessionNo != null && sessionNo > -1) {
+                  Map<String, Object> data = new HashMap<>(2);
+                  data.put("sessionNo", sessionNo);
+                  data.put("sessions", responseSesList);
+                  return new ServiceResponse(data);
                }
             }
          }
