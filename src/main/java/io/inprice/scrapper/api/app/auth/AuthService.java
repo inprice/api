@@ -164,24 +164,29 @@ public class AuthService {
             if (cookieSesList != null && cookieSesList.size() > 0) {
 
                Integer sessionNo = null;
-
-               List<ForResponse> responseSesList = new ArrayList<>();
                for (int i=0; i<cookieSesList.size(); i++) {
                   ForCookie cookieSes = cookieSesList.get(i);
                   if (cookieSes.getEmail().equals(email)) {
-                     ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
-                     if (redisSes != null) {
-                        if (sessionNo == null) sessionNo = i;
-                        responseSesList.add(new ForResponse(cookieSes, redisSes.getUser(), redisSes.getCompany()));
-                     }
+                     sessionNo = i;
+                     break;
                   }
                }
 
                if (sessionNo != null && sessionNo > -1) {
-                  Map<String, Object> data = new HashMap<>(2);
-                  data.put("sessionNo", sessionNo);
-                  data.put("sessions", responseSesList);
-                  return new ServiceResponse(data);
+                  List<ForResponse> responseSesList = new ArrayList<>();
+
+                  for (int i=0; i<cookieSesList.size(); i++) {
+                     ForCookie cookieSes = cookieSesList.get(i);
+                     ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
+                     responseSesList.add(new ForResponse(cookieSes, redisSes.getUser(), redisSes.getCompany()));
+                  }
+
+                  if (responseSesList.size() == cookieSesList.size()) {
+                     Map<String, Object> data = new HashMap<>(2);
+                     data.put("sessionNo", sessionNo);
+                     data.put("sessions", responseSesList);
+                     return new ServiceResponse(data);
+                  }
                }
             }
          }
@@ -213,9 +218,7 @@ public class AuthService {
          } else {
             for (ForCookie cookieSes: cookieSesList) {
                ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
-               if (redisSes != null) {
-                  responseSesList.add(new ForResponse(cookieSes, redisSes.getUser(), redisSes.getCompany()));
-               }
+               responseSesList.add(new ForResponse(cookieSes, redisSes.getUser(), redisSes.getCompany()));
             }
          }
          sessionNo = cookieSesList.size();
