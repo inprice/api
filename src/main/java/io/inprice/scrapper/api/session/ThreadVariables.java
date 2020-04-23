@@ -1,24 +1,20 @@
 package io.inprice.scrapper.api.session;
 
+import io.inprice.scrapper.api.session.info.ForRedis;
+
 class ThreadVariables {
 
-   private SessionInToken sestok;
-   private SessionInDB sesdb;
+   private ForRedis session;
 
    ThreadVariables() {
    }
 
-   void set(SessionInToken sestok, SessionInDB sesdb) {
-      this.sestok = sestok;
-      this.sesdb = sesdb;
+   void set(ForRedis session) {
+      this.session = session;
    }
 
-   SessionInToken getFromToken() {
-      return sestok;
-   }
-
-   SessionInDB getFromDatabase() {
-      return sesdb;
+   ForRedis getSession() {
+      return session;
    }
 
 }

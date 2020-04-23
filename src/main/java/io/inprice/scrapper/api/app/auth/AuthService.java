@@ -33,8 +33,10 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.SessionHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
-import io.inprice.scrapper.api.session.SessionInDB;
-import io.inprice.scrapper.api.session.SessionInToken;
+import io.inprice.scrapper.api.session.info.ForCookie;
+import io.inprice.scrapper.api.session.info.ForDatabase;
+import io.inprice.scrapper.api.session.info.ForRedis;
+import io.inprice.scrapper.api.session.info.ForResponse;
 import io.javalin.http.Context;
 import jodd.util.BCrypt;
 
@@ -142,9 +144,9 @@ public class AuthService {
          ctx.removeCookie(Consts.SESSION);
          if (StringUtils.isNotBlank(tokenString)) {
 
-            List<SessionInToken> tokenList = SessionHelper.fromToken(tokenString);
-            if (tokenList != null && tokenList.size() > 0) {
-               authRepository.deleteSession(tokenList);
+            List<ForCookie> cookieSesList = SessionHelper.fromToken(tokenString);
+            if (cookieSesList != null && cookieSesList.size() > 0) {
+               authRepository.deleteSession(cookieSesList);
                return Responses.OK;
             }
          }
@@ -158,15 +160,15 @@ public class AuthService {
          String tokenString = ctx.cookie(Consts.SESSION);
          if (StringUtils.isNotBlank(tokenString)) {
 
-            List<SessionInToken> tokenList = SessionHelper.fromToken(tokenString);
-            if (tokenList != null && tokenList.size() > 0) {
+            List<ForCookie> cookieSesList = SessionHelper.fromToken(tokenString);
+            if (cookieSesList != null && cookieSesList.size() > 0) {
 
-               for (int i=0; i<tokenList.size(); i++) {
-                  SessionInToken token = tokenList.get(i);
+               for (int i=0; i<cookieSesList.size(); i++) {
+                  ForCookie token = cookieSesList.get(i);
                   if (token.getEmail().equals(email)) {
                      Map<String, Object> data = new HashMap<>(2);
                      data.put("sessionNo", i);
-                     data.put("sessions", tokenList);
+                     data.put("sessions", cookieSesList);
                      return new ServiceResponse(data);
                   }
                }
@@ -182,54 +184,81 @@ public class AuthService {
       ServiceResponse res = userCompanyRepository.getUserCompanies(user.getEmail());
       if (res.isOK()) {
 
-         List<UserCompany> userCompaniyList = res.getData();
-         List<SessionInDB> dbSessionList = new ArrayList<>();
-         List<SessionInToken> tokenList = null;
+         List<UserCompany> userCompanyList = res.getData();
+
+         List<ForCookie> cookieSesList = null;
+         List<ForRedis> redisSesList = new ArrayList<>();
+         List<ForDatabase> dbSesList = new ArrayList<>();
+         List<ForResponse> responseSesList = new ArrayList<>();
 
          if (ctx.cookieMap().containsKey(Consts.SESSION)) {
             String tokenString = ctx.cookie(Consts.SESSION);
             if (StringUtils.isNotBlank(tokenString)) {
-               tokenList = SessionHelper.fromToken(tokenString);
+               cookieSesList = SessionHelper.fromToken(tokenString);
             }
          }
-         if (tokenList == null) tokenList = new ArrayList<>();
-         sessionNo = tokenList.size();
+         if (cookieSesList == null) {
+            cookieSesList = new ArrayList<>();
+         } else {
+            for (ForCookie cookieSes: cookieSesList) {
+               ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
+               if (redisSes != null) {
+                  responseSesList.add(new ForResponse(cookieSes, redisSes.getUser(), redisSes.getCompany()));
+               }
+            }
+         }
+         sessionNo = cookieSesList.size();
 
          UserAgent ua = new UserAgent(ctx.userAgent());
-         for (UserCompany uc: userCompaniyList) {
-            SessionInToken sestok = new SessionInToken(
-               user.getName(),
-               user.getEmail(),
-               uc.getCompanyName(),
-               uc.getRole()
-            );
-            tokenList.add(sestok);
+         for (UserCompany uc: userCompanyList) {
 
-            SessionInDB ses = new SessionInDB();
-            ses.setHash(sestok.getHash());
-            ses.setUserId(uc.getUserId());
-            ses.setCompanyId(uc.getCompanyId());
-            ses.setIp(ctx.ip());
-            ses.setOs(ua.getOperatingSystem().getName());
-            ses.setBrowser(ua.getBrowser().getName());
-            ses.setUserAgent(ctx.userAgent());
-            dbSessionList.add(ses);
+            ForCookie cookieSes = new ForCookie(user.getEmail(), uc.getRole());
+            cookieSesList.add(cookieSes);
+
+            ForResponse responseSes = new ForResponse(
+               cookieSes,
+               user.getName(),
+               uc.getCompanyName()
+            );
+            responseSesList.add(responseSes);
+
+            ForRedis redisSes = new ForRedis(
+               responseSes,
+               user.getId(),
+               uc.getCompanyId(),
+               cookieSes.getHash()
+            );
+            redisSesList.add(redisSes);
+
+            ForDatabase dbSes = new ForDatabase();
+            dbSes.setHash(cookieSes.getHash());
+            dbSes.setUserId(uc.getUserId());
+            dbSes.setCompanyId(uc.getCompanyId());
+            dbSes.setIp(ctx.ip());
+            dbSes.setOs(ua.getOperatingSystem().getName());
+            dbSes.setBrowser(ua.getBrowser().getName());
+            dbSes.setUserAgent(ctx.userAgent());
+            dbSesList.add(dbSes);
          }
 
-         if (dbSessionList.size() > 0) {
-            res = authRepository.saveSessions(dbSessionList);
+         if (dbSesList.size() > 0) {
+            res = authRepository.saveSessions(redisSesList, dbSesList);
 
             if (res.isOK()) {
-               String tokenString = SessionHelper.toToken(tokenList);
-               Cookie serverCookie = new Cookie(Consts.SESSION, tokenString);
-               serverCookie.setHttpOnly(true);
-               serverCookie.setSecure(! Props.isRunningForDev());
-               ctx.cookie(serverCookie);
+               String tokenString = SessionHelper.toToken(cookieSesList);
+               Cookie cookie = new Cookie(Consts.SESSION, tokenString);
+               cookie.setHttpOnly(true);
+               if (! Props.isRunningForDev()) {
+                  cookie.setDomain(".inprice.io");
+                  cookie.setMaxAge(Integer.MAX_VALUE);
+                  cookie.setSecure(true);
+               }
+               ctx.cookie(cookie);
 
                // response
                Map<String, Object> data = new HashMap<>(2);
                data.put("sessionNo", sessionNo);
-               data.put("sessions", tokenList);
+               data.put("sessions", responseSesList);
                res = new ServiceResponse(data);
             }
          } else {

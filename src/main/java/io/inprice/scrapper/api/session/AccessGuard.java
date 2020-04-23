@@ -11,6 +11,7 @@ import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.SessionHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.session.info.ForCookie;
 import io.inprice.scrapper.api.utils.NumberUtils;
 import io.javalin.core.security.AccessManager;
 import io.javalin.core.security.Role;
@@ -35,16 +36,16 @@ public class AccessGuard implements AccessManager {
          String tokenString = ctx.cookieMap().get(Consts.SESSION);
          if (StringUtils.isNotBlank(tokenString)) {
 
-            List<SessionInToken> sessionTokens = SessionHelper.fromToken(tokenString);
+            List<ForCookie> sessionTokens = SessionHelper.fromToken(tokenString);
             if (sessionTokens != null && sessionTokens.size() > sessionNo) {
 
-               SessionInToken token = sessionTokens.get(sessionNo);
+               ForCookie token = sessionTokens.get(sessionNo);
                if (permittedRoles.contains(token.getRole())) {
 
                   ServiceResponse res = authRepository.findByHash(token.getHash());
                   if (res.isOK()) {
                      isDone = true;
-                     CurrentUser.set(token, res.getData());
+                     CurrentUser.set(res.getData());
                      handler.handle(ctx);
                   }
                } else {

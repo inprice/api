@@ -1,6 +1,7 @@
 package io.inprice.scrapper.api.session;
 
 import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.api.session.info.ForRedis;
 
 public class CurrentUser {
 
@@ -11,32 +12,32 @@ public class CurrentUser {
       }
    };
 
-   static void set(SessionInToken sestok, SessionInDB sesdb) {
-      THREAD_VARIABLES.get().set(sestok, sesdb);
+   static void set(ForRedis forRedis) {
+      THREAD_VARIABLES.get().set(forRedis);
    }
 
    public static Long getUserId() {
-      return THREAD_VARIABLES.get().getFromDatabase().getUserId();
+      return THREAD_VARIABLES.get().getSession().getUserId();
    }
 
    public static String getEmail() {
-      return THREAD_VARIABLES.get().getFromToken().getEmail();
+      return THREAD_VARIABLES.get().getSession().getEmail();
    }
 
    public static String getUserName() {
-      return THREAD_VARIABLES.get().getFromToken().getUser();
+      return THREAD_VARIABLES.get().getSession().getUser();
    }
 
    public static Long getCompanyId() {
-      return THREAD_VARIABLES.get().getFromDatabase().getCompanyId();
+      return THREAD_VARIABLES.get().getSession().getCompanyId();
    }
 
    public static String getCompanyName() {
-      return THREAD_VARIABLES.get().getFromToken().getCompany();
+      return THREAD_VARIABLES.get().getSession().getCompany();
    }
 
    public static UserRole getRole() {
-      return THREAD_VARIABLES.get().getFromToken().getRole();
+      return THREAD_VARIABLES.get().getSession().getRole();
    }
 
    public static void cleanup() {
