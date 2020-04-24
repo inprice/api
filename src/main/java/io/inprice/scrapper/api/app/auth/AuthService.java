@@ -266,6 +266,8 @@ public class AuthService {
                   cookie.setDomain(".inprice.io");
                   cookie.setMaxAge(Integer.MAX_VALUE);
                   cookie.setSecure(true);
+               } else { // for dev and test purposes
+                  cookie.setMaxAge(60 * 60 * 24); // for one day
                }
                ctx.cookie(cookie);
 
