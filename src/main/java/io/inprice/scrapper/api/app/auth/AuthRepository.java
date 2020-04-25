@@ -1,10 +1,13 @@
 package io.inprice.scrapper.api.app.auth;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -16,9 +19,11 @@ import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.session.info.ForCookie;
 import io.inprice.scrapper.api.session.info.ForDatabase;
 import io.inprice.scrapper.api.session.info.ForRedis;
+import io.inprice.scrapper.api.utils.DateUtils;
 
 public class AuthRepository {
 
@@ -39,17 +44,17 @@ public class AuthRepository {
       return Responses.NotFound.DATA;
    }
 
-   public boolean deleteSession(List<ForCookie> sessions) {
-      List<String> deletedList = new ArrayList<>(sessions.size());
+   public boolean closeSession(List<ForCookie> sessions) {
+      List<String> closed = new ArrayList<>(sessions.size());
 
       for (ForCookie ses: sessions) {
          RedisClient.removeSesion(ses.getHash());
-         deletedList.add(ses.getHash());
+         closed.add(ses.getHash());
          log.info("Logout {}", ses.toString());
       }
 
-      if (deletedList.size() > 0) {
-         String inClause = StringUtils.join(deletedList, "', '");
+      if (closed.size() > 0) {
+         String inClause = StringUtils.join(closed, "', '");
          return
             db.executeQuery(
                String.format("delete from user_session where _hash in ('%s')", inClause),
@@ -60,14 +65,30 @@ public class AuthRepository {
    }
 
    public ServiceResponse findByUserId(Long userId) {
-      List<ForDatabase> models = db.findMultiple(String.format("select * from user_session where user_id=%d", userId), AuthRepository::map);
-      if (models != null)
-         return new ServiceResponse(models);
-      else
-         return Responses.NotFound.DATA;
+      final String query = "select distinct os, browser, ip, accessed_at from user_session where user_id=? ";
+      try (Connection con = db.getConnection();
+         PreparedStatement pst = con.prepareStatement(query)) {
+         pst.setLong(1, CurrentUser.getUserId());
+
+         try (ResultSet rs = pst.executeQuery()) {
+            List<Map<String, String>> data = new ArrayList<>();
+            while (rs.next()) {
+               Map<String, String> map = new HashMap<>(4);
+               map.put("os", rs.getString("os"));
+               map.put("browser", rs.getString("browser"));
+               map.put("ip", rs.getString("ip"));
+               map.put("date", DateUtils.formatLongDate(rs.getTimestamp("accessed_at")));
+               data.add(map);
+            }
+            return new ServiceResponse(data);
+         }
+      } catch (SQLException e) {
+         log.error("Failed to get user session. UserId: " + userId, e);
+         return Responses.DataProblem.DB_PROBLEM;
+      }
    }
 
-   public boolean deleteByUserId(Long userId) {
+   public boolean closeByUserId(Long userId) {
       try (Connection con = db.getConnection()) {
          List<ForDatabase> sessions = 
             db.findMultiple(con, String.format("select * from user_session where user_id=%d", userId), AuthRepository::map);
@@ -88,7 +109,7 @@ public class AuthRepository {
       return false;
    }
 
-   public boolean deleteByUserAndCompanyId(Long userId, Long companyId) {
+   public boolean closeByUserAndCompanyId(Long userId, Long companyId) {
       try (Connection con = db.getConnection()) {
          List<ForDatabase> sessions = 
             db.findMultiple(con, String.format("select * from user_session where user_id=%d and company_id=%d", userId, companyId), AuthRepository::map);

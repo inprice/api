@@ -28,7 +28,7 @@ public class UserCompanyService {
          if (userCompany != null) {
             ServiceResponse res = userCompanyRepository.deleteById(userCompany.getId());
             if (res.isOK()) {
-               authRepository.deleteByUserAndCompanyId(userCompany.getUserId(), userCompany.getCompanyId());
+               authRepository.closeByUserAndCompanyId(userCompany.getUserId(), userCompany.getCompanyId());
                return Responses.OK;
             }
          }
@@ -43,7 +43,7 @@ public class UserCompanyService {
             ServiceResponse res = userCompanyRepository.toggleStatus(id);
             if (res.isOK()) {
                if (userCompany.getActive().equals(Boolean.TRUE)) {
-                  authRepository.deleteByUserAndCompanyId(userCompany.getUserId(), CurrentUser.getCompanyId());
+                  authRepository.closeByUserAndCompanyId(userCompany.getUserId(), CurrentUser.getCompanyId());
                }
                return Responses.OK;
             }
@@ -60,7 +60,7 @@ public class UserCompanyService {
          if (! userCompany.getRole().equals(UserRole.ADMIN)) {
             res = userCompanyRepository.changeRole(dto);
             if (res.isOK()) {
-               authRepository.deleteByUserAndCompanyId(userCompany.getUserId(), CurrentUser.getCompanyId());
+               authRepository.closeByUserAndCompanyId(userCompany.getUserId(), CurrentUser.getCompanyId());
                log.info("{} role is changed to {} ", dto.getMemberId(), userCompany.getRole());
             }
          } else {

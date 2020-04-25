@@ -33,6 +33,13 @@ public class DateUtils {
          return "";
    }
 
+   public static String formatLongDate(Date date) {
+      if (date != null)
+         return sdfLongForDB.format(date);
+      else
+         return "";
+   }
+
    public static String formatLongDateForDB(Date date) {
       if (date != null)
          return "'" + sdfLongForDB.format(date) + "'";

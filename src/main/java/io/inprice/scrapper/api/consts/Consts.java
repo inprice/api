@@ -32,7 +32,9 @@ public class Consts {
       public static class User {
          public static final String BASE = "/user";
          public static final String PASSWORD = BASE + "/change-password";
-         public static final String SWITCH_COMPANY = BASE + "/switch-company";
+         public static final String UPDATE_NAME = BASE + "/update-name";
+         public static final String OPENED_SESSIONS = BASE + "/opened-sessions";
+         public static final String CLOSE_ALL_SESSIONS = BASE + "/close-all-sessions";
       }
 
       public static class UserCompany {

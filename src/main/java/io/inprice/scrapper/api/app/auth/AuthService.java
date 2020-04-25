@@ -124,7 +124,7 @@ public class AuthService {
                ServiceResponse res = userRepository.updatePassword(user.getId(), dto.getPassword());
                if (res.isOK()) {
                   TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
-                  authRepository.deleteByUserId(user.getId());
+                  authRepository.closeByUserId(user.getId());
                   return createSession(ctx, user);
                }
             } else {
@@ -146,7 +146,7 @@ public class AuthService {
 
             List<ForCookie> cookieSesList = SessionHelper.fromToken(tokenString);
             if (cookieSesList != null && cookieSesList.size() > 0) {
-               authRepository.deleteSession(cookieSesList);
+               authRepository.closeSession(cookieSesList);
                return Responses.OK;
             }
          }
