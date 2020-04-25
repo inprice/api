@@ -5,18 +5,23 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.session.CurrentUser;
-import io.inprice.scrapper.api.dto.UserDTO;
-import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.dto.UserDTO;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.CodeGenerator;
 import io.inprice.scrapper.api.helpers.RepositoryHelper;
+import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.api.utils.DateUtils;
 import jodd.util.BCrypt;
 
 public class UserRepository {
@@ -146,6 +151,68 @@ public class UserRepository {
 
       } catch (Exception e) {
          log.error("Failed to update user", e);
+         return Responses.ServerProblem.EXCEPTION;
+      }
+   }
+
+   public ServiceResponse findActiveInvitations() {
+      String query =
+         "select uc.id, c.name, uc.role, uc.created_at " +
+         "from user_company as uc " +
+         "left join company as c on c.id = uc.company_id " +
+         "where active=true " +
+         "  and email=? " +
+         "  and status=? " +
+         "order by created_at desc";
+
+      try (Connection con = db.getConnection();
+         PreparedStatement pst = con.prepareStatement(query)) {
+         pst.setString(1, CurrentUser.getEmail());
+         pst.setString(2, UserStatus.PENDING.name());
+   
+         try (ResultSet rs = pst.executeQuery()) {
+            List<Map<String, String>> data = new ArrayList<>();
+            while (rs.next()) {
+               Map<String, String> map = new HashMap<>(4);
+               map.put("id", rs.getString("id"));
+               map.put("company", rs.getString("name"));
+               map.put("role", rs.getString("role"));
+               map.put("date", DateUtils.formatLongDate(rs.getTimestamp("created_at")));
+               data.add(map);
+            }
+            return new ServiceResponse(data);
+         }
+      } catch (SQLException e) {
+         log.error("Failed to get user invitations.", e);
+         return Responses.DataProblem.DB_PROBLEM;
+      }
+   }
+
+   public ServiceResponse acceptInvitation(Long id) {
+      return processInvitation(id, UserStatus.JOINED);
+   }
+
+   public ServiceResponse rejectInvitation(Long id) {
+      return processInvitation(id, UserStatus.LEFT);
+   }
+
+   private ServiceResponse processInvitation(Long id, UserStatus status) {
+      final String query = "update user_company set status=?, user_id=?, updated_at=now() where id=? and email=?";
+
+      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+         int i = 0;
+         pst.setString(++i, status.name());
+         pst.setLong(++i, CurrentUser.getUserId());
+         pst.setLong(++i, id);
+         pst.setString(++i, CurrentUser.getEmail());
+
+         if (pst.executeUpdate() > 0)
+            return Responses.OK;
+         else
+            return Responses.NotFound.USER;
+
+      } catch (SQLException sqle) {
+         log.error("Failed to set user invitation to " + status, sqle);
          return Responses.ServerProblem.EXCEPTION;
       }
    }

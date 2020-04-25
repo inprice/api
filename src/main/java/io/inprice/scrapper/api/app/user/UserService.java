@@ -1,15 +1,20 @@
 package io.inprice.scrapper.api.app.user;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.scrapper.api.app.auth.AuthRepository;
 import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.dto.LongDTO;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.PasswordValidator;
 import io.inprice.scrapper.api.dto.StringDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.api.session.info.ForCookie;
 
 /**
  * TODO:
@@ -27,7 +32,6 @@ public class UserService {
       } else if (dto.getValue().length() < 3 || dto.getValue().length() > 70) {
          return new ServiceResponse("Name must be between 3 and 70 chars!");
       }
-
       return userRepository.updateName(dto.getValue());
    }
 
@@ -40,8 +44,30 @@ public class UserService {
       }
    }
 
-   public ServiceResponse getOpenedSessions() {
-      return authRepository.findByUserId(CurrentUser.getUserId());
+   public ServiceResponse getInvitations() {
+      return userRepository.findActiveInvitations();
+   }
+
+   public ServiceResponse acceptInvitation(LongDTO dto) {
+      if (dto.getValue() == null || dto.getValue() < 1) {
+         return Responses.Invalid.DATA;
+      }
+      return userRepository.acceptInvitation(dto.getValue());
+   }
+
+   public ServiceResponse rejectInvitation(LongDTO dto) {
+      if (dto.getValue() == null || dto.getValue() < 1) {
+         return Responses.Invalid.DATA;
+      }
+      return userRepository.rejectInvitation(dto.getValue());
+   }
+
+   public ServiceResponse getOpenedSessions(List<ForCookie> cookieSesList) {
+      List<String> hashes = new ArrayList<>(cookieSesList.size());
+      for (ForCookie ses: cookieSesList) {
+         hashes.add(ses.getHash());
+      }
+      return authRepository.findOpenedSessions(hashes);
    }
 
    public ServiceResponse closeAllSessions() {

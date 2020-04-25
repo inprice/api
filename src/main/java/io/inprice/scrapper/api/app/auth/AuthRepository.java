@@ -64,12 +64,14 @@ public class AuthRepository {
       return false;
    }
 
-   public ServiceResponse findByUserId(Long userId) {
-      final String query = "select distinct os, browser, ip, accessed_at from user_session where user_id=? ";
+   public ServiceResponse findOpenedSessions(List<String> excludedHashes) {
+      String inClause = StringUtils.join(excludedHashes, "', '");
+      String query = "select distinct os, browser, ip, accessed_at from user_session where user_id=? and _hash not in ('" + inClause + "')";
+
       try (Connection con = db.getConnection();
          PreparedStatement pst = con.prepareStatement(query)) {
          pst.setLong(1, CurrentUser.getUserId());
-
+   
          try (ResultSet rs = pst.executeQuery()) {
             List<Map<String, String>> data = new ArrayList<>();
             while (rs.next()) {
@@ -83,7 +85,7 @@ public class AuthRepository {
             return new ServiceResponse(data);
          }
       } catch (SQLException e) {
-         log.error("Failed to get user session. UserId: " + userId, e);
+         log.error("Failed to get user session.", e);
          return Responses.DataProblem.DB_PROBLEM;
       }
    }
