@@ -49,6 +49,15 @@ public class UserController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.rejectInvitation(dto)));
       }, AccessRoles.ANYONE());
 
+      app.get(Consts.Paths.User.MEMBERSHIPS, (ctx) -> {
+         ctx.json(Commons.createResponse(ctx, service.getMemberships()));
+      }, AccessRoles.ANYONE());
+
+      app.put(Consts.Paths.User.LEAVE_MEMBERSHIP, (ctx) -> {
+         LongDTO dto = ctx.bodyAsClass(LongDTO.class);
+         ctx.json(Commons.createResponse(ctx, service.leaveMembership(dto)));
+      }, AccessRoles.ANYONE());
+
       app.get(Consts.Paths.User.OPENED_SESSIONS, (ctx) -> {
          String tokenString = ctx.cookie(Consts.SESSION);
          List<ForCookie> cookieSesList = SessionHelper.fromToken(tokenString);

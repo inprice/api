@@ -138,7 +138,7 @@ public class CompanyRepository {
                // mamber insertion
                if (companyId != null) {
                   try (PreparedStatement pst = con.prepareStatement(
-                        "insert into user_company (user_id, email, company_id, role, status) values (?, ?, ?, ?, ?) ")) {
+                        "insert into user_company (user_id, email, company_id, role, status, updated_at) values (?, ?, ?, ?, ?, now()) ")) {
                      int i = 0;
                      pst.setLong(++i, dto.getUserId());
                      pst.setString(++i, dto.getEmail());

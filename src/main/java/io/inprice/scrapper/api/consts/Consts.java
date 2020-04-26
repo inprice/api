@@ -36,6 +36,8 @@ public class Consts {
          public static final String INVITATIONS = BASE + "/invitations";
          public static final String ACCEPT_INVITATION = BASE + "/accept-invitation";
          public static final String REJECT_INVITATION = BASE + "/reject-invitation";
+         public static final String MEMBERSHIPS = BASE + "/memberships";
+         public static final String LEAVE_MEMBERSHIP = BASE + "/leave-membership";
          public static final String OPENED_SESSIONS = BASE + "/opened-sessions";
          public static final String CLOSE_ALL_SESSIONS = BASE + "/close-all-sessions";
       }

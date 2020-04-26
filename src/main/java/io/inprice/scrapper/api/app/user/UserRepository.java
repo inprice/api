@@ -155,6 +155,65 @@ public class UserRepository {
       }
    }
 
+   public ServiceResponse findMemberships() {
+      String query =
+         "select uc.id, c.name, uc.role, uc.status, uc.updated_at " +
+         "from user_company as uc " +
+         "left join company as c on c.id = uc.company_id " +
+         "where email=? " +
+         "  and company_id!=? " +
+         "  and status in (?, ?) " +
+         "order by status, updated_at desc";
+
+      try (Connection con = db.getConnection();
+         PreparedStatement pst = con.prepareStatement(query)) {
+         int i = 0;
+         pst.setString(++i, CurrentUser.getEmail());
+         pst.setLong(++i, CurrentUser.getCompanyId());
+         pst.setString(++i, UserStatus.JOINED.name());
+         pst.setString(++i, UserStatus.LEFT.name());
+   
+         try (ResultSet rs = pst.executeQuery()) {
+            List<Map<String, String>> data = new ArrayList<>();
+            while (rs.next()) {
+               Map<String, String> map = new HashMap<>(5);
+               map.put("id", rs.getString("id"));
+               map.put("company", rs.getString("name"));
+               map.put("role", rs.getString("role"));
+               map.put("status", rs.getString("status"));
+               map.put("date", DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
+               data.add(map);
+            }
+            return new ServiceResponse(data);
+         }
+      } catch (SQLException e) {
+         log.error("Failed to get user memberships.", e);
+         return Responses.DataProblem.DB_PROBLEM;
+      }
+   }
+
+   public ServiceResponse leaveMembership(Long id) {
+      final String query = "update user_company set status=?, user_id=?, updated_at=now() where id=? and email=? and status=?";
+
+      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+         int i = 0;
+         pst.setString(++i, UserStatus.LEFT.name());
+         pst.setLong(++i, CurrentUser.getUserId());
+         pst.setLong(++i, id);
+         pst.setString(++i, CurrentUser.getEmail());
+         pst.setString(++i, UserStatus.JOINED.name());
+
+         if (pst.executeUpdate() > 0)
+            return Responses.OK;
+         else
+            return Responses.NotFound.USER;
+
+      } catch (SQLException sqle) {
+         log.error("Failed to leave membership. User: " + CurrentUser.getUserId(), sqle);
+         return Responses.ServerProblem.EXCEPTION;
+      }
+   }
+
    public ServiceResponse findActiveInvitations() {
       String query =
          "select uc.id, c.name, uc.role, uc.created_at " +
@@ -188,22 +247,23 @@ public class UserRepository {
    }
 
    public ServiceResponse acceptInvitation(Long id) {
-      return processInvitation(id, UserStatus.JOINED);
+      return processInvitation(id, UserStatus.PENDING, UserStatus.JOINED);
    }
 
    public ServiceResponse rejectInvitation(Long id) {
-      return processInvitation(id, UserStatus.LEFT);
+      return processInvitation(id, UserStatus.JOINED, UserStatus.LEFT);
    }
 
-   private ServiceResponse processInvitation(Long id, UserStatus status) {
-      final String query = "update user_company set status=?, user_id=?, updated_at=now() where id=? and email=?";
+   private ServiceResponse processInvitation(Long id, UserStatus fromStatus, UserStatus toStatus) {
+      final String query = "update user_company set status=?, user_id=?, updated_at=now() where id=? and email=? and status=?";
 
       try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
          int i = 0;
-         pst.setString(++i, status.name());
+         pst.setString(++i, toStatus.name());
          pst.setLong(++i, CurrentUser.getUserId());
          pst.setLong(++i, id);
          pst.setString(++i, CurrentUser.getEmail());
+         pst.setString(++i, fromStatus.name());
 
          if (pst.executeUpdate() > 0)
             return Responses.OK;
@@ -211,7 +271,8 @@ public class UserRepository {
             return Responses.NotFound.USER;
 
       } catch (SQLException sqle) {
-         log.error("Failed to set user invitation to " + status, sqle);
+         log.error("Failed to set invitation status of user: " + CurrentUser.getUserId() + 
+            " from " + fromStatus + " to " + toStatus, sqle);
          return Responses.ServerProblem.EXCEPTION;
       }
    }

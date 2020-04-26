@@ -62,6 +62,17 @@ public class UserService {
       return userRepository.rejectInvitation(dto.getValue());
    }
 
+   public ServiceResponse getMemberships() {
+      return userRepository.findMemberships();
+   }
+
+   public ServiceResponse leaveMembership(LongDTO dto) {
+      if (dto.getValue() == null || dto.getValue() < 1) {
+         return Responses.Invalid.DATA;
+      }
+      return userRepository.leaveMembership(dto.getValue());
+   }
+
    public ServiceResponse getOpenedSessions(List<ForCookie> cookieSesList) {
       List<String> hashes = new ArrayList<>(cookieSesList.size());
       for (ForCookie ses: cookieSesList) {
