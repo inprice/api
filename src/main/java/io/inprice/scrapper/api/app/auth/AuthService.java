@@ -202,8 +202,8 @@ public class AuthService {
 
          List<UserCompany> userCompanyList = res.getData();
 
-         List<ForCookie> cookieSesList = null;
          List<ForRedis> redisSesList = new ArrayList<>();
+         List<ForCookie> cookieSesList = null;
          List<ForDatabase> dbSesList = new ArrayList<>();
          List<ForResponse> responseSesList = new ArrayList<>();
 

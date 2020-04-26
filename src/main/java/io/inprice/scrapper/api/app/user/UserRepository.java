@@ -160,8 +160,7 @@ public class UserRepository {
          "select uc.id, c.name, uc.role, uc.created_at " +
          "from user_company as uc " +
          "left join company as c on c.id = uc.company_id " +
-         "where active=true " +
-         "  and email=? " +
+         "where email=? " +
          "  and status=? " +
          "order by created_at desc";
 

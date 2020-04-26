@@ -169,10 +169,6 @@ public class InvitationService {
          if (StringUtils.isBlank(dto.getToken())) {
             problem = Responses.Invalid.TOKEN.getReason();
          }
-
-         if (! TokenService.isTokenValid(dto.getToken())) {
-            problem = Responses.Invalid.TOKEN.getReason();
-         }
       }
 
       if (problem == null)

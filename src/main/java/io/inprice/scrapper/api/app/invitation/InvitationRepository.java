@@ -193,7 +193,7 @@ public class InvitationRepository {
    private ServiceResponse checkUserCompany(UserCompany userCompany) {
       ServiceResponse res = Responses.OK;
       if (userCompany != null) {
-         if (userCompany.getActive() && UserStatus.PENDING.equals(userCompany.getStatus())) {
+         if (UserStatus.PENDING.equals(userCompany.getStatus())) {
             res = Responses.OK;
          } else {
             res = Responses.NotActive.INVITATION;
@@ -208,7 +208,6 @@ public class InvitationRepository {
       try {
          UserCompany model = new UserCompany();
          model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
-         model.setActive(rs.getBoolean("active"));
          model.setEmail(rs.getString("email"));
          model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
          model.setRole(UserRole.valueOf(rs.getString("role")));

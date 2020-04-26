@@ -67,13 +67,12 @@ alter table company add foreign key (plan_id) references plan (id);
 
 create table user_company (
   id                        bigint auto_increment not null,
-  active                    boolean default true,
   email                     varchar(100) not null,
   user_id                   bigint,
   company_id                bigint not null,
   role                      enum('ADMIN', 'EDITOR', 'VIEWER') not null default 'EDITOR',
-  pre_status                enum('PENDING', 'JOINED', 'LEFT') not null default 'PENDING',
-  status                    enum('PENDING', 'JOINED', 'LEFT') not null default 'PENDING',
+  pre_status                enum('PENDING', 'JOINED', 'PAUSED', 'LEFT') not null default 'PENDING',
+  status                    enum('PENDING', 'JOINED', 'PAUSED', 'LEFT') not null default 'PENDING',
   retry                     smallint default 1,
   updated_at                timestamp,
   created_at                timestamp not null default current_timestamp,

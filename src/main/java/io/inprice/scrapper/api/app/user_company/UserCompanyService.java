@@ -36,22 +36,6 @@ public class UserCompanyService {
       return Responses.NotFound.INVITATION;
    }
 
-   public ServiceResponse toggleStatus(Long id) {
-      if (id != null && id > 0) {
-         UserCompany userCompany = userCompanyRepository.getById(id);
-         if (userCompany != null) {
-            ServiceResponse res = userCompanyRepository.toggleStatus(id);
-            if (res.isOK()) {
-               if (userCompany.getActive().equals(Boolean.TRUE)) {
-                  authRepository.closeByUserAndCompanyId(userCompany.getUserId(), CurrentUser.getCompanyId());
-               }
-               return Responses.OK;
-            }
-         }
-      }
-      return Responses.NotFound.INVITATION;
-   }
-
    public ServiceResponse changeRole(MemberChangeRoleDTO dto, String ip, String userAgent) {
       ServiceResponse res = validate(dto);
       if (res.isOK()) {

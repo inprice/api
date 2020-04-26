@@ -31,11 +31,7 @@ public class UserCompanyRepository {
       UserCompany model = db.findSingle(String.format(COMPANY_SELECT_STANDARD_QUERY + " where m.id=%d", invitationId),
             this::map);
       if (model != null) {
-         if (model.getActive()) {
-            return new ServiceResponse(model);
-         } else {
-            return Responses.NotActive.INVITATION;
-         }
+         return new ServiceResponse(model);
       } else {
          return Responses.NotFound.INVITATION;
       }
@@ -43,21 +39,21 @@ public class UserCompanyRepository {
 
    public ServiceResponse getListByUser() {
       List<UserCompany> companies = db.findMultiple(String.format(
-            COMPANY_SELECT_STANDARD_QUERY + " where m.active = true and m.email = '%s' order by m.role, c.name, m.created_at desc",
+            COMPANY_SELECT_STANDARD_QUERY + " where m.email = '%s' order by m.role, c.name, m.created_at desc",
             SqlHelper.clear(CurrentUser.getEmail())), this::map);
       return new ServiceResponse(companies);
    }
 
    public ServiceResponse getListByCompany() {
       List<UserCompany> companies = db.findMultiple(String.format(
-            COMPANY_SELECT_STANDARD_QUERY + " where m.active = true and m.company_id = %d order by m.role, c.name, m.created_at desc",
+            COMPANY_SELECT_STANDARD_QUERY + " where m.company_id = %d order by m.role, c.name, m.created_at desc",
             CurrentUser.getCompanyId()), this::map);
       return new ServiceResponse(companies);
    }
 
    public ServiceResponse getUserCompanies(String email) {
       List<UserCompany> companies = db.findMultiple(String.format(
-            COMPANY_SELECT_STANDARD_QUERY + " where m.active = true and m.email = '%s' and m.status = '%s' order by m.role, m.company_id",
+            COMPANY_SELECT_STANDARD_QUERY + " where m.email = '%s' and m.status = '%s' order by m.role, m.company_id",
             SqlHelper.clear(email), UserStatus.JOINED), this::map);
       if (companies != null && companies.size() > 0) {
          return new ServiceResponse(companies);
@@ -74,11 +70,7 @@ public class UserCompanyRepository {
             .findSingle(String.format(COMPANY_SELECT_STANDARD_QUERY + " where m.email='%s' and m.company_id=%d",
                   SqlHelper.clear(email), companyId), this::map);
       if (model != null) {
-         if (model.getActive()) {
-            return new ServiceResponse(model);
-         } else {
-            return Responses.NotActive.INVITATION;
-         }
+         return new ServiceResponse(model);
       } else {
          return Responses.NotFound.INVITATION;
       }
@@ -94,17 +86,6 @@ public class UserCompanyRepository {
          return Responses.OK;
       else
          return Responses.NotFound.PRODUCT;
-   }
-
-   public ServiceResponse toggleStatus(Long invitationId) {
-      boolean result = db
-         .executeQuery(String.format("update user_company set active = not active where id = %d and company_id = %d ", invitationId,
-            CurrentUser.getCompanyId()), "Failed to toggle product status! id: " + invitationId);
-
-      if (result) {
-         return Responses.OK;
-      }
-      return Responses.NotFound.INVITATION;
    }
 
    public ServiceResponse changeRole(MemberChangeRoleDTO dto) {
@@ -132,7 +113,6 @@ public class UserCompanyRepository {
       try {
          UserCompany model = new UserCompany();
          model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
-         model.setActive(rs.getBoolean("active"));
          model.setUserId(RepositoryHelper.nullLongHandler(rs, "user_id"));
          model.setEmail(rs.getString("email"));
          model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
