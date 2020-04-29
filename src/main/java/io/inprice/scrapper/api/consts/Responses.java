@@ -104,7 +104,7 @@ public class Responses {
 
       public static final ServiceResponse USER = new ServiceResponse(BASE, "User not found!");
       public static final ServiceResponse EMAIL = new ServiceResponse(BASE, "Email not found!");
-      public static final ServiceResponse INVITATION = new ServiceResponse(BASE, "Member not found!");
+      public static final ServiceResponse MEMBERSHIP = new ServiceResponse(BASE, "Member not found!");
 
       public static final ServiceResponse PRODUCT = new ServiceResponse(BASE, "Product not found!");
       public static final ServiceResponse LINK = new ServiceResponse(BASE, "Link not found!");

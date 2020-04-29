@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.app.invitation;
+package io.inprice.scrapper.api.app.membership;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,11 +12,12 @@ import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.app.user.UserRole;
-import io.inprice.scrapper.api.app.user_company.UserCompany;
+import io.inprice.scrapper.api.app.user.UserStatus;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.EmailValidator;
 import io.inprice.scrapper.api.dto.InvitationAcceptDTO;
-import io.inprice.scrapper.api.dto.InvitationDTO;
+import io.inprice.scrapper.api.dto.InvitationSendDTO;
+import io.inprice.scrapper.api.dto.InvitationUpdateDTO;
 import io.inprice.scrapper.api.dto.NameAndEmailValidator;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.PasswordValidator;
@@ -27,55 +28,82 @@ import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 
-public class InvitationService {
+public class MembershipService {
 
-   private static final Logger log = LoggerFactory.getLogger(InvitationService.class);
+   private static final Logger log = LoggerFactory.getLogger(MembershipService.class);
 
    private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-   private final InvitationRepository invitationRepository = Beans.getSingleton(InvitationRepository.class);
+   private final MembershipRepository membershipRepository = Beans.getSingleton(MembershipRepository.class);
 
    private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
    private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
 
-   public ServiceResponse send(InvitationDTO dto) {
+   public ServiceResponse getList() {
+      return membershipRepository.getList();
+   }
+
+   public ServiceResponse invite(InvitationSendDTO dto) {
+      ServiceResponse res = validate(dto);
+      if (res.isOK()) {
+
+         res = membershipRepository.findByEmailAndCompanyId(dto.getEmail(), CurrentUser.getCompanyId());
+         if (! res.isOK()) {
+            dto.setCompanyId(CurrentUser.getCompanyId());
+            res = membershipRepository.invite(dto);
+            if (res.isOK()) {
+               res = sendMail(dto);
+            }
+         } else {
+            return new ServiceResponse("A user with " + dto.getEmail() + " address is already added to this company!");
+         }
+      }
+      return res;
+   }
+
+   public ServiceResponse resend(long memId) {
+      ServiceResponse res = membershipRepository.findById(memId);
+
+      if (res.isOK()) {
+         Membership membership = res.getData();
+         res = membershipRepository.increaseSendingCount(memId);
+         if (res.isOK()) {
+            InvitationSendDTO dto = new InvitationSendDTO();
+            dto.setCompanyId(CurrentUser.getCompanyId());
+            dto.setEmail(membership.getEmail());
+            dto.setRole(membership.getRole());
+            res = sendMail(dto);
+         }
+      }
+      return res;
+   }
+
+   public ServiceResponse changeRole(InvitationUpdateDTO dto) {
+      ServiceResponse res = validate(dto, true);
+
+      if (res.isOK()) {
+         res = membershipRepository.changeRole(dto);
+      }
+      return res;
+   }
+
+   public ServiceResponse updateStatus(InvitationUpdateDTO dto) {
+      ServiceResponse res = validate(dto, false);
+
+      if (res.isOK()) {
+         res = membershipRepository.updateStatus(dto);
+      }
+      return res;
+   }
+
+   public ServiceResponse acceptNewUser(InvitationAcceptDTO dto) {
       ServiceResponse res = validate(dto);
 
       if (res.isOK()) {
-         dto.setCompanyId(CurrentUser.getCompanyId());
-         res = invitationRepository.invite(dto);
-         if (res.isOK()) {
-            res = sendMail(dto);
-         }
-      }
-      return res;
-   }
-
-   public ServiceResponse resend(long invitationId) {
-      ServiceResponse res = invitationRepository.findById(invitationId);
-
-      if (res.isOK()) {
-         UserCompany userCoompany = res.getData();
-         res = invitationRepository.increaseSendingCount(invitationId);
-         if (res.isOK()) {
-            InvitationDTO dto = new InvitationDTO();
-            dto.setCompanyId(CurrentUser.getCompanyId());
-            dto.setEmail(userCoompany.getEmail());
-            dto.setRole(userCoompany.getRole());
-            res = sendMail(dto);
-         }
-      }
-      return res;
-   }
-
-   public ServiceResponse acceptNewUser(InvitationAcceptDTO acceptDTO) {
-      ServiceResponse res = validate(acceptDTO);
-
-      if (res.isOK()) {
-         InvitationDTO invitationDTO = TokenService.get(TokenType.INVITATION, acceptDTO.getToken());
+         InvitationSendDTO invitationDTO = TokenService.get(TokenType.INVITATION, dto.getToken());
          if (invitationDTO != null) {
-            res = invitationRepository.acceptNewUser(acceptDTO, invitationDTO);
+            res = membershipRepository.acceptNewUser(dto, invitationDTO);
             if (res.isOK()) {
-               TokenService.remove(TokenType.INVITATION, acceptDTO.getToken());
+               TokenService.remove(TokenType.INVITATION, dto.getToken());
             }
          } else {
             return Responses.Invalid.TOKEN;
@@ -84,15 +112,7 @@ public class InvitationService {
       return res;
    }
 
-   public ServiceResponse acceptExisting(Long invitationId) {
-      return invitationRepository.handleExisting(invitationId, true);
-   }
-
-   public ServiceResponse rejectExisting(Long invitationId) {
-      return invitationRepository.handleExisting(invitationId, false);
-   }
-
-   private ServiceResponse sendMail(InvitationDTO dto) {
+   private ServiceResponse sendMail(InvitationSendDTO dto) {
       Map<String, Object> dataMap = new HashMap<>(5);
       dataMap.put("company", CurrentUser.getCompanyName());
       dataMap.put("admin", CurrentUser.getUserName());
@@ -129,13 +149,9 @@ public class InvitationService {
       }
    }
 
-   private ServiceResponse validate(InvitationDTO dto) {
+   private ServiceResponse validate(InvitationSendDTO dto) {
       if (dto == null) {
          return Responses.Invalid.INVITATION;
-      }
-
-      if (CurrentUser.getRole().equals(UserRole.ADMIN)) {
-         return new ServiceResponse("Only admins can send an invitation!");
       }
 
       if (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN)) {
@@ -147,15 +163,30 @@ public class InvitationService {
          return new ServiceResponse(checkIfItHasAProblem);
       }
 
-      ServiceResponse found = invitationRepository.findByEmailAndCompanyId(dto.getEmail(), CurrentUser.getCompanyId());
-      if (found.isOK()) {
-         return new ServiceResponse("A user with " + dto.getEmail() + " address is already added to this company!");
+      return Responses.OK;
+   }
+
+   private ServiceResponse validate(InvitationUpdateDTO dto, boolean forRole) {
+      if (dto == null || dto.getId() == null || dto.getId() < 1) {
+         return Responses.Invalid.INVITATION;
+      }
+
+      if (forRole && (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN))) {
+         return new ServiceResponse(String.format("Role must be either %s or %s!", UserRole.EDITOR.name(), UserRole.VIEWER.name()));
+      }
+
+      if (!forRole && (dto.getStatus() == null || dto.getStatus().equals(UserStatus.LEFT) || dto.getStatus().equals(UserStatus.JOINED))) {
+         return new ServiceResponse(String.format("Status must be either %s or %s!", UserStatus.PENDING.name(), UserStatus.PAUSED.name()));
       }
 
       return Responses.OK;
    }
 
    private ServiceResponse validate(InvitationAcceptDTO dto) {
+      if (dto == null) {
+         return Responses.Invalid.INVITATION;
+      }
+
       String problem = NameAndEmailValidator.verifyName(dto.getName());
 
       if (problem == null) {

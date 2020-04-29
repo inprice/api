@@ -40,7 +40,7 @@ public class TokenService {
    }
 
    private static String generateToken() {
-      return UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+      return UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
    }
 
 }

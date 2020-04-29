@@ -14,6 +14,7 @@ public class Consts {
          public static final String RESET_PASSWORD = "/reset-password";
          public static final String REQUEST_REGISTRATION = "/request-registration";
          public static final String COMPLETE_REGISTRATION = "/complete-registration";
+         public static final String ACCEPT_INVITATION = "/accept-invitation";
       }
 
       public static final String ADMIN_BASE = "/admin";
@@ -42,20 +43,10 @@ public class Consts {
          public static final String CLOSE_ALL_SESSIONS = BASE + "/close-all-sessions";
       }
 
-      public static class UserCompany {
-         public static final String BASE = "/ucompany";
-         public static final String TOGGLE_STATUS = BASE + "/toggle";
+      public static class Membership {
+         public static final String BASE = "/membership";
+         public static final String UPDATE_STATUS = BASE + "/update-status";
          public static final String CHANGE_ROLE = BASE + "/change-role";
-         public static final String CHANGE_STATUS = BASE + "/change-status";
-      }
-
-      public static class Invitation {
-         public static final String BASE = "/invitation";
-         public static final String SEND = BASE + "/send";
-         public static final String RESEND = BASE + "/resend";
-         public static final String ACCEPT_NEW = BASE + "/accept-new";
-         public static final String ACCEPT_EXISTING = BASE + "/accept";
-         public static final String REJECT_EXISTING = BASE + "/reject";
       }
 
       public static class Product {

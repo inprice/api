@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,66 +27,66 @@ import jodd.util.BCrypt;
 
 public class UserRepository {
 
-   private static final Logger log = LoggerFactory.getLogger(UserRepository.class);
+  private static final Logger log = LoggerFactory.getLogger(UserRepository.class);
 
-   private final Database db = Beans.getSingleton(Database.class);
-   private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
+  private final Database db = Beans.getSingleton(Database.class);
+  private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
-   public ServiceResponse findById(Long id) {
-      return findById(id, false);
-   }
+  public ServiceResponse findById(Long id) {
+    return findById(id, false);
+  }
 
-   public ServiceResponse findById(Long id, boolean passwordFields) {
-      User model = db.findSingle(String.format("select * from user where id = %d", id), this::map);
-      if (model != null) {
-         if (!passwordFields) {
-            model.setPasswordSalt(null);
-            model.setPasswordHash(null);
-         }
-         return new ServiceResponse(model);
+  public ServiceResponse findById(Long id, boolean passwordFields) {
+    User model = db.findSingle(String.format("select * from user where id = %d", id), this::map);
+    if (model != null) {
+      if (!passwordFields) {
+        model.setPasswordSalt(null);
+        model.setPasswordHash(null);
       }
-      return Responses.NotFound.USER;
-   }
+      return new ServiceResponse(model);
+    }
+    return Responses.NotFound.USER;
+  }
 
-   public ServiceResponse findByEmail(String email) {
-      return findByEmail(email, false);
-   }
+  public ServiceResponse findByEmail(String email) {
+    return findByEmail(email, false);
+  }
 
-   public ServiceResponse findByEmail(Connection con, String email) {
-      User model = db.findSingle(con, String.format("select * from user where email = '%s'", email), this::map);
-      if (model != null) {
-         model.setPasswordSalt(null);
-         model.setPasswordHash(null);
-         return new ServiceResponse(model);
+  public ServiceResponse findByEmail(Connection con, String email) {
+    User model = db.findSingle(con, String.format("select * from user where email = '%s'", email), this::map);
+    if (model != null) {
+      model.setPasswordSalt(null);
+      model.setPasswordHash(null);
+      return new ServiceResponse(model);
+    }
+    return Responses.NotFound.USER;
+  }
+
+  public ServiceResponse findByEmail(String email, boolean passwordFields) {
+    User model = db.findSingle(String.format("select * from user where email = '%s'", email), this::map);
+    if (model != null) {
+      if (!passwordFields) {
+        model.setPasswordSalt(null);
+        model.setPasswordHash(null);
       }
-      return Responses.NotFound.USER;
-   }
+      return new ServiceResponse(model);
+    }
+    return Responses.NotFound.USER;
+  }
 
-   public ServiceResponse findByEmail(String email, boolean passwordFields) {
-      User model = db.findSingle(String.format("select * from user where email = '%s'", email), this::map);
-      if (model != null) {
-         if (!passwordFields) {
-            model.setPasswordSalt(null);
-            model.setPasswordHash(null);
-         }
-         return new ServiceResponse(model);
-      }
-      return Responses.NotFound.USER;
-   }
+  public ServiceResponse insert(UserDTO dto) {
+    try (Connection con = db.getConnection()) {
+      return insert(con, dto);
+    } catch (SQLException e) {
+      log.error("Failed to insert user", e);
+      return Responses.ServerProblem.EXCEPTION;
+    }
+  }
 
-   public ServiceResponse insert(UserDTO dto) {
-      try (Connection con = db.getConnection()) {
-         return insert(con, dto);
-      } catch (SQLException e) {
-         log.error("Failed to insert user", e);
-         return Responses.ServerProblem.EXCEPTION;
-      }
-   }
-
-   public ServiceResponse insert(Connection con, UserDTO dto) {
+  public ServiceResponse insert(Connection con, UserDTO dto) {
       final String query = "insert into user (email, name, password_salt, password_hash) values (?, ?, ?, ?) ";
 
-      try (PreparedStatement pst = con.prepareStatement(query)) {
+      try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
          final String salt = codeGenerator.generateSalt();
          
          int i = 0;
@@ -94,10 +95,18 @@ public class UserRepository {
          pst.setString(++i, salt);
          pst.setString(++i, BCrypt.hashpw(dto.getPassword(), salt));
 
-         if (pst.executeUpdate() > 0)
-            return Responses.OK;
-         else
-            return Responses.DataProblem.DB_PROBLEM;
+          if (pst.executeUpdate() > 0) {
+            try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+              if (generatedKeys.next()) {
+                User user = new User();
+                user.setId(generatedKeys.getLong(1));
+                user.setEmail(dto.getEmail());
+                user.setName(dto.getName());
+                return new ServiceResponse(user);
+              }
+            }
+          }
+          return Responses.DataProblem.DB_PROBLEM;
 
       } catch (SQLIntegrityConstraintViolationException ie) {
          log.error("Failed to insert user: " + ie.getMessage());
@@ -108,189 +117,187 @@ public class UserRepository {
       }
    }
 
-   public ServiceResponse updateName(String name) {
-      final String query = "update user set name=? where id=?";
+  public ServiceResponse updateName(String name) {
+    final String query = "update user set name=? where id=?";
 
-      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+    try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
 
-         int i = 0;
-         pst.setString(++i, name);
-         pst.setLong(++i, CurrentUser.getUserId());
+      int i = 0;
+      pst.setString(++i, name);
+      pst.setLong(++i, CurrentUser.getUserId());
 
-         if (pst.executeUpdate() > 0)
-            return Responses.OK;
-         else
-            return Responses.NotFound.USER;
+      if (pst.executeUpdate() > 0)
+        return Responses.OK;
+      else
+        return Responses.NotFound.USER;
 
-      } catch (SQLException sqle) {
-         log.error("Failed to update user", sqle);
-         return Responses.ServerProblem.EXCEPTION;
+    } catch (SQLException sqle) {
+      log.error("Failed to update user", sqle);
+      return Responses.ServerProblem.EXCEPTION;
+    }
+  }
+
+  public ServiceResponse updatePassword(String password) {
+    return updatePassword(CurrentUser.getUserId(), password);
+  }
+
+  public ServiceResponse updatePassword(Long userId, String password) {
+    final String query = "update user set password_salt=?, password_hash=? where id=?";
+
+    try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+
+      int i = 0;
+      final String salt = codeGenerator.generateSalt();
+
+      pst.setString(++i, salt);
+      pst.setString(++i, BCrypt.hashpw(password, salt));
+      pst.setLong(++i, userId);
+
+      if (pst.executeUpdate() > 0)
+        return Responses.OK;
+      else
+        return Responses.NotFound.USER;
+
+    } catch (Exception e) {
+      log.error("Failed to update user", e);
+      return Responses.ServerProblem.EXCEPTION;
+    }
+  }
+
+  public ServiceResponse findMemberships() {
+    String query = 
+      "select mem.id, c.name, mem.role, mem.status, mem.updated_at " + 
+      "from membership as mem " + 
+      "left join company as c on c.id = mem.company_id " + 
+      "where email=? " + 
+      "  and company_id!=? " + 
+      "  and status in (?, ?) " + 
+      "order by status, updated_at desc";
+
+    try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+      int i = 0;
+      pst.setString(++i, CurrentUser.getEmail());
+      pst.setLong(++i, CurrentUser.getCompanyId());
+      pst.setString(++i, UserStatus.JOINED.name());
+      pst.setString(++i, UserStatus.LEFT.name());
+
+      try (ResultSet rs = pst.executeQuery()) {
+        List<Map<String, String>> data = new ArrayList<>();
+        while (rs.next()) {
+          Map<String, String> map = new HashMap<>(5);
+          map.put("id", rs.getString("id"));
+          map.put("company", rs.getString("name"));
+          map.put("role", rs.getString("role"));
+          map.put("status", rs.getString("status"));
+          map.put("date", DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
+          data.add(map);
+        }
+        return new ServiceResponse(data);
       }
-   }
+    } catch (SQLException e) {
+      log.error("Failed to get user memberships.", e);
+      return Responses.DataProblem.DB_PROBLEM;
+    }
+  }
 
-   public ServiceResponse updatePassword(String password) {
-      return updatePassword(CurrentUser.getUserId(), password);
-   }
+  public ServiceResponse leaveMembership(Long id) {
+    final String query = "update membership set status=?, user_id=?, updated_at=now() where id=? and email=? and status=?";
 
-   public ServiceResponse updatePassword(Long userId, String password) {
-      final String query = "update user set password_salt=?, password_hash=? where id=?";
+    try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+      int i = 0;
+      pst.setString(++i, UserStatus.LEFT.name());
+      pst.setLong(++i, CurrentUser.getUserId());
+      pst.setLong(++i, id);
+      pst.setString(++i, CurrentUser.getEmail());
+      pst.setString(++i, UserStatus.JOINED.name());
 
-      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+      if (pst.executeUpdate() > 0)
+        return Responses.OK;
+      else
+        return Responses.NotFound.USER;
 
-         int i = 0;
-         final String salt = codeGenerator.generateSalt();
+    } catch (SQLException sqle) {
+      log.error("Failed to leave membership. User: " + CurrentUser.getUserId(), sqle);
+      return Responses.ServerProblem.EXCEPTION;
+    }
+  }
 
-         pst.setString(++i, salt);
-         pst.setString(++i, BCrypt.hashpw(password, salt));
-         pst.setLong(++i, userId);
+  public ServiceResponse findActiveInvitations() {
+    String query = 
+      "select mem.id, c.name, mem.role, mem.created_at " + 
+      "from membership as mem " + 
+      "left join company as c on c.id = mem.company_id " + 
+      "where email=? " + 
+      "  and status=? " + 
+      "order by created_at desc";
 
-         if (pst.executeUpdate() > 0)
-            return Responses.OK;
-         else
-            return Responses.NotFound.USER;
+    try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+      pst.setString(1, CurrentUser.getEmail());
+      pst.setString(2, UserStatus.PENDING.name());
 
-      } catch (Exception e) {
-         log.error("Failed to update user", e);
-         return Responses.ServerProblem.EXCEPTION;
+      try (ResultSet rs = pst.executeQuery()) {
+        List<Map<String, String>> data = new ArrayList<>();
+        while (rs.next()) {
+          Map<String, String> map = new HashMap<>(4);
+          map.put("id", rs.getString("id"));
+          map.put("company", rs.getString("name"));
+          map.put("role", rs.getString("role"));
+          map.put("date", DateUtils.formatLongDate(rs.getTimestamp("created_at")));
+          data.add(map);
+        }
+        return new ServiceResponse(data);
       }
-   }
+    } catch (SQLException e) {
+      log.error("Failed to get user invitations.", e);
+      return Responses.DataProblem.DB_PROBLEM;
+    }
+  }
 
-   public ServiceResponse findMemberships() {
-      String query =
-         "select uc.id, c.name, uc.role, uc.status, uc.updated_at " +
-         "from user_company as uc " +
-         "left join company as c on c.id = uc.company_id " +
-         "where email=? " +
-         "  and company_id!=? " +
-         "  and status in (?, ?) " +
-         "order by status, updated_at desc";
+  public ServiceResponse acceptInvitation(Long id) {
+    return processInvitation(id, UserStatus.PENDING, UserStatus.JOINED);
+  }
 
-      try (Connection con = db.getConnection();
-         PreparedStatement pst = con.prepareStatement(query)) {
-         int i = 0;
-         pst.setString(++i, CurrentUser.getEmail());
-         pst.setLong(++i, CurrentUser.getCompanyId());
-         pst.setString(++i, UserStatus.JOINED.name());
-         pst.setString(++i, UserStatus.LEFT.name());
-   
-         try (ResultSet rs = pst.executeQuery()) {
-            List<Map<String, String>> data = new ArrayList<>();
-            while (rs.next()) {
-               Map<String, String> map = new HashMap<>(5);
-               map.put("id", rs.getString("id"));
-               map.put("company", rs.getString("name"));
-               map.put("role", rs.getString("role"));
-               map.put("status", rs.getString("status"));
-               map.put("date", DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
-               data.add(map);
-            }
-            return new ServiceResponse(data);
-         }
-      } catch (SQLException e) {
-         log.error("Failed to get user memberships.", e);
-         return Responses.DataProblem.DB_PROBLEM;
-      }
-   }
+  public ServiceResponse rejectInvitation(Long id) {
+    return processInvitation(id, UserStatus.JOINED, UserStatus.LEFT);
+  }
 
-   public ServiceResponse leaveMembership(Long id) {
-      final String query = "update user_company set status=?, user_id=?, updated_at=now() where id=? and email=? and status=?";
+  private ServiceResponse processInvitation(Long id, UserStatus fromStatus, UserStatus toStatus) {
+    final String query = "update membership set status=?, user_id=?, updated_at=now() where id=? and email=? and status=?";
 
-      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
-         int i = 0;
-         pst.setString(++i, UserStatus.LEFT.name());
-         pst.setLong(++i, CurrentUser.getUserId());
-         pst.setLong(++i, id);
-         pst.setString(++i, CurrentUser.getEmail());
-         pst.setString(++i, UserStatus.JOINED.name());
+    try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
+      int i = 0;
+      pst.setString(++i, toStatus.name());
+      pst.setLong(++i, CurrentUser.getUserId());
+      pst.setLong(++i, id);
+      pst.setString(++i, CurrentUser.getEmail());
+      pst.setString(++i, fromStatus.name());
 
-         if (pst.executeUpdate() > 0)
-            return Responses.OK;
-         else
-            return Responses.NotFound.USER;
+      if (pst.executeUpdate() > 0)
+        return Responses.OK;
+      else
+        return Responses.NotFound.USER;
 
-      } catch (SQLException sqle) {
-         log.error("Failed to leave membership. User: " + CurrentUser.getUserId(), sqle);
-         return Responses.ServerProblem.EXCEPTION;
-      }
-   }
+    } catch (SQLException sqle) {
+      log.error("Failed to set invitation status of user: " + CurrentUser.getUserId() + " from " + fromStatus + " to "
+          + toStatus, sqle);
+      return Responses.ServerProblem.EXCEPTION;
+    }
+  }
 
-   public ServiceResponse findActiveInvitations() {
-      String query =
-         "select uc.id, c.name, uc.role, uc.created_at " +
-         "from user_company as uc " +
-         "left join company as c on c.id = uc.company_id " +
-         "where email=? " +
-         "  and status=? " +
-         "order by created_at desc";
-
-      try (Connection con = db.getConnection();
-         PreparedStatement pst = con.prepareStatement(query)) {
-         pst.setString(1, CurrentUser.getEmail());
-         pst.setString(2, UserStatus.PENDING.name());
-   
-         try (ResultSet rs = pst.executeQuery()) {
-            List<Map<String, String>> data = new ArrayList<>();
-            while (rs.next()) {
-               Map<String, String> map = new HashMap<>(4);
-               map.put("id", rs.getString("id"));
-               map.put("company", rs.getString("name"));
-               map.put("role", rs.getString("role"));
-               map.put("date", DateUtils.formatLongDate(rs.getTimestamp("created_at")));
-               data.add(map);
-            }
-            return new ServiceResponse(data);
-         }
-      } catch (SQLException e) {
-         log.error("Failed to get user invitations.", e);
-         return Responses.DataProblem.DB_PROBLEM;
-      }
-   }
-
-   public ServiceResponse acceptInvitation(Long id) {
-      return processInvitation(id, UserStatus.PENDING, UserStatus.JOINED);
-   }
-
-   public ServiceResponse rejectInvitation(Long id) {
-      return processInvitation(id, UserStatus.JOINED, UserStatus.LEFT);
-   }
-
-   private ServiceResponse processInvitation(Long id, UserStatus fromStatus, UserStatus toStatus) {
-      final String query = "update user_company set status=?, user_id=?, updated_at=now() where id=? and email=? and status=?";
-
-      try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
-         int i = 0;
-         pst.setString(++i, toStatus.name());
-         pst.setLong(++i, CurrentUser.getUserId());
-         pst.setLong(++i, id);
-         pst.setString(++i, CurrentUser.getEmail());
-         pst.setString(++i, fromStatus.name());
-
-         if (pst.executeUpdate() > 0)
-            return Responses.OK;
-         else
-            return Responses.NotFound.USER;
-
-      } catch (SQLException sqle) {
-         log.error("Failed to set invitation status of user: " + CurrentUser.getUserId() + 
-            " from " + fromStatus + " to " + toStatus, sqle);
-         return Responses.ServerProblem.EXCEPTION;
-      }
-   }
-
-   private User map(ResultSet rs) {
-      try {
-         User model = new User();
-         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
-         model.setEmail(rs.getString("email"));
-         model.setName(rs.getString("name"));
-         model.setPasswordHash(rs.getString("password_hash"));
-         model.setPasswordSalt(rs.getString("password_salt"));
-         model.setCreatedAt(rs.getTimestamp("created_at"));
-         return model;
-      } catch (SQLException e) {
-         log.error("Failed to set user's properties", e);
-      }
-      return null;
-   }
+  private User map(ResultSet rs) {
+    try {
+      User model = new User();
+      model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
+      model.setEmail(rs.getString("email"));
+      model.setName(rs.getString("name"));
+      model.setPasswordHash(rs.getString("password_hash"));
+      model.setPasswordSalt(rs.getString("password_salt"));
+      model.setCreatedAt(rs.getTimestamp("created_at"));
+      return model;
+    } catch (SQLException e) {
+      log.error("Failed to set user's properties", e);
+    }
+    return null;
+  }
 
 }

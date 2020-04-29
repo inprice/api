@@ -16,8 +16,8 @@ import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
-import io.inprice.scrapper.api.app.user_company.UserCompany;
-import io.inprice.scrapper.api.app.user_company.UserCompanyRepository;
+import io.inprice.scrapper.api.app.membership.Membership;
+import io.inprice.scrapper.api.app.membership.MembershipRepository;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.EmailValidator;
@@ -45,7 +45,7 @@ public class AuthService {
    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
    private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-   private final UserCompanyRepository userCompanyRepository = Beans.getSingleton(UserCompanyRepository.class);
+   private final MembershipRepository membershipRepository = Beans.getSingleton(MembershipRepository.class);
    private final AuthRepository authRepository = Beans.getSingleton(AuthRepository.class);
    private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
    private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
@@ -197,10 +197,10 @@ public class AuthService {
    public ServiceResponse createSession(Context ctx, User user) {
       Integer sessionNo = null;
 
-      ServiceResponse res = userCompanyRepository.getUserCompanies(user.getEmail());
+      ServiceResponse res = membershipRepository.getUserCompanies(user.getEmail());
       if (res.isOK()) {
 
-         List<UserCompany> userCompanyList = res.getData();
+         List<Membership> membershipList = res.getData();
 
          List<ForRedis> redisSesList = new ArrayList<>();
          List<ForCookie> cookieSesList = null;
@@ -224,30 +224,30 @@ public class AuthService {
          sessionNo = cookieSesList.size();
 
          UserAgent ua = new UserAgent(ctx.userAgent());
-         for (UserCompany uc: userCompanyList) {
+         for (Membership mem: membershipList) {
 
-            ForCookie cookieSes = new ForCookie(user.getEmail(), uc.getRole());
+            ForCookie cookieSes = new ForCookie(user.getEmail(), mem.getRole());
             cookieSesList.add(cookieSes);
 
             ForResponse responseSes = new ForResponse(
                cookieSes,
                user.getName(),
-               uc.getCompanyName()
+               mem.getCompanyName()
             );
             responseSesList.add(responseSes);
 
             ForRedis redisSes = new ForRedis(
                responseSes,
                user.getId(),
-               uc.getCompanyId(),
+               mem.getCompanyId(),
                cookieSes.getHash()
             );
             redisSesList.add(redisSes);
 
             ForDatabase dbSes = new ForDatabase();
             dbSes.setHash(cookieSes.getHash());
-            dbSes.setUserId(uc.getUserId());
-            dbSes.setCompanyId(uc.getCompanyId());
+            dbSes.setUserId(mem.getUserId());
+            dbSes.setCompanyId(mem.getCompanyId());
             dbSes.setIp(ctx.ip());
             dbSes.setOs(ua.getOperatingSystem().getName());
             dbSes.setBrowser(ua.getBrowser().getName());

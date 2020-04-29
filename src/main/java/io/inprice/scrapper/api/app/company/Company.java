@@ -15,7 +15,7 @@ public class Company implements Serializable {
    private String website;
    private String country;
    private Long adminId;
-   private Long planId;
+   private Integer planId;
    private PlanStatus planStatus;
    private Date dueDate;
    private Integer retry = 0;
@@ -71,11 +71,11 @@ public class Company implements Serializable {
       this.adminId = adminId;
    }
 
-   public Long getPlanId() {
+   public Integer getPlanId() {
       return planId;
    }
 
-   public void setPlanId(Long planId) {
+   public void setPlanId(Integer planId) {
       this.planId = planId;
    }
 

@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.app.user_company;
+package io.inprice.scrapper.api.app.membership;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -6,7 +6,7 @@ import java.util.Date;
 import io.inprice.scrapper.api.app.user.UserRole;
 import io.inprice.scrapper.api.app.user.UserStatus;
 
-public class UserCompany implements Serializable {
+public class Membership implements Serializable {
 
    private static final long serialVersionUID = -7793356216234713734L;
 

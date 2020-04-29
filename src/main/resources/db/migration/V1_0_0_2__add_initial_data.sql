@@ -189,50 +189,15 @@ values
     ('NewLook UK', 'newlook.com', 'United Kingdom', 'uk.NewLook'),
     ('Zavvi UK', 'zavvi.com', 'United Kingdom', 'uk.Zavvi');
 
-insert into plan (name, row_limit, price, order_no)
+insert into plan (name, row_limit, user_limit, price, order_no)
 values
-    ('Micro', 30, 15, 1),
-    ('Small', 100, 30, 2),
-    ('Medium', 250, 50, 3),
-    ('Professional', 500, 80, 4),
-    ('Business', 1000, 120, 5),
-    ('Enterprise', 2500, 200, 6);
-
-
-insert into plan_rows (plan_id, description, order_no)
-values
-    (1, 'Suitable for trials', 1),
-    (1, 'Up to 30 product URLs', 2),
-    (1, 'Example: 15 products x 2 competitors, or 10 products x 3 competitors', 3),
-    (1, 'Price updates 4 times a Day', 4),
-    (1, 'Stock availability monitoring', 5),
-    (1, 'Price position comparison', 6),
-    (1, 'Batch product import', 7),
-
-    (2, 'Suitable for startups', 1),
-    (2, 'Up to 100 product URLs', 2),
-    (2, 'Example: 50 products x 2 competitors, or 25 products x 4 competitors', 3),
-    (2, 'Includes all other features in Micro Plan', 20),
-
-    (3, 'Suitable for middle-sized companies', 1),
-    (3, 'Up to 250 product URLs', 2),
-    (3, 'Example: 125 products x 2 competitors, or 50 products x 5 competitors', 3),
-    (3, 'Includes all other features in Small Plan', 20),
-
-    (4, 'Suitable for large companies', 1),
-    (4, 'Up to 500 product URLs', 2),
-    (4, 'Example: 250 products x 2 competitors, or 100 products x 5 competitors', 3),
-    (4, 'Automated daily reports in Excel & PDF format', 4),
-    (4, 'Includes all other features in Medium Plan', 20),
-
-    (5, 'Suitable for large companies', 1),
-    (5, 'Up to 1000 product URLs', 2),
-    (5, 'Example: 250 products x 4 competitors, or 100 products x 10 competitors', 3),
-    (5, 'API Access', 4),
-    (5, 'Includes all other features in Professional Plan', 20),
-
-    (6, 'Suitable for large companies', 1),
-    (6, 'Up to 2500 product URLs', 2),
-    (6, 'Example: 250 products x 10 competitors, or 500 products x 5 competitors', 3),
-    (6, 'Instant price change notification', 4),
-    (6, 'Includes all other features in Business Plan', 20);
+    ('Micro', 5, 1, 10, 1),
+    ('Micro+', 10, 1, 15, 2),
+    ('Small', 25, 2, 15, 3),
+    ('Small+', 50, 2, 25, 4),
+    ('Pro', 100, 3, 50, 5),
+    ('Pro+', 150, 5, 100, 6),
+    ('Business', 250, 10, 150, 7),
+    ('Business+', 500, 25, 250, 8),
+    ('Enterprise', 1000, 50, 400, 9),
+    ('Enterprise+', 10000, 500, 1000, 10);

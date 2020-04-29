@@ -138,7 +138,7 @@ public class CompanyRepository {
                // mamber insertion
                if (companyId != null) {
                   try (PreparedStatement pst = con.prepareStatement(
-                        "insert into user_company (user_id, email, company_id, role, status, updated_at) values (?, ?, ?, ?, ?, now()) ")) {
+                        "insert into membership (user_id, email, company_id, role, status, updated_at) values (?, ?, ?, ?, ?, now()) ")) {
                      int i = 0;
                      pst.setLong(++i, dto.getUserId());
                      pst.setString(++i, dto.getEmail());
@@ -223,7 +223,7 @@ public class CompanyRepository {
          model.setName(rs.getString("name"));
          model.setCountry(rs.getString("country"));
          model.setAdminId(RepositoryHelper.nullLongHandler(rs, "admin_id"));
-         model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
+         model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
          model.setPlanStatus(PlanStatus.valueOf(rs.getString("plan_status")));
          model.setDueDate(rs.getTimestamp("due_date"));
          model.setRetry(rs.getInt("retry"));

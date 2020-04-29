@@ -15,9 +15,15 @@ public class RepositoryHelper {
       try {
          Long val = rs.getLong(field);
          if (! rs.wasNull()) return val;
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
+      } catch (Exception ignored) { }
+      return null;
+   }
+
+   public static Integer nullIntegerHandler(ResultSet rs, String field) {
+      try {
+         Integer val = rs.getInt(field);
+         if (! rs.wasNull()) return val;
+      } catch (Exception ignored) { }
       return null;
    }
 

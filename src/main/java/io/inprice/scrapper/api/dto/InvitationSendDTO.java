@@ -5,7 +5,7 @@ import java.util.Date;
 
 import io.inprice.scrapper.api.app.user.UserRole;
 
-public class InvitationDTO implements Serializable {
+public class InvitationSendDTO implements Serializable {
 
    private static final long serialVersionUID = 2545602928755294073L;
 
@@ -48,7 +48,7 @@ public class InvitationDTO implements Serializable {
 
    @Override
    public String toString() {
-      return "InvitationDTO [companyId=" + companyId + ", email=" + email + ", role=" + role + "]";
+      return "[companyId=" + companyId + ", email=" + email + ", role=" + role + "]";
    }
 
 }

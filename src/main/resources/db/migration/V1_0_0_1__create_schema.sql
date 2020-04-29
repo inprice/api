@@ -14,24 +14,13 @@ create table site (
 create unique index ix1 on site (name);
 
 create table plan (
-  id                        bigint auto_increment not null,
-  active                    boolean default true,
-  name                      varchar(30) not null,
+  name                      varchar(15) not null,
   description               varchar(70),
-  css                       varchar(50),
   price                     double default 0,
   row_limit                 smallint,
+  user_limit                smallint default 0,
   order_no                  smallint,
-  primary key (id)
-) engine=innodb;
-create unique index ix1 on plan (name);
-
-create table plan_rows (
-  id                        bigint auto_increment not null,
-  description               varchar(120) not null,
-  order_no                  smallint,
-  plan_id                   bigint not null,
-  primary key (id)
+  primary key (name)
 ) engine=innodb;
 
 create table user (
@@ -52,7 +41,7 @@ create table company (
   website                   varchar(100),
   country                   varchar(50) not null,
   admin_id                  bigint not null,
-  plan_id                   bigint,
+  plan_name                 varchar(15),
   plan_status               enum('NOT_SET', 'ACTIVE', 'PAUSED', 'CANCELLED') not null default 'NOT_SET',
   due_date                  datetime,
   retry                     smallint default 0,
@@ -63,9 +52,9 @@ create table company (
 ) engine=innodb;
 create index ix1 on company (name);
 alter table company add foreign key (admin_id) references user (id);
-alter table company add foreign key (plan_id) references plan (id);
+alter table company add foreign key (plan_name) references plan (name);
 
-create table user_company (
+create table membership (
   id                        bigint auto_increment not null,
   email                     varchar(100) not null,
   user_id                   bigint,
@@ -78,9 +67,9 @@ create table user_company (
   created_at                timestamp not null default current_timestamp,
   primary key (id)
 ) engine=innodb;
-create index ix1 on user_company (email);
-alter table user_company add foreign key (user_id) references user (id);
-alter table user_company add foreign key (company_id) references company (id);
+create index ix1 on membership (email);
+alter table membership add foreign key (user_id) references user (id);
+alter table membership add foreign key (company_id) references company (id);
 
 create table user_session (
   _hash                     varchar(32) not null,
