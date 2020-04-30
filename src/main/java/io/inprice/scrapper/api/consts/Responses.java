@@ -83,6 +83,7 @@ public class Responses {
 
       public static class Defined {
          public static final ServiceResponse COMPANY = new ServiceResponse(BASE + 10, "Seems that you have already registered this company!");
+         public static final ServiceResponse MEMBERSHIP = new ServiceResponse(BASE + 11, "Seems that this user has an account, please sign in with your credentials and manage your memberships under user settings page!");
       }
    }
 
@@ -105,6 +106,7 @@ public class Responses {
       public static final ServiceResponse USER = new ServiceResponse(BASE, "User not found!");
       public static final ServiceResponse EMAIL = new ServiceResponse(BASE, "Email not found!");
       public static final ServiceResponse MEMBERSHIP = new ServiceResponse(BASE, "Member not found!");
+      public static final ServiceResponse INVITATION = new ServiceResponse(BASE, "An active invitation not found!");
 
       public static final ServiceResponse PRODUCT = new ServiceResponse(BASE, "Product not found!");
       public static final ServiceResponse LINK = new ServiceResponse(BASE, "Link not found!");

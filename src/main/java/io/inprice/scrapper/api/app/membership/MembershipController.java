@@ -37,9 +37,14 @@ public class MembershipController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.changeRole(dto)));
      }, AccessRoles.ADMIN_ONLY());
 
-      app.put(Consts.Paths.Membership.UPDATE_STATUS, (ctx) -> {
-         InvitationUpdateDTO dto = ctx.bodyAsClass(InvitationUpdateDTO.class);
-         ctx.json(Commons.createResponse(ctx, service.updateStatus(dto)));
+      app.put(Consts.Paths.Membership.PAUSE + "/:mem_id", (ctx) -> {
+        Long memId = ctx.pathParam("mem_id", Long.class).check(it -> it > 0).getValue();
+        ctx.json(Commons.createResponse(ctx, service.pause(memId)));
+      }, AccessRoles.ADMIN_ONLY());
+
+      app.put(Consts.Paths.Membership.RESUME + "/:mem_id", (ctx) -> {
+        Long memId = ctx.pathParam("mem_id", Long.class).check(it -> it > 0).getValue();
+        ctx.json(Commons.createResponse(ctx, service.resume(memId)));
       }, AccessRoles.ADMIN_ONLY());
 
    }

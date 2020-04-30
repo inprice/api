@@ -45,7 +45,8 @@ public class Consts {
 
       public static class Membership {
          public static final String BASE = "/membership";
-         public static final String UPDATE_STATUS = BASE + "/update-status";
+         public static final String PAUSE = BASE + "/pause";
+         public static final String RESUME = BASE + "/resume";
          public static final String CHANGE_ROLE = BASE + "/change-role";
       }
 

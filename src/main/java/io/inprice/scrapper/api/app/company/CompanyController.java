@@ -27,6 +27,15 @@ public class CompanyController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.completeRegistration(ctx, ctx.queryParam("token"))));
       });
 
+      app.get(Consts.Paths.Company.BASE, (ctx) -> {
+         ctx.json(Commons.createResponse(ctx, service.getCurrentCompany()));
+      }, AccessRoles.ANYONE());
+
+      app.post(Consts.Paths.Company.BASE, (ctx) -> {
+         CompanyDTO dto = ctx.bodyAsClass(CompanyDTO.class);
+         ctx.json(Commons.createResponse(ctx, service.create(dto)));
+      }, AccessRoles.ANYONE());
+
       app.put(Consts.Paths.Company.BASE, (ctx) -> {
          CompanyDTO dto = ctx.bodyAsClass(CompanyDTO.class);
          ctx.json(Commons.createResponse(ctx, service.update(dto)));

@@ -31,211 +31,285 @@ import jodd.util.BCrypt;
 
 public class CompanyRepository {
 
-   private static final Logger log = LoggerFactory.getLogger(CompanyRepository.class);
+  private static final Logger log = LoggerFactory.getLogger(CompanyRepository.class);
 
-   private final Database db = Beans.getSingleton(Database.class);
-   private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-   private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
+  private final Database db = Beans.getSingleton(Database.class);
+  private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
+  private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
-   public ServiceResponse findById(Long id) {
-      Company model = db.findSingle("select * from company where id=" + id, CompanyRepository::map);
-      if (model != null)
-         return new ServiceResponse(model);
-      else
-         return Responses.DataProblem.DB_PROBLEM;
-   }
+  public ServiceResponse findById(Long id) {
+    Company model = db.findSingle("select * from company where id=" + id, CompanyRepository::map);
+    if (model != null)
+      return new ServiceResponse(model);
+    else
+      return Responses.DataProblem.DB_PROBLEM;
+  }
 
-   public ServiceResponse findByAdminId(Long adminId) {
-      Company model = db.findSingle("select * from company where admin_id=" + adminId, CompanyRepository::map);
-      if (model != null)
-         return new ServiceResponse(model);
-      else
-         return Responses.NotFound.COMPANY;
-   }
+  public ServiceResponse findByAdminId(Long adminId) {
+    Company model = db.findSingle("select * from company where admin_id=" + adminId, CompanyRepository::map);
+    if (model != null)
+      return new ServiceResponse(model);
+    else
+      return Responses.NotFound.COMPANY;
+  }
 
-   public ServiceResponse findByCompanyNameAndAdminId(Connection con, String name, Long adminId) {
-      Company model = 
-         db.findSingle(
-            con,
-            String.format("select * from company where name='%s' and admin_id=%d", SqlHelper.clear(name), adminId), CompanyRepository::map);
-      if (model != null)
-         return new ServiceResponse(model);
-      else
-         return Responses.NotFound.COMPANY;
-   }
+  public ServiceResponse findByCompanyNameAndAdminId(Connection con, String name, Long adminId) {
+    Company model = db.findSingle(con,
+        String.format("select * from company where name='%s' and admin_id=%d", SqlHelper.clear(name), adminId),
+        CompanyRepository::map);
+    if (model != null)
+      return new ServiceResponse(model);
+    else
+      return Responses.NotFound.COMPANY;
+  }
 
-   /**
-    * Three insert operations happen during a new company creation:
-    * admin user, company and member
-    */
-   public ServiceResponse insert(RegisterDTO dto, String token) {
-      ServiceResponse response = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+  /**
+   * Three insert operations happen during a new company creation: admin user,
+   * company and member
+   */
+  public ServiceResponse insert(RegisterDTO dto, String token) {
+    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
-      Connection con = null;
+    Connection con = null;
 
-      // admin user insertion
-      try {
-         con = db.getTransactionalConnection();
-         User user = null;
+    // admin user insertion
+    try {
+      con = db.getTransactionalConnection();
+      User user = null;
 
-         if (dto.getUserId() == null) {
-            // last duplication control
-            ServiceResponse found = userRepository.findByEmail(con, dto.getEmail());
-            if (found.isOK()) {
-               user = found.getData();
-               dto.setUserId(user.getId());
-               dto.setUserName(user.getName());
-            } else {           
+      if (dto.getUserId() == null) {
+        // duplication control
+        ServiceResponse found = userRepository.findByEmail(con, dto.getEmail());
+        if (found.isOK()) {
+          user = found.getData();
+          dto.setUserId(user.getId());
+          dto.setUserName(user.getName());
+        } else {
 
-               final String salt = codeGenerator.generateSalt();
-               final String userInsertQuery = "insert into user (email, name, password_salt, password_hash) values (?, ?, ?, ?) ";
+          final String salt = codeGenerator.generateSalt();
+          final String userInsertQuery = "insert into user (email, name, password_salt, password_hash) values (?, ?, ?, ?) ";
 
-               try (PreparedStatement pst = con.prepareStatement(userInsertQuery, Statement.RETURN_GENERATED_KEYS)) {
-                  int i = 0;
-                  pst.setString(++i, dto.getEmail());
-                  pst.setString(++i, dto.getUserName());
-                  pst.setString(++i, salt);
-                  pst.setString(++i, BCrypt.hashpw(dto.getPassword(), salt));
+          try (PreparedStatement pst = con.prepareStatement(userInsertQuery, Statement.RETURN_GENERATED_KEYS)) {
+            int i = 0;
+            pst.setString(++i, dto.getEmail());
+            pst.setString(++i, dto.getUserName());
+            pst.setString(++i, salt);
+            pst.setString(++i, BCrypt.hashpw(dto.getPassword(), salt));
 
-                  if (pst.executeUpdate() > 0) {
-                     try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
-                        if (generatedKeys.next()) {
-                           dto.setUserId(generatedKeys.getLong(1));
-                        }
-                     }
-                  }
-               }
+            if (pst.executeUpdate() > 0) {
+              try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                  dto.setUserId(generatedKeys.getLong(1));
+                }
+              }
             }
-         }
+          }
+        }
+      }
 
-         if (dto.getUserId() != null) {
+      if (dto.getUserId() != null) {
 
-            ServiceResponse found = findByCompanyNameAndAdminId(con, dto.getCompanyName().trim(), dto.getUserId());
-            if (! found.isOK()) {
-            
-               Long companyId = null;
+        ServiceResponse found = findByCompanyNameAndAdminId(con, dto.getCompanyName().trim(), dto.getUserId());
+        if (!found.isOK()) {
 
-               //company insertion
-               try (PreparedStatement pst = con.prepareStatement(
-                     "insert into company (admin_id, name, sector, website, country) values (?, ?, ?, ?, ?) ",
-                     Statement.RETURN_GENERATED_KEYS)) {
-                  int i = 0;
-                  pst.setLong(++i, dto.getUserId());
-                  pst.setString(++i, dto.getCompanyName().trim());
-                  pst.setString(++i, dto.getSector());
-                  pst.setString(++i, dto.getWebsite());
-                  pst.setString(++i, dto.getCountry());
+          Long companyId = null;
 
-                  if (pst.executeUpdate() > 0) {
-                     try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
-                        if (generatedKeys.next()) {
-                           companyId = generatedKeys.getLong(1);
-                        }
-                     }
-                  }
-               }
+          // company insertion
+          try (PreparedStatement pst = con.prepareStatement(
+              "insert into company (admin_id, name, sector, website, country) values (?, ?, ?, ?, ?) ",
+              Statement.RETURN_GENERATED_KEYS)) {
+            int i = 0;
+            pst.setLong(++i, dto.getUserId());
+            pst.setString(++i, dto.getCompanyName().trim());
+            pst.setString(++i, dto.getSector());
+            pst.setString(++i, dto.getWebsite());
+            pst.setString(++i, dto.getCountry());
 
-               // mamber insertion
-               if (companyId != null) {
-                  try (PreparedStatement pst = con.prepareStatement(
-                        "insert into membership (user_id, email, company_id, role, status, updated_at) values (?, ?, ?, ?, ?, now()) ")) {
-                     int i = 0;
-                     pst.setLong(++i, dto.getUserId());
-                     pst.setString(++i, dto.getEmail());
-                     pst.setLong(++i, companyId);
-                     pst.setString(++i, UserRole.ADMIN.name());
-                     pst.setString(++i, UserStatus.JOINED.name());
-
-                     if (pst.executeUpdate() > 0) {
-                        log.info("A new user just registered a new company -> " + dto.toString());
-                        response = Responses.OK;
-                     }
-                  }
-               }
-
-               if (Responses.OK.equals(response)) {
-                  TokenService.remove(TokenType.REGISTER_REQUEST, token);
-                  //returning user for auto login
-                  if (user == null) {
-                     user = new User();
-                     user.setId(dto.getUserId());
-                     user.setEmail(dto.getEmail());
-                     user.setName(dto.getUserName());
-                     user.setCreatedAt(new Date());
-                  }
-                  response = new ServiceResponse(user);
-
-                  db.commit(con);
-               } else {
-                  db.rollback(con);
-               }
-
-            } else {
-               response = Responses.Already.Defined.COMPANY;
+            if (pst.executeUpdate() > 0) {
+              try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                  companyId = generatedKeys.getLong(1);
+                }
+              }
             }
-         } else {
-            response = Responses.NotFound.USER;
-         }
+          }
 
-      } catch (SQLException e) {
-         if (con != null) {
+          // mamber insertion
+          if (companyId != null) {
+            try (PreparedStatement pst = con.prepareStatement(
+                "insert into membership (user_id, email, company_id, role, status, updated_at) values (?, ?, ?, ?, ?, now()) ")) {
+              int i = 0;
+              pst.setLong(++i, dto.getUserId());
+              pst.setString(++i, dto.getEmail());
+              pst.setLong(++i, companyId);
+              pst.setString(++i, UserRole.ADMIN.name());
+              pst.setString(++i, UserStatus.JOINED.name());
+
+              if (pst.executeUpdate() > 0) {
+                log.info("A new user just registered a new company -> " + dto.toString());
+                res = Responses.OK;
+              }
+            }
+          }
+
+          if (Responses.OK.equals(res)) {
+            TokenService.remove(TokenType.REGISTER_REQUEST, token);
+            // returning user for auto login
+            if (user == null) {
+              user = new User();
+              user.setId(dto.getUserId());
+              user.setEmail(dto.getEmail());
+              user.setName(dto.getUserName());
+              user.setCreatedAt(new Date());
+            }
+            res = new ServiceResponse(user);
+
+            db.commit(con);
+          } else {
             db.rollback(con);
-         }
-         log.error("Failed to register a new company. " + dto, e);
-      } finally {
-         if (con != null) {
-            db.close(con);
-         }
+          }
+
+        } else {
+          res = Responses.Already.Defined.COMPANY;
+        }
+      } else {
+        res = Responses.NotFound.USER;
       }
 
-      return response;
-   }
-
-   public ServiceResponse update(CompanyDTO dto) {
-      try (Connection con = db.getConnection();
-            PreparedStatement pst = con
-                  .prepareStatement("update company set name=?, website=?, sector=?, country=? where id=? and admin_id=?")) {
-
-         int i = 0;
-         pst.setString(++i, dto.getCompanyName());
-         pst.setString(++i, dto.getWebsite());
-         pst.setString(++i, dto.getSector());
-         pst.setString(++i, dto.getCountry());
-         pst.setLong(++i, CurrentUser.getCompanyId());
-         pst.setLong(++i, CurrentUser.getUserId());
-
-         if (pst.executeUpdate() <= 0) {
-            return Responses.NotFound.COMPANY;
-         }
-
-         return Responses.OK;
-
-      } catch (SQLException e) {
-         log.error("Failed to update company. " + dto, e);
-         return Responses.ServerProblem.EXCEPTION;
+    } catch (SQLException e) {
+      if (con != null) {
+        db.rollback(con);
       }
-   }
-
-   private static Company map(ResultSet rs) {
-      try {
-         Company model = new Company();
-         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
-         model.setName(rs.getString("name"));
-         model.setCountry(rs.getString("country"));
-         model.setAdminId(RepositoryHelper.nullLongHandler(rs, "admin_id"));
-         model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
-         model.setPlanStatus(PlanStatus.valueOf(rs.getString("plan_status")));
-         model.setDueDate(rs.getTimestamp("due_date"));
-         model.setRetry(rs.getInt("retry"));
-         model.setLastCollectingTime(rs.getTimestamp("last_collecting_time"));
-         model.setLastCollectingStatus(rs.getBoolean("last_collecting_status"));
-         model.setCreatedAt(rs.getTimestamp("created_at"));
-
-         return model;
-      } catch (SQLException e) {
-         log.error("Failed to set company's properties", e);
+      log.error("Failed to register a new company. " + dto, e);
+    } finally {
+      if (con != null) {
+        db.close(con);
       }
-      return null;
-   }
+    }
+
+    return res;
+  }
+
+  public ServiceResponse create(CompanyDTO dto) {
+    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+
+    Connection con = null;
+
+    try {
+      con = db.getTransactionalConnection();
+
+      ServiceResponse found = findByCompanyNameAndAdminId(con, dto.getCompanyName().trim(), CurrentUser.getUserId());
+      if (!found.isOK()) {
+
+        Long companyId = null;
+
+        try (PreparedStatement pst = con.prepareStatement(
+            "insert into company (admin_id, name, sector, website, country) values (?, ?, ?, ?, ?) ",
+            Statement.RETURN_GENERATED_KEYS)) {
+          int i = 0;
+          pst.setLong(++i, CurrentUser.getUserId());
+          pst.setString(++i, dto.getCompanyName().trim());
+          pst.setString(++i, dto.getSector());
+          pst.setString(++i, dto.getWebsite());
+          pst.setString(++i, dto.getCountry());
+
+          if (pst.executeUpdate() > 0) {
+            try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+              if (generatedKeys.next()) {
+                companyId = generatedKeys.getLong(1);
+              }
+            }
+          }
+        }
+
+        if (companyId != null) {
+          try (PreparedStatement pst = con.prepareStatement(
+              "insert into membership (user_id, email, company_id, role, status, updated_at) values (?, ?, ?, ?, ?, now()) ")) {
+            int i = 0;
+            pst.setLong(++i, CurrentUser.getUserId());
+            pst.setString(++i, CurrentUser.getEmail());
+            pst.setLong(++i, companyId);
+            pst.setString(++i, UserRole.ADMIN.name());
+            pst.setString(++i, UserStatus.JOINED.name());
+
+            if (pst.executeUpdate() > 0) {
+              log.info("A new company just registered -> " + dto.toString());
+              res = Responses.OK;
+            }
+          }
+        }
+
+        if (res.isOK()) {
+          db.commit(con);
+        } else {
+          db.rollback(con);
+        }
+
+      } else {
+        res = Responses.Already.Defined.COMPANY;
+      }
+
+    } catch (SQLException e) {
+      if (con != null) {
+        db.rollback(con);
+      }
+      log.error("Failed to create a new company. " + dto, e);
+    } finally {
+      if (con != null) {
+        db.close(con);
+      }
+    }
+
+    return res;
+  }
+
+  public ServiceResponse update(CompanyDTO dto) {
+    try (Connection con = db.getConnection();
+        PreparedStatement pst = con
+            .prepareStatement("update company set name=?, website=?, sector=?, country=? where id=? and admin_id=?")) {
+
+      int i = 0;
+      pst.setString(++i, dto.getCompanyName());
+      pst.setString(++i, dto.getWebsite());
+      pst.setString(++i, dto.getSector());
+      pst.setString(++i, dto.getCountry());
+      pst.setLong(++i, CurrentUser.getCompanyId());
+      pst.setLong(++i, CurrentUser.getUserId());
+
+      if (pst.executeUpdate() <= 0) {
+        return Responses.NotFound.COMPANY;
+      }
+
+      return Responses.OK;
+
+    } catch (SQLException e) {
+      log.error("Failed to update company. " + dto, e);
+      return Responses.ServerProblem.EXCEPTION;
+    }
+  }
+
+  private static Company map(ResultSet rs) {
+    try {
+      Company model = new Company();
+      model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
+      model.setName(rs.getString("name"));
+      model.setCountry(rs.getString("country"));
+      model.setWebsite(rs.getString("website"));
+      model.setSector(rs.getString("sector"));
+      model.setAdminId(RepositoryHelper.nullLongHandler(rs, "admin_id"));
+      model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
+      model.setPlanStatus(PlanStatus.valueOf(rs.getString("plan_status")));
+      model.setDueDate(rs.getTimestamp("due_date"));
+      model.setRetry(rs.getInt("retry"));
+      model.setLastCollectingTime(rs.getTimestamp("last_collecting_time"));
+      model.setLastCollectingStatus(rs.getBoolean("last_collecting_status"));
+      model.setCreatedAt(rs.getTimestamp("created_at"));
+
+      return model;
+    } catch (SQLException e) {
+      log.error("Failed to set company's properties", e);
+    }
+    return null;
+  }
 
 }

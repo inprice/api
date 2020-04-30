@@ -12,7 +12,6 @@ import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.app.user.UserRole;
-import io.inprice.scrapper.api.app.user.UserStatus;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.EmailValidator;
 import io.inprice.scrapper.api.dto.InvitationAcceptDTO;
@@ -78,7 +77,7 @@ public class MembershipService {
    }
 
    public ServiceResponse changeRole(InvitationUpdateDTO dto) {
-      ServiceResponse res = validate(dto, true);
+      ServiceResponse res = validate(dto);
 
       if (res.isOK()) {
          res = membershipRepository.changeRole(dto);
@@ -86,13 +85,12 @@ public class MembershipService {
       return res;
    }
 
-   public ServiceResponse updateStatus(InvitationUpdateDTO dto) {
-      ServiceResponse res = validate(dto, false);
+   public ServiceResponse pause(Long id) {
+      return membershipRepository.changeStatus(id, false);
+   }
 
-      if (res.isOK()) {
-         res = membershipRepository.updateStatus(dto);
-      }
-      return res;
+   public ServiceResponse resume(Long id) {
+      return membershipRepository.changeStatus(id, true);
    }
 
    public ServiceResponse acceptNewUser(InvitationAcceptDTO dto) {
@@ -150,7 +148,8 @@ public class MembershipService {
    }
 
    private ServiceResponse validate(InvitationSendDTO dto) {
-      if (dto == null) {
+      if (dto == null 
+      || (dto.getEmail() != null && dto.getEmail().toLowerCase().equals(CurrentUser.getEmail().toLowerCase()))) {
          return Responses.Invalid.INVITATION;
       }
 
@@ -166,17 +165,13 @@ public class MembershipService {
       return Responses.OK;
    }
 
-   private ServiceResponse validate(InvitationUpdateDTO dto, boolean forRole) {
+   private ServiceResponse validate(InvitationUpdateDTO dto) {
       if (dto == null || dto.getId() == null || dto.getId() < 1) {
          return Responses.Invalid.INVITATION;
       }
 
-      if (forRole && (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN))) {
+      if (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN)) {
          return new ServiceResponse(String.format("Role must be either %s or %s!", UserRole.EDITOR.name(), UserRole.VIEWER.name()));
-      }
-
-      if (!forRole && (dto.getStatus() == null || dto.getStatus().equals(UserStatus.LEFT) || dto.getStatus().equals(UserStatus.JOINED))) {
-         return new ServiceResponse(String.format("Status must be either %s or %s!", UserStatus.PENDING.name(), UserStatus.PAUSED.name()));
       }
 
       return Responses.OK;

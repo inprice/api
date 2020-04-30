@@ -3,7 +3,6 @@ package io.inprice.scrapper.api.dto;
 import java.io.Serializable;
 
 import io.inprice.scrapper.api.app.user.UserRole;
-import io.inprice.scrapper.api.app.user.UserStatus;
 
 public class InvitationUpdateDTO implements Serializable {
 
@@ -11,7 +10,6 @@ public class InvitationUpdateDTO implements Serializable {
 
    private Long id;
    private UserRole role;
-   private UserStatus status;
 
    public Long getId() {
       return id;
@@ -29,17 +27,9 @@ public class InvitationUpdateDTO implements Serializable {
       this.role = role;
    }
 
-   public UserStatus getStatus() {
-      return status;
-   }
-
-   public void setStatus(UserStatus status) {
-      this.status = status;
-   }
-
    @Override
    public String toString() {
-      return "[id=" + id + ", role=" + role + ", status=" + status + "]";
+      return "[id=" + id + ", role=" + role + "]";
    }
 
 }

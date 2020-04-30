@@ -33,9 +33,15 @@ public class MembershipRepository {
   private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
 
   public ServiceResponse getList() {
-    List<Membership> memberList = db.findMultiple(String.format(
-        "select * from membership " + "where email != '%s' " + "  and company_id = %d " + "order by email",
-        CurrentUser.getEmail(), CurrentUser.getCompanyId()), this::map);
+    List<Membership> memberList = 
+      db.findMultiple(
+        String.format(
+          "select m.*, c.name as company_name from membership as m " +
+          "inner join company as c on c.id = m.company_id " + 
+          "where m.email != '%s' " + 
+          "  and company_id = %d " + 
+          "order by m.email",
+        CurrentUser.getEmail(), CurrentUser.getCompanyId()), this::mapWithCompany);
 
     if (memberList != null && memberList.size() > 0) {
       return new ServiceResponse(memberList);
@@ -105,24 +111,32 @@ public class MembershipRepository {
     return res;
   }
 
-  public ServiceResponse updateStatus(InvitationUpdateDTO dto) {
-    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+  public ServiceResponse changeStatus(Long id, boolean isResumed) {
+    String part1 = "pre_status=status, status='PAUSED'";
+    String part2 = "and status!='PAUSED'";
+    if (isResumed) {
+      part1 = "status=pre_status, pre_status='PAUSED'";
+      part2 = "and status='PAUSED'";
+    }
 
     try (Connection con = db.getConnection();
-        PreparedStatement pst = con.prepareStatement("update membership set status=? where id=? and company_id=?")) {
+        PreparedStatement pst = 
+          con.prepareStatement(
+            "update membership set " + part1 + ", updated_at=now() where id=? and company_id=? " + part2)) {
       int i = 0;
-      pst.setString(++i, dto.getStatus().name());
-      pst.setLong(++i, dto.getId());
+      pst.setLong(++i, id);
       pst.setLong(++i, CurrentUser.getCompanyId());
 
       if (pst.executeUpdate() > 0) {
-        res = Responses.OK;
+        return Responses.OK;
+      } else {
+        return Responses.DataProblem.NOT_SUITABLE;
       }
     } catch (SQLException e) {
-      log.error("Failed to update status member. " + dto, e);
+      log.error("Failed to update status member. UserId: " + id + ", isResumed: " + isResumed , e);
     }
 
-    return res;
+    return Responses.DataProblem.DB_PROBLEM;
   }
 
   public ServiceResponse acceptNewUser(InvitationAcceptDTO acceptDTO, InvitationSendDTO invitationDTO) {
@@ -149,6 +163,8 @@ public class MembershipRepository {
           dto.setPassword(acceptDTO.getPassword());
           dto.setCompanyId(invitationDTO.getCompanyId());
           res = userRepository.insert(con, dto);
+        } else {
+          res = Responses.Already.Defined.MEMBERSHIP;
         }
 
         if (res.isOK()) {
@@ -177,7 +193,7 @@ public class MembershipRepository {
           }
         }
       } else {
-        res = Responses.NotFound.MEMBERSHIP;
+        res = Responses.NotFound.INVITATION;
       }
 
     } catch (SQLException e) {
@@ -249,9 +265,14 @@ public class MembershipRepository {
   }
 
   public ServiceResponse getUserCompanies(String email) {
-    List<Membership> memberships = db.findMultiple(String.format(
-        "select m.*, c.name as company_name from membership as m inner join company as c on c.id = m.company_id "
-            + "where m.email='%s' " + "  and m.status = '%s' " + "order by m.role, m.created_at",
+    List<Membership> memberships = 
+      db.findMultiple(
+        String.format(
+          "select m.*, c.name as company_name from membership as m " +
+          "inner join company as c on c.id = m.company_id " + 
+          "where m.email='%s' " + 
+          "  and m.status = '%s' " + 
+          "order by m.role, m.created_at",
         SqlHelper.clear(email), UserStatus.JOINED), this::mapWithCompany);
     if (memberships != null && memberships.size() > 0) {
       return new ServiceResponse(memberships);

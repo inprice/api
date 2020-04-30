@@ -27,6 +27,7 @@ import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
+import io.inprice.scrapper.api.session.CurrentUser;
 import io.javalin.http.Context;
 
 public class CompanyService {
@@ -91,6 +92,19 @@ public class CompanyService {
          TokenService.get(TokenType.REGISTER_REQUEST, token);
       }
       return Responses.Invalid.TOKEN;
+   }
+
+   public ServiceResponse getCurrentCompany() {
+      return companyRepository.findById(CurrentUser.getCompanyId());
+   }
+
+   public ServiceResponse create(CompanyDTO dto) {
+      ServiceResponse res = validateCompanyDTO(dto);
+      if (res.isOK()) {
+         return companyRepository.create(dto);
+      } else {
+         return res;
+      }
    }
 
    public ServiceResponse update(CompanyDTO dto) {
