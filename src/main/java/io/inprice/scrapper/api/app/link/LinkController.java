@@ -54,7 +54,7 @@ public class LinkController implements Controller {
       // change status to RESUMED
       app.put(Consts.Paths.Link.RESUME + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, LinkStatus.PAUSED)));
+         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, LinkStatus.RESUMED)));
       }, AccessRoles.EDITOR());
 
    }

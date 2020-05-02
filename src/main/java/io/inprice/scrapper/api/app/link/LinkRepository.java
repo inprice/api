@@ -37,8 +37,8 @@ public class LinkRepository {
         String.format(
           "select l.*, s.name as platform from link as l " + 
           "left join site as s on s.id = l.site_id " + 
-          "where id = %d " + 
-          "  and company_id = %d ", id,
+          "where l.id = %d " + 
+          "  and l.company_id = %d ", id,
         CurrentUser.getCompanyId()), this::map);
     if (model != null) {
       return new ServiceResponse(model);
