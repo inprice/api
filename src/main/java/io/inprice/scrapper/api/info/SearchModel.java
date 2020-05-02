@@ -11,21 +11,18 @@ public class SearchModel {
    private String term;
    private int lastRowNo;
    private String orderBy;
-   private String orderDir;
    private List<String> fields;
 
-   public final int ROW_LIMIT = 3;
+   public final int ROW_LIMIT = 25;
 
-   public SearchModel(Map<String, String> map, Class<?> clazz) {
-      term = SqlHelper.clear(map.getOrDefault("term", "").trim());
-      lastRowNo = Integer.parseInt(map.getOrDefault("lastRowNo", "0"));
-      orderBy = SqlHelper.clear(map.getOrDefault("orderBy", "id").trim());
-      orderDir = SqlHelper.clear(map.getOrDefault("orderDir", "asc").trim());
+   public SearchModel(Map<String, String> map, String orderBy, Class<?> clazz) {
+      this.term = SqlHelper.clear(map.getOrDefault("term", "").trim());
+      this.lastRowNo = Integer.parseInt(map.getOrDefault("lastRowNo", "0"));
+      this.orderBy = orderBy;
 
       // clearance
       if (term.length() > 255) term = term.substring(0, 255);
       if (lastRowNo < 0 || lastRowNo > 1000) lastRowNo = 0;
-      if (!orderDir.matches("(a|de)sc")) orderDir = "asc";
    }
 
    public String getTable() {
@@ -48,10 +45,6 @@ public class SearchModel {
       return orderBy;
    }
 
-   public String getOrderDir() {
-      return orderDir;
-   }
-
    public List<String> getFields() {
       return fields;
    }
@@ -62,7 +55,7 @@ public class SearchModel {
 
    @Override
    public String toString() {
-      return "SearchModel [orderBy=" + orderBy + ", orderDir=" + orderDir + ", table=" + table + ", term=" + term + "]";
+      return "SearchModel [orderBy=" + orderBy + ", table=" + table + ", term=" + term + "]";
    }
 
 }

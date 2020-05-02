@@ -15,7 +15,6 @@ public class SqlHelper {
       STANDARD_SEARCH_MAP.put("term", "");
       STANDARD_SEARCH_MAP.put("lastRowNo", "0");
       STANDARD_SEARCH_MAP.put("orderBy", "id");
-      STANDARD_SEARCH_MAP.put("orderDir", "asc");
    }
 
    // http://www.java2s.com/Code/Java/Database-SQL-JDBC/EscapeSQL.htm
@@ -95,8 +94,6 @@ public class SqlHelper {
       if (!searchModel.getOrderBy().isEmpty()) {
          sql.append(" order by ");
          sql.append(searchModel.getOrderBy());
-         sql.append(" ");
-         sql.append(searchModel.getOrderDir());
       }
 
       // limiting part

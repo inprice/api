@@ -80,6 +80,7 @@ public class Responses {
    public static class Already {
       private static final int BASE = 800;
       public static final ServiceResponse LOGGED_OUT = new ServiceResponse(BASE + 1, "Seems that you are already logged out!");
+      public static final ServiceResponse DELETED_MEMBER = new ServiceResponse(BASE + 2, "This member is already deleted!");
 
       public static class Defined {
          public static final ServiceResponse COMPANY = new ServiceResponse(BASE + 10, "Seems that you have already registered this company!");

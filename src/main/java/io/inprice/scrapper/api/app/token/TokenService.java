@@ -13,7 +13,7 @@ public class TokenService {
    private static final RMapCache<String, Serializable> tokensMap;
 
    static {
-      tokensMap = RedisClient.getClient().getMapCache("api:tokens");
+      tokensMap = RedisClient.checkDBConnection(0).getMapCache("api:tokens");
    }
 
    public static String add(TokenType tokenType, Serializable object) {

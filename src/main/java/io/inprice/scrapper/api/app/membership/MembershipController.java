@@ -32,10 +32,15 @@ public class MembershipController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.resend(memId)));
       }, AccessRoles.ADMIN_ONLY());
 
+      app.delete(Consts.Paths.Membership.DELETE + "/:mem_id", (ctx) -> {
+         Long memId = ctx.pathParam("mem_id", Long.class).check(it -> it > 0).getValue();
+         ctx.json(Commons.createResponse(ctx, service.delete(memId)));
+      }, AccessRoles.ADMIN_ONLY());
+
       app.put(Consts.Paths.Membership.CHANGE_ROLE, (ctx) -> {
         InvitationUpdateDTO dto = ctx.bodyAsClass(InvitationUpdateDTO.class);
         ctx.json(Commons.createResponse(ctx, service.changeRole(dto)));
-     }, AccessRoles.ADMIN_ONLY());
+      }, AccessRoles.ADMIN_ONLY());
 
       app.put(Consts.Paths.Membership.PAUSE + "/:mem_id", (ctx) -> {
         Long memId = ctx.pathParam("mem_id", Long.class).check(it -> it > 0).getValue();

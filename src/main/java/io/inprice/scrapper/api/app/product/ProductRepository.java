@@ -438,7 +438,7 @@ public class ProductRepository {
          pst.setString(++i, dto.getCode());
          pst.setString(++i, dto.getName());
          pst.setString(++i, dto.getBrand());
-         pst.setString(++i, dto.getCode());
+         pst.setString(++i, dto.getCategory());
          pst.setBigDecimal(++i, dto.getPrice());
          if (dto.getImportId() != null)
             pst.setLong(++i, dto.getImportId());

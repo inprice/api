@@ -1,35 +1,42 @@
 package io.inprice.scrapper.api.dto;
 
-public class LinkDTO {
+import java.io.Serializable;
 
-    private Long productId;
-    private String url;
+public class LinkDTO implements Serializable {
 
-    public LinkDTO() {
-    }
+  private static final long serialVersionUID = 4899893105959011844L;
 
-    public LinkDTO(Long productId) {
-        this.productId = productId;
-    }
+  private Long id;
+  private String url;
+  private Long productId;
 
-    public LinkDTO(Long productId, String url) {
-        this.productId = productId;
-        this.url = url;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public Long getProductId() {
-        return productId;
-    }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
+  public String getUrl() {
+    return url;
+  }
 
-    public String getUrl() {
-        return url;
-    }
+  public void setUrl(String url) {
+    this.url = url;
+  }
 
-    public void setUrl(String url) {
-        this.url = url;
-    }
+  public Long getProductId() {
+    return productId;
+  }
+
+  public void setProductId(Long productId) {
+    this.productId = productId;
+  }
+
+  @Override
+  public String toString() {
+    return "[id=" + id + ", productId=" + productId + ", url=" + url + "]";
+  }
+
 }

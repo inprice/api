@@ -49,8 +49,8 @@ public class MembershipRepository {
     return Responses.NotFound.MEMBERSHIP;
   }
 
-  public ServiceResponse findById(long membershipId) {
-    Membership model = db.findSingle(String.format("select * from membership where id=%d", membershipId), this::map);
+  public ServiceResponse findById(long memberId) {
+    Membership model = db.findSingle(String.format("select * from membership where id=%d", memberId), this::map);
 
     if (model != null) {
       return new ServiceResponse(model);
@@ -240,7 +240,7 @@ public class MembershipRepository {
     return res;
   }
 
-  public ServiceResponse increaseSendingCount(long membershipId) {
+  public ServiceResponse increaseSendingCount(long memberId) {
     ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     // company is inserted
@@ -248,7 +248,7 @@ public class MembershipRepository {
         PreparedStatement pst = con.prepareStatement(
             "update membership set retry=retry+1 where id=? and retry<3 and status=? and company_id=?")) {
       int i = 0;
-      pst.setLong(++i, membershipId);
+      pst.setLong(++i, memberId);
       pst.setString(++i, UserStatus.PENDING.name());
       pst.setLong(++i, CurrentUser.getCompanyId());
 
@@ -258,7 +258,7 @@ public class MembershipRepository {
         res = Responses.DataProblem.NOT_SUITABLE;
       }
     } catch (SQLException e) {
-      log.error("Failed to increase retry count. Membership Id: " + membershipId, e);
+      log.error("Failed to increase retry count. Membership Id: " + memberId, e);
     }
 
     return res;
@@ -278,6 +278,30 @@ public class MembershipRepository {
       return new ServiceResponse(memberships);
     }
     return Responses.NotFound.MEMBERSHIP;
+  }
+
+  public ServiceResponse delete(long memberId) {
+    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+
+    try (Connection con = db.getConnection();
+        PreparedStatement pst = con.prepareStatement(
+            "update membership set status=?, updated_at=now() where id=? and status!=? and company_id=?")) {
+      int i = 0;
+      pst.setString(++i, UserStatus.DELETED.name());
+      pst.setLong(++i, memberId);
+      pst.setString(++i, UserStatus.DELETED.name());
+      pst.setLong(++i, CurrentUser.getCompanyId());
+
+      if (pst.executeUpdate() > 0) {
+        res = Responses.OK;
+      } else {
+        res = Responses.DataProblem.NOT_SUITABLE;
+      }
+    } catch (SQLException e) {
+      log.error("Failed to delete a user. Id: " + memberId, e);
+    }
+
+    return res;
   }
 
   private ServiceResponse checkMembership(Membership membership) {

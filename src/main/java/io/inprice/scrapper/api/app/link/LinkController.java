@@ -22,43 +22,39 @@ public class LinkController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.insert(ctx.bodyAsClass(LinkDTO.class))));
       }, AccessRoles.EDITOR());
 
+      // update
+      app.put(Consts.Paths.Link.BASE, (ctx) -> {
+         ctx.json(Commons.createResponse(ctx, service.update(ctx.bodyAsClass(LinkDTO.class))));
+      }, AccessRoles.EDITOR());
+
       // delete
       app.delete(Consts.Paths.Link.BASE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, service.deleteById(id)));
       }, AccessRoles.EDITOR());
 
-      // find
-      app.get(Consts.Paths.Link.BASE + "/:id", (ctx) -> {
-         Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.findById(id)));
-      }, AccessRoles.ANYONE());
-
       // list
-      app.get(Consts.Paths.Link.BASE + "s/:product_id", (ctx) -> {
-         Long productId = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.getList(productId)));
+      app.get(Consts.Paths.Link.BASE + "s/:prod_id", (ctx) -> {
+         Long prodId = ctx.pathParam("prod_id", Long.class).check(it -> it > 0).getValue();
+         ctx.json(Commons.createResponse(ctx, service.getList(prodId)));
       }, AccessRoles.ANYONE());
 
       // change status to RENEWED
       app.put(Consts.Paths.Link.RENEW + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-         Long productId = ctx.queryParam("product_id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, LinkStatus.RENEWED)));
+         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, LinkStatus.RENEWED)));
       }, AccessRoles.EDITOR());
 
       // change status to PAUSED
       app.put(Consts.Paths.Link.PAUSE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-         Long productId = ctx.queryParam("product_id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, LinkStatus.PAUSED)));
+         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, LinkStatus.PAUSED)));
       }, AccessRoles.EDITOR());
 
       // change status to RESUMED
       app.put(Consts.Paths.Link.RESUME + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-         Long productId = ctx.queryParam("product_id", Long.class).check(it -> it > 0).getValue();
-         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, productId, LinkStatus.PAUSED)));
+         ctx.json(Commons.createResponse(ctx, service.changeStatus(id, LinkStatus.PAUSED)));
       }, AccessRoles.EDITOR());
 
    }

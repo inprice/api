@@ -12,6 +12,7 @@ import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.api.app.user.UserStatus;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.EmailValidator;
 import io.inprice.scrapper.api.dto.InvitationAcceptDTO;
@@ -71,6 +72,20 @@ public class MembershipService {
             dto.setEmail(membership.getEmail());
             dto.setRole(membership.getRole());
             res = sendMail(dto);
+         }
+      }
+      return res;
+   }
+
+   public ServiceResponse delete(long memId) {
+      ServiceResponse res = membershipRepository.findById(memId);
+
+      if (res.isOK()) {
+         Membership membership = res.getData();
+         if (! membership.getStatus().equals(UserStatus.DELETED)) {
+            res = membershipRepository.delete(memId);
+         } else {
+           res = Responses.Already.DELETED_MEMBER;
          }
       }
       return res;

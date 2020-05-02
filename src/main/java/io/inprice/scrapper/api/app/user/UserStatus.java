@@ -12,6 +12,7 @@ public enum UserStatus {
    PENDING,
    JOINED,
    PAUSED,
-   LEFT;
+   LEFT,
+   DELETED;
 
 }
