@@ -78,8 +78,8 @@ public class LinkRepository {
         if (res.isOK()) { // if any, lets clone it
           String query = 
             "insert into link " +
-            "(url, url_hash, sku, name, brand, seller, shipment, price, status, http_status, website_class_name, site_id, product_id, company_id) " + 
-            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ";
+            "(url, url_hash, sku, name, brand, seller, shipment, status, http_status, website_class_name, site_id, product_id, company_id) " + 
+            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ";
 
           try (PreparedStatement pst = con.prepareStatement(query)) {
             Link sample = res.getData();
@@ -92,7 +92,6 @@ public class LinkRepository {
             pst.setString(++i, sample.getBrand());
             pst.setString(++i, sample.getSeller());
             pst.setString(++i, sample.getShipment());
-            pst.setBigDecimal(++i, sample.getPrice());
             pst.setString(++i, sample.getStatus().name());
             pst.setInt(++i, sample.getHttpStatus());
             pst.setString(++i, sample.getWebsiteClassName());
