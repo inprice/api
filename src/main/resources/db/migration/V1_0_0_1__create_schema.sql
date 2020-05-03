@@ -133,7 +133,8 @@ alter table product_price add foreign key (product_id) references product (id);
 
 create table link (
   id                        bigint auto_increment not null,
-  url                       varchar(2000) not null,
+  url                       varchar(1024) not null,
+  url_hash                  varchar(32) not null,
   sku                       varchar(70),
   name                      varchar(500),
   brand                     varchar(150),
@@ -154,10 +155,11 @@ create table link (
   import_row_id             bigint,
   primary key (id)
 ) engine=innodb;
-create index ix1 on link (status);
-create index ix2 on link (name);
-create index ix3 on link (last_update);
-create index ix4 on link (last_check);
+create index ix1 on link (url_hash);
+create index ix2 on link (status);
+create index ix3 on link (name);
+create index ix4 on link (last_update);
+create index ix5 on link (last_check);
 alter table link add foreign key (product_id) references product (id);
 alter table link add foreign key (site_id) references site (id);
 alter table link add foreign key (company_id) references company (id);

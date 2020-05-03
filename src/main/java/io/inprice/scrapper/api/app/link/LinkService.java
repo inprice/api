@@ -32,20 +32,9 @@ public class LinkService {
 
   public ServiceResponse insert(LinkDTO dto) {
     if (dto != null) {
-      ServiceResponse res = validate(dto, true);
+      ServiceResponse res = validate(dto);
       if (res.isOK()) {
         res = linkRepository.insert(dto);
-      }
-      return res;
-    }
-    return Responses.Invalid.LINK;
-  }
-
-  public ServiceResponse update(LinkDTO dto) {
-    if (dto != null) {
-      ServiceResponse res = validate(dto, false);
-      if (res.isOK()) {
-        res = linkRepository.update(dto);
       }
       return res;
     }
@@ -122,19 +111,15 @@ public class LinkService {
     return res;
   }
 
-  private ServiceResponse validate(LinkDTO dto, boolean isInsert) {
+  private ServiceResponse validate(LinkDTO dto) {
     String problem = null;
 
     if (!URLUtils.isAValidURL(dto.getUrl())) {
       problem = "Invalid URL!";
-    } else if (dto.getUrl().length() > 2000) {
-      problem = "The length of URL must be less than 2000 chars!";
+    } else if (dto.getUrl().length() > 1024) {
+      problem = "The length of URL must be less than 1024 chars!";
     }
 
-    if (problem == null && !isInsert && (dto.getId() == null || dto.getId() < 1)) {
-      problem = "Link id cannot be null!";
-    }
-      
     if (problem == null) {
       if (dto.getProductId() == null || dto.getProductId() < 1) {
         problem = "Product id cannot be null!";

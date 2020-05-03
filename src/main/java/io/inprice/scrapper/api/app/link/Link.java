@@ -11,6 +11,7 @@ public class Link implements Serializable {
 
   private Long id;
   private String url;
+  private String urlHash;
   private String sku;
   private String name;
   private String brand;
@@ -66,6 +67,14 @@ public class Link implements Serializable {
 
   public void setUrl(String url) {
     this.url = url;
+  }
+
+  public String getUrlHash() {
+    return urlHash;
+  }
+
+  public void setUrlHash(String urlHash) {
+    this.urlHash = urlHash;
   }
 
   public String getSku() {

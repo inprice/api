@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,6 @@ import io.inprice.scrapper.api.helpers.BulkDeleteStatements;
 import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
 import io.inprice.scrapper.api.external.Database;
-import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.app.product.Product;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
@@ -38,8 +38,8 @@ public class LinkRepository {
           "select l.*, s.name as platform from link as l " + 
           "left join site as s on s.id = l.site_id " + 
           "where l.id = %d " + 
-          "  and l.company_id = %d ", id,
-        CurrentUser.getCompanyId()), this::map);
+          "  and l.company_id = %d ",
+        id, CurrentUser.getCompanyId()), this::map);
     if (model != null) {
       return new ServiceResponse(model);
     }
@@ -65,57 +65,85 @@ public class LinkRepository {
   }
 
   public ServiceResponse insert(LinkDTO dto) {
-    if (Props.isLinkUniqueness()) {
-      boolean alreadyExists = doesExist(dto.getUrl(), dto.getProductId());
-      if (alreadyExists) {
-        return Responses.DataProblem.ALREADY_EXISTS;
+    ServiceResponse res = Responses.DataProblem.DB_PROBLEM;
+
+    try (Connection con = db.getConnection()) {
+      boolean exists = doesExist(con, dto.getUrl(), dto.getProductId());
+      if (! exists) {
+
+        int affected = 0;
+        String urlHash = DigestUtils.md5Hex(dto.getUrl());
+
+        res = findSampleByHash(con, urlHash);
+        if (res.isOK()) { // if any, lets clone it
+          String query = 
+            "insert into link " +
+            "(url, url_hash, sku, name, brand, seller, shipment, price, status, http_status, website_class_name, site_id, product_id, company_id) " + 
+            "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ";
+
+          try (PreparedStatement pst = con.prepareStatement(query)) {
+            Link sample = res.getData();
+            
+            int i = 0;
+            pst.setString(++i, SqlHelper.clear(dto.getUrl()));
+            pst.setString(++i, urlHash);
+            pst.setString(++i, sample.getSku());
+            pst.setString(++i, sample.getName());
+            pst.setString(++i, sample.getBrand());
+            pst.setString(++i, sample.getSeller());
+            pst.setString(++i, sample.getShipment());
+            pst.setBigDecimal(++i, sample.getPrice());
+            pst.setString(++i, sample.getStatus().name());
+            pst.setInt(++i, sample.getHttpStatus());
+            pst.setString(++i, sample.getWebsiteClassName());
+            pst.setLong(++i, sample.getSiteId());
+            pst.setLong(++i, dto.getProductId());
+            pst.setLong(++i, CurrentUser.getCompanyId());
+            affected = pst.executeUpdate();
+          }
+        } else {
+          String query = "insert into link (url, url_hash, product_id, company_id) values  (?, ?, ?, ?) ";
+          try (PreparedStatement pst = con.prepareStatement(query)) {
+            int i = 0;
+            pst.setString(++i, SqlHelper.clear(dto.getUrl()));
+            pst.setString(++i, urlHash);
+            pst.setLong(++i, dto.getProductId());
+            pst.setLong(++i, CurrentUser.getCompanyId());
+            affected = pst.executeUpdate();
+          }
+        }
+
+        if (affected > 0) {
+          res = Responses.OK;
+        }
+      } else {
+        res = Responses.DataProblem.ALREADY_EXISTS;
       }
-    }
-
-    final String query = "insert into link " + "(url, product_id, company_id) " + "values  (?, ?, ?) ";
-
-    try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
-
-      int i = 0;
-      pst.setString(++i, SqlHelper.clear(dto.getUrl()));
-      pst.setLong(++i, dto.getProductId());
-      pst.setLong(++i, CurrentUser.getCompanyId());
-
-      if (pst.executeUpdate() > 0)
-        return Responses.OK;
-      else
-        return Responses.DataProblem.DB_PROBLEM;
-
     } catch (SQLIntegrityConstraintViolationException ie) {
       log.error("Failed to insert link (duplicate): " + ie.getMessage());
       return Responses.DataProblem.INTEGRITY_PROBLEM;
     } catch (Exception e) {
       log.error("Failed to insert link. " + dto.toString(), e);
-      return Responses.ServerProblem.EXCEPTION;
     }
+
+    return res;
   }
 
-  public ServiceResponse update(LinkDTO dto) {
-    final String query = "update link set pre_status=status, url=?, status=? where id=? and product_id=? and company_id=? ";
-
-    try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
-
-      int i = 0;
-      pst.setString(++i, SqlHelper.clear(dto.getUrl()));
-      pst.setString(++i, LinkStatus.RENEWED.name());
-      pst.setLong(++i, dto.getId());
-      pst.setLong(++i, dto.getProductId());
-      pst.setLong(++i, CurrentUser.getCompanyId());
-
-      if (pst.executeUpdate() > 0)
-        return Responses.OK;
-      else
-        return Responses.DataProblem.DB_PROBLEM;
-
-    } catch (Exception e) {
-      log.error("Failed to update link. " + dto.toString(), e);
-      return Responses.ServerProblem.EXCEPTION;
+  private ServiceResponse findSampleByHash(Connection con, String urlHash) {
+    Link model = 
+      db.findSingle(con,
+        String.format(
+          "select * from link " + 
+          "where url_hash = '%s' " + 
+          "  and name is not null " + 
+          "  and company_id != %d " + 
+          "order by last_update desc " +
+          "limit 1 ", 
+          urlHash, CurrentUser.getCompanyId()), this::map);
+    if (model != null) {
+      return new ServiceResponse(model);
     }
+    return Responses.NotFound.LINK;
   }
 
   public ServiceResponse deleteById(Long id) {
@@ -188,14 +216,15 @@ public class LinkRepository {
     }
   }
 
-  private boolean doesExist(String url, Long productId) {
-    Link model = db.findSingle(
+  private boolean doesExist(Connection con, String url, Long productId) {
+    String urlHash = DigestUtils.md5Hex(url);
+    Link model = db.findSingle(con,
         String.format(
         "select *, '' as platform from link " + 
-        "where url = '%s' " + 
+        "where url_hash = '%s' " + 
         "  and product_id = %d " + 
         "  and company_id = %d ",
-        SqlHelper.clear(url), productId, CurrentUser.getCompanyId()), this::map);
+        urlHash, productId, CurrentUser.getCompanyId()), this::map);
     return (model != null);
   }
 
@@ -204,6 +233,7 @@ public class LinkRepository {
       Link model = new Link();
       model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
       model.setUrl(rs.getString("url"));
+      model.setUrlHash(rs.getString("url_hash"));
       model.setSku(rs.getString("sku"));
       model.setName(rs.getString("name"));
       model.setBrand(rs.getString("brand"));

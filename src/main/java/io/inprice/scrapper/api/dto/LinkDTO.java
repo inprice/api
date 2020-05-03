@@ -6,17 +6,8 @@ public class LinkDTO implements Serializable {
 
   private static final long serialVersionUID = 4899893105959011844L;
 
-  private Long id;
   private String url;
   private Long productId;
-
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
 
   public String getUrl() {
     return url;
@@ -36,7 +27,7 @@ public class LinkDTO implements Serializable {
 
   @Override
   public String toString() {
-    return "[id=" + id + ", productId=" + productId + ", url=" + url + "]";
+    return "[productId=" + productId + ", url=" + url + "]";
   }
 
 }

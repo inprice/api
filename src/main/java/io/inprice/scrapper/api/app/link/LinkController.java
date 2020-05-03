@@ -22,11 +22,6 @@ public class LinkController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.insert(ctx.bodyAsClass(LinkDTO.class))));
       }, AccessRoles.EDITOR());
 
-      // update
-      app.put(Consts.Paths.Link.BASE, (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.update(ctx.bodyAsClass(LinkDTO.class))));
-      }, AccessRoles.EDITOR());
-
       // delete
       app.delete(Consts.Paths.Link.BASE + "/:id", (ctx) -> {
          Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();

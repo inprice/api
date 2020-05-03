@@ -8,14 +8,6 @@ public class Props {
       return ! "prod".equals(System.getenv().getOrDefault("APP_ENV", "prod").toLowerCase());
    }
 
-   public static boolean isProdUniqueness() {
-      return "true".equals(System.getenv().getOrDefault("APP_PROD_UNIQUENESS", "false").toLowerCase());
-   }
-
-   public static boolean isLinkUniqueness() {
-      return "true".equals(System.getenv().getOrDefault("APP_LINK_UNIQUENESS", "false").toLowerCase());
-   }
-
    public static boolean isShowingSQLQueries() {
       return "true".equals(System.getenv().getOrDefault("APP_SHOWING_SQL_QUERIES", "false").toLowerCase());
    }

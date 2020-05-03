@@ -98,7 +98,7 @@ public class RedisClient {
         }
       }
     }
-    return null;
+    return client;
   }
 
 }

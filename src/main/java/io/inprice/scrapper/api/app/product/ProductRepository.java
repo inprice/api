@@ -73,12 +73,10 @@ public class ProductRepository {
       try {
          con = db.getTransactionalConnection();
 
-         if (Props.isProdUniqueness()) {
-            boolean alreadyExists = doesExist(con, dto.getCode(), null);
-            if (alreadyExists) {
-               return Responses.DataProblem.ALREADY_EXISTS;
-            }
-         }
+          boolean alreadyExists = doesExist(con, dto.getCode(), null);
+          if (alreadyExists) {
+              return Responses.DataProblem.ALREADY_EXISTS;
+          }
 
          ServiceResponse result = insertANewProduct(con, dto);
          if (result.isOK()) {
@@ -107,12 +105,10 @@ public class ProductRepository {
       try {
          con = db.getTransactionalConnection();
 
-         if (Props.isProdUniqueness()) {
-            boolean alreadyExists = doesExist(con, dto.getCode(), dto.getId());
-            if (alreadyExists) {
-               return Responses.DataProblem.ALREADY_EXISTS;
-            }
-         }
+          boolean alreadyExists = doesExist(con, dto.getCode(), dto.getId());
+          if (alreadyExists) {
+              return Responses.DataProblem.ALREADY_EXISTS;
+          }
 
          final String query = "update product set code=?, name=?, brand=?, category=?, price=? where id=? and company_id=? ";
 
