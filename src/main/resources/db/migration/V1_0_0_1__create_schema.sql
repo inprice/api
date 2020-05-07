@@ -9,9 +9,9 @@ create table site (
   class_name                varchar(100) not null,
   logo_url                  varchar(250),
   created_at                timestamp not null default current_timestamp,
-  primary key (id)
+  primary key (id),
+  unique key ix1 (name)
 ) engine=innodb;
-create unique index ix1 on site (name);
 
 create table plan (
   name                      varchar(15) not null,
@@ -27,19 +27,17 @@ create table user (
   id                        bigint auto_increment not null,
   email                     varchar(100) not null,
   name                      varchar(70) not null,
+  timezone                  varchar(30),
   password_hash             varchar(255) not null,
   password_salt             varchar(255) not null,
   created_at                timestamp not null default current_timestamp,
-  primary key (id)
+  primary key (id),
+  unique key ix1 (email)
 ) engine=innodb;
-create unique index ix1 on user (email);
 
 create table company (
   id                        bigint auto_increment not null,
   name                      varchar(70) not null,
-  sector                    varchar(50),
-  website                   varchar(100),
-  country                   varchar(50) not null,
   admin_id                  bigint not null,
   plan_name                 varchar(15),
   plan_status               enum('NOT_SET', 'ACTIVE', 'PAUSED', 'CANCELLED') not null default 'NOT_SET',
@@ -47,10 +45,12 @@ create table company (
   retry                     smallint default 0,
   last_collecting_time      datetime,
   last_collecting_status    boolean default false,
+  currency_code             char(3),
+  currency_format           varchar(35),
   created_at                timestamp not null default current_timestamp,
-  primary key (id)
+  primary key (id),
+  key ix1 (name)
 ) engine=innodb;
-create index ix1 on company (name);
 alter table company add foreign key (admin_id) references user (id);
 alter table company add foreign key (plan_name) references plan (name);
 
@@ -65,9 +65,9 @@ create table membership (
   retry                     smallint default 1,
   updated_at                timestamp,
   created_at                timestamp not null default current_timestamp,
-  primary key (id)
+  primary key (id),
+  key ix1 (email)
 ) engine=innodb;
-create index ix1 on membership (email);
 alter table membership add foreign key (user_id) references user (id);
 alter table membership add foreign key (company_id) references company (id);
 
@@ -80,11 +80,11 @@ create table user_session (
   browser                   varchar(100),
   user_agent                varchar(500),
   accessed_at               timestamp not null default current_timestamp,
-  primary key (_hash)
+  primary key (_hash),
+  key ix1 (accessed_at)
 ) engine=innodb;
 alter table user_session add foreign key (user_id) references user (id);
 alter table user_session add foreign key (company_id) references company (id);
-create index ix1 on user_session (accessed_at);
 
 create table product (
   id                        bigint auto_increment not null,
@@ -106,10 +106,10 @@ create table product (
   import_id                 bigint,
   updated_at                datetime,
   created_at                timestamp not null default current_timestamp,
-  primary key (id)
+  primary key (id),
+  unique key ix1 (company_id, code),
+  key ix2 (company_id, name)
 ) engine=innodb;
-create unique index ix1 on product (company_id, code);
-create index ix2 on product (company_id, name);
 alter table product add foreign key (company_id) references company (id);
 
 create table product_price (
@@ -126,9 +126,9 @@ create table product_price (
   max_price                 double default 0,
   company_id                bigint not null,
   created_at                timestamp not null default current_timestamp,
-  primary key (id)
+  primary key (id),
+  key ix1 (created_at)
 ) engine=innodb;
-create index ix1 on product_price (created_at);
 alter table product_price add foreign key (product_id) references product (id);
 
 create table link (
@@ -153,13 +153,13 @@ create table link (
   company_id                bigint,
   import_id                 bigint,
   import_row_id             bigint,
-  primary key (id)
+  primary key (id),
+  key ix1 (url_hash),
+  key ix2 (status),
+  key ix3 (name),
+  key ix4 (last_update),
+  key ix5 (last_check)
 ) engine=innodb;
-create index ix1 on link (url_hash);
-create index ix2 on link (status);
-create index ix3 on link (name);
-create index ix4 on link (last_update);
-create index ix5 on link (last_check);
 alter table link add foreign key (product_id) references product (id);
 alter table link add foreign key (site_id) references site (id);
 alter table link add foreign key (company_id) references company (id);
@@ -171,9 +171,9 @@ create table link_price (
   product_id                bigint not null,
   company_id                bigint not null,
   created_at                timestamp not null default current_timestamp,
-  primary key (id)
+  primary key (id),
+  key ix1 (created_at)
 ) engine=innodb;
-create index ix1 on link_price (created_at);
 alter table link_price add foreign key (link_id) references link (id);
 
 create table link_spec (
@@ -195,9 +195,9 @@ create table link_history (
   product_id                bigint not null,
   company_id                bigint not null,
   created_at                timestamp not null default current_timestamp,
-  primary key (id)
+  primary key (id),
+  key ix1 (created_at)
 ) engine=innodb;
-create index ix1 on link_history (created_at);
 alter table link_history add foreign key (link_id) references link (id);
 
 create table import_product (

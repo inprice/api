@@ -5,61 +5,75 @@ import java.util.Date;
 
 public class User implements Serializable {
 
-   private static final long serialVersionUID = 1753526228909974777L;
+  private static final long serialVersionUID = 1753526228909974777L;
 
-   private Long id;
-   private String email;
-   private String name;
-   private String passwordHash;
-   private String passwordSalt;
-   private Date createdAt;
+  private Long id;
+  private String email;
+  private String name;
+  private String timezone;
+  private String passwordHash;
+  private String passwordSalt;
+  private Date createdAt;
 
-   public Long getId() {
-      return id;
-   }
+  public Long getId() {
+    return id;
+  }
 
-   public void setId(Long id) {
-      this.id = id;
-   }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-   public String getEmail() {
-      return email;
-   }
+  public String getEmail() {
+    return email;
+  }
 
-   public void setEmail(String email) {
-      this.email = email;
-   }
+  public void setEmail(String email) {
+    this.email = email;
+  }
 
-   public String getName() {
-      return name;
-   }
+  public String getName() {
+    return name;
+  }
 
-   public void setName(String name) {
-      this.name = name;
-   }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-   public String getPasswordHash() {
-      return passwordHash;
-   }
+  public String getTimezone() {
+    return timezone;
+  }
 
-   public void setPasswordHash(String passwordHash) {
-      this.passwordHash = passwordHash;
-   }
+  public void setTimezone(String timezone) {
+    this.timezone = timezone;
+  }
 
-   public String getPasswordSalt() {
-      return passwordSalt;
-   }
+  public String getPasswordHash() {
+    return passwordHash;
+  }
 
-   public void setPasswordSalt(String passwordSalt) {
-      this.passwordSalt = passwordSalt;
-   }
+  public void setPasswordHash(String passwordHash) {
+    this.passwordHash = passwordHash;
+  }
 
-   public Date getCreatedAt() {
-      return createdAt;
-   }
+  public String getPasswordSalt() {
+    return passwordSalt;
+  }
 
-   public void setCreatedAt(Date createdAt) {
-      this.createdAt = createdAt;
-   }
+  public void setPasswordSalt(String passwordSalt) {
+    this.passwordSalt = passwordSalt;
+  }
+
+  public Date getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(Date createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  @Override
+  public String toString() {
+    return "[createdAt=" + createdAt + ", email=" + email + ", id=" + id + ", name=" + name + ", timezone=" + timezone + "]";
+  }
 
 }

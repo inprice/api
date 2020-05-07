@@ -14,6 +14,8 @@ public class ForResponse implements Serializable {
    private String user;
    private String email;
    private String company;
+   private String timezone;
+   private String currencyFormat;
    private UserRole role;
 
    public ForResponse() {
@@ -23,13 +25,27 @@ public class ForResponse implements Serializable {
       this.user = forResponse.getUser();
       this.email = forResponse.getEmail();
       this.company = forResponse.getCompany();
+      this.timezone = forResponse.getTimezone();
+      this.currencyFormat = forResponse.getCurrencyFormat();
       this.role = forResponse.getRole();
    }
 
-   public ForResponse(ForCookie forCookie, String user, String company) {
+   public ForResponse(ForCookie forCookie, String user, 
+    String company, String timezone, String currencyFormat) {
       this.user = user;
       this.email = forCookie.getEmail();
       this.company = company;
+      this.timezone = timezone;
+      this.currencyFormat = currencyFormat;
+      this.role = forCookie.getRole();
+   }
+
+   public ForResponse(ForCookie forCookie, ForRedis forRedis) {  
+      this.user = forRedis.getUser();
+      this.email = forCookie.getEmail();
+      this.company = forRedis.getCompany();
+      this.timezone = forRedis.getTimezone();
+      this.currencyFormat = forRedis.getCurrencyFormat();
       this.role = forCookie.getRole();
    }
 
@@ -49,9 +65,18 @@ public class ForResponse implements Serializable {
       return role;
    }
 
+   public String getTimezone() {
+     return timezone;
+   }
+
+   public String getCurrencyFormat() {
+     return currencyFormat;
+   }
+
    @Override
    public String toString() {
-      return "[company=" + company + ", email=" + email + ", role=" + role + ", user=" + user + "]";
+     return "[company=" + company + ", currencyFormat=" + currencyFormat + ", email=" + email + ", role="
+         + role + ", timezone=" + timezone + ", user=" + user + "]";
    }
 
 }

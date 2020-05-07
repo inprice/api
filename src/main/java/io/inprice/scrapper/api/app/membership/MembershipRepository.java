@@ -36,7 +36,7 @@ public class MembershipRepository {
     List<Membership> memberList = 
       db.findMultiple(
         String.format(
-          "select m.*, c.name as company_name from membership as m " +
+          "select m.*, c.currency_format, c.name as company_name from membership as m " +
           "inner join company as c on c.id = m.company_id " + 
           "where m.email != '%s' " + 
           "  and company_id = %d " + 
@@ -160,6 +160,7 @@ public class MembershipRepository {
           UserDTO dto = new UserDTO();
           dto.setName(acceptDTO.getName());
           dto.setEmail(invitationDTO.getEmail());
+          dto.setTimezone(acceptDTO.getTimezone());
           dto.setPassword(acceptDTO.getPassword());
           dto.setCompanyId(invitationDTO.getCompanyId());
           res = userRepository.insert(con, dto);
@@ -268,7 +269,7 @@ public class MembershipRepository {
     List<Membership> memberships = 
       db.findMultiple(
         String.format(
-          "select m.*, c.name as company_name from membership as m " +
+          "select m.*, c.currency_format, c.name as company_name from membership as m " +
           "inner join company as c on c.id = m.company_id " + 
           "where m.email='%s' " + 
           "  and m.status = '%s' " + 
@@ -323,6 +324,7 @@ public class MembershipRepository {
       Membership model = map(rs);
       model.setUserId(RepositoryHelper.nullLongHandler(rs, "user_id"));
       model.setCompanyName(rs.getString("company_name"));
+      model.setCurrencyFormat(rs.getString("currency_format"));
       model.setPreStatus(UserStatus.valueOf(rs.getString("pre_status")));
       model.setUpdatedAt(rs.getTimestamp("updated_at"));
 

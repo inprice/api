@@ -5,34 +5,43 @@ package io.inprice.scrapper.api.dto;
  */
 public class UserDTO extends PasswordDTO {
 
-   private static final long serialVersionUID = -4510116778307627456L;
+  private static final long serialVersionUID = -4510116778307627456L;
 
-   private String email;
-   private String name;
-   private Long companyId;
+  private String email;
+  private String name;
+  private String timezone;
+  private Long companyId;
 
-   public String getEmail() {
-      return email;
-   }
+  public String getEmail() {
+    return email;
+  }
 
-   public void setEmail(String email) {
-      this.email = email;
-   }
+  public void setEmail(String email) {
+    this.email = email;
+  }
 
-   public String getName() {
-      return name;
-   }
+  public String getName() {
+    return name;
+  }
 
-   public void setName(String name) {
-      this.name = name;
-   }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-   public Long getCompanyId() {
-      return companyId;
-   }
+  public String getTimezone() {
+    return timezone;
+  }
 
-   public void setCompanyId(Long companyId) {
-      this.companyId = companyId;
-   }
+  public void setTimezone(String timezone) {
+    this.timezone = timezone;
+  }
+
+  public Long getCompanyId() {
+    return companyId;
+  }
+
+  public void setCompanyId(Long companyId) {
+    this.companyId = companyId;
+  }
 
 }

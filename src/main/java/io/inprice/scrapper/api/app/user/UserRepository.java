@@ -33,18 +33,8 @@ public class UserRepository {
   private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
   public ServiceResponse findById(Long id) {
-    return findById(id, false);
-  }
-
-  public ServiceResponse findById(Long id, boolean passwordFields) {
     User model = db.findSingle(String.format("select * from user where id = %d", id), this::map);
-    if (model != null) {
-      if (!passwordFields) {
-        model.setPasswordSalt(null);
-        model.setPasswordHash(null);
-      }
-      return new ServiceResponse(model);
-    }
+    if (model != null) return new ServiceResponse(model);
     return Responses.NotFound.USER;
   }
 
@@ -84,7 +74,7 @@ public class UserRepository {
   }
 
   public ServiceResponse insert(Connection con, UserDTO dto) {
-      final String query = "insert into user (email, name, password_salt, password_hash) values (?, ?, ?, ?) ";
+      final String query = "insert into user (email, name, timezone, password_salt, password_hash) values (?, ?, ?, ?, ?) ";
 
       try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
          final String salt = codeGenerator.generateSalt();
@@ -92,6 +82,7 @@ public class UserRepository {
          int i = 0;
          pst.setString(++i, dto.getEmail());
          pst.setString(++i, dto.getName());
+         pst.setString(++i, dto.getTimezone());
          pst.setString(++i, salt);
          pst.setString(++i, BCrypt.hashpw(dto.getPassword(), salt));
 
@@ -102,6 +93,7 @@ public class UserRepository {
                 user.setId(generatedKeys.getLong(1));
                 user.setEmail(dto.getEmail());
                 user.setName(dto.getName());
+                user.setTimezone(dto.getTimezone());
                 return new ServiceResponse(user);
               }
             }
@@ -290,6 +282,7 @@ public class UserRepository {
       model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
       model.setEmail(rs.getString("email"));
       model.setName(rs.getString("name"));
+      model.setTimezone(rs.getString("timezone"));
       model.setPasswordHash(rs.getString("password_hash"));
       model.setPasswordSalt(rs.getString("password_salt"));
       model.setCreatedAt(rs.getTimestamp("created_at"));

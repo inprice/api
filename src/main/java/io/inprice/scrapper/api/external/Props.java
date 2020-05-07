@@ -130,4 +130,12 @@ public class Props {
       return System.getenv().getOrDefault("PREFIX_FOR_SEARCH_AMAZON", "https://www.amazon.com/dp/");
    }
 
+   public static String getAPIKey_Email() {
+    return System.getenv().get("SENDGRID_API_KEY");
+   }
+
+   public static String getAPIKey_IP() {
+    return System.getenv().get("IP_SERVICE_APIKEY");
+   }
+
 }

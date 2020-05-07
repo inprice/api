@@ -1,63 +1,76 @@
 package io.inprice.scrapper.api.dto;
 
+import java.io.Serializable;
+
 /**
  * Used for handling company info from client side
  */
-public class RegisterDTO extends CompanyDTO {
+public class RegisterDTO implements Serializable {
 
-   private static final long serialVersionUID = 7416774892611386665L;
+  private static final long serialVersionUID = 7416774892611386665L;
 
-   private Long userId;
-   private String userName;
-   private String email;
-   private String password;
-   private String repeatPassword;
+  private Long userId;
+  private String email;
+  private String userName;
+  private String companyName;
+  private String timezone;
+  private String password;
+  private String repeatPassword;
 
-   public Long getUserId() {
-      return userId;
-   }
+  public Long getUserId() {
+    return userId;
+  }
 
-   public void setUserId(Long userId) {
-      this.userId = userId;
-   }
+  public void setUserId(Long userId) {
+    this.userId = userId;
+  }
 
-   public String getUserName() {
-      return userName;
-   }
+  public String getEmail() {
+    return email;
+  }
 
-   public void setUserName(String userName) {
-      this.userName = userName;
-   }
+  public void setEmail(String email) {
+    this.email = email;
+  }
 
-   public String getEmail() {
-      return email;
-   }
+  public String getUserName() {
+    return userName;
+  }
 
-   public void setEmail(String email) {
-      this.email = email;
-   }
+  public void setUserName(String userName) {
+    this.userName = userName;
+  }
 
-   public String getPassword() {
-      return password;
-   }
+  public String getCompanyName() {
+    return companyName;
+  }
 
-   public void setPassword(String password) {
-      this.password = password;
-   }
+  public void setCompanyName(String companyName) {
+    this.companyName = companyName;
+  }
 
-   public String getRepeatPassword() {
-      return repeatPassword;
-   }
+  public String getTimezone() {
+    return timezone;
+  }
 
-   public void setRepeatPassword(String repeatPassword) {
-      this.repeatPassword = repeatPassword;
-   }
+  public void setTimezone(String timezone) {
+    this.timezone = timezone;
+  }
 
-   @Override
-   public String toString() {
-      return "[email=" + email + ", user=" + userName + ", company=" + getCompanyName() +
-         ", sector=" + getSector() + ", website=" + getWebsite() + ", country=" + getCountry()
-      + "]";
-   }
+  public String getPassword() {
+    return password;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  public String getRepeatPassword() {
+    return repeatPassword;
+  }
+
+  public void setRepeatPassword(String repeatPassword) {
+    this.repeatPassword = repeatPassword;
+  }
 
 }

@@ -25,7 +25,7 @@ public class PasswordValidator {
          if (StringUtils.isBlank(dto.getOldPassword())) {
             return "Old password cannot be null!";
          } else {
-            ServiceResponse found = userRepository.findById(dto.getId(), true);
+            ServiceResponse found = userRepository.findById(dto.getId());
             if (found.isOK()) {
                User user = found.getData();
                final String hash = BCrypt.hashpw(dto.getOldPassword(), user.getPasswordSalt());

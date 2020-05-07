@@ -18,7 +18,6 @@ import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.app.user.UserRole;
 import io.inprice.scrapper.api.app.user.UserStatus;
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.dto.CompanyDTO;
 import io.inprice.scrapper.api.dto.RegisterDTO;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.framework.Beans;
@@ -53,9 +52,9 @@ public class CompanyRepository {
       return Responses.NotFound.COMPANY;
   }
 
-  public ServiceResponse findByCompanyNameAndAdminId(Connection con, String name, Long adminId) {
+  public ServiceResponse findByNameAndAdminId(Connection con, String name, Long adminId) {
     Company model = db.findSingle(con,
-        String.format("select * from company where name='%s' and admin_id=%d", SqlHelper.clear(name), adminId),
+        String.format("select * from company where name='%s' and admin_id=%d", SqlHelper.clear(name.trim()), adminId),
         CompanyRepository::map);
     if (model != null)
       return new ServiceResponse(model);
@@ -84,15 +83,17 @@ public class CompanyRepository {
           user = found.getData();
           dto.setUserId(user.getId());
           dto.setUserName(user.getName());
+          dto.setTimezone(user.getTimezone());
         } else {
 
           final String salt = codeGenerator.generateSalt();
-          final String userInsertQuery = "insert into user (email, name, password_salt, password_hash) values (?, ?, ?, ?) ";
+          final String userInsertQuery = "insert into user (email, name, timezone, password_salt, password_hash) values (?, ?, ?, ?, ?) ";
 
           try (PreparedStatement pst = con.prepareStatement(userInsertQuery, Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pst.setString(++i, dto.getEmail());
             pst.setString(++i, dto.getUserName());
+            pst.setString(++i, dto.getTimezone());
             pst.setString(++i, salt);
             pst.setString(++i, BCrypt.hashpw(dto.getPassword(), salt));
 
@@ -109,21 +110,18 @@ public class CompanyRepository {
 
       if (dto.getUserId() != null) {
 
-        ServiceResponse found = findByCompanyNameAndAdminId(con, dto.getCompanyName().trim(), dto.getUserId());
+        ServiceResponse found = findByNameAndAdminId(con, dto.getCompanyName(), dto.getUserId());
         if (!found.isOK()) {
 
           Long companyId = null;
 
           // company insertion
           try (PreparedStatement pst = con.prepareStatement(
-              "insert into company (admin_id, name, sector, website, country) values (?, ?, ?, ?, ?) ",
+              "insert into company (admin_id, name) values (?, ?) ",
               Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pst.setLong(++i, dto.getUserId());
             pst.setString(++i, dto.getCompanyName().trim());
-            pst.setString(++i, dto.getSector());
-            pst.setString(++i, dto.getWebsite());
-            pst.setString(++i, dto.getCountry());
 
             if (pst.executeUpdate() > 0) {
               try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
@@ -160,6 +158,7 @@ public class CompanyRepository {
               user.setId(dto.getUserId());
               user.setEmail(dto.getEmail());
               user.setName(dto.getUserName());
+              user.setTimezone(dto.getTimezone());
               user.setCreatedAt(new Date());
             }
             res = new ServiceResponse(user);
@@ -190,7 +189,7 @@ public class CompanyRepository {
     return res;
   }
 
-  public ServiceResponse create(CompanyDTO dto) {
+  public ServiceResponse create(String name) {
     ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     Connection con = null;
@@ -198,20 +197,16 @@ public class CompanyRepository {
     try {
       con = db.getTransactionalConnection();
 
-      ServiceResponse found = findByCompanyNameAndAdminId(con, dto.getCompanyName().trim(), CurrentUser.getUserId());
+      ServiceResponse found = findByNameAndAdminId(con, name.trim(), CurrentUser.getUserId());
       if (!found.isOK()) {
 
         Long companyId = null;
 
         try (PreparedStatement pst = con.prepareStatement(
-            "insert into company (admin_id, name, sector, website, country) values (?, ?, ?, ?, ?) ",
-            Statement.RETURN_GENERATED_KEYS)) {
+            "insert into company (admin_id, name) values (?, ?) ", Statement.RETURN_GENERATED_KEYS)) {
           int i = 0;
           pst.setLong(++i, CurrentUser.getUserId());
-          pst.setString(++i, dto.getCompanyName().trim());
-          pst.setString(++i, dto.getSector());
-          pst.setString(++i, dto.getWebsite());
-          pst.setString(++i, dto.getCountry());
+          pst.setString(++i, name.trim());
 
           if (pst.executeUpdate() > 0) {
             try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
@@ -233,7 +228,7 @@ public class CompanyRepository {
             pst.setString(++i, UserStatus.JOINED.name());
 
             if (pst.executeUpdate() > 0) {
-              log.info("A new company just registered -> " + dto.toString());
+              log.info("A new company just registered -> " + name);
               res = Responses.OK;
             }
           }
@@ -253,7 +248,7 @@ public class CompanyRepository {
       if (con != null) {
         db.rollback(con);
       }
-      log.error("Failed to create a new company. " + dto, e);
+      log.error("Failed to create a new company. " + name, e);
     } finally {
       if (con != null) {
         db.close(con);
@@ -263,16 +258,13 @@ public class CompanyRepository {
     return res;
   }
 
-  public ServiceResponse update(CompanyDTO dto) {
+  public ServiceResponse update(String name) {
     try (Connection con = db.getConnection();
         PreparedStatement pst = con
-            .prepareStatement("update company set name=?, website=?, sector=?, country=? where id=? and admin_id=?")) {
+            .prepareStatement("update company set name=? where id=? and admin_id=?")) {
 
       int i = 0;
-      pst.setString(++i, dto.getCompanyName());
-      pst.setString(++i, dto.getWebsite());
-      pst.setString(++i, dto.getSector());
-      pst.setString(++i, dto.getCountry());
+      pst.setString(++i, name.trim());
       pst.setLong(++i, CurrentUser.getCompanyId());
       pst.setLong(++i, CurrentUser.getUserId());
 
@@ -283,7 +275,7 @@ public class CompanyRepository {
       return Responses.OK;
 
     } catch (SQLException e) {
-      log.error("Failed to update company. " + dto, e);
+      log.error("Failed to update company. " + name, e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
@@ -293,9 +285,8 @@ public class CompanyRepository {
       Company model = new Company();
       model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
       model.setName(rs.getString("name"));
-      model.setCountry(rs.getString("country"));
-      model.setWebsite(rs.getString("website"));
-      model.setSector(rs.getString("sector"));
+      model.setCurrencyCode(rs.getString("currency_code"));
+      model.setCurrencyFormat(rs.getString("currency_format"));
       model.setAdminId(RepositoryHelper.nullLongHandler(rs, "admin_id"));
       model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
       model.setPlanStatus(PlanStatus.valueOf(rs.getString("plan_status")));

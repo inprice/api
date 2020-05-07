@@ -23,6 +23,7 @@ public class Membership implements Serializable {
 
    // transient
    private String companyName;
+   private String currencyFormat;
 
    public Long getId() {
       return id;
@@ -110,6 +111,14 @@ public class Membership implements Serializable {
 
    public void setCompanyName(String companyName) {
       this.companyName = companyName;
+   }
+
+   public String getCurrencyFormat() {
+     return currencyFormat;
+   }
+
+   public void setCurrencyFormat(String currencyFormat) {
+     this.currencyFormat = currencyFormat;
    }
 
 }

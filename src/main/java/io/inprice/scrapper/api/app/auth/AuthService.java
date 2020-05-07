@@ -178,7 +178,7 @@ public class AuthService {
                   for (int i=0; i<cookieSesList.size(); i++) {
                      ForCookie cookieSes = cookieSesList.get(i);
                      ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
-                     responseSesList.add(new ForResponse(cookieSes, redisSes.getUser(), redisSes.getCompany()));
+                     responseSesList.add(new ForResponse(cookieSes, redisSes));
                   }
 
                   if (responseSesList.size() == cookieSesList.size()) {
@@ -218,7 +218,7 @@ public class AuthService {
          } else {
             for (ForCookie cookieSes: cookieSesList) {
                ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
-               responseSesList.add(new ForResponse(cookieSes, redisSes.getUser(), redisSes.getCompany()));
+               responseSesList.add(new ForResponse(cookieSes, redisSes));
             }
          }
          sessionNo = cookieSesList.size();
@@ -232,7 +232,9 @@ public class AuthService {
             ForResponse responseSes = new ForResponse(
                cookieSes,
                user.getName(),
-               mem.getCompanyName()
+               mem.getCompanyName(),
+               user.getTimezone(),
+               mem.getCurrencyFormat()
             );
             responseSesList.add(responseSes);
 
