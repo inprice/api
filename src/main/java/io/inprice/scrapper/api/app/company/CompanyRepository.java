@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,9 @@ import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.app.user.UserRole;
 import io.inprice.scrapper.api.app.user.UserStatus;
+import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.dto.CreateCompanyDTO;
 import io.inprice.scrapper.api.dto.RegisterDTO;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.framework.Beans;
@@ -66,7 +69,7 @@ public class CompanyRepository {
    * Three insert operations happen during a new company creation: admin user,
    * company and member
    */
-  public ServiceResponse insert(RegisterDTO dto, String token) {
+  public ServiceResponse insert(RegisterDTO dto, Map<String, String> clientInfo, String token) {
     ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     Connection con = null;
@@ -76,52 +79,55 @@ public class CompanyRepository {
       con = db.getTransactionalConnection();
       User user = null;
 
-      if (dto.getUserId() == null) {
-        // duplication control
-        ServiceResponse found = userRepository.findByEmail(con, dto.getEmail());
-        if (found.isOK()) {
-          user = found.getData();
-          dto.setUserId(user.getId());
-          dto.setUserName(user.getName());
-          dto.setTimezone(user.getTimezone());
-        } else {
+      // duplication control
+      ServiceResponse found = userRepository.findByEmail(con, dto.getEmail());
+      if (found.isOK()) {
+        user = found.getData();
+      } else {
 
-          final String salt = codeGenerator.generateSalt();
-          final String userInsertQuery = "insert into user (email, name, timezone, password_salt, password_hash) values (?, ?, ?, ?, ?) ";
+        user = new User();
+        user.setEmail(dto.getEmail());
+        user.setName(dto.getEmail().split("@")[0]);
+        user.setTimezone(clientInfo.get(Consts.TIMEZONE));
+        user.setCreatedAt(new Date());
 
-          try (PreparedStatement pst = con.prepareStatement(userInsertQuery, Statement.RETURN_GENERATED_KEYS)) {
-            int i = 0;
-            pst.setString(++i, dto.getEmail());
-            pst.setString(++i, dto.getUserName());
-            pst.setString(++i, dto.getTimezone());
-            pst.setString(++i, salt);
-            pst.setString(++i, BCrypt.hashpw(dto.getPassword(), salt));
+        final String salt = codeGenerator.generateSalt();
+        final String userInsertQuery = "insert into user (email, name, timezone, password_salt, password_hash) values (?, ?, ?, ?, ?) ";
 
-            if (pst.executeUpdate() > 0) {
-              try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                  dto.setUserId(generatedKeys.getLong(1));
-                }
+        try (PreparedStatement pst = con.prepareStatement(userInsertQuery, Statement.RETURN_GENERATED_KEYS)) {
+          int i = 0;
+          pst.setString(++i, user.getEmail());
+          pst.setString(++i, user.getName());
+          pst.setString(++i, clientInfo.get(Consts.TIMEZONE));
+          pst.setString(++i, salt);
+          pst.setString(++i, BCrypt.hashpw(dto.getPassword(), salt));
+
+          if (pst.executeUpdate() > 0) {
+            try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+              if (generatedKeys.next()) {
+                user.setId(generatedKeys.getLong(1));
               }
             }
           }
         }
       }
 
-      if (dto.getUserId() != null) {
+      if (user.getId() != null) {
 
-        ServiceResponse found = findByNameAndAdminId(con, dto.getCompanyName(), dto.getUserId());
+        found = findByNameAndAdminId(con, dto.getCompanyName(), user.getId());
         if (!found.isOK()) {
 
           Long companyId = null;
 
           // company insertion
           try (PreparedStatement pst = con.prepareStatement(
-              "insert into company (admin_id, name) values (?, ?) ",
+              "insert into company (admin_id, name, currency_code, currency_format) values (?, ?, ?, ?) ",
               Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
-            pst.setLong(++i, dto.getUserId());
+            pst.setLong(++i, user.getId());
             pst.setString(++i, dto.getCompanyName().trim());
+            pst.setString(++i, clientInfo.get(Consts.CURRENCY_CODE));
+            pst.setString(++i, clientInfo.get(Consts.CURRENCY_FORMAT));
 
             if (pst.executeUpdate() > 0) {
               try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
@@ -137,8 +143,8 @@ public class CompanyRepository {
             try (PreparedStatement pst = con.prepareStatement(
                 "insert into membership (user_id, email, company_id, role, status, updated_at) values (?, ?, ?, ?, ?, now()) ")) {
               int i = 0;
-              pst.setLong(++i, dto.getUserId());
-              pst.setString(++i, dto.getEmail());
+              pst.setLong(++i, user.getId());
+              pst.setString(++i, user.getEmail());
               pst.setLong(++i, companyId);
               pst.setString(++i, UserRole.ADMIN.name());
               pst.setString(++i, UserStatus.JOINED.name());
@@ -153,16 +159,7 @@ public class CompanyRepository {
           if (Responses.OK.equals(res)) {
             TokenService.remove(TokenType.REGISTER_REQUEST, token);
             // returning user for auto login
-            if (user == null) {
-              user = new User();
-              user.setId(dto.getUserId());
-              user.setEmail(dto.getEmail());
-              user.setName(dto.getUserName());
-              user.setTimezone(dto.getTimezone());
-              user.setCreatedAt(new Date());
-            }
             res = new ServiceResponse(user);
-
             db.commit(con);
           } else {
             db.rollback(con);
@@ -189,7 +186,7 @@ public class CompanyRepository {
     return res;
   }
 
-  public ServiceResponse create(String name) {
+  public ServiceResponse create(CreateCompanyDTO dto) {
     ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     Connection con = null;
@@ -197,16 +194,18 @@ public class CompanyRepository {
     try {
       con = db.getTransactionalConnection();
 
-      ServiceResponse found = findByNameAndAdminId(con, name.trim(), CurrentUser.getUserId());
+      ServiceResponse found = findByNameAndAdminId(con, dto.getName().trim(), CurrentUser.getUserId());
       if (!found.isOK()) {
 
         Long companyId = null;
 
         try (PreparedStatement pst = con.prepareStatement(
-            "insert into company (admin_id, name) values (?, ?) ", Statement.RETURN_GENERATED_KEYS)) {
+            "insert into company (admin_id, name, currency_code, currency_format) values (?, ?, ?, ?) ", Statement.RETURN_GENERATED_KEYS)) {
           int i = 0;
           pst.setLong(++i, CurrentUser.getUserId());
-          pst.setString(++i, name.trim());
+          pst.setString(++i, dto.getName().trim());
+          pst.setString(++i, dto.getCurrencyCode());
+          pst.setString(++i, dto.getCurrencyFormat());
 
           if (pst.executeUpdate() > 0) {
             try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
@@ -228,7 +227,7 @@ public class CompanyRepository {
             pst.setString(++i, UserStatus.JOINED.name());
 
             if (pst.executeUpdate() > 0) {
-              log.info("A new company just registered -> " + name);
+              log.info("A new company just registered -> " + dto.toString());
               res = Responses.OK;
             }
           }
@@ -248,7 +247,7 @@ public class CompanyRepository {
       if (con != null) {
         db.rollback(con);
       }
-      log.error("Failed to create a new company. " + name, e);
+      log.error("Failed to create a new company. " + dto.toString(), e);
     } finally {
       if (con != null) {
         db.close(con);
@@ -258,13 +257,15 @@ public class CompanyRepository {
     return res;
   }
 
-  public ServiceResponse update(String name) {
+  public ServiceResponse update(CreateCompanyDTO dto) {
     try (Connection con = db.getConnection();
         PreparedStatement pst = con
-            .prepareStatement("update company set name=? where id=? and admin_id=?")) {
+            .prepareStatement("update company set name=?, currency_code=?, currency_format=? where id=? and admin_id=?")) {
 
       int i = 0;
-      pst.setString(++i, name.trim());
+      pst.setString(++i, dto.getName().trim());
+      pst.setString(++i, dto.getCurrencyCode());
+      pst.setString(++i, dto.getCurrencyFormat());
       pst.setLong(++i, CurrentUser.getCompanyId());
       pst.setLong(++i, CurrentUser.getUserId());
 
@@ -275,7 +276,7 @@ public class CompanyRepository {
       return Responses.OK;
 
     } catch (SQLException e) {
-      log.error("Failed to update company. " + name, e);
+      log.error("Failed to update company. " + dto, e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }

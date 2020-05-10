@@ -10,6 +10,7 @@ import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
+import io.inprice.scrapper.api.helpers.ClientSide;
 import io.inprice.scrapper.api.helpers.Commons;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.javalin.Javalin;
@@ -43,8 +44,10 @@ public class AuthController implements Controller {
     });
 
     app.post(Consts.Paths.Auth.ACCEPT_INVITATION, (ctx) -> {
+      String timezone = ClientSide.getGeoInfo(ctx.req).get(Consts.TIMEZONE);
+
       InvitationAcceptDTO dto = ctx.bodyAsClass(InvitationAcceptDTO.class);
-      ServiceResponse res = membershipService.acceptNewUser(dto);
+      ServiceResponse res = membershipService.acceptNewUser(dto, timezone);
       if (res.isOK()) {
         User user = res.getData();
         ctx.json(Commons.createResponse(ctx, authService.createSession(ctx, user)));

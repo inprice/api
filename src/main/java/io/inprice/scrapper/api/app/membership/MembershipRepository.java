@@ -139,7 +139,7 @@ public class MembershipRepository {
     return Responses.DataProblem.DB_PROBLEM;
   }
 
-  public ServiceResponse acceptNewUser(InvitationAcceptDTO acceptDTO, InvitationSendDTO invitationDTO) {
+  public ServiceResponse acceptNewUser(InvitationAcceptDTO acceptDTO, String timezone, InvitationSendDTO invitationDTO) {
     ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     Connection con = null;
@@ -158,9 +158,9 @@ public class MembershipRepository {
         res = userRepository.findByEmail(con, invitationDTO.getEmail());
         if (Responses.NotFound.USER.equals(res)) {
           UserDTO dto = new UserDTO();
-          dto.setName(acceptDTO.getName());
+          dto.setName(invitationDTO.getEmail().split("@")[0]);
           dto.setEmail(invitationDTO.getEmail());
-          dto.setTimezone(acceptDTO.getTimezone());
+          dto.setTimezone(timezone);
           dto.setPassword(acceptDTO.getPassword());
           dto.setCompanyId(invitationDTO.getCompanyId());
           res = userRepository.insert(con, dto);

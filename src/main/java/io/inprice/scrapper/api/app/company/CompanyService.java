@@ -14,20 +14,22 @@ import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.dto.NameAndEmailValidator;
+import io.inprice.scrapper.api.dto.CreateCompanyDTO;
+import io.inprice.scrapper.api.dto.EmailValidator;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.PasswordValidator;
 import io.inprice.scrapper.api.dto.RegisterDTO;
-import io.inprice.scrapper.api.dto.StringDTO;
 import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.ClientSide;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
 import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.api.utils.CurrencyFormats;
 import io.javalin.http.Context;
 
 public class CompanyService {
@@ -53,20 +55,16 @@ public class CompanyService {
       try (Connection con = db.getConnection()) {
         ServiceResponse found = userRepository.findByEmail(con, dto.getEmail());
         if (found.isOK()) {
-          User user = found.getData();
-          dto.setUserId(user.getId());
-          dto.setUserName(user.getName());
-          dto.setTimezone(user.getTimezone());
-
           // checks if the user has already defined the same company
-          found = companyRepository.findByNameAndAdminId(con, dto.getCompanyName(), dto.getUserId());
+          User user = found.getData();
+          found = companyRepository.findByNameAndAdminId(con, dto.getCompanyName(), user.getId());
           if (found.isOK()) {
             return Responses.Already.Defined.COMPANY;
           }
         }
 
         Map<String, Object> dataMap = new HashMap<>(3);
-        dataMap.put("user", dto.getUserName());
+        dataMap.put("user", dto.getEmail().split("@")[0]);
         dataMap.put("company", dto.getCompanyName());
         dataMap.put("token", TokenService.add(TokenType.REGISTER_REQUEST, dto));
 
@@ -86,7 +84,8 @@ public class CompanyService {
   public ServiceResponse completeRegistration(Context ctx, String token) {
     RegisterDTO dto = TokenService.get(TokenType.REGISTER_REQUEST, token);
     if (dto != null) {
-      ServiceResponse res = companyRepository.insert(dto, token);
+      Map<String, String> clientInfo = ClientSide.getGeoInfo(ctx.req);
+      ServiceResponse res = companyRepository.insert(dto, clientInfo, token);
       if (res.isOK()) {
         return authService.createSession(ctx, res.getData());
       }
@@ -101,19 +100,19 @@ public class CompanyService {
     return companyRepository.findById(CurrentUser.getCompanyId());
   }
 
-  public ServiceResponse create(StringDTO dto) {
+  public ServiceResponse create(CreateCompanyDTO dto) {
     ServiceResponse res = validateCompanyDTO(dto);
     if (res.isOK()) {
-      return companyRepository.create(dto.getValue());
+      return companyRepository.create(dto);
     } else {
       return res;
     }
   }
 
-  public ServiceResponse update(StringDTO dto) {
+  public ServiceResponse update(CreateCompanyDTO dto) {
     ServiceResponse res = validateCompanyDTO(dto);
     if (res.isOK()) {
-      return companyRepository.update(dto.getValue());
+      return companyRepository.update(dto);
     } else {
       return res;
     }
@@ -127,7 +126,7 @@ public class CompanyService {
     ServiceResponse res = validateCompanyDTO(dto);
 
     if (res.isOK()) {
-      String problem = NameAndEmailValidator.verify(dto.getUserName(), dto.getEmail());
+      String problem = EmailValidator.verify(dto.getEmail());
 
       if (problem == null) {
         PasswordDTO pswDTO = new PasswordDTO();
@@ -145,7 +144,7 @@ public class CompanyService {
     }
   }
 
-  private ServiceResponse validateCompanyDTO(StringDTO dto) {
+  private ServiceResponse validateCompanyDTO(CreateCompanyDTO dto) {
     String problem = null;
 
     if (dto == null) {
@@ -153,10 +152,26 @@ public class CompanyService {
     }
 
     if (problem == null) {
-      if (StringUtils.isBlank(dto.getValue())) {
+      if (StringUtils.isBlank(dto.getName())) {
         problem = "Company name cannot be null!";
-      } else if (dto.getValue().length() < 3 || dto.getValue().length() > 70) {
+      } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
         problem = "Company name must be between 3 - 70 chars";
+      }
+    }
+
+    if (problem == null) {
+      if (StringUtils.isBlank(dto.getCurrencyCode())) {
+        problem = "Currency cannot be empty!";
+      } else if (CurrencyFormats.get(dto.getCurrencyCode()) == null) {
+        problem = "Unknown currency code!";
+      }
+    }
+
+    if (problem == null) {
+      if (StringUtils.isBlank(dto.getCurrencyFormat())) {
+        problem = "Currency format cannot be empty!";
+      } else if (dto.getName().length() < 10 || dto.getName().length() > 30) {
+        problem = "Currency format must be between 10 - 30 chars";
       }
     }
 
@@ -174,15 +189,15 @@ public class CompanyService {
     }
 
     if (problem == null) {
+      problem = EmailValidator.verify(dto.getEmail());
+    }
+
+    if (problem == null) {
       if (StringUtils.isBlank(dto.getCompanyName())) {
         problem = "Company name cannot be null!";
       } else if (dto.getCompanyName().length() < 3 || dto.getCompanyName().length() > 70) {
         problem = "Company name must be between 3 - 70 chars";
       }
-    }
-
-    if (problem == null && StringUtils.isBlank(dto.getTimezone())) {
-      problem = "You should pick a timezone!";
     }
 
     if (problem == null)

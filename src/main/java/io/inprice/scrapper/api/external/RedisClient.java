@@ -1,5 +1,6 @@
 package io.inprice.scrapper.api.external;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -18,18 +19,30 @@ import io.inprice.scrapper.api.session.info.ForRedis;
 
 public class RedisClient {
 
-  private static RedissonClient client;
+  private static final RedissonClient client;
 
-  private static RSetCache<String> limitedIpsSet;
-  private static RMapCache<String, ForRedis> sessionMap;
+  private static final RSetCache<String> limitedIpsSet;
+  private static final RMapCache<String, ForRedis> sessionMap;
+  private static final RMapCache<String, Serializable> tokensMap;
+
+  static {
+    final String redisPass = Props.getRedis_Password();
+    Config config = new Config();
+    config.useSingleServer()
+        .setAddress(String.format("redis://%s:%d", Props.getRedis_Host(), Props.getRedis_Port()))
+        .setPassword(!StringUtils.isBlank(redisPass) ? redisPass : null);
+
+    client = Redisson.create(config);
+    limitedIpsSet = client.getSetCache("api:limited:ips");
+    sessionMap = client.getMapCache("api:token:sessions");
+    tokensMap = client.getMapCache("api:tokens");
+  }
 
   public static void shutdown() {
     client.shutdown();
   }
 
   public static ServiceResponse isIpRateLimited(RateLimiterType type, String ip) {
-    checkDBConnection(0);
-
     boolean exists = limitedIpsSet.contains(type.name() + ip);
     if (exists) {
       return Responses.Illegal.TOO_MUCH_REQUEST;
@@ -39,8 +52,6 @@ public class RedisClient {
   }
 
   public static boolean addSesions(List<ForRedis> sessions) {
-    checkDBConnection(0);
-
     for (ForRedis ses : sessions) {
       sessionMap.put(ses.getHash(), ses);
     }
@@ -48,21 +59,15 @@ public class RedisClient {
   }
 
   public static ForRedis getSession(String hash) {
-    checkDBConnection(0);
-
     return sessionMap.get(hash);
   }
 
   public static boolean removeSesion(String hash) {
-    checkDBConnection(0);
-
     ForRedis ses = sessionMap.remove(hash);
     return ses != null;
   }
 
   public static boolean refreshSesion(String hash) {
-    checkDBConnection(0);
-
     ForRedis ses = sessionMap.get(hash);
     if (ses != null) {
       ses.setAccessedAt(new Date());
@@ -72,33 +77,8 @@ public class RedisClient {
     return false;
   }
 
-  public static RedissonClient checkDBConnection(int retry) {
-    if (client == null || client.isShutdown()) {
-      try {
-        final String redisPass = Props.getRedis_Password();
-        Config config = new Config();
-        config.useSingleServer()
-            .setAddress(String.format("redis://%s:%d", Props.getRedis_Host(), Props.getRedis_Port()))
-            .setPassword(!StringUtils.isBlank(redisPass) ? redisPass : null);
-
-        client = Redisson.create(config);
-        limitedIpsSet = client.getSetCache("api:limited:ips");
-        sessionMap = client.getMapCache("api:token:sessions");
-        System.out.println("Redis connection established, no: " + retry);
-        return client;
-      } catch (Exception e) {
-        if (retry < 10) {
-          try {
-            Thread.sleep(3000);
-            checkDBConnection(++retry);
-          } catch (InterruptedException e1) { }
-        } else {
-          System.err.println("Redis connection error! " + e.getMessage());
-          System.exit(-1);
-        }
-      }
-    }
-    return client;
+  public static RMapCache<String, Serializable> getTokensmap() {
+    return tokensMap;
   }
 
 }

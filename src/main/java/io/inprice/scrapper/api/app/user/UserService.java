@@ -10,11 +10,12 @@ import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.LongDTO;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.PasswordValidator;
-import io.inprice.scrapper.api.dto.StringDTO;
+import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.session.info.ForCookie;
+import io.inprice.scrapper.api.utils.Timezones;
 
 /**
  * TODO:
@@ -26,13 +27,13 @@ public class UserService {
    private static final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
    private static final AuthRepository authRepository = Beans.getSingleton(AuthRepository.class);
 
-   public ServiceResponse updateName(StringDTO dto) {
-      if (StringUtils.isBlank(dto.getValue())) {
-         return Responses.Invalid.NAME;
-      } else if (dto.getValue().length() < 3 || dto.getValue().length() > 70) {
-         return new ServiceResponse("Name must be between 3 and 70 chars!");
-      }
-      return userRepository.updateName(dto.getValue());
+   public ServiceResponse update(UserDTO dto) {
+    String problem = validateUserDTOForUpdate(dto);
+      if (problem == null) {
+        return userRepository.update(dto);
+     } else {
+        return new ServiceResponse(problem);
+     }
    }
 
    public ServiceResponse updatePassword(PasswordDTO dto) {
@@ -87,5 +88,31 @@ public class UserService {
       }
       return Responses.ServerProblem.EXCEPTION;
    }
+
+   private String validateUserDTOForUpdate(UserDTO dto) {
+    String problem = null;
+
+    if (dto == null) {
+      problem = "Invalid user info!";
+    }
+
+    if (problem == null) {
+      if (StringUtils.isBlank(dto.getName())) {
+        problem = "User name cannot be null!";
+      } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
+        problem = "User name must be between 3 - 70 chars";
+      }
+    }
+
+    if (problem == null) {
+      if (StringUtils.isBlank(dto.getTimezone())) {
+        problem = "Time zone cannot be empty!";
+      } else if (! Timezones.exists(dto.getTimezone())) {
+        problem = "Unknown time zone!";
+      }
+    }
+
+    return problem;
+  }
 
 }

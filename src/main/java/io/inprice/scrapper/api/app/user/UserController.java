@@ -5,7 +5,7 @@ import java.util.List;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.dto.LongDTO;
 import io.inprice.scrapper.api.dto.PasswordDTO;
-import io.inprice.scrapper.api.dto.StringDTO;
+import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
@@ -30,9 +30,9 @@ public class UserController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.updatePassword(dto)));
       }, AccessRoles.ANYONE());
 
-      app.put(Consts.Paths.User.UPDATE_NAME, (ctx) -> {
-         StringDTO dto = ctx.bodyAsClass(StringDTO.class);
-         ctx.json(Commons.createResponse(ctx, service.updateName(dto)));
+      app.put(Consts.Paths.User.UPDATE, (ctx) -> {
+         UserDTO dto = ctx.bodyAsClass(UserDTO.class);
+         ctx.json(Commons.createResponse(ctx, service.update(dto)));
       }, AccessRoles.ANYONE());
 
       app.get(Consts.Paths.User.INVITATIONS, (ctx) -> {

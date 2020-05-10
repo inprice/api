@@ -60,7 +60,7 @@ public class ForRedis extends ForResponse {
 
   @Override
   public String toString() {
-    return "ForRedis [companyId=" + companyId + ", userId=" + userId + "]";
+    return "[companyId=" + companyId + ", userId=" + userId + "]";
   }
 
 }

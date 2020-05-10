@@ -30,6 +30,7 @@ import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.ClientSide;
 import io.inprice.scrapper.api.helpers.SessionHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
@@ -141,7 +142,14 @@ public class AuthService {
    public ServiceResponse logout(Context ctx) {
       if (ctx.cookieMap().containsKey(Consts.SESSION)) {
          String tokenString = ctx.cookie(Consts.SESSION);
-         ctx.removeCookie(Consts.SESSION);
+
+         // removing the cookie
+         Cookie cookie = new Cookie(Consts.SESSION, null);
+         cookie.setMaxAge(0);
+         cookie.setHttpOnly(true);
+         cookie.setSecure(true);
+         ctx.cookie(cookie);
+
          if (StringUtils.isNotBlank(tokenString)) {
 
             List<ForCookie> cookieSesList = SessionHelper.fromToken(tokenString);
@@ -178,7 +186,9 @@ public class AuthService {
                   for (int i=0; i<cookieSesList.size(); i++) {
                      ForCookie cookieSes = cookieSesList.get(i);
                      ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
-                     responseSesList.add(new ForResponse(cookieSes, redisSes));
+                     if (redisSes != null) {
+                      responseSesList.add(new ForResponse(cookieSes, redisSes));
+                     }
                   }
 
                   if (responseSesList.size() == cookieSesList.size()) {
@@ -218,12 +228,16 @@ public class AuthService {
          } else {
             for (ForCookie cookieSes: cookieSesList) {
                ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
-               responseSesList.add(new ForResponse(cookieSes, redisSes));
+               if (redisSes != null) {
+                responseSesList.add(new ForResponse(cookieSes, redisSes));
+               }
             }
          }
          sessionNo = cookieSesList.size();
 
+         String ipAddress = ClientSide.getIp(ctx.req);
          UserAgent ua = new UserAgent(ctx.userAgent());
+
          for (Membership mem: membershipList) {
 
             ForCookie cookieSes = new ForCookie(user.getEmail(), mem.getRole());
@@ -250,7 +264,7 @@ public class AuthService {
             dbSes.setHash(cookieSes.getHash());
             dbSes.setUserId(mem.getUserId());
             dbSes.setCompanyId(mem.getCompanyId());
-            dbSes.setIp(ctx.ip());
+            dbSes.setIp(ipAddress);
             dbSes.setOs(ua.getOperatingSystem().getName());
             dbSes.setBrowser(ua.getBrowser().getName());
             dbSes.setUserAgent(ctx.userAgent());
@@ -264,11 +278,11 @@ public class AuthService {
                String tokenString = SessionHelper.toToken(cookieSesList);
                Cookie cookie = new Cookie(Consts.SESSION, tokenString);
                cookie.setHttpOnly(true);
+               cookie.setSecure(true);
                if (! Props.isRunningForDev()) {
-                  cookie.setDomain(".inprice.io");
-                  cookie.setMaxAge(Integer.MAX_VALUE);
-                  cookie.setSecure(true);
-               } else { // for dev and test purposes
+                 cookie.setDomain(".inprice.io");
+                 cookie.setMaxAge(Integer.MAX_VALUE);
+                } else { // for dev and test purposes
                   cookie.setMaxAge(60 * 60 * 24); // for one day
                }
                ctx.cookie(cookie);

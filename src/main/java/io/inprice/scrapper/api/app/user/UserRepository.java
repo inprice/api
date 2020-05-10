@@ -109,13 +109,14 @@ public class UserRepository {
       }
    }
 
-  public ServiceResponse updateName(String name) {
-    final String query = "update user set name=? where id=?";
+  public ServiceResponse update(UserDTO dto) {
+    final String query = "update user set name=?, timezone=? where id=?";
 
     try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
 
       int i = 0;
-      pst.setString(++i, name);
+      pst.setString(++i, dto.getName());
+      pst.setString(++i, dto.getTimezone());
       pst.setLong(++i, CurrentUser.getUserId());
 
       if (pst.executeUpdate() > 0)

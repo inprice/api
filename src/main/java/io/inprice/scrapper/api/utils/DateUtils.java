@@ -22,8 +22,8 @@ public class DateUtils {
 
    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
    private static final SimpleDateFormat sdfForDB = new SimpleDateFormat("yyyy-MM-dd");
-   private static final SimpleDateFormat sdfLongForDB = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
-   private static final SimpleDateFormat sdfLongForLogging = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+   private static final SimpleDateFormat sdfLongForDB = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+   private static final SimpleDateFormat sdfLongForLogging = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
    private static final SimpleDateFormat sdfStandart = new SimpleDateFormat("dd/MM/yyyy");
 
    public static String formatDateForDB(Date date) {

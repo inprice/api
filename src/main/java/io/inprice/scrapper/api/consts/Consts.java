@@ -5,6 +5,11 @@ public class Consts {
    public static final String SESSION = "INPRICE_AT";
    public static final String SESSION_NO = "X-Session";
 
+   public static final String IP = "ip";
+   public static final String TIMEZONE = "timezone";
+   public static final String CURRENCY_CODE = "currencyCode";
+   public static final String CURRENCY_FORMAT = "currencyFormat";
+
    public static class Paths {
 
       public static class Auth {
@@ -28,12 +33,13 @@ public class Consts {
 
       public static class Company {
          public static final String BASE = "/company";
+         public static final String GEO_INFO = BASE + "/geo";
       }
 
       public static class User {
          public static final String BASE = "/user";
          public static final String PASSWORD = BASE + "/change-password";
-         public static final String UPDATE_NAME = BASE + "/update-name";
+         public static final String UPDATE = BASE + "/update";
          public static final String INVITATIONS = BASE + "/invitations";
          public static final String ACCEPT_INVITATION = BASE + "/accept-invitation";
          public static final String REJECT_INVITATION = BASE + "/reject-invitation";

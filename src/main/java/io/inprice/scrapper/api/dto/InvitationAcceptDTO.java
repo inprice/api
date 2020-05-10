@@ -9,26 +9,16 @@ public class InvitationAcceptDTO implements Serializable {
 
   private static final long serialVersionUID = -7246512135937071388L;
 
-  private String name;
-  private String timezone;
+  private String token;
   private String password;
   private String repeatPassword;
-  private String token;
 
-  public String getName() {
-    return name;
+  public String getToken() {
+    return token;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public String getTimezone() {
-    return timezone;
-  }
-
-  public void setTimezone(String timezone) {
-    this.timezone = timezone;
+  public void setToken(String token) {
+    this.token = token;
   }
 
   public String getPassword() {
@@ -45,14 +35,6 @@ public class InvitationAcceptDTO implements Serializable {
 
   public void setRepeatPassword(String repeatPassword) {
     this.repeatPassword = repeatPassword;
-  }
-
-  public String getToken() {
-    return token;
-  }
-
-  public void setToken(String token) {
-    this.token = token;
   }
 
 }
