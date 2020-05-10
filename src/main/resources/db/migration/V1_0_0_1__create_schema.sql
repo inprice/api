@@ -46,7 +46,7 @@ create table company (
   last_collecting_time      datetime,
   last_collecting_status    boolean default false,
   currency_code             char(3),
-  currency_format           varchar(35),
+  currency_format           varchar(16),
   created_at                timestamp not null default current_timestamp,
   primary key (id),
   key ix1 (name)

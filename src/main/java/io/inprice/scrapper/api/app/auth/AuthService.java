@@ -144,6 +144,7 @@ public class AuthService {
          String tokenString = ctx.cookie(Consts.SESSION);
 
          // removing the cookie
+         // never use javalin's removeCookie method as it doesn't provide a way to set some attrs like Secure and HttpOnly
          Cookie cookie = new Cookie(Consts.SESSION, null);
          cookie.setMaxAge(0);
          cookie.setHttpOnly(true);
