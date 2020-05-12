@@ -20,17 +20,18 @@ public class RabbitMQ {
       if (!isChannelActive()) {
          synchronized (log) {
             if (!isChannelActive()) {
-               final ConnectionFactory connectionFactory = new ConnectionFactory();
-               connectionFactory.setHost(Props.getMQ_Host());
-               connectionFactory.setPort(Props.getMQ_Port());
-               connectionFactory.setUsername(Props.getMQ_Username());
-               connectionFactory.setPassword(Props.getMQ_Password());
+               final ConnectionFactory connFactory = new ConnectionFactory();
+               connFactory.setHost(Props.getMQ_Host());
+               connFactory.setPort(Props.getMQ_Port());
+               connFactory.setUsername(Props.getMQ_Username());
+               connFactory.setPassword(Props.getMQ_Password());
+               connFactory.setAutomaticRecoveryEnabled(true);
 
                try {
                   final String deletedLinksQueue = Props.getRouterKey_DeletedLinks();
 
-                  Connection connection = connectionFactory.newConnection();
-                  channel = connection.createChannel();
+                  Connection conn = connFactory.newConnection();
+                  channel = conn.createChannel();
 
                   channel.exchangeDeclare(Props.getMQ_ChangeExchange(), "topic");
                   channel.queueDeclare(deletedLinksQueue, true, false, false, null);

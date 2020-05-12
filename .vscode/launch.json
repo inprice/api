@@ -34,12 +34,12 @@
         "MQ_ROUTING_DELETED_LINKS": "deleted-links",
         "REDIS_HOST": "localhost",
         "REDIS_PORT": 6379,
-        "OTHER_SENDER_EMAIL": "support@inprice.io",
+        "OTHER_SENDER_EMAIL": "dumlupinar01@gmail.com",
         "PREFIX_FOR_SEARCH_EBAY": "https://www.ebay.com/itm/",
         "PREFIX_FOR_SEARCH_AMAZON": "https://www.amazon.com/dp/",
         "SECURITY_SALT_ROUNDS": "12",
         "IP_SERVICE_APIKEY": "9eac35ec732e43a3a89863fce6cb406a",
-        "SENDGRID_API_KEY": "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"
+        "SENDGRID_API_KEY": "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"
       }
     }
   ]

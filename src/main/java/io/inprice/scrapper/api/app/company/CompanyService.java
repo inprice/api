@@ -170,8 +170,15 @@ public class CompanyService {
     if (problem == null) {
       if (StringUtils.isBlank(dto.getCurrencyFormat())) {
         problem = "Currency format cannot be empty!";
-      } else if (dto.getName().length() < 3 || dto.getName().length() > 16) {
-        problem = "Currency format must be between 3 - 16 chars";
+      } else {
+        if (dto.getCurrencyFormat().length() < 3 || dto.getCurrencyFormat().length() > 16) {
+          problem = "Currency format must be between 3 - 16 chars";
+        } else {
+          int count = StringUtils.countMatches(dto.getCurrencyFormat(), "#");
+          if (count != 3) {
+            problem = "Currency format is invalid";
+          }
+        }
       }
     }
 

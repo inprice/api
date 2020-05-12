@@ -103,7 +103,6 @@ create table product (
   max_seller                varchar(50),
   max_price                 double default 0,
   company_id                bigint not null,
-  import_id                 bigint,
   updated_at                datetime,
   created_at                timestamp not null default current_timestamp,
   primary key (id),
@@ -151,8 +150,6 @@ create table link (
   product_id                bigint,
   site_id                   bigint,
   company_id                bigint,
-  import_id                 bigint,
-  import_row_id             bigint,
   primary key (id),
   key ix1 (url_hash),
   key ix2 (status),
@@ -214,19 +211,24 @@ create table import_product (
   primary key (id)
 ) engine=innodb;
 alter table import_product add foreign key (company_id) references company (id);
-alter table link add foreign key (import_id) references import_product (id);
-alter table product add foreign key (import_id) references import_product (id);
 
 create table import_product_row (
   id                        bigint auto_increment not null,
   import_id                 bigint not null,
   import_type               enum('CSV', 'URL', 'EBAY_SKU', 'AMAZON_ASIN') not null default 'CSV',
-  data                      varchar(1024) not null,
-  status                    varchar(25) not null default 'NEW',
+  data                      varchar(2048) not null,
+  sku                       varchar(70),
+  name                      varchar(500),
+  brand                     varchar(150),
+  price                     double default 0,
+  last_check                datetime default now(),
   last_update               datetime,
+  status                    varchar(25) not null default 'NEW',
+  retry                     smallint default 0,
+  http_status               smallint default 0,
   description               varchar(255),
-  link_id                   bigint,
   company_id                bigint not null,
   primary key (id)
 ) engine=innodb;
-alter table link add foreign key (import_row_id) references import_product_row (id);
+alter table import_product_row add foreign key (import_id) references import_product (id);
+alter table import_product_row add foreign key (company_id) references company (id);

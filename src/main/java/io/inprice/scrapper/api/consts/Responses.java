@@ -7,8 +7,8 @@ import io.inprice.scrapper.api.info.ServiceResponse;
 public class Responses {
 
    public static final ServiceResponse OK = new ServiceResponse(0, "OK");
-   public static final ServiceResponse _401 = new ServiceResponse(HttpStatus.UNAUTHORIZED_401, "Unauthorized");
-   public static final ServiceResponse _403 = new ServiceResponse(HttpStatus.FORBIDDEN_403, "Forbidden");
+   public static final ServiceResponse _401 = new ServiceResponse(HttpStatus.UNAUTHORIZED_401, "Your session seems to be expired, please sign in again.");
+   public static final ServiceResponse _403 = new ServiceResponse(HttpStatus.FORBIDDEN_403, "Your role is not suitable to do this operation.");
 
    public static class Invalid {
       private static final int BASE = 100;
