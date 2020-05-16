@@ -1,114 +1,152 @@
 package io.inprice.scrapper.api.app.product_import;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.app.link.LinkStatus;
-import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.api.app.product.ProductRepository;
+import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.RepositoryHelper;
-import io.inprice.scrapper.api.external.Database;
-import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.helpers.SqlHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.session.CurrentUser;
 
 public class ProductImportRepository {
 
-   private static final Logger log = LoggerFactory.getLogger(ProductImportRepository.class);
-   private static final Database db = Beans.getSingleton(Database.class);
+  private static final Logger log = LoggerFactory.getLogger(ProductImportRepository.class);
+  private static final Database db = Beans.getSingleton(Database.class);
+  private static final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
 
-   public ServiceResponse findById(Long id) {
-      ImportProduct model = db.findSingle(String.format(
-            "select * from import_product where id = %d and company_id = %d ", id, CurrentUser.getCompanyId()), this::map);
+  public ServiceResponse findById(Long id) {
+    ImportProduct model = db.findSingle(String.format("select * from import_product where id = %d and company_id = %d ",
+        id, CurrentUser.getCompanyId()), this::map);
 
-      if (model != null) {
-         // finding rows
-         List<ImportProductRow> rowList = db
-               .findMultiple(String.format("select * from import_product_row where import_id = %d and company_id = %d ",
-                     id, CurrentUser.getCompanyId()), this::rowMap);
-         model.setRowList(rowList);
-         return new ServiceResponse(model);
-      }
+    if (model != null) {
+      return new ServiceResponse(model);
+    }
 
+    return Responses.NotFound.IMPORT;
+  }
+
+  public ServiceResponse getList() {
+    return new ServiceResponse(
+      db.findMultiple(String.format("select * from import_product where company_id = %d order by status, import_type",
+          CurrentUser.getCompanyId()), this::map)
+    );
+  }
+
+  public ServiceResponse deleteById(Long id) {
+    boolean result =
+      db.executeQuery(
+        String.format("delete from import_product where id=%d and company_id=%d ", id, CurrentUser.getCompanyId()),
+        String.format("Failed to delete link. Id: %d", id));
+    if (result)
+      return Responses.OK;
+    else
       return Responses.NotFound.IMPORT;
-   }
+  }
 
-   public ServiceResponse getList() {
-      List<ImportProduct> imports = db.findMultiple(
-            String.format("select * from import_product where company_id = %d order by created_at desc, import_type",
-                  CurrentUser.getCompanyId()),
-            this::map);
+  public ServiceResponse bulkInsert(Collection<ImportProduct> imports) {
+    final String query = "insert into import_product (import_type, status, data, description, company_id) values ('%s', '%s', '%s', '%s', %d); ";
 
-      return new ServiceResponse(imports);
-   }
+    Connection con = null;
+    try {
+      con = db.getTransactionalConnection();
 
-   public ServiceResponse deleteById(Long id) {
-      final String subQuery = "(select id from link where import_id=%d and company_id=%d)";
+      List<String> queries = new ArrayList<>(imports.size());
+      Iterator<ImportProduct> itr = imports.iterator();
+      while (itr.hasNext()) {
+        ImportProduct row = itr.next();
+        String data = null;
 
-      boolean result = db.executeBatchQueries(new String[] {
-            String.format("delete from link_price where link_id in " + subQuery, id, CurrentUser.getCompanyId()),
+        switch (row.getImportType()) {
+          case EBAY_SKU: {
+            data = Props.getPrefix_ForSearchingInEbay() + row.getData();
+            break;
+          }
+          case AMAZON_ASIN: {
+            data = Props.getPrefix_ForSearchingInAmazon() + row.getData();
+            break;
+          }
+          default:
+            data = row.getData();
+            break;
+        }
 
-            String.format("delete from link_spec where link_id in " + subQuery, id, CurrentUser.getCompanyId()),
+        // adding product if any
+        if (row.getStatus().equals(LinkStatus.NEW) && row.getProductDTO() != null) {
+          ServiceResponse res = productRepository.insertANewProduct(con, row.getProductDTO());
+          if (! res.isOK()) {
+            if (res.equals(Responses.DataProblem.DUPLICATE)) {
+              row.setStatus(LinkStatus.DUPLICATE);
+            }
+            row.setDescription(res.getReason());
+          }
+        }
 
-            String.format("delete from link_history where link_id in " + subQuery, id, CurrentUser.getCompanyId()),
+        // adding import row
+        queries.add( 
+          String.format(query,
+            row.getImportType().name(),
+            row.getStatus().name(),
+            SqlHelper.clear(data),
+            SqlHelper.clear(row.getDescription()),
+            CurrentUser.getCompanyId()
+          )
+        );
 
-            String.format("delete from link where import_id=%d and company_id=%d ", id, CurrentUser.getCompanyId()),
-
-            String.format("delete from import_product_row where import_id=%d and company_id=%d ", id,
-                  CurrentUser.getCompanyId()),
-
-            String.format("delete from import_product where id=%d and company_id=%d ", id, CurrentUser.getCompanyId()) },
-
-            String.format("Failed to delete import. Id: %d", id), 1 // at least one execution must be successful
-      );
-
-      if (result)
-         return Responses.OK;
-      else
-         return Responses.NotFound.IMPORT;
-   }
-
-   private ImportProduct map(ResultSet rs) {
-      try {
-         ImportProduct model = new ImportProduct();
-         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
-         model.setImportType(ImportType.valueOf(rs.getString("import_type")));
-         model.setStatus(rs.getInt("status"));
-         model.setResult(rs.getString("result"));
-         model.setTotalCount(rs.getInt("total_count"));
-         model.setInsertCount(rs.getInt("insert_count"));
-         model.setDuplicateCount(rs.getInt("duplicate_count"));
-         model.setProblemCount(rs.getInt("problem_count"));
-         model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
-
-         return model;
-      } catch (SQLException e) {
-         log.error("Failed to set import's properties", e);
       }
-      return null;
-   }
 
-   private ImportProductRow rowMap(ResultSet rs) {
-      try {
-         ImportProductRow model = new ImportProductRow();
-         model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
-         model.setImportId(RepositoryHelper.nullLongHandler(rs, "import_id"));
-         model.setImportType(ImportType.valueOf(rs.getString("import_type")));
-         model.setData(rs.getString("data"));
-         model.setStatus(LinkStatus.valueOf(rs.getString("status")));
-         model.setLastUpdate(rs.getTimestamp("last_update"));
-         model.setDescription(rs.getString("description"));
-         model.setLinkId(RepositoryHelper.nullLongHandler(rs, "link_id"));
-         model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
+      boolean result = db.executeBatchQueries(con, queries, "Failed to import products");
 
-         return model;
-      } catch (SQLException e) {
-         log.error("Failed to set import product row's properties", e);
+      if (result) {
+        db.commit(con);
+        return Responses.OK;
+      } else {
+        db.rollback(con);
+        return Responses.DataProblem.NOT_SUITABLE;
       }
-      return null;
-   }
+    } catch (SQLException e) {
+      db.rollback(con);
+      log.error("Failed to import products", e);
+      return Responses.DataProblem.NOT_SUITABLE;
+    } finally {
+      if (con != null)
+        db.close(con);
+    }
+  }
+
+  private ImportProduct map(ResultSet rs) {
+    try {
+      ImportProduct model = new ImportProduct();
+      model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
+      model.setImportType(ImportType.valueOf(rs.getString("import_type")));
+      model.setData(rs.getString("data"));
+      model.setStatus(LinkStatus.valueOf(rs.getString("status")));
+      model.setLastCheck(rs.getTimestamp("last_check"));
+      model.setLastUpdate(rs.getTimestamp("last_update"));
+      model.setRetry(rs.getInt("retry"));
+      model.setHttpStatus(rs.getInt("http_status"));
+      model.setDescription(rs.getString("description"));
+      model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
+      model.setCreatedAt(rs.getTimestamp("created_at"));
+
+      return model;
+    } catch (SQLException e) {
+      log.error("Failed to set import's properties", e);
+    }
+    return null;
+  }
 
 }

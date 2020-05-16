@@ -3,6 +3,8 @@ package io.inprice.scrapper.api.helpers;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.info.SearchModel;
 
@@ -19,6 +21,8 @@ public class SqlHelper {
 
    // http://www.java2s.com/Code/Java/Database-SQL-JDBC/EscapeSQL.htm
    public static String clear(String val) {
+     if (StringUtils.isBlank(val)) return val;
+
       int length = val.length();
       int newLength = length;
       // first check for characters that might

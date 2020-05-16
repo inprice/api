@@ -1,11 +1,7 @@
 package io.inprice.scrapper.api.helpers;
 
-import java.util.Arrays;
-
-import io.inprice.scrapper.api.session.CurrentUser;
-
 public class BulkDeleteStatements {
-
+/*
   private String[] linksByProductId(Long productId) {
     return links(productId, null);
   }
@@ -13,12 +9,11 @@ public class BulkDeleteStatements {
   public String[] linksByLinkIdId(Long linkId) {
     return links(null, linkId);
   }
-
+*/
   /**
    * Generates necessary delete statements for links
    *
    * @return delete statements
-   */
   private String[] links(Long productId, Long linkId) {
     String where = "where company_id=" + CurrentUser.getCompanyId();
     String where_1 = null;
@@ -48,7 +43,6 @@ public class BulkDeleteStatements {
    * Generates necessary delete statements for products
    *
    * @return delete statements
-   */
   public String[] products(Long productId) {
     String where = "where company_id=" + CurrentUser.getCompanyId();
     String where_1 = where;
@@ -72,5 +66,6 @@ public class BulkDeleteStatements {
     System.arraycopy(second, 0, both, first.length, second.length);
     return both;
   }
+   */
 
 }

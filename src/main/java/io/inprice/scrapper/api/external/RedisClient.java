@@ -16,6 +16,7 @@ import org.redisson.connection.ConnectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.scrapper.api.consts.Global;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
@@ -39,22 +40,9 @@ public class RedisClient {
         .setPassword(!StringUtils.isBlank(redisPass) ? redisPass : null).setConnectionPoolSize(10)
         .setConnectionMinimumIdleSize(1).setIdleConnectionTimeout(5000).setTimeout(5000);
 
-    while (!isHealthy) {
+    while (!isHealthy && Global.isApplicationRunning) {
       try {
         client = Redisson.create(config);
-
-        client.getNodesGroup().addConnectionListener(new ConnectionListener(){
-          @Override
-          public void onDisconnect(InetSocketAddress addr) {
-            isHealthy = true;
-            log.error("Redis connection is lost!");
-          }
-          @Override
-          public void onConnect(InetSocketAddress addr) {
-            isHealthy = false;
-            log.info("Redis connected again.");
-          }
-        });
 
         limitedIpsSet = client.getSetCache("api:limited:ips");
         sessionMap = client.getMapCache("api:token:sessions");
@@ -71,7 +59,7 @@ public class RedisClient {
   }
 
   public static void shutdown() {
-    client.shutdown();
+    if (client != null) client.shutdown();
     isHealthy = false;
   }
 

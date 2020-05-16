@@ -1,8 +1,12 @@
 package io.inprice.scrapper.api.dto;
 
-/**
- * Used for handling user info from client side
- */
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+@Getter
+@Setter
+@ToString
 public class UserDTO extends PasswordDTO {
 
   private static final long serialVersionUID = -4510116778307627456L;
@@ -11,37 +15,5 @@ public class UserDTO extends PasswordDTO {
   private String name;
   private String timezone;
   private Long companyId;
-
-  public String getEmail() {
-    return email;
-  }
-
-  public void setEmail(String email) {
-    this.email = email;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public String getTimezone() {
-    return timezone;
-  }
-
-  public void setTimezone(String timezone) {
-    this.timezone = timezone;
-  }
-
-  public Long getCompanyId() {
-    return companyId;
-  }
-
-  public void setCompanyId(Long companyId) {
-    this.companyId = companyId;
-  }
 
 }

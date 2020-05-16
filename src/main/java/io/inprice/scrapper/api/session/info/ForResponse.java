@@ -3,10 +3,15 @@ package io.inprice.scrapper.api.session.info;
 import java.io.Serializable;
 
 import io.inprice.scrapper.api.app.user.UserRole;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-/**
- * Used in responses from successful Login
- */
+@Getter
+@Setter
+@ToString
+@NoArgsConstructor
 public class ForResponse implements Serializable {
 
    private static final long serialVersionUID = -3414991620052194958L;
@@ -17,9 +22,6 @@ public class ForResponse implements Serializable {
    private String timezone;
    private String currencyFormat;
    private UserRole role;
-
-   public ForResponse() {
-   }
 
    public ForResponse(ForResponse forResponse) {
       this.user = forResponse.getUser();
@@ -49,34 +51,4 @@ public class ForResponse implements Serializable {
       this.role = forCookie.getRole();
    }
 
-   public String getUser() {
-      return user;
-   }
-
-   public String getEmail() {
-      return email;
-   }
-
-   public String getCompany() {
-      return company;
-   }
-
-   public UserRole getRole() {
-      return role;
-   }
-
-   public String getTimezone() {
-     return timezone;
-   }
-
-   public String getCurrencyFormat() {
-     return currencyFormat;
-   }
-
-   @Override
-   public String toString() {
-     return "[company=" + company + ", currencyFormat=" + currencyFormat + ", email=" + email + ", role="
-         + role + ", timezone=" + timezone + ", user=" + user + "]";
-   }
-
-}
+  }

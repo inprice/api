@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,23 +14,20 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.session.CurrentUser;
-import io.inprice.scrapper.api.dto.LinkDTO;
-import io.inprice.scrapper.api.framework.Beans;
-import io.inprice.scrapper.api.helpers.BulkDeleteStatements;
-import io.inprice.scrapper.api.helpers.RepositoryHelper;
-import io.inprice.scrapper.api.helpers.SqlHelper;
-import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.app.product.Product;
 import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.dto.LinkDTO;
+import io.inprice.scrapper.api.external.Database;
+import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.RepositoryHelper;
+import io.inprice.scrapper.api.helpers.SqlHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.session.CurrentUser;
 
 public class LinkRepository {
 
   private static final Logger log = LoggerFactory.getLogger(LinkRepository.class);
-
   private static final Database db = Beans.getSingleton(Database.class);
-  private static final BulkDeleteStatements bulkDeleteStatements = Beans.getSingleton(BulkDeleteStatements.class);
 
   public ServiceResponse findById(Long id) {
     Link model = 
@@ -146,14 +144,20 @@ public class LinkRepository {
   }
 
   public ServiceResponse deleteById(Long id) {
-    boolean result = db.executeBatchQueries(bulkDeleteStatements.linksByLinkIdId(id),
-        String.format("Failed to delete link. Id: %d", id), 1 // at least one execution must be successful
-    );
+    String where = String.format("where link_id=%d and company_id=%d; ", id, CurrentUser.getCompanyId());
 
-    if (result)
+    List<String> queries = new ArrayList<>(4);
+    queries.add("delete from link_price " + where);
+    queries.add("delete from link_history " + where);
+    queries.add("delete from link_spec " + where);
+    queries.add("delete from link " + where.replace("link_", ""));
+
+    boolean result = db.executeBatchQueries(queries, String.format("Failed to delete link. Id: %d", id), 1);
+
+    if (result) {
       return Responses.OK;
-    else
-      return Responses.NotFound.LINK;
+    }
+    return Responses.NotFound.PRODUCT;
   }
 
   public ServiceResponse changeStatus(Long id, Long productId, LinkStatus status) {
@@ -250,10 +254,6 @@ public class LinkRepository {
       model.setProductId(RepositoryHelper.nullLongHandler(rs, "product_id"));
       model.setSiteId(RepositoryHelper.nullLongHandler(rs, "site_id"));
       model.setPlatform(rs.getString("platform"));
-
-      // if not null then it is an imported product!
-      model.setImportId(RepositoryHelper.nullLongHandler(rs, "import_id"));
-      model.setImportRowId(RepositoryHelper.nullLongHandler(rs, "import_row_id"));
 
       return model;
     } catch (SQLException e) {

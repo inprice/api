@@ -289,7 +289,7 @@ public class CompanyRepository {
       model.setCurrencyCode(rs.getString("currency_code"));
       model.setCurrencyFormat(rs.getString("currency_format"));
       model.setAdminId(RepositoryHelper.nullLongHandler(rs, "admin_id"));
-      model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
+      model.setPlanName(rs.getString("plan_name"));
       model.setPlanStatus(PlanStatus.valueOf(rs.getString("plan_status")));
       model.setDueDate(rs.getTimestamp("due_date"));
       model.setRetry(rs.getInt("retry"));

@@ -136,12 +136,14 @@ public class AuthRepository {
       boolean isAdded = RedisClient.addSesions(redisSesList);
 
       if (isAdded) {
-         String[] queries = new String[dbSesList.size()];
+         List<String> queries = new ArrayList<>(dbSesList.size());
          for (int i = 0; i < dbSesList.size(); i++) {
             ForDatabase uses = dbSesList.get(i);
-            queries[i] = String.format(
+            queries.add(
+              String.format(
                "insert into user_session (_hash, user_id, company_id, ip, os, browser, user_agent) values ('%s', %d, %d, '%s', '%s', '%s', '%s')",
                uses.getHash(), uses.getUserId(), uses.getCompanyId(), uses.getIp(), uses.getOs(), uses.getBrowser(), uses.getUserAgent()
+              )
             );
          }
          boolean result = 

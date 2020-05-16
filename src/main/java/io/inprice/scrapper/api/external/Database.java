@@ -210,7 +210,7 @@ public class Database {
       return false;
    }
 
-   public boolean executeBatchQueries(Connection con, String[] queries, String errorMessage) {
+   public boolean executeBatchQueries(Connection con, List<String> queries, String errorMessage) {
       if (con == null) {
          return executeBatchQueries(queries, errorMessage);
       }
@@ -239,11 +239,11 @@ public class Database {
     * For batch executions without any continual transaction
     *
     */
-   public boolean executeBatchQueries(String[] queries, String errorMessage) {
+   public boolean executeBatchQueries(List<String> queries, String errorMessage) {
       return executeBatchQueries(queries, errorMessage, 0);
    }
 
-   public boolean executeBatchQueries(String[] queries, String errorMessage, int expectedSuccessfulStatementCount) {
+   public boolean executeBatchQueries(List<String> queries, String errorMessage, int expectedSuccessfulStatementCount) {
       boolean result = false;
 
       Connection con = null;

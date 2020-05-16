@@ -78,7 +78,7 @@ public class DashboardRepository {
 
    private void addCompanyInfo(Connection con, JSONObject parent) throws SQLException {
       final String query = "select c.last_collecting_time, c.last_collecting_status, p.name, c.name, c.due_date "
-            + "from company as c left join plan as p on c.plan_id = p.id where w.id=?";
+            + "from company as c left join plan as p on c.plan_name = p.name where w.id=?";
       try (PreparedStatement pst = con.prepareStatement(query)) {
          pst.setLong(1, CurrentUser.getCompanyId());
 

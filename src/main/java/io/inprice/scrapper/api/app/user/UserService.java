@@ -17,11 +17,6 @@ import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.session.info.ForCookie;
 import io.inprice.scrapper.api.utils.Timezones;
 
-/**
- * TODO:
- * Eklenmesi gereken fonksiyonlar
- * 1- Bir davete internal olarak confirm ya da reject verilebilmeli
- */
 public class UserService {
 
    private static final UserRepository userRepository = Beans.getSingleton(UserRepository.class);

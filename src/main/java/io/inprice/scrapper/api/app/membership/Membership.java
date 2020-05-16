@@ -5,7 +5,13 @@ import java.util.Date;
 
 import io.inprice.scrapper.api.app.user.UserRole;
 import io.inprice.scrapper.api.app.user.UserStatus;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
+@Getter
+@Setter
+@ToString
 public class Membership implements Serializable {
 
    private static final long serialVersionUID = -7793356216234713734L;
@@ -24,101 +30,5 @@ public class Membership implements Serializable {
    // transient
    private String companyName;
    private String currencyFormat;
-
-   public Long getId() {
-      return id;
-   }
-
-   public void setId(Long id) {
-      this.id = id;
-   }
-
-   public String getEmail() {
-      return email;
-   }
-
-   public void setEmail(String email) {
-      this.email = email;
-   }
-
-   public Long getUserId() {
-      return userId;
-   }
-
-   public void setUserId(Long userId) {
-      this.userId = userId;
-   }
-
-   public Long getCompanyId() {
-      return companyId;
-   }
-
-   public void setCompanyId(Long companyId) {
-      this.companyId = companyId;
-   }
-
-   public UserRole getRole() {
-      return role;
-   }
-
-   public void setRole(UserRole role) {
-      this.role = role;
-   }
-
-   public UserStatus getStatus() {
-      return status;
-   }
-
-   public void setStatus(UserStatus status) {
-      this.status = status;
-   }
-
-   public UserStatus getPreStatus() {
-      return preStatus;
-   }
-
-   public void setPreStatus(UserStatus preStatus) {
-      this.preStatus = preStatus;
-   }
-
-   public Integer getRetry() {
-      return retry;
-   }
-
-   public void setRetry(Integer retry) {
-      this.retry = retry;
-   }
-
-   public Date getUpdatedAt() {
-      return updatedAt;
-   }
-
-   public void setUpdatedAt(Date updatedAt) {
-      this.updatedAt = updatedAt;
-   }
-
-   public Date getCreatedAt() {
-      return createdAt;
-   }
-
-   public void setCreatedAt(Date createdAt) {
-      this.createdAt = createdAt;
-   }
-
-   public String getCompanyName() {
-      return companyName;
-   }
-
-   public void setCompanyName(String companyName) {
-      this.companyName = companyName;
-   }
-
-   public String getCurrencyFormat() {
-     return currencyFormat;
-   }
-
-   public void setCurrencyFormat(String currencyFormat) {
-     this.currencyFormat = currencyFormat;
-   }
 
 }

@@ -199,36 +199,19 @@ alter table link_history add foreign key (link_id) references link (id);
 
 create table import_product (
   id                        bigint auto_increment not null,
-  import_type               enum('CSV', 'URL', 'EBAY_SKU', 'AMAZON_ASIN') not null default 'CSV',
-  status                    varchar(25) not null,
-  result                    varchar(255),
-  total_count               smallint default 0,
-  insert_count              smallint default 0,
-  duplicate_count           smallint default 0,
-  problem_count             smallint default 0,
-  company_id                bigint not null,
-  created_at                timestamp not null default current_timestamp,
-  primary key (id)
-) engine=innodb;
-alter table import_product add foreign key (company_id) references company (id);
-
-create table import_product_row (
-  id                        bigint auto_increment not null,
-  import_id                 bigint not null,
-  import_type               enum('CSV', 'URL', 'EBAY_SKU', 'AMAZON_ASIN') not null default 'CSV',
-  data                      varchar(2048) not null,
-  sku                       varchar(70),
-  name                      varchar(500),
-  brand                     varchar(150),
-  price                     double default 0,
+  import_type               enum('CSV', 'EBAY_SKU', 'AMAZON_ASIN') not null default 'CSV',
+  data                      varchar(2048),
+  status                    varchar(25) not null default 'NEW',
   last_check                datetime default now(),
   last_update               datetime,
-  status                    varchar(25) not null default 'NEW',
   retry                     smallint default 0,
   http_status               smallint default 0,
-  description               varchar(255),
+  description               varchar(250),
   company_id                bigint not null,
-  primary key (id)
+  created_at                timestamp not null default current_timestamp,
+  primary key (id),
+  key ix1 (status),
+  key ix2 (last_update),
+  key ix3 (last_check)
 ) engine=innodb;
-alter table import_product_row add foreign key (import_id) references import_product (id);
-alter table import_product_row add foreign key (company_id) references company (id);
+alter table import_product add foreign key (company_id) references company (id);

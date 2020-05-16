@@ -31,7 +31,7 @@ public class PlanRepository {
    }
 
    private ServiceResponse findByCompanyId() {
-      Plan model = db.findSingle("select p.* from plan as p inner join company as c on p.id = c.plan_id "
+      Plan model = db.findSingle("select p.* from plan as p inner join company as c on p.name = c.plan_name "
             + "where c.id = " + CurrentUser.getCompanyId(), PlanRepository::map);
       if (model != null) {
          return new ServiceResponse(model);
