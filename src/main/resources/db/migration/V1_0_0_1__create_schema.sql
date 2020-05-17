@@ -208,10 +208,11 @@ create table import_product (
   http_status               smallint default 0,
   description               varchar(250),
   company_id                bigint not null,
-  created_at                timestamp not null default current_timestamp,
+  created_at                timestamp not null,
   primary key (id),
   key ix1 (status),
   key ix2 (last_update),
-  key ix3 (last_check)
+  key ix3 (last_check),
+  key ix4 (created_at)
 ) engine=innodb;
 alter table import_product add foreign key (company_id) references company (id);

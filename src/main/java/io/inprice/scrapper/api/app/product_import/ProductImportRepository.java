@@ -5,6 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -21,6 +22,7 @@ import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.api.utils.DateUtils;
 
 public class ProductImportRepository {
 
@@ -46,6 +48,13 @@ public class ProductImportRepository {
     );
   }
 
+  public ServiceResponse getListByCreatedAt(Connection con, Date createdAt) {
+    return new ServiceResponse(
+      db.findMultiple(con, String.format("select * from import_product where created_at='%s' and company_id=%d order by import_type, status",
+          DateUtils.formatLongDate(createdAt), CurrentUser.getCompanyId()), this::map)
+    );
+  }
+
   public ServiceResponse deleteById(Long id) {
     boolean result =
       db.executeQuery(
@@ -58,7 +67,8 @@ public class ProductImportRepository {
   }
 
   public ServiceResponse bulkInsert(Collection<ImportProduct> imports) {
-    final String query = "insert into import_product (import_type, status, data, description, company_id) values ('%s', '%s', '%s', '%s', %d); ";
+    Date createdAt = new Date();
+    final String query = "insert into import_product (import_type, status, data, description, created_at, company_id) values ('%s', '%s', '%s', %s,'%s', %d)";
 
     Connection con = null;
     try {
@@ -95,13 +105,17 @@ public class ProductImportRepository {
           }
         }
 
+        String desc = row.getDescription();
+        if (desc != null) desc = "'" + SqlHelper.clear(row.getDescription()) + "'";
+
         // adding import row
         queries.add( 
           String.format(query,
             row.getImportType().name(),
             row.getStatus().name(),
             SqlHelper.clear(data),
-            SqlHelper.clear(row.getDescription()),
+            desc,
+            DateUtils.formatLongDate(createdAt),
             CurrentUser.getCompanyId()
           )
         );
@@ -112,7 +126,7 @@ public class ProductImportRepository {
 
       if (result) {
         db.commit(con);
-        return Responses.OK;
+        return getListByCreatedAt(con, createdAt);
       } else {
         db.rollback(con);
         return Responses.DataProblem.NOT_SUITABLE;

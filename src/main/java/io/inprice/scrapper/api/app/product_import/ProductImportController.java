@@ -54,12 +54,12 @@ public class ProductImportController implements Controller {
     }, AccessRoles.EDITOR());
 
     // upload ebay SKU list
-    app.post(Consts.Paths.Product.IMPORT_EBAY_SKU_LIST, (ctx) -> {
+    app.post(Consts.Paths.Product.IMPORT_EBAY_SKU, (ctx) -> {
       upload(ctx, "text/plain", codeImportService, ImportType.EBAY_SKU);
     }, AccessRoles.EDITOR());
 
     // upload amazon ASIN list
-    app.post(Consts.Paths.Product.IMPORT_AMAZON_ASIN_LIST, (ctx) -> {
+    app.post(Consts.Paths.Product.IMPORT_AMAZON_ASIN, (ctx) -> {
       upload(ctx, "text/plain", codeImportService, ImportType.AMAZON_ASIN);
     }, AccessRoles.EDITOR());
 

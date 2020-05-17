@@ -64,9 +64,8 @@ public class Consts {
 
          public static final String IMPORT_BASE = BASE + "/import";
          public static final String IMPORT_CSV = IMPORT_BASE + "/csv";
-         public static final String IMPORT_URL_LIST = IMPORT_BASE + "/url";
-         public static final String IMPORT_EBAY_SKU_LIST = IMPORT_BASE + "/ebay";
-         public static final String IMPORT_AMAZON_ASIN_LIST = IMPORT_BASE + "/amazon";
+         public static final String IMPORT_EBAY_SKU = IMPORT_BASE + "/ebay-sku";
+         public static final String IMPORT_AMAZON_ASIN = IMPORT_BASE + "/amazon-asin";
       }
 
       public static class Link {

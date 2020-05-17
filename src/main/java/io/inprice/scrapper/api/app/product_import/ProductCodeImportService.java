@@ -26,13 +26,20 @@ public class ProductCodeImportService implements IProductImportService {
   private static final PlanRepository planRepository = Beans.getSingleton(PlanRepository.class);
 
   private static final String ASIN_REGEX = "^(?i)(B0|BT)[0-9A-Z]{8}$";
-  private static final String SKU_REGEX = "^[1-3][0-9]{11}$";
+  private static final String SKU_REGEX = "^[1-3][0-9]{10,11}$";
 
   public ServiceResponse upload(ImportType importType, String content) {
     ServiceResponse res = Responses.DataProblem.DB_PROBLEM;
 
-    final String identifier = (ImportType.EBAY_SKU.equals(importType) ? "SKU" : "ASIN");
-    final String regex = (ImportType.EBAY_SKU.equals(importType) ? SKU_REGEX : ASIN_REGEX);
+    String company = "Ebay";
+    String identifier = "SKU";
+    String regex = SKU_REGEX;
+
+    if (ImportType.AMAZON_ASIN.equals(importType)) {
+      company = "Amazon";
+      identifier = "ASIN";
+      regex = ASIN_REGEX;
+    }
 
     int allowedCount = planRepository.findAllowedProductCount();
     if (allowedCount > 0) {
@@ -46,7 +53,10 @@ public class ProductCodeImportService implements IProductImportService {
         try (BufferedReader reader = new BufferedReader(new StringReader(content))) {
           String line = reader.readLine().trim();
           while (line != null) {
-            if (StringUtils.isBlank(line) || line.startsWith("#")) continue;
+            if (StringUtils.isBlank(line) || line.trim().startsWith("#")) {
+              line = reader.readLine();
+              continue;
+            }
 
             ImportProduct row = new ImportProduct();
             row.setImportType(importType);
@@ -56,7 +66,7 @@ public class ProductCodeImportService implements IProductImportService {
               boolean found = insertedCodeSet.contains(line);
               if (!found) {
                 if (line.matches(regex)) {
-                  row.setDescription("Healthy.");
+                  row.setDescription("will be updated in a short while from " + company);
                   insertedCodeSet.add(line);
                   actualCount++;
                 } else {
@@ -76,7 +86,7 @@ public class ProductCodeImportService implements IProductImportService {
           return Responses.DataProblem.DB_PROBLEM;
         }
 
-        if (actualCount > 0) {
+        if (insertedCodeSet.size() > 0) {
           res = productImportRepository.bulkInsert(importList);
         } else {
           res = new ServiceResponse("Failed to import " + identifier + " list, please check your data!");

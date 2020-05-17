@@ -1,7 +1,6 @@
 package io.inprice.scrapper.api.external;
 
 import java.io.Serializable;
-import java.net.InetSocketAddress;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -12,7 +11,6 @@ import org.redisson.api.RMapCache;
 import org.redisson.api.RSetCache;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-import org.redisson.connection.ConnectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

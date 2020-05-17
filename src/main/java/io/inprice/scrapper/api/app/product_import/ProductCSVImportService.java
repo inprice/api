@@ -30,10 +30,10 @@ public class ProductCSVImportService implements IProductImportService {
   private static final ProductImportRepository productImportRepository = Beans.getSingleton(ProductImportRepository.class);
   private static final PlanRepository planRepository = Beans.getSingleton(PlanRepository.class);
 
+  private static final int COLUMN_COUNT = 5;
+
   public ServiceResponse upload(String content) {
     ServiceResponse res = Responses.OK;
-
-    final int COLUMN_COUNT = 5;
 
     int allowedCount = planRepository.findAllowedProductCount();
     if (allowedCount > 0) {
@@ -69,7 +69,7 @@ public class ProductCSVImportService implements IProductImportService {
   
                   ServiceResponse isValid = ProductDTOValidator.validate(dto);
                   if (isValid.isOK()) {
-                    row.setDescription("Healthy.");
+                    row.setDescription("Added among the products.");
                     row.setStatus(LinkStatus.NEW);
                     row.setProductDTO(dto);
                     actualCount++;
@@ -89,7 +89,7 @@ public class ProductCSVImportService implements IProductImportService {
                 }
               } else {
                 row.setDescription(String.format(
-                    "Wrong column count: %d. There must be %d columns in each row!. Column separator is comma ,",
+                    "Expected col count is %d, but %d. Separator is comma ,",
                     COLUMN_COUNT, values.length));
                 row.setStatus(LinkStatus.IMPROPER);
               }
@@ -105,7 +105,7 @@ public class ProductCSVImportService implements IProductImportService {
           return Responses.DataProblem.DB_PROBLEM;
         }
 
-        if (actualCount > 0) {
+        if (insertedProductSet.size() > 0) {
           res = productImportRepository.bulkInsert(importList);
         } else {
           res = new ServiceResponse("Failed to import CSV file, please check your data!");
