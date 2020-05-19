@@ -79,14 +79,20 @@ public class SqlHelper {
       sql.append(CurrentUser.getCompanyId());
 
       // query string part
-      if (!searchModel.getTerm().isEmpty()) {
+      if (StringUtils.isNotBlank(searchModel.getTerm()) && !searchModel.getTerm().equals("null")) {
          sql.append(" and (");
          for (int i=0; i<searchModel.getFields().size(); i++) {
             String field = searchModel.getFields().get(i);
             sql.append(field);
-            sql.append(" like '%");
-            sql.append(searchModel.getTerm());
-            sql.append("%' ");
+            if (searchModel.isExactSearch()) {
+              sql.append(" = '");
+              sql.append(searchModel.getTerm());
+              sql.append("' ");
+            } else {
+              sql.append(" like '%");
+              sql.append(searchModel.getTerm());
+              sql.append("%' ");
+            }
             if (i < searchModel.getFields().size() - 1) {
                sql.append(" OR ");
             }

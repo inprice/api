@@ -15,6 +15,7 @@ import io.inprice.scrapper.api.app.link.LinkStatus;
 import io.inprice.scrapper.api.app.plan.PlanRepository;
 import io.inprice.scrapper.api.app.product.ProductRepository;
 import io.inprice.scrapper.api.consts.Responses;
+import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 
@@ -60,15 +61,39 @@ public class ProductCodeImportService implements IProductImportService {
 
             ImportProduct row = new ImportProduct();
             row.setImportType(importType);
-            row.setData(line);
 
+            switch (importType) {
+              case EBAY_SKU: {
+                row.setData(Props.getPrefix_ForSearchingInEbay() + line);
+                break;
+              }
+              case AMAZON_ASIN: {
+                row.setData(Props.getPrefix_ForSearchingInAmazon() + line);
+                break;
+              }
+              default:
+                row.setData(line);
+                break;
+            }
+    
             if (actualCount < allowedCount) {
-              boolean found = insertedCodeSet.contains(line);
-              if (!found) {
+              boolean exists = insertedCodeSet.contains(line);
+              if (! exists) {
                 if (line.matches(regex)) {
-                  row.setDescription("will be updated in a short while from " + company);
-                  insertedCodeSet.add(line);
-                  actualCount++;
+
+                  ServiceResponse found = productRepository.findByCode(line);
+                  if (! found.isOK()) {
+                    found = productImportRepository.findByData(row.getData());
+                  }
+
+                  if (! found.isOK()) {
+                    row.setDescription("This prod. will be updated shortly via " + company);
+                    insertedCodeSet.add(line);
+                    actualCount++;
+                  } else {
+                    row.setStatus(LinkStatus.DUPLICATE);
+                  }
+
                 } else {
                   row.setStatus(LinkStatus.IMPROPER);
                 }

@@ -9,6 +9,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.common.collect.Maps;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,10 +18,10 @@ import io.inprice.scrapper.api.app.link.LinkStatus;
 import io.inprice.scrapper.api.app.product.ProductRepository;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.external.Database;
-import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
+import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.utils.DateUtils;
@@ -41,18 +43,27 @@ public class ProductImportRepository {
     return Responses.NotFound.IMPORT;
   }
 
-  public ServiceResponse getList() {
-    return new ServiceResponse(
-      db.findMultiple(String.format("select * from import_product where company_id = %d order by status, import_type",
-          CurrentUser.getCompanyId()), this::map)
-    );
+  public ServiceResponse findByData(String data) {
+    ImportProduct model = db.findSingle(String.format("select * from import_product where data = '%s' and company_id = %d ",
+        data, CurrentUser.getCompanyId()), this::map);
+
+    if (model != null) {
+      return new ServiceResponse(model);
+    }
+
+    return Responses.NotFound.IMPORT;
   }
 
-  public ServiceResponse getListByCreatedAt(Connection con, Date createdAt) {
-    return new ServiceResponse(
-      db.findMultiple(con, String.format("select * from import_product where created_at='%s' and company_id=%d order by import_type, status",
-          DateUtils.formatLongDate(createdAt), CurrentUser.getCompanyId()), this::map)
-    );
+  public ServiceResponse search(SearchModel searchModel) {
+    final String searchQuery = SqlHelper.generateSearchQuery(searchModel);
+
+    try {
+      List<ImportProduct> rows = db.findMultiple(searchQuery, this::map);
+      return new ServiceResponse(Maps.immutableEntry("rows", rows));
+    } catch (Exception e) {
+      log.error("Failed to search imported products. ", e);
+      return Responses.ServerProblem.EXCEPTION;
+    }
   }
 
   public ServiceResponse deleteById(Long id) {
@@ -78,24 +89,9 @@ public class ProductImportRepository {
       Iterator<ImportProduct> itr = imports.iterator();
       while (itr.hasNext()) {
         ImportProduct row = itr.next();
-        String data = null;
-
-        switch (row.getImportType()) {
-          case EBAY_SKU: {
-            data = Props.getPrefix_ForSearchingInEbay() + row.getData();
-            break;
-          }
-          case AMAZON_ASIN: {
-            data = Props.getPrefix_ForSearchingInAmazon() + row.getData();
-            break;
-          }
-          default:
-            data = row.getData();
-            break;
-        }
 
         // adding product if any
-        if (row.getStatus().equals(LinkStatus.NEW) && row.getProductDTO() != null) {
+        if (row.getStatus().equals(LinkStatus.AVAILABLE) && row.getProductDTO() != null) {
           ServiceResponse res = productRepository.insertANewProduct(con, row.getProductDTO());
           if (! res.isOK()) {
             if (res.equals(Responses.DataProblem.DUPLICATE)) {
@@ -113,7 +109,7 @@ public class ProductImportRepository {
           String.format(query,
             row.getImportType().name(),
             row.getStatus().name(),
-            SqlHelper.clear(data),
+            SqlHelper.clear(row.getData()),
             desc,
             DateUtils.formatLongDate(createdAt),
             CurrentUser.getCompanyId()
@@ -126,7 +122,7 @@ public class ProductImportRepository {
 
       if (result) {
         db.commit(con);
-        return getListByCreatedAt(con, createdAt);
+        return Responses.OK;
       } else {
         db.rollback(con);
         return Responses.DataProblem.NOT_SUITABLE;

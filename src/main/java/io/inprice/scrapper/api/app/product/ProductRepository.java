@@ -147,11 +147,12 @@ public class ProductRepository {
   public ServiceResponse deleteById(Long id) {
     String where = String.format("where product_id=%d and company_id=%d", id, CurrentUser.getCompanyId());
 
-    List<String> queries = new ArrayList<>(4);
+    List<String> queries = new ArrayList<>(6);
     queries.add("delete from link_price " + where);
     queries.add("delete from link_history " + where);
     queries.add("delete from link_spec " + where);
     queries.add("delete from link " + where);
+    queries.add("delete from product_price " + where);
     queries.add("delete from product " + where.replace("product_", ""));
 
     boolean result = db.executeBatchQueries(queries, String.format("Failed to delete product. Id: %d", id), 1);
@@ -305,6 +306,7 @@ public class ProductRepository {
       model.setBrand(rs.getString("brand"));
       model.setCategory(rs.getString("category"));
       model.setPosition(rs.getInt("position"));
+      model.setLinksCount(rs.getInt("links_count"));
       model.setPrice(rs.getBigDecimal("price"));
       model.setAvgPrice(rs.getBigDecimal("avg_price"));
       model.setMinPlatform(rs.getString("min_platform"));

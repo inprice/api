@@ -2,6 +2,7 @@ package io.inprice.scrapper.api.app.product_import;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
 import io.inprice.scrapper.api.helpers.AccessRoles;
 import io.inprice.scrapper.api.helpers.Commons;
+import io.inprice.scrapper.api.helpers.ControllerHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -37,9 +39,10 @@ public class ProductImportController implements Controller {
       ctx.json(Commons.createResponse(ctx, importService.findById(id)));
     }, AccessRoles.ANYONE());
 
-    // list
-    app.get(Consts.Paths.Product.IMPORT_BASE + "s", (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, importService.getList()));
+    // search
+    app.get(Consts.Paths.Product.IMPORTED_PRODUCTS, (ctx) -> {
+      Map<String, String> searchMap = ControllerHelper.editSearchMap(ctx.queryParamMap());
+      ctx.json(Commons.createResponse(ctx, importService.search(searchMap)));
     }, AccessRoles.ANYONE());
 
     // delete

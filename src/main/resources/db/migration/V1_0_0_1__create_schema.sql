@@ -94,6 +94,7 @@ create table product (
   brand                     varchar(100),
   category                  varchar(100),
   position                  int default 3,
+  links_count               int default 0,
   price                     double default 0,
   avg_price                 double default 0,
   min_platform              varchar(50),
@@ -200,7 +201,7 @@ alter table link_history add foreign key (link_id) references link (id);
 create table import_product (
   id                        bigint auto_increment not null,
   import_type               enum('CSV', 'EBAY_SKU', 'AMAZON_ASIN') not null default 'CSV',
-  data                      varchar(2048),
+  data                      varchar(1024),
   status                    varchar(25) not null default 'NEW',
   last_check                datetime default now(),
   last_update               datetime,

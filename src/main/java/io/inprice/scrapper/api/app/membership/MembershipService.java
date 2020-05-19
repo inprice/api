@@ -116,6 +116,7 @@ public class MembershipService {
         ServiceResponse res = membershipRepository.acceptNewUser(dto, timezone, invitationDTO);
         if (res.isOK()) {
           TokenService.remove(TokenType.INVITATION, dto.getToken());
+          return res;
         }
       } else {
         return Responses.Invalid.TOKEN;

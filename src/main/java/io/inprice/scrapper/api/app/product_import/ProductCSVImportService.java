@@ -56,9 +56,9 @@ public class ProductCSVImportService implements IProductImportService {
             if (actualCount < allowedCount) {
 
               if (values.length == COLUMN_COUNT) {
-                boolean found = insertedProductSet.containsKey(values[0]);
+                boolean exists = insertedProductSet.containsKey(values[0]);
 
-                if (!found) {
+                if (!exists) {
                   int i = 0;
                   ProductDTO dto = new ProductDTO();
                   dto.setCode(values[i++]);
@@ -69,11 +69,18 @@ public class ProductCSVImportService implements IProductImportService {
   
                   ServiceResponse isValid = ProductDTOValidator.validate(dto);
                   if (isValid.isOK()) {
-                    row.setDescription("Added among the products.");
-                    row.setStatus(LinkStatus.NEW);
-                    row.setProductDTO(dto);
-                    actualCount++;
-                    insertedProductSet.put(dto.getCode(), dto);
+
+                    ServiceResponse found = productRepository.findByCode(dto.getCode());
+                    if (! found.isOK()) {
+                      row.setDescription("Added among the products.");
+                      row.setStatus(LinkStatus.AVAILABLE);
+                      row.setProductDTO(dto);
+                      actualCount++;
+                      insertedProductSet.put(dto.getCode(), dto);
+                    } else {
+                      row.setStatus(LinkStatus.DUPLICATE);
+                    }
+
                   } else {
                     StringBuilder sb = new StringBuilder();
                     for (String problem : isValid.getProblems()) {

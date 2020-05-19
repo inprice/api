@@ -22,6 +22,7 @@ public class Product implements Serializable {
    private String brand;
    private String category;
    private Integer position;
+   private Integer linksCount;
    private BigDecimal price;
    private BigDecimal avgPrice;
    private String minPlatform;
