@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.Maps;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,7 @@ import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
+import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 
@@ -219,6 +222,18 @@ public class LinkRepository {
     }
   }
 
+  public ServiceResponse search(SearchModel searchModel, String whereStatus) {
+    final String searchQuery = SqlHelper.generateSearchQuery(searchModel, whereStatus);
+
+    try {
+      List<Link> rows = db.findMultiple(searchQuery, this::map);
+      return new ServiceResponse(Maps.immutableEntry("rows", rows));
+    } catch (Exception e) {
+      log.error("Failed to search links. ", e);
+      return Responses.ServerProblem.EXCEPTION;
+    }
+  }
+
   private boolean doesExist(Connection con, String url, Long productId) {
     String urlHash = DigestUtils.md5Hex(url);
     Link model = db.findSingle(con,
@@ -254,6 +269,7 @@ public class LinkRepository {
       model.setProductId(RepositoryHelper.nullLongHandler(rs, "product_id"));
       model.setSiteId(RepositoryHelper.nullLongHandler(rs, "site_id"));
       model.setPlatform(rs.getString("platform"));
+      model.setCreatedAt(rs.getTimestamp("created_at"));
 
       return model;
     } catch (SQLException e) {

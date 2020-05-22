@@ -1,5 +1,7 @@
 package io.inprice.scrapper.api.app.link;
 
+import java.util.Map;
+
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.framework.Beans;
@@ -7,6 +9,7 @@ import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
 import io.inprice.scrapper.api.helpers.AccessRoles;
 import io.inprice.scrapper.api.helpers.Commons;
+import io.inprice.scrapper.api.helpers.ControllerHelper;
 import io.javalin.Javalin;
 
 @Router
@@ -32,6 +35,12 @@ public class LinkController implements Controller {
       app.get(Consts.Paths.Link.BASE + "s/:prod_id", (ctx) -> {
          Long prodId = ctx.pathParam("prod_id", Long.class).check(it -> it > 0).getValue();
          ctx.json(Commons.createResponse(ctx, service.getList(prodId)));
+      }, AccessRoles.ANYONE());
+
+      // search
+      app.get(Consts.Paths.Link.SEARCH, (ctx) -> {
+        Map<String, String> searchMap = ControllerHelper.editSearchMap(ctx.queryParamMap(), "status");
+        ctx.json(Commons.createResponse(ctx, service.search(searchMap)));
       }, AccessRoles.ANYONE());
 
       // change status to RENEWED

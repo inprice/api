@@ -1,11 +1,17 @@
 package io.inprice.scrapper.api.app.link;
 
+import java.util.Arrays;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+
 import io.inprice.scrapper.api.app.product.ProductRepository;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.LinkDTO;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RabbitMQ;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.utils.URLUtils;
@@ -28,6 +34,21 @@ public class LinkService {
     }
 
     return Responses.NotFound.PRODUCT;
+  }
+
+  public ServiceResponse search(Map<String, String> searchMap) {
+    SearchModel sm = new SearchModel(searchMap, "name, platform, seller", Link.class);
+    sm.setQuery("select l.*, s.name as platform from link as l left join site as s on s.id = l.site_id");
+    sm.setFields(Arrays.asList("seller", "s.name"));
+
+    String whereStatus = searchMap.get("status");
+    if (StringUtils.isNotBlank(whereStatus) && ! whereStatus.equals("null")) {
+      try {
+        whereStatus = "status = '" + LinkStatus.valueOf(whereStatus).name() + "'";
+      } catch (Exception ignored) {}
+    }
+
+    return linkRepository.search(sm, whereStatus);
   }
 
   public ServiceResponse insert(LinkDTO dto) {

@@ -151,6 +151,7 @@ create table link (
   product_id                bigint,
   site_id                   bigint,
   company_id                bigint,
+  created_at                timestamp not null default current_timestamp,
   primary key (id),
   key ix1 (url_hash),
   key ix2 (status),

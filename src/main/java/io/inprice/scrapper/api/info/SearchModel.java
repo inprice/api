@@ -8,6 +8,7 @@ import io.inprice.scrapper.api.helpers.SqlHelper;
 public class SearchModel {
 
   private String table;
+  private String query;
   private String term;
   private boolean isExactSearch;
   private int lastRowNo;
@@ -34,6 +35,14 @@ public class SearchModel {
 
   public void setTable(String table) {
     this.table = table;
+  }
+
+  public String getQuery() {
+    return query;
+  }
+
+  public void setQuery(String query) {
+    this.query = query;
   }
 
   public String getTerm() {
@@ -66,8 +75,8 @@ public class SearchModel {
 
   @Override
   public String toString() {
-    return "[isExactSearch=" + isExactSearch + ", lastRowNo=" + lastRowNo
-        + ", orderBy=" + orderBy + ", table=" + table + ", term=" + term + "]";
+    return "[isExactSearch=" + isExactSearch + ", lastRowNo=" + lastRowNo + ", orderBy=" + orderBy
+        + ", query=" + query + ", table=" + table + ", term=" + term + "]";
   }
 
 }

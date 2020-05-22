@@ -35,6 +35,7 @@ public class Link implements Serializable {
   private Long productId;
   private Long siteId;
   private Long companyId;
+  private Date createdAt;
 
   /**
    * The three list fields below never be saved into database.

@@ -73,10 +73,24 @@ public class SqlHelper {
    }
 
    public static String generateSearchQuery(SearchModel searchModel) {
-      StringBuilder sql = new StringBuilder("select * from ");
-      sql.append(searchModel.getTable());
+    return generateSearchQuery(searchModel, null);
+   }
+
+   public static String generateSearchQuery(SearchModel searchModel, String extraConditions) {
+      StringBuilder sql = new StringBuilder();
+      if (StringUtils.isBlank(searchModel.getQuery())) {
+        sql.append("select * from ");
+        sql.append(searchModel.getTable());
+      } else {
+        sql.append(searchModel.getQuery());
+      }
       sql.append(" where company_id = ");
       sql.append(CurrentUser.getCompanyId());
+
+      if (StringUtils.isNotBlank(extraConditions)) {
+        sql.append(" and ");
+        sql.append(extraConditions);
+      }
 
       // query string part
       if (StringUtils.isNotBlank(searchModel.getTerm()) && !searchModel.getTerm().equals("null")) {
