@@ -142,7 +142,7 @@ public class MembershipService {
       templateName = "invitation-for-existing-users";
       message = renderer.renderInvitationForExistingUsers(dataMap);
     } else {
-      dataMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@') - 1));
+      dataMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')));
       dataMap.put("token", TokenService.add(TokenType.INVITATION, dto));
       dataMap.put("url", Props.getWebUrl() + "/accept-invitation");
 
@@ -155,6 +155,7 @@ public class MembershipService {
           "About your invitation for " + CurrentUser.getCompanyName() + " at inprice.io", dto.getEmail(), message);
 
       log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getCompanyId());
+      log.info(message);
       return Responses.OK;
     } else {
       log.error("Template error for " + templateName + " --> " + dto);

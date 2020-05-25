@@ -8,7 +8,10 @@ import org.eclipse.jetty.http.HttpStatus;
 
 import io.inprice.scrapper.api.app.auth.AuthRepository;
 import io.inprice.scrapper.api.consts.Consts;
+import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.framework.Beans;
+import io.inprice.scrapper.api.helpers.Commons;
+import io.inprice.scrapper.api.helpers.ControllerHelper;
 import io.inprice.scrapper.api.helpers.SessionHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.info.ForCookie;
@@ -47,16 +50,18 @@ public class AccessGuard implements AccessManager {
                      isDone = true;
                      CurrentUser.set(res.getData());
                      handler.handle(ctx);
+                  } else {
+                    ControllerHelper.removeExpiredAuthCookie(ctx);
                   }
                } else {
                   isDone = true;
-                  ctx.status(HttpStatus.FORBIDDEN_403).result("Forbidden");
+                  ctx.json(Commons.createResponse(ctx, Responses._401));
                }
             }
          }
          if (! isDone) {
             ctx.removeCookie(Consts.SESSION);
-            ctx.status(HttpStatus.UNAUTHORIZED_401).result("Invalid token");
+            ctx.json(Commons.createResponse(ctx, Responses._401));
          }
       } else {
          ctx.status(HttpStatus.BAD_REQUEST_400).result("Invalid session");

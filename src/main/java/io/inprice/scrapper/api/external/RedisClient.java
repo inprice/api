@@ -3,6 +3,7 @@ package io.inprice.scrapper.api.external;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +31,7 @@ public class RedisClient {
   private static RSetCache<String> limitedIpsSet;
   private static RMapCache<String, ForRedis> sessionMap;
   private static RMapCache<String, Serializable> tokensMap;
+  private static RMapCache<Long, Map<String, Object>> dashboardsMap;
 
   static {
     final String redisPass = Props.getRedis_Password();
@@ -45,6 +47,7 @@ public class RedisClient {
         limitedIpsSet = client.getSetCache("api:limited:ips");
         sessionMap = client.getMapCache("api:token:sessions");
         tokensMap = client.getMapCache("api:tokens");
+        dashboardsMap = client.getMapCache("api:dashboards");
         isHealthy = true;
       } catch (Exception e) {
         log.error("Failed to connext to Redis server, trying again in 3 seconds!", e.getMessage());
@@ -96,8 +99,12 @@ public class RedisClient {
     return false;
   }
 
-  public static RMapCache<String, Serializable> getTokensmap() {
+  public static RMapCache<String, Serializable> getTokensMap() {
     return tokensMap;
+  }
+
+  public static RMapCache<Long, Map<String, Object>> getDashboardsMap() {
+    return dashboardsMap;
   }
 
 }

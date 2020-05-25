@@ -11,15 +11,19 @@ import io.javalin.Javalin;
 @Router
 public class DashboardController implements Controller {
 
-   private static final DashboardService service = Beans.getSingleton(DashboardService.class);
+  private static final DashboardService service = Beans.getSingleton(DashboardService.class);
 
-   @Override
-   public void addRoutes(Javalin app) {
+  @Override
+  public void addRoutes(Javalin app) {
 
-      app.get(Consts.Paths.Misc.DASHBOARD, (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.getReport()));
-      }, AccessRoles.ANYONE());
+    app.get(Consts.Paths.Dashboard.BASE, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, service.getReport(false)));
+    }, AccessRoles.ANYONE());
 
-   }
+    app.get(Consts.Paths.Dashboard.REFRESH, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, service.getReport(true)));
+    }, AccessRoles.ANYONE());
+
+  }
 
 }

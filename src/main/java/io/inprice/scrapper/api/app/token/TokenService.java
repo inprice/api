@@ -10,13 +10,13 @@ public class TokenService {
 
    public static String add(TokenType tokenType, Serializable object) {
       final String token = generateToken();
-      RedisClient.getTokensmap().put(getKey(tokenType, token), object, tokenType.ttl(), TimeUnit.MILLISECONDS);
+      RedisClient.getTokensMap().put(getKey(tokenType, token), object, tokenType.ttl(), TimeUnit.MILLISECONDS);
       return token;
    }
 
    @SuppressWarnings("unchecked")
    public static <T extends Serializable> T get(TokenType tokenType, String token) {
-      Serializable seri = RedisClient.getTokensmap().get(getKey(tokenType, token));
+      Serializable seri = RedisClient.getTokensMap().get(getKey(tokenType, token));
       if (seri != null)
          return (T) seri;
       else
@@ -24,7 +24,7 @@ public class TokenService {
    }
 
    public static boolean remove(TokenType tokenType, String token) {
-      return (RedisClient.getTokensmap().remove(getKey(tokenType, token)) != null);
+      return (RedisClient.getTokensMap().remove(getKey(tokenType, token)) != null);
    }
 
    private static String getKey(TokenType tokenType, String token) {
