@@ -12,12 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import eu.bitwalker.useragentutils.UserAgent;
+import io.inprice.scrapper.api.app.membership.MembershipRepository;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
-import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
-import io.inprice.scrapper.api.app.membership.Membership;
-import io.inprice.scrapper.api.app.membership.MembershipRepository;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.EmailValidator;
@@ -29,7 +27,6 @@ import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.ClientSide;
 import io.inprice.scrapper.api.helpers.ControllerHelper;
 import io.inprice.scrapper.api.helpers.SessionHelper;
@@ -39,6 +36,9 @@ import io.inprice.scrapper.api.session.info.ForCookie;
 import io.inprice.scrapper.api.session.info.ForDatabase;
 import io.inprice.scrapper.api.session.info.ForRedis;
 import io.inprice.scrapper.api.session.info.ForResponse;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.models.Membership;
+import io.inprice.scrapper.common.models.User;
 import io.javalin.http.Context;
 import jodd.util.BCrypt;
 
@@ -96,10 +96,10 @@ public class AuthService {
           Map<String, Object> dataMap = new HashMap<>(3);
           dataMap.put("user", user.getName());
           dataMap.put("token", TokenService.add(TokenType.FORGOT_PASSWORD, email));
-          dataMap.put("url", Props.getWebUrl() + Consts.Paths.Auth.RESET_PASSWORD);
+          dataMap.put("url", Props.APP_WEB_URL() + Consts.Paths.Auth.RESET_PASSWORD);
 
           final String message = renderer.renderForgotPassword(dataMap);
-          emailSender.send(Props.getEmail_Sender(), "Reset your password", user.getEmail(), message);
+          emailSender.send(Props.APP_EMAIL_SENDER(), "Reset your password", user.getEmail(), message);
 
           return Responses.OK;
         } catch (Exception e) {
@@ -237,7 +237,7 @@ public class AuthService {
 
       for (Membership mem : membershipList) {
 
-        ForCookie cookieSes = new ForCookie(user.getEmail(), mem.getRole());
+        ForCookie cookieSes = new ForCookie(user.getEmail(), mem.getRole().name());
         cookieSesList.add(cookieSes);
 
         ForResponse responseSes = new ForResponse(cookieSes, user.getName(), mem.getCompanyName(), user.getTimezone(),
@@ -266,7 +266,7 @@ public class AuthService {
           Cookie cookie = new Cookie(Consts.SESSION, tokenString);
           cookie.setHttpOnly(true);
           cookie.setSecure(true);
-          if (!Props.isRunningForDev()) {
+          if (!Props.IS_RUN_FOR_DEV()) {
             cookie.setDomain(".inprice.io");
             cookie.setMaxAge(Integer.MAX_VALUE);
           } else { // for dev and test purposes

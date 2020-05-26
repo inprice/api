@@ -2,10 +2,10 @@ package io.inprice.scrapper.api.dto;
 
 import org.apache.commons.lang3.StringUtils;
 
-import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.models.User;
 import jodd.util.BCrypt;
 
 public class PasswordValidator {

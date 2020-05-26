@@ -11,13 +11,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.app.link.LinkStatus;
 import io.inprice.scrapper.api.app.plan.PlanRepository;
 import io.inprice.scrapper.api.app.product.ProductRepository;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.external.Props;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.meta.ImportType;
+import io.inprice.scrapper.common.meta.LinkStatus;
+import io.inprice.scrapper.common.models.ImportProduct;
 
 public class ProductCodeImportService implements IProductImportService {
 
@@ -64,11 +66,11 @@ public class ProductCodeImportService implements IProductImportService {
 
             switch (importType) {
               case EBAY_SKU: {
-                row.setData(Props.getPrefix_ForSearchingInEbay() + line);
+                row.setData(Props.PREFIX_FOR_SEARCH_EBAY() + line);
                 break;
               }
               case AMAZON_ASIN: {
-                row.setData(Props.getPrefix_ForSearchingInAmazon() + line);
+                row.setData(Props.PREFIX_FOR_SEARCH_AMAZON() + line);
                 break;
               }
               default:

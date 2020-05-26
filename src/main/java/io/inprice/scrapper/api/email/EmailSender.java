@@ -25,7 +25,7 @@ public class EmailSender {
 
       Mail mail = new Mail(emailFrom, subject, emailTo, emailContent);
 
-      SendGrid sg = new SendGrid(Props.getAPIKey_Email());
+      SendGrid sg = new SendGrid(Props.API_KEYS_SENDGRID());
       Request request = new Request();
       try {
          request.setMethod(Method.POST);

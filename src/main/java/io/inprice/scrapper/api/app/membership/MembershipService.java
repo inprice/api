@@ -9,10 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
-import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
-import io.inprice.scrapper.api.app.user.UserRole;
-import io.inprice.scrapper.api.app.user.UserStatus;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.EmailValidator;
 import io.inprice.scrapper.api.dto.InvitationAcceptDTO;
@@ -23,9 +20,13 @@ import io.inprice.scrapper.api.dto.PasswordValidator;
 import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
 import io.inprice.scrapper.api.external.Props;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.meta.UserRole;
+import io.inprice.scrapper.common.meta.UserStatus;
+import io.inprice.scrapper.common.models.Membership;
+import io.inprice.scrapper.common.models.User;
 
 public class MembershipService {
 
@@ -144,14 +145,14 @@ public class MembershipService {
     } else {
       dataMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')));
       dataMap.put("token", TokenService.add(TokenType.INVITATION, dto));
-      dataMap.put("url", Props.getWebUrl() + "/accept-invitation");
+      dataMap.put("url", Props.APP_WEB_URL() + "/accept-invitation");
 
       templateName = "invitation-for-new-users";
       message = renderer.renderInvitationForNewUsers(dataMap);
     }
 
     if (message != null) {
-      emailSender.send(Props.getEmail_Sender(),
+      emailSender.send(Props.APP_EMAIL_SENDER(),
           "About your invitation for " + CurrentUser.getCompanyName() + " at inprice.io", dto.getEmail(), message);
 
       log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getCompanyId());

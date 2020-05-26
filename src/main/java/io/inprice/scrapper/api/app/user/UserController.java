@@ -6,7 +6,6 @@ import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.dto.LongDTO;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
 import io.inprice.scrapper.api.helpers.AccessRoles;
@@ -14,6 +13,7 @@ import io.inprice.scrapper.api.helpers.Commons;
 import io.inprice.scrapper.api.helpers.SessionHelper;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.session.info.ForCookie;
+import io.inprice.scrapper.common.helpers.Beans;
 import io.javalin.Javalin;
 
 @Router

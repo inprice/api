@@ -5,11 +5,14 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import io.inprice.scrapper.api.app.user.UserRole;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Used in session cookie
  */
+@Getter
+@NoArgsConstructor
 public class ForCookie implements Serializable {
 
    private static final long serialVersionUID = -2758435636435796934L;
@@ -18,30 +21,15 @@ public class ForCookie implements Serializable {
    private String email;
 
    @JsonProperty("r")
-   private UserRole role;
+   private String role;
 
    @JsonProperty("h")
    private String hash;
 
-   public ForCookie() {
-   }
-
-   public ForCookie(String email, UserRole role) {
+   public ForCookie(String email, String role) {
       this.email = email;
       this.role = role;
       this.hash = UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
-   }
-
-   public String getEmail() {
-      return email;
-   }
-
-   public UserRole getRole() {
-      return role;
-   }
-
-   public String getHash() {
-      return hash;
    }
 
    @Override

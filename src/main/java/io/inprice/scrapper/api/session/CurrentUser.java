@@ -1,7 +1,7 @@
 package io.inprice.scrapper.api.session;
 
-import io.inprice.scrapper.api.app.user.UserRole;
 import io.inprice.scrapper.api.session.info.ForRedis;
+import io.inprice.scrapper.common.meta.UserRole;
 
 public class CurrentUser {
 

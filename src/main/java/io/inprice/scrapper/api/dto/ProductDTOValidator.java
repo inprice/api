@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.scrapper.api.helpers.Commons;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.common.info.ProductDTO;
 
 public class ProductDTOValidator {
 

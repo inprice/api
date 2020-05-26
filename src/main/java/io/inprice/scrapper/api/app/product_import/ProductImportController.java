@@ -10,13 +10,14 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
 import io.inprice.scrapper.api.helpers.AccessRoles;
 import io.inprice.scrapper.api.helpers.Commons;
 import io.inprice.scrapper.api.helpers.ControllerHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.meta.ImportType;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;

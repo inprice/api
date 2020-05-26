@@ -2,7 +2,7 @@ package io.inprice.scrapper.api.session.info;
 
 import java.io.Serializable;
 
-import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.common.meta.UserRole;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -39,7 +39,7 @@ public class ForResponse implements Serializable {
       this.company = company;
       this.timezone = timezone;
       this.currencyFormat = currencyFormat;
-      this.role = forCookie.getRole();
+      this.role = UserRole.valueOf(forCookie.getRole());
    }
 
    public ForResponse(ForCookie forCookie, ForRedis forRedis) {  
@@ -48,7 +48,7 @@ public class ForResponse implements Serializable {
       this.company = forRedis.getCompany();
       this.timezone = forRedis.getTimezone();
       this.currencyFormat = forRedis.getCurrencyFormat();
-      this.role = forCookie.getRole();
+      this.role = UserRole.valueOf(forCookie.getRole());
    }
 
   }

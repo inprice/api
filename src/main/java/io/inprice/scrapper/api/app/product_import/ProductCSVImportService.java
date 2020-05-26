@@ -13,15 +13,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.app.link.LinkStatus;
 import io.inprice.scrapper.api.app.plan.PlanRepository;
 import io.inprice.scrapper.api.app.product.ProductRepository;
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.dto.ProductDTO;
 import io.inprice.scrapper.api.dto.ProductDTOValidator;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
-import io.inprice.scrapper.api.utils.NumberUtils;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.info.ProductDTO;
+import io.inprice.scrapper.common.meta.ImportType;
+import io.inprice.scrapper.common.meta.LinkStatus;
+import io.inprice.scrapper.common.models.ImportProduct;
+import io.inprice.scrapper.common.utils.NumberUtils;
 
 public class ProductCSVImportService implements IProductImportService {
 

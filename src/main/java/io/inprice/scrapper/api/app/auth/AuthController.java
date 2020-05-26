@@ -1,18 +1,18 @@
 package io.inprice.scrapper.api.app.auth;
 
 import io.inprice.scrapper.api.app.membership.MembershipService;
-import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.dto.EmailDTO;
 import io.inprice.scrapper.api.dto.InvitationAcceptDTO;
 import io.inprice.scrapper.api.dto.LoginDTO;
 import io.inprice.scrapper.api.dto.PasswordDTO;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
 import io.inprice.scrapper.api.helpers.ClientSide;
 import io.inprice.scrapper.api.helpers.Commons;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.models.User;
 import io.javalin.Javalin;
 
 @Router

@@ -15,11 +15,11 @@ import org.apache.commons.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.app.link.LinkStatus;
-import io.inprice.scrapper.api.external.Database;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.session.CurrentUser;
-import io.inprice.scrapper.api.utils.DateUtils;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.helpers.Database;
+import io.inprice.scrapper.common.meta.LinkStatus;
+import io.inprice.scrapper.common.utils.DateUtils;
 
 public class DashboardRepository {
 

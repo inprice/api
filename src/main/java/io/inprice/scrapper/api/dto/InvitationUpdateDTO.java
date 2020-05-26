@@ -2,7 +2,7 @@ package io.inprice.scrapper.api.dto;
 
 import java.io.Serializable;
 
-import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.common.meta.UserRole;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

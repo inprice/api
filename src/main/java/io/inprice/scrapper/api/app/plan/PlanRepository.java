@@ -8,10 +8,11 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.app.company.CompanyRepository;
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.external.Database;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.helpers.Database;
+import io.inprice.scrapper.common.models.Plan;
 
 public class PlanRepository {
 

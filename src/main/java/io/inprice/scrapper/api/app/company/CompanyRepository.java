@@ -11,24 +11,25 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.scrapper.api.app.plan.PlanStatus;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
-import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
-import io.inprice.scrapper.api.app.user.UserRole;
-import io.inprice.scrapper.api.app.user.UserStatus;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.CreateCompanyDTO;
 import io.inprice.scrapper.api.dto.RegisterDTO;
-import io.inprice.scrapper.api.external.Database;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.CodeGenerator;
 import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.helpers.Database;
+import io.inprice.scrapper.common.meta.PlanStatus;
+import io.inprice.scrapper.common.meta.UserRole;
+import io.inprice.scrapper.common.meta.UserStatus;
+import io.inprice.scrapper.common.models.Company;
+import io.inprice.scrapper.common.models.User;
 import jodd.util.BCrypt;
 
 public class CompanyRepository {

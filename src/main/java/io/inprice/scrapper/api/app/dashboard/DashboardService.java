@@ -5,9 +5,9 @@ import java.util.concurrent.TimeUnit;
 
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.external.RedisClient;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.common.helpers.Beans;
 
 public class DashboardService {
 

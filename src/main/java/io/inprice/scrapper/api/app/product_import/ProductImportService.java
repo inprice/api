@@ -1,13 +1,13 @@
 package io.inprice.scrapper.api.app.product_import;
 
-import io.inprice.scrapper.api.framework.Beans;
-
 import java.util.Arrays;
 import java.util.Map;
 
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.models.ImportProduct;
 
 public class ProductImportService {
 

@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import io.inprice.scrapper.api.app.auth.AuthService;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
-import io.inprice.scrapper.api.app.user.User;
 import io.inprice.scrapper.api.app.user.UserRepository;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.CreateCompanyDTO;
@@ -21,15 +20,16 @@ import io.inprice.scrapper.api.dto.PasswordValidator;
 import io.inprice.scrapper.api.dto.RegisterDTO;
 import io.inprice.scrapper.api.email.EmailSender;
 import io.inprice.scrapper.api.email.TemplateRenderer;
-import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.ClientSide;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.utils.CurrencyFormats;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.helpers.Database;
+import io.inprice.scrapper.common.models.User;
 import io.javalin.http.Context;
 
 public class CompanyService {
@@ -69,7 +69,7 @@ public class CompanyService {
         dataMap.put("token", TokenService.add(TokenType.REGISTER_REQUEST, dto));
 
         final String message = renderer.renderRegisterActivationLink(dataMap);
-        emailSender.send(Props.getEmail_Sender(), "About " + dto.getCompanyName() + " registration on inprice.io",
+        emailSender.send(Props.APP_EMAIL_SENDER(), "About " + dto.getCompanyName() + " registration on inprice.io",
             dto.getEmail(), message);
 
         return Responses.OK;

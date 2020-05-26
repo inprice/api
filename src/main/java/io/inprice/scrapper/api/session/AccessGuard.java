@@ -9,13 +9,14 @@ import org.eclipse.jetty.http.HttpStatus;
 import io.inprice.scrapper.api.app.auth.AuthRepository;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.helpers.Commons;
 import io.inprice.scrapper.api.helpers.ControllerHelper;
 import io.inprice.scrapper.api.helpers.SessionHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.api.meta.ShadowRoles;
 import io.inprice.scrapper.api.session.info.ForCookie;
-import io.inprice.scrapper.api.utils.NumberUtils;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.utils.NumberUtils;
 import io.javalin.core.security.AccessManager;
 import io.javalin.core.security.Role;
 import io.javalin.http.Context;
@@ -43,7 +44,8 @@ public class AccessGuard implements AccessManager {
             if (sessionTokens != null && sessionTokens.size() > sessionNo) {
 
                ForCookie token = sessionTokens.get(sessionNo);
-               if (permittedRoles.contains(token.getRole())) {
+               ShadowRoles role = ShadowRoles.valueOf(token.getRole());
+               if (permittedRoles.contains(role)) {
 
                   ServiceResponse res = authRepository.findByHash(token.getHash());
                   if (res.isOK()) {

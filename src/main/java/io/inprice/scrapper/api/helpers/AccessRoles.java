@@ -3,7 +3,7 @@ package io.inprice.scrapper.api.helpers;
 import java.util.HashSet;
 import java.util.Set;
 
-import io.inprice.scrapper.api.app.user.UserRole;
+import io.inprice.scrapper.api.meta.ShadowRoles;
 import io.javalin.core.security.Role;
 
 public class AccessRoles {
@@ -15,7 +15,7 @@ public class AccessRoles {
    public static Set<Role> ADMIN_ONLY() {
       if (ROLES_OF_ADMIN == null) {
          ROLES_OF_ADMIN = new HashSet<>(1);
-         ROLES_OF_ADMIN.add(UserRole.ADMIN);
+         ROLES_OF_ADMIN.add(ShadowRoles.ADMIN);
       }
       return ROLES_OF_ADMIN;
    }
@@ -23,8 +23,8 @@ public class AccessRoles {
    public static Set<Role> EDITOR() {
       if (ROLES_OF_EDITOR == null) {
          ROLES_OF_EDITOR = new HashSet<>(2);
-         ROLES_OF_EDITOR.add(UserRole.ADMIN);
-         ROLES_OF_EDITOR.add(UserRole.EDITOR);
+         ROLES_OF_EDITOR.add(ShadowRoles.ADMIN);
+         ROLES_OF_EDITOR.add(ShadowRoles.EDITOR);
       }
       return ROLES_OF_EDITOR;
    }
@@ -32,9 +32,9 @@ public class AccessRoles {
    public static Set<Role> ANYONE() {
       if (ROLES_OF_ANYONE == null) {
          ROLES_OF_ANYONE = new HashSet<>(3);
-         ROLES_OF_ANYONE.add(UserRole.ADMIN);
-         ROLES_OF_ANYONE.add(UserRole.EDITOR);
-         ROLES_OF_ANYONE.add(UserRole.VIEWER);
+         ROLES_OF_ANYONE.add(ShadowRoles.ADMIN);
+         ROLES_OF_ANYONE.add(ShadowRoles.EDITOR);
+         ROLES_OF_ANYONE.add(ShadowRoles.VIEWER);
       }
       return ROLES_OF_ANYONE;
    }

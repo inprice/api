@@ -4,16 +4,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.consts.Global;
-import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RabbitMQ;
 import io.inprice.scrapper.api.external.RedisClient;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.ConfigScanner;
 import io.inprice.scrapper.api.framework.HandlerInterruptException;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.AccessGuard;
 import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.helpers.Database;
 import io.javalin.Javalin;
 import io.javalin.core.util.Header;
 import io.javalin.core.util.RouteOverviewPlugin;
@@ -68,7 +68,7 @@ public class Application {
          config.logIfServerNotStarted = true;
          config.showJavalinBanner = false;
          
-         if (Props.isRunningForDev()) {
+         if (Props.IS_RUN_FOR_DEV()) {
             config.registerPlugin(new RouteOverviewPlugin("/routes"));
          } else {
             config.enforceSsl = true;
@@ -77,7 +77,7 @@ public class Application {
          config.accessManager(new AccessGuard());
 
          JavalinJackson.configure(Global.getObjectMapper());
-      }).start(Props.getAPP_Port());
+      }).start(Props.APP_PORT());
 
       app.before(ctx -> {
          if (ctx.method() == "OPTIONS") {

@@ -1,7 +1,4 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
     {
@@ -13,18 +10,16 @@
       "env": {
         "APP_ENV": "dev",
         "APP_PORT": 4567,
+        "APP_SHOW_QUERIES": true,
         "APP_WEB_URL": "http://localhost:8080",
         "APP_API_URL": "http://localhost:4567",
-        "APP_PROD_UNIQUENESS": false,
-        "APP_LINK_UNIQUENESS": false,
-        "APP_SHOWING_SQL_QUERIES": true,
-        "APP_WAITING_TIME": 5,
+        "APP_SALT_ROUNDS": "12",
         "DB_DRIVER": "mysql",
+        "DB_DATABASE": "inprice",
         "DB_HOST": "//localhost",
         "DB_PORT": 3306,
         "DB_USERNAME": "root",
         "DB_PASSWORD": "1234",
-        "DB_DATABASE": "inprice",
         "DB_ADDITIONS": "",
         "MQ_HOST": "localhost",
         "MQ_PORT": 5672,
@@ -33,13 +28,13 @@
         "MQ_EXCHANGE_CHANGES": "changes",
         "MQ_ROUTING_DELETED_LINKS": "deleted-links",
         "REDIS_HOST": "localhost",
+        "REDIS_PASSWORD": null,
         "REDIS_PORT": 6379,
         "OTHER_SENDER_EMAIL": "dumlupinar01@gmail.com",
         "PREFIX_FOR_SEARCH_EBAY": "https://www.ebay.com/itm/",
         "PREFIX_FOR_SEARCH_AMAZON": "https://www.amazon.com/dp/",
-        "SECURITY_SALT_ROUNDS": "12",
-        "IP_SERVICE_APIKEY": "9eac35ec732e43a3a89863fce6cb406a",
-        "SENDGRID_API_KEY": "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"
+        "API_KEYS_GELOCATION": "9eac35ec732e43a3a89863fce6cb406a",
+        "API_KEYS_SENDGRID": "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"
       }
     }
   ]

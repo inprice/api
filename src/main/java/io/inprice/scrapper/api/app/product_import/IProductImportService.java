@@ -2,6 +2,7 @@ package io.inprice.scrapper.api.app.product_import;
 
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
+import io.inprice.scrapper.common.meta.ImportType;
 
 /**
  * IProductImportService

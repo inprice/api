@@ -15,15 +15,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.external.Database;
 import io.inprice.scrapper.api.external.RedisClient;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.session.info.ForCookie;
 import io.inprice.scrapper.api.session.info.ForDatabase;
 import io.inprice.scrapper.api.session.info.ForRedis;
-import io.inprice.scrapper.api.utils.DateUtils;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.helpers.Database;
+import io.inprice.scrapper.common.utils.DateUtils;
 
 public class AuthRepository {
 

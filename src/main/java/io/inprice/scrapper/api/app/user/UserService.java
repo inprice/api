@@ -11,11 +11,11 @@ import io.inprice.scrapper.api.dto.LongDTO;
 import io.inprice.scrapper.api.dto.PasswordDTO;
 import io.inprice.scrapper.api.dto.PasswordValidator;
 import io.inprice.scrapper.api.dto.UserDTO;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.session.info.ForCookie;
 import io.inprice.scrapper.api.utils.Timezones;
+import io.inprice.scrapper.common.helpers.Beans;
 
 public class UserService {
 

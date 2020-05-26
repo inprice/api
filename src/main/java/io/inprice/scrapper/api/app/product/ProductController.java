@@ -3,13 +3,13 @@ package io.inprice.scrapper.api.app.product;
 import java.util.Map;
 
 import io.inprice.scrapper.api.consts.Consts;
-import io.inprice.scrapper.api.dto.ProductDTO;
-import io.inprice.scrapper.api.framework.Beans;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
 import io.inprice.scrapper.api.helpers.AccessRoles;
 import io.inprice.scrapper.api.helpers.Commons;
 import io.inprice.scrapper.api.helpers.ControllerHelper;
+import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.info.ProductDTO;
 import io.javalin.Javalin;
 
 @Router

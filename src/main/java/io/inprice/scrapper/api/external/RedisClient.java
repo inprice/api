@@ -34,9 +34,9 @@ public class RedisClient {
   private static RMapCache<Long, Map<String, Object>> dashboardsMap;
 
   static {
-    final String redisPass = Props.getRedis_Password();
+    final String redisPass = Props.REDIS_PASSWORD();
     Config config = new Config();
-    config.useSingleServer().setAddress(String.format("redis://%s:%d", Props.getRedis_Host(), Props.getRedis_Port()))
+    config.useSingleServer().setAddress(String.format("redis://%s:%d", Props.REDIS_HOST(), Props.REDIS_PORT()))
         .setPassword(!StringUtils.isBlank(redisPass) ? redisPass : null).setConnectionPoolSize(10)
         .setConnectionMinimumIdleSize(1).setIdleConnectionTimeout(5000).setTimeout(5000);
 
@@ -50,7 +50,7 @@ public class RedisClient {
         dashboardsMap = client.getMapCache("api:dashboards");
         isHealthy = true;
       } catch (Exception e) {
-        log.error("Failed to connext to Redis server, trying again in 3 seconds!", e.getMessage());
+        log.error("Failed to connect to Redis server, trying again in 3 seconds! " + e.getMessage());
         try {
           Thread.sleep(3000);
         } catch (InterruptedException ignored) { }
