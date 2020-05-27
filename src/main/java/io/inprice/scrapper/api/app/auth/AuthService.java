@@ -36,7 +36,9 @@ import io.inprice.scrapper.api.session.info.ForCookie;
 import io.inprice.scrapper.api.session.info.ForDatabase;
 import io.inprice.scrapper.api.session.info.ForRedis;
 import io.inprice.scrapper.api.session.info.ForResponse;
+import io.inprice.scrapper.common.config.SysProps;
 import io.inprice.scrapper.common.helpers.Beans;
+import io.inprice.scrapper.common.meta.AppEnv;
 import io.inprice.scrapper.common.models.Membership;
 import io.inprice.scrapper.common.models.User;
 import io.javalin.http.Context;
@@ -266,7 +268,7 @@ public class AuthService {
           Cookie cookie = new Cookie(Consts.SESSION, tokenString);
           cookie.setHttpOnly(true);
           cookie.setSecure(true);
-          if (!Props.IS_RUN_FOR_DEV()) {
+          if (!SysProps.APP_ENV().equals(AppEnv.PROD)) {
             cookie.setDomain(".inprice.io");
             cookie.setMaxAge(Integer.MAX_VALUE);
           } else { // for dev and test purposes

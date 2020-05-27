@@ -5,13 +5,15 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.consts.Global;
 import io.inprice.scrapper.api.external.Props;
-import io.inprice.scrapper.api.external.RabbitMQ;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.ConfigScanner;
 import io.inprice.scrapper.api.framework.HandlerInterruptException;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.AccessGuard;
 import io.inprice.scrapper.api.session.CurrentUser;
+import io.inprice.scrapper.common.helpers.RabbitMQ;
+import io.inprice.scrapper.common.meta.AppEnv;
+import io.inprice.scrapper.common.config.SysProps;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
 import io.javalin.Javalin;
@@ -22,74 +24,74 @@ import io.javalin.plugin.openapi.annotations.ContentType;
 
 public class Application {
 
-   private static final Logger log = LoggerFactory.getLogger(Application.class);
+  private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-   private static Javalin app;
-   private static final Database db = Beans.getSingleton(Database.class);
+  private static Javalin app;
+  private static final Database db = Beans.getSingleton(Database.class);
 
-   public static void main(String[] args) {
-      new Thread(() -> {
-         log.info("APPLICATION IS STARTING...");
+  public static void main(String[] args) {
+    new Thread(() -> {
+      log.info("APPLICATION IS STARTING...");
 
-         createServer();
-         ConfigScanner.scanControllers(app);
+      createServer();
+      ConfigScanner.scanControllers(app);
 
-         log.info("APPLICATION STARTED.");
-         Global.isApplicationRunning = true;
+      log.info("APPLICATION STARTED.");
+      Global.isApplicationRunning = true;
 
-      }, "app-starter").start();
+    }, "app-starter").start();
 
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 
-         Global.isApplicationRunning = false;
-         log.info("APPLICATION IS TERMINATING...");
+      Global.isApplicationRunning = false;
+      log.info("APPLICATION IS TERMINATING...");
 
-         log.info(" - Web server is shutting down...");
-         app.stop();
+      log.info(" - Web server is shutting down...");
+      app.stop();
 
-         log.info(" - Redis connection is closing...");
-         RedisClient.shutdown();
+      log.info(" - Redis connection is closing...");
+      RedisClient.shutdown();
 
-         log.info(" - RabbitMQ connection is closing...");
-         RabbitMQ.closeChannel();
+      log.info(" - RabbitMQ connection is closing...");
+      RabbitMQ.closeChannel();
 
-         log.info(" - DB connection is closing...");
-         db.shutdown();
+      log.info(" - DB connection is closing...");
+      db.shutdown();
 
-         log.info("ALL SERVICES IS DONE.");
+      log.info("ALL SERVICES IS DONE.");
 
-      }, "shutdown-hook"));
-   }
+    }, "shutdown-hook"));
+  }
 
-   private static void createServer() {
-      app = Javalin.create((config) -> {
-         config.defaultContentType = ContentType.JSON;
-         config.enableCorsForAllOrigins();
-         config.logIfServerNotStarted = true;
-         config.showJavalinBanner = false;
-         
-         if (Props.IS_RUN_FOR_DEV()) {
-            config.registerPlugin(new RouteOverviewPlugin("/routes"));
-         } else {
-            config.enforceSsl = true;
-         }
+  private static void createServer() {
+    app = Javalin.create((config) -> {
+      config.defaultContentType = ContentType.JSON;
+      config.enableCorsForAllOrigins();
+      config.logIfServerNotStarted = true;
+      config.showJavalinBanner = false;
 
-         config.accessManager(new AccessGuard());
+      if (SysProps.APP_ENV().equals(AppEnv.DEV)) {
+        config.registerPlugin(new RouteOverviewPlugin("/routes"));
+      } else {
+        config.enforceSsl = true;
+      }
 
-         JavalinJackson.configure(Global.getObjectMapper());
-      }).start(Props.APP_PORT());
+      config.accessManager(new AccessGuard());
 
-      app.before(ctx -> {
-         if (ctx.method() == "OPTIONS") {
-            ctx.header(Header.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
-         }
-      });
+      JavalinJackson.configure(Global.getObjectMapper());
+    }).start(Props.APP_PORT());
 
-      app.after(ctx -> CurrentUser.cleanup());
+    app.before(ctx -> {
+      if (ctx.method() == "OPTIONS") {
+        ctx.header(Header.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
+      }
+    });
 
-      app.exception(HandlerInterruptException.class, (e, ctx) -> {
-         ctx.json(new ServiceResponse(e.getStatus(), e.getMessage()));
-      });
-   }
+    app.after(ctx -> CurrentUser.cleanup());
+
+    app.exception(HandlerInterruptException.class, (e, ctx) -> {
+      ctx.json(new ServiceResponse(e.getStatus(), e.getMessage()));
+    });
+  }
 
 }

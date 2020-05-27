@@ -8,12 +8,12 @@ import org.apache.commons.lang3.StringUtils;
 import io.inprice.scrapper.api.app.product.ProductRepository;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.LinkDTO;
-import io.inprice.scrapper.api.external.Props;
-import io.inprice.scrapper.api.external.RabbitMQ;
 import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.utils.URLUtils;
+import io.inprice.scrapper.common.helpers.RabbitMQ;
+import io.inprice.scrapper.common.config.SysProps;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.meta.LinkStatus;
 import io.inprice.scrapper.common.models.Link;
@@ -72,7 +72,7 @@ public class LinkService {
         if (del.isOK()) {
           // inform the product to be refreshed
           Link link = res.getData();
-          RabbitMQ.publish(Props.MQ_EXCHANGE_CHANGES(), Props.MQ_ROUTING_DELETED_LINKS(), link.getProductId());
+          RabbitMQ.publish(SysProps.MQ_CHANGES_EXCHANGE(), SysProps.MQ_DELETED_LINKS_ROUTING(), link.getProductId());
           return Responses.OK;
         }
       }

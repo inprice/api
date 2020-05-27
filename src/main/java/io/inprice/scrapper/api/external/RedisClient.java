@@ -20,6 +20,7 @@ import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
 import io.inprice.scrapper.api.session.info.ForRedis;
+import io.inprice.scrapper.common.config.SysProps;
 
 public class RedisClient {
 
@@ -34,11 +35,16 @@ public class RedisClient {
   private static RMapCache<Long, Map<String, Object>> dashboardsMap;
 
   static {
-    final String redisPass = Props.REDIS_PASSWORD();
+    final String redisPass = SysProps.REDIS_PASSWORD();
     Config config = new Config();
-    config.useSingleServer().setAddress(String.format("redis://%s:%d", Props.REDIS_HOST(), Props.REDIS_PORT()))
-        .setPassword(!StringUtils.isBlank(redisPass) ? redisPass : null).setConnectionPoolSize(10)
-        .setConnectionMinimumIdleSize(1).setIdleConnectionTimeout(5000).setTimeout(5000);
+    config
+      .useSingleServer()
+      .setAddress(String.format("redis://%s:%d", SysProps.REDIS_HOST(), SysProps.REDIS_PORT()))
+      .setPassword(!StringUtils.isBlank(redisPass) ? redisPass : null)
+      .setConnectionPoolSize(10)
+      .setConnectionMinimumIdleSize(1)
+      .setIdleConnectionTimeout(5000)
+      .setTimeout(5000);
 
     while (!isHealthy && Global.isApplicationRunning) {
       try {
