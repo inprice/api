@@ -7,8 +7,8 @@ import javax.crypto.SecretKey;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import io.inprice.scrapper.api.consts.Global;
 import io.inprice.scrapper.api.session.info.ForCookie;
+import io.inprice.scrapper.common.helpers.JsonConverter;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParser;
@@ -31,14 +31,14 @@ public class SessionHelper {
          Jwts.builder()
             .signWith(key)
             .serializeToJsonWith(
-               new JacksonSerializer<>(Global.getObjectMapper())
+               new JacksonSerializer<>(JsonConverter.mapper)
             );
 
       parser = 
          Jwts.parserBuilder()
             .setSigningKey(key)
             .deserializeJsonWith(
-               new JacksonDeserializer<>(Global.getObjectMapper())
+               new JacksonDeserializer<>(JsonConverter.mapper)
             )
          .build();
    }
@@ -53,7 +53,7 @@ public class SessionHelper {
       try {
          Claims claims = parser.parseClaimsJws(token).getBody();
          Object raw = claims.get("payload", List.class);
-         return Global.getObjectMapper().convertValue(raw, new TypeReference<List<ForCookie>>() {});
+         return JsonConverter.mapper.convertValue(raw, new TypeReference<List<ForCookie>>() {});
       } catch (Exception ignored) { 
          ignored.printStackTrace();
       }

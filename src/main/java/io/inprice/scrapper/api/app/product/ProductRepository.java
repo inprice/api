@@ -1,5 +1,6 @@
 package io.inprice.scrapper.api.app.product;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -25,15 +26,40 @@ import io.inprice.scrapper.common.helpers.Database;
 import io.inprice.scrapper.common.info.ProductDTO;
 import io.inprice.scrapper.common.meta.LinkStatus;
 import io.inprice.scrapper.common.models.Product;
+import io.inprice.scrapper.common.models.ProductPrice;
 
 public class ProductRepository {
 
   private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
   private static final Database db = Beans.getSingleton(Database.class);
 
+  private static final String BASE_QUERY = "select p.*, pp.* from product as p left join product_price as pp on p.last_price_id = pp.id ";
+  private final ProductPrice zeroPrice;
+
+  public ProductRepository() {
+    //used for products having no any available competitor
+    zeroPrice = new ProductPrice();
+    zeroPrice.setPrice(BigDecimal.ZERO);
+    zeroPrice.setMinPlatform("NA");
+    zeroPrice.setMinSeller("NA");
+    zeroPrice.setMinPrice(BigDecimal.ZERO);
+    zeroPrice.setMinDiff(BigDecimal.ZERO);
+    zeroPrice.setAvgPrice(BigDecimal.ZERO);
+    zeroPrice.setAvgDiff(BigDecimal.ZERO);
+    zeroPrice.setMaxPlatform("NA");
+    zeroPrice.setMaxSeller("NA");
+    zeroPrice.setMaxPrice(BigDecimal.ZERO);
+    zeroPrice.setMaxDiff(BigDecimal.ZERO);
+    zeroPrice.setCompetitors(0);
+    zeroPrice.setPosition(3);
+    zeroPrice.setRanking(0);
+    zeroPrice.setRankingWith(0);
+    zeroPrice.setSuggestedPrice(BigDecimal.ZERO);
+  }
+
   public ServiceResponse findById(Long id) {
     Product model = db.findSingle(
-        String.format("select * from product where id=%d and company_id=%d ", id, CurrentUser.getCompanyId()),
+        String.format("%s where p.id=%d and p.company_id=%d ", BASE_QUERY, id, CurrentUser.getCompanyId()),
         this::map);
     if (model != null) {
       return new ServiceResponse(model);
@@ -42,8 +68,8 @@ public class ProductRepository {
   }
 
   public ServiceResponse findByCode(String code) {
-    Product model = db.findSingle(String.format("select * from product where code='%s' and company_id=%d ",
-        SqlHelper.clear(code), CurrentUser.getCompanyId()), this::map);
+    Product model = db.findSingle(String.format("%s where code='%s' and p.company_id=%d ",
+      BASE_QUERY, SqlHelper.clear(code), CurrentUser.getCompanyId()), this::map);
     if (model != null) {
       return new ServiceResponse(model);
     }
@@ -51,6 +77,7 @@ public class ProductRepository {
   }
 
   public ServiceResponse search(SearchModel searchModel) {
+    searchModel.setQuery(BASE_QUERY);
     final String searchQuery = SqlHelper.generateSearchQuery(searchModel);
 
     try {
@@ -227,26 +254,6 @@ public class ProductRepository {
     return result;
   }
 
-  /*
-  public List<String> insertQueries(ProductDTO dto) {
-    List<String> queryList = new ArrayList<>(2);
-
-    queryList.add(
-      String.format(
-        "insert into product (code, name, brand, category, price, company_id) values ('%s', '%s', '%s', '%s', %d, %d); "
-      , dto.getCode(), dto.getName(), dto.getBrand(), dto.getCategory(), dto.getPrice(), CurrentUser.getCompanyId()
-    ));
-
-    queryList.add(
-      String.format(
-        "insert into product_price (product_id, price, company_id) values (LAST_INSERT_ID(), %d, %d); "
-      , dto.getPrice(), CurrentUser.getCompanyId()
-    ));
-
-    return queryList;
-  }
-  */
-
   public ServiceResponse insertANewProduct(Connection con, ProductDTO dto) {
     final String query = "insert into product "
         + "(code, name, brand, category, price, company_id) values (?, ?, ?, ?, ?, ?)";
@@ -306,19 +313,33 @@ public class ProductRepository {
       model.setName(rs.getString("name"));
       model.setBrand(rs.getString("brand"));
       model.setCategory(rs.getString("category"));
-      model.setPosition(rs.getInt("position"));
-      model.setLinksCount(rs.getInt("links_count"));
       model.setPrice(rs.getBigDecimal("price"));
-      model.setAvgPrice(rs.getBigDecimal("avg_price"));
-      model.setMinPlatform(rs.getString("min_platform"));
-      model.setMinSeller(rs.getString("min_seller"));
-      model.setMinPrice(rs.getBigDecimal("min_price"));
-      model.setMaxPlatform(rs.getString("max_platform"));
-      model.setMaxSeller(rs.getString("max_seller"));
-      model.setMaxPrice(rs.getBigDecimal("max_price"));
+      model.setLastPriceId(RepositoryHelper.nullLongHandler(rs, "last_price_id"));
       model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
       model.setUpdatedAt(rs.getTimestamp("updated_at"));
       model.setCreatedAt(rs.getTimestamp("created_at"));
+      model.setPriceDetails(zeroPrice);
+
+      if (model.getLastPriceId() != null) {
+        ProductPrice pp = new ProductPrice();
+        pp.setPrice(rs.getBigDecimal("price"));
+        pp.setMinPlatform(rs.getString("min_platform"));
+        pp.setMinSeller(rs.getString("min_seller"));
+        pp.setMinPrice(rs.getBigDecimal("min_price"));
+        pp.setMinDiff(rs.getBigDecimal("min_diff"));
+        pp.setAvgPrice(rs.getBigDecimal("avg_price"));
+        pp.setAvgDiff(rs.getBigDecimal("avg_diff"));
+        pp.setMaxPlatform(rs.getString("max_platform"));
+        pp.setMaxSeller(rs.getString("max_seller"));
+        pp.setMaxPrice(rs.getBigDecimal("max_price"));
+        pp.setMaxDiff(rs.getBigDecimal("max_diff"));
+        pp.setCompetitors(rs.getInt("competitors"));
+        pp.setPosition(rs.getInt("position"));
+        pp.setRanking(rs.getInt("ranking"));
+        pp.setRankingWith(rs.getInt("ranking_with"));
+        pp.setSuggestedPrice(rs.getBigDecimal("suggested_price"));
+        model.setPriceDetails(pp);
+      }
 
       return model;
     } catch (SQLException e) {

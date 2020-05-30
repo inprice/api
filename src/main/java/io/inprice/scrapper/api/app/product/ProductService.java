@@ -21,7 +21,6 @@ public class ProductService {
 
    public ServiceResponse search(Map<String, String> searchMap) {
       SearchModel sm = new SearchModel(searchMap, "name", Product.class);
-      sm.setTable("product");
       sm.setFields(Arrays.asList("code", "name"));
       return repository.search(sm);
    }

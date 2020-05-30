@@ -16,6 +16,7 @@ import io.inprice.scrapper.common.meta.AppEnv;
 import io.inprice.scrapper.common.config.SysProps;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
+import io.inprice.scrapper.common.helpers.JsonConverter;
 import io.javalin.Javalin;
 import io.javalin.core.util.Header;
 import io.javalin.core.util.RouteOverviewPlugin;
@@ -53,7 +54,7 @@ public class Application {
       RedisClient.shutdown();
 
       log.info(" - RabbitMQ connection is closing...");
-      RabbitMQ.closeChannel();
+      RabbitMQ.closeConnection();
 
       log.info(" - DB connection is closing...");
       db.shutdown();
@@ -78,7 +79,7 @@ public class Application {
 
       config.accessManager(new AccessGuard());
 
-      JavalinJackson.configure(Global.getObjectMapper());
+      JavalinJackson.configure(JsonConverter.mapper);
     }).start(Props.APP_PORT());
 
     app.before(ctx -> {

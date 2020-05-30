@@ -245,7 +245,11 @@ public class DashboardRepository {
   private List<Map<String, Object>> find10MRUProducts(Connection con) throws SQLException {
     List<Map<String, Object>> result = new ArrayList<>(10);
 
-    final String query = "select * from product where company_id=? order by updated_at desc limit 10";
+    final String query = 
+      "select p.name, p.price, pp.* from product as p " +
+      "left join product_price as pp on pp.id = p.last_price_id " +
+      "where p.company_id=? " +
+      "order by updated_at desc limit 10";
     try (PreparedStatement pst = con.prepareStatement(query)) {
       pst.setLong(1, CurrentUser.getCompanyId());
 
@@ -253,15 +257,21 @@ public class DashboardRepository {
         while (rs.next()) {
           Map<String, Object> row = new HashMap<>(11);
           row.put("name", rs.getString("name"));
-          row.put("position", rs.getInt("position"));
           row.put("price", rs.getBigDecimal("price"));
-          row.put("avgPrice", rs.getBigDecimal("avg_price"));
+          row.put("position", rs.getInt("position"));
           row.put("minPlatform", rs.getString("min_platform"));
           row.put("minSeller", rs.getString("min_seller"));
           row.put("minPrice", rs.getBigDecimal("min_price"));
+          row.put("minDiff", rs.getBigDecimal("min_diff"));
+          row.put("avgPrice", rs.getBigDecimal("avg_price"));
+          row.put("avgDiff", rs.getBigDecimal("avg_diff"));
           row.put("maxPlatform", rs.getString("max_platform"));
           row.put("maxSeller", rs.getString("max_seller"));
           row.put("maxPrice", rs.getBigDecimal("max_price"));
+          row.put("maxDiff", rs.getBigDecimal("max_diff"));
+          row.put("competitors", rs.getInt("competitors"));
+          row.put("ranking", rs.getInt("ranking"));
+          row.put("rankingWith", rs.getInt("ranking_with"));
           if (rs.getTimestamp("updated_at") != null) {
             row.put("lastUpdate", DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
           } else {

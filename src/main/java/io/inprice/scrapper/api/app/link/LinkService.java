@@ -3,6 +3,8 @@ package io.inprice.scrapper.api.app.link;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.rabbitmq.client.Channel;
+
 import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.scrapper.api.app.product.ProductRepository;
@@ -72,7 +74,9 @@ public class LinkService {
         if (del.isOK()) {
           // inform the product to be refreshed
           Link link = res.getData();
-          RabbitMQ.publish(SysProps.MQ_CHANGES_EXCHANGE(), SysProps.MQ_DELETED_LINKS_ROUTING(), link.getProductId());
+          Channel channel = RabbitMQ.openChannel();
+          RabbitMQ.publish(channel, SysProps.MQ_CHANGES_EXCHANGE(), SysProps.MQ_DELETED_LINKS_ROUTING(), ""+link.getProductId());
+          RabbitMQ.closeChannel(channel);
           return Responses.OK;
         }
       }
