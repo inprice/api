@@ -14,6 +14,7 @@ public class SearchModel {
   private int lastRowNo;
   private String orderBy;
   private List<String> fields;
+  private String prefixForCompanyId;
 
   public final int ROW_LIMIT = 25;
 
@@ -73,10 +74,12 @@ public class SearchModel {
     this.fields = fields;
   }
 
-  @Override
-  public String toString() {
-    return "[isExactSearch=" + isExactSearch + ", lastRowNo=" + lastRowNo + ", orderBy=" + orderBy
-        + ", query=" + query + ", table=" + table + ", term=" + term + "]";
+  public String getPrefixForCompanyId() {
+    return prefixForCompanyId;
+  }
+
+  public void setPrefixForCompanyId(String prefixForCompanyId) {
+    this.prefixForCompanyId = prefixForCompanyId;
   }
 
 }

@@ -246,7 +246,7 @@ public class DashboardRepository {
     List<Map<String, Object>> result = new ArrayList<>(10);
 
     final String query = 
-      "select p.name, p.price, pp.* from product as p " +
+      "select p.name, p.updated_at, p.created_at, pp.* from product as p " +
       "left join product_price as pp on pp.id = p.last_price_id " +
       "where p.company_id=? " +
       "order by updated_at desc limit 10";
@@ -291,12 +291,20 @@ public class DashboardRepository {
   private Map<String, Object> findProductDistributions(Connection con) throws SQLException {
     Map<String, Object> result = new HashMap<>(5);
 
-    String[] labels = {"LOWEST", "LOWER", "AVERAGE", "HIGHER", "HIGHEST"};
+    String[] labels = { "LOWEST", "LOWER", "AVERAGE", "HIGHER", "HIGHEST" };
     int[] series = new int[labels.length];
 
-    final String query = "select position, count(1) from product where company_id=? and active=true group by position";
+    final String query = 
+      "select pp.position, count(1) " +
+      "from product as p " +
+      "inner join product_price as pp on pp.id = p.last_price_id " +
+      "where p.active=? " +
+      "  and p.last_price_id is not null " +
+      "  and p.company_id=? " +
+      "group by pp.position";
     try (PreparedStatement pst = con.prepareStatement(query)) {
-      pst.setLong(1, CurrentUser.getCompanyId());
+      pst.setBoolean(1, Boolean.TRUE);
+      pst.setLong(2, CurrentUser.getCompanyId());
 
       try (ResultSet rs = pst.executeQuery()) {
         while (rs.next()) {
@@ -322,10 +330,18 @@ public class DashboardRepository {
     for (String indicator : indicators) {
       result.put(indicator, 0);
 
-      final String query = "select count(1) from product where company_id=? and active=true and " + indicator
-          + "_seller='You'";
+      final String query = 
+        "select count(1) " +
+        "from product as p " +
+        "inner join product_price as pp on pp.id = p.last_price_id " +
+        "where p.active=? " +
+        "  and p.company_id=? " +
+        "  and pp." + indicator + "_seller='You'";
+
       try (PreparedStatement pst = con.prepareStatement(query)) {
-        pst.setLong(1, CurrentUser.getCompanyId());
+        pst.setBoolean(1, Boolean.TRUE);
+        pst.setLong(2, CurrentUser.getCompanyId());
+
         try (ResultSet rs = pst.executeQuery()) {
           if (rs.next()) {
             result.put(indicator, rs.getInt(1));

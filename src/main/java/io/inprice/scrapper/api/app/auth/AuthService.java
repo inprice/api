@@ -268,7 +268,7 @@ public class AuthService {
           Cookie cookie = new Cookie(Consts.SESSION, tokenString);
           cookie.setHttpOnly(true);
           cookie.setSecure(true);
-          if (!SysProps.APP_ENV().equals(AppEnv.PROD)) {
+          if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
             cookie.setDomain(".inprice.io");
             cookie.setMaxAge(Integer.MAX_VALUE);
           } else { // for dev and test purposes

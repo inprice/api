@@ -84,7 +84,12 @@ public class SqlHelper {
       } else {
         sql.append(searchModel.getQuery());
       }
-      sql.append(" where company_id = ");
+      sql.append(" where ");
+      if (StringUtils.isNotBlank(searchModel.getPrefixForCompanyId())) {
+        sql.append(searchModel.getPrefixForCompanyId());
+        sql.append(".");
+      }
+      sql.append("company_id = ");
       sql.append(CurrentUser.getCompanyId());
 
       if (StringUtils.isNotBlank(extraConditions)) {

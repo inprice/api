@@ -77,6 +77,7 @@ public class ProductRepository {
   }
 
   public ServiceResponse search(SearchModel searchModel) {
+    searchModel.setPrefixForCompanyId("p");
     searchModel.setQuery(BASE_QUERY);
     final String searchQuery = SqlHelper.generateSearchQuery(searchModel);
 
