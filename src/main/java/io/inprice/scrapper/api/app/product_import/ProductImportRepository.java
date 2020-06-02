@@ -24,7 +24,7 @@ import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
 import io.inprice.scrapper.common.meta.ImportType;
-import io.inprice.scrapper.common.meta.LinkStatus;
+import io.inprice.scrapper.common.meta.CompetitorStatus;
 import io.inprice.scrapper.common.models.ImportProduct;
 import io.inprice.scrapper.common.utils.DateUtils;
 
@@ -72,7 +72,7 @@ public class ProductImportRepository {
     boolean result =
       db.executeQuery(
         String.format("delete from import_product where id=%d and company_id=%d ", id, CurrentUser.getCompanyId()),
-        String.format("Failed to delete link. Id: %d", id));
+        String.format("Failed to delete competitor. Id: %d", id));
     if (result)
       return Responses.OK;
     else
@@ -93,11 +93,11 @@ public class ProductImportRepository {
         ImportProduct row = itr.next();
 
         // adding product if any
-        if (row.getStatus().equals(LinkStatus.AVAILABLE) && row.getProductDTO() != null) {
+        if (row.getStatus().equals(CompetitorStatus.AVAILABLE) && row.getProductDTO() != null) {
           ServiceResponse res = productRepository.insertANewProduct(con, row.getProductDTO());
           if (! res.isOK()) {
             if (res.equals(Responses.DataProblem.DUPLICATE)) {
-              row.setStatus(LinkStatus.DUPLICATE);
+              row.setStatus(CompetitorStatus.DUPLICATE);
             }
             row.setDescription(res.getReason());
           }
@@ -145,7 +145,7 @@ public class ProductImportRepository {
       model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
       model.setImportType(ImportType.valueOf(rs.getString("import_type")));
       model.setData(rs.getString("data"));
-      model.setStatus(LinkStatus.valueOf(rs.getString("status")));
+      model.setStatus(CompetitorStatus.valueOf(rs.getString("status")));
       model.setLastCheck(rs.getTimestamp("last_check"));
       model.setLastUpdate(rs.getTimestamp("last_update"));
       model.setRetry(rs.getInt("retry"));

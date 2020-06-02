@@ -18,7 +18,7 @@ import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.meta.ImportType;
-import io.inprice.scrapper.common.meta.LinkStatus;
+import io.inprice.scrapper.common.meta.CompetitorStatus;
 import io.inprice.scrapper.common.models.ImportProduct;
 
 public class ProductCodeImportService implements IProductImportService {
@@ -93,17 +93,17 @@ public class ProductCodeImportService implements IProductImportService {
                     insertedCodeSet.add(line);
                     actualCount++;
                   } else {
-                    row.setStatus(LinkStatus.DUPLICATE);
+                    row.setStatus(CompetitorStatus.DUPLICATE);
                   }
 
                 } else {
-                  row.setStatus(LinkStatus.IMPROPER);
+                  row.setStatus(CompetitorStatus.IMPROPER);
                 }
               } else {
-                row.setStatus(LinkStatus.DUPLICATE);
+                row.setStatus(CompetitorStatus.DUPLICATE);
               }
             } else {
-              row.setStatus(LinkStatus.WONT_BE_IMPLEMENTED);
+              row.setStatus(CompetitorStatus.WONT_BE_IMPLEMENTED);
             }
             importList.add(row);
             line = reader.readLine();

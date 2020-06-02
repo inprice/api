@@ -1,4 +1,4 @@
-package io.inprice.scrapper.api.app.link;
+package io.inprice.scrapper.api.app.competitor;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.scrapper.api.app.product.ProductRepository;
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.dto.LinkDTO;
+import io.inprice.scrapper.api.dto.CompetitorDTO;
 import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
@@ -17,16 +17,16 @@ import io.inprice.scrapper.api.utils.URLUtils;
 import io.inprice.scrapper.common.helpers.RabbitMQ;
 import io.inprice.scrapper.common.config.SysProps;
 import io.inprice.scrapper.common.helpers.Beans;
-import io.inprice.scrapper.common.meta.LinkStatus;
-import io.inprice.scrapper.common.models.Link;
+import io.inprice.scrapper.common.meta.CompetitorStatus;
+import io.inprice.scrapper.common.models.Competitor;
 
-public class LinkService {
+public class CompetitorService {
 
-  private final LinkRepository linkRepository = Beans.getSingleton(LinkRepository.class);
+  private final CompetitorRepository competitorRepository = Beans.getSingleton(CompetitorRepository.class);
   private final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
 
   public ServiceResponse findById(Long id) {
-    return linkRepository.findById(id);
+    return competitorRepository.findById(id);
   }
 
   public ServiceResponse getList(Long prodId) {
@@ -34,90 +34,90 @@ public class LinkService {
 
     ServiceResponse found = productRepository.findById(prodId);
     if (found.isOK()) {
-      return linkRepository.getList(found.getData());
+      return competitorRepository.getList(found.getData());
     }
 
     return Responses.NotFound.PRODUCT;
   }
 
   public ServiceResponse search(Map<String, String> searchMap) {
-    SearchModel sm = new SearchModel(searchMap, "name, platform, seller", Link.class);
-    sm.setQuery("select l.*, s.name as platform from link as l left join site as s on s.id = l.site_id");
+    SearchModel sm = new SearchModel(searchMap, "name, platform, seller", Competitor.class);
+    sm.setQuery("select l.*, s.name as platform from competitor as l left join site as s on s.id = l.site_id");
     sm.setFields(Arrays.asList("seller", "s.name"));
 
     String whereStatus = searchMap.get("status");
     if (StringUtils.isNotBlank(whereStatus) && ! whereStatus.equals("null")) {
       try {
-        whereStatus = "status = '" + LinkStatus.valueOf(whereStatus).name() + "'";
+        whereStatus = "status = '" + CompetitorStatus.valueOf(whereStatus).name() + "'";
       } catch (Exception ignored) {}
     }
 
-    return linkRepository.search(sm, whereStatus);
+    return competitorRepository.search(sm, whereStatus);
   }
 
-  public ServiceResponse insert(LinkDTO dto) {
+  public ServiceResponse insert(CompetitorDTO dto) {
     if (dto != null) {
       ServiceResponse res = validate(dto);
       if (res.isOK()) {
-        res = linkRepository.insert(dto);
+        res = competitorRepository.insert(dto);
       }
       return res;
     }
-    return Responses.Invalid.LINK;
+    return Responses.Invalid.COMPETITOR;
   }
 
-  public ServiceResponse deleteById(Long linkId) {
-    if (linkId != null && linkId > 0) {
-      ServiceResponse res = linkRepository.findById(linkId);
+  public ServiceResponse deleteById(Long competitorId) {
+    if (competitorId != null && competitorId > 0) {
+      ServiceResponse res = competitorRepository.findById(competitorId);
       if (res.isOK()) {
-        ServiceResponse del = linkRepository.deleteById(linkId);
+        ServiceResponse del = competitorRepository.deleteById(competitorId);
         if (del.isOK()) {
           // inform the product to be refreshed
-          Link link = res.getData();
+          Competitor competitor = res.getData();
           Channel channel = RabbitMQ.openChannel();
-          RabbitMQ.publish(channel, SysProps.MQ_CHANGES_EXCHANGE(), SysProps.MQ_DELETED_LINKS_ROUTING(), ""+link.getProductId());
+          RabbitMQ.publish(channel, SysProps.MQ_CHANGES_EXCHANGE(), SysProps.MQ_PRICE_REFRESH_ROUTING(), ""+competitor.getProductId());
           RabbitMQ.closeChannel(channel);
           return Responses.OK;
         }
       }
-      return Responses.NotFound.LINK;
+      return Responses.NotFound.COMPETITOR;
     } else {
-      return Responses.Invalid.LINK;
+      return Responses.Invalid.COMPETITOR;
     }
   }
 
   @SuppressWarnings("incomplete-switch")
-  public ServiceResponse changeStatus(Long id, LinkStatus status) {
+  public ServiceResponse changeStatus(Long id, CompetitorStatus status) {
     if (id == null || id < 1) {
-      return Responses.NotFound.LINK;
+      return Responses.NotFound.COMPETITOR;
     }
 
-    ServiceResponse res = linkRepository.findById(id);
+    ServiceResponse res = competitorRepository.findById(id);
     if (res.isOK()) {
-      Link link = res.getData();
+      Competitor competitor = res.getData();
 
-      if (!link.getCompanyId().equals(CurrentUser.getCompanyId())) {
+      if (!competitor.getCompanyId().equals(CurrentUser.getCompanyId())) {
         return Responses.Invalid.PRODUCT;
       }
 
-      if (link.getStatus().equals(status)) {
+      if (competitor.getStatus().equals(status)) {
         return Responses.DataProblem.NOT_SUITABLE;
       }
 
       boolean suitable = false;
 
-      switch (link.getStatus()) {
+      switch (competitor.getStatus()) {
         case AVAILABLE: {
-          suitable = (status.equals(LinkStatus.RENEWED) || status.equals(LinkStatus.PAUSED));
+          suitable = (status.equals(CompetitorStatus.TOBE_RENEWED) || status.equals(CompetitorStatus.PAUSED));
           break;
         }
         case PAUSED: {
-          suitable = (status.equals(LinkStatus.RESUMED));
+          suitable = (status.equals(CompetitorStatus.RESUMED));
           break;
         }
-        case NEW:
-        case RENEWED:
-        case BE_IMPLEMENTED:
+        case TOBE_CLASSIFIED:
+        case TOBE_RENEWED:
+        case TOBE_IMPLEMENTED:
         case IMPLEMENTED:
         case NOT_AVAILABLE:
         case READ_ERROR:
@@ -125,20 +125,20 @@ public class LinkService {
         case NETWORK_ERROR:
         case CLASS_PROBLEM:
         case INTERNAL_ERROR: {
-          suitable = (status.equals(LinkStatus.PAUSED));
+          suitable = (status.equals(CompetitorStatus.PAUSED));
           break;
         }
       }
       if (!suitable)
         return Responses.DataProblem.NOT_SUITABLE;
 
-      return linkRepository.changeStatus(id, link.getProductId(), status);
+      return competitorRepository.changeStatus(id, competitor.getProductId(), status);
     }
 
     return res;
   }
 
-  private ServiceResponse validate(LinkDTO dto) {
+  private ServiceResponse validate(CompetitorDTO dto) {
     String problem = null;
 
     if (!URLUtils.isAValidURL(dto.getUrl())) {

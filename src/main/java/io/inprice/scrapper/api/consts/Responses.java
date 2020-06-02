@@ -25,7 +25,7 @@ public class Responses {
       public static final ServiceResponse NAME = new ServiceResponse(BASE + 14, "Invalid name!");
       
       public static final ServiceResponse PRODUCT = new ServiceResponse(BASE + 20, "Invalid product!");
-      public static final ServiceResponse LINK = new ServiceResponse(BASE + 21, "Invalid link!");
+      public static final ServiceResponse COMPETITOR = new ServiceResponse(BASE + 21, "Invalid competitor!");
       
       public static final ServiceResponse TOKEN = new ServiceResponse(BASE + 30, "Invalid token!");
       public static final ServiceResponse EMPTY_FILE = new ServiceResponse(BASE + 40, "Empty file!");
@@ -110,7 +110,7 @@ public class Responses {
       public static final ServiceResponse INVITATION = new ServiceResponse(BASE, "An active invitation not found!");
 
       public static final ServiceResponse PRODUCT = new ServiceResponse(BASE, "Product not found!");
-      public static final ServiceResponse LINK = new ServiceResponse(BASE, "Link not found!");
+      public static final ServiceResponse COMPETITOR = new ServiceResponse(BASE, "Competitor not found!");
       public static final ServiceResponse IMPORT = new ServiceResponse(BASE, "Import not found!");
 
       public static final ServiceResponse HISTORY = new ServiceResponse(BASE, "History not found!");

@@ -9,7 +9,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class LinkDTO implements Serializable {
+public class CompetitorDTO implements Serializable {
 
   private static final long serialVersionUID = 4899893105959011844L;
 

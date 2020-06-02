@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
-import io.inprice.scrapper.common.meta.LinkStatus;
+import io.inprice.scrapper.common.meta.CompetitorStatus;
 import io.inprice.scrapper.common.utils.DateUtils;
 
 public class DashboardRepository {
@@ -35,7 +35,7 @@ public class DashboardRepository {
       report.put("date", DateUtils.formatLongDate(new Date()));
       report.put("company", getCompanyInfo(con));
       report.put("products", getProductsInfo(con));
-      report.put("links", getLinksInfo(con));
+      report.put("competitors", getCompetitorsInfo(con));
 
     } catch (Exception e) {
       log.error("Failed to get dashboard report", e);
@@ -90,18 +90,18 @@ public class DashboardRepository {
     return result;
   }
 
-  private Map<String, Object> getLinksInfo(Connection con) throws SQLException {
+  private Map<String, Object> getCompetitorsInfo(Connection con) throws SQLException {
     Map<String, Object> result = new HashMap<>(2);
-    result.put("count", findLinkCounts(con));
-    result.put("distribution", findLinkDistributions(con));
-    result.put("mru10", find10MRULinks(con));
+    result.put("count", findCompetitorCounts(con));
+    result.put("distribution", findCompetitorDistributions(con));
+    result.put("mru10", find10MRUCompetitors(con));
     return result;
   }
 
-  private int findLinkCounts(Connection con) throws SQLException {
+  private int findCompetitorCounts(Connection con) throws SQLException {
     int result = 0;
 
-    final String query = "select count(1) from link where company_id=?";
+    final String query = "select count(1) from competitor where company_id=?";
     try (PreparedStatement pst = con.prepareStatement(query)) {
       pst.setLong(1, CurrentUser.getCompanyId());
 
@@ -116,26 +116,26 @@ public class DashboardRepository {
     return result;
   }
 
-  private Map<String, Object> findLinkDistributions(Connection con) throws SQLException {
+  private Map<String, Object> findCompetitorDistributions(Connection con) throws SQLException {
     final String OTHER = "OTHER";
 
-    LinkStatus[] statuses = {
-      LinkStatus.NEW,
-      LinkStatus.AVAILABLE,
-      LinkStatus.NOT_AVAILABLE,
-      LinkStatus.PAUSED,
-      LinkStatus.IMPLEMENTED,
-      LinkStatus.BE_IMPLEMENTED,
-      LinkStatus.WONT_BE_IMPLEMENTED
+    CompetitorStatus[] statuses = {
+      CompetitorStatus.TOBE_CLASSIFIED,
+      CompetitorStatus.AVAILABLE,
+      CompetitorStatus.NOT_AVAILABLE,
+      CompetitorStatus.PAUSED,
+      CompetitorStatus.IMPLEMENTED,
+      CompetitorStatus.TOBE_IMPLEMENTED,
+      CompetitorStatus.WONT_BE_IMPLEMENTED
     };
 
     Map<String, Integer> vals = new HashMap<>(statuses.length+1);
-    for (LinkStatus ls: statuses) {
+    for (CompetitorStatus ls: statuses) {
       vals.put(ls.name(), 0);
     }
     vals.put(OTHER, 0);
 
-    final String query = "select status, count(1) from link where company_id=? group by status";
+    final String query = "select status, count(1) from competitor where company_id=? group by status";
     try (PreparedStatement pst = con.prepareStatement(query)) {
       pst.setLong(1, CurrentUser.getCompanyId());
 
@@ -157,7 +157,7 @@ public class DashboardRepository {
     List<String> labels = new ArrayList<>(statuses.length+1);
     List<Integer> series = new ArrayList<>(statuses.length+1);
 
-    for (LinkStatus ls: statuses) {
+    for (CompetitorStatus ls: statuses) {
       labels.add(WordUtils.capitalize(ls.name().replaceAll("_", " ")));
       series.add(vals.get(ls.name()));
     }
@@ -172,14 +172,14 @@ public class DashboardRepository {
   }
 
   /**
-   * finding 10 MRU Links (Most Recently Updated)
+   * finding 10 MRU Competitors (Most Recently Updated)
    *
    */
-  private List<Map<String, Object>> find10MRULinks(Connection con) throws SQLException {
+  private List<Map<String, Object>> find10MRUCompetitors(Connection con) throws SQLException {
     List<Map<String, Object>> result = new ArrayList<>(10);
 
     final String query = 
-      "select l.*, p.name as product, s.name as platform from link as l " + 
+      "select l.*, p.name as product, s.name as platform from competitor as l " + 
       "inner join product as p on p.id = l.product_id " + 
       "left join site as s on s.id = l.site_id " + 
       "where l.company_id=? " +

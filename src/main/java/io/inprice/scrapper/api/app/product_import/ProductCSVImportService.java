@@ -21,7 +21,7 @@ import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.info.ProductDTO;
 import io.inprice.scrapper.common.meta.ImportType;
-import io.inprice.scrapper.common.meta.LinkStatus;
+import io.inprice.scrapper.common.meta.CompetitorStatus;
 import io.inprice.scrapper.common.models.ImportProduct;
 import io.inprice.scrapper.common.utils.NumberUtils;
 
@@ -75,12 +75,12 @@ public class ProductCSVImportService implements IProductImportService {
                     ServiceResponse found = productRepository.findByCode(dto.getCode());
                     if (! found.isOK()) {
                       row.setDescription("Added among the products.");
-                      row.setStatus(LinkStatus.AVAILABLE);
+                      row.setStatus(CompetitorStatus.AVAILABLE);
                       row.setProductDTO(dto);
                       actualCount++;
                       insertedProductSet.put(dto.getCode(), dto);
                     } else {
-                      row.setStatus(LinkStatus.DUPLICATE);
+                      row.setStatus(CompetitorStatus.DUPLICATE);
                     }
 
                   } else {
@@ -91,21 +91,21 @@ public class ProductCSVImportService implements IProductImportService {
                       sb.append(problem);
                     }
                     row.setDescription(sb.toString());
-                    row.setStatus(LinkStatus.IMPROPER);
+                    row.setStatus(CompetitorStatus.IMPROPER);
                   }
                 } else {
-                  row.setStatus(LinkStatus.DUPLICATE);
+                  row.setStatus(CompetitorStatus.DUPLICATE);
                 }
               } else {
                 row.setDescription(String.format(
                     "Expected col count is %d, but %d. Separator is comma ,",
                     COLUMN_COUNT, values.length));
-                row.setStatus(LinkStatus.IMPROPER);
+                row.setStatus(CompetitorStatus.IMPROPER);
               }
 
             } else {
               row.setDescription("You have reached your plan's maximum product limit.");
-              row.setStatus(LinkStatus.WONT_BE_IMPLEMENTED);
+              row.setStatus(CompetitorStatus.WONT_BE_IMPLEMENTED);
             }
             importList.add(row);
           }

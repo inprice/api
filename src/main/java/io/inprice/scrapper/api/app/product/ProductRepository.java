@@ -24,7 +24,7 @@ import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
 import io.inprice.scrapper.common.info.ProductDTO;
-import io.inprice.scrapper.common.meta.LinkStatus;
+import io.inprice.scrapper.common.meta.CompetitorStatus;
 import io.inprice.scrapper.common.models.Product;
 import io.inprice.scrapper.common.models.ProductPrice;
 
@@ -177,10 +177,10 @@ public class ProductRepository {
     String where = String.format("where product_id=%d and company_id=%d", id, CurrentUser.getCompanyId());
 
     List<String> queries = new ArrayList<>(6);
-    queries.add("delete from link_price " + where);
-    queries.add("delete from link_history " + where);
-    queries.add("delete from link_spec " + where);
-    queries.add("delete from link " + where);
+    queries.add("delete from competitor_price " + where);
+    queries.add("delete from competitor_history " + where);
+    queries.add("delete from competitor_spec " + where);
+    queries.add("delete from competitor " + where);
     queries.add("delete from product_price " + where);
     queries.add("delete from product " + where.replace("product_", ""));
 
@@ -239,7 +239,7 @@ public class ProductRepository {
       // from product imports
       try (PreparedStatement pst = con
           .prepareStatement("select count(id) from import_product where status=? and company_id=?")) {
-        pst.setString(1, LinkStatus.NEW.name());
+        pst.setString(1, CompetitorStatus.TOBE_CLASSIFIED.name());
         pst.setLong(2, CurrentUser.getCompanyId());
 
         ResultSet rs = pst.executeQuery();
