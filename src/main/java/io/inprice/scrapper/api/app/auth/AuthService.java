@@ -242,11 +242,10 @@ public class AuthService {
         ForCookie cookieSes = new ForCookie(user.getEmail(), mem.getRole().name());
         cookieSesList.add(cookieSes);
 
-        ForResponse responseSes = new ForResponse(cookieSes, user.getName(), mem.getCompanyName(), user.getTimezone(),
-            mem.getCurrencyFormat());
+        ForResponse responseSes = new ForResponse(cookieSes, user, mem);
         responseSesList.add(responseSes);
 
-        ForRedis redisSes = new ForRedis(responseSes, user.getId(), mem.getCompanyId(), cookieSes.getHash());
+        ForRedis redisSes = new ForRedis(responseSes, mem, cookieSes.getHash());
         redisSesList.add(redisSes);
 
         ForDatabase dbSes = new ForDatabase();

@@ -41,7 +41,7 @@ public class CompanyRepository {
   private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
   public ServiceResponse findById(Long id) {
-    Company model = db.findSingle("select * from company where id=" + id, CompanyRepository::map);
+    Company model = db.findSingle("select * from company where id=" + id, this::map);
     if (model != null)
       return new ServiceResponse(model);
     else
@@ -49,7 +49,7 @@ public class CompanyRepository {
   }
 
   public ServiceResponse findByAdminId(Long adminId) {
-    Company model = db.findSingle("select * from company where admin_id=" + adminId, CompanyRepository::map);
+    Company model = db.findSingle("select * from company where admin_id=" + adminId, this::map);
     if (model != null)
       return new ServiceResponse(model);
     else
@@ -59,7 +59,7 @@ public class CompanyRepository {
   public ServiceResponse findByNameAndAdminId(Connection con, String name, Long adminId) {
     Company model = db.findSingle(con,
         String.format("select * from company where name='%s' and admin_id=%d", SqlHelper.clear(name.trim()), adminId),
-        CompanyRepository::map);
+        this::map);
     if (model != null)
       return new ServiceResponse(model);
     else
@@ -282,7 +282,7 @@ public class CompanyRepository {
     }
   }
 
-  private static Company map(ResultSet rs) {
+  private Company map(ResultSet rs) {
     try {
       Company model = new Company();
       model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
@@ -290,12 +290,14 @@ public class CompanyRepository {
       model.setCurrencyCode(rs.getString("currency_code"));
       model.setCurrencyFormat(rs.getString("currency_format"));
       model.setAdminId(RepositoryHelper.nullLongHandler(rs, "admin_id"));
-      model.setPlanName(rs.getString("plan_name"));
-      model.setPlanStatus(PlanStatus.valueOf(rs.getString("plan_status")));
       model.setDueDate(rs.getTimestamp("due_date"));
       model.setRetry(rs.getInt("retry"));
       model.setLastCollectingTime(rs.getTimestamp("last_collecting_time"));
       model.setLastCollectingStatus(rs.getBoolean("last_collecting_status"));
+      model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
+      model.setPlanStatus(PlanStatus.valueOf(rs.getString("plan_status")));
+      model.setProductLimit(rs.getInt("product_limit"));
+      model.setProductCount(rs.getInt("product_count"));
       model.setCreatedAt(rs.getTimestamp("created_at"));
 
       return model;

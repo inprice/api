@@ -53,13 +53,13 @@ public class DashboardRepository {
     result.put("name", CurrentUser.getCompanyName());
     result.put("lastCollectingStatus", "Waiting");
     result.put("planName", "Please select one!");
-    result.put("rowLimit", 0);
+    result.put("productLimit", 0);
     result.put("dueDate", "");
 
     final String 
       query = 
-        "select c.*, p.row_limit " +
-        "from company as c left join plan as p on c.plan_name = p.name " +
+        "select c.*, p.product_limit, p.name as plan_name from company as c " +
+        "left join plan as p on p.id = c.plan_id " +
         "where c.id=?";
 
     try (PreparedStatement pst = con.prepareStatement(query)) {
@@ -67,13 +67,14 @@ public class DashboardRepository {
 
       try (ResultSet rs = pst.executeQuery()) {
         if (rs.next()) {
+          result.put("planName", rs.getString("plan_name"));
+          result.put("dueDate", DateUtils.formatReverseDate(rs.getTimestamp("due_date")));
+
           Date lastCollectionTime = rs.getTimestamp("last_collecting_time");
           if (lastCollectionTime != null) {
-            result.put("planName", rs.getString("plan_name"));
             result.put("lastCollectingTime", DateUtils.formatLongDate(lastCollectionTime));
             result.put("lastCollectingStatus", (rs.getBoolean("last_collecting_status") ? "Successful" : "Failed"));
           }
-          result.put("dueDate", DateUtils.formatLongDate(rs.getTimestamp("due_date")));
         }
       }
     }

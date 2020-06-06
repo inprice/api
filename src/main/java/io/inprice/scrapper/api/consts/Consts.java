@@ -34,6 +34,8 @@ public class Consts {
     public static class Company {
       public static final String BASE = "/company";
       public static final String GEO_INFO = BASE + "/geo";
+      public static final String COUPONS = BASE + "/coupons";
+      public static final String APPLY_COUPON = BASE + "/apply-coupon";
     }
 
     public static class User {

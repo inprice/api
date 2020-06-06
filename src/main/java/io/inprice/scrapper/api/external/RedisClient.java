@@ -90,6 +90,10 @@ public class RedisClient {
     return sessionMap.get(hash);
   }
 
+  public static void updateSessions(Map<String, ForRedis> map) {
+    sessionMap.putAll(map);
+  }
+
   public static boolean removeSesion(String hash) {
     ForRedis ses = sessionMap.remove(hash);
     return ses != null;

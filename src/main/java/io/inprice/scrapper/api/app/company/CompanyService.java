@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.app.auth.AuthService;
+import io.inprice.scrapper.api.app.coupon.CouponRepository;
 import io.inprice.scrapper.api.app.token.TokenService;
 import io.inprice.scrapper.api.app.token.TokenType;
 import io.inprice.scrapper.api.app.user.UserRepository;
@@ -30,6 +31,7 @@ import io.inprice.scrapper.api.utils.CurrencyFormats;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
 import io.inprice.scrapper.common.models.User;
+import io.inprice.scrapper.common.utils.CouponManager;
 import io.javalin.http.Context;
 
 public class CompanyService {
@@ -39,6 +41,7 @@ public class CompanyService {
   private final AuthService authService = Beans.getSingleton(AuthService.class);
   private final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
   private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
+  private final CouponRepository couponRepository = Beans.getSingleton(CouponRepository.class);
   private final Database db = Beans.getSingleton(Database.class);
 
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
@@ -142,6 +145,15 @@ public class CompanyService {
     } else {
       return res;
     }
+  }
+
+  public ServiceResponse getCoupons() {
+    return couponRepository.getCoupons();
+  }
+
+  public ServiceResponse applyCoupon(String code) {
+    if (! CouponManager.isValid(code)) return Responses.Invalid.COUPON;
+    return couponRepository.applyCoupon(code);
   }
 
   private ServiceResponse validateCompanyDTO(CreateCompanyDTO dto) {

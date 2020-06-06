@@ -176,16 +176,16 @@ public class ProductRepository {
   public ServiceResponse deleteById(Long id) {
     String where = String.format("where product_id=%d and company_id=%d", id, CurrentUser.getCompanyId());
 
-    List<String> queries = new ArrayList<>(6);
+    List<String> queries = new ArrayList<>(7);
     queries.add("delete from competitor_price " + where);
     queries.add("delete from competitor_history " + where);
     queries.add("delete from competitor_spec " + where);
     queries.add("delete from competitor " + where);
     queries.add("delete from product_price " + where);
     queries.add("delete from product " + where.replace("product_", ""));
+    queries.add("update company set product_count=product_count-1 where product_count>0 and id=" + CurrentUser.getCompanyId());
 
-    boolean result = db.executeBatchQueries(queries, String.format("Failed to delete product. Id: %d", id), 1);
-
+    boolean result = db.executeBatchQueries(queries, String.format("Failed to delete product. Id: %d", id), 2);
     if (result) {
       return Responses.OK;
     }
@@ -256,34 +256,42 @@ public class ProductRepository {
   }
 
   public ServiceResponse insertANewProduct(Connection con, ProductDTO dto) {
-    final String query = "insert into product "
-        + "(code, name, brand, category, price, company_id) values (?, ?, ?, ?, ?, ?)";
-    try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-      int i = 0;
-      pst.setString(++i, dto.getCode());
-      pst.setString(++i, dto.getName());
-      pst.setString(++i, dto.getBrand());
-      pst.setString(++i, dto.getCategory());
-      pst.setBigDecimal(++i, dto.getPrice());
-      pst.setLong(++i, CurrentUser.getCompanyId());
+    // increase product count by 1
+    final String query1 = "update company set product_count=product_count+1 where id=? and product_count<product_limit";
+    try (PreparedStatement pst1 = con.prepareStatement(query1)) {
+      pst1.setLong(1, CurrentUser.getCompanyId());
 
-      if (pst.executeUpdate() > 0) {
-        try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
-          if (generatedKeys.next()) {
-            dto.setId(generatedKeys.getLong(1));
-            boolean ok = addAPriceHistory(con, dto);
-            if (ok) {
-              return Responses.OK;
-            } else {
-              return Responses.DataProblem.DB_PROBLEM;
+      if (pst1.executeUpdate() > 0) {
+        final String query2 = 
+          "insert into product " +
+          "(code, name, brand, category, price, company_id) " + 
+          "values (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement pst2 = con.prepareStatement(query2, Statement.RETURN_GENERATED_KEYS)) {
+          int i = 0;
+          pst2.setString(++i, dto.getCode());
+          pst2.setString(++i, dto.getName());
+          pst2.setString(++i, dto.getBrand());
+          pst2.setString(++i, dto.getCategory());
+          pst2.setBigDecimal(++i, dto.getPrice());
+          pst2.setLong(++i, CurrentUser.getCompanyId());
+    
+          if (pst2.executeUpdate() > 0) {
+            try (ResultSet generatedKeys = pst2.getGeneratedKeys()) {
+              if (generatedKeys.next()) {
+                dto.setId(generatedKeys.getLong(1));
+                if (addAPriceHistory(con, dto)) return Responses.OK;
+              }
             }
           }
+        } catch (SQLIntegrityConstraintViolationException ie) {
+          return Responses.DataProblem.DUPLICATE;
         }
+      } else {
+        return Responses.PermissionProblem.PRODUCT_LIMIT_PROBLEM;
       }
-    } catch (SQLIntegrityConstraintViolationException ie) {
-      return Responses.DataProblem.DUPLICATE;
+  
     } catch (Exception e) {
-      log.error("Error", e);
+      log.error("Failed to insert a  new product", e);
     }
 
     return Responses.DataProblem.DB_PROBLEM;

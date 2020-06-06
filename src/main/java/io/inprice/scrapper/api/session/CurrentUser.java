@@ -16,6 +16,10 @@ public class CurrentUser {
       THREAD_VARIABLES.get().set(forRedis);
    }
 
+   public static String getSessionHash() {
+    return THREAD_VARIABLES.get().getSession().getHash();
+  }
+
    public static Long getUserId() {
       return THREAD_VARIABLES.get().getSession().getUserId();
    }
@@ -40,8 +44,11 @@ public class CurrentUser {
       return THREAD_VARIABLES.get().getSession().getRole();
    }
 
+   public static Long getPlanId() {
+      return THREAD_VARIABLES.get().getSession().getPlanId();
+   }
+
    public static void cleanup() {
-      THREAD_VARIABLES.remove();
       THREAD_VARIABLES.set(null);
       THREAD_VARIABLES.remove();
    }

@@ -2,6 +2,7 @@ package io.inprice.scrapper.api.session.info;
 
 import java.util.Date;
 
+import io.inprice.scrapper.common.models.Membership;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,15 +18,19 @@ public class ForRedis extends ForResponse {
 
   private Long userId;
   private Long companyId;
+  private Long planId;
+  private String planName;
   private String timezone;
   private String currencyFormat;
   private String hash;
   private Date accessedAt = new Date();
 
-  public ForRedis(ForResponse forResponse, Long userId, Long companyId, String hash) {
+  public ForRedis(ForResponse forResponse, Membership mem, String hash) {
     super(forResponse);
-    this.userId = userId;
-    this.companyId = companyId;
+    this.userId = mem.getUserId();
+    this.companyId = mem.getCompanyId();
+    this.planId = mem.getPlanId();
+    this.planName = mem.getPlanName();
     this.hash = hash;
   }
 
