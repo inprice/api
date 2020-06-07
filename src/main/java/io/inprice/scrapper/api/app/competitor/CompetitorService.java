@@ -75,7 +75,7 @@ public class CompetitorService {
           // inform the product to be refreshed
           Competitor competitor = res.getData();
           Channel channel = RabbitMQ.openChannel();
-          RabbitMQ.publish(channel, SysProps.MQ_CHANGES_EXCHANGE(), SysProps.MQ_PRICE_REFRESH_ROUTING(), ""+competitor.getProductId());
+          RabbitMQ.publish(channel, SysProps.MQ_CHANGES_EXCHANGE(), SysProps.MQ_PRICE_REFRESH_ROUTING(), competitor.getProductId().toString());
           RabbitMQ.closeChannel(channel);
           return Responses.OK;
         }

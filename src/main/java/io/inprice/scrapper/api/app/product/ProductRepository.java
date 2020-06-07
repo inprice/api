@@ -68,8 +68,28 @@ public class ProductRepository {
   }
 
   public ServiceResponse findByCode(String code) {
+    Connection con = null;
+    try {
+      con = db.getConnection();
+      return findByCode(con, code);
+    } catch (SQLException e) {
+      log.error("Failed to get a product by code", e);
+    } finally {
+      if (con != null) {
+        try {
+          con.close();
+        } catch (SQLException e) {
+          log.error("Failed to get a product by code", e);
+        }
+      }
+    }
+    return Responses.DataProblem.DB_PROBLEM;
+  }
+
+  public ServiceResponse findByCode(Connection con, String code) {
     Product model = db.findSingle(String.format("%s where code='%s' and p.company_id=%d ",
       BASE_QUERY, SqlHelper.clear(code), CurrentUser.getCompanyId()), this::map);
+
     if (model != null) {
       return new ServiceResponse(model);
     }
@@ -127,8 +147,13 @@ public class ProductRepository {
     try {
       con = db.getTransactionalConnection();
 
-      boolean alreadyExists = exists(con, dto.getCode(), dto.getId());
-      if (alreadyExists) {
+      ServiceResponse res = findByCode(con, dto.getCode());
+      if (! res.isOK()) {
+        return Responses.NotFound.PRODUCT;
+      }
+
+      Product old = res.getData();
+      if (! old.getId().equals(dto.getId())) {
         return Responses.DataProblem.ALREADY_EXISTS;
       }
 
@@ -150,18 +175,13 @@ public class ProductRepository {
 
         if (result) {
           db.commit(con);
-          return Responses.OK;
+          Boolean hasPriceChanged = (! old.getPrice().equals(dto.getPrice()));
+          return new ServiceResponse(hasPriceChanged);
         } else {
           db.rollback(con);
           return Responses.DataProblem.DB_PROBLEM;
         }
       }
-    } catch (SQLIntegrityConstraintViolationException duperr) {
-      if (con != null)
-        db.rollback(con);
-      log.error("Code duplication error " + dto.getCode(), duperr.getMessage());
-      return new ServiceResponse(Responses.DataProblem.DUPLICATE.getStatus(),
-          dto.getCode() + " is already used for another product!");
     } catch (Exception e) {
       if (con != null)
         db.rollback(con);

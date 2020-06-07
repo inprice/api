@@ -21,7 +21,7 @@ public class ForResponse implements Serializable {
   private String user;
   private String email;
   private String company;
-  private String plan;
+  private Long planId;
   private String timezone;
   private String currencyFormat;
   private UserRole role;
@@ -30,7 +30,7 @@ public class ForResponse implements Serializable {
     this.user = forResponse.getUser();
     this.email = forResponse.getEmail();
     this.company = forResponse.getCompany();
-    this.plan = forResponse.getPlan();
+    this.planId = forResponse.getPlanId();
     this.timezone = forResponse.getTimezone();
     this.currencyFormat = forResponse.getCurrencyFormat();
     this.role = forResponse.getRole();
@@ -40,7 +40,7 @@ public class ForResponse implements Serializable {
     this.user = forRedis.getUser();
     this.email = forCookie.getEmail();
     this.company = forRedis.getCompany();
-    this.plan = forRedis.getPlan();
+    this.planId = forRedis.getPlanId();
     this.timezone = forRedis.getTimezone();
     this.currencyFormat = forRedis.getCurrencyFormat();
     this.role = UserRole.valueOf(forCookie.getRole());
@@ -50,7 +50,7 @@ public class ForResponse implements Serializable {
     this.user = user.getName();
     this.email = forCookie.getEmail();
     this.company = mem.getCompanyName();
-    this.plan = mem.getPlanName();
+    this.planId = mem.getPlanId();
     this.timezone = user.getTimezone();
     this.currencyFormat = mem.getCurrencyFormat();
     this.role = UserRole.valueOf(forCookie.getRole());

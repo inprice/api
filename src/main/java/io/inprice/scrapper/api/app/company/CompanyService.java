@@ -28,8 +28,10 @@ import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.meta.RateLimiterType;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.utils.CurrencyFormats;
+import io.inprice.scrapper.common.config.SysProps;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
+import io.inprice.scrapper.common.meta.AppEnv;
 import io.inprice.scrapper.common.models.User;
 import io.inprice.scrapper.common.utils.CouponManager;
 import io.javalin.http.Context;
@@ -71,11 +73,15 @@ public class CompanyService {
         dataMap.put("company", dto.getCompanyName());
         dataMap.put("token", TokenService.add(TokenType.REGISTER_REQUEST, dto));
 
-        final String message = renderer.renderRegisterActivationLink(dataMap);
-        emailSender.send(Props.APP_EMAIL_SENDER(), "About " + dto.getCompanyName() + " registration on inprice.io",
-            dto.getEmail(), message);
+        if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+          final String message = renderer.renderRegisterActivationLink(dataMap);
+          emailSender.send(Props.APP_EMAIL_SENDER(), "About " + dto.getCompanyName() + " registration on inprice.io",
+              dto.getEmail(), message);
 
-        return Responses.OK;
+          return Responses.OK;
+        } else {
+          return new ServiceResponse(dataMap);
+        }
       } catch (Exception e) {
         log.error("An error occurred in rendering email for activating register company", e);
         return Responses.ServerProblem.EXCEPTION;

@@ -50,7 +50,6 @@ public class CouponRepository {
             query = query.replace("now()", "due_date");
           }
 
-
           Long planId = company.getPlanId();
           Integer productLimit = company.getProductLimit();
 
@@ -80,7 +79,7 @@ public class CouponRepository {
                 pstCoupon.setString(2, coupon.getCode());
 
                 if (pstCoupon.executeUpdate() > 0) {
-                  res = updateRedisSessionsForPlan(con, planId, plan.getName());
+                  res = updateRedisSessionsForPlan(con, planId);
                   log.info("Coupon {}, is issued for {}", coupon.getCode(), company.getName());
                 }
               }
@@ -113,7 +112,7 @@ public class CouponRepository {
     return res;
   }
 
-  private ServiceResponse updateRedisSessionsForPlan(Connection con, Long planId, String planName) {
+  private ServiceResponse updateRedisSessionsForPlan(Connection con, Long planId) {
     List<String> hashes = db.findMultiple(con,
         String.format("select _hash from user_session where company_id=%d", CurrentUser.getCompanyId()), this::mapForHashField);
 
@@ -122,15 +121,13 @@ public class CouponRepository {
       for (String hash : hashes) {
         ForRedis ses = RedisClient.getSession(hash);
         ses.setPlanId(planId);
-        ses.setPlan(planName);
         map.put(hash, ses);
       }
       RedisClient.updateSessions(map);
 
-      Map<String, Object> data = new HashMap<>(2);
-      data.put("planId", planId);
-      data.put("planName", planName);
-      return new ServiceResponse(data);
+      Map<String, Long> dataMap = new HashMap<>(1);
+      dataMap.put("planId", planId);
+      return new ServiceResponse(dataMap);
     }
 
     return Responses.DataProblem.DB_PROBLEM;

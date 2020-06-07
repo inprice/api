@@ -19,7 +19,6 @@ public class ForRedis extends ForResponse {
   private Long userId;
   private Long companyId;
   private Long planId;
-  private String planName;
   private String timezone;
   private String currencyFormat;
   private String hash;
@@ -30,7 +29,6 @@ public class ForRedis extends ForResponse {
     this.userId = mem.getUserId();
     this.companyId = mem.getCompanyId();
     this.planId = mem.getPlanId();
-    this.planName = mem.getPlanName();
     this.hash = hash;
   }
 
