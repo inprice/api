@@ -15,7 +15,7 @@ import io.inprice.scrapper.api.dto.InvitationAcceptDTO;
 import io.inprice.scrapper.api.dto.InvitationSendDTO;
 import io.inprice.scrapper.api.dto.InvitationUpdateDTO;
 import io.inprice.scrapper.api.dto.UserDTO;
-import io.inprice.scrapper.api.helpers.RepositoryHelper;
+import io.inprice.scrapper.common.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
@@ -271,7 +271,7 @@ public class MembershipRepository {
     List<Membership> memberships = 
       db.findMultiple(
         String.format(
-          "select m.*, c.currency_format, c.name as company_name, c.plan_id, p.name as plan_name from membership as m " +
+          "select m.*, c.currency_format, c.name as company_name, c.plan_id from membership as m " +
           "inner join company as c on c.id = m.company_id " + 
           "left join plan as p on p.id = c.plan_id " + 
           "where m.email='%s' " + 
@@ -328,7 +328,6 @@ public class MembershipRepository {
       model.setUserId(RepositoryHelper.nullLongHandler(rs, "user_id"));
       model.setCompanyName(rs.getString("company_name"));
       model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
-      model.setPlanName(rs.getString("plan_name"));
       model.setCurrencyFormat(rs.getString("currency_format"));
       model.setPreStatus(UserStatus.valueOf(rs.getString("pre_status")));
       model.setUpdatedAt(rs.getTimestamp("updated_at"));

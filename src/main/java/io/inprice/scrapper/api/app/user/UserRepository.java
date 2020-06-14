@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.UserDTO;
 import io.inprice.scrapper.api.helpers.CodeGenerator;
-import io.inprice.scrapper.api.helpers.RepositoryHelper;
+import io.inprice.scrapper.common.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.common.helpers.Beans;
@@ -44,18 +44,21 @@ public class UserRepository {
     return findByEmail(email, false);
   }
 
-  public ServiceResponse findByEmail(Connection con, String email) {
-    User model = db.findSingle(con, String.format("select * from user where email = '%s'", email), this::map);
-    if (model != null) {
-      model.setPasswordSalt(null);
-      model.setPasswordHash(null);
-      return new ServiceResponse(model);
+  public ServiceResponse findByEmail(String email, boolean passwordFields) {
+    try (Connection con = db.getConnection()) {
+      return findByEmail(con, email, passwordFields);
+    } catch (SQLException e) {
+      log.error("Failed to insert user", e);
+      return Responses.ServerProblem.EXCEPTION;
     }
-    return Responses.NotFound.USER;
   }
 
-  public ServiceResponse findByEmail(String email, boolean passwordFields) {
-    User model = db.findSingle(String.format("select * from user where email = '%s'", email), this::map);
+  public ServiceResponse findByEmail(Connection con, String email) {
+    return findByEmail(con, email, false);
+  }
+
+  public ServiceResponse findByEmail(Connection con, String email, boolean passwordFields) {
+    User model = db.findSingle(con, String.format("select * from user where email = '%s'", email), this::map);
     if (model != null) {
       if (!passwordFields) {
         model.setPasswordSalt(null);

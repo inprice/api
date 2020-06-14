@@ -2,7 +2,6 @@ package io.inprice.scrapper.api.app.product_import;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -14,7 +13,6 @@ import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
 import io.inprice.scrapper.api.helpers.AccessRoles;
 import io.inprice.scrapper.api.helpers.Commons;
-import io.inprice.scrapper.api.helpers.ControllerHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.meta.ImportType;
@@ -27,44 +25,30 @@ public class ProductImportController implements Controller {
 
   private static final Logger log = LoggerFactory.getLogger(ProductImportController.class);
 
-  private static final ProductImportService importService = Beans.getSingleton(ProductImportService.class);
   private static final ProductCSVImportService csvImportService = Beans.getSingleton(ProductCSVImportService.class);
-  private static final ProductCodeImportService codeImportService = Beans.getSingleton(ProductCodeImportService.class);
+  private static final ProductGenericImportService genericImportService = Beans.getSingleton(ProductGenericImportService.class);
 
   @Override
   public void addRoutes(Javalin app) {
-
-    // find
-    app.get(Consts.Paths.Product.IMPORT_BASE + "/:id", (ctx) -> {
-      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, importService.findById(id)));
-    }, AccessRoles.ANYONE());
-
-    // search
-    app.get(Consts.Paths.Product.IMPORTED_PRODUCTS, (ctx) -> {
-      Map<String, String> searchMap = ControllerHelper.editSearchMap(ctx.queryParamMap());
-      ctx.json(Commons.createResponse(ctx, importService.search(searchMap)));
-    }, AccessRoles.ANYONE());
-
-    // delete
-    app.delete(Consts.Paths.Product.IMPORT_BASE + "/:id", (ctx) -> {
-      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, importService.deleteById(id)));
-    }, AccessRoles.EDITOR());
 
     // upload CSV
     app.post(Consts.Paths.Product.IMPORT_CSV, (ctx) -> {
       upload(ctx, "text/csv", csvImportService);
     }, AccessRoles.EDITOR());
 
+    // upload URL list
+    app.post(Consts.Paths.Product.IMPORT_URL_LIST, (ctx) -> {
+      upload(ctx, "text/plain", genericImportService, ImportType.URL);
+    }, AccessRoles.EDITOR());
+
     // upload ebay SKU list
     app.post(Consts.Paths.Product.IMPORT_EBAY_SKU, (ctx) -> {
-      upload(ctx, "text/plain", codeImportService, ImportType.EBAY_SKU);
+      upload(ctx, "text/plain", genericImportService, ImportType.EBAY_SKU);
     }, AccessRoles.EDITOR());
 
     // upload amazon ASIN list
     app.post(Consts.Paths.Product.IMPORT_AMAZON_ASIN, (ctx) -> {
-      upload(ctx, "text/plain", codeImportService, ImportType.AMAZON_ASIN);
+      upload(ctx, "text/plain", genericImportService, ImportType.AMAZON_ASIN);
     }, AccessRoles.EDITOR());
 
   }

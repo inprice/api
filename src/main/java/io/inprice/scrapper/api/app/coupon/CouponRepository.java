@@ -15,13 +15,13 @@ import org.slf4j.LoggerFactory;
 import io.inprice.scrapper.api.app.plan.PlanRepository;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.external.RedisClient;
-import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.api.session.info.ForRedis;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
-import io.inprice.scrapper.common.meta.PlanStatus;
+import io.inprice.scrapper.common.helpers.RepositoryHelper;
+import io.inprice.scrapper.common.meta.CompanyStatus;
 import io.inprice.scrapper.common.models.Company;
 import io.inprice.scrapper.common.models.Coupon;
 import io.inprice.scrapper.common.models.Plan;
@@ -45,7 +45,7 @@ public class CouponRepository {
         
           Company company = db.findSingle(con, "select plan_id, product_limit, name, due_date from company where id=" + CurrentUser.getCompanyId(), this::mapForCompany);
 
-          String query = "update company set plan_id=?, plan_status=?, due_date=DATE_ADD(now(), interval ? day), product_limit=? where id=?";
+          String query = "update company set plan_id=?, status=?, due_date=DATE_ADD(now(), interval ? day), product_limit=? where id=?";
           if (company.getDueDate() != null && company.getDueDate().after(new Date())) {
             query = query.replace("now()", "due_date");
           }
@@ -67,7 +67,7 @@ public class CouponRepository {
           try (PreparedStatement pst = con.prepareStatement(query)) {
             int i = 0;
             pst.setLong(++i, planId);
-            pst.setString(++i, PlanStatus.ACTIVE.name());
+            pst.setString(++i, CompanyStatus.ACTIVE.name());
             pst.setInt(++i, coupon.getDays());
             pst.setInt(++i, productLimit);
             pst.setLong(++i, CurrentUser.getUserId());

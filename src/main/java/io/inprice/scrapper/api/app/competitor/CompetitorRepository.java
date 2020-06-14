@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,13 +17,13 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.CompetitorDTO;
-import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
 import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
+import io.inprice.scrapper.common.helpers.RepositoryHelper;
 import io.inprice.scrapper.common.meta.CompetitorStatus;
 import io.inprice.scrapper.common.models.Competitor;
 import io.inprice.scrapper.common.models.Product;
@@ -68,10 +67,25 @@ public class CompetitorRepository {
   }
 
   public ServiceResponse insert(CompetitorDTO dto) {
+    try (Connection con = db.getConnection()) {
+      return insert(con, dto);
+    } catch (Exception e) {
+      log.error("Failed to insert competitor. " + dto.toString(), e);
+    }
+    return Responses.DataProblem.DB_PROBLEM;
+  }
+
+  public ServiceResponse insert(Connection con, CompetitorDTO dto) {
     ServiceResponse res = Responses.DataProblem.DB_PROBLEM;
 
-    try (Connection con = db.getConnection()) {
-      boolean exists = doesExist(con, dto.getUrl(), dto.getProductId());
+    try {
+      // sanitizing the url
+      if (dto.getUrl().indexOf("?") > 0) {
+        dto.setUrl(dto.getUrl().substring(0, dto.getUrl().indexOf("?")));
+      }
+      dto.setUrl(SqlHelper.clear(dto.getUrl()).trim());
+
+      boolean exists = doesExistByUrl(con, dto.getUrl(), dto.getProductId());
       if (! exists) {
 
         int affected = 0;
@@ -88,7 +102,7 @@ public class CompetitorRepository {
             Competitor sample = res.getData();
             
             int i = 0;
-            pst.setString(++i, SqlHelper.clear(dto.getUrl()));
+            pst.setString(++i, dto.getUrl());
             pst.setString(++i, urlHash);
             pst.setString(++i, sample.getSku());
             pst.setString(++i, sample.getName());
@@ -99,17 +113,23 @@ public class CompetitorRepository {
             pst.setInt(++i, sample.getHttpStatus());
             pst.setString(++i, sample.getWebsiteClassName());
             pst.setLong(++i, sample.getSiteId());
-            pst.setLong(++i, dto.getProductId());
-            pst.setLong(++i, CurrentUser.getCompanyId());
+            if (dto.getProductId() != null)
+              pst.setLong(++i, dto.getProductId());
+            else
+              pst.setNull(++i, java.sql.Types.NULL);
+          pst.setLong(++i, CurrentUser.getCompanyId());
             affected = pst.executeUpdate();
           }
         } else {
           String query = "insert into competitor (url, url_hash, product_id, company_id) values  (?, ?, ?, ?) ";
           try (PreparedStatement pst = con.prepareStatement(query)) {
             int i = 0;
-            pst.setString(++i, SqlHelper.clear(dto.getUrl()));
+            pst.setString(++i, dto.getUrl());
             pst.setString(++i, urlHash);
-            pst.setLong(++i, dto.getProductId());
+            if (dto.getProductId() != null)
+              pst.setLong(++i, dto.getProductId());
+            else
+            pst.setNull(++i, java.sql.Types.NULL);
             pst.setLong(++i, CurrentUser.getCompanyId());
             affected = pst.executeUpdate();
           }
@@ -121,9 +141,6 @@ public class CompetitorRepository {
       } else {
         res = Responses.DataProblem.ALREADY_EXISTS;
       }
-    } catch (SQLIntegrityConstraintViolationException ie) {
-      log.error("Failed to insert competitor (duplicate): " + ie.getMessage());
-      return Responses.DataProblem.INTEGRITY_PROBLEM;
     } catch (Exception e) {
       log.error("Failed to insert competitor. " + dto.toString(), e);
     }
@@ -236,15 +253,15 @@ public class CompetitorRepository {
     }
   }
 
-  private boolean doesExist(Connection con, String url, Long productId) {
+  public boolean doesExistByUrl(Connection con, String url, Long productId) {
     String urlHash = DigestUtils.md5Hex(url);
     Competitor model = db.findSingle(con,
         String.format(
         "select *, '' as platform from competitor " + 
         "where url_hash = '%s' " + 
-        "  and product_id = %d " + 
-        "  and company_id = %d ",
-        urlHash, productId, CurrentUser.getCompanyId()), this::map);
+        "  and company_id = %d " +
+        "  and product_id " + (productId != null ? " = " + productId : " is null"),
+        urlHash, CurrentUser.getCompanyId()), this::map);
     return (model != null);
   }
 

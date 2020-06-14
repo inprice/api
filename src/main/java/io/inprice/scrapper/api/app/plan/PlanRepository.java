@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.app.company.CompanyRepository;
-import io.inprice.scrapper.api.helpers.RepositoryHelper;
+import io.inprice.scrapper.common.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;

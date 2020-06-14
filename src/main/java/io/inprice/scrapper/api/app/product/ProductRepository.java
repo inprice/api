@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.consts.Responses;
-import io.inprice.scrapper.api.helpers.RepositoryHelper;
+import io.inprice.scrapper.common.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
 import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
@@ -25,6 +25,7 @@ import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
 import io.inprice.scrapper.common.info.ProductDTO;
 import io.inprice.scrapper.common.meta.CompetitorStatus;
+import io.inprice.scrapper.common.models.Competitor;
 import io.inprice.scrapper.common.models.Product;
 import io.inprice.scrapper.common.models.ProductPrice;
 
@@ -114,11 +115,7 @@ public class ProductRepository {
     Connection con = null;
     try {
       con = db.getTransactionalConnection();
-
-      boolean alreadyExists = exists(con, dto.getCode(), null);
-      if (alreadyExists) {
-        return Responses.DataProblem.ALREADY_EXISTS;
-      }
+      dto.setCompanyId(CurrentUser.getCompanyId());
 
       ServiceResponse result = insertANewProduct(con, dto);
       if (result.isOK()) {
@@ -133,6 +130,46 @@ public class ProductRepository {
       if (con != null)
         db.rollback(con);
       log.error("Failed to insert a new product. " + dto, e);
+      return Responses.ServerProblem.EXCEPTION;
+    } finally {
+      if (con != null)
+        db.close(con);
+    }
+  }
+
+  public ServiceResponse createFromLink(Competitor link) {
+    Connection con = null;
+    try {
+      con = db.getTransactionalConnection();
+
+      ProductDTO dto = new ProductDTO();
+      dto.setCode(link.getSku());
+      dto.setName(link.getName());
+      dto.setBrand(link.getBrand());
+      dto.setPrice(link.getPrice());
+      dto.setCompanyId(link.getCompanyId());
+
+      boolean isCompelted = false;
+
+      ServiceResponse result = insertANewProduct(con, dto);
+      if (result.isOK()) {
+        isCompelted = db.executeQuery(String.format("delete from competitor where id=%d", link.getId()),
+          String.format("Failed to delete link to be product. Id: %d", link.getId())
+        );
+      }
+
+      if (isCompelted) {
+        db.commit(con);
+        return Responses.OK;
+      } else {
+        db.rollback(con);
+        return result;
+      }
+
+    } catch (Exception e) {
+      if (con != null)
+        db.rollback(con);
+      log.error("Failed to insert a new product. " + link.toString(), e);
       return Responses.ServerProblem.EXCEPTION;
     } finally {
       if (con != null)
@@ -230,7 +267,7 @@ public class ProductRepository {
       int i = 0;
       pst.setLong(++i, dto.getId());
       pst.setBigDecimal(++i, dto.getPrice());
-      pst.setLong(++i, CurrentUser.getCompanyId());
+      pst.setLong(++i, dto.getCompanyId());
 
       return (pst.executeUpdate() > 0);
     } catch (Exception e) {
@@ -279,7 +316,7 @@ public class ProductRepository {
     // increase product count by 1
     final String query1 = "update company set product_count=product_count+1 where id=? and product_count<product_limit";
     try (PreparedStatement pst1 = con.prepareStatement(query1)) {
-      pst1.setLong(1, CurrentUser.getCompanyId());
+      pst1.setLong(1, dto.getCompanyId());
 
       if (pst1.executeUpdate() > 0) {
         final String query2 = 
@@ -293,7 +330,7 @@ public class ProductRepository {
           pst2.setString(++i, dto.getBrand());
           pst2.setString(++i, dto.getCategory());
           pst2.setBigDecimal(++i, dto.getPrice());
-          pst2.setLong(++i, CurrentUser.getCompanyId());
+          pst2.setLong(++i, dto.getCompanyId());
     
           if (pst2.executeUpdate() > 0) {
             try (ResultSet generatedKeys = pst2.getGeneratedKeys()) {
@@ -315,22 +352,6 @@ public class ProductRepository {
     }
 
     return Responses.DataProblem.DB_PROBLEM;
-  }
-
-  private boolean exists(Connection con, String code, Long id) {
-    String query = "select id from product where code=? and company_id=? " + (id != null ? " and id != " + id : "");
-
-    try (PreparedStatement pst = con.prepareStatement(query)) {
-       int i = 0;
-       pst.setString(++i, code);
-       pst.setLong(++i, CurrentUser.getCompanyId());
-
-       ResultSet rs = pst.executeQuery();
-       return rs.next();
-    } catch (Exception e) {
-       log.error("Error", e);
-    }
-    return false;
   }
 
   private Product map(ResultSet rs) {

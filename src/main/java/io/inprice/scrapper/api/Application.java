@@ -4,10 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.consts.Global;
+import io.inprice.scrapper.api.consumer.ProductCreationFromLinkConsumer;
 import io.inprice.scrapper.api.external.Props;
 import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.framework.ConfigScanner;
 import io.inprice.scrapper.api.framework.HandlerInterruptException;
+import io.inprice.scrapper.api.helpers.ThreadPools;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.AccessGuard;
 import io.inprice.scrapper.api.session.CurrentUser;
@@ -37,6 +39,8 @@ public class Application {
       createServer();
       ConfigScanner.scanControllers(app);
 
+      new ProductCreationFromLinkConsumer().start();      
+
       log.info("APPLICATION STARTED.");
       Global.isApplicationRunning = true;
 
@@ -46,6 +50,9 @@ public class Application {
 
       Global.isApplicationRunning = false;
       log.info("APPLICATION IS TERMINATING...");
+
+			log.info(" - Thread pools are shutting down...");
+			ThreadPools.shutdown();
 
       log.info(" - Web server is shutting down...");
       app.stop();

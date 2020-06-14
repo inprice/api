@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -18,14 +20,15 @@ import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.CreateCompanyDTO;
 import io.inprice.scrapper.api.dto.RegisterDTO;
+import io.inprice.scrapper.api.external.RedisClient;
 import io.inprice.scrapper.api.helpers.CodeGenerator;
-import io.inprice.scrapper.api.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
-import io.inprice.scrapper.common.meta.PlanStatus;
+import io.inprice.scrapper.common.helpers.RepositoryHelper;
+import io.inprice.scrapper.common.meta.CompanyStatus;
 import io.inprice.scrapper.common.meta.UserRole;
 import io.inprice.scrapper.common.meta.UserStatus;
 import io.inprice.scrapper.common.models.Company;
@@ -48,8 +51,12 @@ public class CompanyRepository {
       return Responses.DataProblem.DB_PROBLEM;
   }
 
-  public ServiceResponse findByAdminId(Long adminId) {
-    Company model = db.findSingle("select * from company where admin_id=" + adminId, this::map);
+  public Company findById(Connection con, Long id) {
+    return db.findSingle(con, "select * from company where id=" + id, this::map);
+  }
+
+  public ServiceResponse findByAdminId(Connection con, Long adminId) {
+    Company model = db.findSingle(con, "select * from company where admin_id=" + adminId, this::map);
     if (model != null)
       return new ServiceResponse(model);
     else
@@ -191,7 +198,6 @@ public class CompanyRepository {
     ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     Connection con = null;
-
     try {
       con = db.getTransactionalConnection();
 
@@ -282,6 +288,87 @@ public class CompanyRepository {
     }
   }
 
+  public ServiceResponse deleteEverything(String password) {
+    Connection con = null;
+    try {
+      con = db.getTransactionalConnection();
+
+      ServiceResponse res = userRepository.findByEmail(con, CurrentUser.getEmail(), true);
+      if (res.isOK()) {
+
+        User user = res.getData();
+        String phash = BCrypt.hashpw(password, user.getPasswordSalt());
+        if (phash.equals(user.getPasswordHash())) {
+
+          res = findByAdminId(con, CurrentUser.getCompanyId());
+          if (res.isOK()) {
+            Company company = res.getData();
+
+            if (company.getAdminId().equals(user.getId())) {
+
+              List<String> hashList = db.findMultiple(con,
+                  String.format("select _hash from user_session where company_id=%d", CurrentUser.getCompanyId()), this::mapForHashField);
+
+              String where = "where company_id=" + CurrentUser.getCompanyId();
+
+              List<String> queries = new ArrayList<>(10);
+              queries.add("delete from competitor_price " + where);
+              queries.add("delete from competitor_history " + where);
+              queries.add("delete from competitor_spec " + where);
+              queries.add("delete from competitor " + where);
+              queries.add("delete from product_price " + where);
+              queries.add("delete from product " + where);
+              queries.add("delete from coupon where issued_company_id="+CurrentUser.getCompanyId());
+              queries.add("delete from user_session " + where);
+              queries.add("delete from membership " + where);
+              queries.add("delete from user where id="+CurrentUser.getCompanyId());
+              queries.add("delete from company where id="+CurrentUser.getCompanyId());
+
+              if (hashList != null && hashList.size() > 0) {
+                for (String hash : hashList) {
+                  RedisClient.removeSesion(hash);
+                }
+              }
+
+              db.executeBatchQueries(con, queries);
+              db.commit(con);
+
+              return Responses.OK;
+
+            } else {
+              return Responses.Invalid.COMPANY;
+            }
+          } else {
+            return Responses.PermissionProblem.UNAUTHORIZED;
+          }
+        } else {
+          return Responses.Invalid.USER;
+        }
+      } else {
+        return res;
+      }
+    } catch (SQLException e) {
+      if (con != null) {
+        db.rollback(con);
+      }
+      log.error("Failed to delete everything for a company. " + CurrentUser.getCompanyName(), e);
+      return Responses.ServerProblem.EXCEPTION;
+    } finally {
+      if (con != null) {
+        db.close(con);
+      }
+    }
+  }
+
+  private String mapForHashField(ResultSet rs) {
+    try {
+      return rs.getString("_hash");
+    } catch (SQLException e) {
+      log.error("Failed to get _hash field from user_session table", e);
+    }
+    return null;
+  }
+
   private Company map(ResultSet rs) {
     try {
       Company model = new Company();
@@ -295,7 +382,7 @@ public class CompanyRepository {
       model.setLastCollectingTime(rs.getTimestamp("last_collecting_time"));
       model.setLastCollectingStatus(rs.getBoolean("last_collecting_status"));
       model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
-      model.setPlanStatus(PlanStatus.valueOf(rs.getString("plan_status")));
+      model.setStatus(CompanyStatus.valueOf(rs.getString("status")));
       model.setProductLimit(rs.getInt("product_limit"));
       model.setProductCount(rs.getInt("product_count"));
       model.setCreatedAt(rs.getTimestamp("created_at"));

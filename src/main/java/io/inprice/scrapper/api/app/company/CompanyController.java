@@ -5,6 +5,7 @@ import java.util.Map;
 import io.inprice.scrapper.api.consts.Consts;
 import io.inprice.scrapper.api.dto.CreateCompanyDTO;
 import io.inprice.scrapper.api.dto.RegisterDTO;
+import io.inprice.scrapper.api.dto.StringDTO;
 import io.inprice.scrapper.api.framework.Controller;
 import io.inprice.scrapper.api.framework.Router;
 import io.inprice.scrapper.api.helpers.AccessRoles;
@@ -56,6 +57,11 @@ public class CompanyController implements Controller {
 
     app.put(Consts.Paths.Company.APPLY_COUPON + "/:code", (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.applyCoupon(ctx.pathParam("code"))));
+    }, AccessRoles.ADMIN_ONLY());
+
+    app.put(Consts.Paths.Company.DELETE, (ctx) -> {
+      StringDTO dto = ctx.bodyAsClass(StringDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.deleteEverything(dto.getValue())));
     }, AccessRoles.ADMIN_ONLY());
 
   }

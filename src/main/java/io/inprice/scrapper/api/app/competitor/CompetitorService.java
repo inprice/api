@@ -13,12 +13,12 @@ import io.inprice.scrapper.api.dto.CompetitorDTO;
 import io.inprice.scrapper.api.info.SearchModel;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
-import io.inprice.scrapper.api.utils.URLUtils;
 import io.inprice.scrapper.common.helpers.RabbitMQ;
 import io.inprice.scrapper.common.config.SysProps;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.meta.CompetitorStatus;
 import io.inprice.scrapper.common.models.Competitor;
+import io.inprice.scrapper.common.utils.URLUtils;
 
 public class CompetitorService {
 
@@ -143,8 +143,6 @@ public class CompetitorService {
 
     if (!URLUtils.isAValidURL(dto.getUrl())) {
       problem = "Invalid URL!";
-    } else if (dto.getUrl().length() > 1024) {
-      problem = "The length of URL must be less than 1024 chars!";
     }
 
     if (problem == null) {

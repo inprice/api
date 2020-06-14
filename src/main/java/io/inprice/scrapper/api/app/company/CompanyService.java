@@ -73,7 +73,7 @@ public class CompanyService {
         dataMap.put("company", dto.getCompanyName());
         dataMap.put("token", TokenService.add(TokenType.REGISTER_REQUEST, dto));
 
-        if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+        if (! SysProps.APP_ENV().equals(AppEnv.DEV)) {
           final String message = renderer.renderRegisterActivationLink(dataMap);
           emailSender.send(Props.APP_EMAIL_SENDER(), "About " + dto.getCompanyName() + " registration on inprice.io",
               dto.getEmail(), message);
@@ -131,6 +131,19 @@ public class CompanyService {
     return companyRepository.findById(id);
   }
 
+  public ServiceResponse deleteEverything(String password) {
+    return companyRepository.deleteEverything(password);
+  }
+
+  public ServiceResponse getCoupons() {
+    return couponRepository.getCoupons();
+  }
+
+  public ServiceResponse applyCoupon(String code) {
+    if (! CouponManager.isValid(code)) return Responses.Invalid.COUPON;
+    return couponRepository.applyCoupon(code);
+  }
+
   private ServiceResponse validateRegisterDTO(RegisterDTO dto) {
     ServiceResponse res = validateCompanyDTO(dto);
 
@@ -151,15 +164,6 @@ public class CompanyService {
     } else {
       return res;
     }
-  }
-
-  public ServiceResponse getCoupons() {
-    return couponRepository.getCoupons();
-  }
-
-  public ServiceResponse applyCoupon(String code) {
-    if (! CouponManager.isValid(code)) return Responses.Invalid.COUPON;
-    return couponRepository.applyCoupon(code);
   }
 
   private ServiceResponse validateCompanyDTO(CreateCompanyDTO dto) {

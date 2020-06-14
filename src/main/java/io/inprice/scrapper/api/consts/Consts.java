@@ -36,6 +36,7 @@ public class Consts {
       public static final String GEO_INFO = BASE + "/geo";
       public static final String COUPONS = BASE + "/coupons";
       public static final String APPLY_COUPON = BASE + "/apply-coupon";
+      public static final String DELETE = BASE + "/delete";
     }
 
     public static class User {
@@ -67,6 +68,7 @@ public class Consts {
       public static final String IMPORT_BASE = BASE + "/import";
       public static final String IMPORTED_PRODUCTS = IMPORT_BASE + "s/search";
       public static final String IMPORT_CSV = IMPORT_BASE + "/csv";
+      public static final String IMPORT_URL_LIST = IMPORT_BASE + "/url-list";
       public static final String IMPORT_EBAY_SKU = IMPORT_BASE + "/ebay-sku";
       public static final String IMPORT_AMAZON_ASIN = IMPORT_BASE + "/amazon-asin";
     }
