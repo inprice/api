@@ -25,7 +25,7 @@ public class CompanyController implements Controller {
 
     app.post(Consts.Paths.Auth.REQUEST_REGISTRATION, (ctx) -> {
       RegisterDTO dto = ctx.bodyAsClass(RegisterDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.requestRegistration(dto, ctx.ip())));
+      ctx.json(Commons.createResponse(ctx, service.requestRegistration(dto)));
     });
 
     app.post(Consts.Paths.Auth.COMPLETE_REGISTRATION, (ctx) -> {

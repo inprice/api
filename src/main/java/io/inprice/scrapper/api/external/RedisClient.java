@@ -29,8 +29,8 @@ public class RedisClient {
   private static boolean isHealthy;
   private static RedissonClient client;
 
-  private static RSetCache<String> limitedIpsSet;
-  private static RMapCache<String, ForRedis> sessionMap;
+  private static RSetCache<String> requestingEmailsSet;
+  private static RMapCache<String, ForRedis> sessionsMap;
   private static RMapCache<String, Serializable> tokensMap;
   private static RMapCache<Long, Map<String, Object>> dashboardsMap;
 
@@ -50,8 +50,8 @@ public class RedisClient {
       try {
         client = Redisson.create(config);
 
-        limitedIpsSet = client.getSetCache("api:limited:ips");
-        sessionMap = client.getMapCache("api:token:sessions");
+        requestingEmailsSet = client.getSetCache("api:requesting:emails");
+        sessionsMap = client.getMapCache("api:token:sessions");
         tokensMap = client.getMapCache("api:tokens");
         dashboardsMap = client.getMapCache("api:dashboards");
         isHealthy = true;
@@ -70,40 +70,40 @@ public class RedisClient {
     isHealthy = false;
   }
 
-  public static ServiceResponse isIpRateLimited(RateLimiterType type, String ip) {
-    boolean exists = limitedIpsSet.contains(type.name() + ip);
+  public static ServiceResponse isEmailRequested(RateLimiterType type, String email) {
+    boolean exists = requestingEmailsSet.contains(type.name() + email);
     if (exists) {
-      return Responses.Illegal.TOO_MUCH_REQUEST;
+      return Responses.Already.REQUESTED_EMAIL;
     }
-    limitedIpsSet.add(type.name() + ip, type.ttl(), TimeUnit.MILLISECONDS);
+    requestingEmailsSet.add(type.name() + email, type.ttl(), TimeUnit.MILLISECONDS);
     return Responses.OK;
   }
 
   public static boolean addSesions(List<ForRedis> sessions) {
     for (ForRedis ses : sessions) {
-      sessionMap.put(ses.getHash(), ses);
+      sessionsMap.put(ses.getHash(), ses);
     }
     return true;
   }
 
   public static ForRedis getSession(String hash) {
-    return sessionMap.get(hash);
+    return sessionsMap.get(hash);
   }
 
   public static void updateSessions(Map<String, ForRedis> map) {
-    sessionMap.putAll(map);
+    sessionsMap.putAll(map);
   }
 
   public static boolean removeSesion(String hash) {
-    ForRedis ses = sessionMap.remove(hash);
+    ForRedis ses = sessionsMap.remove(hash);
     return ses != null;
   }
 
   public static boolean refreshSesion(String hash) {
-    ForRedis ses = sessionMap.get(hash);
+    ForRedis ses = sessionsMap.get(hash);
     if (ses != null) {
       ses.setAccessedAt(new Date());
-      sessionMap.put(ses.getHash(), ses);
+      sessionsMap.put(ses.getHash(), ses);
       return true;
     }
     return false;

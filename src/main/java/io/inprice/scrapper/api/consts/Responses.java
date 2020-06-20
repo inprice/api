@@ -75,8 +75,6 @@ public class Responses {
 
   public static class Illegal {
     private static final int BASE = 700;
-    public static final ServiceResponse TOO_MUCH_REQUEST = new ServiceResponse(BASE + 1,
-        "You are trying too much, please wait some time!");
     public static final ServiceResponse TIMED_OUT_FORGOT_PASSWORD = new ServiceResponse(BASE + 2,
         "Your session seems to expire, please send us a new forgot password request again!");
   }
@@ -90,6 +88,9 @@ public class Responses {
 
     public static final ServiceResponse USED_COUPON = new ServiceResponse(BASE + 5,
         "This coupon code is already used!");
+
+    public static final ServiceResponse REQUESTED_EMAIL = new ServiceResponse(BASE + 7,
+        "This email is already requested, please wait some time to try again!");
 
     public static class Defined {
       public static final ServiceResponse COMPANY = new ServiceResponse(BASE + 10,

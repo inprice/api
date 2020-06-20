@@ -12,7 +12,7 @@ public class Props {
   }
 
   public static String APP_EMAIL_SENDER() {
-    return System.getenv().getOrDefault("APP_EMAIL_SENDER", "support@inprice.io");
+    return System.getenv().getOrDefault("APP_EMAIL_SENDER", "account@inprice.io");
   }
 
   public static String APP_WEB_URL() {

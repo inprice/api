@@ -82,8 +82,8 @@ public class AuthService {
     return Responses.Invalid.EMAIL_OR_PASSWORD;
   }
 
-  public ServiceResponse forgotPassword(String email, String ip) {
-    ServiceResponse res = RedisClient.isIpRateLimited(RateLimiterType.FORGOT_PASSWORD, ip);
+  public ServiceResponse forgotPassword(String email) {
+    ServiceResponse res = RedisClient.isEmailRequested(RateLimiterType.FORGOT_PASSWORD, email);
     if (!res.isOK())
       return res;
 

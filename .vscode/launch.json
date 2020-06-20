@@ -11,7 +11,7 @@
         "APP_ENV": "dev",
         "APP_PORT": 4567,
         "APP_SHOW_QUERIES": true,
-        "APP_EMAIL_SENDER": "dumlupinar01@gmail.com",
+        "APP_EMAIL_SENDER": "support@inprice.io",
         "APP_WEB_URL": "http://localhost:8080",
         "APP_API_URL": "http://localhost:4567",
         "APP_SALT_ROUNDS": "12",

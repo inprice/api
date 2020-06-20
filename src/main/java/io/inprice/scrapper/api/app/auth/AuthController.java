@@ -31,7 +31,7 @@ public class AuthController implements Controller {
 
     app.post(Consts.Paths.Auth.FORGOT_PASSWORD, (ctx) -> {
       EmailDTO dto = ctx.bodyAsClass(EmailDTO.class);
-      ctx.json(Commons.createResponse(ctx, authService.forgotPassword(dto.getEmail(), ctx.ip())));
+      ctx.json(Commons.createResponse(ctx, authService.forgotPassword(dto.getEmail())));
     });
 
     app.post(Consts.Paths.Auth.RESET_PASSWORD, (ctx) -> {
