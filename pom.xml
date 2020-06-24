@@ -174,28 +174,6 @@
         </configuration>
       </plugin>
 
-      <!-- Creating  the standalone jar file -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.1.1</version>
-        <configuration>
-          <excludes>
-            <exclude>**/*.properties</exclude>
-          </excludes>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-              <classpathPrefix>lib/</classpathPrefix>
-              <mainClass>io.inprice.scrapper.api.Application</mainClass>
-            </manifest>
-            <manifestEntries>
-              <Class-Path>conf/</Class-Path>
-            </manifestEntries>
-          </archive>
-        </configuration>
-      </plugin>
-
       <!-- Collecting all the necessary dependencies under lib folder -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -217,32 +195,6 @@
         </executions>
       </plugin>
 
-      <!-- Putting all the necessary properties file (in resources folder) under conf folder -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-resources-plugin</artifactId>
-        <version>3.1.0</version>
-        <executions>
-          <execution>
-            <id>copy-resources</id>
-            <phase>install</phase>
-            <goals>
-              <goal>copy-resources</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${basedir}/target/conf</outputDirectory>
-              <resources>
-                <resource>
-                  <directory>src/main/resources</directory>
-                  <includes>
-                    <include>**/*.properties</include>
-                  </includes>
-                </resource>
-              </resources>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 

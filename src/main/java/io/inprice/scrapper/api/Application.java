@@ -80,8 +80,6 @@ public class Application {
 
       if (SysProps.APP_ENV().equals(AppEnv.DEV)) {
         config.registerPlugin(new RouteOverviewPlugin("/routes"));
-      } else {
-        config.enforceSsl = true;
       }
 
       config.accessManager(new AccessGuard());

@@ -7,6 +7,8 @@ import java.util.Map;
 import javax.servlet.http.Cookie;
 
 import io.inprice.scrapper.api.consts.Consts;
+import io.inprice.scrapper.common.config.SysProps;
+import io.inprice.scrapper.common.meta.AppEnv;
 import io.javalin.http.Context;
 
 /**
@@ -33,13 +35,16 @@ public class ControllerHelper {
   /**
    * Removes authentication cookie from requesting client
    * Please note: never use javalin's removeCookie method as it doesn't provide a way to set 
-   * some attrs like Secure and HttpOnly
+   * some attrs like Secure and HttpOnly. Cookies can be deleted just by the way they are created
    */
   public static void removeExpiredAuthCookie(Context ctx) {
     Cookie cookie = new Cookie(Consts.SESSION, null);
     cookie.setMaxAge(0);
     cookie.setHttpOnly(true);
     cookie.setSecure(true);
+    if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+      cookie.setDomain(".inprice.io");
+    }
     ctx.cookie(cookie);
   }
 

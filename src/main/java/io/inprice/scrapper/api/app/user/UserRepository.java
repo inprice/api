@@ -169,8 +169,8 @@ public class UserRepository {
       "left join company as c on c.id = mem.company_id " + 
       "where email=? " + 
       "  and company_id!=? " + 
-      "  and status in (?, ?) " + 
-      "order by status, updated_at desc";
+      "  and mem.status in (?, ?) " + 
+      "order by mem.status, mem.updated_at desc";
 
     try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
       int i = 0;
@@ -226,8 +226,8 @@ public class UserRepository {
       "from membership as mem " + 
       "left join company as c on c.id = mem.company_id " + 
       "where email=? " + 
-      "  and status=? " + 
-      "order by created_at desc";
+      "  and mem.status=? " + 
+      "order by mem.created_at desc";
 
     try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
       pst.setString(1, CurrentUser.getEmail());

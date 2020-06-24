@@ -311,7 +311,8 @@ public class CompanyRepository {
 
               String where = "where company_id=" + CurrentUser.getCompanyId();
 
-              List<String> queries = new ArrayList<>(10);
+              List<String> queries = new ArrayList<>(13);
+              queries.add("SET FOREIGN_KEY_CHECKS=0");
               queries.add("delete from competitor_price " + where);
               queries.add("delete from competitor_history " + where);
               queries.add("delete from competitor_spec " + where);
@@ -321,8 +322,9 @@ public class CompanyRepository {
               queries.add("delete from coupon where issued_company_id="+CurrentUser.getCompanyId());
               queries.add("delete from user_session " + where);
               queries.add("delete from membership " + where);
-              queries.add("delete from user where id="+CurrentUser.getCompanyId());
+              queries.add("delete from user where id in (select admin_id from company where id="+CurrentUser.getCompanyId()+")");
               queries.add("delete from company where id="+CurrentUser.getCompanyId());
+              queries.add("SET FOREIGN_KEY_CHECKS=1");
 
               if (hashList != null && hashList.size() > 0) {
                 for (String hash : hashList) {

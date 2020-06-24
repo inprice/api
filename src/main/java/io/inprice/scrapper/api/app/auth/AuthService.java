@@ -264,6 +264,11 @@ public class AuthService {
 
         if (res.isOK()) {
           String tokenString = SessionHelper.toToken(cookieSesList);
+
+          /*
+           * Please not that: cookies must be deleted in the way they are created below
+           * see ControllerHelper class
+          */
           Cookie cookie = new Cookie(Consts.SESSION, tokenString);
           cookie.setHttpOnly(true);
           cookie.setSecure(true);
