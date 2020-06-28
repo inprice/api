@@ -15,6 +15,7 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.scrapper.api.app.lookup.LookupRepository;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.common.helpers.RepositoryHelper;
 import io.inprice.scrapper.api.helpers.SqlHelper;
@@ -25,6 +26,7 @@ import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
 import io.inprice.scrapper.common.info.ProductDTO;
 import io.inprice.scrapper.common.meta.CompetitorStatus;
+import io.inprice.scrapper.common.meta.LookupType;
 import io.inprice.scrapper.common.models.Competitor;
 import io.inprice.scrapper.common.models.Product;
 import io.inprice.scrapper.common.models.ProductPrice;
@@ -32,9 +34,16 @@ import io.inprice.scrapper.common.models.ProductPrice;
 public class ProductRepository {
 
   private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
+  private static final LookupRepository lookupRepository = Beans.getSingleton(LookupRepository.class);
   private static final Database db = Beans.getSingleton(Database.class);
 
-  private static final String BASE_QUERY = "select p.*, pp.* from product as p left join product_price as pp on p.last_price_id = pp.id ";
+  private static final 
+    String BASE_QUERY = 
+      "select p.*, pp.*, brand.name as brand, category.name as category from product as p " +
+      "left join product_price as pp on p.last_price_id = pp.id " +
+      "left join lookup as brand on p.brand_id = brand.id " +
+      "left join lookup as category on p.category_id = category.id " ;
+
   private final ProductPrice zeroPrice;
 
   public ProductRepository() {
@@ -145,7 +154,7 @@ public class ProductRepository {
       ProductDTO dto = new ProductDTO();
       dto.setCode(link.getSku());
       dto.setName(link.getName());
-      dto.setBrand(link.getBrand());
+      dto.setBrandId(lookupRepository.add(LookupType.BRAND, link.getBrand()).getId());
       dto.setPrice(link.getPrice());
       dto.setCompanyId(link.getCompanyId());
 
@@ -194,14 +203,24 @@ public class ProductRepository {
         return Responses.DataProblem.ALREADY_EXISTS;
       }
 
-      final String query = "update product set code=?, name=?, brand=?, category=?, price=? where id=? and company_id=? ";
+      final String query = "update product set code=?, name=?, brand_id=?, category_id=?, price=? where id=? and company_id=? ";
 
       try (PreparedStatement pst = con.prepareStatement(query)) {
         int i = 0;
         pst.setString(++i, dto.getCode());
         pst.setString(++i, dto.getName());
-        pst.setString(++i, dto.getBrand());
-        pst.setString(++i, dto.getCategory());
+
+        if (dto.getBrandId() != null) {
+          pst.setLong(++i, dto.getBrandId());
+        } else {
+          pst.setNull(++i, java.sql.Types.NULL);
+        }
+        if (dto.getCategoryId() != null) {
+          pst.setLong(++i, dto.getCategoryId());
+        } else {
+          pst.setNull(++i, java.sql.Types.NULL);
+        }
+
         pst.setBigDecimal(++i, dto.getPrice());
         pst.setLong(++i, dto.getId());
         pst.setLong(++i, CurrentUser.getCompanyId());
@@ -321,16 +340,25 @@ public class ProductRepository {
       if (pst1.executeUpdate() > 0) {
         final String query2 = 
           "insert into product " +
-          "(code, name, brand, category, price, company_id) " + 
+          "(code, name, price, company_id, brand_id, category_id) " + 
           "values (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pst2 = con.prepareStatement(query2, Statement.RETURN_GENERATED_KEYS)) {
           int i = 0;
           pst2.setString(++i, dto.getCode());
           pst2.setString(++i, dto.getName());
-          pst2.setString(++i, dto.getBrand());
-          pst2.setString(++i, dto.getCategory());
           pst2.setBigDecimal(++i, dto.getPrice());
           pst2.setLong(++i, dto.getCompanyId());
+
+          if (dto.getBrandId() != null) {
+            pst2.setLong(++i, dto.getBrandId());
+          } else {
+            pst2.setNull(++i, java.sql.Types.NULL);
+          }
+          if (dto.getCategoryId() != null) {
+            pst2.setLong(++i, dto.getCategoryId());
+          } else {
+            pst2.setNull(++i, java.sql.Types.NULL);
+          }
     
           if (pst2.executeUpdate() > 0) {
             try (ResultSet generatedKeys = pst2.getGeneratedKeys()) {
@@ -365,6 +393,8 @@ public class ProductRepository {
       model.setCategory(rs.getString("category"));
       model.setPrice(rs.getBigDecimal("price"));
       model.setLastPriceId(RepositoryHelper.nullLongHandler(rs, "last_price_id"));
+      model.setBrandId(RepositoryHelper.nullLongHandler(rs, "brand_id"));
+      model.setCategoryId(RepositoryHelper.nullLongHandler(rs, "category_id"));
       model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
       model.setUpdatedAt(rs.getTimestamp("updated_at"));
       model.setCreatedAt(rs.getTimestamp("created_at"));

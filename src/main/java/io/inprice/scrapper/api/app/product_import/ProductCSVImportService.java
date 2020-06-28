@@ -16,15 +16,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.scrapper.api.app.company.CompanyRepository;
+import io.inprice.scrapper.api.app.lookup.LookupRepository;
 import io.inprice.scrapper.api.app.product.ProductRepository;
 import io.inprice.scrapper.api.consts.Responses;
 import io.inprice.scrapper.api.dto.ProductDTOValidator;
+import io.inprice.scrapper.api.helpers.SqlHelper;
 import io.inprice.scrapper.api.info.ServiceResponse;
 import io.inprice.scrapper.api.session.CurrentUser;
 import io.inprice.scrapper.common.helpers.Beans;
 import io.inprice.scrapper.common.helpers.Database;
 import io.inprice.scrapper.common.info.ProductDTO;
+import io.inprice.scrapper.common.meta.LookupType;
 import io.inprice.scrapper.common.models.Company;
+import io.inprice.scrapper.common.models.Lookup;
 import io.inprice.scrapper.common.utils.NumberUtils;
 
 public class ProductCSVImportService implements IProductImportService {
@@ -32,6 +36,7 @@ public class ProductCSVImportService implements IProductImportService {
   private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
   private static final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
   private static final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
+  private static final LookupRepository lookupRepository = Beans.getSingleton(LookupRepository.class);
   private static final Database db = Beans.getSingleton(Database.class);
 
   private static final int COLUMN_COUNT = 5;
@@ -56,6 +61,9 @@ public class ProductCSVImportService implements IProductImportService {
 
           try (CSVReader csvReader = new CSVReader(new StringReader(content))) {
 
+            Map<String, Lookup> brandsMap = lookupRepository.getMap(LookupType.BRAND);
+            Map<String, Lookup> categoriesMap = lookupRepository.getMap(LookupType.CATEGORY);
+
             String[] values;
             while ((values = csvReader.readNext()) != null) {
               if (values.length <= 1 || values[0].trim().isEmpty() || values[0].trim().equals("#")) continue;
@@ -72,13 +80,22 @@ public class ProductCSVImportService implements IProductImportService {
 
                       int i = 0;
                       ProductDTO dto = new ProductDTO();
-                      dto.setCode(values[i++]);
-                      dto.setName(values[i++]);
-                      dto.setBrand(values[i++]);
-                      dto.setCategory(values[i++]);
+                      dto.setCode(SqlHelper.clear(values[i++]));
+                      dto.setName(SqlHelper.clear(values[i++]));
+                      String brandName = SqlHelper.clear(values[i++]);
+                      String categoryName = SqlHelper.clear(values[i++]);
                       dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[i])));
                       dto.setCompanyId(CurrentUser.getCompanyId());
-      
+
+                      if (!brandsMap.containsKey(brandName)) {
+                        brandsMap.put(brandName, lookupRepository.add(LookupType.BRAND, brandName));
+                      }
+                      if (!categoriesMap.containsKey(categoryName)) {
+                        categoriesMap.put(categoryName, lookupRepository.add(LookupType.CATEGORY, categoryName));
+                      }
+                      dto.setBrandId(brandsMap.get(brandName).getId());
+                      dto.setCategoryId(categoriesMap.get(categoryName).getId());
+                      
                       ServiceResponse isValid = ProductDTOValidator.validate(dto);
                       if (isValid.isOK()) {
                         op = productRepository.insertANewProduct(con, dto);

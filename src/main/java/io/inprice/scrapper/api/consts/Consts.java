@@ -1,5 +1,7 @@
 package io.inprice.scrapper.api.consts;
 
+import io.inprice.scrapper.common.meta.LookupType;
+
 public class Consts {
 
   public static final String SESSION = "INPRICE_AT";
@@ -79,6 +81,12 @@ public class Consts {
       public static final String RENEW = BASE + "/renew";
       public static final String PAUSE = BASE + "/pause";
       public static final String RESUME = BASE + "/resume";
+    }
+
+    public static class Lookup {
+      public static final String BASE = "/lookup";
+      public static final String BRAND = BASE + "/" + LookupType.BRAND.name().toLowerCase();
+      public static final String CATEGORY = BASE  + LookupType.CATEGORY.name().toLowerCase();
     }
 
     public static class Dashboard {

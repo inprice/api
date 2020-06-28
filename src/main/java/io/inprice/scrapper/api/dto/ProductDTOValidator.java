@@ -17,22 +17,14 @@ public class ProductDTOValidator {
 
         if (StringUtils.isBlank(dto.getCode())) {
             problems.add("Product code cannot be null!");
-        } else if (dto.getCode().length() < 3 || dto.getCode().length() > 120) {
-            problems.add("Product code must be between 3 and 120 chars!");
+        } else if (dto.getCode().length() < 3 || dto.getCode().length() > 50) {
+            problems.add("Product code must be between 3 and 50 chars!");
         }
 
         if (StringUtils.isBlank(dto.getName())) {
             problems.add("Product name cannot be null!");
         } else if (dto.getName().length() < 3 || dto.getName().length() > 500) {
             problems.add("Product name must be between 3 and 500 chars!");
-        }
-
-        if (! StringUtils.isBlank(dto.getBrand()) && dto.getBrand().length() > 100) {
-            problems.add("Brand can be up to 100 chars!");
-        }
-
-        if (! StringUtils.isBlank(dto.getCategory()) && dto.getCategory().length() > 100) {
-            problems.add("Category can be up to 100 chars!");
         }
 
         if (dto.getPrice() == null || dto.getPrice().compareTo(BigDecimal.ONE) < 0) {

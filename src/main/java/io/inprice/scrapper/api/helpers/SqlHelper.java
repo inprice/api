@@ -69,7 +69,7 @@ public class SqlHelper {
             }
          }
       }
-      return sb.toString();
+      return sb.toString().trim();
    }
 
    public static String generateSearchQuery(SearchModel searchModel) {

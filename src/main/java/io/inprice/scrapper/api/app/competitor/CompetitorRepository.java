@@ -80,9 +80,6 @@ public class CompetitorRepository {
 
     try {
       // sanitizing the url
-      if (dto.getUrl().indexOf("?") > 0) {
-        dto.setUrl(dto.getUrl().substring(0, dto.getUrl().indexOf("?")));
-      }
       dto.setUrl(SqlHelper.clear(dto.getUrl()).trim());
 
       boolean exists = doesExistByUrl(con, dto.getUrl(), dto.getProductId());
@@ -100,7 +97,7 @@ public class CompetitorRepository {
 
           try (PreparedStatement pst = con.prepareStatement(query)) {
             Competitor sample = res.getData();
-            
+
             int i = 0;
             pst.setString(++i, dto.getUrl());
             pst.setString(++i, urlHash);
@@ -117,7 +114,7 @@ public class CompetitorRepository {
               pst.setLong(++i, dto.getProductId());
             else
               pst.setNull(++i, java.sql.Types.NULL);
-          pst.setLong(++i, CurrentUser.getCompanyId());
+            pst.setLong(++i, CurrentUser.getCompanyId());
             affected = pst.executeUpdate();
           }
         } else {
@@ -129,7 +126,7 @@ public class CompetitorRepository {
             if (dto.getProductId() != null)
               pst.setLong(++i, dto.getProductId());
             else
-            pst.setNull(++i, java.sql.Types.NULL);
+              pst.setNull(++i, java.sql.Types.NULL);
             pst.setLong(++i, CurrentUser.getCompanyId());
             affected = pst.executeUpdate();
           }
@@ -187,8 +184,12 @@ public class CompetitorRepository {
     try {
       con = db.getTransactionalConnection();
 
-      final String q1 = "update competitor " + "set pre_status=status, status=?, last_update=now() " + "where id=? "
-          + "  and status != ? " + "  and company_id=? ";
+      final String q1 = 
+        "update competitor " + 
+        "set pre_status=status, status=?, last_update=now() " + 
+        "where id=? " + 
+        "  and status != ? " + 
+        "  and company_id=? ";
 
       boolean res1;
       boolean res2 = false;
@@ -205,7 +206,7 @@ public class CompetitorRepository {
 
       if (res1) {
         try (PreparedStatement pst = con.prepareStatement(
-            "insert into competitor_history (competitor_id, status, product_id, company_id) " + "values (?, ?, ?, ?)")) {
+            "insert into competitor_history (competitor_id, status, product_id, company_id) values (?, ?, ?, ?)")) {
           int i = 0;
           pst.setLong(++i, id);
           pst.setString(++i, status.name());

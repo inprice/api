@@ -311,7 +311,7 @@ public class CompanyRepository {
 
               String where = "where company_id=" + CurrentUser.getCompanyId();
 
-              List<String> queries = new ArrayList<>(13);
+              List<String> queries = new ArrayList<>(14);
               queries.add("SET FOREIGN_KEY_CHECKS=0");
               queries.add("delete from competitor_price " + where);
               queries.add("delete from competitor_history " + where);
@@ -319,6 +319,7 @@ public class CompanyRepository {
               queries.add("delete from competitor " + where);
               queries.add("delete from product_price " + where);
               queries.add("delete from product " + where);
+              queries.add("delete from lookup " + where);
               queries.add("delete from coupon where issued_company_id="+CurrentUser.getCompanyId());
               queries.add("delete from user_session " + where);
               queries.add("delete from membership " + where);
