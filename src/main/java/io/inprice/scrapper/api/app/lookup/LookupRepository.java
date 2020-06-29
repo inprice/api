@@ -36,7 +36,6 @@ public class LookupRepository {
 
       Map<String, Object> data = new HashMap<>(3);
       data.put("type", dto.getType());
-      data.put("items", getList(con, LookupType.valueOf(dto.getType())).getData());
 
       Lookup found = findByTypeAndName(con, dto.getType(), dto.getNewValue());
       if (found != null) {
@@ -55,6 +54,8 @@ public class LookupRepository {
           }
         }
       }
+
+      data.put("items", getList(con, LookupType.valueOf(dto.getType())).getData());
       return new ServiceResponse(data);
 
     } catch (Exception e) {
