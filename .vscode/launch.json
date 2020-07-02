@@ -6,7 +6,7 @@
       "name": "Debug API",
       "request": "launch",
       "projectName": "api",
-      "mainClass": "io.inprice.scrapper.api.Application",
+      "mainClass": "io.inprice.api.Application",
       "env": {
         "APP_ENV": "DEV",
         "APP_PORT": 4567,
