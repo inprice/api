@@ -41,7 +41,7 @@ public class CompetitorService {
   }
 
   public ServiceResponse search(Map<String, String> searchMap) {
-    SearchModel sm = new SearchModel(searchMap, "name, platform, seller", Competitor.class);
+    SearchModel sm = new SearchModel(searchMap, "s.name, platform, seller", Competitor.class);
     sm.setQuery("select l.*, s.name as platform from competitor as l left join site as s on s.id = l.site_id");
     sm.setFields(Arrays.asList("seller", "s.name"));
 
