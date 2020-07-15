@@ -21,6 +21,7 @@ import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.meta.SubsStatus;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Membership;
@@ -271,7 +272,7 @@ public class MembershipRepository {
     List<Membership> memberships = 
       db.findMultiple(
         String.format(
-          "select m.*, c.currency_format, c.name as company_name, c.plan_id from membership as m " +
+          "select m.*, c.currency_format, c.name as company_name, c.plan_id, c.subs_status, c.subs_renewal_at from membership as m " +
           "inner join company as c on c.id = m.company_id " + 
           "left join plan as p on p.id = c.plan_id " + 
           "where m.email='%s' " + 
@@ -328,6 +329,8 @@ public class MembershipRepository {
       model.setUserId(RepositoryHelper.nullLongHandler(rs, "user_id"));
       model.setCompanyName(rs.getString("company_name"));
       model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
+      model.setSubsStatus(SubsStatus.valueOf(rs.getString("subs_status")));
+      model.setSubsRenewalAt(rs.getTimestamp("subs_renewal_at"));
       model.setCurrencyFormat(rs.getString("currency_format"));
       model.setPreStatus(UserStatus.valueOf(rs.getString("pre_status")));
       model.setUpdatedAt(rs.getTimestamp("updated_at"));

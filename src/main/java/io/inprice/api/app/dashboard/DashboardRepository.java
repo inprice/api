@@ -51,10 +51,10 @@ public class DashboardRepository {
   private Map<String, Object> getCompanyInfo(Connection con) throws SQLException {
     Map<String, Object> result = new HashMap<>(5);
     result.put("name", CurrentUser.getCompanyName());
-    result.put("lastCollectingStatus", "Waiting");
     result.put("planName", "Please select one!");
     result.put("productLimit", 0);
-    result.put("dueDate", "");
+    result.put("subsStatus", "");
+    result.put("subsRenewalAt", "");
 
     final String 
       query = 
@@ -68,13 +68,8 @@ public class DashboardRepository {
       try (ResultSet rs = pst.executeQuery()) {
         if (rs.next()) {
           result.put("planName", rs.getString("plan_name"));
-          result.put("dueDate", DateUtils.formatReverseDate(rs.getTimestamp("due_date")));
-
-          Date lastCollectionTime = rs.getTimestamp("last_collecting_time");
-          if (lastCollectionTime != null) {
-            result.put("lastCollectingTime", DateUtils.formatLongDate(lastCollectionTime));
-            result.put("lastCollectingStatus", (rs.getBoolean("last_collecting_status") ? "Successful" : "Failed"));
-          }
+          result.put("subsStatus", rs.getString("subs_status"));
+          result.put("subsRenewalAt", DateUtils.formatReverseDate(rs.getTimestamp("subs_renewal_at")));
         }
       }
     }

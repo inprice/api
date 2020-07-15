@@ -89,9 +89,20 @@ public class Consts {
       public static final String CATEGORY = BASE  + LookupType.CATEGORY.name().toLowerCase();
     }
 
+    public static class Subscription {
+      public static final String BASE = "/subs";
+      public static final String TRANSACTIONS = BASE + "/transactions";
+      public static final String CANCEL = BASE + "/cancel";
+    }
+
     public static class Dashboard {
       public static final String BASE = "/dashboard";
       public static final String REFRESH = BASE + "/refresh";
+    }
+
+    public static class System {
+      public static final String BASE = "/app";
+      public static final String PLANS = BASE + "/plans";
     }
 
   }

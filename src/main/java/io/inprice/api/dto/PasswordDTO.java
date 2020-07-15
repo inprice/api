@@ -4,11 +4,9 @@ import java.io.Serializable;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 @Getter
 @Setter
-@ToString
 public class PasswordDTO implements Serializable {
 
    private static final long serialVersionUID = -326743507759919356L;
@@ -24,6 +22,11 @@ public class PasswordDTO implements Serializable {
 
    public PasswordDTO(Long id) {
       this.id = id;
+   }
+
+   @Override
+   public String toString() {
+     return "[id=" + id + ", token=" + token + "]";
    }
 
 }

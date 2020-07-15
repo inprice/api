@@ -79,6 +79,10 @@ public class RedisClient {
     return Responses.OK;
   }
 
+  public static boolean removeRequestedEmail(RateLimiterType type, String email) {
+    return requestingEmailsSet.remove(type.name() + email);
+  }
+
   public static boolean addSesions(List<ForRedis> sessions) {
     for (ForRedis ses : sessions) {
       sessionsMap.put(ses.getHash(), ses);

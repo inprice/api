@@ -75,6 +75,8 @@ public class CompanyService {
         emailSender.send(Props.APP_EMAIL_SENDER(), "About " + dto.getCompanyName() + " registration on inprice.io",
             dto.getEmail(), message);
 
+        RedisClient.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
+
         return Responses.OK;
       } catch (Exception e) {
         log.error("An error occurred in rendering email for activating register company", e);

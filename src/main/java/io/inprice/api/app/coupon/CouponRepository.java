@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +21,10 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.JsonConverter;
 import io.inprice.common.helpers.RepositoryHelper;
-import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.EventType;
+import io.inprice.common.meta.SubsStatus;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.Coupon;
 import io.inprice.common.models.Plan;
@@ -41,49 +44,82 @@ public class CouponRepository {
 
       Coupon coupon = db.findSingle(con, "select * from coupon where code='" + code + "'", this::map);
       if (coupon != null) {
-        if (coupon.getIssuedCompanyId() == null) {
+        if (coupon.getIssuedAt() == null) {
         
-          Company company = db.findSingle(con, "select plan_id, product_limit, name, due_date from company where id=" + CurrentUser.getCompanyId(), this::mapForCompany);
+          Company company = 
+            db.findSingle(con, 
+              String.format("select * from company where id=%d", CurrentUser.getCompanyId()),
+              this::mapForCompany
+            );
 
-          String query = "update company set plan_id=?, status=?, due_date=DATE_ADD(now(), interval ? day), product_limit=? where id=?";
-          if (company.getDueDate() != null && company.getDueDate().after(new Date())) {
-            query = query.replace("now()", "due_date");
-          }
+          if (! company.getSubsStatus().equals(SubsStatus.ACTIVE)
+          ||  ! company.getSubsStatus().equals(SubsStatus.COUPONED)) {
 
-          Long planId = company.getPlanId();
-          Integer productLimit = company.getProductLimit();
+            final String query = 
+              "update company " +
+              "   set plan_id=?, subs_status=?, subs_renewal_at=DATE_ADD(now(), interval ? day), product_limit=? " +
+              "where id=?";
 
-          boolean usePlanProdLimit = false;
-          if (company.getPlanId() == null || coupon.getPlanId().compareTo(company.getPlanId()) > 0) {
-            planId = coupon.getPlanId();
-            usePlanProdLimit = true;
-          }
+            Long planId = company.getPlanId();
+            Integer productLimit = company.getProductLimit();
 
-          Plan plan = planRepository.findById(con, planId);
-          if (usePlanProdLimit) {
-            productLimit = plan.getProductLimit();
-          }
+            boolean usePlanProdLimit = false;
+            if (company.getPlanId() == null || coupon.getPlanId().compareTo(company.getPlanId()) > 0) {
+              planId = coupon.getPlanId();
+              usePlanProdLimit = true;
+            }
 
-          try (PreparedStatement pst = con.prepareStatement(query)) {
-            int i = 0;
-            pst.setLong(++i, planId);
-            pst.setString(++i, CompanyStatus.ACTIVE.name());
-            pst.setInt(++i, coupon.getDays());
-            pst.setInt(++i, productLimit);
-            pst.setLong(++i, CurrentUser.getUserId());
+            Plan plan = planRepository.findById(con, planId);
+            if (usePlanProdLimit) {
+              productLimit = plan.getProductLimit();
+            }
 
-            if (pst.executeUpdate() > 0) {
+            try (PreparedStatement pst = con.prepareStatement(query)) {
+              int i = 0;
+              pst.setLong(++i, planId);
+              pst.setString(++i, SubsStatus.COUPONED.name());
+              pst.setInt(++i, coupon.getDays());
+              pst.setInt(++i, productLimit);
+              pst.setLong(++i, CurrentUser.getCompanyId());
 
-              try (PreparedStatement pstCoupon = con.prepareStatement("update coupon set issued_company_id=?, issued_at=now() where code=?")) {
-                pstCoupon.setLong(1, CurrentUser.getCompanyId());
-                pstCoupon.setString(2, coupon.getCode());
+              if (pst.executeUpdate() > 0) {
 
-                if (pstCoupon.executeUpdate() > 0) {
-                  res = updateRedisSessionsForPlan(con, planId);
-                  log.info("Coupon {}, is issued for {}", coupon.getCode(), company.getName());
+                try (PreparedStatement pstCoupon = con.prepareStatement("update coupon set issued_at=now() where code=?")) {
+                  pstCoupon.setString(1, coupon.getCode());
+
+                  if (pstCoupon.executeUpdate() > 0) {
+                    final String insertQuery = "insert into subs_event (company_id, event_type, event_id, event, data) values (?, ?, ?, ?, ?)";
+                    try (PreparedStatement pst1 = con.prepareStatement(insertQuery)) {
+                      int j = 0;
+                      pst1.setLong(++j, CurrentUser.getCompanyId());
+                      pst1.setString(++j, EventType.COUPON.name());
+                      pst1.setString(++j, "coupon.given");
+                      pst1.setString(++j, coupon.getCode());
+
+                      Map<String, Object> couponData = new HashMap<>(2);
+                      couponData.put("planId", coupon.getPlanId());
+                      couponData.put("description", coupon.getDescription());
+                      pst1.setString(++j, JsonConverter.toJson(couponData));
+          
+                      if (pst1.executeUpdate() > 0) {
+                        res = updateRedisSessionsForPlan(con, planId, coupon.getDays());
+                        if (res.isOK()) {
+                          Map<String, Object> data = new HashMap<>(3);
+                          data.put("planId", coupon.getPlanId());
+                          data.put("subsStatus", SubsStatus.COUPONED);
+                          data.put("subsRenewalAt", DateUtils.addDays(new Date(), coupon.getDays()));
+                          res = new ServiceResponse(data);
+                        }
+                      }
+                    }
+
+                    log.info("Coupon {}, is issued for {}", coupon.getCode(), company.getName());
+                  }
                 }
               }
             }
+          } else {
+            res = Responses.Already.ACTIVE_SUBSCRIPTION;
           }
         } else {
           res = Responses.Already.USED_COUPON;
@@ -112,7 +148,7 @@ public class CouponRepository {
     return res;
   }
 
-  private ServiceResponse updateRedisSessionsForPlan(Connection con, Long planId) {
+  private ServiceResponse updateRedisSessionsForPlan(Connection con, Long planId, int days) {
     List<String> hashes = db.findMultiple(con,
         String.format("select _hash from user_session where company_id=%d", CurrentUser.getCompanyId()), this::mapForHashField);
 
@@ -120,7 +156,13 @@ public class CouponRepository {
       Map<String, ForRedis> map = new HashMap<>(hashes.size());
       for (String hash : hashes) {
         ForRedis ses = RedisClient.getSession(hash);
+        if (ses == null) {
+          RedisClient.removeSesion(hash);
+          continue;
+        }
         ses.setPlanId(planId);
+        ses.setSubsStatus(SubsStatus.COUPONED);
+        ses.setSubsRenewalAt(DateUtils.addDays(new Date(), days));
         map.put(hash, ses);
       }
       RedisClient.updateSessions(map);
@@ -136,10 +178,14 @@ public class CouponRepository {
   public ServiceResponse getCoupons() {
     List<Coupon> coupons = 
       db.findMultiple(
-        "select * from coupon " + 
-        "where issued_company_id=" + CurrentUser.getCompanyId() +
-        " order by issued_at desc", 
-        this::map);
+        String.format(
+          "select * from coupon " + 
+          "where code in (select event_id from subs_event where company_id=%d and event_type='%s') " +
+          "order by issued_at desc",
+          CurrentUser.getCompanyId(), EventType.COUPON.name()
+        ),
+        this::map
+      );
     if (coupons != null && coupons.size() > 0) {
       return new ServiceResponse(coupons);
     }
@@ -161,7 +207,8 @@ public class CouponRepository {
       model.setName(rs.getString("name"));
       model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
       model.setProductLimit(rs.getInt("product_limit"));
-      model.setDueDate(rs.getTimestamp("due_date"));
+      model.setSubsStatus(SubsStatus.valueOf(rs.getString("subs_status")));
+      model.setSubsRenewalAt(rs.getTimestamp("subs_renewal_at"));
 
       return model;
     } catch (SQLException e) {
@@ -178,7 +225,6 @@ public class CouponRepository {
       model.setDays(rs.getInt("days"));
       model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
       model.setIssuedAt(rs.getTimestamp("issued_at"));
-      model.setIssuedCompanyId(RepositoryHelper.nullLongHandler(rs, "issued_company_id"));
       model.setCreatedAt(rs.getTimestamp("created_at"));
 
       return model;

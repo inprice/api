@@ -154,7 +154,7 @@ public class ProductRepository {
       ProductDTO dto = new ProductDTO();
       dto.setCode(link.getSku());
       dto.setName(link.getName());
-      dto.setBrandId(lookupRepository.add(LookupType.BRAND, link.getBrand()).getId());
+      dto.setBrandId(lookupRepository.add(con, LookupType.BRAND, link.getBrand()).getId());
       dto.setPrice(link.getPrice());
       dto.setCompanyId(link.getCompanyId());
 
