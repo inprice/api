@@ -75,8 +75,10 @@ public class Responses {
 
   public static class Illegal {
     private static final int BASE = 700;
-    public static final ServiceResponse TIMED_OUT_FORGOT_PASSWORD = new ServiceResponse(BASE + 2,
+    public static final ServiceResponse TIMED_OUT_FORGOT_PASSWORD = new ServiceResponse(BASE + 1,
         "Your session seems to expire, please send us a new forgot password request again!");
+    public static final ServiceResponse COUPON_ISSUED_FOR_ANOTHER_COMPANY = new ServiceResponse(BASE + 2,
+        "This coupon is issued for another company!");
   }
 
   public static class Already {

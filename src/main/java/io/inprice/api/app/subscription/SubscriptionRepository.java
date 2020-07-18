@@ -24,6 +24,7 @@ import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.common.meta.EventType;
 import io.inprice.common.meta.SubsStatus;
 import io.inprice.common.models.Company;
+import io.inprice.common.models.Coupon;
 import io.inprice.common.models.SubsEvent;
 
 public class SubscriptionRepository {
@@ -84,25 +85,27 @@ public class SubscriptionRepository {
           pst.setLong(++i, CurrentUser.getCompanyId());
 
           if (pst.executeUpdate() > 0) {
-            final String insertQuery = "insert into subs_event (company_id, event_type, event, data) values (?, ?, ?, ?)";
-            try (PreparedStatement pst1 = con.prepareStatement(insertQuery)) {
-              int j = 0;
-              pst1.setLong(++j, CurrentUser.getCompanyId());
-              if (company.getSubsStatus().equals(SubsStatus.ACTIVE)) {
-                pst1.setString(++j, EventType.SUBSCRIPTION.name());
-                pst1.setString(++j, "subscription.cancel");
-              } else {
-                pst1.setString(++j, EventType.COUPON.name());
-                pst1.setString(++j, "coupon.cancel");
+            if (company.getSubsStatus().equals(SubsStatus.ACTIVE)) {
+              final String insertQuery = "insert into subs_event (company_id, event_type, event, data) values (?, ?, ?, ?)";
+              try (PreparedStatement pst1 = con.prepareStatement(insertQuery)) {
+                int j = 0;
+                pst1.setLong(++j, CurrentUser.getCompanyId());
+                if (company.getSubsStatus().equals(SubsStatus.ACTIVE)) {
+                  pst1.setString(++j, EventType.SUBSCRIPTION.name());
+                  pst1.setString(++j, "subscription.cancel");
+                }
+                pst1.setString(++j, "{ \"description\": \"Manually cancelled\" }");
+    
+                if (pst1.executeUpdate() > 0) {
+                  res = cancel(con);
+                }
               }
-              pst1.setString(++j, "{ \"description\": \"Manually cancelled\" }");
-  
-              if (pst1.executeUpdate() > 0) {
-                res = cancel(con);
-              }
-            }
+              log.info("A subscription is canceled: Company: {}, Id: {}", company.getName(), company.getId());
 
-            log.info("A subscription is canceled: Company: {}, Status: {}", company.getName(), company.getSubsStatus());
+            } else {
+              res = cancel(con);
+              log.info("A coupon is canceled: Company: {}, Id: {}", company.getName(), company.getId());
+            }
           }
         }
       } else {

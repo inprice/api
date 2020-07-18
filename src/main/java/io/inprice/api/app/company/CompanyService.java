@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.auth.AuthService;
-import io.inprice.api.app.coupon.CouponRepository;
 import io.inprice.api.app.token.TokenService;
 import io.inprice.api.app.token.TokenType;
 import io.inprice.api.app.user.UserRepository;
@@ -31,7 +30,6 @@ import io.inprice.api.utils.CurrencyFormats;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.models.User;
-import io.inprice.common.utils.CouponManager;
 import io.javalin.http.Context;
 
 public class CompanyService {
@@ -41,7 +39,6 @@ public class CompanyService {
   private final AuthService authService = Beans.getSingleton(AuthService.class);
   private final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
   private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-  private final CouponRepository couponRepository = Beans.getSingleton(CouponRepository.class);
   private final Database db = Beans.getSingleton(Database.class);
 
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
@@ -129,15 +126,6 @@ public class CompanyService {
 
   public ServiceResponse deleteEverything(String password) {
     return companyRepository.deleteEverything(password);
-  }
-
-  public ServiceResponse getCoupons() {
-    return couponRepository.getCoupons();
-  }
-
-  public ServiceResponse applyCoupon(String code) {
-    if (! CouponManager.isValid(code)) return Responses.Invalid.COUPON;
-    return couponRepository.applyCoupon(code);
   }
 
   private ServiceResponse validateRegisterDTO(RegisterDTO dto) {

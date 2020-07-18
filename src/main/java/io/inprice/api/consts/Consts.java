@@ -36,8 +36,6 @@ public class Consts {
     public static class Company {
       public static final String BASE = "/company";
       public static final String GEO_INFO = BASE + "/geo";
-      public static final String COUPONS = BASE + "/coupons";
-      public static final String APPLY_COUPON = BASE + "/apply-coupon";
       public static final String DELETE = BASE + "/delete";
     }
 
@@ -91,8 +89,10 @@ public class Consts {
 
     public static class Subscription {
       public static final String BASE = "/subs";
-      public static final String TRANSACTIONS = BASE + "/transactions";
+      public static final String TRANSACTIONS = BASE + "/trans";
       public static final String CANCEL = BASE + "/cancel";
+      public static final String COUPONS = BASE + "/coupons";
+      public static final String APPLY_COUPON = BASE + "/apply-coupon";
     }
 
     public static class Dashboard {
