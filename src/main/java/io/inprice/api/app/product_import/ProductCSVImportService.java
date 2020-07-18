@@ -87,14 +87,19 @@ public class ProductCSVImportService implements IProductImportService {
                       dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[i])));
                       dto.setCompanyId(CurrentUser.getCompanyId());
 
-                      if (!brandsMap.containsKey(brandName)) {
-                        brandsMap.put(brandName, lookupRepository.add(LookupType.BRAND, brandName));
+                      Lookup brand = brandsMap.get(brandName);
+                      if (brand == null) {
+                        brand = lookupRepository.add(con, LookupType.BRAND, brandName);
+                        brandsMap.put(brandName, brand);
                       }
-                      if (!categoriesMap.containsKey(categoryName)) {
-                        categoriesMap.put(categoryName, lookupRepository.add(LookupType.CATEGORY, categoryName));
+                      dto.setBrandId(brand.getId());
+
+                      Lookup category = categoriesMap.get(brandName);
+                      if (category == null) {
+                        category = lookupRepository.add(con, LookupType.CATEGORY, categoryName);
+                        categoriesMap.put(categoryName, category);
                       }
-                      dto.setBrandId(brandsMap.get(brandName).getId());
-                      dto.setCategoryId(categoriesMap.get(categoryName).getId());
+                      dto.setCategoryId(category.getId());
                       
                       ServiceResponse isValid = ProductDTOValidator.validate(dto);
                       if (isValid.isOK()) {

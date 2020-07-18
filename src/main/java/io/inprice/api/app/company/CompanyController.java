@@ -41,22 +41,16 @@ public class CompanyController implements Controller {
       ctx.json(Commons.createResponse(ctx, new ServiceResponse(map)));
     }, AccessRoles.ANYONE());
 
+    // create
     app.post(Consts.Paths.Company.BASE, (ctx) -> {
       CreateCompanyDTO dto = ctx.bodyAsClass(CreateCompanyDTO.class);
       ctx.json(Commons.createResponse(ctx, service.create(dto)));
     }, AccessRoles.ANYONE());
 
+    // update
     app.put(Consts.Paths.Company.BASE, (ctx) -> {
       CreateCompanyDTO dto = ctx.bodyAsClass(CreateCompanyDTO.class);
       ctx.json(Commons.createResponse(ctx, service.update(dto)));
-    }, AccessRoles.ADMIN_ONLY());
-
-    app.get(Consts.Paths.Company.COUPONS, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getCoupons()));
-    }, AccessRoles.ADMIN_ONLY());
-
-    app.put(Consts.Paths.Company.APPLY_COUPON + "/:code", (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.applyCoupon(ctx.pathParam("code"))));
     }, AccessRoles.ADMIN_ONLY());
 
     app.put(Consts.Paths.Company.DELETE, (ctx) -> {

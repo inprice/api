@@ -2,6 +2,7 @@ package io.inprice.api.session.info;
 
 import java.util.Date;
 
+import io.inprice.common.meta.SubsStatus;
 import io.inprice.common.models.Membership;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,8 @@ public class ForRedis extends ForResponse {
   private Long userId;
   private Long companyId;
   private Long planId;
+  private SubsStatus subsStatus;
+  private Date subsRenewalAt;
   private String timezone;
   private String currencyFormat;
   private String hash;
@@ -29,6 +32,8 @@ public class ForRedis extends ForResponse {
     this.userId = mem.getUserId();
     this.companyId = mem.getCompanyId();
     this.planId = mem.getPlanId();
+    this.subsStatus = mem.getSubsStatus();
+    this.subsRenewalAt = mem.getSubsRenewalAt();
     this.hash = hash;
   }
 

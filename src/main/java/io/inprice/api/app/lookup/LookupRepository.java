@@ -64,12 +64,10 @@ public class LookupRepository {
     return Responses.DataProblem.DB_PROBLEM;
   }
 
-  public Lookup add(LookupType type, String name) {
+  public Lookup add(Connection con, LookupType type, String name) {
     final String query = "insert into lookup (company_id, type, name) values (?, ?, ?)";
 
-    try (Connection con = db.getConnection();
-        PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-
+    try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
       Lookup found = findByTypeAndName(con, type.name(), name);
       if (found == null) {
         int i = 0;
@@ -147,7 +145,7 @@ public class LookupRepository {
       log.error("Failed to get lookup map. " + type, e);
     }
 
-    return null;
+    return new HashMap<>();
   }
 
   private Lookup map(ResultSet rs) {

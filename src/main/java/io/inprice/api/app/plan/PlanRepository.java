@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyRepository;
+import io.inprice.api.info.ServiceResponse;
 import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
@@ -29,11 +30,34 @@ public class PlanRepository {
    *
    */
   public Plan findById(Connection con, Long id) {
+    return getCacheMap(con).get(id);
+  }
+
+  public int findAllowedProductCount() {
+    Plan found = getCacheMap().get(CurrentUser.getPlanId());
+    if (found != null) return found.getProductLimit();
+    return 0;
+  }
+
+  public ServiceResponse getList() {
+    return new ServiceResponse(getCacheMap().values());
+  }
+
+  private Map<Long, Plan> getCacheMap() {
+    return getCacheMap(null);
+  }
+
+  private Map<Long, Plan> getCacheMap(Connection con) {
     if (cacheMap == null) {
       synchronized(log) {
        if (cacheMap == null) {
          cacheMap = new HashMap<>();
-         List<Plan> plans = db.findMultiple(con, "select * from plan ", this::map);
+         List<Plan> plans = null;
+         if (con == null) {
+          plans = db.findMultiple("select * from plan ", this::map);
+         } else {
+          plans = db.findMultiple(con, "select * from plan ", this::map);
+         }
          if (plans != null && plans.size() > 0) {
            for (Plan plan : plans) {
              cacheMap.put(plan.getId(), plan);
@@ -42,31 +66,20 @@ public class PlanRepository {
        }
       }
     }
-    return cacheMap.get(id);
-  }
-
-  public int findAllowedProductCount() {
-    int result = 0;
-
-    Plan model = db.findSingle("select p.* from plan as p inner " + 
-      "join company as c on p.id = c.plan_id " +
-      "where c.id = " + CurrentUser.getCompanyId(), this::map);
-    if (model != null) {
-      result = model.getProductLimit();
-    }
-
-    return result;
+    return cacheMap;
   }
 
   private Plan map(ResultSet rs) {
     try {
       Plan model = new Plan();
       model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
+      model.setActive(rs.getBoolean("active"));
+      model.setOrderNo(rs.getInt("order_no"));
       model.setName(rs.getString("name"));
       model.setDescription(rs.getString("description"));
       model.setPrice(rs.getBigDecimal("price"));
       model.setProductLimit(rs.getInt("product_limit"));
-      model.setOrderNo(rs.getInt("order_no"));
+      model.setStripeProdId(rs.getString("stripe_prod_id"));
 
       return model;
     } catch (SQLException e) {

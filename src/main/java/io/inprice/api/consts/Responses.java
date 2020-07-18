@@ -75,8 +75,10 @@ public class Responses {
 
   public static class Illegal {
     private static final int BASE = 700;
-    public static final ServiceResponse TIMED_OUT_FORGOT_PASSWORD = new ServiceResponse(BASE + 2,
+    public static final ServiceResponse TIMED_OUT_FORGOT_PASSWORD = new ServiceResponse(BASE + 1,
         "Your session seems to expire, please send us a new forgot password request again!");
+    public static final ServiceResponse COUPON_ISSUED_FOR_ANOTHER_COMPANY = new ServiceResponse(BASE + 2,
+        "This coupon is issued for another company!");
   }
 
   public static class Already {
@@ -87,15 +89,20 @@ public class Responses {
         "This member is already deleted!");
 
     public static final ServiceResponse USED_COUPON = new ServiceResponse(BASE + 5,
-        "This coupon code is already used!");
+        "This coupon seems already used!");
 
-    public static final ServiceResponse REQUESTED_EMAIL = new ServiceResponse(BASE + 7,
+    public static final ServiceResponse ACTIVE_SUBSCRIPTION = new ServiceResponse(BASE + 6,
+        "You have already an active subscription. You cannot use any coupon!");
+    public static final ServiceResponse PASSIVE_SUBSCRIPTION = new ServiceResponse(BASE + 7,
+        "This account has no active subscription at the moment!");
+
+    public static final ServiceResponse REQUESTED_EMAIL = new ServiceResponse(BASE + 10,
         "This email is already requested, please wait some time to try again!");
 
     public static class Defined {
-      public static final ServiceResponse COMPANY = new ServiceResponse(BASE + 10,
+      public static final ServiceResponse COMPANY = new ServiceResponse(BASE + 20,
           "Seems that you have already registered this company!");
-      public static final ServiceResponse MEMBERSHIP = new ServiceResponse(BASE + 11,
+      public static final ServiceResponse MEMBERSHIP = new ServiceResponse(BASE + 21,
           "Seems that this user has an account, please sign in with your credentials and manage your memberships under user settings page!");
     }
   }
@@ -127,6 +134,7 @@ public class Responses {
     public static final ServiceResponse IMPORT = new ServiceResponse(BASE, "Import not found!");
 
     public static final ServiceResponse HISTORY = new ServiceResponse(BASE, "History not found!");
+    public static final ServiceResponse TRANSACTION = new ServiceResponse(BASE, "Transaction not found!");
 
     public static final ServiceResponse DATA = new ServiceResponse(BASE, "Nothing found!");
   }
