@@ -24,7 +24,6 @@ import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.common.meta.EventType;
 import io.inprice.common.meta.SubsStatus;
 import io.inprice.common.models.Company;
-import io.inprice.common.models.Coupon;
 import io.inprice.common.models.SubsEvent;
 
 public class SubscriptionRepository {

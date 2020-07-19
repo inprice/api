@@ -34,6 +34,21 @@ public class CouponRepository {
   private static final Database db = Beans.getSingleton(Database.class);
   private static final PlanRepository planRepository = Beans.getSingleton(PlanRepository.class);
 
+  public ServiceResponse getCoupons() {
+    List<Coupon> coupons = 
+      db.findMultiple(
+        String.format(
+          "select * from coupon where issued_company_id=%d order by issued_at desc",
+          CurrentUser.getCompanyId()
+        ),
+        this::map
+      );
+    if (coupons != null && coupons.size() > 0) {
+      return new ServiceResponse(coupons);
+    }
+    return Responses.NotFound.COUPON;
+  }
+
   public ServiceResponse applyCoupon(String code) {
     ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
@@ -160,21 +175,6 @@ public class CouponRepository {
     }
 
     return Responses.DataProblem.DB_PROBLEM;
-  }
-
-  public ServiceResponse getCoupons() {
-    List<Coupon> coupons = 
-      db.findMultiple(
-        String.format(
-          "select * from coupon where issued_company_id=%d order by issued_at desc",
-          CurrentUser.getCompanyId()
-        ),
-        this::map
-      );
-    if (coupons != null && coupons.size() > 0) {
-      return new ServiceResponse(coupons);
-    }
-    return Responses.NotFound.COUPON;
   }
 
   private String mapForHashField(ResultSet rs) {

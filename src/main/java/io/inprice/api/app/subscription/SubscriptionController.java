@@ -24,13 +24,12 @@ public class SubscriptionController implements Controller {
       ctx.json(Commons.createResponse(ctx, service.cancel()));
     }, AccessRoles.ADMIN_ONLY());
 
-    app.get(Consts.Paths.Subscription.COUPONS, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getCoupons()));
+    /*
+    app.post(Consts.Paths.Subscription.SAVE_CUSTOMER, (ctx) -> {
+      StripeCustomerDTO dto = ctx.bodyAsClass(StripeCustomerDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.saveCustomer(dto)));
     }, AccessRoles.ADMIN_ONLY());
-
-    app.put(Consts.Paths.Subscription.APPLY_COUPON + "/:code", (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.applyCoupon(ctx.pathParam("code"))));
-    }, AccessRoles.ADMIN_ONLY());
+    */
 
   }
 

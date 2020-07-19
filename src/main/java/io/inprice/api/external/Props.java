@@ -56,4 +56,8 @@ public class Props {
     return System.getenv().get("API_KEYS_GELOCATION");
   }
 
+  public static String API_KEYS_STRIPE() {
+    return System.getenv().get("API_KEYS_STRIPE");
+  }
+
 }

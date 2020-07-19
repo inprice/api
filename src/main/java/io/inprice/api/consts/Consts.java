@@ -88,11 +88,20 @@ public class Consts {
     }
 
     public static class Subscription {
-      public static final String BASE = "/subs";
-      public static final String TRANSACTIONS = BASE + "/trans";
+      public static final String BASE = "/subscription";
       public static final String CANCEL = BASE + "/cancel";
-      public static final String COUPONS = BASE + "/coupons";
-      public static final String APPLY_COUPON = BASE + "/apply-coupon";
+      public static final String TRANSACTIONS = BASE + "/trans";
+    }
+
+    public static class Billing {
+      public static final String BASE = "/billing";
+      public static final String SAVE_INFO = BASE + "/save-info";
+      public static final String TRANSACTIONS = BASE + "/trans";
+    }
+
+    public static class Coupon {
+      public static final String BASE = "/coupon";
+      public static final String APPLY = BASE + "/apply";
     }
 
     public static class Dashboard {

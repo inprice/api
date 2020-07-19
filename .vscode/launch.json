@@ -18,7 +18,8 @@
         "PREFIX_FOR_SEARCH_EBAY": "https://www.ebay.com/itm/",
         "PREFIX_FOR_SEARCH_AMAZON": "https://www.amazon.com/dp/",
         "API_KEYS_GELOCATION": "9eac35ec732e43a3a89863fce6cb406a",
-        "API_KEYS_SENDGRID": "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"
+        "API_KEYS_SENDGRID": "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",
+        "API_KEYS_STRIPE": "sk_test_51H0m4UBiHTcqawyMEfSqMdjwXDwJHzJuWk3WuWJbLIG2fr6zCnIaQc5PKWzKB1hDnp9wRQYPeoOhQpR1OmD7A29K00CJdCwOmQ"
       }
     }
   ]
