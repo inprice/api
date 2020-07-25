@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.stripe.model.Product;
+import com.stripe.model.ProductCollection;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +29,7 @@ public class PlanRepository {
   private Map<Long, Plan> cacheMap;
 
   /**
-   * Plans don't change frequently, so we can cache them 
+   * Plans don't change frequently, so we can cache them
    *
    */
   public Plan findById(Connection con, Long id) {
@@ -35,7 +38,8 @@ public class PlanRepository {
 
   public int findAllowedProductCount() {
     Plan found = getCacheMap().get(CurrentUser.getPlanId());
-    if (found != null) return found.getProductLimit();
+    if (found != null)
+      return found.getProductLimit();
     return 0;
   }
 
@@ -49,21 +53,40 @@ public class PlanRepository {
 
   private Map<Long, Plan> getCacheMap(Connection con) {
     if (cacheMap == null) {
-      synchronized(log) {
-       if (cacheMap == null) {
-         cacheMap = new HashMap<>();
-         List<Plan> plans = null;
-         if (con == null) {
-          plans = db.findMultiple("select * from plan ", this::map);
-         } else {
-          plans = db.findMultiple(con, "select * from plan ", this::map);
-         }
-         if (plans != null && plans.size() > 0) {
-           for (Plan plan : plans) {
-             cacheMap.put(plan.getId(), plan);
-           }
-         }
-       }
+      synchronized (log) {
+        if (cacheMap == null) {
+          cacheMap = new HashMap<>();
+          List<Plan> plans = null;
+          if (con == null) {
+            plans = db.findMultiple("select * from plan ", this::map);
+          } else {
+            plans = db.findMultiple(con, "select * from plan ", this::map);
+          }
+          if (plans != null && plans.size() > 0) {
+
+            //fetching Stripe's product list to set all the plans' product id fields
+            List<Product> stripeProdList = null;
+            try {
+              Map<String, Object> params = new HashMap<>();
+              ProductCollection products = Product.list(params);
+              stripeProdList = products.getData();
+            } catch (Exception e) {
+              log.error("Failed to fetch Stripe's product list", e);
+            }
+
+            for (Plan plan : plans) {
+              if (stripeProdList != null && stripeProdList.size() > 0) {
+                for (Product product : stripeProdList) {
+                  if (product.getName().equals(plan.getName())) {
+                    plan.setStripeProdId(product.getId());
+                    break;
+                  }
+                }
+              }
+              cacheMap.put(plan.getId(), plan);
+            }
+          }
+        }
       }
     }
     return cacheMap;
@@ -79,7 +102,6 @@ public class PlanRepository {
       model.setDescription(rs.getString("description"));
       model.setPrice(rs.getBigDecimal("price"));
       model.setProductLimit(rs.getInt("product_limit"));
-      model.setStripeProdId(rs.getString("stripe_prod_id"));
 
       return model;
     } catch (SQLException e) {

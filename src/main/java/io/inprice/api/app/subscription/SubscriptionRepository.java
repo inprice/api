@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.InvoiceInfoDTO;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
@@ -31,37 +30,11 @@ public class SubscriptionRepository {
   private static final Logger log = LoggerFactory.getLogger(SubscriptionRepository.class);
   private static final Database db = Beans.getSingleton(Database.class);
 
-  public ServiceResponse getInvoiceInfo() {
-    Company model = db.findSingle("select * from company where id=" + CurrentUser.getCompanyId(), this::map);
-    if (model != null)
-      return new ServiceResponse(model);
-    else
-      return Responses.NotFound.COMPANY;
-  }
-
-  public ServiceResponse updateInvoiceInfo(InvoiceInfoDTO dto) {
-    final String query = "update company set title=?, address_1=?, address_2=?, town_or_city=?, postcode=?, country=? where id=?";
-
-    try (Connection con = db.getConnection();
-        PreparedStatement pst = con.prepareStatement(query)) {
-      int i = 0;
-      pst.setString(++i, dto.getTitle());
-      pst.setString(++i, dto.getAddress1());
-      pst.setString(++i, dto.getAddress2());
-      pst.setString(++i, dto.getTownOrCity());
-      pst.setString(++i, dto.getPostcode());
-      pst.setString(++i, dto.getCountry());
-      pst.setLong(++i, CurrentUser.getCompanyId());
-
-      if (pst.executeUpdate() > 0)
-        return Responses.OK;
-      else
-        return Responses.NotFound.COMPANY;
-
-    } catch (SQLException e) {
-      log.error("Failed to set invoice info", e);
-      return Responses.ServerProblem.EXCEPTION;
-    }
+  public ServiceResponse getTransactions() {
+    return 
+      new ServiceResponse(
+        db.findMultiple("select * from subs_event where company_id=" + CurrentUser.getCompanyId() + " order by created_at desc", this::transMap)
+      );
   }
 
   public ServiceResponse cancel() {
@@ -131,13 +104,6 @@ public class SubscriptionRepository {
     return res;
   }
 
-  public ServiceResponse getTransactions() {
-    return 
-      new ServiceResponse(
-        db.findMultiple("select * from subs_event where company_id=" + CurrentUser.getCompanyId() + " order by created_at desc", this::transMap)
-      );
-  }
-
   private ServiceResponse cancel(Connection con) {
     List<String> hashes = db.findMultiple(con,
         String.format("select _hash from user_session where company_id=%d", CurrentUser.getCompanyId()), this::mapForHashField);
@@ -193,23 +159,6 @@ public class SubscriptionRepository {
       return model;
     } catch (SQLException e) {
       log.error("Failed to set transaction's properties", e);
-    }
-    return null;
-  }
-
-  private Company map(ResultSet rs) {
-    try {
-      Company model = new Company();
-      model.setTitle(rs.getString("title"));
-      model.setAddress1(rs.getString("address_1"));
-      model.setAddress2(rs.getString("address_2"));
-      model.setTownOrCity(rs.getString("town_or_city"));
-      model.setPostcode(rs.getString("postcode"));
-      model.setCountry(rs.getString("country"));
-
-      return model;
-    } catch (SQLException e) {
-      log.error("Failed to set invoice info's properties", e);
     }
     return null;
   }
