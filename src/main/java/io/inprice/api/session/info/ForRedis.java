@@ -19,7 +19,7 @@ public class ForRedis extends ForResponse {
 
   private Long userId;
   private Long companyId;
-  private Long planId;
+  private Integer planId;
   private SubsStatus subsStatus;
   private Date subsRenewalAt;
   private String timezone;

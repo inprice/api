@@ -133,7 +133,7 @@ public class SubscriptionRepository {
     try {
       Company model = new Company();
       model.setName(rs.getString("name"));
-      model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
+      model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
       model.setProductLimit(rs.getInt("product_limit"));
       model.setSubsStatus(SubsStatus.valueOf(rs.getString("subs_status")));
       model.setSubsRenewalAt(rs.getTimestamp("subs_renewal_at"));

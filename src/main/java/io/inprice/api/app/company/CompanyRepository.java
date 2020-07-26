@@ -382,7 +382,7 @@ public class CompanyRepository {
       model.setProductLimit(rs.getInt("product_limit"));
       model.setProductCount(rs.getInt("product_count"));
       model.setAdminId(RepositoryHelper.nullLongHandler(rs, "admin_id"));
-      model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
+      model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
       model.setSubsStatus(SubsStatus.valueOf(rs.getString("subs_status")));
       model.setSubsRenewalAt(rs.getTimestamp("subs_renewal_at"));
       model.setCreatedAt(rs.getTimestamp("created_at"));

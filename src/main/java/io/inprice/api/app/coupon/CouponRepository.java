@@ -75,7 +75,7 @@ public class CouponRepository {
                 "   set plan_id=?, subs_status=?, subs_renewal_at=DATE_ADD(now(), interval ? day), product_limit=? " +
                 "where id=?";
 
-              Long planId = company.getPlanId();
+              Integer planId = company.getPlanId();
               Integer productLimit = company.getProductLimit();
 
               boolean usePlanProdLimit = false;
@@ -84,7 +84,7 @@ public class CouponRepository {
                 usePlanProdLimit = true;
               }
 
-              Plan plan = planRepository.findById(con, planId);
+              Plan plan = planRepository.findById(planId);
               if (usePlanProdLimit) {
                 productLimit = plan.getProductLimit();
               }
@@ -150,7 +150,7 @@ public class CouponRepository {
     return res;
   }
 
-  private ServiceResponse updateRedisSessionsForPlan(Connection con, Long planId, int days) {
+  private ServiceResponse updateRedisSessionsForPlan(Connection con, Integer planId, int days) {
     List<String> hashes = db.findMultiple(con,
         String.format("select _hash from user_session where company_id=%d", CurrentUser.getCompanyId()), this::mapForHashField);
 
@@ -169,7 +169,7 @@ public class CouponRepository {
       }
       RedisClient.updateSessions(map);
 
-      Map<String, Long> dataMap = new HashMap<>(1);
+      Map<String, Integer> dataMap = new HashMap<>(1);
       dataMap.put("planId", planId);
       return new ServiceResponse(dataMap);
     }
@@ -190,7 +190,7 @@ public class CouponRepository {
     try {
       Company model = new Company();
       model.setName(rs.getString("name"));
-      model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
+      model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
       model.setProductLimit(rs.getInt("product_limit"));
       model.setSubsStatus(SubsStatus.valueOf(rs.getString("subs_status")));
       model.setSubsRenewalAt(rs.getTimestamp("subs_renewal_at"));
@@ -208,7 +208,7 @@ public class CouponRepository {
       model.setCode(rs.getString("code"));
       model.setDescription(rs.getString("description"));
       model.setDays(rs.getInt("days"));
-      model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
+      model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
       model.setIssuedCompanyId(RepositoryHelper.nullLongHandler(rs, "issued_company_id"));
       model.setIssuedAt(rs.getTimestamp("issued_at"));
       model.setCreatedAt(rs.getTimestamp("created_at"));

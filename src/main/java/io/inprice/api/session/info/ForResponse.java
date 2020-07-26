@@ -23,7 +23,7 @@ public class ForResponse implements Serializable {
   private String user;
   private String email;
   private String company;
-  private Long planId;
+  private Integer planId;
   private SubsStatus subsStatus;
   private Date subsRenewalAt;
   private String timezone;

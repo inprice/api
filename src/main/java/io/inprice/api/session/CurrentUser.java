@@ -44,7 +44,7 @@ public class CurrentUser {
       return THREAD_VARIABLES.get().getSession().getRole();
    }
 
-   public static Long getPlanId() {
+   public static Integer getPlanId() {
       return THREAD_VARIABLES.get().getSession().getPlanId();
    }
 
