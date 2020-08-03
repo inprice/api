@@ -90,13 +90,9 @@ public class Consts {
     public static class Subscription {
       public static final String BASE = "/subscription";
       public static final String CANCEL = BASE + "/cancel";
+      public static final String CREATE_SESSION = BASE + "/create-session";
       public static final String TRANSACTIONS = BASE + "/trans";
-    }
-
-    public static class Billing {
-      public static final String BASE = "/billing";
       public static final String SAVE_INFO = BASE + "/save-info";
-      public static final String TRANSACTIONS = BASE + "/trans";
     }
 
     public static class Coupon {
@@ -112,6 +108,10 @@ public class Consts {
     public static class System {
       public static final String BASE = "/app";
       public static final String PLANS = BASE + "/plans";
+    }
+
+    public static class Webhook {
+      public static final String STRIPE = "/stripe/webhook";
     }
 
   }

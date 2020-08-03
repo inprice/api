@@ -1,6 +1,7 @@
 package io.inprice.api.app.subscription;
 
 import io.inprice.api.consts.Consts;
+import io.inprice.api.dto.CustomerInfoDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -16,12 +17,26 @@ public class SubscriptionController implements Controller {
   @Override
   public void addRoutes(Javalin app) {
 
-    app.get(Consts.Paths.Subscription.TRANSACTIONS, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getTransactions()));
+    app.get(Consts.Paths.Subscription.BASE, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, service.getInfo()));
+    }, AccessRoles.ADMIN_ONLY());
+
+    app.post(Consts.Paths.Subscription.SAVE_INFO, (ctx) -> {
+      CustomerInfoDTO dto = ctx.bodyAsClass(CustomerInfoDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.saveInfo(dto)));
     }, AccessRoles.ADMIN_ONLY());
 
     app.put(Consts.Paths.Subscription.CANCEL, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.cancel()));
+    }, AccessRoles.ADMIN_ONLY());
+    
+    app.get(Consts.Paths.Subscription.TRANSACTIONS, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, service.getTransactions()));
+    }, AccessRoles.ADMIN_ONLY());
+
+    app.post(Consts.Paths.Subscription.CREATE_SESSION + "/:plan_id", (ctx) -> {
+      Integer planId = ctx.pathParam("plan_id", Integer.class).check(it -> it > 0).getValue();
+      ctx.json(Commons.createResponse(ctx, service.createSession(planId)));
     }, AccessRoles.ADMIN_ONLY());
 
   }

@@ -60,4 +60,8 @@ public class Props {
     return System.getenv().get("API_KEYS_STRIPE");
   }
 
+  public static String API_KEYS_STRIPE_WEBHOOK() {
+    return System.getenv().get("API_KEYS_STRIPE_WEBHOOK");
+  }
+
 }

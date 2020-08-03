@@ -81,6 +81,7 @@ public class Application {
       config.enableCorsForAllOrigins();
       config.logIfServerNotStarted = true;
       config.showJavalinBanner = false;
+      config.requestCacheSize = 8192L;
 
       if (SysProps.APP_ENV().equals(AppEnv.DEV)) {
         config.registerPlugin(new RouteOverviewPlugin("/routes"));

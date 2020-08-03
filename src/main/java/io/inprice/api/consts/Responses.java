@@ -7,6 +7,7 @@ import io.inprice.api.info.ServiceResponse;
 public class Responses {
 
   public static final ServiceResponse OK = new ServiceResponse(0, "OK");
+  public static final ServiceResponse BAD_REQUEST = new ServiceResponse(HttpStatus.BAD_REQUEST_400, "Bad request!");
   public static final ServiceResponse _401 = new ServiceResponse(HttpStatus.UNAUTHORIZED_401,
       "Your session seems to be expired, please sign in again.");
   public static final ServiceResponse _403 = new ServiceResponse(HttpStatus.FORBIDDEN_403,
