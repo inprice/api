@@ -1,5 +1,7 @@
 package io.inprice.api;
 
+import com.stripe.Stripe;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +46,8 @@ public class Application {
       log.info("APPLICATION STARTED.");
       Global.isApplicationRunning = true;
 
+      Stripe.apiKey = Props.API_KEYS_STRIPE();
+
     }, "app-starter").start();
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -77,6 +81,7 @@ public class Application {
       config.enableCorsForAllOrigins();
       config.logIfServerNotStarted = true;
       config.showJavalinBanner = false;
+      config.requestCacheSize = 8192L;
 
       if (SysProps.APP_ENV().equals(AppEnv.DEV)) {
         config.registerPlugin(new RouteOverviewPlugin("/routes"));

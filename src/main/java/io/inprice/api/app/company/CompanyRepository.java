@@ -55,6 +55,10 @@ public class CompanyRepository {
     return db.findSingle(con, "select * from company where id=" + id, this::map);
   }
 
+  public Company findBySubsCustomerId(Connection con, String custId) {
+    return db.findSingle(con, "select * from company where subs_customer_id='" + custId + "'", this::map);
+  }
+
   public ServiceResponse findByAdminId(Connection con, Long adminId) {
     Company model = db.findSingle(con, "select * from company where admin_id=" + adminId, this::map);
     if (model != null)
@@ -322,7 +326,7 @@ public class CompanyRepository {
               queries.add("delete from lookup " + where);
               queries.add("delete from user_session " + where);
               queries.add("delete from membership " + where);
-              queries.add("delete from subs_event " + where);
+              queries.add("delete from subs_trans " + where);
               queries.add("delete from user where id in (select admin_id from company where id="+CurrentUser.getCompanyId()+")");
               queries.add("delete from company where id="+CurrentUser.getCompanyId());
               queries.add("SET FOREIGN_KEY_CHECKS=1");
@@ -382,7 +386,7 @@ public class CompanyRepository {
       model.setProductLimit(rs.getInt("product_limit"));
       model.setProductCount(rs.getInt("product_count"));
       model.setAdminId(RepositoryHelper.nullLongHandler(rs, "admin_id"));
-      model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
+      model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
       model.setSubsStatus(SubsStatus.valueOf(rs.getString("subs_status")));
       model.setSubsRenewalAt(rs.getTimestamp("subs_renewal_at"));
       model.setCreatedAt(rs.getTimestamp("created_at"));

@@ -15,16 +15,20 @@ import org.apache.commons.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.plan.PlanRepository;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.common.meta.CompetitorStatus;
+import io.inprice.common.models.Plan;
 import io.inprice.common.utils.DateUtils;
 
 public class DashboardRepository {
 
   private static final Logger log = LoggerFactory.getLogger(DashboardRepository.class);
 
+  private final PlanRepository planRepository = Beans.getSingleton(PlanRepository.class);
   private final Database db = Beans.getSingleton(Database.class);
 
   public Map<String, Object> getReport() {
@@ -56,18 +60,16 @@ public class DashboardRepository {
     result.put("subsStatus", "");
     result.put("subsRenewalAt", "");
 
-    final String 
-      query = 
-        "select c.*, p.product_limit, p.name as plan_name from company as c " +
-        "left join plan as p on p.id = c.plan_id " +
-        "where c.id=?";
-
-    try (PreparedStatement pst = con.prepareStatement(query)) {
+    try (PreparedStatement pst = con.prepareStatement("select * from company where id=?")) {
       pst.setLong(1, CurrentUser.getCompanyId());
 
       try (ResultSet rs = pst.executeQuery()) {
         if (rs.next()) {
-          result.put("planName", rs.getString("plan_name"));
+          Integer planId = RepositoryHelper.nullIntegerHandler(rs, "plan_id");
+          if (planId != null && planId > 0) {
+            Plan plan = planRepository.findById(planId);
+            result.put("planName", plan.getName());
+          }
           result.put("subsStatus", rs.getString("subs_status"));
           result.put("subsRenewalAt", DateUtils.formatReverseDate(rs.getTimestamp("subs_renewal_at")));
         }

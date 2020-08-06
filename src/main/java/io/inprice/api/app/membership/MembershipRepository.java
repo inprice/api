@@ -38,9 +38,8 @@ public class MembershipRepository {
     List<Membership> memberList = 
       db.findMultiple(
         String.format(
-          "select m.*, c.currency_format, c.name as company_name, c.plan_id, p.name as plan_name from membership as m " +
+          "select m.*, c.currency_format, c.name as company_name, c.plan_id from membership as m " +
           "inner join company as c on c.id = m.company_id " + 
-          "left join plan as p on p.id = c.plan_id " + 
           "where m.email != '%s' " + 
           "  and company_id = %d " + 
           "order by m.email",
@@ -274,7 +273,6 @@ public class MembershipRepository {
         String.format(
           "select m.*, c.currency_format, c.name as company_name, c.plan_id, c.subs_status, c.subs_renewal_at from membership as m " +
           "inner join company as c on c.id = m.company_id " + 
-          "left join plan as p on p.id = c.plan_id " + 
           "where m.email='%s' " + 
           "  and m.status = '%s' " + 
           "order by m.role, m.created_at",
@@ -328,7 +326,7 @@ public class MembershipRepository {
       Membership model = map(rs);
       model.setUserId(RepositoryHelper.nullLongHandler(rs, "user_id"));
       model.setCompanyName(rs.getString("company_name"));
-      model.setPlanId(RepositoryHelper.nullLongHandler(rs, "plan_id"));
+      model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
       model.setSubsStatus(SubsStatus.valueOf(rs.getString("subs_status")));
       model.setSubsRenewalAt(rs.getTimestamp("subs_renewal_at"));
       model.setCurrencyFormat(rs.getString("currency_format"));

@@ -1,91 +1,53 @@
 package io.inprice.api.app.plan;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.math.BigDecimal;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.inprice.api.app.company.CompanyRepository;
 import io.inprice.api.info.ServiceResponse;
-import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.helpers.Beans;
-import io.inprice.common.helpers.Database;
 import io.inprice.common.models.Plan;
 
 public class PlanRepository {
 
-  private static final Logger log = LoggerFactory.getLogger(CompanyRepository.class);
-  private static final Database db = Beans.getSingleton(Database.class);
+  private Map<Integer, Plan> plansMap;
 
-  private Map<Long, Plan> cacheMap;
+  PlanRepository() {
+    Plan[] plans = {
+      new Plan(
+        1, 
+        "Micro Plan",
+        "Up to 5 products with unlimited competitors.",
+        new BigDecimal(5),
+        5,
+        "price_1H8hpfBiHTcqawyMTooghKgi"
+      ),
+      new Plan(
+        2, 
+        "Micro Plus Plan",
+        "Up to 10 products with unlimited competitors.",
+        new BigDecimal(7),
+        10,
+        "price_1H8hqXBiHTcqawyMvG5xVsdb"
+      )
+    };
 
-  /**
-   * Plans don't change frequently, so we can cache them 
-   *
-   */
-  public Plan findById(Connection con, Long id) {
-    return getCacheMap(con).get(id);
-  }
-
-  public int findAllowedProductCount() {
-    Plan found = getCacheMap().get(CurrentUser.getPlanId());
-    if (found != null) return found.getProductLimit();
-    return 0;
-  }
-
-  public ServiceResponse getList() {
-    return new ServiceResponse(getCacheMap().values());
-  }
-
-  private Map<Long, Plan> getCacheMap() {
-    return getCacheMap(null);
-  }
-
-  private Map<Long, Plan> getCacheMap(Connection con) {
-    if (cacheMap == null) {
-      synchronized(log) {
-       if (cacheMap == null) {
-         cacheMap = new HashMap<>();
-         List<Plan> plans = null;
-         if (con == null) {
-          plans = db.findMultiple("select * from plan ", this::map);
-         } else {
-          plans = db.findMultiple(con, "select * from plan ", this::map);
-         }
-         if (plans != null && plans.size() > 0) {
-           for (Plan plan : plans) {
-             cacheMap.put(plan.getId(), plan);
-           }
-         }
-       }
-      }
+    plansMap = new TreeMap<>();
+    for (Plan plan : plans) {
+      plansMap.put(plan.getId(), plan);
     }
-    return cacheMap;
   }
 
-  private Plan map(ResultSet rs) {
-    try {
-      Plan model = new Plan();
-      model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
-      model.setActive(rs.getBoolean("active"));
-      model.setOrderNo(rs.getInt("order_no"));
-      model.setName(rs.getString("name"));
-      model.setDescription(rs.getString("description"));
-      model.setPrice(rs.getBigDecimal("price"));
-      model.setProductLimit(rs.getInt("product_limit"));
-      model.setStripeProdId(rs.getString("stripe_prod_id"));
+  public Plan findById(Integer id) {
+    return plansMap.get(id);
+  }
 
-      return model;
-    } catch (SQLException e) {
-      log.error("Failed to set plan's properties", e);
-    }
-    return null;
+  public ServiceResponse getPlans() {
+    Map<String, Object> dataMap = new HashMap<>(2);
+    dataMap.put("cid", CurrentUser.getCompanyId());
+    dataMap.put("plans", plansMap.values());
+    return new ServiceResponse(dataMap);
   }
 
 }
