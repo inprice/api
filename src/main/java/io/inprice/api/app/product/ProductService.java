@@ -64,7 +64,8 @@ public class ProductService {
   }
 
   public ServiceResponse deleteById(Long id) {
-    if (id == null || id < 1) return Responses.NotFound.PRODUCT;
+    if (id == null || id < 1)
+      return Responses.NotFound.PRODUCT;
     return repository.deleteById(id);
   }
 

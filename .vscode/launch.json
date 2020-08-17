@@ -3,9 +3,9 @@
   "configurations": [
     {
       "type": "java",
-      "name": "CodeLens (Launch) - CodeGenerator",
+      "name": "CodeLens (Launch) - Test",
       "request": "launch",
-      "mainClass": "io.inprice.api.helpers.CodeGenerator",
+      "mainClass": "io.inprice.api.Test",
       "projectName": "api"
     },
     {

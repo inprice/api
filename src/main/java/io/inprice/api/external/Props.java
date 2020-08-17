@@ -8,7 +8,7 @@ public class Props {
 
   public static int APP_PORT() {
     String def = SysProps.APP_ENV().equals(AppEnv.PROD) ? "8901" : "4567";
-    return new Integer(System.getenv().getOrDefault("APP_PORT", def));
+    return Integer.parseInt(System.getenv().getOrDefault("APP_PORT", def));
   }
 
   public static String APP_EMAIL_SENDER() {
@@ -25,7 +25,7 @@ public class Props {
 
   public static int APP_SALT_ROUNDS() {
     String def = SysProps.APP_ENV().equals(AppEnv.PROD) ? "12" : "4";
-    return new Integer(System.getenv().getOrDefault("APP_SALT_ROUNDS", def));
+    return Integer.parseInt(System.getenv().getOrDefault("APP_SALT_ROUNDS", def));
   }
 
   public static Long TTL_ACCESS_TOKENS() {

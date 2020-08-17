@@ -1,6 +1,8 @@
 package io.inprice.api.helpers;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -38,6 +40,21 @@ public class HttpHelper {
       return EntityUtils.toString(entity);
     } catch (IOException e) {
       log.error("Failed to get", e);
+    }
+    return null;
+  }
+
+  public static String extractHostname(String url) {
+    try {
+      URI uri = new URI(url);
+      String domain = uri.getHost();
+      if (domain == null) domain = url;
+      if (domain.indexOf("/") > 0) {
+        domain = domain.substring(0, domain.indexOf("/"));
+      }
+      return domain.startsWith("www.") ? domain.substring(4) : domain;
+    } catch (URISyntaxException e) {
+      //ignored
     }
     return null;
   }

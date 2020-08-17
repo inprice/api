@@ -5,31 +5,31 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.plan.PlanRepository;
+import io.inprice.api.app.company.CompanyRepository;
+import io.inprice.api.helpers.HttpHelper;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.common.meta.CompetitorStatus;
-import io.inprice.common.models.Plan;
+import io.inprice.common.meta.Position;
 import io.inprice.common.utils.DateUtils;
 
 public class DashboardRepository {
 
   private static final Logger log = LoggerFactory.getLogger(DashboardRepository.class);
 
-  private final PlanRepository planRepository = Beans.getSingleton(PlanRepository.class);
   private final Database db = Beans.getSingleton(Database.class);
+  private final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
 
   public Map<String, Object> getReport() {
     Map<String, Object> report = new HashMap<>(4);
@@ -37,9 +37,9 @@ public class DashboardRepository {
     try (Connection con = db.getConnection()) {
 
       report.put("date", DateUtils.formatLongDate(new Date()));
-      report.put("company", getCompanyInfo(con));
-      report.put("products", getProductsInfo(con));
-      report.put("competitors", getCompetitorsInfo(con));
+      report.put("products", getProducts(con));
+      report.put("competitors", getCompetitors(con));
+      report.put("company", companyRepository.findById(con, CurrentUser.getCompanyId()));
 
     } catch (Exception e) {
       log.error("Failed to get dashboard report", e);
@@ -48,90 +48,36 @@ public class DashboardRepository {
     return report;
   }
 
-  /**
-   * getting company info
-   * 
-   */
-  private Map<String, Object> getCompanyInfo(Connection con) throws SQLException {
-    Map<String, Object> result = new HashMap<>(5);
-    result.put("name", CurrentUser.getCompanyName());
-    result.put("planName", "Please select one!");
-    result.put("productLimit", 0);
-    result.put("subsStatus", "");
-    result.put("subsRenewalAt", "");
-
-    try (PreparedStatement pst = con.prepareStatement("select * from company where id=?")) {
-      pst.setLong(1, CurrentUser.getCompanyId());
-
-      try (ResultSet rs = pst.executeQuery()) {
-        if (rs.next()) {
-          Integer planId = RepositoryHelper.nullIntegerHandler(rs, "plan_id");
-          if (planId != null && planId > 0) {
-            Plan plan = planRepository.findById(planId);
-            result.put("planName", plan.getName());
-          }
-          result.put("subsStatus", rs.getString("subs_status"));
-          result.put("subsRenewalAt", DateUtils.formatReverseDate(rs.getTimestamp("subs_renewal_at")));
-        }
-      }
-    }
-
-    return result;
-  }
-
-  private Map<String, Object> getProductsInfo(Connection con) throws SQLException {
-    Map<String, Object> result = new HashMap<>(4);
-    result.put("count", findProductCounts(con));
-    result.put("distribution", findProductDistributions(con));
-    result.put("mru10", find10MRUProducts(con));
-    result.put("edgeOfYou", findMinMaxProductCountsOfYou(con));
-    return result;
-  }
-
-  private Map<String, Object> getCompetitorsInfo(Connection con) throws SQLException {
+  private Map<String, Object> getProducts(Connection con) throws SQLException {
     Map<String, Object> result = new HashMap<>(2);
-    result.put("count", findCompetitorCounts(con));
-    result.put("distribution", findCompetitorDistributions(con));
-    result.put("mru10", find10MRUCompetitors(con));
+    result.put("extremePrices", find10ProductsHavingExtremePrices(con));
+    result.put("positionDists", findProductPositionDists(con));
     return result;
   }
 
-  private int findCompetitorCounts(Connection con) throws SQLException {
-    int result = 0;
-
-    final String query = "select count(1) from competitor where company_id=?";
-    try (PreparedStatement pst = con.prepareStatement(query)) {
-      pst.setLong(1, CurrentUser.getCompanyId());
-
-      try (ResultSet rs = pst.executeQuery()) {
-        if (rs.next()) {
-          result = rs.getInt(1);
-        }
-      }
-
-    }
-
+  private Map<String, Object> getCompetitors(Connection con) throws SQLException {
+    Map<String, Object> result = new HashMap<>(2);
+    result.put("statusDists", findCompetitorStatusDists(con));
+    result.put("mru25", find25MRUCompetitors(con));
     return result;
   }
 
-  private Map<String, Object> findCompetitorDistributions(Connection con) throws SQLException {
-    final String OTHER = "OTHER";
+  /**
+   * finding competitor distributions by the CompetitorStatus
+   */
+  private int[] findCompetitorStatusDists(Connection con) throws SQLException {
+    int i = 0;
+    final String OTHERS = "OTHERS";
 
-    CompetitorStatus[] statuses = {
-      CompetitorStatus.TOBE_CLASSIFIED,
-      CompetitorStatus.AVAILABLE,
-      CompetitorStatus.NOT_AVAILABLE,
-      CompetitorStatus.PAUSED,
-      CompetitorStatus.IMPLEMENTED,
-      CompetitorStatus.TOBE_IMPLEMENTED,
-      CompetitorStatus.WONT_BE_IMPLEMENTED
-    };
+    Map<String, Integer> stats = new HashMap<>(6);
+    stats.put(CompetitorStatus.TOBE_CLASSIFIED.name(), i++);
+    stats.put(CompetitorStatus.AVAILABLE.name(), i++);
+    stats.put(CompetitorStatus.NOT_AVAILABLE.name(), i++);
+    stats.put(CompetitorStatus.TOBE_IMPLEMENTED.name(), i++);
+    stats.put(CompetitorStatus.WONT_BE_IMPLEMENTED.name(), i++);
+    stats.put(OTHERS, i++);
 
-    Map<String, Integer> vals = new HashMap<>(statuses.length+1);
-    for (CompetitorStatus ls: statuses) {
-      vals.put(ls.name(), 0);
-    }
-    vals.put(OTHER, 0);
+    int[] result = new int[i];
 
     final String query = "select status, count(1) from competitor where company_id=? group by status";
     try (PreparedStatement pst = con.prepareStatement(query)) {
@@ -139,72 +85,53 @@ public class DashboardRepository {
 
       try (ResultSet rs = pst.executeQuery()) {
         while (rs.next()) {
-          String name = rs.getString(1);
-          Integer val = vals.get(name);
-          if (val == null) {
-            name = OTHER;
-            val = vals.get(name);
-          }
-          if (val == null) val = 0;
-          val += rs.getInt(2);
-          vals.put(name, val);
+          Integer index = stats.get(rs.getString(1));
+          if (index == null) index = i-1; // it must be OTHERS's index
+          result[index] += rs.getInt(2);
         }
       }
     }
-
-    List<String> labels = new ArrayList<>(statuses.length+1);
-    List<Integer> series = new ArrayList<>(statuses.length+1);
-
-    for (CompetitorStatus ls: statuses) {
-      labels.add(WordUtils.capitalize(ls.name().replaceAll("_", " ")));
-      series.add(vals.get(ls.name()));
-    }
-    labels.add(OTHER);
-    series.add(vals.get(OTHER));
-
-    Map<String, Object> result = new HashMap<>();
-    result.put("labels", labels);
-    result.put("series", series);
 
     return result;
   }
 
   /**
-   * finding 10 MRU Competitors (Most Recently Updated)
+   * finding 25 MRU Competitors (Most Recently Updated)
    *
    */
-  private List<Map<String, Object>> find10MRUCompetitors(Connection con) throws SQLException {
+  private List<Map<String, Object>> find25MRUCompetitors(Connection con) throws SQLException {
     List<Map<String, Object>> result = new ArrayList<>(10);
 
     final String query = 
-      "select l.*, p.name as product, s.name as platform from competitor as l " + 
+      "select l.*, p.name as product, s.name as platform, url from competitor as l " + 
       "inner join product as p on p.id = l.product_id " + 
       "left join site as s on s.id = l.site_id " + 
       "where l.company_id=? " +
-      "order by l.last_update desc limit 10";
+      "order by l.last_update desc limit 25";
 
     try (PreparedStatement pst = con.prepareStatement(query)) {
       pst.setLong(1, CurrentUser.getCompanyId());
 
       try (ResultSet rs = pst.executeQuery()) {
         while (rs.next()) {
-          Map<String, Object> row = new HashMap<>(8);
+          Map<String, Object> row = new HashMap<>(7);
           row.put("productName", rs.getString("product"));
-          row.put("name", rs.getString("name"));
-          row.put("platform", rs.getString("platform"));
           row.put("seller", rs.getString("seller"));
           row.put("price", rs.getBigDecimal("price"));
           row.put("status", rs.getString("status"));
+
           if (rs.getTimestamp("last_update") != null) {
             row.put("lastUpdate", DateUtils.formatLongDate(rs.getTimestamp("last_update")));
           } else {
             row.put("lastUpdate", DateUtils.formatLongDate(rs.getTimestamp("created_at")));
           }
-          if (StringUtils.isNotBlank(rs.getString("sku"))) {
-            row.put("sku", rs.getString("sku"));
-          } else {
-            row.put("sku", "NA-" + rs.getLong("id"));
+
+          String platform = rs.getString("platform");
+          if (StringUtils.isBlank(platform)) {
+            platform = HttpHelper.extractHostname(rs.getString("url"));
           }
+          row.put("platform", platform);
+
           result.add(row);
         }
       }
@@ -214,136 +141,70 @@ public class DashboardRepository {
   }
 
   /**
-   * finding product counts
+   * finding 10 Products having lowest / highest prices
    *
    */
-  private Map<String, Object> findProductCounts(Connection con) throws SQLException {
-    Map<String, Object> result = new HashMap<>(2);
-    result.put("active", 0);
-    result.put("passive", 0);
+  private Map<String, List<Map<String, Object>>> find10ProductsHavingExtremePrices(Connection con) throws SQLException {
+    Map<String, List<Map<String, Object>>> result = new HashMap<>(2);
 
-    final String query = "select active, count(1) from product where company_id=? group by active";
-    try (PreparedStatement pst = con.prepareStatement(query)) {
-      pst.setLong(1, CurrentUser.getCompanyId());
+    Position[] positions = { Position.LOWEST, Position.HIGHEST};
+    for (Position pos: positions) {
 
-      try (ResultSet rs = pst.executeQuery()) {
-        while (rs.next()) {
-          result.put((rs.getBoolean(1) ? "active" : "passive"), rs.getInt(2));
-        }
-      }
-    }
+      final String query = 
+        "select p.id as pid, p.name, p.updated_at as upat, p.created_at as crat, pp.* from product as p " +
+        "left join product_price as pp on pp.id = p.last_price_id " +
+        "where p.company_id=? " +
+        "  and pp.position= " + (pos.ordinal()+1) +
+        " order by p.updated_at " + (pos.equals(Position.HIGHEST) ? "desc" : "") + " limit 10";
 
-    return result;
-  }
+      List<Map<String, Object>> rows = new ArrayList<>(10);
+      try (PreparedStatement pst = con.prepareStatement(query)) {
+        pst.setLong(1, CurrentUser.getCompanyId());
 
-  /**
-   * finding 10 MRU Products (Most Recently Updated)
-   *
-   */
-  private List<Map<String, Object>> find10MRUProducts(Connection con) throws SQLException {
-    List<Map<String, Object>> result = new ArrayList<>(10);
-
-    final String query = 
-      "select p.name, p.updated_at, p.created_at, pp.* from product as p " +
-      "left join product_price as pp on pp.id = p.last_price_id " +
-      "where p.company_id=? " +
-      "order by updated_at desc limit 10";
-    try (PreparedStatement pst = con.prepareStatement(query)) {
-      pst.setLong(1, CurrentUser.getCompanyId());
-
-      try (ResultSet rs = pst.executeQuery()) {
-        while (rs.next()) {
-          Map<String, Object> row = new HashMap<>(11);
-          row.put("name", rs.getString("name"));
-          row.put("price", rs.getBigDecimal("price"));
-          row.put("position", rs.getInt("position"));
-          row.put("minPlatform", rs.getString("min_platform"));
-          row.put("minSeller", rs.getString("min_seller"));
-          row.put("minPrice", rs.getBigDecimal("min_price"));
-          row.put("minDiff", rs.getBigDecimal("min_diff"));
-          row.put("avgPrice", rs.getBigDecimal("avg_price"));
-          row.put("avgDiff", rs.getBigDecimal("avg_diff"));
-          row.put("maxPlatform", rs.getString("max_platform"));
-          row.put("maxSeller", rs.getString("max_seller"));
-          row.put("maxPrice", rs.getBigDecimal("max_price"));
-          row.put("maxDiff", rs.getBigDecimal("max_diff"));
-          row.put("competitors", rs.getInt("competitors"));
-          row.put("ranking", rs.getInt("ranking"));
-          row.put("rankingWith", rs.getInt("ranking_with"));
-          if (rs.getTimestamp("updated_at") != null) {
-            row.put("lastUpdate", DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
-          } else {
-            row.put("lastUpdate", DateUtils.formatLongDate(rs.getTimestamp("created_at")));
+        try (ResultSet rs = pst.executeQuery()) {
+          while (rs.next()) {
+            Map<String, Object> row = new HashMap<>(7);
+            row.put("id", rs.getString("pid"));
+            row.put("name", rs.getString("name"));
+            row.put("price", rs.getBigDecimal("price"));
+            row.put("competitors", rs.getInt("competitors"));
+            row.put("ranking", rs.getInt("ranking"));
+            row.put("rankingWith", rs.getInt("ranking_with"));
+            if (rs.getTimestamp("upat") != null) {
+              row.put("lastUpdate", DateUtils.formatLongDate(rs.getTimestamp("upat")));
+            } else {
+              row.put("lastUpdate", DateUtils.formatLongDate(rs.getTimestamp("crat")));
+            }
+            rows.add(row);
           }
-          result.add(row);
         }
       }
+
+      result.put(pos.name().toLowerCase(), rows);
     }
 
     return result;
   }
 
   /**
-   * finding product distributions
+   * finding product distributions by the Positions
    */
-  private Map<String, Object> findProductDistributions(Connection con) throws SQLException {
-    Map<String, Object> result = new HashMap<>(5);
-
-    String[] labels = { "LOWEST", "LOWER", "AVERAGE", "HIGHER", "HIGHEST" };
-    int[] series = new int[labels.length];
+  private int[] findProductPositionDists(Connection con) throws SQLException {
+    int[] result = new int[5];
 
     final String query = 
       "select pp.position, count(1) " +
       "from product as p " +
       "inner join product_price as pp on pp.id = p.last_price_id " +
-      "where p.active=? " +
-      "  and p.last_price_id is not null " +
+      "where p.last_price_id is not null " +
       "  and p.company_id=? " +
       "group by pp.position";
     try (PreparedStatement pst = con.prepareStatement(query)) {
-      pst.setBoolean(1, Boolean.TRUE);
-      pst.setLong(2, CurrentUser.getCompanyId());
+      pst.setLong(1, CurrentUser.getCompanyId());
 
       try (ResultSet rs = pst.executeQuery()) {
         while (rs.next()) {
-          series[rs.getInt(1)-1] = rs.getInt(2);
-        }
-      }
-    }
-
-    result.put("labels", labels);
-    result.put("series", series);
-
-    return result;
-  }
-
-  /**
-   * finding product counts of you in which you are either the cheapest or the most
-   * expensive
-   */
-  private Map<String, Object> findMinMaxProductCountsOfYou(Connection con) throws SQLException {
-    Map<String, Object> result = new HashMap<>(2);
-
-    String[] indicators = { "min", "max" };
-    for (String indicator : indicators) {
-      result.put(indicator, 0);
-
-      final String query = 
-        "select count(1) " +
-        "from product as p " +
-        "inner join product_price as pp on pp.id = p.last_price_id " +
-        "where p.active=? " +
-        "  and p.company_id=? " +
-        "  and pp." + indicator + "_seller='You'";
-
-      try (PreparedStatement pst = con.prepareStatement(query)) {
-        pst.setBoolean(1, Boolean.TRUE);
-        pst.setLong(2, CurrentUser.getCompanyId());
-
-        try (ResultSet rs = pst.executeQuery()) {
-          if (rs.next()) {
-            result.put(indicator, rs.getInt(1));
-          }
+          result[rs.getInt(1)-1] = rs.getInt(2);
         }
       }
     }

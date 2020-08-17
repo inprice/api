@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,13 +16,13 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.lookup.LookupRepository;
 import io.inprice.api.consts.Responses;
-import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.SearchModel;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.common.info.ProductDTO;
 import io.inprice.common.meta.CompetitorStatus;
 import io.inprice.common.meta.LookupType;
@@ -37,17 +36,16 @@ public class ProductRepository {
   private static final LookupRepository lookupRepository = Beans.getSingleton(LookupRepository.class);
   private static final Database db = Beans.getSingleton(Database.class);
 
-  private static final 
-    String BASE_QUERY = 
-      "select p.*, pp.*, brand.name as brand, category.name as category from product as p " +
+  private static final String BASE_QUERY = 
+    "select p.*, pp.*, brand.name as brand, category.name as category from product as p " +
       "left join product_price as pp on p.last_price_id = pp.id " +
       "left join lookup as brand on p.brand_id = brand.id " +
-      "left join lookup as category on p.category_id = category.id " ;
+      "left join lookup as category on p.category_id = category.id ";
 
   private final ProductPrice zeroPrice;
 
   public ProductRepository() {
-    //used for products having no any available competitor
+    // used for products having no any available competitor
     zeroPrice = new ProductPrice();
     zeroPrice.setPrice(BigDecimal.ZERO);
     zeroPrice.setMinPlatform("NA");
@@ -69,8 +67,7 @@ public class ProductRepository {
 
   public ServiceResponse findById(Long id) {
     Product model = db.findSingle(
-        String.format("%s where p.id=%d and p.company_id=%d ", BASE_QUERY, id, CurrentUser.getCompanyId()),
-        this::map);
+        String.format("%s where p.id=%d and p.company_id=%d ", BASE_QUERY, id, CurrentUser.getCompanyId()), this::map);
     if (model != null) {
       return new ServiceResponse(model);
     }
@@ -97,8 +94,8 @@ public class ProductRepository {
   }
 
   public ServiceResponse findByCode(Connection con, String code) {
-    Product model = db.findSingle(String.format("%s where code='%s' and p.company_id=%d ",
-      BASE_QUERY, SqlHelper.clear(code), CurrentUser.getCompanyId()), this::map);
+    Product model = db.findSingle(String.format("%s where code='%s' and p.company_id=%d ", BASE_QUERY,
+        SqlHelper.clear(code), CurrentUser.getCompanyId()), this::map);
 
     if (model != null) {
       return new ServiceResponse(model);
@@ -163,8 +160,7 @@ public class ProductRepository {
       ServiceResponse result = insertANewProduct(con, dto);
       if (result.isOK()) {
         isCompelted = db.executeQuery(String.format("delete from competitor where id=%d", link.getId()),
-          String.format("Failed to delete link to be product. Id: %d", link.getId())
-        );
+            String.format("Failed to delete link to be product. Id: %d", link.getId()));
       }
 
       if (isCompelted) {
@@ -194,12 +190,12 @@ public class ProductRepository {
       con = db.getTransactionalConnection();
 
       ServiceResponse res = findByCode(con, dto.getCode());
-      if (! res.isOK()) {
+      if (!res.isOK()) {
         return Responses.NotFound.PRODUCT;
       }
 
       Product old = res.getData();
-      if (! old.getId().equals(dto.getId())) {
+      if (!old.getId().equals(dto.getId())) {
         return Responses.DataProblem.ALREADY_EXISTS;
       }
 
@@ -225,27 +221,26 @@ public class ProductRepository {
         pst.setLong(++i, dto.getId());
         pst.setLong(++i, CurrentUser.getCompanyId());
 
-        if (pst.executeUpdate() > 0) {
-          result = addAPriceHistory(con, dto);
-        }
+        result = (pst.executeUpdate() > 0);
 
         if (result) {
           db.commit(con);
-          Boolean hasPriceChanged = (! old.getPrice().equals(dto.getPrice()));
-          return new ServiceResponse(hasPriceChanged);
+          return new ServiceResponse(old.getPrice().equals(dto.getPrice()));
         } else {
           db.rollback(con);
           return Responses.DataProblem.DB_PROBLEM;
         }
       }
     } catch (Exception e) {
-      if (con != null)
+      if (con != null) {
         db.rollback(con);
+      }
       log.error("Failed to update a product. " + dto, e);
       return Responses.ServerProblem.EXCEPTION;
     } finally {
-      if (con != null)
+      if (con != null) {
         db.close(con);
+      }
     }
   }
 
@@ -259,7 +254,8 @@ public class ProductRepository {
     queries.add("delete from competitor " + where);
     queries.add("delete from product_price " + where);
     queries.add("delete from product " + where.replace("product_", ""));
-    queries.add("update company set product_count=product_count-1 where product_count>0 and id=" + CurrentUser.getCompanyId());
+    queries.add(
+        "update company set product_count=product_count-1 where product_count>0 and id=" + CurrentUser.getCompanyId());
 
     boolean result = db.executeBatchQueries(queries, String.format("Failed to delete product. Id: %d", id), 2);
     if (result) {
@@ -270,30 +266,13 @@ public class ProductRepository {
 
   public ServiceResponse toggleStatus(Long id) {
     boolean result = db
-      .executeQuery(String.format("update product set active = not active where id=%d and company_id=%d ", id,
-        CurrentUser.getCompanyId()), "Failed to toggle product status! id: " + id);
+        .executeQuery(String.format("update product set active = not active where id=%d and company_id=%d ", id,
+            CurrentUser.getCompanyId()), "Failed to toggle product status! id: " + id);
 
     if (result) {
       return Responses.OK;
     }
     return Responses.NotFound.PRODUCT;
-  }
-
-  private boolean addAPriceHistory(Connection con, ProductDTO dto) {
-    final String query = "insert into product_price (product_id, price, company_id) values (?, ?, ?) ";
-
-    try (PreparedStatement pst = con.prepareStatement(query)) {
-      int i = 0;
-      pst.setLong(++i, dto.getId());
-      pst.setBigDecimal(++i, dto.getPrice());
-      pst.setLong(++i, dto.getCompanyId());
-
-      return (pst.executeUpdate() > 0);
-    } catch (Exception e) {
-      log.error("Error", e);
-    }
-
-    return false;
   }
 
   public int findProductCount() {
@@ -338,11 +317,9 @@ public class ProductRepository {
       pst1.setLong(1, dto.getCompanyId());
 
       if (pst1.executeUpdate() > 0) {
-        final String query2 = 
-          "insert into product " +
-          "(code, name, price, company_id, brand_id, category_id) " + 
-          "values (?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement pst2 = con.prepareStatement(query2, Statement.RETURN_GENERATED_KEYS)) {
+        final String query2 = "insert into product " + "(code, name, price, company_id, brand_id, category_id) "
+            + "values (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement pst2 = con.prepareStatement(query2)) {
           int i = 0;
           pst2.setString(++i, dto.getCode());
           pst2.setString(++i, dto.getName());
@@ -359,14 +336,9 @@ public class ProductRepository {
           } else {
             pst2.setNull(++i, java.sql.Types.NULL);
           }
-    
+
           if (pst2.executeUpdate() > 0) {
-            try (ResultSet generatedKeys = pst2.getGeneratedKeys()) {
-              if (generatedKeys.next()) {
-                dto.setId(generatedKeys.getLong(1));
-                if (addAPriceHistory(con, dto)) return Responses.OK;
-              }
-            }
+            return Responses.OK;
           }
         } catch (SQLIntegrityConstraintViolationException ie) {
           return Responses.DataProblem.DUPLICATE;
@@ -374,7 +346,7 @@ public class ProductRepository {
       } else {
         return Responses.PermissionProblem.PRODUCT_LIMIT_PROBLEM;
       }
-  
+
     } catch (Exception e) {
       log.error("Failed to insert a  new product", e);
     }
