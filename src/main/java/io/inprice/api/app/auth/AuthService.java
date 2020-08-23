@@ -28,7 +28,7 @@ import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
-import io.inprice.api.helpers.ControllerHelper;
+import io.inprice.api.helpers.CookieHelper;
 import io.inprice.api.helpers.SessionHelper;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.meta.RateLimiterType;
@@ -146,7 +146,7 @@ public class AuthService {
   public ServiceResponse logout(Context ctx) {
     if (ctx.cookieMap().containsKey(Consts.SESSION)) {
 
-      ControllerHelper.removeExpiredAuthCookie(ctx);
+      CookieHelper.removeAuthCookie(ctx);
 
       String tokenString = ctx.cookie(Consts.SESSION);
       if (StringUtils.isNotBlank(tokenString)) {

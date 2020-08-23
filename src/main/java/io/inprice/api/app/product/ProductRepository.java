@@ -7,7 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.collect.Maps;
 
@@ -17,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.lookup.LookupRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.SearchModel;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
@@ -103,16 +104,20 @@ public class ProductRepository {
     return Responses.NotFound.PRODUCT;
   }
 
-  public ServiceResponse search(SearchModel searchModel) {
-    searchModel.setPrefixForCompanyId("p");
-    searchModel.setQuery(BASE_QUERY);
-    final String searchQuery = SqlHelper.generateSearchQuery(searchModel);
-
+  public ServiceResponse search(String term) {
+    final String clearTerm = SqlHelper.clear(term);
     try {
-      List<Product> rows = db.findMultiple(searchQuery, this::map);
+      List<Map<String, Object>> rows = 
+        db.findMultiple(
+          "select id, code, name from product " + 
+          "where code like '%" + clearTerm + "%' "+ 
+          "   or name like '%" + clearTerm + "%' " +
+          "order by name " +
+          "limit 50", this::nameOnlyMap);
+       
       return new ServiceResponse(Maps.immutableEntry("rows", rows));
     } catch (Exception e) {
-      log.error("Failed to search products. ", e);
+      log.error("Failed to search competitors. ", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
@@ -352,6 +357,19 @@ public class ProductRepository {
     }
 
     return Responses.DataProblem.DB_PROBLEM;
+  }
+
+  private Map<String, Object> nameOnlyMap(ResultSet rs) {
+    try {
+      Map<String, Object> modelMap = new HashMap<>(1);
+      modelMap.put("id", RepositoryHelper.nullLongHandler(rs, "id"));
+      modelMap.put("code", rs.getString("code"));
+      modelMap.put("name", rs.getString("name"));
+      return modelMap;
+    } catch (SQLException e) {
+      log.error("Failed to set name only map", e);
+    }
+    return null;
   }
 
   private Product map(ResultSet rs) {

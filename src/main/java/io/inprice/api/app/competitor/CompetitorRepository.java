@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CompetitorDTO;
 import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.SearchModel;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
@@ -242,11 +241,16 @@ public class CompetitorRepository {
     }
   }
 
-  public ServiceResponse search(SearchModel searchModel, String whereStatus) {
-    final String searchQuery = SqlHelper.generateSearchQuery(searchModel, whereStatus);
-
+  public ServiceResponse search(String term) {
+    final String clearTerm = SqlHelper.clear(term);
     try {
-      List<Competitor> rows = db.findMultiple(searchQuery, this::map);
+      List<Competitor> rows = 
+        db.findMultiple(
+          "select id, name from competitor " + 
+          "where  sku like '%" + clearTerm + "%' " + 
+          "   or name like '%" + clearTerm + "%' " +
+          "limit 50", this::map);
+       
       return new ServiceResponse(Maps.immutableEntry("rows", rows));
     } catch (Exception e) {
       log.error("Failed to search competitors. ", e);

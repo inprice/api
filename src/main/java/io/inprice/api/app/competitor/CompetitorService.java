@@ -1,21 +1,15 @@
 package io.inprice.api.app.competitor;
 
-import java.util.Arrays;
-import java.util.Map;
-
 import com.rabbitmq.client.Channel;
-
-import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.api.app.product.ProductRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CompetitorDTO;
-import io.inprice.api.info.SearchModel;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.helpers.RabbitMQ;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
+import io.inprice.common.helpers.RabbitMQ;
 import io.inprice.common.meta.CompetitorStatus;
 import io.inprice.common.models.Competitor;
 import io.inprice.common.utils.URLUtils;
@@ -40,19 +34,8 @@ public class CompetitorService {
     return Responses.NotFound.PRODUCT;
   }
 
-  public ServiceResponse search(Map<String, String> searchMap) {
-    SearchModel sm = new SearchModel(searchMap, "s.name, platform, seller", Competitor.class);
-    sm.setQuery("select l.*, s.name as platform from competitor as l left join site as s on s.id = l.site_id");
-    sm.setFields(Arrays.asList("seller", "s.name"));
-
-    String whereStatus = searchMap.get("status");
-    if (StringUtils.isNotBlank(whereStatus) && ! whereStatus.equals("null")) {
-      try {
-        whereStatus = "status = '" + CompetitorStatus.valueOf(whereStatus).name() + "'";
-      } catch (Exception ignored) {}
-    }
-
-    return competitorRepository.search(sm, whereStatus);
+  public ServiceResponse search(String term) {
+    return competitorRepository.search(term);
   }
 
   public ServiceResponse insert(CompetitorDTO dto) {
