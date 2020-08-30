@@ -6,10 +6,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.google.common.collect.Maps;
 
@@ -32,6 +38,8 @@ import io.inprice.common.models.Product;
 import io.inprice.common.models.ProductPrice;
 
 public class ProductRepository {
+
+  private static final SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM");
 
   private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
   private static final LookupRepository lookupRepository = Beans.getSingleton(LookupRepository.class);
@@ -72,6 +80,82 @@ public class ProductRepository {
     if (model != null) {
       return new ServiceResponse(model);
     }
+    return Responses.NotFound.PRODUCT;
+  }
+
+  public ServiceResponse findEverythingById(Long id) {
+    Map<String, Object> dataMap = new HashMap<>(3);
+
+    try (Connection con = db.getConnection()) {
+      //-------------------------------------------
+      // product itself
+      //-------------------------------------------
+      Product produdct =
+        db.findSingle(con,
+          String.format("%s where p.id=%d and p.company_id=%d ", BASE_QUERY, id, CurrentUser.getCompanyId()), this::map);
+
+      dataMap.put("product", produdct);
+
+      //-------------------------------------------
+      // competitors
+      //-------------------------------------------
+      List<Competitor> competitors =
+        db.findMultiple(con,
+          String.format(
+            "select l.*, s.name as platform from competitor as l " + 
+            "left join site as s on s.id = l.site_id " + 
+            "where product_id = %d " +
+            "  and company_id = %d " +
+            "order by name",
+            id, CurrentUser.getCompanyId()),
+          this::mapCompetitor);
+
+      dataMap.put("competitors", competitors);
+
+      //-------------------------------------------
+      // price movements of last 10
+      // in this section, we create data sets of prices for chart display
+      //-------------------------------------------
+      Set<String> priceLabels = new TreeSet<>();
+      Map<String, List<BigDecimal>> datasetMap = new HashMap<>(3);
+
+      String[] prefixes = {"min", "avg", "max"};
+      for (String prefix : prefixes) {
+        List<Map<Date, BigDecimal>> prices =
+          db.findMultiple(con,
+            String.format(
+              "select DATE(created_at) AS date, MAX("+prefix+"_price) from product_price " + 
+              "where product_id = %d " +
+              "  and company_id = %d " +
+              "group by date " +
+              "limit 10",
+              id, CurrentUser.getCompanyId()),
+            this::mapPriceMovement);
+
+        boolean firstTime = true;
+        List<BigDecimal> dataset = new ArrayList<>(10);
+        if (prices != null && prices.size() > 0) {
+
+          //creating dataset
+          for (Map<Date, BigDecimal> price : prices) {
+            for (Entry<Date, BigDecimal> entry: price.entrySet()) {
+              dataset.add(entry.getValue());
+              if (firstTime) priceLabels.add(sdf.format(entry.getKey()));
+            }
+            firstTime = false;
+          }
+        }
+        datasetMap.put(prefix, dataset);
+      }
+      
+      dataMap.put("priceLabels", priceLabels);
+      dataMap.put("priceData", datasetMap);
+      return new ServiceResponse(dataMap);
+      
+    } catch (Exception e) {
+      log.error("Failed to find a product by id to get everything about it", e);
+    }
+
     return Responses.NotFound.PRODUCT;
   }
 
@@ -414,6 +498,51 @@ public class ProductRepository {
       return model;
     } catch (SQLException e) {
       log.error("Failed to set product's properties", e);
+    }
+    return null;
+  }
+
+  private Map<Date, BigDecimal> mapPriceMovement(ResultSet rs) {
+    try {
+      return 
+        Collections.singletonMap(
+          rs.getTimestamp(1),
+          rs.getBigDecimal(2)
+        );
+    } catch (SQLException e) {
+      log.error("Failed to set price movement's properties", e);
+    }
+    return null;
+  }
+
+  private Competitor mapCompetitor(ResultSet rs) {
+    try {
+      Competitor model = new Competitor();
+      model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
+      model.setUrl(rs.getString("url"));
+      model.setUrlHash(rs.getString("url_hash"));
+      model.setSku(rs.getString("sku"));
+      model.setName(rs.getString("name"));
+      model.setBrand(rs.getString("brand"));
+      model.setSeller(rs.getString("seller"));
+      model.setShipment(rs.getString("shipment"));
+      model.setPrice(rs.getBigDecimal("price"));
+      model.setPreStatus(CompetitorStatus.valueOf(rs.getString("pre_status")));
+      model.setStatus(CompetitorStatus.valueOf(rs.getString("status")));
+      model.setLastCheck(rs.getTimestamp("last_check"));
+      model.setLastUpdate(rs.getTimestamp("last_update"));
+      model.setRetry(rs.getInt("retry"));
+      model.setHttpStatus(rs.getInt("http_status"));
+      model.setWebsiteClassName(rs.getString("website_class_name"));
+      model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
+      model.setProductId(RepositoryHelper.nullLongHandler(rs, "product_id"));
+      model.setSiteId(RepositoryHelper.nullLongHandler(rs, "site_id"));
+      model.setPlatform(rs.getString("platform"));
+      model.setCreatedAt(rs.getTimestamp("created_at"));
+
+      return model;
+    } catch (SQLException e) {
+      log.error("Failed to set competitor's properties", e);
     }
     return null;
   }

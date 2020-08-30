@@ -14,8 +14,8 @@ public class ProductService {
 
   private final ProductRepository repository = Beans.getSingleton(ProductRepository.class);
 
-  public ServiceResponse findById(Long id) {
-    return repository.findById(id);
+  public ServiceResponse findEverythingById(Long id) {
+    return repository.findEverythingById(id);
   }
 
   public ServiceResponse search(String term) {

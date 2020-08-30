@@ -23,17 +23,6 @@ public class CompetitorService {
     return competitorRepository.findById(id);
   }
 
-  public ServiceResponse getList(Long prodId) {
-    if (prodId == null || prodId < 1) return Responses.NotFound.PRODUCT;
-
-    ServiceResponse found = productRepository.findById(prodId);
-    if (found.isOK()) {
-      return competitorRepository.getList(found.getData());
-    }
-
-    return Responses.NotFound.PRODUCT;
-  }
-
   public ServiceResponse search(String term) {
     return competitorRepository.search(term);
   }

@@ -5,9 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.google.common.collect.Maps;
 
@@ -25,7 +23,6 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.common.meta.CompetitorStatus;
 import io.inprice.common.models.Competitor;
-import io.inprice.common.models.Product;
 
 public class CompetitorRepository {
 
@@ -47,7 +44,17 @@ public class CompetitorRepository {
     return Responses.NotFound.COMPETITOR;
   }
 
-  public ServiceResponse getList(Product product) {
+  /*TODO: silinecek
+  public ServiceResponse getListByProdId(long prodId) {
+    try (Connection con = db.getConnection()) {
+      return getListByProdId(con, prodId);
+    } catch (Exception e) {
+      log.error("Failed to get competitors list by prod id: " + prodId, e);
+    }
+    return Responses.NotFound.COMPETITOR;
+  }
+
+  public ServiceResponse getListByProdId(Connection con, long prodId) {
     List<Competitor> competitors = db.findMultiple(
         String.format(
           "select l.*, s.name as platform from competitor as l " + 
@@ -55,7 +62,7 @@ public class CompetitorRepository {
           "where product_id = %d " +
           "  and company_id = %d " +
           "order by name",
-          product.getId(), CurrentUser.getCompanyId()),
+          prodId, CurrentUser.getCompanyId()),
         this::map);
 
     Map<String, Object> data = new HashMap<>(2);
@@ -64,6 +71,7 @@ public class CompetitorRepository {
 
     return new ServiceResponse(data);
   }
+  */
 
   public ServiceResponse insert(CompetitorDTO dto) {
     try (Connection con = db.getConnection()) {
