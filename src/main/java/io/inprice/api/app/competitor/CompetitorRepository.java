@@ -44,7 +44,6 @@ public class CompetitorRepository {
     return Responses.NotFound.COMPETITOR;
   }
 
-  /*TODO: silinecek
   public ServiceResponse getListByProdId(long prodId) {
     try (Connection con = db.getConnection()) {
       return getListByProdId(con, prodId);
@@ -55,23 +54,18 @@ public class CompetitorRepository {
   }
 
   public ServiceResponse getListByProdId(Connection con, long prodId) {
-    List<Competitor> competitors = db.findMultiple(
+    List<Competitor> data = db.findMultiple(
         String.format(
           "select l.*, s.name as platform from competitor as l " + 
           "left join site as s on s.id = l.site_id " + 
           "where product_id = %d " +
           "  and company_id = %d " +
-          "order by name",
+          "order by status, seller",
           prodId, CurrentUser.getCompanyId()),
         this::map);
 
-    Map<String, Object> data = new HashMap<>(2);
-    data.put("product", product);
-    if (competitors != null && competitors.size() > 0) data.put("competitors", competitors);
-
     return new ServiceResponse(data);
   }
-  */
 
   public ServiceResponse insert(CompetitorDTO dto) {
     try (Connection con = db.getConnection()) {

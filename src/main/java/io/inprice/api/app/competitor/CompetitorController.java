@@ -29,12 +29,10 @@ public class CompetitorController implements Controller {
       ctx.json(Commons.createResponse(ctx, service.deleteById(id)));
     }, AccessRoles.EDITOR());
 
-    /* list
     app.get(Consts.Paths.Competitor.BASE + "s/:prod_id", (ctx) -> {
       Long prodId = ctx.pathParam("prod_id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.getList(prodId)));
     }, AccessRoles.ANYONE());
-    */
 
     // search
     app.get(Consts.Paths.Competitor.SEARCH, (ctx) -> {

@@ -6,16 +6,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeSet;
 
 import com.google.common.collect.Maps;
 
@@ -39,7 +33,7 @@ import io.inprice.common.models.ProductPrice;
 
 public class ProductRepository {
 
-  private static final SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM");
+  //private static final SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM");
 
   private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
   private static final LookupRepository lookupRepository = Beans.getSingleton(LookupRepository.class);
@@ -106,16 +100,16 @@ public class ProductRepository {
             "left join site as s on s.id = l.site_id " + 
             "where product_id = %d " +
             "  and company_id = %d " +
-            "order by name",
+            "order by status, seller",
             id, CurrentUser.getCompanyId()),
           this::mapCompetitor);
 
       dataMap.put("competitors", competitors);
 
-      //-------------------------------------------
-      // price movements of last 10
-      // in this section, we create data sets of prices for chart display
-      //-------------------------------------------
+      /*-------------------------------------------
+        price movements of last 10
+        in this section, we create data sets of prices for chart display
+      -------------------------------------------
       Set<String> priceLabels = new TreeSet<>();
       Map<String, List<BigDecimal>> datasetMap = new HashMap<>(3);
 
@@ -133,8 +127,9 @@ public class ProductRepository {
             this::mapPriceMovement);
 
         boolean firstTime = true;
-        List<BigDecimal> dataset = new ArrayList<>(10);
+        List<BigDecimal> dataset = new ArrayList<>(11);
         if (prices != null && prices.size() > 0) {
+          //dataset.add(BigDecimal.ZERO);
 
           //creating dataset
           for (Map<Date, BigDecimal> price : prices) {
@@ -150,6 +145,7 @@ public class ProductRepository {
       
       dataMap.put("priceLabels", priceLabels);
       dataMap.put("priceData", datasetMap);
+      */
       return new ServiceResponse(dataMap);
       
     } catch (Exception e) {
@@ -406,8 +402,7 @@ public class ProductRepository {
       pst1.setLong(1, dto.getCompanyId());
 
       if (pst1.executeUpdate() > 0) {
-        final String query2 = "insert into product " + "(code, name, price, company_id, brand_id, category_id) "
-            + "values (?, ?, ?, ?, ?, ?)";
+        final String query2 = "insert into product (code, name, price, company_id, brand_id, category_id) values (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pst2 = con.prepareStatement(query2)) {
           int i = 0;
           pst2.setString(++i, dto.getCode());
@@ -430,7 +425,7 @@ public class ProductRepository {
             return Responses.OK;
           }
         } catch (SQLIntegrityConstraintViolationException ie) {
-          return Responses.DataProblem.DUPLICATE;
+          return new ServiceResponse("There is a product already defined with this code!");
         }
       } else {
         return Responses.PermissionProblem.PRODUCT_LIMIT_PROBLEM;
@@ -492,6 +487,7 @@ public class ProductRepository {
         pp.setRanking(rs.getInt("ranking"));
         pp.setRankingWith(rs.getInt("ranking_with"));
         pp.setSuggestedPrice(rs.getBigDecimal("suggested_price"));
+        pp.setCreatedAt(rs.getTimestamp("created_at"));
         model.setPriceDetails(pp);
       }
 
@@ -501,7 +497,7 @@ public class ProductRepository {
     }
     return null;
   }
-
+/* 
   private Map<Date, BigDecimal> mapPriceMovement(ResultSet rs) {
     try {
       return 
@@ -514,7 +510,7 @@ public class ProductRepository {
     }
     return null;
   }
-
+ */
   private Competitor mapCompetitor(ResultSet rs) {
     try {
       Competitor model = new Competitor();

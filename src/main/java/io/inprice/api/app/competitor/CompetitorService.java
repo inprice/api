@@ -2,6 +2,8 @@ package io.inprice.api.app.competitor;
 
 import com.rabbitmq.client.Channel;
 
+import org.apache.commons.validator.routines.UrlValidator;
+
 import io.inprice.api.app.product.ProductRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CompetitorDTO;
@@ -12,15 +14,21 @@ import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.RabbitMQ;
 import io.inprice.common.meta.CompetitorStatus;
 import io.inprice.common.models.Competitor;
-import io.inprice.common.utils.URLUtils;
 
 public class CompetitorService {
 
   private final CompetitorRepository competitorRepository = Beans.getSingleton(CompetitorRepository.class);
   private final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
 
+  private final UrlValidator urlValidator = new UrlValidator(new String[] {"http", "https"});
+
   public ServiceResponse findById(Long id) {
     return competitorRepository.findById(id);
+  }
+
+  public ServiceResponse getList(Long prodId) {
+    if (prodId == null || prodId < 1) return Responses.NotFound.PRODUCT;
+    return competitorRepository.getListByProdId(prodId);
   }
 
   public ServiceResponse search(String term) {
@@ -113,7 +121,7 @@ public class CompetitorService {
   private ServiceResponse validate(CompetitorDTO dto) {
     String problem = null;
 
-    if (!URLUtils.isAValidURL(dto.getUrl())) {
+    if (! urlValidator.isValid(dto.getUrl())) {
       problem = "Invalid URL!";
     }
 

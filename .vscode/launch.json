@@ -3,13 +3,6 @@
   "configurations": [
     {
       "type": "java",
-      "name": "CodeLens (Launch) - Test",
-      "request": "launch",
-      "mainClass": "io.inprice.api.Test",
-      "projectName": "api"
-    },
-    {
-      "type": "java",
       "name": "Debug API",
       "request": "launch",
       "projectName": "api",
