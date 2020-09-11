@@ -26,11 +26,6 @@ public class CompetitorService {
     return competitorRepository.findById(id);
   }
 
-  public ServiceResponse getList(Long prodId) {
-    if (prodId == null || prodId < 1) return Responses.NotFound.PRODUCT;
-    return competitorRepository.getListByProdId(prodId);
-  }
-
   public ServiceResponse search(String term) {
     return competitorRepository.search(term);
   }
@@ -50,20 +45,18 @@ public class CompetitorService {
     if (competitorId != null && competitorId > 0) {
       ServiceResponse res = competitorRepository.findById(competitorId);
       if (res.isOK()) {
-        ServiceResponse del = competitorRepository.deleteById(competitorId);
-        if (del.isOK()) {
-          // inform the product to be refreshed
+        Competitor oldOne = res.getData();
+        ServiceResponse delRes = competitorRepository.deleteById(competitorId);
+        if (delRes.isOK() && (oldOne.getStatus().equals(CompetitorStatus.AVAILABLE) || oldOne.getPreStatus().equals(CompetitorStatus.AVAILABLE))) {
           Competitor competitor = res.getData();
           Channel channel = RabbitMQ.openChannel();
           RabbitMQ.publish(channel, SysProps.MQ_CHANGES_EXCHANGE(), SysProps.MQ_PRICE_REFRESH_ROUTING(), competitor.getProductId().toString());
           RabbitMQ.closeChannel(channel);
-          return Responses.OK;
         }
+        return delRes;
       }
-      return Responses.NotFound.COMPETITOR;
-    } else {
-      return Responses.Invalid.COMPETITOR;
     }
+    return Responses.NotFound.COMPETITOR;
   }
 
   @SuppressWarnings("incomplete-switch")
