@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.lookup.LookupRepository;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.ProductSearchDTO;
 import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
@@ -184,16 +185,41 @@ public class ProductRepository {
     return Responses.NotFound.PRODUCT;
   }
 
-  public ServiceResponse search(String term) {
-    final String clearTerm = SqlHelper.clear(term);
+  public ServiceResponse search(ProductSearchDTO dto) {
+    dto.setTerm(SqlHelper.clear(dto.getTerm()));
+
+    StringBuilder criteria = new StringBuilder();
+    //company
+    criteria.append(" and p.company_id = ");
+    criteria.append(CurrentUser.getCompanyId());
+    //brand
+    if (dto.getBrand() != null && dto.getBrand() > 0) {
+      criteria.append(" and p.brand_id = ");
+      criteria.append(dto.getBrand());
+    }
+    //category
+    if (dto.getCategory() != null && dto.getCategory() > 0) {
+      criteria.append(" and p.category_id = ");
+      criteria.append(dto.getCategory());
+    }
+
+    //position is a special case so we need take care of it differently
+    String posClause = "";
+    if (dto.getPosition() != null && dto.getPosition() > -1) {
+      posClause = "inner join product_price as pp on pp.id = p.last_price_id and pp.position = " + dto.getPosition();
+    }
+
     try {
       List<Map<String, Object>> rows = 
         db.findMultiple(
-          "select id, code, name from product " + 
-          "where code like '%" + clearTerm + "%' "+ 
-          "   or name like '%" + clearTerm + "%' " +
-          "order by name " +
-          "limit 50", this::nameOnlyMap);
+          "select p.id, p.code, p.name, p.price, b.name as brand, c.name as category from product as p " + 
+          " left join lookup as b on b.id = p.brand_id and b.company_id = p.company_id and b.type = 'BRAND' " + 
+          " left join lookup as c on c.id = p.category_id and c.company_id = p.company_id and c.type = 'CATEGORY' " + 
+          posClause +
+          " where p.name like '%" + dto.getTerm() + "%' "+ 
+          criteria +
+          " order by p.name " +
+          " limit 25", this::mapSearch);
        
       return new ServiceResponse(Maps.immutableEntry("rows", rows));
     } catch (Exception e) {
@@ -438,12 +464,15 @@ public class ProductRepository {
     return Responses.DataProblem.DB_PROBLEM;
   }
 
-  private Map<String, Object> nameOnlyMap(ResultSet rs) {
+  private Map<String, Object> mapSearch(ResultSet rs) {
     try {
-      Map<String, Object> modelMap = new HashMap<>(1);
+      Map<String, Object> modelMap = new HashMap<>(6);
       modelMap.put("id", RepositoryHelper.nullLongHandler(rs, "id"));
       modelMap.put("code", rs.getString("code"));
       modelMap.put("name", rs.getString("name"));
+      modelMap.put("price", rs.getBigDecimal("price"));
+      modelMap.put("brand", rs.getString("brand"));
+      modelMap.put("category", rs.getString("category"));
       return modelMap;
     } catch (SQLException e) {
       log.error("Failed to set name only map", e);

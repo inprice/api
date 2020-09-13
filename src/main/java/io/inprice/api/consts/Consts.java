@@ -76,9 +76,9 @@ public class Consts {
     public static class Competitor {
       public static final String BASE = "/competitor";
       public static final String SEARCH = BASE + "/search";
-      public static final String RENEW = BASE + "/renew";
-      public static final String PAUSE = BASE + "/pause";
-      public static final String RESUME = BASE + "/resume";
+      public static final String RENEW = BASE + "/renewed";
+      public static final String PAUSE = BASE + "/paused";
+      public static final String RESUME = BASE + "/resumed";
     }
 
     public static class Lookup {

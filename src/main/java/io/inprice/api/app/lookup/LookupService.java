@@ -44,4 +44,8 @@ public class LookupService {
     return repository.getList(null, type);
   }
 
+  public ServiceResponse getAllList() {
+    return repository.getAllList();
+  }
+
 }

@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LookupDTO;
+import io.inprice.api.dto.Pair;
 import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
@@ -111,7 +112,18 @@ public class LookupRepository {
       Connection connection = (isConNull ? connection = db.getConnection() : con);
 
       List<Map<String, Object>> data = new ArrayList<>();
-      List<Lookup> lookups = db.findMultiple(connection, "select * from lookup where type='"+type.name()+"' order by name", this::map);
+      List<Lookup> lookups = 
+        db.findMultiple(
+          connection, 
+          String.format(
+            "select * from lookup " +
+            "where company_id=%d " +
+            "  and type='%s' " +
+            "order by name",
+            CurrentUser.getCompanyId(), type.name()
+          ), 
+        this::map
+        );
       if (lookups != null && lookups.size() > 0) {
         for (Lookup lu: lookups) {
           Map<String, Object> map = new HashMap<>(2);
@@ -126,6 +138,47 @@ public class LookupRepository {
 
     } catch (Exception e) {
       log.error("Failed to get lookup. " + type, e);
+    }
+
+    return Responses.NotFound.DATA;
+  }
+
+  public ServiceResponse getAllList() {
+    try (Connection connection = db.getConnection()) {
+      Map<String, List<Pair<Long, String>>> data = new HashMap<>();
+      List<Lookup> lookups = 
+        db.findMultiple(
+          connection, 
+          String.format(
+            "select * from lookup " +
+            "where company_id=%d " +
+            "order by type, name",
+            CurrentUser.getCompanyId()
+          ), 
+          this::map
+        );
+
+      if (lookups != null && lookups.size() > 0) {
+        LookupType lastType = null;
+        List<Pair<Long, String>> entryList = null;
+
+        for (Lookup lu: lookups) {
+          if (lastType == null || ! lastType.equals(lu.getType())) {
+            if (entryList != null) {
+              data.put(lastType.name(), entryList);
+            }
+            entryList = data.get(lu.getType().name());
+            if (entryList == null) entryList = new ArrayList<>();
+            lastType = lu.getType();
+          }
+          entryList.add(new Pair<>(lu.getId(), lu.getName()));
+        }
+        data.put(lastType.name(), entryList);
+      }
+      return new ServiceResponse(data);
+
+    } catch (Exception e) {
+      log.error("Failed to get all lookups for Company: " + CurrentUser.getCompanyId(), e);
     }
 
     return Responses.NotFound.DATA;

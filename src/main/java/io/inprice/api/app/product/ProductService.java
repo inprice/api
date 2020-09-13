@@ -4,6 +4,7 @@ import com.rabbitmq.client.Channel;
 
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.ProductDTOValidator;
+import io.inprice.api.dto.ProductSearchDTO;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
@@ -18,8 +19,8 @@ public class ProductService {
     return repository.findEverythingById(id);
   }
 
-  public ServiceResponse search(String term) {
-    return repository.search(term);
+  public ServiceResponse search(ProductSearchDTO dto) {
+    return repository.search(dto);
   }
 
   public ServiceResponse insert(ProductDTO dto) {

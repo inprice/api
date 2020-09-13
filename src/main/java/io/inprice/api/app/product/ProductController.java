@@ -1,6 +1,7 @@
 package io.inprice.api.app.product;
 
 import io.inprice.api.consts.Consts;
+import io.inprice.api.dto.ProductSearchDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -46,9 +47,8 @@ public class ProductController implements Controller {
     }, AccessRoles.EDITOR());
 
     // search
-    app.get(Consts.Paths.Product.SEARCH, (ctx) -> {
-      String term = ctx.queryParam("term");
-      ctx.json(Commons.createResponse(ctx, service.search(term)));
+    app.post(Consts.Paths.Product.SEARCH, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, service.search(ctx.bodyAsClass(ProductSearchDTO.class))));
     }, AccessRoles.ANYONE());
 
   }
