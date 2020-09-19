@@ -1,19 +1,15 @@
 package io.inprice.api.app.product;
 
-import java.util.Arrays;
-import java.util.Map;
-
 import com.rabbitmq.client.Channel;
 
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.ProductDTOValidator;
-import io.inprice.api.info.SearchModel;
+import io.inprice.api.dto.ProductSearchDTO;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.RabbitMQ;
 import io.inprice.common.info.ProductDTO;
-import io.inprice.common.models.Product;
 
 public class ProductService {
 
@@ -23,10 +19,16 @@ public class ProductService {
     return repository.findById(id);
   }
 
-  public ServiceResponse search(Map<String, String> searchMap) {
-    SearchModel sm = new SearchModel(searchMap, "p.name", Product.class);
-    sm.setFields(Arrays.asList("p.code", "p.name"));
-    return repository.search(sm);
+  public ServiceResponse findEverythingById(Long id) {
+    return repository.findEverythingById(id);
+  }
+
+  public ServiceResponse simpleSearch(String term) {
+    return repository.simpleSearch(term);
+  }
+
+  public ServiceResponse fullSearch(ProductSearchDTO dto) {
+    return repository.fullSearch(dto);
   }
 
   public ServiceResponse insert(ProductDTO dto) {

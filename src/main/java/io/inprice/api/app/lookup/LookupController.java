@@ -33,6 +33,11 @@ public class LookupController implements Controller {
          ctx.json(Commons.createResponse(ctx, service.getList(LookupType.CATEGORY)));
       }, AccessRoles.EDITOR());
 
+      // get all list
+      app.get(Consts.Paths.Lookup.BASE + "/all", (ctx) -> {
+         ctx.json(Commons.createResponse(ctx, service.getAllList()));
+      }, AccessRoles.EDITOR());
+
    }
 
 }

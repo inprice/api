@@ -10,7 +10,7 @@ import io.inprice.api.app.auth.AuthRepository;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.Commons;
-import io.inprice.api.helpers.ControllerHelper;
+import io.inprice.api.helpers.CookieHelper;
 import io.inprice.api.helpers.SessionHelper;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.meta.ShadowRoles;
@@ -53,7 +53,7 @@ public class AccessGuard implements AccessManager {
                      CurrentUser.set(res.getData());
                      handler.handle(ctx);
                   } else {
-                    ControllerHelper.removeExpiredAuthCookie(ctx);
+                    CookieHelper.removeAuthCookie(ctx);
                   }
                } else {
                   isDone = true;

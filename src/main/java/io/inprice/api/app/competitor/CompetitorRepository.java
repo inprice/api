@@ -4,10 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import com.google.common.collect.Maps;
 
@@ -18,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CompetitorDTO;
 import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.SearchModel;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
@@ -26,7 +24,6 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.common.meta.CompetitorStatus;
 import io.inprice.common.models.Competitor;
-import io.inprice.common.models.Product;
 
 public class CompetitorRepository {
 
@@ -48,24 +45,6 @@ public class CompetitorRepository {
     return Responses.NotFound.COMPETITOR;
   }
 
-  public ServiceResponse getList(Product product) {
-    List<Competitor> competitors = db.findMultiple(
-        String.format(
-          "select l.*, s.name as platform from competitor as l " + 
-          "left join site as s on s.id = l.site_id " + 
-          "where product_id = %d " +
-          "  and company_id = %d " +
-          "order by name",
-          product.getId(), CurrentUser.getCompanyId()),
-        this::map);
-
-    Map<String, Object> data = new HashMap<>(2);
-    data.put("product", product);
-    if (competitors != null && competitors.size() > 0) data.put("competitors", competitors);
-
-    return new ServiceResponse(data);
-  }
-
   public ServiceResponse insert(CompetitorDTO dto) {
     try (Connection con = db.getConnection()) {
       return insert(con, dto);
@@ -85,7 +64,6 @@ public class CompetitorRepository {
       boolean exists = doesExistByUrl(con, dto.getUrl(), dto.getProductId());
       if (! exists) {
 
-        int affected = 0;
         String urlHash = DigestUtils.md5Hex(dto.getUrl());
 
         res = findSampleByHash(con, urlHash);
@@ -95,7 +73,7 @@ public class CompetitorRepository {
             "(url, url_hash, sku, name, brand, seller, shipment, status, http_status, website_class_name, site_id, product_id, company_id) " + 
             "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ";
 
-          try (PreparedStatement pst = con.prepareStatement(query)) {
+          try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             Competitor sample = res.getData();
 
             int i = 0;
@@ -115,11 +93,19 @@ public class CompetitorRepository {
             else
               pst.setNull(++i, java.sql.Types.NULL);
             pst.setLong(++i, CurrentUser.getCompanyId());
-            affected = pst.executeUpdate();
+
+            if (pst.executeUpdate() > 0) {
+              try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                  sample.setId(generatedKeys.getLong(1));
+                  res = new ServiceResponse(sample);
+                }
+              }
+            }
           }
         } else {
           String query = "insert into competitor (url, url_hash, product_id, company_id) values  (?, ?, ?, ?) ";
-          try (PreparedStatement pst = con.prepareStatement(query)) {
+          try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             int i = 0;
             pst.setString(++i, dto.getUrl());
             pst.setString(++i, urlHash);
@@ -128,13 +114,21 @@ public class CompetitorRepository {
             else
               pst.setNull(++i, java.sql.Types.NULL);
             pst.setLong(++i, CurrentUser.getCompanyId());
-            affected = pst.executeUpdate();
+
+            if (pst.executeUpdate() > 0) {
+              try (ResultSet generatedKeys = pst.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                  Competitor sample = new Competitor();
+                  sample.setId(generatedKeys.getLong(1));
+                  sample.setUrl(dto.getUrl());
+                  sample.setProductId(dto.getProductId());
+                  res = new ServiceResponse(sample);
+                }
+              }
+            }
           }
         }
 
-        if (affected > 0) {
-          res = Responses.OK;
-        }
       } else {
         res = Responses.DataProblem.ALREADY_EXISTS;
       }
@@ -176,7 +170,7 @@ public class CompetitorRepository {
     if (result) {
       return Responses.OK;
     }
-    return Responses.NotFound.PRODUCT;
+    return Responses.NotFound.COMPETITOR;
   }
 
   public ServiceResponse changeStatus(Long id, Long productId, CompetitorStatus status) {
@@ -242,11 +236,16 @@ public class CompetitorRepository {
     }
   }
 
-  public ServiceResponse search(SearchModel searchModel, String whereStatus) {
-    final String searchQuery = SqlHelper.generateSearchQuery(searchModel, whereStatus);
-
+  public ServiceResponse search(String term) {
+    final String clearTerm = SqlHelper.clear(term);
     try {
-      List<Competitor> rows = db.findMultiple(searchQuery, this::map);
+      List<Competitor> rows = 
+        db.findMultiple(
+          "select id, name from competitor " + 
+          "where  sku like '%" + clearTerm + "%' " + 
+          "   or name like '%" + clearTerm + "%' " +
+          "limit 50", this::map);
+       
       return new ServiceResponse(Maps.immutableEntry("rows", rows));
     } catch (Exception e) {
       log.error("Failed to search competitors. ", e);

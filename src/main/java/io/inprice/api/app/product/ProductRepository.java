@@ -7,7 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.collect.Maps;
 
@@ -15,9 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.lookup.LookupRepository;
+import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.ProductSearchDTO;
 import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.SearchModel;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
@@ -31,6 +34,8 @@ import io.inprice.common.models.Product;
 import io.inprice.common.models.ProductPrice;
 
 public class ProductRepository {
+
+  //private static final SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM");
 
   private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
   private static final LookupRepository lookupRepository = Beans.getSingleton(LookupRepository.class);
@@ -74,6 +79,84 @@ public class ProductRepository {
     return Responses.NotFound.PRODUCT;
   }
 
+  public ServiceResponse findEverythingById(Long id) {
+    Map<String, Object> dataMap = new HashMap<>(3);
+
+    try (Connection con = db.getConnection()) {
+      //-------------------------------------------
+      // product itself
+      //-------------------------------------------
+      Product produdct =
+        db.findSingle(con,
+          String.format("%s where p.id=%d and p.company_id=%d ", BASE_QUERY, id, CurrentUser.getCompanyId()), this::map);
+
+      dataMap.put("product", produdct);
+
+      //-------------------------------------------
+      // competitors
+      //-------------------------------------------
+      List<Competitor> competitors =
+        db.findMultiple(con,
+          String.format(
+            "select l.*, s.name as platform from competitor as l " + 
+            "left join site as s on s.id = l.site_id " + 
+            "where product_id = %d " +
+            "  and company_id = %d " +
+            "order by status, seller",
+            id, CurrentUser.getCompanyId()),
+          this::mapCompetitor);
+
+      dataMap.put("competitors", competitors);
+
+      /*-------------------------------------------
+        price movements of last 10
+        in this section, we create data sets of prices for chart display
+      -------------------------------------------
+      Set<String> priceLabels = new TreeSet<>();
+      Map<String, List<BigDecimal>> datasetMap = new HashMap<>(3);
+
+      String[] prefixes = {"min", "avg", "max"};
+      for (String prefix : prefixes) {
+        List<Map<Date, BigDecimal>> prices =
+          db.findMultiple(con,
+            String.format(
+              "select DATE(created_at) AS date, MAX("+prefix+"_price) from product_price " + 
+              "where product_id = %d " +
+              "  and company_id = %d " +
+              "group by date " +
+              "limit 10",
+              id, CurrentUser.getCompanyId()),
+            this::mapPriceMovement);
+
+        boolean firstTime = true;
+        List<BigDecimal> dataset = new ArrayList<>(11);
+        if (prices != null && prices.size() > 0) {
+          //dataset.add(BigDecimal.ZERO);
+
+          //creating dataset
+          for (Map<Date, BigDecimal> price : prices) {
+            for (Entry<Date, BigDecimal> entry: price.entrySet()) {
+              dataset.add(entry.getValue());
+              if (firstTime) priceLabels.add(sdf.format(entry.getKey()));
+            }
+            firstTime = false;
+          }
+        }
+        datasetMap.put(prefix, dataset);
+      }
+      
+      dataMap.put("priceLabels", priceLabels);
+      dataMap.put("priceData", datasetMap);
+      */
+      return new ServiceResponse(dataMap);
+      
+    } catch (Exception e) {
+      log.error("Failed to find a product by id to get everything about it", e);
+    }
+
+    return Responses.NotFound.PRODUCT;
+  }
+
   public ServiceResponse findByCode(String code) {
     Connection con = null;
     try {
@@ -103,16 +186,79 @@ public class ProductRepository {
     return Responses.NotFound.PRODUCT;
   }
 
-  public ServiceResponse search(SearchModel searchModel) {
-    searchModel.setPrefixForCompanyId("p");
-    searchModel.setQuery(BASE_QUERY);
-    final String searchQuery = SqlHelper.generateSearchQuery(searchModel);
-
+  public ServiceResponse simpleSearch(String term) {
+    final String clearTerm = SqlHelper.clear(term);
     try {
-      List<Product> rows = db.findMultiple(searchQuery, this::map);
+      List<Map<String, Object>> rows = 
+        db.findMultiple(
+          "select id, code, name from product " + 
+          "where code like '%" + clearTerm + "%' "+ 
+          "   or name like '%" + clearTerm + "%' " +
+          "order by name " +
+          "limit " + Consts.ROW_LIMIT_FOR_LISTS, this::nameOnlyMap);
+       
       return new ServiceResponse(Maps.immutableEntry("rows", rows));
     } catch (Exception e) {
-      log.error("Failed to search products. ", e);
+      log.error("Failed in simple search for products. ", e);
+      return Responses.ServerProblem.EXCEPTION;
+    }
+  }
+
+  public ServiceResponse fullSearch(ProductSearchDTO dto) {
+    dto.setTerm(SqlHelper.clear(dto.getTerm()));
+
+    StringBuilder criteria = new StringBuilder();
+    //company
+    criteria.append(" and p.company_id = ");
+    criteria.append(CurrentUser.getCompanyId());
+
+    //brand
+    if (dto.getBrand() != null && dto.getBrand() > 0) {
+      criteria.append(" and p.brand_id = ");
+      criteria.append(dto.getBrand());
+    }
+
+    //category
+    if (dto.getCategory() != null && dto.getCategory() > 0) {
+      criteria.append(" and p.category_id = ");
+      criteria.append(dto.getCategory());
+    }
+
+    //position is a special case so we need take care of it differently
+    String posField = " pp.position ";
+    String posClause = " left join product_price as pp on pp.id = p.last_price_id ";
+    if (dto.getPosition() != null) {
+      if (dto.getPosition() > 1) {
+        posClause = " inner join product_price as pp on pp.id = p.last_price_id and pp.position = " + (dto.getPosition()-1);
+      } else if (dto.getPosition() == 1) {
+        posField = " 'NOT YET' as position ";
+        posClause = "";
+        criteria.append(" and p.last_price_id is null");
+      }
+    }
+
+    //limiting
+    String limit = " limit " + Consts.ROW_LIMIT_FOR_LISTS;
+    if (dto.getLoadMore() && dto.getRowCount() >= Consts.ROW_LIMIT_FOR_LISTS) {
+      limit = " limit " + dto.getRowCount() + ", " + Consts.ROW_LIMIT_FOR_LISTS;
+    }
+
+    try {
+      List<Map<String, Object>> rows = 
+        db.findMultiple(
+          "select p.id, p.code, p.name, p.price, "+posField+", b.name as brand, c.name as category, p.updated_at, p.created_at from product as p " + 
+          " left join lookup as b on b.id = p.brand_id and b.company_id = p.company_id and b.type = 'BRAND' " + 
+          " left join lookup as c on c.id = p.category_id and c.company_id = p.company_id and c.type = 'CATEGORY' " + 
+          posClause +
+          " where p.name like '%" + dto.getTerm() + "%' "+ 
+          criteria +
+          " order by p.name " +
+          limit, 
+          this::mapSearch);
+       
+      return new ServiceResponse(Maps.immutableEntry("rows", rows));
+    } catch (Exception e) {
+      log.error("Failed in full search for products. ", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
@@ -317,8 +463,7 @@ public class ProductRepository {
       pst1.setLong(1, dto.getCompanyId());
 
       if (pst1.executeUpdate() > 0) {
-        final String query2 = "insert into product " + "(code, name, price, company_id, brand_id, category_id) "
-            + "values (?, ?, ?, ?, ?, ?)";
+        final String query2 = "insert into product (code, name, price, company_id, brand_id, category_id) values (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pst2 = con.prepareStatement(query2)) {
           int i = 0;
           pst2.setString(++i, dto.getCode());
@@ -341,7 +486,7 @@ public class ProductRepository {
             return Responses.OK;
           }
         } catch (SQLIntegrityConstraintViolationException ie) {
-          return Responses.DataProblem.DUPLICATE;
+          return new ServiceResponse("There is a product already defined with this code!");
         }
       } else {
         return Responses.PermissionProblem.PRODUCT_LIMIT_PROBLEM;
@@ -352,6 +497,25 @@ public class ProductRepository {
     }
 
     return Responses.DataProblem.DB_PROBLEM;
+  }
+
+  private Map<String, Object> mapSearch(ResultSet rs) {
+    try {
+      Map<String, Object> modelMap = new HashMap<>(6);
+      modelMap.put("id", RepositoryHelper.nullLongHandler(rs, "id"));
+      modelMap.put("code", rs.getString("code"));
+      modelMap.put("name", rs.getString("name"));
+      modelMap.put("price", rs.getBigDecimal("price"));
+      modelMap.put("brand", rs.getString("brand"));
+      modelMap.put("category", rs.getString("category"));
+      modelMap.put("position", RepositoryHelper.nullIntegerHandler(rs, "position"));
+      modelMap.put("updatedAt", rs.getTimestamp("updated_at"));
+      modelMap.put("createdAt", rs.getTimestamp("created_at"));
+      return modelMap;
+    } catch (SQLException e) {
+      log.error("Failed to set name only map", e);
+    }
+    return null;
   }
 
   private Product map(ResultSet rs) {
@@ -390,12 +554,72 @@ public class ProductRepository {
         pp.setRanking(rs.getInt("ranking"));
         pp.setRankingWith(rs.getInt("ranking_with"));
         pp.setSuggestedPrice(rs.getBigDecimal("suggested_price"));
+        pp.setCreatedAt(rs.getTimestamp("created_at"));
         model.setPriceDetails(pp);
       }
 
       return model;
     } catch (SQLException e) {
       log.error("Failed to set product's properties", e);
+    }
+    return null;
+  }
+/* 
+  private Map<Date, BigDecimal> mapPriceMovement(ResultSet rs) {
+    try {
+      return 
+        Collections.singletonMap(
+          rs.getTimestamp(1),
+          rs.getBigDecimal(2)
+        );
+    } catch (SQLException e) {
+      log.error("Failed to set price movement's properties", e);
+    }
+    return null;
+  }
+ */
+
+  private Map<String, Object> nameOnlyMap(ResultSet rs) {
+    try {
+      Map<String, Object> modelMap = new HashMap<>(1);
+      modelMap.put("id", RepositoryHelper.nullLongHandler(rs, "id"));
+      modelMap.put("code", rs.getString("code"));
+      modelMap.put("name", rs.getString("name"));
+      return modelMap;
+    } catch (SQLException e) {
+      log.error("Failed to set name only map", e);
+    }
+    return null;
+  }
+
+ private Competitor mapCompetitor(ResultSet rs) {
+    try {
+      Competitor model = new Competitor();
+      model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
+      model.setUrl(rs.getString("url"));
+      model.setUrlHash(rs.getString("url_hash"));
+      model.setSku(rs.getString("sku"));
+      model.setName(rs.getString("name"));
+      model.setBrand(rs.getString("brand"));
+      model.setSeller(rs.getString("seller"));
+      model.setShipment(rs.getString("shipment"));
+      model.setPrice(rs.getBigDecimal("price"));
+      model.setPreStatus(CompetitorStatus.valueOf(rs.getString("pre_status")));
+      model.setStatus(CompetitorStatus.valueOf(rs.getString("status")));
+      model.setLastCheck(rs.getTimestamp("last_check"));
+      model.setLastUpdate(rs.getTimestamp("last_update"));
+      model.setRetry(rs.getInt("retry"));
+      model.setHttpStatus(rs.getInt("http_status"));
+      model.setWebsiteClassName(rs.getString("website_class_name"));
+      model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
+      model.setProductId(RepositoryHelper.nullLongHandler(rs, "product_id"));
+      model.setSiteId(RepositoryHelper.nullLongHandler(rs, "site_id"));
+      model.setPlatform(rs.getString("platform"));
+      model.setCreatedAt(rs.getTimestamp("created_at"));
+
+      return model;
+    } catch (SQLException e) {
+      log.error("Failed to set competitor's properties", e);
     }
     return null;
   }
