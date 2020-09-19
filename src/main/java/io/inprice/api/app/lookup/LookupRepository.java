@@ -21,7 +21,9 @@ import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.common.meta.LookupType;
+import io.inprice.common.meta.Position;
 import io.inprice.common.models.Lookup;
 
 public class LookupRepository {
@@ -146,6 +148,76 @@ public class LookupRepository {
   public ServiceResponse getAllList() {
     try (Connection connection = db.getConnection()) {
       Map<String, List<Pair<Long, String>>> data = new HashMap<>();
+
+      //positions
+      List<Map<String, Object>> positions = 
+      db.findMultiple(
+        connection, 
+        String.format(
+          "select pp.position, count(1) as counter from product as p " +
+          "left join product_price as pp on pp.id=p.last_price_id " +
+          "where p.company_id=%d " +
+          "group by pp.position " +
+          "order by pp.position ",
+          CurrentUser.getCompanyId()
+        ), 
+        this::mapPositionCounts
+      );
+
+      if (positions != null && positions.size() > 0) {
+        List<Pair<Long, String>> entryList = new ArrayList<>();
+        for (Map<String, Object> pos: positions) {
+          if (pos.get("position") != null) {
+            int posNum = Integer.parseInt(pos.get("position").toString());
+            String name = Position.getByOrdinal(posNum-1).name() + " (" + pos.get("counter").toString() + ")";
+            entryList.add(new Pair<>((long)posNum+1, name));
+          } else {
+            String name = "NOT SET (" + pos.get("counter").toString() + ")";
+            entryList.add(new Pair<>(1L, name));
+          }
+        }
+        data.put("POSITIONS", entryList);
+      }
+
+      //brand and categories
+      String[] types = { LookupType.BRAND.name(), LookupType.CATEGORY.name() };
+
+      for (String type: types) {
+        List<Map<String, Object>> lookups = 
+          db.findMultiple(
+            connection, 
+            String.format(
+              "select l.id, l.name, count(1) as counter from lookup as l " +
+              "inner join product as p on p.%s_id = l.id " +
+              "where p.company_id=%d " +
+              "group by l.id, l.name " +
+              "order by l.name ",
+              type.toLowerCase(), CurrentUser.getCompanyId()
+            ), 
+            this::mapCountly
+          );
+
+        if (lookups != null && lookups.size() > 0) {
+          List<Pair<Long, String>> entryList = new ArrayList<>();
+          for (Map<String, Object> lu: lookups) {
+            entryList.add(new Pair<>(Long.parseLong(lu.get("id").toString()), lu.get("name").toString() + " (" + lu.get("counter").toString() + ")"));
+          }
+          data.put(type, entryList);
+        }
+
+      }
+      return new ServiceResponse(data);
+
+    } catch (Exception e) {
+      log.error("Failed to get all lookups for Company: " + CurrentUser.getCompanyId(), e);
+    }
+
+    return Responses.NotFound.DATA;
+  }
+/*
+  public ServiceResponse getAllList() {
+    try (Connection connection = db.getConnection()) {
+      Map<String, List<Pair<Long, String>>> data = new HashMap<>();
       List<Lookup> lookups = 
         db.findMultiple(
           connection, 
@@ -183,7 +255,7 @@ public class LookupRepository {
 
     return Responses.NotFound.DATA;
   }
-
+*/
   public Map<String, Lookup> getMap(LookupType type) {
     try (Connection con = db.getConnection()) {
       List<Lookup> lookups = db.findMultiple(con, "select * from lookup where type='"+type.name()+"'", this::map);
@@ -199,6 +271,33 @@ public class LookupRepository {
     }
 
     return new HashMap<>();
+  }
+
+  private Map<String, Object> mapPositionCounts(ResultSet rs) {
+    try {
+      Map<String, Object> model = new HashMap<>(2);
+      model.put("position", RepositoryHelper.nullIntegerHandler(rs, "position"));
+      model.put("counter", rs.getInt("counter"));
+
+      return model;
+    } catch (SQLException e) {
+      log.error("Failed to set position counts map", e);
+    }
+    return null;
+  }
+
+  private Map<String, Object> mapCountly(ResultSet rs) {
+    try {
+      Map<String, Object> model = new HashMap<>(3);
+      model.put("id", rs.getLong("id"));
+      model.put("name", rs.getString("name"));
+      model.put("counter", rs.getInt("counter"));
+
+      return model;
+    } catch (SQLException e) {
+      log.error("Failed to set count map", e);
+    }
+    return null;
   }
 
   private Lookup map(ResultSet rs) {

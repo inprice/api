@@ -15,12 +15,20 @@ public class ProductService {
 
   private final ProductRepository repository = Beans.getSingleton(ProductRepository.class);
 
+  public ServiceResponse findById(Long id) {
+    return repository.findById(id);
+  }
+
   public ServiceResponse findEverythingById(Long id) {
     return repository.findEverythingById(id);
   }
 
-  public ServiceResponse search(ProductSearchDTO dto) {
-    return repository.search(dto);
+  public ServiceResponse simpleSearch(String term) {
+    return repository.simpleSearch(term);
+  }
+
+  public ServiceResponse fullSearch(ProductSearchDTO dto) {
+    return repository.fullSearch(dto);
   }
 
   public ServiceResponse insert(ProductDTO dto) {

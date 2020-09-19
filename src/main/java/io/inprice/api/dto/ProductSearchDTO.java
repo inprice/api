@@ -11,5 +11,7 @@ public class ProductSearchDTO {
   private Long position;
   private Long brand;
   private Long category;
+  private Boolean loadMore = Boolean.FALSE;
+  private Integer rowCount = 0;
 
 }

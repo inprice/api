@@ -12,6 +12,8 @@ public class Consts {
   public static final String CURRENCY_CODE = "currencyCode";
   public static final String CURRENCY_FORMAT = "currencyFormat";
 
+  public static final int ROW_LIMIT_FOR_LISTS = 25;
+
   public static class Paths {
 
     public static class Auth {
@@ -62,6 +64,7 @@ public class Consts {
 
     public static class Product {
       public static final String BASE = "/product";
+      public static final String EVERYTHING = BASE + "/everything";
       public static final String SEARCH = BASE + "s/search";
       public static final String TOGGLE_STATUS = BASE + "/toggle";
 

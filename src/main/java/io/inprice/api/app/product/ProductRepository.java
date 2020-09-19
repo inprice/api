@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.lookup.LookupRepository;
+import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.ProductSearchDTO;
 import io.inprice.api.helpers.SqlHelper;
@@ -185,18 +186,38 @@ public class ProductRepository {
     return Responses.NotFound.PRODUCT;
   }
 
-  public ServiceResponse search(ProductSearchDTO dto) {
+  public ServiceResponse simpleSearch(String term) {
+    final String clearTerm = SqlHelper.clear(term);
+    try {
+      List<Map<String, Object>> rows = 
+        db.findMultiple(
+          "select id, code, name from product " + 
+          "where code like '%" + clearTerm + "%' "+ 
+          "   or name like '%" + clearTerm + "%' " +
+          "order by name " +
+          "limit " + Consts.ROW_LIMIT_FOR_LISTS, this::nameOnlyMap);
+       
+      return new ServiceResponse(Maps.immutableEntry("rows", rows));
+    } catch (Exception e) {
+      log.error("Failed in simple search for products. ", e);
+      return Responses.ServerProblem.EXCEPTION;
+    }
+  }
+
+  public ServiceResponse fullSearch(ProductSearchDTO dto) {
     dto.setTerm(SqlHelper.clear(dto.getTerm()));
 
     StringBuilder criteria = new StringBuilder();
     //company
     criteria.append(" and p.company_id = ");
     criteria.append(CurrentUser.getCompanyId());
+
     //brand
     if (dto.getBrand() != null && dto.getBrand() > 0) {
       criteria.append(" and p.brand_id = ");
       criteria.append(dto.getBrand());
     }
+
     //category
     if (dto.getCategory() != null && dto.getCategory() > 0) {
       criteria.append(" and p.category_id = ");
@@ -204,26 +225,40 @@ public class ProductRepository {
     }
 
     //position is a special case so we need take care of it differently
-    String posClause = "";
-    if (dto.getPosition() != null && dto.getPosition() > -1) {
-      posClause = "inner join product_price as pp on pp.id = p.last_price_id and pp.position = " + dto.getPosition();
+    String posField = " pp.position ";
+    String posClause = " left join product_price as pp on pp.id = p.last_price_id ";
+    if (dto.getPosition() != null) {
+      if (dto.getPosition() > 1) {
+        posClause = " inner join product_price as pp on pp.id = p.last_price_id and pp.position = " + (dto.getPosition()-1);
+      } else if (dto.getPosition() == 1) {
+        posField = " 'NOT YET' as position ";
+        posClause = "";
+        criteria.append(" and p.last_price_id is null");
+      }
+    }
+
+    //limiting
+    String limit = " limit " + Consts.ROW_LIMIT_FOR_LISTS;
+    if (dto.getLoadMore() && dto.getRowCount() >= Consts.ROW_LIMIT_FOR_LISTS) {
+      limit = " limit " + dto.getRowCount() + ", " + Consts.ROW_LIMIT_FOR_LISTS;
     }
 
     try {
       List<Map<String, Object>> rows = 
         db.findMultiple(
-          "select p.id, p.code, p.name, p.price, b.name as brand, c.name as category from product as p " + 
+          "select p.id, p.code, p.name, p.price, "+posField+", b.name as brand, c.name as category, p.updated_at, p.created_at from product as p " + 
           " left join lookup as b on b.id = p.brand_id and b.company_id = p.company_id and b.type = 'BRAND' " + 
           " left join lookup as c on c.id = p.category_id and c.company_id = p.company_id and c.type = 'CATEGORY' " + 
           posClause +
           " where p.name like '%" + dto.getTerm() + "%' "+ 
           criteria +
           " order by p.name " +
-          " limit 25", this::mapSearch);
+          limit, 
+          this::mapSearch);
        
       return new ServiceResponse(Maps.immutableEntry("rows", rows));
     } catch (Exception e) {
-      log.error("Failed to search competitors. ", e);
+      log.error("Failed in full search for products. ", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
@@ -473,6 +508,9 @@ public class ProductRepository {
       modelMap.put("price", rs.getBigDecimal("price"));
       modelMap.put("brand", rs.getString("brand"));
       modelMap.put("category", rs.getString("category"));
+      modelMap.put("position", RepositoryHelper.nullIntegerHandler(rs, "position"));
+      modelMap.put("updatedAt", rs.getTimestamp("updated_at"));
+      modelMap.put("createdAt", rs.getTimestamp("created_at"));
       return modelMap;
     } catch (SQLException e) {
       log.error("Failed to set name only map", e);
@@ -540,7 +578,21 @@ public class ProductRepository {
     return null;
   }
  */
-  private Competitor mapCompetitor(ResultSet rs) {
+
+  private Map<String, Object> nameOnlyMap(ResultSet rs) {
+    try {
+      Map<String, Object> modelMap = new HashMap<>(1);
+      modelMap.put("id", RepositoryHelper.nullLongHandler(rs, "id"));
+      modelMap.put("code", rs.getString("code"));
+      modelMap.put("name", rs.getString("name"));
+      return modelMap;
+    } catch (SQLException e) {
+      log.error("Failed to set name only map", e);
+    }
+    return null;
+  }
+
+ private Competitor mapCompetitor(ResultSet rs) {
     try {
       Competitor model = new Competitor();
       model.setId(RepositoryHelper.nullLongHandler(rs, "id"));

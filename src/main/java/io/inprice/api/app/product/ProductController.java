@@ -1,11 +1,14 @@
 package io.inprice.api.app.product;
 
+import org.apache.commons.lang3.StringUtils;
+
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.ProductSearchDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
+import io.inprice.api.info.ServiceResponse;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.info.ProductDTO;
 import io.javalin.Javalin;
@@ -37,6 +40,12 @@ public class ProductController implements Controller {
     // find by id
     app.get(Consts.Paths.Product.BASE + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+      ctx.json(Commons.createResponse(ctx, service.findById(id)));
+    }, AccessRoles.ANYONE());
+
+    // find everything by id
+    app.get(Consts.Paths.Product.EVERYTHING + "/:id", (ctx) -> {
+      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.findEverythingById(id)));
     }, AccessRoles.ANYONE());
 
@@ -48,7 +57,14 @@ public class ProductController implements Controller {
 
     // search
     app.post(Consts.Paths.Product.SEARCH, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.search(ctx.bodyAsClass(ProductSearchDTO.class))));
+      ServiceResponse res = null;
+      String searchTerm = ctx.queryParam("term");
+      if (StringUtils.isNotBlank(searchTerm)) {
+        res = service.simpleSearch(searchTerm);
+      } else {
+        res = service.fullSearch(ctx.bodyAsClass(ProductSearchDTO.class));
+      }
+      ctx.json(Commons.createResponse(ctx, res));
     }, AccessRoles.ANYONE());
 
   }
