@@ -12,9 +12,9 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.helpers.CookieHelper;
 import io.inprice.api.helpers.SessionHelper;
-import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.meta.ShadowRoles;
 import io.inprice.api.session.info.ForCookie;
+import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.utils.NumberUtils;
 import io.javalin.core.security.AccessManager;
@@ -47,10 +47,10 @@ public class AccessGuard implements AccessManager {
                ShadowRoles role = ShadowRoles.valueOf(token.getRole());
                if (permittedRoles.contains(role)) {
 
-                  ServiceResponse res = authRepository.findByHash(token.getHash());
-                  if (res.isOK()) {
+                  ForRedis redisSes = authRepository.findByHash(token.getHash());
+                  if (redisSes != null) {
                      isDone = true;
-                     CurrentUser.set(res.getData());
+                     CurrentUser.set(redisSes);
                      handler.handle(ctx);
                   } else {
                     CookieHelper.removeAuthCookie(ctx);

@@ -1,14 +1,10 @@
 package io.inprice.api.app.product;
 
-import com.rabbitmq.client.Channel;
-
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.ProductDTOValidator;
 import io.inprice.api.dto.ProductSearchDTO;
 import io.inprice.api.info.ServiceResponse;
-import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
-import io.inprice.common.helpers.RabbitMQ;
 import io.inprice.common.info.ProductDTO;
 
 public class ProductService {
@@ -51,14 +47,15 @@ public class ProductService {
       ServiceResponse res = ProductDTOValidator.validate(dto);
       if (res.isOK()) {
         res = repository.update(dto);
-        if (res.isOK()) {
-          Boolean hasPriceChanged = res.getData();
-          if (hasPriceChanged.equals(Boolean.TRUE)) {
-            Channel channel = RabbitMQ.openChannel();
-            RabbitMQ.publish(channel, SysProps.MQ_CHANGES_EXCHANGE(), SysProps.MQ_PRICE_REFRESH_ROUTING(), dto.getId().toString());
-            RabbitMQ.closeChannel(channel);
-          }
-        }
+        //TODO: repository nin icinde yapılacak1
+        //if (res.isOK()) {
+        //  Boolean hasPriceChanged = res.getData();
+        //  if (hasPriceChanged.equals(Boolean.TRUE)) {
+        //    Channel channel = RabbitMQ.openChannel();
+        //    RabbitMQ.publish(channel, SysProps.MQ_CHANGES_EXCHANGE(), SysProps.MQ_PRICE_REFRESH_ROUTING(), dto.getId().toString());
+        //    RabbitMQ.closeChannel(channel);
+        //  }
+        //}
       }
       return res;
     }

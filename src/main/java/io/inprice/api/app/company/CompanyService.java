@@ -1,6 +1,5 @@
 package io.inprice.api.app.company;
 
-import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,43 +7,37 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.auth.AuthService;
+import io.inprice.api.app.auth.dto.PasswordDTO;
+import io.inprice.api.app.company.dto.CreateDTO;
+import io.inprice.api.app.company.dto.RegisterDTO;
 import io.inprice.api.app.token.TokenService;
 import io.inprice.api.app.token.TokenType;
-import io.inprice.api.app.user.UserRepository;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.CreateCompanyDTO;
-import io.inprice.api.dto.EmailValidator;
-import io.inprice.api.dto.PasswordDTO;
-import io.inprice.api.dto.PasswordValidator;
-import io.inprice.api.dto.RegisterDTO;
 import io.inprice.api.email.EmailSender;
 import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
+import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.CurrencyFormats;
+import io.inprice.api.validator.EmailValidator;
+import io.inprice.api.validator.PasswordValidator;
 import io.inprice.common.helpers.Beans;
-import io.inprice.common.helpers.Database;
-import io.inprice.common.models.User;
+import io.inprice.common.models.Company;
 import io.javalin.http.Context;
 
-public class CompanyService {
+class CompanyService {
 
   private static final Logger log = LoggerFactory.getLogger(CompanyService.class);
 
-  private final AuthService authService = Beans.getSingleton(AuthService.class);
-  private final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
-  private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-  private final Database db = Beans.getSingleton(Database.class);
-
+  private final CompanyRepository repository = Beans.getSingleton(CompanyRepository.class);
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
   private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
 
-  public ServiceResponse requestRegistration(RegisterDTO dto) {
+  ServiceResponse requestRegistration(RegisterDTO dto) {
     ServiceResponse res = RedisClient.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
     if (!res.isOK())
       return res;
@@ -52,29 +45,27 @@ public class CompanyService {
     res = validateRegisterDTO(dto);
     if (res.isOK()) {
 
-      try (Connection con = db.getConnection()) {
-        ServiceResponse found = userRepository.findByEmail(con, dto.getEmail());
-        if (found.isOK()) {
-          // checks if the user has already defined the same company
-          User user = found.getData();
-          found = companyRepository.findByNameAndAdminId(con, dto.getCompanyName(), user.getId());
-          if (found.isOK()) {
-            return Responses.Already.Defined.COMPANY;
-          }
+      try {
+        if (! repository.hasUserDefinedTheCompany(dto)) {
+          Map<String, Object> dataMap = new HashMap<>(3);
+          dataMap.put("user", dto.getEmail().split("@")[0]);
+          dataMap.put("company", dto.getCompanyName());
+          dataMap.put("token", TokenService.add(TokenType.REGISTER_REQUEST, dto));
+
+          String message = renderer.renderRegisterActivationLink(dataMap);
+          emailSender.send(
+            Props.APP_EMAIL_SENDER(), 
+            "About " + dto.getCompanyName() + " registration on inprice.io",
+            dto.getEmail(), 
+            message
+          );
+          RedisClient.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
+
+          return Responses.OK;
+        } else {
+          return Responses.Already.Defined.COMPANY;
         }
 
-        Map<String, Object> dataMap = new HashMap<>(3);
-        dataMap.put("user", dto.getEmail().split("@")[0]);
-        dataMap.put("company", dto.getCompanyName());
-        dataMap.put("token", TokenService.add(TokenType.REGISTER_REQUEST, dto));
-
-        final String message = renderer.renderRegisterActivationLink(dataMap);
-        emailSender.send(Props.APP_EMAIL_SENDER(), "About " + dto.getCompanyName() + " registration on inprice.io",
-            dto.getEmail(), message);
-
-        RedisClient.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
-
-        return Responses.OK;
       } catch (Exception e) {
         log.error("An error occurred in rendering email for activating register company", e);
         return Responses.ServerProblem.EXCEPTION;
@@ -83,49 +74,54 @@ public class CompanyService {
     return res;
   }
 
-  public ServiceResponse completeRegistration(Context ctx, String token) {
+  ServiceResponse completeRegistration(Context ctx, String token) {
+    ServiceResponse res = Responses.Invalid.TOKEN;
+
     RegisterDTO dto = TokenService.get(TokenType.REGISTER_REQUEST, token);
     if (dto != null) {
       Map<String, String> clientInfo = ClientSide.getGeoInfo(ctx.req);
-      ServiceResponse res = companyRepository.insert(dto, clientInfo, token);
+      res = repository.insert(dto, clientInfo, token);
       if (res.isOK()) {
-        return authService.createSession(ctx, res.getData());
+        TokenService.remove(TokenType.REGISTER_REQUEST, token);
       }
-      return res;
-    } else if (StringUtils.isNotBlank(token)) {
-      TokenService.get(TokenType.REGISTER_REQUEST, token);
     }
-    return Responses.Invalid.TOKEN;
+
+    return res;
   }
 
-  public ServiceResponse getCurrentCompany() {
-    return companyRepository.findById(CurrentUser.getCompanyId());
+  ServiceResponse getCurrentCompany() {
+    Company found = repository.findById(CurrentUser.getCompanyId());
+    if (found != null) {
+      return new ServiceResponse(found);
+    }
+    return Responses.NotFound.COMPANY;
   }
 
-  public ServiceResponse create(CreateCompanyDTO dto) {
+  ServiceResponse create(CreateDTO dto) {
     ServiceResponse res = validateCompanyDTO(dto);
     if (res.isOK()) {
-      return companyRepository.create(dto);
+      return repository.create(dto);
     } else {
       return res;
     }
   }
 
-  public ServiceResponse update(CreateCompanyDTO dto) {
+  ServiceResponse update(CreateDTO dto) {
     ServiceResponse res = validateCompanyDTO(dto);
     if (res.isOK()) {
-      return companyRepository.update(dto);
+      boolean isOK = repository.update(dto);
+      if (isOK) {
+        return Responses.OK;
+      } else {
+        return Responses.DataProblem.DB_PROBLEM;
+      }
     } else {
       return res;
     }
   }
 
-  public ServiceResponse findById(Long id) {
-    return companyRepository.findById(id);
-  }
-
-  public ServiceResponse deleteEverything(String password) {
-    return companyRepository.deleteEverything(password);
+  ServiceResponse deleteEverything(String password) {
+    return repository.deleteEverything(password);
   }
 
   private ServiceResponse validateRegisterDTO(RegisterDTO dto) {
@@ -150,7 +146,7 @@ public class CompanyService {
     }
   }
 
-  private ServiceResponse validateCompanyDTO(CreateCompanyDTO dto) {
+  private ServiceResponse validateCompanyDTO(CreateDTO dto) {
     String problem = null;
 
     if (dto == null) {
@@ -188,10 +184,16 @@ public class CompanyService {
       }
     }
 
-    if (problem == null)
+    if (problem == null) {
+      //cleaning
+      dto.setName(SqlHelper.clear(dto.getName()));
+      dto.setCurrencyCode(SqlHelper.clear(dto.getCurrencyCode()));
+      dto.setCurrencyFormat(SqlHelper.clear(dto.getCurrencyFormat()));
+
       return Responses.OK;
-    else
+    } else {
       return new ServiceResponse(problem);
+    }
   }
 
   private ServiceResponse validateCompanyDTO(RegisterDTO dto) {
@@ -213,10 +215,17 @@ public class CompanyService {
       }
     }
 
-    if (problem == null)
+    if (problem == null) {
+      //cleaning
+      dto.setEmail(SqlHelper.clear(dto.getEmail()));
+      dto.setCompanyName(SqlHelper.clear(dto.getCompanyName()));
+      dto.setPassword(SqlHelper.clear(dto.getPassword()));
+      dto.setRepeatPassword(SqlHelper.clear(dto.getRepeatPassword()));
+
       return Responses.OK;
-    else
+    } else {
       return new ServiceResponse(problem);
+    }
   }
 
 }

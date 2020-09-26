@@ -7,12 +7,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.token.TokenService;
 import io.inprice.api.app.token.TokenType;
 import io.inprice.api.app.user.UserRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.EmailValidator;
-import io.inprice.api.dto.InvitationAcceptDTO;
 import io.inprice.api.dto.InvitationSendDTO;
 import io.inprice.api.dto.InvitationUpdateDTO;
 import io.inprice.api.dto.PasswordDTO;

@@ -1,4 +1,4 @@
-package io.inprice.api.dto;
+package io.inprice.api.app.company.dto;
 
 import java.io.Serializable;
 
@@ -9,7 +9,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class CreateCompanyDTO implements Serializable {
+public class CreateDTO implements Serializable {
 
   private static final long serialVersionUID = -8983343002065096998L;
 

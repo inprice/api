@@ -74,7 +74,7 @@ public class UserService {
       for (ForCookie ses: cookieSesList) {
          hashes.add(ses.getHash());
       }
-      return authRepository.findOpenedSessions(hashes);
+      return new ServiceResponse(authRepository.findOpenedSessions(hashes));
    }
 
    public ServiceResponse closeAllSessions() {

@@ -8,21 +8,17 @@ import java.util.Map;
 import javax.servlet.http.Cookie;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import eu.bitwalker.useragentutils.UserAgent;
-import io.inprice.api.app.membership.MembershipRepository;
+import io.inprice.api.app.auth.dto.LoginDTO;
+import io.inprice.api.app.auth.dto.PasswordDTO;
 import io.inprice.api.app.token.TokenService;
 import io.inprice.api.app.token.TokenType;
-import io.inprice.api.app.user.UserRepository;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.EmailValidator;
-import io.inprice.api.dto.LoginDTO;
-import io.inprice.api.dto.LoginDTOValidator;
-import io.inprice.api.dto.PasswordDTO;
-import io.inprice.api.dto.PasswordValidator;
 import io.inprice.api.email.EmailSender;
 import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
@@ -36,8 +32,12 @@ import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.api.session.info.ForResponse;
+import io.inprice.api.validator.AuthValidator;
+import io.inprice.api.validator.EmailValidator;
+import io.inprice.api.validator.PasswordValidator;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
+import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.AppEnv;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
@@ -48,31 +48,32 @@ public class AuthService {
 
   private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
-  private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-  private final MembershipRepository membershipRepository = Beans.getSingleton(MembershipRepository.class);
-  private final AuthRepository authRepository = Beans.getSingleton(AuthRepository.class);
-  private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
+  private final AuthRepository repository = Beans.getSingleton(AuthRepository.class);
+  private final TemplateRenderer templateRenderer = Beans.getSingleton(TemplateRenderer.class);
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
 
-  public ServiceResponse login(Context ctx, LoginDTO dto) {
+  ServiceResponse login(Context ctx, LoginDTO dto) {
     if (dto != null) {
-      String problem = LoginDTOValidator.verify(dto);
+      String problem = AuthValidator.verify(dto);
       if (problem == null) {
 
-        ServiceResponse found = userRepository.findByEmail(dto.getEmail(), true);
-        if (found.isOK()) {
-          User user = found.getData();
-          String salt = user.getPasswordSalt();
-          String hash = BCrypt.hashpw(dto.getPassword(), salt);
-          if (hash.equals(user.getPasswordHash())) {
+        try (Handle handle = Database.getHandle()) {
+          AuthDao dao = handle.attach(AuthDao.class);
 
-            found = findSessionNo(ctx, user.getEmail());
-            if (found.isOK()) {
-              return found;
-            } else {
-              return createSession(ctx, user);
+          User user = dao.findUserByEmail(dto.getEmail());
+          if (user != null) {
+            String salt = user.getPasswordSalt();
+            String hash = BCrypt.hashpw(dto.getPassword(), salt);
+
+            if (hash.equals(user.getPasswordHash())) {
+              Map<String, Object> sessionInfo = findSessionInfoByEmail(ctx, user.getEmail());
+              if (sessionInfo != null && sessionInfo.size() > 0) {
+                return new ServiceResponse(sessionInfo);
+              } else {
+                return createSession(ctx, user);
+              }
+
             }
-
           }
         }
       } else {
@@ -82,25 +83,22 @@ public class AuthService {
     return Responses.Invalid.EMAIL_OR_PASSWORD;
   }
 
-  public ServiceResponse forgotPassword(String email) {
+  ServiceResponse forgotPassword(String email) {
     ServiceResponse res = RedisClient.isEmailRequested(RateLimiterType.FORGOT_PASSWORD, email);
-    if (!res.isOK())
-      return res;
+    if (!res.isOK()) return res;
 
     String problem = EmailValidator.verify(email);
     if (problem == null) {
 
-      ServiceResponse found = userRepository.findByEmail(email);
-      if (found.isOK()) {
-
-        User user = found.getData();
+      User user = repository.findUserByEmail(email);
+      if (user != null) {
         try {
           Map<String, Object> dataMap = new HashMap<>(3);
           dataMap.put("user", user.getName());
           dataMap.put("token", TokenService.add(TokenType.FORGOT_PASSWORD, email));
           dataMap.put("url", Props.APP_WEB_URL() + Consts.Paths.Auth.RESET_PASSWORD);
 
-          final String message = renderer.renderForgotPassword(dataMap);
+          final String message = templateRenderer.renderForgotPassword(dataMap);
           emailSender.send(Props.APP_EMAIL_SENDER(), "Reset your password", user.getEmail(), message);
 
           return Responses.OK;
@@ -111,27 +109,20 @@ public class AuthService {
       } else {
         return Responses.NotFound.EMAIL;
       }
+
     }
     return Responses.Invalid.EMAIL;
   }
 
-  public ServiceResponse resetPassword(Context ctx, PasswordDTO dto) {
+  ServiceResponse resetPassword(Context ctx, PasswordDTO dto) {
     if (dto != null) {
-
       String problem = PasswordValidator.verify(dto, true, false);
       if (problem == null) {
-
-        final String email = TokenService.get(TokenType.FORGOT_PASSWORD, dto.getToken());
-        ServiceResponse found = userRepository.findByEmail(email);
-
-        if (found.isOK()) {
-          User user = found.getData();
-          ServiceResponse res = userRepository.updatePassword(user.getId(), dto.getPassword());
-          if (res.isOK()) {
-            TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
-            authRepository.closeByUserId(user.getId());
-            return createSession(ctx, user);
-          }
+        User user = repository.updateUserPassword(dto);
+        if (user != null) {
+          TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
+          repository.closeByUserId(user.getId());
+          return createSession(ctx, user);
         } else {
           TokenService.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
           return Responses.NotFound.EMAIL;
@@ -143,7 +134,7 @@ public class AuthService {
     return Responses.Invalid.DATA;
   }
 
-  public ServiceResponse logout(Context ctx) {
+  ServiceResponse logout(Context ctx) {
     if (ctx.cookieMap().containsKey(Consts.SESSION)) {
 
       CookieHelper.removeAuthCookie(ctx);
@@ -153,15 +144,15 @@ public class AuthService {
 
         List<ForCookie> cookieSesList = SessionHelper.fromToken(tokenString);
         if (cookieSesList != null && cookieSesList.size() > 0) {
-          authRepository.closeSession(cookieSesList);
-          return Responses.OK;
+          boolean res = repository.closeSession(cookieSesList);
+          if (res) return Responses.OK;
         }
       }
     }
     return Responses.Already.LOGGED_OUT;
   }
 
-  public ServiceResponse findSessionNo(Context ctx, String email) {
+  private Map<String, Object> findSessionInfoByEmail(Context ctx, String email) {
     if (ctx.cookieMap().containsKey(Consts.SESSION)) {
 
       String tokenString = ctx.cookie(Consts.SESSION);
@@ -191,25 +182,23 @@ public class AuthService {
             }
 
             if (responseSesList.size() == cookieSesList.size()) {
-              Map<String, Object> data = new HashMap<>(2);
-              data.put("sessionNo", sessionNo);
-              data.put("sessions", responseSesList);
-              return new ServiceResponse(data);
+              Map<String, Object> map = new HashMap<>(2);
+              map.put("sessionNo", sessionNo);
+              map.put("sessions", responseSesList);
+              return map;
             }
           }
         }
       }
     }
-    return Responses.NotFound.DATA;
+    return null;
   }
 
   public ServiceResponse createSession(Context ctx, User user) {
     Integer sessionNo = null;
 
-    ServiceResponse res = membershipRepository.getUserCompanies(user.getEmail());
-    if (res.isOK()) {
-
-      List<Membership> membershipList = res.getData();
+    List<Membership> membershipList = repository.getUserMembershipsByEmail(user.getEmail());
+    if (membershipList != null && membershipList.size() > 0) {
 
       List<ForRedis> redisSesList = new ArrayList<>();
       List<ForCookie> cookieSesList = null;
@@ -238,7 +227,6 @@ public class AuthService {
       UserAgent ua = new UserAgent(ctx.userAgent());
 
       for (Membership mem : membershipList) {
-
         ForCookie cookieSes = new ForCookie(user.getEmail(), mem.getRole().name());
         cookieSesList.add(cookieSes);
 
@@ -260,9 +248,9 @@ public class AuthService {
       }
 
       if (dbSesList.size() > 0) {
-        res = authRepository.saveSessions(redisSesList, dbSesList);
+        boolean saved = repository.saveSessions(redisSesList, dbSesList);
 
-        if (res.isOK()) {
+        if (saved) {
           String tokenString = SessionHelper.toToken(cookieSesList);
 
           /*
@@ -280,17 +268,19 @@ public class AuthService {
           }
           ctx.cookie(cookie);
 
-          // response
-          Map<String, Object> data = new HashMap<>(2);
-          data.put("sessionNo", sessionNo);
-          data.put("sessions", responseSesList);
-          res = new ServiceResponse(data);
+          // the response
+          Map<String, Object> map = new HashMap<>(2);
+          map.put("sessionNo", sessionNo);
+          map.put("sessions", responseSesList);
+          return new ServiceResponse(map);
+        } else {
+          return Responses.DataProblem.DB_PROBLEM;
         }
       } else {
-        res = Responses.ServerProblem.EXCEPTION;
+        return Responses.ServerProblem.EXCEPTION;
       }
     }
-    return res;
+    return Responses.NotFound.MEMBERSHIP;
   }
 
 }

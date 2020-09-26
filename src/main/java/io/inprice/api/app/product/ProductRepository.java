@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Maps;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +30,7 @@ import io.inprice.common.meta.LookupType;
 import io.inprice.common.models.Competitor;
 import io.inprice.common.models.Product;
 import io.inprice.common.models.ProductPrice;
+import io.jsonwebtoken.lang.Maps;
 
 public class ProductRepository {
 
@@ -197,7 +196,7 @@ public class ProductRepository {
           "order by name " +
           "limit " + Consts.ROW_LIMIT_FOR_LISTS, this::nameOnlyMap);
        
-      return new ServiceResponse(Maps.immutableEntry("rows", rows));
+      return new ServiceResponse(Maps.of("rows", rows));
     } catch (Exception e) {
       log.error("Failed in simple search for products. ", e);
       return Responses.ServerProblem.EXCEPTION;
@@ -256,7 +255,7 @@ public class ProductRepository {
           limit, 
           this::mapSearch);
        
-      return new ServiceResponse(Maps.immutableEntry("rows", rows));
+      return new ServiceResponse(Maps.of("rows", rows));
     } catch (Exception e) {
       log.error("Failed in full search for products. ", e);
       return Responses.ServerProblem.EXCEPTION;

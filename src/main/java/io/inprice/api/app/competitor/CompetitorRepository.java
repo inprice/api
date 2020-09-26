@@ -8,8 +8,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.collect.Maps;
-
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +22,7 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.common.meta.CompetitorStatus;
 import io.inprice.common.models.Competitor;
+import io.jsonwebtoken.lang.Maps;
 
 public class CompetitorRepository {
 
@@ -246,7 +245,7 @@ public class CompetitorRepository {
           "   or name like '%" + clearTerm + "%' " +
           "limit 50", this::map);
        
-      return new ServiceResponse(Maps.immutableEntry("rows", rows));
+      return new ServiceResponse(Maps.of("rows", rows));
     } catch (Exception e) {
       log.error("Failed to search competitors. ", e);
       return Responses.ServerProblem.EXCEPTION;

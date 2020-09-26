@@ -1,11 +1,11 @@
 package io.inprice.api.app.auth;
 
+import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
+import io.inprice.api.app.auth.dto.LoginDTO;
+import io.inprice.api.app.auth.dto.PasswordDTO;
 import io.inprice.api.app.membership.MembershipService;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.EmailDTO;
-import io.inprice.api.dto.InvitationAcceptDTO;
-import io.inprice.api.dto.LoginDTO;
-import io.inprice.api.dto.PasswordDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.ClientSide;
@@ -18,7 +18,7 @@ import io.javalin.Javalin;
 @Router
 public class AuthController implements Controller {
 
-  private static final AuthService authService = Beans.getSingleton(AuthService.class);
+  private static final AuthService service = Beans.getSingleton(AuthService.class);
   private static final MembershipService membershipService = Beans.getSingleton(MembershipService.class);
 
   @Override
@@ -26,21 +26,21 @@ public class AuthController implements Controller {
 
     app.post(Consts.Paths.Auth.LOGIN, (ctx) -> {
       LoginDTO dto = ctx.bodyAsClass(LoginDTO.class);
-      ctx.json(Commons.createResponse(ctx, authService.login(ctx, dto)));
+      ctx.json(Commons.createResponse(ctx, service.login(ctx, dto)));
     });
 
     app.post(Consts.Paths.Auth.FORGOT_PASSWORD, (ctx) -> {
       EmailDTO dto = ctx.bodyAsClass(EmailDTO.class);
-      ctx.json(Commons.createResponse(ctx, authService.forgotPassword(dto.getEmail())));
+      ctx.json(Commons.createResponse(ctx, service.forgotPassword(dto.getEmail())));
     });
 
     app.post(Consts.Paths.Auth.RESET_PASSWORD, (ctx) -> {
       PasswordDTO dto = ctx.bodyAsClass(PasswordDTO.class);
-      ctx.json(Commons.createResponse(ctx, authService.resetPassword(ctx, dto)));
+      ctx.json(Commons.createResponse(ctx, service.resetPassword(ctx, dto)));
     });
 
     app.post(Consts.Paths.Auth.LOGOUT, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, authService.logout(ctx)));
+      ctx.json(Commons.createResponse(ctx, service.logout(ctx)));
     });
 
     app.post(Consts.Paths.Auth.ACCEPT_INVITATION, (ctx) -> {
@@ -50,7 +50,7 @@ public class AuthController implements Controller {
       ServiceResponse res = membershipService.acceptNewUser(dto, timezone);
       if (res.isOK()) {
         User user = res.getData();
-        ctx.json(Commons.createResponse(ctx, authService.createSession(ctx, user)));
+        ctx.json(Commons.createResponse(ctx, service.createSession(ctx, user)));
       } else {
         ctx.json(Commons.createResponse(ctx, res));
       }

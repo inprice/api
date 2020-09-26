@@ -1,7 +1,5 @@
 package io.inprice.api.app.competitor;
 
-import com.rabbitmq.client.Channel;
-
 import org.apache.commons.validator.routines.UrlValidator;
 
 import io.inprice.api.app.product.ProductRepository;
@@ -9,9 +7,7 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CompetitorDTO;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
-import io.inprice.common.helpers.RabbitMQ;
 import io.inprice.common.meta.CompetitorStatus;
 import io.inprice.common.models.Competitor;
 
@@ -45,15 +41,10 @@ public class CompetitorService {
     if (competitorId != null && competitorId > 0) {
       ServiceResponse res = competitorRepository.findById(competitorId);
       if (res.isOK()) {
-        Competitor oldOne = res.getData();
-        ServiceResponse delRes = competitorRepository.deleteById(competitorId);
-        if (delRes.isOK() && (oldOne.getStatus().equals(CompetitorStatus.AVAILABLE) || oldOne.getPreStatus().equals(CompetitorStatus.AVAILABLE))) {
-          Competitor competitor = res.getData();
-          Channel channel = RabbitMQ.openChannel();
-          RabbitMQ.publish(channel, SysProps.MQ_CHANGES_EXCHANGE(), SysProps.MQ_PRICE_REFRESH_ROUTING(), competitor.getProductId().toString());
-          RabbitMQ.closeChannel(channel);
-        }
-        return delRes;
+        //Competitor oldOne = res.getData();
+        //TODO: commonDao kanalı ile yapılmalı
+        //ServiceResponse delRes = competitorRepository.deleteById(competitorId);
+        return res;
       }
     }
     return Responses.NotFound.COMPETITOR;

@@ -11,11 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.user.UserRepository;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.InvitationAcceptDTO;
-import io.inprice.api.dto.InvitationSendDTO;
-import io.inprice.api.dto.InvitationUpdateDTO;
 import io.inprice.api.dto.UserDTO;
-import io.inprice.common.helpers.RepositoryHelper;
 import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.ServiceResponse;
 import io.inprice.api.session.CurrentUser;
@@ -319,43 +315,6 @@ public class MembershipRepository {
       res = Responses.NotFound.MEMBERSHIP;
     }
     return res;
-  }
-
-  private Membership mapWithCompany(ResultSet rs) {
-    try {
-      Membership model = map(rs);
-      model.setUserId(RepositoryHelper.nullLongHandler(rs, "user_id"));
-      model.setCompanyName(rs.getString("company_name"));
-      model.setPlanId(RepositoryHelper.nullIntegerHandler(rs, "plan_id"));
-      model.setSubsStatus(SubsStatus.valueOf(rs.getString("subs_status")));
-      model.setSubsRenewalAt(rs.getTimestamp("subs_renewal_at"));
-      model.setCurrencyFormat(rs.getString("currency_format"));
-      model.setPreStatus(UserStatus.valueOf(rs.getString("pre_status")));
-      model.setUpdatedAt(rs.getTimestamp("updated_at"));
-
-      return model;
-    } catch (SQLException e) {
-      log.error("Failed to set member's properties", e);
-    }
-    return null;
-  }
-
-  private Membership map(ResultSet rs) {
-    try {
-      Membership model = new Membership();
-      model.setId(RepositoryHelper.nullLongHandler(rs, "id"));
-      model.setEmail(rs.getString("email"));
-      model.setCompanyId(RepositoryHelper.nullLongHandler(rs, "company_id"));
-      model.setRole(UserRole.valueOf(rs.getString("role")));
-      model.setStatus(UserStatus.valueOf(rs.getString("status")));
-      model.setRetry(rs.getInt("retry"));
-      model.setCreatedAt(rs.getTimestamp("created_at"));
-
-      return model;
-    } catch (SQLException e) {
-      log.error("Failed to set member's properties", e);
-    }
-    return null;
   }
 
 }
