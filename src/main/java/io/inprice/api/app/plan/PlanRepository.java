@@ -5,15 +5,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.models.Plan;
 
 public class PlanRepository {
 
-  private Map<Integer, Plan> plansMap;
+  private static Map<Integer, Plan> plansMap;
 
-  PlanRepository() {
+  static {
     Plan[] plans = {
       new Plan(
         1, 
@@ -39,15 +39,15 @@ public class PlanRepository {
     }
   }
 
-  public Plan findById(Integer id) {
+  public static Plan getById(Integer id) {
     return plansMap.get(id);
   }
 
-  public ServiceResponse getPlans() {
+  public static Response getPlans() {
     Map<String, Object> dataMap = new HashMap<>(2);
     dataMap.put("cid", CurrentUser.getCompanyId());
     dataMap.put("plans", plansMap.values());
-    return new ServiceResponse(dataMap);
+    return new Response(dataMap);
   }
 
 }

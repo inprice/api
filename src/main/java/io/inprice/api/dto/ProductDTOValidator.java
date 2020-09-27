@@ -7,12 +7,12 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.api.helpers.Commons;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.common.info.ProductDTO;
 
 public class ProductDTOValidator {
 
-    public static ServiceResponse validate(ProductDTO dto) {
+    public static Response validate(ProductDTO dto) {
         List<String> problems = new ArrayList<>();
 
         if (StringUtils.isBlank(dto.getCode())) {

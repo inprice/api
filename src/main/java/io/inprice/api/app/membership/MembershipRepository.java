@@ -13,7 +13,7 @@ import io.inprice.api.app.user.UserRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.UserDTO;
 import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
@@ -30,7 +30,7 @@ public class MembershipRepository {
   private final Database db = Beans.getSingleton(Database.class);
   private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
 
-  public ServiceResponse getList() {
+  public Response getList() {
     List<Membership> memberList = 
       db.findMultiple(
         String.format(
@@ -42,34 +42,34 @@ public class MembershipRepository {
         CurrentUser.getEmail(), CurrentUser.getCompanyId()), this::mapWithCompany);
 
     if (memberList != null && memberList.size() > 0) {
-      return new ServiceResponse(memberList);
+      return new Response(memberList);
     }
     return Responses.NotFound.MEMBERSHIP;
   }
 
-  public ServiceResponse findById(long memberId) {
+  public Response findById(long memberId) {
     Membership model = db.findSingle(String.format("select * from membership where id=%d", memberId), this::map);
 
     if (model != null) {
-      return new ServiceResponse(model);
+      return new Response(model);
     } else {
       return Responses.NotFound.MEMBERSHIP;
     }
   }
 
-  public ServiceResponse findByEmailAndCompanyId(String email, long companyId) {
+  public Response findByEmailAndCompanyId(String email, long companyId) {
     Membership model = db.findSingle(
         String.format("select * from membership where email='%s' and company_id=%d", SqlHelper.clear(email), companyId),
         this::map);
     if (model != null) {
-      return new ServiceResponse(model);
+      return new Response(model);
     } else {
       return Responses.NotFound.MEMBERSHIP;
     }
   }
 
-  public ServiceResponse invite(InvitationSendDTO dto) {
-    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+  public Response invite(InvitationSendDTO dto) {
+    Response res = new Response(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     try (Connection con = db.getConnection();
         PreparedStatement pst = con
@@ -89,8 +89,8 @@ public class MembershipRepository {
     return res;
   }
 
-  public ServiceResponse changeRole(InvitationUpdateDTO dto) {
-    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+  public Response changeRole(InvitationUpdateDTO dto) {
+    Response res = new Response(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     try (Connection con = db.getConnection();
         PreparedStatement pst = con.prepareStatement("update membership set role=? where id=? and company_id=?")) {
@@ -109,7 +109,7 @@ public class MembershipRepository {
     return res;
   }
 
-  public ServiceResponse changeStatus(Long id, boolean isResumed) {
+  public Response changeStatus(Long id, boolean isResumed) {
     String part1 = "pre_status=status, status='PAUSED'";
     String part2 = "and status!='PAUSED'";
     if (isResumed) {
@@ -137,8 +137,8 @@ public class MembershipRepository {
     return Responses.DataProblem.DB_PROBLEM;
   }
 
-  public ServiceResponse acceptNewUser(InvitationAcceptDTO acceptDTO, String timezone, InvitationSendDTO invitationDTO) {
-    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+  public Response acceptNewUser(InvitationAcceptDTO acceptDTO, String timezone, InvitationSendDTO invitationDTO) {
+    Response res = new Response(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     Connection con = null;
 
@@ -209,8 +209,8 @@ public class MembershipRepository {
     return res;
   }
 
-  public ServiceResponse acceptExisting(Long invitationId) {
-    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+  public Response acceptExisting(Long invitationId) {
+    Response res = new Response(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     try (Connection con = db.getConnection()) {
 
@@ -239,8 +239,8 @@ public class MembershipRepository {
     return res;
   }
 
-  public ServiceResponse increaseSendingCount(long memberId) {
-    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+  public Response increaseSendingCount(long memberId) {
+    Response res = new Response(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     // company is inserted
     try (Connection con = db.getConnection();
@@ -263,7 +263,7 @@ public class MembershipRepository {
     return res;
   }
 
-  public ServiceResponse getUserCompanies(String email) {
+  public Response getUserCompanies(String email) {
     List<Membership> memberships = 
       db.findMultiple(
         String.format(
@@ -274,13 +274,13 @@ public class MembershipRepository {
           "order by m.role, m.created_at",
         SqlHelper.clear(email), UserStatus.JOINED), this::mapWithCompany);
     if (memberships != null && memberships.size() > 0) {
-      return new ServiceResponse(memberships);
+      return new Response(memberships);
     }
     return Responses.NotFound.MEMBERSHIP;
   }
 
-  public ServiceResponse delete(long memberId) {
-    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+  public Response delete(long memberId) {
+    Response res = new Response(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     try (Connection con = db.getConnection();
         PreparedStatement pst = con.prepareStatement(
@@ -303,8 +303,8 @@ public class MembershipRepository {
     return res;
   }
 
-  private ServiceResponse checkMembership(Membership membership) {
-    ServiceResponse res = Responses.OK;
+  private Response checkMembership(Membership membership) {
+    Response res = Responses.OK;
     if (membership != null) {
       if (UserStatus.PENDING.equals(membership.getStatus())) {
         res = Responses.OK;

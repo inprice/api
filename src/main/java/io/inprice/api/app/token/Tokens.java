@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.inprice.api.external.RedisClient;
 
-public class TokenService {
+public class Tokens {
 
    public static String add(TokenType tokenType, Serializable object) {
       final String token = generateToken();

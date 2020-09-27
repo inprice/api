@@ -13,7 +13,7 @@ import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.meta.ImportType;
 import io.javalin.Javalin;
@@ -63,7 +63,7 @@ public class ProductImportController implements Controller {
       if (file.getContentType().equals(contentType)) {
         try {
           String content = IOUtils.toString(file.getContent(), StandardCharsets.UTF_8.name());
-          ServiceResponse result = (importType == null ? importService.upload(content)
+          Response result = (importType == null ? importService.upload(content)
               : importService.upload(importType, content));
           ctx.json(Commons.createResponse(ctx, result));
         } catch (IOException e) {

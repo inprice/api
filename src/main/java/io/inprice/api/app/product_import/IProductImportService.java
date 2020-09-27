@@ -1,7 +1,7 @@
 package io.inprice.api.app.product_import;
 
 import io.inprice.api.consts.Responses;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.common.meta.ImportType;
 
 /**
@@ -9,11 +9,11 @@ import io.inprice.common.meta.ImportType;
  */
 public interface IProductImportService {
 
-  default ServiceResponse upload( String content) {
+  default Response upload( String content) {
     return Responses.DataProblem.NOT_SUITABLE;
   }
 
-  default ServiceResponse upload(ImportType importType, String content) {
+  default Response upload(ImportType importType, String content) {
     return Responses.DataProblem.NOT_SUITABLE;
   }
 

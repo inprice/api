@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.subscription.SubscriptionRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerInfoDTO;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.meta.SubsSource;
@@ -26,8 +26,8 @@ public class StripeService {
   
   private static final SubscriptionRepository subsRepository = Beans.getSingleton(SubscriptionRepository.class);
 
-  public ServiceResponse handle(Event event) {
-    ServiceResponse res = Responses.BAD_REQUEST;
+  public Response handle(Event event) {
+    Response res = Responses.BAD_REQUEST;
 
     EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
 
@@ -122,7 +122,7 @@ public class StripeService {
       }
     } else {
       log.error("Failed to parse stripe event object. Type: " + event.getType());
-      res = new ServiceResponse("Failed to parse stripe event object!");
+      res = new Response("Failed to parse stripe event object!");
     }
  
     return res;

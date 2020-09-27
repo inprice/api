@@ -3,7 +3,7 @@ package io.inprice.api.app.lookup;
 import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.api.dto.LookupDTO;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.meta.LookupType;
 
@@ -11,7 +11,7 @@ public class LookupService {
 
   private final LookupRepository repository = Beans.getSingleton(LookupRepository.class);
 
-  public ServiceResponse add(LookupDTO dto) {
+  public Response add(LookupDTO dto) {
     String problem = null;
 
     dto.setType(dto.getType().trim().toUpperCase());
@@ -37,14 +37,14 @@ public class LookupService {
       return repository.add(dto);
     }
 
-    return new ServiceResponse(problem);
+    return new Response(problem);
   }
 
-  public ServiceResponse getList(LookupType type) {
+  public Response getList(LookupType type) {
     return repository.getList(null, type);
   }
 
-  public ServiceResponse getAllList() {
+  public Response getAllList() {
     return repository.getAllList();
   }
 

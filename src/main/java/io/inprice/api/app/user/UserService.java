@@ -11,7 +11,7 @@ import io.inprice.api.dto.LongDTO;
 import io.inprice.api.dto.PasswordDTO;
 import io.inprice.api.dto.PasswordValidator;
 import io.inprice.api.dto.UserDTO;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.utils.Timezones;
@@ -22,62 +22,62 @@ public class UserService {
    private static final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
    private static final AuthRepository authRepository = Beans.getSingleton(AuthRepository.class);
 
-   public ServiceResponse update(UserDTO dto) {
+   public Response update(UserDTO dto) {
     String problem = validateUserDTOForUpdate(dto);
       if (problem == null) {
         return userRepository.update(dto);
      } else {
-        return new ServiceResponse(problem);
+        return new Response(problem);
      }
    }
 
-   public ServiceResponse updatePassword(PasswordDTO dto) {
+   public Response updatePassword(PasswordDTO dto) {
       String problem = PasswordValidator.verify(dto, true, true);
       if (problem == null) {
          return userRepository.updatePassword(dto.getPassword());
       } else {
-         return new ServiceResponse(problem);
+         return new Response(problem);
       }
    }
 
-   public ServiceResponse getInvitations() {
+   public Response getInvitations() {
       return userRepository.findActiveInvitations();
    }
 
-   public ServiceResponse acceptInvitation(LongDTO dto) {
+   public Response acceptInvitation(LongDTO dto) {
       if (dto.getValue() == null || dto.getValue() < 1) {
          return Responses.Invalid.DATA;
       }
       return userRepository.acceptInvitation(dto.getValue());
    }
 
-   public ServiceResponse rejectInvitation(LongDTO dto) {
+   public Response rejectInvitation(LongDTO dto) {
       if (dto.getValue() == null || dto.getValue() < 1) {
          return Responses.Invalid.DATA;
       }
       return userRepository.rejectInvitation(dto.getValue());
    }
 
-   public ServiceResponse getMemberships() {
+   public Response getMemberships() {
       return userRepository.findMemberships();
    }
 
-   public ServiceResponse leaveMembership(LongDTO dto) {
+   public Response leaveMembership(LongDTO dto) {
       if (dto.getValue() == null || dto.getValue() < 1) {
          return Responses.Invalid.DATA;
       }
       return userRepository.leaveMembership(dto.getValue());
    }
 
-   public ServiceResponse getOpenedSessions(List<ForCookie> cookieSesList) {
+   public Response getOpenedSessions(List<ForCookie> cookieSesList) {
       List<String> hashes = new ArrayList<>(cookieSesList.size());
       for (ForCookie ses: cookieSesList) {
          hashes.add(ses.getHash());
       }
-      return new ServiceResponse(authRepository.findOpenedSessions(hashes));
+      return new Response(authRepository.findOpenedSessions(hashes));
    }
 
-   public ServiceResponse closeAllSessions() {
+   public Response closeAllSessions() {
       if (authRepository.closeByUserId(CurrentUser.getUserId())) {
          return Responses.OK;
       }
@@ -109,5 +109,18 @@ public class UserService {
 
     return problem;
   }
+
+ /*
+  List<ForDatabase> findOpenedSessions(List<String> excludedHashes) {
+    try (Handle handle = Database.getHandle()) {
+      AuthDao dao = handle.attach(AuthDao.class);
+      List<ForDatabase> openedSessions = dao.getOpenedSessions(CurrentUser.getUserId(), excludedHashes);
+      return openedSessions;
+    } catch (Exception e) {
+      log.error("Failed to get user session.", e);
+    }
+    return null;
+  }
+  */
 
 }

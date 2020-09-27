@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.RedisClient;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 
@@ -13,7 +13,7 @@ public class DashboardService {
 
   private final DashboardRepository repository = Beans.getSingleton(DashboardRepository.class);
 
-  public ServiceResponse getReport(boolean refresh) {
+  public Response getReport(boolean refresh) {
     Map<String, Object> data = null;
 
     if (! refresh) data = RedisClient.getDashboardsMap().get(CurrentUser.getCompanyId());
@@ -21,7 +21,7 @@ public class DashboardService {
 
     if (data != null) {
       RedisClient.getDashboardsMap().put(CurrentUser.getCompanyId(), data, 5, TimeUnit.MINUTES);
-      return new ServiceResponse(data);
+      return new Response(data);
     }
 
     return Responses.DataProblem.DB_PROBLEM;

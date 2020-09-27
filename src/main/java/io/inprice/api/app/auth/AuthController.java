@@ -10,7 +10,7 @@ import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.Commons;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.models.User;
 import io.javalin.Javalin;
@@ -47,7 +47,7 @@ public class AuthController implements Controller {
       String timezone = ClientSide.getGeoInfo(ctx.req).get(Consts.TIMEZONE);
 
       InvitationAcceptDTO dto = ctx.bodyAsClass(InvitationAcceptDTO.class);
-      ServiceResponse res = membershipService.acceptNewUser(dto, timezone);
+      Response res = membershipService.acceptNewUser(dto, timezone);
       if (res.isOK()) {
         User user = res.getData();
         ctx.json(Commons.createResponse(ctx, service.createSession(ctx, user)));

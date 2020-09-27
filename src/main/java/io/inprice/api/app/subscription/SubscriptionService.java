@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerInfoDTO;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.meta.SubsEvent;
@@ -20,15 +20,15 @@ public class SubscriptionService {
 
   private static final SubscriptionRepository repository = Beans.getSingleton(SubscriptionRepository.class);
 
-  public ServiceResponse getInfo() {
+  public Response getInfo() {
     return repository.getInfo();
   }
 
-  public ServiceResponse getTransactions() {
+  public Response getTransactions() {
     return repository.getTransactions();
   }
 
-  public ServiceResponse cancel() {
+  public Response cancel() {
     SubsTrans trans = new SubsTrans();
     trans.setCompanyId(CurrentUser.getCompanyId());
     trans.setEvent(SubsEvent.SUBSCRIPTION_CANCELLED);
@@ -38,12 +38,12 @@ public class SubscriptionService {
     return repository.addTransaction(CurrentUser.getCompanyId(), null, null, trans);
   }
   
-  public ServiceResponse createSession(Integer planId) {
+  public Response createSession(Integer planId) {
     return repository.createSession(planId);
   }
 
-  public ServiceResponse saveInfo(CustomerInfoDTO dto) {
-    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "DB error!");
+  public Response saveInfo(CustomerInfoDTO dto) {
+    Response res = new Response(Responses.DataProblem.DB_PROBLEM.getStatus(), "DB error!");
 
     String problem = validateInvoiceInfo(dto);
     if (problem == null) {
@@ -55,7 +55,7 @@ public class SubscriptionService {
         res = Responses.OK;
         log.info(CurrentUser.getCompanyName() + " customer info is updated, Id: " + customer.getId());
       } else {
-        res = new ServiceResponse("Sorry, we are unable to update your invoice info at the moment. We are working on it.");
+        res = new Response("Sorry, we are unable to update your invoice info at the moment. We are working on it.");
         log.error("Failed to update a new customer in Stripe.");
       }
 
@@ -65,7 +65,7 @@ public class SubscriptionService {
       }
 
     } else {
-      res = new ServiceResponse(problem);
+      res = new Response(problem);
     }
 
     return res;

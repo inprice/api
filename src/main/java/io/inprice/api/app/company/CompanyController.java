@@ -12,7 +12,7 @@ import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.Commons;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
@@ -31,7 +31,7 @@ public class CompanyController implements Controller {
     });
 
     app.post(Consts.Paths.Auth.COMPLETE_REGISTRATION, (ctx) -> {
-      ServiceResponse res = service.completeRegistration(ctx, ctx.queryParam("token"));
+      Response res = service.completeRegistration(ctx, ctx.queryParam("token"));
       if (res.isOK()) {
         res = authService.createSession(ctx, res.getData());
       }
@@ -44,7 +44,7 @@ public class CompanyController implements Controller {
 
     app.get(Consts.Paths.Company.GEO_INFO, (ctx) -> {
       Map<String, String> map = ClientSide.getGeoInfo(ctx.req);
-      ctx.json(Commons.createResponse(ctx, new ServiceResponse(map)));
+      ctx.json(Commons.createResponse(ctx, new Response(map)));
     }, AccessRoles.ANYONE());
 
     // create

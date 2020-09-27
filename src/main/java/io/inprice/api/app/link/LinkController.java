@@ -1,26 +1,26 @@
-package io.inprice.api.app.competitor;
+package io.inprice.api.app.link;
 
+import io.inprice.api.app.link.dto.LinkDTO;
 import io.inprice.api.consts.Consts;
-import io.inprice.api.dto.CompetitorDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
 import io.inprice.common.helpers.Beans;
-import io.inprice.common.meta.CompetitorStatus;
+import io.inprice.common.meta.LinkStatus;
 import io.javalin.Javalin;
 
 @Router
-public class CompetitorController implements Controller {
+public class LinkController implements Controller {
 
-  private static final CompetitorService service = Beans.getSingleton(CompetitorService.class);
+  private static final LinkService service = Beans.getSingleton(LinkService.class);
 
   @Override
   public void addRoutes(Javalin app) {
 
     // insert
     app.post(Consts.Paths.Competitor.BASE, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.insert(ctx.bodyAsClass(CompetitorDTO.class))));
+      ctx.json(Commons.createResponse(ctx, service.insert(ctx.bodyAsClass(LinkDTO.class))));
     }, AccessRoles.EDITOR());
 
     // delete
@@ -29,28 +29,22 @@ public class CompetitorController implements Controller {
       ctx.json(Commons.createResponse(ctx, service.deleteById(id)));
     }, AccessRoles.EDITOR());
 
-    // search
-    app.get(Consts.Paths.Competitor.SEARCH, (ctx) -> {
-      String term = ctx.queryParam("term");
-      ctx.json(Commons.createResponse(ctx, service.search(term)));
-    }, AccessRoles.ANYONE());
-
     // change status to TOBE_RENEWED
     app.put(Consts.Paths.Competitor.RENEW + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.changeStatus(id, CompetitorStatus.TOBE_RENEWED)));
+      ctx.json(Commons.createResponse(ctx, service.changeStatus(id, LinkStatus.TOBE_RENEWED)));
     }, AccessRoles.EDITOR());
 
     // change status to PAUSED
     app.put(Consts.Paths.Competitor.PAUSE + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.changeStatus(id, CompetitorStatus.PAUSED)));
+      ctx.json(Commons.createResponse(ctx, service.changeStatus(id, LinkStatus.PAUSED)));
     }, AccessRoles.EDITOR());
 
     // change status to RESUMED
     app.put(Consts.Paths.Competitor.RESUME + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.changeStatus(id, CompetitorStatus.RESUMED)));
+      ctx.json(Commons.createResponse(ctx, service.changeStatus(id, LinkStatus.RESUMED)));
     }, AccessRoles.EDITOR());
 
   }

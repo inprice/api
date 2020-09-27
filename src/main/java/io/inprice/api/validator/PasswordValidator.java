@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.api.app.auth.dto.PasswordDTO;
 import io.inprice.api.app.user.UserRepository;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.models.User;
 import jodd.util.BCrypt;
@@ -26,7 +26,7 @@ public class PasswordValidator {
       if (StringUtils.isBlank(dto.getOldPassword())) {
         return "Old password cannot be null!";
       } else {
-        ServiceResponse found = userRepository.findById(dto.getId());
+        Response found = userRepository.findById(dto.getId());
         if (found.isOK()) {
           User user = found.getData();
           final String hash = BCrypt.hashpw(dto.getOldPassword(), user.getPasswordSalt());

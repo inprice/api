@@ -15,12 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyRepository;
-import io.inprice.api.app.competitor.CompetitorRepository;
+import io.inprice.api.app.link.LinkRepository;
 import io.inprice.api.app.product.ProductRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CompetitorDTO;
 import io.inprice.api.external.Props;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
@@ -33,14 +33,14 @@ public class ProductGenericImportService implements IProductImportService {
   private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
   private static final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
   private static final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
-  private static final CompetitorRepository linkRepository = Beans.getSingleton(CompetitorRepository.class);
+  private static final LinkRepository linkRepository = Beans.getSingleton(LinkRepository.class);
   private static final Database db = Beans.getSingleton(Database.class);
 
   private static final String ASIN_REGEX = "^(?i)(B0|BT)[0-9A-Z]{8}$";
   private static final String SKU_REGEX = "^[1-3][0-9]{10,11}$";
 
-  public ServiceResponse upload(ImportType importType, String content) {
-    ServiceResponse res = Responses.DataProblem.DB_PROBLEM;
+  public Response upload(ImportType importType, String content) {
+    Response res = Responses.DataProblem.DB_PROBLEM;
 
     String identifier = null;
     String regex = null;
@@ -96,7 +96,7 @@ public class ProductGenericImportService implements IProductImportService {
                 if (! exists) {
                   if (line.matches(regex)) {
 
-                    ServiceResponse op = null;
+                    Response op = null;
 
                     if (ImportType.URL.equals(importType)) {
                       exists = linkRepository.doesExistByUrl(con, line, null);
@@ -110,7 +110,7 @@ public class ProductGenericImportService implements IProductImportService {
                     }
 
                     if (op.equals(Responses.NotFound.PRODUCT)) {
-                      CompetitorDTO link = new CompetitorDTO();
+                      LinkDTO link = new LinkDTO();
                       switch (importType) {
                         case EBAY_SKU: {
                           link.setUrl(Props.PREFIX_FOR_SEARCH_EBAY() + line);
@@ -153,15 +153,15 @@ public class ProductGenericImportService implements IProductImportService {
               if (result.indexOf("reached") > 0) break;
             }
 
-            res = new ServiceResponse(resultMapList);
+            res = new Response(resultMapList);
           }
 
         } else {
-          res = new ServiceResponse("You have reached your plan's maximum product limit.");
+          res = new Response("You have reached your plan's maximum product limit.");
         }
 
       } else {
-        res = new ServiceResponse("You haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
+        res = new Response("You haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
       }
 
       db.commit(con);
@@ -180,5 +180,19 @@ public class ProductGenericImportService implements IProductImportService {
 
     return res;
   }
+
+  /*
+  boolean doesExistByUrl(Connection con, String url, Long productId) {
+    String urlHash = DigestUtils.md5Hex(url);
+    Link model = db.findSingle(con,
+        String.format(
+        "select *, '' as platform from competitor " + 
+        "where url_hash = '%s' " + 
+        "  and company_id = %d " +
+        "  and product_id " + (productId != null ? " = " + productId : " is null"),
+        urlHash, CurrentUser.getCompanyId()), this::map);
+    return (model != null);
+  }
+  */
 
 }

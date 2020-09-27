@@ -3,7 +3,7 @@ package io.inprice.api.app.product;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.ProductDTOValidator;
 import io.inprice.api.dto.ProductSearchDTO;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.info.ProductDTO;
 
@@ -11,25 +11,25 @@ public class ProductService {
 
   private final ProductRepository repository = Beans.getSingleton(ProductRepository.class);
 
-  public ServiceResponse findById(Long id) {
+  public Response findById(Long id) {
     return repository.findById(id);
   }
 
-  public ServiceResponse findEverythingById(Long id) {
+  public Response findEverythingById(Long id) {
     return repository.findEverythingById(id);
   }
 
-  public ServiceResponse simpleSearch(String term) {
+  public Response simpleSearch(String term) {
     return repository.simpleSearch(term);
   }
 
-  public ServiceResponse fullSearch(ProductSearchDTO dto) {
+  public Response fullSearch(ProductSearchDTO dto) {
     return repository.fullSearch(dto);
   }
 
-  public ServiceResponse insert(ProductDTO dto) {
+  public Response insert(ProductDTO dto) {
     if (dto != null) {
-      ServiceResponse res = ProductDTOValidator.validate(dto);
+      Response res = ProductDTOValidator.validate(dto);
       if (res.isOK()) {
         res = repository.insert(dto);
       }
@@ -38,13 +38,13 @@ public class ProductService {
     return Responses.Invalid.PRODUCT;
   }
 
-  public ServiceResponse update(ProductDTO dto) {
+  public Response update(ProductDTO dto) {
     if (dto != null) {
       if (dto.getId() == null || dto.getId() < 1) {
         return Responses.NotFound.PRODUCT;
       }
 
-      ServiceResponse res = ProductDTOValidator.validate(dto);
+      Response res = ProductDTOValidator.validate(dto);
       if (res.isOK()) {
         res = repository.update(dto);
         //TODO: repository nin icinde yapılacak1
@@ -62,13 +62,13 @@ public class ProductService {
     return Responses.Invalid.PRODUCT;
   }
 
-  public ServiceResponse deleteById(Long id) {
+  public Response deleteById(Long id) {
     if (id == null || id < 1)
       return Responses.NotFound.PRODUCT;
     return repository.deleteById(id);
   }
 
-  public ServiceResponse toggleStatus(Long id) {
+  public Response toggleStatus(Long id) {
     if (id == null || id < 1)
       return Responses.NotFound.PRODUCT;
     return repository.toggleStatus(id);

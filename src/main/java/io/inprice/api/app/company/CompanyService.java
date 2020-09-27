@@ -1,17 +1,22 @@
 package io.inprice.api.app.company;
 
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.auth.dto.PasswordDTO;
 import io.inprice.api.app.company.dto.CreateDTO;
 import io.inprice.api.app.company.dto.RegisterDTO;
-import io.inprice.api.app.token.TokenService;
+import io.inprice.api.app.token.Tokens;
 import io.inprice.api.app.token.TokenType;
+import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.email.EmailSender;
 import io.inprice.api.email.TemplateRenderer;
@@ -19,38 +24,52 @@ import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.CurrencyFormats;
 import io.inprice.api.validator.EmailValidator;
 import io.inprice.api.validator.PasswordValidator;
 import io.inprice.common.helpers.Beans;
+import io.inprice.common.helpers.Database;
+import io.inprice.common.meta.UserRole;
+import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Company;
+import io.inprice.common.models.User;
 import io.javalin.http.Context;
+import jodd.util.BCrypt;
 
 class CompanyService {
 
   private static final Logger log = LoggerFactory.getLogger(CompanyService.class);
 
-  private final CompanyRepository repository = Beans.getSingleton(CompanyRepository.class);
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
   private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
 
-  ServiceResponse requestRegistration(RegisterDTO dto) {
-    ServiceResponse res = RedisClient.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
+  Response requestRegistration(RegisterDTO dto) {
+    Response res = RedisClient.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
     if (!res.isOK())
       return res;
 
     res = validateRegisterDTO(dto);
     if (res.isOK()) {
 
-      try {
-        if (! repository.hasUserDefinedTheCompany(dto)) {
+      try (Handle handle = Database.getHandle()) {
+        CompanyDao dao = handle.attach(CompanyDao.class);
+
+        boolean isCompanyDefined = false;
+
+        User user = dao.findUserByEmail(dto.getEmail());
+        if (user != null) {
+          Company found = dao.findByNameAndAdminId(dto.getCompanyName(), user.getId());
+          isCompanyDefined = (found != null);
+        }
+
+        if (! isCompanyDefined) {
           Map<String, Object> dataMap = new HashMap<>(3);
           dataMap.put("user", dto.getEmail().split("@")[0]);
           dataMap.put("company", dto.getCompanyName());
-          dataMap.put("token", TokenService.add(TokenType.REGISTER_REQUEST, dto));
+          dataMap.put("token", Tokens.add(TokenType.REGISTER_REQUEST, dto));
 
           String message = renderer.renderRegisterActivationLink(dataMap);
           emailSender.send(
@@ -74,58 +93,182 @@ class CompanyService {
     return res;
   }
 
-  ServiceResponse completeRegistration(Context ctx, String token) {
-    ServiceResponse res = Responses.Invalid.TOKEN;
+  Response completeRegistration(Context ctx, String token) {
+    final Response[] res = { Responses.Invalid.TOKEN };
 
-    RegisterDTO dto = TokenService.get(TokenType.REGISTER_REQUEST, token);
+    RegisterDTO dto = Tokens.get(TokenType.REGISTER_REQUEST, token);
     if (dto != null) {
       Map<String, String> clientInfo = ClientSide.getGeoInfo(ctx.req);
-      res = repository.insert(dto, clientInfo, token);
-      if (res.isOK()) {
-        TokenService.remove(TokenType.REGISTER_REQUEST, token);
+
+      try (Handle handle = Database.getHandle()) {
+        handle.inTransaction(h -> {
+          CompanyDao dao = h.attach(CompanyDao.class);
+  
+          User user = dao.findUserByEmail(dto.getEmail());
+          if (user == null) {
+            user = new User();
+            user.setEmail(dto.getEmail());
+            user.setName(dto.getEmail().split("@")[0]);
+            user.setTimezone(clientInfo.get(Consts.TIMEZONE));
+            user.setCreatedAt(new Date());
+  
+            final String salt = BCrypt.gensalt(Props.APP_SALT_ROUNDS());
+            final String hash = BCrypt.hashpw(dto.getPassword(), salt);
+  
+            user.setId(
+              dao.insertUser(
+                user.getEmail(), 
+                user.getName(), 
+                clientInfo.get(Consts.TIMEZONE), 
+                salt, hash
+              )
+            );
+          }
+    
+          if (user.getId() != null) {
+            res[0] = 
+              createCompany(
+                dao,
+                user.getId(),
+                user.getEmail(),
+                dto.getCompanyName(),
+                clientInfo.get(Consts.CURRENCY_CODE),
+                clientInfo.get(Consts.CURRENCY_FORMAT)
+              );
+          } else {
+            res[0] = Responses.NotFound.USER;
+          }
+
+          if (res[0].isOK()) {
+            Tokens.remove(TokenType.REGISTER_REQUEST, token);
+          }
+
+          return res[0].isOK();
+        });
       }
     }
 
-    return res;
+    return res[0];
   }
 
-  ServiceResponse getCurrentCompany() {
-    Company found = repository.findById(CurrentUser.getCompanyId());
-    if (found != null) {
-      return new ServiceResponse(found);
+  Response getCurrentCompany() {
+    try (Handle handle = Database.getHandle()) {
+      CompanyDao dao = handle.attach(CompanyDao.class);
+      Company company = dao.findById(CurrentUser.getCompanyId());
+      if (company != null) {
+        return new Response(company);
+      }
     }
     return Responses.NotFound.COMPANY;
   }
 
-  ServiceResponse create(CreateDTO dto) {
-    ServiceResponse res = validateCompanyDTO(dto);
-    if (res.isOK()) {
-      return repository.create(dto);
-    } else {
-      return res;
-    }
-  }
+  Response create(CreateDTO dto) {
+    final Response[] res = { validateCompanyDTO(dto) };
 
-  ServiceResponse update(CreateDTO dto) {
-    ServiceResponse res = validateCompanyDTO(dto);
-    if (res.isOK()) {
-      boolean isOK = repository.update(dto);
-      if (isOK) {
-        return Responses.OK;
-      } else {
-        return Responses.DataProblem.DB_PROBLEM;
+    if (res[0].isOK()) {
+      try (Handle handle = Database.getHandle()) {
+        handle.inTransaction(h -> {
+          CompanyDao dao = h.attach(CompanyDao.class);
+          res[0] = 
+            createCompany(
+              dao,
+              CurrentUser.getUserId(),
+              CurrentUser.getEmail(),
+              dto.getName(),
+              dto.getCurrencyCode(),
+              dto.getCurrencyFormat()
+            );
+          return true;
+        });
       }
-    } else {
-      return res;
     }
+
+    return res[0];
   }
 
-  ServiceResponse deleteEverything(String password) {
-    return repository.deleteEverything(password);
+  Response update(CreateDTO dto) {
+    Response res = validateCompanyDTO(dto);
+
+    if (res.isOK()) {
+      boolean isOK = false;
+
+      try (Handle handle = Database.getHandle()) {
+        CompanyDao dao = handle.attach(CompanyDao.class);
+        isOK =
+          dao.updateCompany(
+            dto.getName(),
+            dto.getCurrencyCode(),
+            dto.getCurrencyFormat(),
+            CurrentUser.getCompanyId(),
+            CurrentUser.getUserId()
+          );
+      }
+  
+      if (isOK) {
+        res = Responses.OK;
+      } else {
+        res = Responses.DataProblem.DB_PROBLEM;
+      }
+    }
+    return res;
   }
 
-  private ServiceResponse validateRegisterDTO(RegisterDTO dto) {
-    ServiceResponse res = validateCompanyDTO(dto);
+  Response deleteEverything(String password) {
+    final Response[] res = { Responses.DataProblem.DB_PROBLEM };
+
+    try (Handle handle = Database.getHandle()) {
+      handle.inTransaction(h -> {
+        CompanyDao dao = h.attach(CompanyDao.class);
+
+        User user = dao.findUserById(CurrentUser.getUserId());
+        String phash = BCrypt.hashpw(password, user.getPasswordSalt());
+
+        if (phash.equals(user.getPasswordHash())) {
+          Company company = dao.findByAdminId(CurrentUser.getCompanyId());
+
+          if (company != null) {
+            String where = "where company_id=" + CurrentUser.getCompanyId();
+
+            Batch batch = h.createBatch();
+            batch.add("SET FOREIGN_KEY_CHECKS=0");
+            batch.add("delete from competitor_price " + where);
+            batch.add("delete from competitor_history " + where);
+            batch.add("delete from competitor_spec " + where);
+            batch.add("delete from competitor " + where);
+            batch.add("delete from product_price " + where);
+            batch.add("delete from product " + where);
+            batch.add("delete from lookup " + where);
+            batch.add("delete from user_session " + where);
+            batch.add("delete from membership " + where);
+            batch.add("delete from subs_trans " + where);
+            batch.add("delete from user where id in (select admin_id from company where id="+CurrentUser.getCompanyId()+")");
+            batch.add("delete from company where id="+CurrentUser.getCompanyId());
+            batch.add("SET FOREIGN_KEY_CHECKS=1");
+            batch.execute();
+
+            List<String> hashList = dao.getSessionHashesByCompanyId(CurrentUser.getCompanyId());
+            if (hashList != null && hashList.size() > 0) {
+              for (String hash : hashList) {
+                RedisClient.removeSesion(hash);
+              }
+            }
+            res[0] = Responses.OK;
+          } else {
+            res[0] = Responses.Invalid.COMPANY;
+          }
+        } else {
+          res[0] = Responses.Invalid.USER;
+        }
+
+        return res[0].isOK();
+      });
+    }
+
+    return res[0];
+  }
+
+  private Response validateRegisterDTO(RegisterDTO dto) {
+    Response res = validateCompanyDTO(dto);
 
     if (res.isOK()) {
       String problem = EmailValidator.verify(dto.getEmail());
@@ -140,13 +283,45 @@ class CompanyService {
       if (problem == null)
         return Responses.OK;
       else
-        return new ServiceResponse(problem);
+        return new Response(problem);
     } else {
       return res;
     }
   }
 
-  private ServiceResponse validateCompanyDTO(CreateDTO dto) {
+  private Response createCompany(CompanyDao dao, Long userId, String userEmail, String companyName, String currencyCode, String currencyFormat) {
+    Company company = dao.findByNameAndAdminId(companyName, userId);
+    if (company == null) {
+      Long companyId = 
+        dao.insertCompany(
+          userId, 
+          companyName,
+          currencyCode,
+          currencyFormat
+        );
+
+      if (companyId != null) {
+        long membershipId = 
+          dao.insertMembership(
+            userId,
+            userEmail,
+            companyId,
+            UserRole.ADMIN.name(),
+            UserStatus.JOINED.name()
+          );
+
+        if (membershipId > 0) {
+          log.info("A new user just registered a new company. C.Name: {}, U.Email: {} ", companyName, email);
+          return Responses.OK;
+        }
+      }
+      return Responses.DataProblem.DB_PROBLEM;
+    } else {
+      return Responses.Already.Defined.COMPANY;
+    }
+  }
+
+  private Response validateCompanyDTO(CreateDTO dto) {
     String problem = null;
 
     if (dto == null) {
@@ -192,11 +367,11 @@ class CompanyService {
 
       return Responses.OK;
     } else {
-      return new ServiceResponse(problem);
+      return new Response(problem);
     }
   }
 
-  private ServiceResponse validateCompanyDTO(RegisterDTO dto) {
+  private Response validateCompanyDTO(RegisterDTO dto) {
     String problem = null;
 
     if (dto == null) {
@@ -224,7 +399,7 @@ class CompanyService {
 
       return Responses.OK;
     } else {
-      return new ServiceResponse(problem);
+      return new Response(problem);
     }
   }
 

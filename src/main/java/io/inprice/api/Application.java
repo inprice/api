@@ -11,7 +11,7 @@ import io.inprice.api.external.RedisClient;
 import io.inprice.api.framework.ConfigScanner;
 import io.inprice.api.framework.HandlerInterruptException;
 import io.inprice.api.helpers.ThreadPools;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.AccessGuard;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.SysProps;
@@ -96,7 +96,7 @@ public class Application {
     app.after(ctx -> CurrentUser.cleanup());
 
     app.exception(HandlerInterruptException.class, (e, ctx) -> {
-      ctx.json(new ServiceResponse(e.getStatus(), e.getMessage()));
+      ctx.json(new Response(e.getStatus(), e.getMessage()));
     });
   }
 

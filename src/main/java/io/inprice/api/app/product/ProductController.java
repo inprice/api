@@ -8,7 +8,7 @@ import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.info.ProductDTO;
 import io.javalin.Javalin;
@@ -57,7 +57,7 @@ public class ProductController implements Controller {
 
     // search
     app.post(Consts.Paths.Product.SEARCH, (ctx) -> {
-      ServiceResponse res = null;
+      Response res = null;
       String searchTerm = ctx.queryParam("term");
       if (StringUtils.isNotBlank(searchTerm)) {
         res = service.simpleSearch(searchTerm);

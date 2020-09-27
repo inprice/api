@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.consts.Global;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.config.SysProps;
@@ -70,7 +70,7 @@ public class RedisClient {
     isHealthy = false;
   }
 
-  public static ServiceResponse isEmailRequested(RateLimiterType type, String email) {
+  public static Response isEmailRequested(RateLimiterType type, String email) {
     boolean exists = requestingEmailsSet.contains(type.name() + email);
     if (exists) {
       return Responses.Already.REQUESTED_EMAIL;

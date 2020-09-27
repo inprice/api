@@ -23,7 +23,7 @@ import io.inprice.api.app.plan.PlanRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerInfoDTO;
 import io.inprice.api.external.Props;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
@@ -41,10 +41,10 @@ public class SubscriptionRepository {
   private static final Database db = Beans.getSingleton(Database.class);
   private static final PlanRepository planRepository = Beans.getSingleton(PlanRepository.class);
 
-  public ServiceResponse getInfo() {
+  public Response getInfo() {
     Company model = db.findSingle("select * from company where id=" + CurrentUser.getCompanyId(), this::companyMap);
     if (model != null)
-      return new ServiceResponse(model);
+      return new Response(model);
     else
       return Responses.NotFound.COMPANY;
   }
@@ -80,7 +80,7 @@ public class SubscriptionRepository {
     return null;
   }
 
-  public ServiceResponse saveCustomerInfo(CustomerInfoDTO dto) {
+  public Response saveCustomerInfo(CustomerInfoDTO dto) {
     final String query = "update company set title=?, address_1=?, address_2=?, postcode=?, city=?, state=?, country=? where id=?";
 
     try (Connection con = db.getConnection();
@@ -106,7 +106,7 @@ public class SubscriptionRepository {
     }
   }
 
-  public ServiceResponse getTransactions() {
+  public Response getTransactions() {
     Map<String, List<SubsTrans>> data = new HashMap<>(2);
 
     List<SubsTrans> allTrans = 
@@ -126,11 +126,11 @@ public class SubscriptionRepository {
       data.put("invoice", invoiceTrans);
     }
 
-    return new ServiceResponse(data);
+    return new Response(data);
   }
 
-  public ServiceResponse addTransaction(Long companyId, String subsCustomerId, CustomerInfoDTO dto, SubsTrans trans) {
-    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
+  public Response addTransaction(Long companyId, String subsCustomerId, CustomerInfoDTO dto, SubsTrans trans) {
+    Response res = new Response(Responses.DataProblem.DB_PROBLEM.getStatus(), "Database error!");
 
     Connection con = null;
     try {
@@ -321,7 +321,7 @@ public class SubscriptionRepository {
     return 0;
   }
 
-  public ServiceResponse createSession(Integer planId) {
+  public Response createSession(Integer planId) {
     Plan plan = planRepository.findById(planId);
 
     if (plan != null) {
@@ -352,7 +352,7 @@ public class SubscriptionRepository {
         Session session = Session.create(params);
         Map<String, String> data = new HashMap<>(1);
         data.put("sessionId", session.getId());
-        return new ServiceResponse(data);
+        return new Response(data);
       } catch (StripeException e) {
         log.error("Failed to create checkout session", e);
         return Responses.ServerProblem.EXCEPTION;

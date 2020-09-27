@@ -25,23 +25,9 @@ interface AuthDao {
   @SqlUpdate("delete from user_session where user_id=:userId")
   boolean deleteSessionByUserId(@BindList Long userId);
 
-  @SqlUpdate("delete from user_session where user_id=:userId and company_id=:companyId")
-  boolean deleteSessionByUserIdAndCompanyId(@BindList Long userId, @Bind Long companyId);
-
-  @SqlUpdate("update user_session set accessed_at = now() where _hash=:hash")
-  boolean refreshAccessedAt(@Bind String hash);
-
-  @SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId and _hash not in (<hashList>)")
-  @UseRowMapper(DBSessionMapper.class)
-  List<ForDatabase> getOpenedSessions(@Bind Long userId, @BindList List<String> hashList);
-
   @SqlQuery("select * from user_session where user_id=:userId")
   @UseRowMapper(DBSessionMapper.class)
   List<ForDatabase> getUserSessions(@Bind Long userId);
-
-  @SqlQuery("select * from user_session where user_id=:userId and company_id=:companyId")
-  @UseRowMapper(DBSessionMapper.class)
-  List<ForDatabase> getUserSessions(@Bind Long userId, @Bind Long companyId);
 
   @SqlBatch(
     "insert into user_session (_hash, user_id, company_id, ip, os, browser, user_agent) " +
@@ -65,5 +51,21 @@ interface AuthDao {
   )
   @UseRowMapper(MembershipMapper.class)
   List<Membership> getUserMemberships(@Bind String email, @Bind String status);
+
+  //@SqlUpdate("delete from user_session where user_id=:userId and company_id=:companyId")
+  //boolean deleteSessionByUserIdAndCompanyId(@BindList Long userId, @Bind Long companyId);
+
+  //@SqlQuery("select * from user_session where user_id=:userId and company_id=:companyId")
+  //@UseRowMapper(DBSessionMapper.class)
+  //List<ForDatabase> getUserSessions(@Bind Long userId, @Bind Long companyId);
+
+  //TODO: accessguard tarafına alınmalı
+  //@SqlUpdate("update user_session set accessed_at = now() where _hash=:hash")
+  //boolean refreshAccessedAt(@Bind String hash);
+
+  //TODO: userdao tarafına alınmalı
+  //@SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId and _hash not in (<hashList>)")
+  //@UseRowMapper(DBSessionMapper.class)
+  //List<ForDatabase> getOpenedSessions(@Bind Long userId, @BindList List<String> hashList);
 
 }

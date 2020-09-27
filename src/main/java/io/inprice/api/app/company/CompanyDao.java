@@ -62,6 +62,4 @@ interface CompanyDao {
   @SqlQuery("select _hash from user_session where company_id=:companyId")
   List<String> getSessionHashesByCompanyId(@Bind Long companyId);
 
-
-
 }

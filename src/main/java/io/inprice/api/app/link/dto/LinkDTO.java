@@ -1,4 +1,4 @@
-package io.inprice.api.dto;
+package io.inprice.api.app.link.dto;
 
 import java.io.Serializable;
 
@@ -9,7 +9,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class CompetitorDTO implements Serializable {
+public class LinkDTO implements Serializable {
 
   private static final long serialVersionUID = 4899893105959011844L;
 

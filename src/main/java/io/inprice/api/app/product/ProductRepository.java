@@ -19,7 +19,7 @@ import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.ProductSearchDTO;
 import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
@@ -69,16 +69,16 @@ public class ProductRepository {
     zeroPrice.setSuggestedPrice(BigDecimal.ZERO);
   }
 
-  public ServiceResponse findById(Long id) {
+  public Response findById(Long id) {
     Product model = db.findSingle(
         String.format("%s where p.id=%d and p.company_id=%d ", BASE_QUERY, id, CurrentUser.getCompanyId()), this::map);
     if (model != null) {
-      return new ServiceResponse(model);
+      return new Response(model);
     }
     return Responses.NotFound.PRODUCT;
   }
 
-  public ServiceResponse findEverythingById(Long id) {
+  public Response findEverythingById(Long id) {
     Map<String, Object> dataMap = new HashMap<>(3);
 
     try (Connection con = db.getConnection()) {
@@ -147,7 +147,7 @@ public class ProductRepository {
       dataMap.put("priceLabels", priceLabels);
       dataMap.put("priceData", datasetMap);
       */
-      return new ServiceResponse(dataMap);
+      return new Response(dataMap);
       
     } catch (Exception e) {
       log.error("Failed to find a product by id to get everything about it", e);
@@ -156,7 +156,7 @@ public class ProductRepository {
     return Responses.NotFound.PRODUCT;
   }
 
-  public ServiceResponse findByCode(String code) {
+  public Response findByCode(String code) {
     Connection con = null;
     try {
       con = db.getConnection();
@@ -175,17 +175,17 @@ public class ProductRepository {
     return Responses.DataProblem.DB_PROBLEM;
   }
 
-  public ServiceResponse findByCode(Connection con, String code) {
+  public Response findByCode(Connection con, String code) {
     Product model = db.findSingle(String.format("%s where code='%s' and p.company_id=%d ", BASE_QUERY,
         SqlHelper.clear(code), CurrentUser.getCompanyId()), this::map);
 
     if (model != null) {
-      return new ServiceResponse(model);
+      return new Response(model);
     }
     return Responses.NotFound.PRODUCT;
   }
 
-  public ServiceResponse simpleSearch(String term) {
+  public Response simpleSearch(String term) {
     final String clearTerm = SqlHelper.clear(term);
     try {
       List<Map<String, Object>> rows = 
@@ -196,14 +196,14 @@ public class ProductRepository {
           "order by name " +
           "limit " + Consts.ROW_LIMIT_FOR_LISTS, this::nameOnlyMap);
        
-      return new ServiceResponse(Maps.of("rows", rows));
+      return new Response(Maps.of("rows", rows));
     } catch (Exception e) {
       log.error("Failed in simple search for products. ", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
 
-  public ServiceResponse fullSearch(ProductSearchDTO dto) {
+  public Response fullSearch(ProductSearchDTO dto) {
     dto.setTerm(SqlHelper.clear(dto.getTerm()));
 
     StringBuilder criteria = new StringBuilder();
@@ -255,20 +255,20 @@ public class ProductRepository {
           limit, 
           this::mapSearch);
        
-      return new ServiceResponse(Maps.of("rows", rows));
+      return new Response(Maps.of("rows", rows));
     } catch (Exception e) {
       log.error("Failed in full search for products. ", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
 
-  public ServiceResponse insert(ProductDTO dto) {
+  public Response insert(ProductDTO dto) {
     Connection con = null;
     try {
       con = db.getTransactionalConnection();
       dto.setCompanyId(CurrentUser.getCompanyId());
 
-      ServiceResponse result = insertANewProduct(con, dto);
+      Response result = insertANewProduct(con, dto);
       if (result.isOK()) {
         db.commit(con);
         return Responses.OK;
@@ -288,7 +288,7 @@ public class ProductRepository {
     }
   }
 
-  public ServiceResponse createFromLink(Competitor link) {
+  public Response createFromLink(Competitor link) {
     Connection con = null;
     try {
       con = db.getTransactionalConnection();
@@ -302,7 +302,7 @@ public class ProductRepository {
 
       boolean isCompelted = false;
 
-      ServiceResponse result = insertANewProduct(con, dto);
+      Response result = insertANewProduct(con, dto);
       if (result.isOK()) {
         isCompelted = db.executeQuery(String.format("delete from competitor where id=%d", link.getId()),
             String.format("Failed to delete link to be product. Id: %d", link.getId()));
@@ -327,14 +327,14 @@ public class ProductRepository {
     }
   }
 
-  public ServiceResponse update(ProductDTO dto) {
+  public Response update(ProductDTO dto) {
     Connection con = null;
     boolean result = false;
 
     try {
       con = db.getTransactionalConnection();
 
-      ServiceResponse res = findByCode(con, dto.getCode());
+      Response res = findByCode(con, dto.getCode());
       if (!res.isOK()) {
         return Responses.NotFound.PRODUCT;
       }
@@ -370,7 +370,7 @@ public class ProductRepository {
 
         if (result) {
           db.commit(con);
-          return new ServiceResponse(old.getPrice().equals(dto.getPrice()));
+          return new Response(old.getPrice().equals(dto.getPrice()));
         } else {
           db.rollback(con);
           return Responses.DataProblem.DB_PROBLEM;
@@ -389,7 +389,7 @@ public class ProductRepository {
     }
   }
 
-  public ServiceResponse deleteById(Long id) {
+  public Response deleteById(Long id) {
     String where = String.format("where product_id=%d and company_id=%d", id, CurrentUser.getCompanyId());
 
     List<String> queries = new ArrayList<>(7);
@@ -409,7 +409,7 @@ public class ProductRepository {
     return Responses.NotFound.PRODUCT;
   }
 
-  public ServiceResponse toggleStatus(Long id) {
+  public Response toggleStatus(Long id) {
     boolean result = db
         .executeQuery(String.format("update product set active = not active where id=%d and company_id=%d ", id,
             CurrentUser.getCompanyId()), "Failed to toggle product status! id: " + id);
@@ -455,7 +455,7 @@ public class ProductRepository {
     return result;
   }
 
-  public ServiceResponse insertANewProduct(Connection con, ProductDTO dto) {
+  public Response insertANewProduct(Connection con, ProductDTO dto) {
     // increase product count by 1
     final String query1 = "update company set product_count=product_count+1 where id=? and product_count<product_limit";
     try (PreparedStatement pst1 = con.prepareStatement(query1)) {
@@ -485,7 +485,7 @@ public class ProductRepository {
             return Responses.OK;
           }
         } catch (SQLIntegrityConstraintViolationException ie) {
-          return new ServiceResponse("There is a product already defined with this code!");
+          return new Response("There is a product already defined with this code!");
         }
       } else {
         return Responses.PermissionProblem.PRODUCT_LIMIT_PROBLEM;

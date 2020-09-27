@@ -17,7 +17,7 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LookupDTO;
 import io.inprice.api.dto.Pair;
 import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
@@ -31,7 +31,7 @@ public class LookupRepository {
   private static final Logger log = LoggerFactory.getLogger(LookupRepository.class);
   private static final Database db = Beans.getSingleton(Database.class);
 
-  public ServiceResponse add(LookupDTO dto) {
+  public Response add(LookupDTO dto) {
     final String query = "insert into lookup (company_id, type, name) values (?, ?, ?)";
 
     try (Connection con = db.getConnection();
@@ -59,7 +59,7 @@ public class LookupRepository {
       }
 
       data.put("items", getList(con, LookupType.valueOf(dto.getType())).getData());
-      return new ServiceResponse(data);
+      return new Response(data);
 
     } catch (Exception e) {
       log.error("Failed to insert lookup. " + dto.toString(), e);
@@ -108,7 +108,7 @@ public class LookupRepository {
         this::map);
   }
 
-  public ServiceResponse getList(Connection con, LookupType type) {
+  public Response getList(Connection con, LookupType type) {
     try {
       boolean isConNull = (con == null);
       Connection connection = (isConNull ? connection = db.getConnection() : con);
@@ -136,7 +136,7 @@ public class LookupRepository {
       }
 
       if (isConNull) connection.close();
-      return new ServiceResponse(data);
+      return new Response(data);
 
     } catch (Exception e) {
       log.error("Failed to get lookup. " + type, e);
@@ -145,7 +145,7 @@ public class LookupRepository {
     return Responses.NotFound.DATA;
   }
 
-  public ServiceResponse getAllList() {
+  public Response getAllList() {
     try (Connection connection = db.getConnection()) {
       Map<String, List<Pair<Long, String>>> data = new HashMap<>();
 
@@ -206,7 +206,7 @@ public class LookupRepository {
         }
 
       }
-      return new ServiceResponse(data);
+      return new Response(data);
 
     } catch (Exception e) {
       log.error("Failed to get all lookups for Company: " + CurrentUser.getCompanyId(), e);

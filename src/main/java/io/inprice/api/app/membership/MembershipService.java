@@ -8,20 +8,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
-import io.inprice.api.app.token.TokenService;
+import io.inprice.api.app.auth.dto.InvitationSendDTO;
+import io.inprice.api.app.auth.dto.InvitationUpdateDTO;
+import io.inprice.api.app.auth.dto.PasswordDTO;
 import io.inprice.api.app.token.TokenType;
+import io.inprice.api.app.token.Tokens;
 import io.inprice.api.app.user.UserRepository;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.EmailValidator;
-import io.inprice.api.dto.InvitationSendDTO;
-import io.inprice.api.dto.InvitationUpdateDTO;
-import io.inprice.api.dto.PasswordDTO;
-import io.inprice.api.dto.PasswordValidator;
 import io.inprice.api.email.EmailSender;
 import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.api.validator.EmailValidator;
+import io.inprice.api.validator.PasswordValidator;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
@@ -38,12 +38,12 @@ public class MembershipService {
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
   private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
 
-  public ServiceResponse getList() {
+  public Response getList() {
     return membershipRepository.getList();
   }
 
-  public ServiceResponse invite(InvitationSendDTO dto) {
-    ServiceResponse res = validate(dto);
+  public Response invite(InvitationSendDTO dto) {
+    Response res = validate(dto);
     if (res.isOK()) {
 
       res = membershipRepository.findByEmailAndCompanyId(dto.getEmail(), CurrentUser.getCompanyId());
@@ -54,14 +54,14 @@ public class MembershipService {
           res = sendMail(dto);
         }
       } else {
-        return new ServiceResponse("A user with " + dto.getEmail() + " address is already added to this company!");
+        return new Response("A user with " + dto.getEmail() + " address is already added to this company!");
       }
     }
     return res;
   }
 
-  public ServiceResponse resend(long memId) {
-    ServiceResponse res = membershipRepository.findById(memId);
+  public Response resend(long memId) {
+    Response res = membershipRepository.findById(memId);
 
     if (res.isOK()) {
       Membership membership = res.getData();
@@ -77,8 +77,8 @@ public class MembershipService {
     return res;
   }
 
-  public ServiceResponse delete(long memId) {
-    ServiceResponse res = membershipRepository.findById(memId);
+  public Response delete(long memId) {
+    Response res = membershipRepository.findById(memId);
 
     if (res.isOK()) {
       Membership membership = res.getData();
@@ -91,32 +91,32 @@ public class MembershipService {
     return res;
   }
 
-  public ServiceResponse changeRole(InvitationUpdateDTO dto) {
+  public Response changeRole(InvitationUpdateDTO dto) {
     String problem = validate(dto);
 
     if (problem == null) {
       return membershipRepository.changeRole(dto);
     }
-    return new ServiceResponse(problem);
+    return new Response(problem);
   }
 
-  public ServiceResponse pause(Long id) {
+  public Response pause(Long id) {
     return membershipRepository.changeStatus(id, false);
   }
 
-  public ServiceResponse resume(Long id) {
+  public Response resume(Long id) {
     return membershipRepository.changeStatus(id, true);
   }
 
-  public ServiceResponse acceptNewUser(InvitationAcceptDTO dto, String timezone) {
+  public Response acceptNewUser(InvitationAcceptDTO dto, String timezone) {
     String problem = validate(dto);
 
     if (problem == null) {
-      InvitationSendDTO invitationDTO = TokenService.get(TokenType.INVITATION, dto.getToken());
+      InvitationSendDTO invitationDTO = Tokens.get(TokenType.INVITATION, dto.getToken());
       if (invitationDTO != null) {
-        ServiceResponse res = membershipRepository.acceptNewUser(dto, timezone, invitationDTO);
+        Response res = membershipRepository.acceptNewUser(dto, timezone, invitationDTO);
         if (res.isOK()) {
-          TokenService.remove(TokenType.INVITATION, dto.getToken());
+          Tokens.remove(TokenType.INVITATION, dto.getToken());
           return res;
         }
       } else {
@@ -124,10 +124,10 @@ public class MembershipService {
       }
     }
 
-    return new ServiceResponse(problem);
+    return new Response(problem);
   }
 
-  private ServiceResponse sendMail(InvitationSendDTO dto) {
+  private Response sendMail(InvitationSendDTO dto) {
     Map<String, Object> dataMap = new HashMap<>(5);
     dataMap.put("company", CurrentUser.getCompanyName());
     dataMap.put("admin", CurrentUser.getUserName());
@@ -135,7 +135,7 @@ public class MembershipService {
     String message = null;
     String templateName = null;
 
-    ServiceResponse found = userRepository.findByEmail(dto.getEmail(), false);
+    Response found = userRepository.findByEmail(dto.getEmail(), false);
     if (found.isOK()) {
       User user = found.getData();
       dataMap.put("user", user.getName());
@@ -144,7 +144,7 @@ public class MembershipService {
       message = renderer.renderInvitationForExistingUsers(dataMap);
     } else {
       dataMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')));
-      dataMap.put("token", TokenService.add(TokenType.INVITATION, dto));
+      dataMap.put("token", Tokens.add(TokenType.INVITATION, dto));
       dataMap.put("url", Props.APP_WEB_URL() + "/accept-invitation");
 
       templateName = "invitation-for-new-users";
@@ -164,20 +164,20 @@ public class MembershipService {
     }
   }
 
-  private ServiceResponse validate(InvitationSendDTO dto) {
+  private Response validate(InvitationSendDTO dto) {
     if (dto == null
         || (dto.getEmail() != null && dto.getEmail().toLowerCase().equals(CurrentUser.getEmail().toLowerCase()))) {
       return Responses.Invalid.INVITATION;
     }
 
     if (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN)) {
-      return new ServiceResponse(
+      return new Response(
           String.format("Role must be either %s or %s!", UserRole.EDITOR.name(), UserRole.VIEWER.name()));
     }
 
     String checkIfItHasAProblem = EmailValidator.verify(dto.getEmail());
     if (checkIfItHasAProblem != null) {
-      return new ServiceResponse(checkIfItHasAProblem);
+      return new Response(checkIfItHasAProblem);
     }
 
     return Responses.OK;

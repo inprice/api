@@ -21,7 +21,7 @@ import io.inprice.api.app.product.ProductRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.ProductDTOValidator;
 import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
@@ -41,8 +41,8 @@ public class ProductCSVImportService implements IProductImportService {
 
   private static final int COLUMN_COUNT = 5;
 
-  public ServiceResponse upload(String content) {
-    ServiceResponse res = Responses.DataProblem.DB_PROBLEM;
+  public Response upload(String content) {
+    Response res = Responses.DataProblem.DB_PROBLEM;
 
     Connection con = null;
 
@@ -75,7 +75,7 @@ public class ProductCSVImportService implements IProductImportService {
                 if (! exists) {
                   if (values.length == COLUMN_COUNT) {
 
-                    ServiceResponse op = productRepository.findByCode(con, values[0]);
+                    Response op = productRepository.findByCode(con, values[0]);
                     if (! op.isOK()) {
 
                       int i = 0;
@@ -101,7 +101,7 @@ public class ProductCSVImportService implements IProductImportService {
                       }
                       dto.setCategoryId(category.getId());
                       
-                      ServiceResponse isValid = ProductDTOValidator.validate(dto);
+                      Response isValid = ProductDTOValidator.validate(dto);
                       if (isValid.isOK()) {
                         op = productRepository.insertANewProduct(con, dto);
                         if (op.isOK()) {
@@ -140,15 +140,15 @@ public class ProductCSVImportService implements IProductImportService {
               if (result.indexOf("reached") > 0) break;
             }
 
-            res = new ServiceResponse(resultMapList);
+            res = new Response(resultMapList);
           }
 
         } else {
-          res = new ServiceResponse("You have reached your plan's maximum product limit.");
+          res = new Response("You have reached your plan's maximum product limit.");
         }
 
       } else {
-        res = new ServiceResponse("You haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
+        res = new Response("You haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
       }
 
       db.commit(con);

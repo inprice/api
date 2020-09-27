@@ -18,7 +18,7 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.UserDTO;
 import io.inprice.api.helpers.CodeGenerator;
 import io.inprice.common.helpers.RepositoryHelper;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
@@ -34,17 +34,17 @@ public class UserRepository {
   private final Database db = Beans.getSingleton(Database.class);
   private final CodeGenerator codeGenerator = Beans.getSingleton(CodeGenerator.class);
 
-  public ServiceResponse findById(Long id) {
+  public Response findById(Long id) {
     User model = db.findSingle(String.format("select * from user where id = %d", id), this::map);
-    if (model != null) return new ServiceResponse(model);
+    if (model != null) return new Response(model);
     return Responses.NotFound.USER;
   }
 
-  public ServiceResponse findByEmail(String email) {
+  public Response findByEmail(String email) {
     return findByEmail(email, false);
   }
 
-  public ServiceResponse findByEmail(String email, boolean passwordFields) {
+  public Response findByEmail(String email, boolean passwordFields) {
     try (Connection con = db.getConnection()) {
       return findByEmail(con, email, passwordFields);
     } catch (SQLException e) {
@@ -53,23 +53,23 @@ public class UserRepository {
     }
   }
 
-  public ServiceResponse findByEmail(Connection con, String email) {
+  public Response findByEmail(Connection con, String email) {
     return findByEmail(con, email, false);
   }
 
-  public ServiceResponse findByEmail(Connection con, String email, boolean passwordFields) {
+  public Response findByEmail(Connection con, String email, boolean passwordFields) {
     User model = db.findSingle(con, String.format("select * from user where email = '%s'", email), this::map);
     if (model != null) {
       if (!passwordFields) {
         model.setPasswordSalt(null);
         model.setPasswordHash(null);
       }
-      return new ServiceResponse(model);
+      return new Response(model);
     }
     return Responses.NotFound.USER;
   }
 
-  public ServiceResponse insert(UserDTO dto) {
+  public Response insert(UserDTO dto) {
     try (Connection con = db.getConnection()) {
       return insert(con, dto);
     } catch (SQLException e) {
@@ -78,7 +78,7 @@ public class UserRepository {
     }
   }
 
-  public ServiceResponse insert(Connection con, UserDTO dto) {
+  public Response insert(Connection con, UserDTO dto) {
       final String query = "insert into user (email, name, timezone, password_salt, password_hash) values (?, ?, ?, ?, ?) ";
 
       try (PreparedStatement pst = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
@@ -99,7 +99,7 @@ public class UserRepository {
                 user.setEmail(dto.getEmail());
                 user.setName(dto.getName());
                 user.setTimezone(dto.getTimezone());
-                return new ServiceResponse(user);
+                return new Response(user);
               }
             }
           }
@@ -114,7 +114,7 @@ public class UserRepository {
       }
    }
 
-  public ServiceResponse update(UserDTO dto) {
+  public Response update(UserDTO dto) {
     final String query = "update user set name=?, timezone=? where id=?";
 
     try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
@@ -135,11 +135,11 @@ public class UserRepository {
     }
   }
 
-  public ServiceResponse updatePassword(String password) {
+  public Response updatePassword(String password) {
     return updatePassword(CurrentUser.getUserId(), password);
   }
 
-  public ServiceResponse updatePassword(Long userId, String password) {
+  public Response updatePassword(Long userId, String password) {
     final String query = "update user set password_salt=?, password_hash=? where id=?";
 
     try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
@@ -162,7 +162,7 @@ public class UserRepository {
     }
   }
 
-  public ServiceResponse findMemberships() {
+  public Response findMemberships() {
     String query = 
       "select mem.id, c.name, mem.role, mem.status, mem.updated_at " + 
       "from membership as mem " + 
@@ -190,7 +190,7 @@ public class UserRepository {
           map.put("date", DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
           data.add(map);
         }
-        return new ServiceResponse(data);
+        return new Response(data);
       }
     } catch (SQLException e) {
       log.error("Failed to get user memberships.", e);
@@ -198,7 +198,7 @@ public class UserRepository {
     }
   }
 
-  public ServiceResponse leaveMembership(Long id) {
+  public Response leaveMembership(Long id) {
     final String query = "update membership set status=?, user_id=?, updated_at=now() where id=? and email=? and status=?";
 
     try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {
@@ -220,7 +220,7 @@ public class UserRepository {
     }
   }
 
-  public ServiceResponse findActiveInvitations() {
+  public Response findActiveInvitations() {
     String query = 
       "select mem.id, c.name, mem.role, mem.created_at " + 
       "from membership as mem " + 
@@ -243,7 +243,7 @@ public class UserRepository {
           map.put("date", DateUtils.formatLongDate(rs.getTimestamp("created_at")));
           data.add(map);
         }
-        return new ServiceResponse(data);
+        return new Response(data);
       }
     } catch (SQLException e) {
       log.error("Failed to get user invitations.", e);
@@ -251,15 +251,15 @@ public class UserRepository {
     }
   }
 
-  public ServiceResponse acceptInvitation(Long id) {
+  public Response acceptInvitation(Long id) {
     return processInvitation(id, UserStatus.PENDING, UserStatus.JOINED);
   }
 
-  public ServiceResponse rejectInvitation(Long id) {
+  public Response rejectInvitation(Long id) {
     return processInvitation(id, UserStatus.JOINED, UserStatus.LEFT);
   }
 
-  private ServiceResponse processInvitation(Long id, UserStatus fromStatus, UserStatus toStatus) {
+  private Response processInvitation(Long id, UserStatus fromStatus, UserStatus toStatus) {
     final String query = "update membership set status=?, user_id=?, updated_at=now() where id=? and email=? and status=?";
 
     try (Connection con = db.getConnection(); PreparedStatement pst = con.prepareStatement(query)) {

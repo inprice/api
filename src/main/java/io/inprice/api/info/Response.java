@@ -3,24 +3,24 @@ package io.inprice.api.info;
 import java.util.List;
 import io.inprice.api.consts.Responses;
 
-public final class ServiceResponse {
+public final class Response {
 
    private int status;
    private String reason;
    private Object data;
    private List<String> problems;
 
-   public ServiceResponse(String reason) {
+   public Response(String reason) {
       this.status = 400;
       this.reason = reason;
    }
 
-   public ServiceResponse(int status, String reason) {
+   public Response(int status, String reason) {
       this.status = status;
       this.reason = reason;
    }
 
-   public ServiceResponse(Object data) {
+   public Response(Object data) {
       this.status = Responses.OK.getStatus();
       this.data = data;
    }

@@ -70,4 +70,27 @@ public class AccessGuard implements AccessManager {
       }
    }
 
+   ForRedis findByHash(String hash) {
+    ForRedis ses = RedisClient.getSession(hash);
+    if (ses != null) {
+      long diffInMillies = Math.abs(System.currentTimeMillis() - ses.getAccessedAt().getTime());
+      long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
+      if (diff > 7 && RedisClient.refreshSesion(ses.getHash())) {
+        boolean refreshed = refreshAccessedAt(ses.getHash());
+        if (!refreshed) {
+          log.warn("Failed to refresh accessed date for {}", hash);
+        }
+      }
+      return ses;
+    }
+    return null;
+  }
+
+  private boolean refreshAccessedAt(String hash) {
+    try (Handle handle = Database.getHandle()) {
+      CouponDao dao = handle.attach(CouponDao.class);
+      return dao.refreshAccessedAt(hash);
+    }
+  }
+
 }
