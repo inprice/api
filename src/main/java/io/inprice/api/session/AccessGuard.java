@@ -88,7 +88,7 @@ public class AccessGuard implements AccessManager {
 
   private boolean refreshAccessedAt(String hash) {
     try (Handle handle = Database.getHandle()) {
-      CouponDao dao = handle.attach(CouponDao.class);
+      DashboardDao dao = handle.attach(DashboardDao.class);
       return dao.refreshAccessedAt(hash);
     }
   }

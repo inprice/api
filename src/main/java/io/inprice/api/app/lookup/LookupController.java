@@ -1,7 +1,7 @@
 package io.inprice.api.app.lookup;
 
+import io.inprice.api.app.lookup.dto.LookupDTO;
 import io.inprice.api.consts.Consts;
-import io.inprice.api.dto.LookupDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;

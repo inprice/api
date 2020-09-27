@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.plan.PlanRepository;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
@@ -50,7 +49,7 @@ class CouponService {
         handle.inTransaction(h -> {
           CouponDao dao = h.attach(CouponDao.class);
 
-          Coupon coupon = dao.findCouponByCode(SqlHelper.clear(code));
+          Coupon coupon = dao.findCouponByCode(code);
           if (coupon != null) {
             if (coupon.getIssuedAt() == null) {
               if (coupon.getIssuedCompanyId() == null || coupon.getIssuedCompanyId().equals(CurrentUser.getCompanyId())) {
