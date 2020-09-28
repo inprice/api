@@ -15,7 +15,6 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.AccessGuard;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.SysProps;
-import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.JsonConverter;
 import io.inprice.common.meta.AppEnv;

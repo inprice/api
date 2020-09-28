@@ -1,8 +1,8 @@
 package io.inprice.api.app.membership;
 
+import io.inprice.api.app.auth.dto.InvitationSendDTO;
+import io.inprice.api.app.membership.dto.InvitationUpdateDTO;
 import io.inprice.api.consts.Consts;
-import io.inprice.api.dto.InvitationSendDTO;
-import io.inprice.api.dto.InvitationUpdateDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;

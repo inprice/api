@@ -3,7 +3,6 @@ package io.inprice.api.app.auth;
 import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.auth.dto.LoginDTO;
 import io.inprice.api.app.auth.dto.PasswordDTO;
-import io.inprice.api.app.membership.MembershipService;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.EmailDTO;
 import io.inprice.api.framework.Controller;
@@ -19,7 +18,6 @@ import io.javalin.Javalin;
 public class AuthController implements Controller {
 
   private static final AuthService service = Beans.getSingleton(AuthService.class);
-  private static final MembershipService membershipService = Beans.getSingleton(MembershipService.class);
 
   @Override
   public void addRoutes(Javalin app) {
@@ -47,7 +45,7 @@ public class AuthController implements Controller {
       String timezone = ClientSide.getGeoInfo(ctx.req).get(Consts.TIMEZONE);
 
       InvitationAcceptDTO dto = ctx.bodyAsClass(InvitationAcceptDTO.class);
-      Response res = membershipService.acceptNewUser(dto, timezone);
+      Response res = service.acceptNewUser(dto, timezone);
       if (res.isOK()) {
         User user = res.getData();
         ctx.json(Commons.createResponse(ctx, service.createSession(ctx, user)));

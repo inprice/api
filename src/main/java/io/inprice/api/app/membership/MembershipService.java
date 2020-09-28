@@ -1,19 +1,17 @@
 package io.inprice.api.app.membership;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
-import io.inprice.api.app.auth.dto.InvitationUpdateDTO;
-import io.inprice.api.app.auth.dto.PasswordDTO;
+import io.inprice.api.app.membership.dto.InvitationUpdateDTO;
 import io.inprice.api.app.token.TokenType;
 import io.inprice.api.app.token.Tokens;
-import io.inprice.api.app.user.UserRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.email.EmailSender;
 import io.inprice.api.email.TemplateRenderer;
@@ -21,113 +19,149 @@ import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.validator.EmailValidator;
-import io.inprice.api.validator.PasswordValidator;
 import io.inprice.common.helpers.Beans;
+import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Membership;
-import io.inprice.common.models.User;
 
-public class MembershipService {
+class MembershipService {
 
   private static final Logger log = LoggerFactory.getLogger(MembershipService.class);
-
-  private final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-  private final MembershipRepository membershipRepository = Beans.getSingleton(MembershipRepository.class);
 
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
   private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
 
-  public Response getList() {
-    return membershipRepository.getList();
+  Response getList() {
+    Response res = Responses.NotFound.MEMBERSHIP;
+
+    try (Handle handle = Database.getHandle()) {
+      MembershipDao dao = handle.attach(MembershipDao.class);
+
+      List<Membership> list = dao.findListByNotEmail(CurrentUser.getEmail(), CurrentUser.getCompanyId());
+      if (list != null && list.size() > 0) {
+        res = new Response(list);
+      }
+    }
+    return res;
   }
 
-  public Response invite(InvitationSendDTO dto) {
+  Response invite(InvitationSendDTO dto) {
     Response res = validate(dto);
     if (res.isOK()) {
 
-      res = membershipRepository.findByEmailAndCompanyId(dto.getEmail(), CurrentUser.getCompanyId());
-      if (!res.isOK()) {
-        dto.setCompanyId(CurrentUser.getCompanyId());
-        res = membershipRepository.invite(dto);
-        if (res.isOK()) {
-          res = sendMail(dto);
+      try (Handle handle = Database.getHandle()) {
+        MembershipDao dao = handle.attach(MembershipDao.class);
+  
+        Membership mem = dao.findByEmail(CurrentUser.getEmail(), CurrentUser.getCompanyId());
+        if (mem == null) {
+          boolean isAdded = dao.insertInvitation(dto.getEmail(), dto.getRole().name(), CurrentUser.getCompanyId());
+          if (isAdded) {
+            dto.setCompanyId(CurrentUser.getCompanyId());
+            res = sendMail(dao, dto);
+          }
+        } else {
+          return new Response("A user with " + dto.getEmail() + " address is already added to this company!");
+        }
+      }
+    }
+    return res;
+  }
+
+  Response resend(long memId) {
+    Response res = Responses.DataProblem.NOT_SUITABLE;
+
+    try (Handle handle = Database.getHandle()) {
+      MembershipDao dao = handle.attach(MembershipDao.class);
+
+      Membership mem = dao.findById(memId);
+      if (mem != null) {
+        boolean isOK = dao.increaseSendingCount(memId, UserStatus.PENDING.name(), CurrentUser.getCompanyId());
+        if (isOK) {
+          InvitationSendDTO dto = new InvitationSendDTO();
+          dto.setEmail(mem.getEmail());
+          dto.setRole(mem.getRole());
+          dto.setCompanyId(CurrentUser.getCompanyId());
+          res = sendMail(dao, dto);
+        }
+      }
+    }
+
+    return res;
+  }
+
+  Response delete(long memId) {
+    Response res = Responses.NotFound.MEMBERSHIP;
+
+    try (Handle handle = Database.getHandle()) {
+      MembershipDao dao = handle.attach(MembershipDao.class);
+
+      Membership mem = dao.findById(memId);
+      if (mem != null) {
+        if (! mem.getCompanyId().equals(CurrentUser.getCompanyId())) {
+          if (! mem.getStatus().equals(UserStatus.DELETED)) {
+            boolean isOK = dao.setStatusDeleted(memId, UserStatus.DELETED.name(), CurrentUser.getCompanyId());
+            if (isOK) {
+              res = Responses.OK;
+            } else {
+              res = Responses.DataProblem.DB_PROBLEM;
+            }
+          } else {
+            res = Responses.Already.DELETED_MEMBER;
+          }
+        } else {
+          res = Responses.DataProblem.NOT_SUITABLE;
         }
       } else {
-        return new Response("A user with " + dto.getEmail() + " address is already added to this company!");
+        res = Responses.NotFound.MEMBERSHIP;
       }
     }
     return res;
   }
 
-  public Response resend(long memId) {
-    Response res = membershipRepository.findById(memId);
-
-    if (res.isOK()) {
-      Membership membership = res.getData();
-      res = membershipRepository.increaseSendingCount(memId);
-      if (res.isOK()) {
-        InvitationSendDTO dto = new InvitationSendDTO();
-        dto.setCompanyId(CurrentUser.getCompanyId());
-        dto.setEmail(membership.getEmail());
-        dto.setRole(membership.getRole());
-        res = sendMail(dto);
-      }
-    }
-    return res;
-  }
-
-  public Response delete(long memId) {
-    Response res = membershipRepository.findById(memId);
-
-    if (res.isOK()) {
-      Membership membership = res.getData();
-      if (!membership.getStatus().equals(UserStatus.DELETED)) {
-        res = membershipRepository.delete(memId);
-      } else {
-        res = Responses.Already.DELETED_MEMBER;
-      }
-    }
-    return res;
-  }
-
-  public Response changeRole(InvitationUpdateDTO dto) {
+  Response changeRole(InvitationUpdateDTO dto) {
     String problem = validate(dto);
 
     if (problem == null) {
-      return membershipRepository.changeRole(dto);
+      try (Handle handle = Database.getHandle()) {
+        MembershipDao dao = handle.attach(MembershipDao.class);
+  
+        boolean isOK = dao.changeRole(dto.getId(), dto.getRole().name(), CurrentUser.getCompanyId());
+        if (isOK) {
+          return Responses.OK;
+        } else {
+          problem = Responses.DataProblem.DB_PROBLEM.getReason();
+        }
+      }
     }
     return new Response(problem);
   }
 
-  public Response pause(Long id) {
-    return membershipRepository.changeStatus(id, false);
-  }
+  Response pause(Long id) {
+    try (Handle handle = Database.getHandle()) {
+      MembershipDao dao = handle.attach(MembershipDao.class);
 
-  public Response resume(Long id) {
-    return membershipRepository.changeStatus(id, true);
-  }
-
-  public Response acceptNewUser(InvitationAcceptDTO dto, String timezone) {
-    String problem = validate(dto);
-
-    if (problem == null) {
-      InvitationSendDTO invitationDTO = Tokens.get(TokenType.INVITATION, dto.getToken());
-      if (invitationDTO != null) {
-        Response res = membershipRepository.acceptNewUser(dto, timezone, invitationDTO);
-        if (res.isOK()) {
-          Tokens.remove(TokenType.INVITATION, dto.getToken());
-          return res;
-        }
-      } else {
-        return Responses.Invalid.TOKEN;
+      boolean isOK = dao.pause(id, CurrentUser.getCompanyId());
+      if (isOK) {
+        return Responses.OK;
       }
     }
-
-    return new Response(problem);
+    return Responses.DataProblem.DB_PROBLEM;
   }
 
-  private Response sendMail(InvitationSendDTO dto) {
+  Response resume(Long id) {
+    try (Handle handle = Database.getHandle()) {
+      MembershipDao dao = handle.attach(MembershipDao.class);
+
+      boolean isOK = dao.resume(id, CurrentUser.getCompanyId());
+      if (isOK) {
+        return Responses.OK;
+      }
+    }
+    return Responses.DataProblem.NOT_SUITABLE;
+  }
+
+  private Response sendMail(MembershipDao dao, InvitationSendDTO dto) {
     Map<String, Object> dataMap = new HashMap<>(5);
     dataMap.put("company", CurrentUser.getCompanyName());
     dataMap.put("admin", CurrentUser.getUserName());
@@ -135,11 +169,9 @@ public class MembershipService {
     String message = null;
     String templateName = null;
 
-    Response found = userRepository.findByEmail(dto.getEmail(), false);
-    if (found.isOK()) {
-      User user = found.getData();
-      dataMap.put("user", user.getName());
-
+    String userName = dao.findUserNameByEmail(dto.getEmail());
+    if (userName != null) {
+      dataMap.put("user", userName);
       templateName = "invitation-for-existing-users";
       message = renderer.renderInvitationForExistingUsers(dataMap);
     } else {
@@ -192,29 +224,6 @@ public class MembershipService {
 
     if (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN)) {
       problem = String.format("Role must be either %s or %s!", UserRole.EDITOR.name(), UserRole.VIEWER.name());
-    }
-
-    return problem;
-  }
-
-  private String validate(InvitationAcceptDTO dto) {
-    String problem = null;
-
-    if (dto == null) {
-      problem = "Invalid invitation data!";
-    }
-
-    if (problem == null) {
-      if (StringUtils.isBlank(dto.getToken())) {
-        problem = Responses.Invalid.TOKEN.getReason();
-      }
-    }
-
-    if (problem == null) {
-      PasswordDTO pswDTO = new PasswordDTO();
-      pswDTO.setPassword(dto.getPassword());
-      pswDTO.setRepeatPassword(dto.getRepeatPassword());
-      problem = PasswordValidator.verify(pswDTO, true, false);
     }
 
     return problem;

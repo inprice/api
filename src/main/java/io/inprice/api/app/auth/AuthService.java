@@ -13,8 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import eu.bitwalker.useragentutils.UserAgent;
+import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
+import io.inprice.api.app.auth.dto.InvitationSendDTO;
 import io.inprice.api.app.auth.dto.LoginDTO;
 import io.inprice.api.app.auth.dto.PasswordDTO;
+import io.inprice.api.app.auth.dto.UserDTO;
 import io.inprice.api.app.token.Tokens;
 import io.inprice.api.app.token.TokenType;
 import io.inprice.api.consts.Consts;
@@ -291,6 +294,99 @@ public class AuthService {
       }
     }
     return Responses.NotFound.MEMBERSHIP;
+  }
+
+  Response acceptNewUser(InvitationAcceptDTO acceptDto, String timezone) {
+    String problem = validateInvitation(acceptDto);
+
+    if (problem == null) {
+      Response res = Responses.DataProblem.DB_PROBLEM;
+
+      InvitationSendDTO sendDto = Tokens.get(TokenType.INVITATION, acceptDto.getToken());
+      if (sendDto != null) {
+
+        try (Handle handle = Database.getHandle()) {
+          AuthDao dao = handle.attach(AuthDao.class);
+    
+          Membership membership = dao.findMembershipdByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getCompanyId());
+          if (membership != null) {
+
+            User user = dao.findUserByEmail(sendDto.getEmail());
+            if (user == null) { //user creation
+              UserDTO dto = new UserDTO();
+              dto.setName(sendDto.getEmail().split("@")[0]);
+              dto.setEmail(sendDto.getEmail());
+              dto.setTimezone(timezone);
+
+              final String salt = BCrypt.gensalt(Props.APP_SALT_ROUNDS());
+              final String hash = BCrypt.hashpw(acceptDto.getPassword(), salt);
+
+              long savedId = dao.insertUser(dto, salt, hash);
+
+              if (savedId > 0) {
+                User newUser = new User(); //user in response is needed for auto login
+                newUser.setId(savedId);
+                newUser.setEmail(dto.getEmail());
+                newUser.setName(dto.getName());
+                newUser.setTimezone(dto.getTimezone());
+                res = new Response(user);
+              }
+            } else {
+              res = Responses.Already.Defined.MEMBERSHIP;
+            }
+
+            if (res.isOK()) {
+              User newUser = res.getData();
+              boolean isActivated = 
+                dao.activateMembership(
+                  newUser.getId(),
+                  UserStatus.JOINED.name(),
+                  newUser.getEmail(),
+                  UserStatus.PENDING.name(),
+                  sendDto.getCompanyId()
+                );
+
+              if (isActivated) {
+                Tokens.remove(TokenType.INVITATION, acceptDto.getToken());
+              } else {
+                res = Responses.NotFound.MEMBERSHIP;
+              }
+            }
+    
+          } else {
+            res = Responses.NotActive.INVITATION;
+          }
+        }
+
+      } else {
+        return Responses.Invalid.TOKEN;
+      }
+    }
+
+    return new Response(problem);
+  }
+              
+  private String validateInvitation(InvitationAcceptDTO dto) {
+    String problem = null;
+
+    if (dto == null) {
+      problem = "Invalid invitation data!";
+    }
+
+    if (problem == null) {
+      if (StringUtils.isBlank(dto.getToken())) {
+        problem = Responses.Invalid.TOKEN.getReason();
+      }
+    }
+
+    if (problem == null) {
+      PasswordDTO pswDTO = new PasswordDTO();
+      pswDTO.setPassword(dto.getPassword());
+      pswDTO.setRepeatPassword(dto.getRepeatPassword());
+      problem = PasswordValidator.verify(pswDTO, true, false);
+    }
+
+    return problem;
   }
 
   private Map<String, Object> findSessionInfoByEmail(Context ctx, String email) {

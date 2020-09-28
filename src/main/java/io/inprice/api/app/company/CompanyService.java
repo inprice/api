@@ -311,7 +311,7 @@ class CompanyService {
           );
 
         if (membershipId > 0) {
-          log.info("A new user just registered a new company. C.Name: {}, U.Email: {} ", companyName, email);
+          log.info("A new user just registered a new company. C.Name: {}, U.Email: {} ", companyName, userEmail);
           return Responses.OK;
         }
       }
