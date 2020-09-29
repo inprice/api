@@ -11,6 +11,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.app.dashboard.mapper.Most10Product;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.RedisClient;
@@ -35,12 +36,13 @@ class DashboardService {
       report = new HashMap<>(4);
 
       try (Handle handle = Database.getHandle()) {
-        DashboardDao dao = handle.attach(DashboardDao.class);
+        CompanyDao companyDao = handle.attach(CompanyDao.class);
+        DashboardDao dashboardDao = handle.attach(DashboardDao.class);
 
         report.put("date", DateUtils.formatLongDate(new Date()));
-        report.put("products", getProducts(dao));
-        report.put("links", getLinks(dao));
-        report.put("company", dao.findCompanyById(CurrentUser.getCompanyId()));
+        report.put("products", getProducts(dashboardDao));
+        report.put("links", getLinks(dashboardDao));
+        report.put("company", companyDao.findById(CurrentUser.getCompanyId()));
 
         RedisClient.getDashboardsMap().put(CurrentUser.getCompanyId(), report, 5, TimeUnit.MINUTES);
         return new Response(report);
@@ -53,24 +55,24 @@ class DashboardService {
     return Responses.DataProblem.DB_PROBLEM;
   }
 
-  private Map<String, Object> getProducts(DashboardDao dao) {
+  private Map<String, Object> getProducts(DashboardDao dashboardDao) {
     Map<String, Object> result = new HashMap<>(2);
-    result.put("extremePrices", find10ProductsHavingExtremePrices(dao));
-    result.put("positionDists", findProductPositionDists(dao));
+    result.put("extremePrices", find10ProductsHavingExtremePrices(dashboardDao));
+    result.put("positionDists", findProductPositionDists(dashboardDao));
     return result;
   }
 
-  private Map<String, Object> getLinks(DashboardDao dao) {
+  private Map<String, Object> getLinks(DashboardDao dashboardDao) {
     Map<String, Object> result = new HashMap<>(2);
-    result.put("statusDists", findLinkStatusDists(dao));
-    result.put("mru25", dao.findMR25Link(CurrentUser.getCompanyId()));
+    result.put("statusDists", findLinkStatusDists(dashboardDao));
+    result.put("mru25", dashboardDao.findMR25Link(CurrentUser.getCompanyId()));
     return result;
   }
 
   /**
    * finding link distributions by the LinkStatus
    */
-  private int[] findLinkStatusDists(DashboardDao dao) {
+  private int[] findLinkStatusDists(DashboardDao dashboardDao) {
     Map<String, Integer> stats = new HashMap<>(6);
     int i = 0;
     stats.put(LinkStatus.TOBE_CLASSIFIED.name(), i++);
@@ -82,7 +84,7 @@ class DashboardService {
 
     int[] result = new int[i];
 
-    Map<String, Integer> statusDistMap = dao.findStatusDists(CurrentUser.getCompanyId());
+    Map<String, Integer> statusDistMap = dashboardDao.findStatusDists(CurrentUser.getCompanyId());
     if (statusDistMap != null && statusDistMap.size() > 0) {
       for (Entry<String, Integer> entry: statusDistMap.entrySet()) {
         Integer index = stats.get(entry.getKey());
@@ -97,10 +99,10 @@ class DashboardService {
   /**
    * finding product distributions by the Positions
    */
-  private int[] findProductPositionDists(DashboardDao dao) {
+  private int[] findProductPositionDists(DashboardDao dashboardDao) {
     int[] result = new int[5];
 
-    Map<Integer, Integer> positionDistMap = dao.findPositionDists(CurrentUser.getCompanyId());
+    Map<Integer, Integer> positionDistMap = dashboardDao.findPositionDists(CurrentUser.getCompanyId());
     if (positionDistMap != null && positionDistMap.size() > 0) {
       for (Entry<Integer, Integer> entry: positionDistMap.entrySet()) {
         result[entry.getKey()-1] = entry.getValue();
@@ -113,12 +115,12 @@ class DashboardService {
   /**
    * finding 10 Products having lowest / highest prices
    */
-  private Map<String, List<Most10Product>> find10ProductsHavingExtremePrices(DashboardDao dao) {
+  private Map<String, List<Most10Product>> find10ProductsHavingExtremePrices(DashboardDao dashboardDao) {
     Map<String, List<Most10Product>> result = new HashMap<>(2);
 
     Position[] positions = { Position.LOWEST, Position.HIGHEST };
     for (Position pos: positions) {
-      result.put(pos.name().toLowerCase(), dao.findMost10Product(pos.ordinal()+1, CurrentUser.getCompanyId()));
+      result.put(pos.name().toLowerCase(), dashboardDao.findMost10Product(pos.ordinal()+1, CurrentUser.getCompanyId()));
     }
 
     return result;

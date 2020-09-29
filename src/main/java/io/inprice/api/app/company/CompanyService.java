@@ -11,10 +11,13 @@ import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.auth.SessionDao;
 import io.inprice.api.app.auth.dto.PasswordDTO;
 import io.inprice.api.app.company.dto.CreateDTO;
 import io.inprice.api.app.company.dto.RegisterDTO;
+import io.inprice.api.app.membership.MembershipDao;
 import io.inprice.api.app.token.Tokens;
+import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.token.TokenType;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
@@ -55,13 +58,14 @@ class CompanyService {
     if (res.isOK()) {
 
       try (Handle handle = Database.getHandle()) {
-        CompanyDao dao = handle.attach(CompanyDao.class);
+        UserDao userDao = handle.attach(UserDao.class);
+        CompanyDao companyDao = handle.attach(CompanyDao.class);
 
         boolean isCompanyDefined = false;
 
-        User user = dao.findUserByEmail(dto.getEmail());
+        User user = userDao.findByEmail(dto.getEmail());
         if (user != null) {
-          Company found = dao.findByNameAndAdminId(dto.getCompanyName(), user.getId());
+          Company found = companyDao.findByNameAndAdminId(dto.getCompanyName(), user.getId());
           isCompanyDefined = (found != null);
         }
 
@@ -102,9 +106,9 @@ class CompanyService {
 
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(h -> {
-          CompanyDao dao = h.attach(CompanyDao.class);
-  
-          User user = dao.findUserByEmail(dto.getEmail());
+          UserDao userDao = handle.attach(UserDao.class);
+
+          User user = userDao.findByEmail(dto.getEmail());
           if (user == null) {
             user = new User();
             user.setEmail(dto.getEmail());
@@ -116,7 +120,7 @@ class CompanyService {
             final String hash = BCrypt.hashpw(dto.getPassword(), salt);
   
             user.setId(
-              dao.insertUser(
+              userDao.insert(
                 user.getEmail(), 
                 user.getName(), 
                 clientInfo.get(Consts.TIMEZONE), 
@@ -128,7 +132,7 @@ class CompanyService {
           if (user.getId() != null) {
             res[0] = 
               createCompany(
-                dao,
+                handle,
                 user.getId(),
                 user.getEmail(),
                 dto.getCompanyName(),
@@ -168,10 +172,9 @@ class CompanyService {
     if (res[0].isOK()) {
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(h -> {
-          CompanyDao dao = h.attach(CompanyDao.class);
           res[0] = 
             createCompany(
-              dao,
+              handle,
               CurrentUser.getUserId(),
               CurrentUser.getEmail(),
               dto.getName(),
@@ -193,9 +196,9 @@ class CompanyService {
       boolean isOK = false;
 
       try (Handle handle = Database.getHandle()) {
-        CompanyDao dao = handle.attach(CompanyDao.class);
+        CompanyDao companyDao = handle.attach(CompanyDao.class);
         isOK =
-          dao.updateCompany(
+          companyDao.update(
             dto.getName(),
             dto.getCurrencyCode(),
             dto.getCurrencyFormat(),
@@ -218,13 +221,15 @@ class CompanyService {
 
     try (Handle handle = Database.getHandle()) {
       handle.inTransaction(h -> {
-        CompanyDao dao = h.attach(CompanyDao.class);
+        UserDao userDao = h.attach(UserDao.class);
+        CompanyDao companyDao = h.attach(CompanyDao.class);
+        SessionDao sessionDao = h.attach(SessionDao.class);
 
-        User user = dao.findUserById(CurrentUser.getUserId());
+        User user = userDao.findById(CurrentUser.getUserId());
         String phash = BCrypt.hashpw(password, user.getPasswordSalt());
 
         if (phash.equals(user.getPasswordHash())) {
-          Company company = dao.findByAdminId(CurrentUser.getCompanyId());
+          Company company = companyDao.findByAdminId(CurrentUser.getCompanyId());
 
           if (company != null) {
             String where = "where company_id=" + CurrentUser.getCompanyId();
@@ -246,7 +251,7 @@ class CompanyService {
             batch.add("SET FOREIGN_KEY_CHECKS=1");
             batch.execute();
 
-            List<String> hashList = dao.getSessionHashesByCompanyId(CurrentUser.getCompanyId());
+            List<String> hashList = sessionDao.findHashesByCompanyId(CurrentUser.getCompanyId());
             if (hashList != null && hashList.size() > 0) {
               for (String hash : hashList) {
                 RedisClient.removeSesion(hash);
@@ -289,11 +294,14 @@ class CompanyService {
     }
   }
 
-  private Response createCompany(CompanyDao dao, Long userId, String userEmail, String companyName, String currencyCode, String currencyFormat) {
-    Company company = dao.findByNameAndAdminId(companyName, userId);
+  private Response createCompany(Handle handle, Long userId, String userEmail, String companyName, String currencyCode, String currencyFormat) {
+    CompanyDao companyDao = handle.attach(CompanyDao.class);
+    MembershipDao membershipDao = handle.attach(MembershipDao.class);
+
+    Company company = companyDao.findByNameAndAdminId(companyName, userId);
     if (company == null) {
       Long companyId = 
-        dao.insertCompany(
+        companyDao.insert(
           userId, 
           companyName,
           currencyCode,
@@ -302,7 +310,7 @@ class CompanyService {
 
       if (companyId != null) {
         long membershipId = 
-          dao.insertMembership(
+          membershipDao.insert(
             userId,
             userEmail,
             companyId,

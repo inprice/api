@@ -24,21 +24,21 @@ class LinkService {
 
       if (res.isOK()) {
         try (Handle handle = Database.getHandle()) {
-          LinkDao dao = handle.attach(LinkDao.class);
+          LinkDao linkDao = handle.attach(LinkDao.class);
 
           String urlHash = DigestUtils.md5Hex(dto.getUrl());
-          Link link = dao.findByProductIdAndUrlHash(dto.getProductId(), urlHash);
+          Link link = linkDao.findByProductIdAndUrlHash(dto.getProductId(), urlHash);
           if (link == null) {
 
-            Link sample = dao.findByUrlHash(urlHash);
+            Link sample = linkDao.findByUrlHash(urlHash);
             if (sample != null) { // if any, lets clone it
-              long id = dao.insertLink(link, dto.getProductId(), CurrentUser.getCompanyId());
+              long id = linkDao.insert(link, dto.getProductId(), CurrentUser.getCompanyId());
               if (id > 0) {
                 sample.setId(id);
                 res = new Response(sample);
               }
             } else {
-              long id = dao.insertLink(dto.getUrl(), urlHash, dto.getProductId(), CurrentUser.getCompanyId());
+              long id = linkDao.insert(dto.getUrl(), urlHash, dto.getProductId(), CurrentUser.getCompanyId());
               if (id > 0) {
                 sample = new Link();
                 sample.setId(id);
@@ -91,9 +91,9 @@ class LinkService {
       try (Handle handle = Database.getHandle()) {
 
         handle.inTransaction(h -> {
-          LinkDao dao = handle.attach(LinkDao.class);
+          LinkDao linkDao = handle.attach(LinkDao.class);
         
-          Link link = dao.findById(id);
+          Link link = linkDao.findById(id);
           if (link != null) {
 
             if (link.getCompanyId().equals(CurrentUser.getCompanyId())) {
@@ -127,7 +127,7 @@ class LinkService {
                 }
 
                 if (suitable) {
-                  boolean isOK = dao.changeStatus(id, newStatus.name(), link.getCompanyId());
+                  boolean isOK = linkDao.changeStatus(id, newStatus.name(), link.getCompanyId());
                   if (isOK) {
                     res[0] = Responses.OK;
                   }

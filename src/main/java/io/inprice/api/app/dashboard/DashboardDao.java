@@ -13,19 +13,13 @@ import io.inprice.api.app.dashboard.mapper.MRU25Link;
 import io.inprice.api.app.dashboard.mapper.MRU25LinkMapper;
 import io.inprice.api.app.dashboard.mapper.Most10Product;
 import io.inprice.api.app.dashboard.mapper.Most10ProductMapper;
-import io.inprice.common.mappers.CompanyMapper;
-import io.inprice.common.models.Company;
 
 interface DashboardDao {
-
-  @SqlQuery("select * from company where id=:id")
-  @UseRowMapper(CompanyMapper.class)
-  Company findCompanyById(@Bind Long id);
 
   @SqlQuery("select status, count(1) as counter from link where company_id=:companyId group by status")
   @KeyColumn("status")
   @ValueColumn("counter")
-  Map<String, Integer> findStatusDists(@Bind Long companyId);
+  Map<String, Integer> findStatusDists(@Bind("companyId") Long companyId);
 
   @SqlQuery(
     "select pp.position, count(1) as counter " +
@@ -37,7 +31,7 @@ interface DashboardDao {
   )
   @KeyColumn("position")
   @ValueColumn("counter")
-  Map<Integer, Integer> findPositionDists(@Bind Long companyId);
+  Map<Integer, Integer> findPositionDists(@Bind("companyId") Long companyId);
 
   @SqlQuery(
     "select p.name as product_name, s.name as platform, l.seller, l.price, l.status, l.last_update, l.created_at, l.url from link as l " + 
@@ -48,7 +42,7 @@ interface DashboardDao {
     "limit 25"
   )
   @UseRowMapper(MRU25LinkMapper.class)
-  List<MRU25Link> findMR25Link(@Bind Long companyId);
+  List<MRU25Link> findMR25Link(@Bind("companyId") Long companyId);
 
   @SqlQuery(
     "select p.id, p.name, p.price, p.updated_at, p.created_at, pp.links, pp.ranking, pp.ranking_with from product as p " +
@@ -59,6 +53,6 @@ interface DashboardDao {
     "limit 10"
   )
   @UseRowMapper(Most10ProductMapper.class)
-  List<Most10Product> findMost10Product(@Bind Integer position, @Bind Long companyId);
+  List<Most10Product> findMost10Product(@Bind("position") Integer position, @Bind("companyId") Long companyId);
 
 }

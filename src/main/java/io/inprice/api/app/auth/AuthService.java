@@ -18,7 +18,9 @@ import io.inprice.api.app.auth.dto.InvitationSendDTO;
 import io.inprice.api.app.auth.dto.LoginDTO;
 import io.inprice.api.app.auth.dto.PasswordDTO;
 import io.inprice.api.app.auth.dto.UserDTO;
+import io.inprice.api.app.membership.MembershipDao;
 import io.inprice.api.app.token.Tokens;
+import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.token.TokenType;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
@@ -61,9 +63,9 @@ public class AuthService {
       if (problem == null) {
 
         try (Handle handle = Database.getHandle()) {
-          AuthDao dao = handle.attach(AuthDao.class);
+          UserDao userDao = handle.attach(UserDao.class);
     
-          User user = dao.findUserByEmail(dto.getEmail());
+          User user = userDao.findByEmail(dto.getEmail());
           if (user != null) {
             String salt = user.getPasswordSalt();
             String hash = BCrypt.hashpw(dto.getPassword(), salt);
@@ -93,9 +95,9 @@ public class AuthService {
     if (problem == null) {
 
       try (Handle handle = Database.getHandle()) {
-        AuthDao dao = handle.attach(AuthDao.class);
+        UserDao userDao = handle.attach(UserDao.class);
   
-        User user = dao.findUserByEmail(email);
+        User user = userDao.findByEmail(email);
         if (user != null) {
           try {
             Map<String, Object> dataMap = new HashMap<>(3);
@@ -125,26 +127,27 @@ public class AuthService {
 
       if (problem == null) {
         try (Handle handle = Database.getHandle()) {
-          AuthDao dao = handle.attach(AuthDao.class);
+          UserDao userDao = handle.attach(UserDao.class);
+          SessionDao sessionDao = handle.attach(SessionDao.class);
 
           final String email = Tokens.get(TokenType.FORGOT_PASSWORD, dto.getToken());
           if (email != null) {
 
-            User user = dao.findUserByEmail(email);
+            User user = userDao.findByEmail(email);
             if (user != null) {
               final String salt = BCrypt.gensalt(Props.APP_SALT_ROUNDS());
               final String hash = BCrypt.hashpw(dto.getPassword(), salt);
-              boolean isOK = dao.updateUserPassword(user.getId(), salt, hash);
+              boolean isOK = userDao.updatePassword(user.getId(), salt, hash);
 
               //closing session
               if (isOK) {
                 Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
-                List<ForDatabase> sessions = dao.getUserSessions(user.getId());
+                List<ForDatabase> sessions = sessionDao.findListByUserId(user.getId());
                 if (sessions != null && sessions.size() > 0) {
                   for (ForDatabase ses : sessions) {
                     RedisClient.removeSesion(ses.getHash());
                   }
-                  dao.deleteSessionByUserId(user.getId());
+                  sessionDao.deleteByUserId(user.getId());
                 }
                 return createSession(ctx, user);
 
@@ -182,8 +185,8 @@ public class AuthService {
           boolean isOK = false;
           if (hashList.size() > 0) {
             try (Handle handle = Database.getHandle()) {
-              AuthDao dao = handle.attach(AuthDao.class);
-              isOK = dao.deleteSessionByHashList(hashList);
+              SessionDao sessionDao = handle.attach(SessionDao.class);
+              isOK = sessionDao.deleteByHashList(hashList);
             }
           }
 
@@ -198,9 +201,10 @@ public class AuthService {
     Integer sessionNo = null;
 
     try (Handle handle = Database.getHandle()) {
-      AuthDao dao = handle.attach(AuthDao.class);
+      SessionDao sessionDao = handle.attach(SessionDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      List<Membership> membershipList = dao.getUserMemberships(user.getEmail(), UserStatus.JOINED.name());
+      List<Membership> membershipList = membershipDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED.name());
       if (membershipList != null && membershipList.size() > 0) {
 
         List<ForRedis> redisSesList = new ArrayList<>();
@@ -254,7 +258,7 @@ public class AuthService {
           boolean isSaved = false;
 
           if (RedisClient.addSesions(redisSesList)) {
-            boolean[] anyAffected = dao.addSessions(dbSesList);
+            boolean[] anyAffected = sessionDao.insert(dbSesList);
             if (anyAffected != null && anyAffected.length > 0) {
               for (boolean b : anyAffected) {
                 if (b) {
@@ -306,12 +310,13 @@ public class AuthService {
       if (sendDto != null) {
 
         try (Handle handle = Database.getHandle()) {
-          AuthDao dao = handle.attach(AuthDao.class);
+          UserDao userDao = handle.attach(UserDao.class);
+          MembershipDao membershipDao = handle.attach(MembershipDao.class);
     
-          Membership membership = dao.findMembershipdByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getCompanyId());
+          Membership membership = membershipDao.findListByEmailAndStatusAndCompanyId(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getCompanyId());
           if (membership != null) {
 
-            User user = dao.findUserByEmail(sendDto.getEmail());
+            User user = userDao.findByEmail(sendDto.getEmail());
             if (user == null) { //user creation
               UserDTO dto = new UserDTO();
               dto.setName(sendDto.getEmail().split("@")[0]);
@@ -321,7 +326,7 @@ public class AuthService {
               final String salt = BCrypt.gensalt(Props.APP_SALT_ROUNDS());
               final String hash = BCrypt.hashpw(acceptDto.getPassword(), salt);
 
-              long savedId = dao.insertUser(dto, salt, hash);
+              long savedId = userDao.insert(dto.getEmail(), dto.getName(), dto.getTimezone(), salt, hash);
 
               if (savedId > 0) {
                 User newUser = new User(); //user in response is needed for auto login
@@ -338,7 +343,7 @@ public class AuthService {
             if (res.isOK()) {
               User newUser = res.getData();
               boolean isActivated = 
-                dao.activateMembership(
+                membershipDao.activate(
                   newUser.getId(),
                   UserStatus.JOINED.name(),
                   newUser.getEmail(),

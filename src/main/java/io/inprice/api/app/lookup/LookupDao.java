@@ -21,15 +21,15 @@ interface LookupDao {
 
   @SqlUpdate("insert into lookup (company_id, type, name) values (:companyId, :type, :name)")
   @GetGeneratedKeys("id")
-  long insertLookup(@Bind Long companyId, @Bind String type, @Bind String name);
+  long insert(@Bind("companyId") Long companyId, @Bind("type") String type, @Bind("name") String name);
 
   @SqlQuery("select * from lookup where company_id=:companyId and type=:type and name=:name")
   @UseRowMapper(LookupMapper.class)
-  Lookup findByTypeAndName(@Bind String type, @Bind String name, @Bind Long companyId);
+  Lookup findByTypeAndName(@Bind("type") String type, @Bind("name") String name, @Bind("companyId") Long companyId);
 
   @SqlQuery("select * from lookup where company_id=:companyId and type=:type order by name")
   @UseRowMapper(LookupMapper.class)
-  List<Lookup> getList(@Bind Long companyId, @Bind String type);
+  List<Lookup> findListByCompanyIdAndType(@Bind("companyId") Long companyId, @Bind("type") String type);
 
   @SqlQuery(
     "select pp.position, count(1) as counter from product as p " +
@@ -40,7 +40,7 @@ interface LookupDao {
   )
   @KeyColumn("position")
   @ValueColumn("counter")
-  Map<Integer, Integer> findPositionDists(@Bind Long companyId);
+  Map<Integer, Integer> findPositionDists(@Bind("companyId") Long companyId);
 
   @SqlQuery(
     "select l.id, l.name, count(1) as counter from lookup as l " +
@@ -50,6 +50,6 @@ interface LookupDao {
     "order by l.name "
   )
   @UseRowMapper(LookupWithInfoMapper.class)
-  List<LookupWithInfo> findLookupsWithInfo(@Define String type, @Bind Long companyId);
+  List<LookupWithInfo> findLookupsWithInfo(@Define("type") String type, @Bind("companyId") Long companyId);
 
 }

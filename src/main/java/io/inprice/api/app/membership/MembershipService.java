@@ -12,6 +12,7 @@ import io.inprice.api.app.auth.dto.InvitationSendDTO;
 import io.inprice.api.app.membership.dto.InvitationUpdateDTO;
 import io.inprice.api.app.token.TokenType;
 import io.inprice.api.app.token.Tokens;
+import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.email.EmailSender;
 import io.inprice.api.email.TemplateRenderer;
@@ -36,9 +37,9 @@ class MembershipService {
     Response res = Responses.NotFound.MEMBERSHIP;
 
     try (Handle handle = Database.getHandle()) {
-      MembershipDao dao = handle.attach(MembershipDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      List<Membership> list = dao.findListByNotEmail(CurrentUser.getEmail(), CurrentUser.getCompanyId());
+      List<Membership> list = membershipDao.findListByNotEmail(CurrentUser.getEmail(), CurrentUser.getCompanyId());
       if (list != null && list.size() > 0) {
         res = new Response(list);
       }
@@ -51,14 +52,15 @@ class MembershipService {
     if (res.isOK()) {
 
       try (Handle handle = Database.getHandle()) {
-        MembershipDao dao = handle.attach(MembershipDao.class);
+        UserDao userDao = handle.attach(UserDao.class);
+        MembershipDao membershipDao = handle.attach(MembershipDao.class);
   
-        Membership mem = dao.findByEmail(CurrentUser.getEmail(), CurrentUser.getCompanyId());
+        Membership mem = membershipDao.findByEmail(CurrentUser.getEmail(), CurrentUser.getCompanyId());
         if (mem == null) {
-          boolean isAdded = dao.insertInvitation(dto.getEmail(), dto.getRole().name(), CurrentUser.getCompanyId());
+          boolean isAdded = membershipDao.insertInvitation(dto.getEmail(), dto.getRole().name(), CurrentUser.getCompanyId());
           if (isAdded) {
             dto.setCompanyId(CurrentUser.getCompanyId());
-            res = sendMail(dao, dto);
+            res = sendMail(userDao, dto);
           }
         } else {
           return new Response("A user with " + dto.getEmail() + " address is already added to this company!");
@@ -72,17 +74,18 @@ class MembershipService {
     Response res = Responses.DataProblem.NOT_SUITABLE;
 
     try (Handle handle = Database.getHandle()) {
-      MembershipDao dao = handle.attach(MembershipDao.class);
+      UserDao userDao = handle.attach(UserDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      Membership mem = dao.findById(memId);
+      Membership mem = membershipDao.findById(memId);
       if (mem != null) {
-        boolean isOK = dao.increaseSendingCount(memId, UserStatus.PENDING.name(), CurrentUser.getCompanyId());
+        boolean isOK = membershipDao.increaseSendingCount(memId, UserStatus.PENDING.name(), CurrentUser.getCompanyId());
         if (isOK) {
           InvitationSendDTO dto = new InvitationSendDTO();
           dto.setEmail(mem.getEmail());
           dto.setRole(mem.getRole());
           dto.setCompanyId(CurrentUser.getCompanyId());
-          res = sendMail(dao, dto);
+          res = sendMail(userDao, dto);
         }
       }
     }
@@ -94,13 +97,13 @@ class MembershipService {
     Response res = Responses.NotFound.MEMBERSHIP;
 
     try (Handle handle = Database.getHandle()) {
-      MembershipDao dao = handle.attach(MembershipDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      Membership mem = dao.findById(memId);
+      Membership mem = membershipDao.findById(memId);
       if (mem != null) {
         if (! mem.getCompanyId().equals(CurrentUser.getCompanyId())) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {
-            boolean isOK = dao.setStatusDeleted(memId, UserStatus.DELETED.name(), CurrentUser.getCompanyId());
+            boolean isOK = membershipDao.setStatusDeleted(memId, UserStatus.DELETED.name(), CurrentUser.getCompanyId());
             if (isOK) {
               res = Responses.OK;
             } else {
@@ -124,9 +127,9 @@ class MembershipService {
 
     if (problem == null) {
       try (Handle handle = Database.getHandle()) {
-        MembershipDao dao = handle.attach(MembershipDao.class);
+        MembershipDao membershipDao = handle.attach(MembershipDao.class);
   
-        boolean isOK = dao.changeRole(dto.getId(), dto.getRole().name(), CurrentUser.getCompanyId());
+        boolean isOK = membershipDao.changeRole(dto.getId(), dto.getRole().name(), CurrentUser.getCompanyId());
         if (isOK) {
           return Responses.OK;
         } else {
@@ -139,9 +142,9 @@ class MembershipService {
 
   Response pause(Long id) {
     try (Handle handle = Database.getHandle()) {
-      MembershipDao dao = handle.attach(MembershipDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      boolean isOK = dao.pause(id, CurrentUser.getCompanyId());
+      boolean isOK = membershipDao.pause(id, CurrentUser.getCompanyId());
       if (isOK) {
         return Responses.OK;
       }
@@ -151,9 +154,9 @@ class MembershipService {
 
   Response resume(Long id) {
     try (Handle handle = Database.getHandle()) {
-      MembershipDao dao = handle.attach(MembershipDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      boolean isOK = dao.resume(id, CurrentUser.getCompanyId());
+      boolean isOK = membershipDao.resume(id, CurrentUser.getCompanyId());
       if (isOK) {
         return Responses.OK;
       }
@@ -161,7 +164,7 @@ class MembershipService {
     return Responses.DataProblem.NOT_SUITABLE;
   }
 
-  private Response sendMail(MembershipDao dao, InvitationSendDTO dto) {
+  private Response sendMail(UserDao userDao, InvitationSendDTO dto) {
     Map<String, Object> dataMap = new HashMap<>(5);
     dataMap.put("company", CurrentUser.getCompanyName());
     dataMap.put("admin", CurrentUser.getUserName());
@@ -169,7 +172,7 @@ class MembershipService {
     String message = null;
     String templateName = null;
 
-    String userName = dao.findUserNameByEmail(dto.getEmail());
+    String userName = userDao.findUserNameByEmail(dto.getEmail());
     if (userName != null) {
       dataMap.put("user", userName);
       templateName = "invitation-for-existing-users";

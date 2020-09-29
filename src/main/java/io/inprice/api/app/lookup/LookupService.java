@@ -32,17 +32,17 @@ class LookupService {
 
     if (res.isOK()) {
       try (Handle handle = Database.getHandle()) {
-        LookupDao dao = handle.attach(LookupDao.class);
+        LookupDao lookupDao = handle.attach(LookupDao.class);
 
         Map<String, Object> data = new HashMap<>(3);
         data.put("type", dto.getType());
-        data.put("items", getConvertedList(dao, dto.getType()));
+        data.put("items", getConvertedList(lookupDao, dto.getType()));
 
-        Lookup lookup = dao.findByTypeAndName(dto.getType(), dto.getNewValue(), CurrentUser.getCompanyId());
+        Lookup lookup = lookupDao.findByTypeAndName(dto.getType(), dto.getNewValue(), CurrentUser.getCompanyId());
         if (lookup != null) {
           data.put("selected", lookup.getId());
         } else {
-          long addedId = dao.insertLookup(CurrentUser.getCompanyId(), dto.getType(), SqlHelper.clear(dto.getNewValue()));
+          long addedId = lookupDao.insert(CurrentUser.getCompanyId(), dto.getType(), SqlHelper.clear(dto.getNewValue()));
           if (addedId > 0) {
             data.put("selected", addedId);
           }
@@ -58,8 +58,8 @@ class LookupService {
 
   Response getList(LookupType type) {
     try (Handle handle = Database.getHandle()) {
-      LookupDao dao = handle.attach(LookupDao.class);
-      return new Response(getConvertedList(dao, type.name()));
+      LookupDao lookupDao = handle.attach(LookupDao.class);
+      return new Response(getConvertedList(lookupDao, type.name()));
     }
   }
 
@@ -67,9 +67,9 @@ class LookupService {
     Map<String, List<Pair<Long, String>>> data = new HashMap<>();
 
     try (Handle handle = Database.getHandle()) {
-      LookupDao dao = handle.attach(LookupDao.class);
+      LookupDao lookupDao = handle.attach(LookupDao.class);
 
-      Map<Integer, Integer> positions = dao.findPositionDists(CurrentUser.getCompanyId());
+      Map<Integer, Integer> positions = lookupDao.findPositionDists(CurrentUser.getCompanyId());
       if (positions != null && positions.size() > 0) {
         List<Pair<Long, String>> entryList = new ArrayList<>();
         for (Entry<Integer, Integer> entry: positions.entrySet()) {
@@ -89,7 +89,7 @@ class LookupService {
       String[] types = { LookupType.BRAND.name(), LookupType.CATEGORY.name() };
 
       for (String type: types) {
-        List<LookupWithInfo> lookups = dao.findLookupsWithInfo(type.toLowerCase(), CurrentUser.getCompanyId());
+        List<LookupWithInfo> lookups = lookupDao.findLookupsWithInfo(type.toLowerCase(), CurrentUser.getCompanyId());
         if (lookups != null && lookups.size() > 0) {
           List<Pair<Long, String>> entryList = new ArrayList<>();
           for (LookupWithInfo lwi: lookups) {
@@ -109,10 +109,10 @@ class LookupService {
 
   }
 
-  private List<Map<String, Object>> getConvertedList(LookupDao dao, String type) {
+  private List<Map<String, Object>> getConvertedList(LookupDao lookupDao, String type) {
     List<Map<String, Object>> data = new ArrayList<>();
 
-    List<Lookup> lookups = dao.getList(CurrentUser.getCompanyId(), type);
+    List<Lookup> lookups = lookupDao.findListByCompanyIdAndType(CurrentUser.getCompanyId(), type);
     if (lookups != null && lookups.size() > 0) {
       for (Lookup lu: lookups) {
         Map<String, Object> map = new HashMap<>(2);
