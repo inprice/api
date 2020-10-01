@@ -30,9 +30,4 @@ interface AuthDao {
   //@SqlUpdate("update user_session set accessed_at = now() where _hash=:hash")
   //boolean refreshAccessedAt(@Bind String hash);
 
-  //TODO: userdao tarafına alınmalı
-  //@SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId and _hash not in (<hashList>)")
-  //@UseRowMapper(DBSessionMapper.class)
-  //List<ForDatabase> getOpenedSessions(@Bind Long userId, @BindList List<String> hashList);
-
 }

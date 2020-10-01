@@ -1,5 +1,7 @@
 package io.inprice.api.app.link;
 
+import java.util.List;
+
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -9,7 +11,7 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.models.Link;
 
-interface LinkDao {
+public interface LinkDao {
 
   @SqlQuery("select * from link where id=:id")
   @UseRowMapper(LinkMapper.class)
@@ -51,5 +53,15 @@ interface LinkDao {
     "values (:link_id, :status, :productId, :companyId)"
   )
   boolean insertLinkHistory(@Bind("linkId") Long linkId, @Bind("status") String status, @Bind("productId") Long productId, @Bind("companyId") Long companyId);
+
+  @SqlQuery(
+    "select l.*, s.name as platform from link as l " + 
+    "left join site as s on s.id = l.site_id " + 
+    "where product_id=:productId " +
+    "  and company_id=:companyId " +
+    "order by status, seller"
+  )
+  @UseRowMapper(LinkMapper.class)
+  List<Link> findListByProductIdAndCompanyId(@Bind("productId") Long productId, @Bind("productId") Long companyId);
 
 }

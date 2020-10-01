@@ -11,7 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
-import io.inprice.api.app.plan.PlanRepository;
+import io.inprice.api.app.subscription.SubscriptionDao;
+import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
@@ -49,12 +50,13 @@ class CouponService {
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(h -> {
           CouponDao couponDao = handle.attach(CouponDao.class);
-          CompanyDao companyDao = handle.attach(CompanyDao.class);
 
           Coupon coupon = couponDao.findByCode(code);
           if (coupon != null) {
             if (coupon.getIssuedAt() == null) {
               if (coupon.getIssuedCompanyId() == null || coupon.getIssuedCompanyId().equals(CurrentUser.getCompanyId())) {
+
+                CompanyDao companyDao = handle.attach(CompanyDao.class);
 
                 Company company = companyDao.findById(CurrentUser.getCompanyId());
                 if (!company.getSubsStatus().equals(SubsStatus.ACTIVE) || !company.getSubsStatus().equals(SubsStatus.COUPONED)) {
@@ -68,11 +70,11 @@ class CouponService {
                     usePlanProdLimit = true;
                   }
 
-                  Plan plan = PlanRepository.getById(planId);
+                  Plan plan = PlanDao.getById(planId);
                   if (usePlanProdLimit) productLimit = plan.getProductLimit();
 
                   boolean isOK = 
-                    couponDao.updateSubscription(
+                    companyDao.updateSubscription(
                       CurrentUser.getCompanyId(),
                       SubsStatus.COUPONED.name(),
                       coupon.getDays(),
@@ -84,6 +86,8 @@ class CouponService {
                     isOK = couponDao.updateByCode(coupon.getCode());
 
                     if (isOK) {
+                      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+
                       SubsTrans trans = new SubsTrans();
                       trans.setCompanyId(CurrentUser.getCompanyId());
                       trans.setEventId(coupon.getCode());
@@ -93,7 +97,7 @@ class CouponService {
                       trans.setReason("coupon");
                       trans.setDescription(coupon.getCode() + " is used.");
 
-                      isOK = couponDao.insertSubsTrans(trans, SubsSource.COUPON.name(), SubsEvent.COUPON_USED.name());
+                      isOK = subscriptionDao.insertTrans(trans, SubsSource.COUPON.name(), SubsEvent.COUPON_USED.name());
                       
                       if (isOK) {
                         Map<String, Object> data = new HashMap<>(3);

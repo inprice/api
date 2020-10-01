@@ -19,7 +19,7 @@ public class ProductCreationFromLinkConsumer {
           try {
             Competitor link = JsonConverter.fromJson(new String(body), Competitor.class);
             if (link != null) {
-              res = productRepository.createFromLink(link);
+              res = createFromLink(link);
               if (! res.isOK()) {
                 log.error("DB problem while activating a competitor!");
               }
@@ -39,6 +39,49 @@ public class ProductCreationFromLinkConsumer {
     } catch (IOException e) {
       log.error("Failed to set a queue for creating products from link.", e);
     }
+
+
+
+  public Response createFromLink(Competitor link) {
+    Connection con = null;
+    try {
+      con = db.getTransactionalConnection();
+
+      ProductDTO dto = new ProductDTO();
+      dto.setCode(link.getSku());
+      dto.setName(link.getName());
+      dto.setBrandId(lookupRepository.add(con, LookupType.BRAND, link.getBrand()).getId());
+      dto.setPrice(link.getPrice());
+      dto.setCompanyId(link.getCompanyId());
+
+      boolean isCompelted = false;
+
+      Response result = insertANewProduct(con, dto);
+      if (result.isOK()) {
+        isCompelted = db.executeQuery(String.format("delete from competitor where id=%d", link.getId()),
+            String.format("Failed to delete link to be product. Id: %d", link.getId()));
+      }
+
+      if (isCompelted) {
+        db.commit(con);
+        return Responses.OK;
+      } else {
+        db.rollback(con);
+        return result;
+      }
+
+    } catch (Exception e) {
+      if (con != null)
+        db.rollback(con);
+      log.error("Failed to insert a new product. " + link.toString(), e);
+      return Responses.ServerProblem.EXCEPTION;
+    } finally {
+      if (con != null)
+        db.close(con);
+    }
+  }
+
+
  */  }
 
 }

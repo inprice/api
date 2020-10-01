@@ -13,7 +13,7 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import io.inprice.api.mapper.DBSessionMapper;
 import io.inprice.api.session.info.ForDatabase;
 
-public interface SessionDao {
+public interface UserSessionDao {
 
   @SqlUpdate("delete from user_session where _hash in (<hashList>)")
   boolean deleteByHashList(@BindList("hashList") List<String> hashList);
@@ -33,5 +33,9 @@ public interface SessionDao {
     "values (:hash, :userId, :companyId, :ip, :os, :browser, :userAgent)"
   )
   boolean[] insert(@BindBean List<ForDatabase> sesList);
+
+  @SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId and _hash not in (<hashList>)")
+  @UseRowMapper(DBSessionMapper.class)
+  List<ForDatabase> findOpenedSessions(@Bind("userId") Long userId, @BindList("hashList") List<String> hashList);
 
 }

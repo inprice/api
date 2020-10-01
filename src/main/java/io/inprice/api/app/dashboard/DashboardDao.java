@@ -22,8 +22,7 @@ interface DashboardDao {
   Map<String, Integer> findStatusDists(@Bind("companyId") Long companyId);
 
   @SqlQuery(
-    "select pp.position, count(1) as counter " +
-    "from product as p " +
+    "select pp.position, count(1) as counter from product as p " +
     "inner join product_price as pp on pp.id = p.last_price_id " +
     "where p.last_price_id is not null " +
     "  and p.company_id=:companyId " +

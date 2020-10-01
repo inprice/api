@@ -70,9 +70,9 @@ class LinkService {
           batch.add("delete from link_price " + where);
           batch.add("delete from link_history " + where);
           batch.add("delete from link_spec " + where);
-          batch.add("delete from link " + where.replace("link_", ""));
-          batch.execute();
-          isOK[0] = true;
+          batch.add("delete from link " + where.replace("link_", "")); //important!!!
+          int[] result = batch.execute();
+          isOK[0] = result[3] > 0;
           return isOK[0];
         });
       }

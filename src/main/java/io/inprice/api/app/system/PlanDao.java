@@ -1,4 +1,4 @@
-package io.inprice.api.app.plan;
+package io.inprice.api.app.system;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -9,7 +9,7 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.models.Plan;
 
-public class PlanRepository {
+public class PlanDao {
 
   private static Map<Integer, Plan> plansMap;
 

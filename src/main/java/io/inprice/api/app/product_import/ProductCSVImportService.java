@@ -101,7 +101,7 @@ public class ProductCSVImportService implements IProductImportService {
                       }
                       dto.setCategoryId(category.getId());
                       
-                      Response isValid = ProductDTOValidator.validate(dto);
+                      Response isValid = ProductValidator.validate(dto);
                       if (isValid.isOK()) {
                         op = productRepository.insertANewProduct(con, dto);
                         if (op.isOK()) {

@@ -15,13 +15,13 @@ import org.slf4j.LoggerFactory;
 import eu.bitwalker.useragentutils.UserAgent;
 import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
-import io.inprice.api.app.auth.dto.LoginDTO;
-import io.inprice.api.app.auth.dto.PasswordDTO;
-import io.inprice.api.app.auth.dto.UserDTO;
 import io.inprice.api.app.membership.MembershipDao;
+import io.inprice.api.app.token.TokenType;
 import io.inprice.api.app.token.Tokens;
 import io.inprice.api.app.user.UserDao;
-import io.inprice.api.app.token.TokenType;
+import io.inprice.api.app.user.dto.LoginDTO;
+import io.inprice.api.app.user.dto.PasswordDTO;
+import io.inprice.api.app.user.dto.UserDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.email.EmailSender;
@@ -128,7 +128,7 @@ public class AuthService {
       if (problem == null) {
         try (Handle handle = Database.getHandle()) {
           UserDao userDao = handle.attach(UserDao.class);
-          SessionDao sessionDao = handle.attach(SessionDao.class);
+          UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
 
           final String email = Tokens.get(TokenType.FORGOT_PASSWORD, dto.getToken());
           if (email != null) {
@@ -142,12 +142,12 @@ public class AuthService {
               //closing session
               if (isOK) {
                 Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
-                List<ForDatabase> sessions = sessionDao.findListByUserId(user.getId());
+                List<ForDatabase> sessions = userSessionDao.findListByUserId(user.getId());
                 if (sessions != null && sessions.size() > 0) {
                   for (ForDatabase ses : sessions) {
                     RedisClient.removeSesion(ses.getHash());
                   }
-                  sessionDao.deleteByUserId(user.getId());
+                  userSessionDao.deleteByUserId(user.getId());
                 }
                 return createSession(ctx, user);
 
@@ -185,8 +185,8 @@ public class AuthService {
           boolean isOK = false;
           if (hashList.size() > 0) {
             try (Handle handle = Database.getHandle()) {
-              SessionDao sessionDao = handle.attach(SessionDao.class);
-              isOK = sessionDao.deleteByHashList(hashList);
+              UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
+              isOK = userSessionDao.deleteByHashList(hashList);
             }
           }
 
@@ -201,7 +201,7 @@ public class AuthService {
     Integer sessionNo = null;
 
     try (Handle handle = Database.getHandle()) {
-      SessionDao sessionDao = handle.attach(SessionDao.class);
+      UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
       List<Membership> membershipList = membershipDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED.name());
@@ -258,7 +258,7 @@ public class AuthService {
           boolean isSaved = false;
 
           if (RedisClient.addSesions(redisSesList)) {
-            boolean[] anyAffected = sessionDao.insert(dbSesList);
+            boolean[] anyAffected = userSessionDao.insert(dbSesList);
             if (anyAffected != null && anyAffected.length > 0) {
               for (boolean b : anyAffected) {
                 if (b) {

@@ -4,87 +4,166 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jdbi.v3.core.Handle;
 
-import io.inprice.api.app.auth.AuthRepository;
+import io.inprice.api.app.auth.UserSessionDao;
+import io.inprice.api.app.membership.MembershipDao;
+import io.inprice.api.app.user.dto.PasswordDTO;
+import io.inprice.api.app.user.dto.UserDTO;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LongDTO;
-import io.inprice.api.dto.PasswordDTO;
-import io.inprice.api.dto.PasswordValidator;
-import io.inprice.api.dto.UserDTO;
+import io.inprice.api.external.Props;
+import io.inprice.api.external.RedisClient;
+import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForCookie;
+import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.Timezones;
-import io.inprice.common.helpers.Beans;
+import io.inprice.api.validator.PasswordValidator;
+import io.inprice.common.helpers.Database;
+import io.inprice.common.meta.UserStatus;
+import jodd.util.BCrypt;
 
 public class UserService {
 
-   private static final UserRepository userRepository = Beans.getSingleton(UserRepository.class);
-   private static final AuthRepository authRepository = Beans.getSingleton(AuthRepository.class);
-
-   public Response update(UserDTO dto) {
+  public Response update(UserDTO dto) {
     String problem = validateUserDTOForUpdate(dto);
-      if (problem == null) {
-        return userRepository.update(dto);
-     } else {
-        return new Response(problem);
-     }
-   }
+    if (problem == null) {
 
-   public Response updatePassword(PasswordDTO dto) {
-      String problem = PasswordValidator.verify(dto, true, true);
-      if (problem == null) {
-         return userRepository.updatePassword(dto.getPassword());
+      try (Handle handle = Database.getHandle()) {
+        UserDao userDao = handle.attach(UserDao.class);
+
+        boolean isOK = userDao.updateName(CurrentUser.getUserId(), dto.getName(), dto.getTimezone());
+        if (isOK) {
+          return Responses.OK;
+        } else {
+          return Responses.NotFound.USER;
+        }
+      }
+    } else {
+      return new Response(problem);
+    }
+  }
+
+  public Response updatePassword(PasswordDTO dto) {
+    String problem = PasswordValidator.verify(dto, true, true);
+    if (problem == null) {
+
+      try (Handle handle = Database.getHandle()) {
+        UserDao userDao = handle.attach(UserDao.class);
+
+        final String salt = BCrypt.gensalt(Props.APP_SALT_ROUNDS());
+        final String hash = BCrypt.hashpw(dto.getPassword(), salt);
+
+        boolean isOK = userDao.updatePassword(CurrentUser.getUserId(), salt, hash);
+        if (isOK) {
+          return Responses.OK;
+        } else {
+          return Responses.NotFound.USER;
+        }
+      }
+    } else {
+      return new Response(problem);
+    }
+  }
+
+  public Response getInvitations() {
+    try (Handle handle = Database.getHandle()) {
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
+      return new Response(membershipDao.findMembershipListByEmailAndStatus(CurrentUser.getEmail(), UserStatus.PENDING.name()));
+    }
+  }
+
+  public Response acceptInvitation(LongDTO dto) {
+    if (dto.getValue() != null && dto.getValue() > 0) {
+      return processInvitation(dto.getValue(), UserStatus.PENDING, UserStatus.JOINED);
+    }
+    return Responses.NotFound.USER;
+  }
+
+  public Response rejectInvitation(LongDTO dto) {
+    if (dto.getValue() != null && dto.getValue() > 0) {
+      return processInvitation(dto.getValue(), UserStatus.JOINED, UserStatus.LEFT);
+    }
+    return Responses.NotFound.USER;
+  }
+
+  private Response processInvitation(Long id, UserStatus fromStatus, UserStatus toStatus) {
+    try (Handle handle = Database.getHandle()) {
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
+
+      boolean isOK = membershipDao.changeStatus(id, fromStatus.name(), toStatus.name(), CurrentUser.getUserId());
+      if (isOK) {
+        return Responses.OK;
       } else {
-         return new Response(problem);
+        return Responses.NotFound.USER;
       }
-   }
+    }
+  }
 
-   public Response getInvitations() {
-      return userRepository.findActiveInvitations();
-   }
+  public Response getMemberships() {
+    try (Handle handle = Database.getHandle()) {
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-   public Response acceptInvitation(LongDTO dto) {
-      if (dto.getValue() == null || dto.getValue() < 1) {
-         return Responses.Invalid.DATA;
+      List<String> roles = new ArrayList<>(2);
+      roles.add(UserStatus.JOINED.name());
+      roles.add(UserStatus.LEFT.name());
+
+      return new Response(
+        membershipDao.findMembershipListByEmailAndStatusListButNotCompanyId(CurrentUser.getEmail(), CurrentUser.getCompanyId(), roles)
+      );
+    }
+  }
+
+  public Response leaveMembership(LongDTO dto) {
+    if (dto.getValue() != null && dto.getValue() > 0) {
+      try (Handle handle = Database.getHandle()) {
+        MembershipDao membershipDao = handle.attach(MembershipDao.class);
+        boolean isOK = membershipDao.changeStatus(dto.getValue(), UserStatus.LEFT.name());
+        if (isOK) {
+          return Responses.OK;
+        }
       }
-      return userRepository.acceptInvitation(dto.getValue());
-   }
+    }
+    return Responses.NotFound.USER;
+  }
 
-   public Response rejectInvitation(LongDTO dto) {
-      if (dto.getValue() == null || dto.getValue() < 1) {
-         return Responses.Invalid.DATA;
+  public Response getOpenedSessions(List<ForCookie> cookieSesList) {
+    List<String> excludedHashes = new ArrayList<>(cookieSesList.size());
+    for (ForCookie ses: cookieSesList) {
+      excludedHashes.add(ses.getHash());
+    }
+
+    if (excludedHashes.size() > 0) {
+      try (Handle handle = Database.getHandle()) { 
+        UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
+        return new Response(
+          userSessionDao.findOpenedSessions(CurrentUser.getUserId(), excludedHashes)
+        );
       }
-      return userRepository.rejectInvitation(dto.getValue());
-   }
+    }
+    return Responses.NotFound.USER;
+  }
 
-   public Response getMemberships() {
-      return userRepository.findMemberships();
-   }
+  public Response closeAllSessions() {
+    try (Handle handle = Database.getHandle()) {
+      UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
 
-   public Response leaveMembership(LongDTO dto) {
-      if (dto.getValue() == null || dto.getValue() < 1) {
-         return Responses.Invalid.DATA;
+      List<ForDatabase> sessions = userSessionDao.findListByUserId(CurrentUser.getUserId());
+      if (sessions != null && sessions.size() > 0) {
+        for (ForDatabase ses : sessions) {
+          RedisClient.removeSesion(ses.getHash());
+        }
+        if (userSessionDao.deleteByUserId(CurrentUser.getUserId())) {
+          return Responses.OK;
+        }
       }
-      return userRepository.leaveMembership(dto.getValue());
-   }
+    }
+    return Responses.NotFound.USER;
+  }
 
-   public Response getOpenedSessions(List<ForCookie> cookieSesList) {
-      List<String> hashes = new ArrayList<>(cookieSesList.size());
-      for (ForCookie ses: cookieSesList) {
-         hashes.add(ses.getHash());
-      }
-      return new Response(authRepository.findOpenedSessions(hashes));
-   }
-
-   public Response closeAllSessions() {
-      if (authRepository.closeByUserId(CurrentUser.getUserId())) {
-         return Responses.OK;
-      }
-      return Responses.ServerProblem.EXCEPTION;
-   }
-
-   private String validateUserDTOForUpdate(UserDTO dto) {
+  private String validateUserDTOForUpdate(UserDTO dto) {
     String problem = null;
 
     if (dto == null) {
@@ -102,25 +181,17 @@ public class UserService {
     if (problem == null) {
       if (StringUtils.isBlank(dto.getTimezone())) {
         problem = "Time zone cannot be empty!";
-      } else if (! Timezones.exists(dto.getTimezone())) {
+      } else if (!Timezones.exists(dto.getTimezone())) {
         problem = "Unknown time zone!";
       }
     }
 
+    if (problem == null) {
+      dto.setEmail(SqlHelper.clear(dto.getEmail()));
+      dto.setName(SqlHelper.clear(dto.getName()));
+    }
+
     return problem;
   }
-
- /*
-  List<ForDatabase> findOpenedSessions(List<String> excludedHashes) {
-    try (Handle handle = Database.getHandle()) {
-      AuthDao dao = handle.attach(AuthDao.class);
-      List<ForDatabase> openedSessions = dao.getOpenedSessions(CurrentUser.getUserId(), excludedHashes);
-      return openedSessions;
-    } catch (Exception e) {
-      log.error("Failed to get user session.", e);
-    }
-    return null;
-  }
-  */
 
 }

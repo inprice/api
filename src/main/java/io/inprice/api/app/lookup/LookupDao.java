@@ -32,17 +32,6 @@ interface LookupDao {
   List<Lookup> findListByCompanyIdAndType(@Bind("companyId") Long companyId, @Bind("type") String type);
 
   @SqlQuery(
-    "select pp.position, count(1) as counter from product as p " +
-    "left join product_price as pp on pp.id=p.last_price_id " +
-    "where p.company_id=:companyId " +
-    "group by pp.position " +
-    "order by pp.position "
-  )
-  @KeyColumn("position")
-  @ValueColumn("counter")
-  Map<Integer, Integer> findPositionDists(@Bind("companyId") Long companyId);
-
-  @SqlQuery(
     "select l.id, l.name, count(1) as counter from lookup as l " +
     "inner join product as p on p.<type>_id = l.id " +
     "where p.company_id=:companyId " +

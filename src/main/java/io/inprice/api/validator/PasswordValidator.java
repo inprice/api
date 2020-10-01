@@ -2,8 +2,8 @@ package io.inprice.api.validator;
 
 import org.apache.commons.lang3.StringUtils;
 
-import io.inprice.api.app.auth.dto.PasswordDTO;
 import io.inprice.api.app.user.UserRepository;
+import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.models.User;

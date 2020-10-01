@@ -1,4 +1,4 @@
-package io.inprice.api.dto;
+package io.inprice.api.app.product.dto;
 
 import lombok.Getter;
 import lombok.Setter;

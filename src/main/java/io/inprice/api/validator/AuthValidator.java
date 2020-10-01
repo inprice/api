@@ -1,6 +1,6 @@
 package io.inprice.api.validator;
 
-import io.inprice.api.app.auth.dto.LoginDTO;
+import io.inprice.api.app.user.dto.LoginDTO;
 
 public class AuthValidator {
 

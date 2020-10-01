@@ -1,6 +1,5 @@
 package io.inprice.api.app.system;
 
-import io.inprice.api.app.plan.PlanRepository;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
@@ -12,7 +11,7 @@ import io.javalin.Javalin;
 @Router
 public class SystemController implements Controller {
 
-  private static final PlanRepository planRepository = Beans.getSingleton(PlanRepository.class);
+  private static final PlanDao planRepository = Beans.getSingleton(PlanDao.class);
 
   @Override
   public void addRoutes(Javalin app) {

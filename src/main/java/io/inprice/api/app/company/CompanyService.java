@@ -11,14 +11,14 @@ import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.auth.SessionDao;
-import io.inprice.api.app.auth.dto.PasswordDTO;
+import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.company.dto.CreateDTO;
 import io.inprice.api.app.company.dto.RegisterDTO;
 import io.inprice.api.app.membership.MembershipDao;
+import io.inprice.api.app.token.TokenType;
 import io.inprice.api.app.token.Tokens;
 import io.inprice.api.app.user.UserDao;
-import io.inprice.api.app.token.TokenType;
+import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.email.EmailSender;
@@ -158,12 +158,8 @@ class CompanyService {
   Response getCurrentCompany() {
     try (Handle handle = Database.getHandle()) {
       CompanyDao dao = handle.attach(CompanyDao.class);
-      Company company = dao.findById(CurrentUser.getCompanyId());
-      if (company != null) {
-        return new Response(company);
-      }
+      return new Response(dao.findById(CurrentUser.getCompanyId()));
     }
-    return Responses.NotFound.COMPANY;
   }
 
   Response create(CreateDTO dto) {
@@ -223,7 +219,7 @@ class CompanyService {
       handle.inTransaction(h -> {
         UserDao userDao = h.attach(UserDao.class);
         CompanyDao companyDao = h.attach(CompanyDao.class);
-        SessionDao sessionDao = h.attach(SessionDao.class);
+        UserSessionDao sessionDao = h.attach(UserSessionDao.class);
 
         User user = userDao.findById(CurrentUser.getUserId());
         String phash = BCrypt.hashpw(password, user.getPasswordSalt());

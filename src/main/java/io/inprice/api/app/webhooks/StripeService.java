@@ -24,7 +24,7 @@ public class StripeService {
 
   private static final Logger log = LoggerFactory.getLogger(StripeService.class);
   
-  private static final SubscriptionRepository subsRepository = Beans.getSingleton(SubscriptionRepository.class);
+  private static final StripeRepository subsRepository = Beans.getSingleton(StripeRepository.class);
 
   public Response handle(Event event) {
     Response res = Responses.BAD_REQUEST;

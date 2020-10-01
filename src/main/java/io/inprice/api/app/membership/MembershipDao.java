@@ -3,11 +3,14 @@ package io.inprice.api.app.membership;
 import java.util.List;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
+import io.inprice.api.app.membership.mapper.ActiveMembership;
+import io.inprice.api.app.membership.mapper.ActiveMembershipMapper;
 import io.inprice.common.mappers.MembershipMapper;
 import io.inprice.common.models.Membership;
 
@@ -46,6 +49,28 @@ public interface MembershipDao {
   Membership findListByEmailAndStatusAndCompanyId(@Bind("email") String email, 
     @Bind("status") String status, @Bind("companyId") Long companyId);
 
+  @SqlQuery(
+    "select mem.id, c.name, mem.role, mem.created_at from membership as mem " + 
+    "left join company as c on c.id = mem.company_id " + 
+    "where email=:email " + 
+    "  and mem.status:status " + 
+    "order by mem.created_at desc"
+  )
+  @UseRowMapper(ActiveMembershipMapper.class)
+  List<ActiveMembership> findMembershipListByEmailAndStatus(@Bind("email") String email, @Bind("status") String status);
+
+  @SqlQuery(
+    "select mem.id, c.name, mem.role, mem.updated_at from membership as mem " + 
+    "left join company as c on c.id = mem.company_id " + 
+    "where email=:email " + 
+    "  and company_id!=:company_id  " + 
+    "  and mem.status in (<statusList>) " + 
+    "order by mem.status, mem.updated_at desc"
+  )
+  @UseRowMapper(ActiveMembershipMapper.class)
+  List<ActiveMembership> findMembershipListByEmailAndStatusListButNotCompanyId(@Bind("email") String email, 
+    @Bind("companyId") Long companyId, @BindList("statusList") List<String> statusList);
+
   @SqlUpdate(
     "insert into membership (user_id, email, company_id, role, status, updated_at) " + 
     "values (:userId, :email, :companyId, :role, :status, now())"
@@ -65,6 +90,12 @@ public interface MembershipDao {
 
   @SqlUpdate("update membership set role=:role where id=:id and company_id=:companyId")
   boolean changeRole(@Bind("id") Long id, @Bind("role") String role, @Bind("companyId") Long companyId);
+
+  @SqlUpdate("update membership set status=:toStatus, user_id=:userId, updated_at=now() where id=:id and status=:fromStatus")
+  boolean changeStatus(@Bind("id") Long id, @Bind("fromStatus") String fromStatus, @Bind("toStatus") String toStatus, @Bind("userId") Long userId);
+
+  @SqlUpdate("update membership set status=:newStatus, updated_at=now() where id=:id")
+  boolean changeStatus(@Bind("id") Long id, @Bind("newStatus") String newStatus);
 
   @SqlUpdate("update membership set pre_status=status, status='PAUSED', updated_at=now() where id=:id and company_id=:companyId and status!='PAUSED")
   boolean pause(@Bind("id") Long id, @Bind("companyId") Long companyId);

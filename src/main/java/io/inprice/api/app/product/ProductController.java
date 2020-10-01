@@ -2,8 +2,8 @@ package io.inprice.api.app.product;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.inprice.api.app.product.dto.ProductSearchDTO;
 import io.inprice.api.consts.Consts;
-import io.inprice.api.dto.ProductSearchDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;

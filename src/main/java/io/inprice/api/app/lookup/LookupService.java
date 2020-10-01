@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.lookup.dto.LookupDTO;
 import io.inprice.api.app.lookup.mapper.LookupWithInfo;
+import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.Pair;
 import io.inprice.api.helpers.SqlHelper;
@@ -68,8 +69,9 @@ class LookupService {
 
     try (Handle handle = Database.getHandle()) {
       LookupDao lookupDao = handle.attach(LookupDao.class);
+      ProductDao productDao = handle.attach(ProductDao.class);
 
-      Map<Integer, Integer> positions = lookupDao.findPositionDists(CurrentUser.getCompanyId());
+      Map<Integer, Integer> positions = productDao.findPositionDists(CurrentUser.getCompanyId());
       if (positions != null && positions.size() > 0) {
         List<Pair<Long, String>> entryList = new ArrayList<>();
         for (Entry<Integer, Integer> entry: positions.entrySet()) {
