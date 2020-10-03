@@ -10,8 +10,8 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
-import io.inprice.api.mapper.DBSessionMapper;
 import io.inprice.api.session.info.ForDatabase;
+import io.inprice.api.app.auth.mapper.DBSessionMapper;
 
 public interface UserSessionDao {
 

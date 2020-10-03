@@ -1,5 +1,7 @@
 package io.inprice.api.app.company;
 
+import java.sql.Timestamp;
+
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -25,6 +27,10 @@ public interface CompanyDao {
   @UseRowMapper(CompanyMapper.class)
   Company findByNameAndAdminId(@Bind("name") String name, @Bind("adminId") Long adminId);
 
+  @SqlQuery("select * from company where subs_customer_id=:subsCustomerId")
+  @UseRowMapper(CompanyMapper.class)
+  Company findBySubsCustomerId(@Bind("subsCustomerId") String subsCustomerId);
+
   @SqlUpdate(
     "insert into company (admin_id, name, currency_code, currency_format) " + 
     "values (:adminId, :name, :currencyCode, :currencyFormat)"
@@ -39,6 +45,17 @@ public interface CompanyDao {
 
   @SqlUpdate("update company set title=:title, address_1=:address1, address_2=:address2, postcode=:postcode, city=:city, state=:state, country=:country where id=:id")
   boolean update(@BindBean("dto") CustomerInfoDTO dto, @Bind("id") Long id);
+
+  @SqlUpdate("update company set subs_status=:subsStatus, subs_renewal_at=:subsRenewalAt where id=:id")
+  boolean updateSubscription(@Bind("subsStatus") String subsStatus, @Bind("subsRenewalAt") Timestamp subsRenewalAt, @Bind("id") Long id);
+
+  @SqlUpdate(
+    "update company " +
+    "set title=:title, address_1=:address1, address_2=:address2, postcode=:postcode, city=:city, state=:state, country=:country, " +
+    "plan_id=:planId, subs_id=:subsId, subs_customer_id=:subsCustomerId, subs_status=:subsStatus, subs_renewal_at=:subsRenewalAt " +
+    "where id=:id"
+  )
+  boolean update(@BindBean("dto") CustomerInfoDTO dto, @Bind("subsStatus") String subsStatus, @Bind("id") Long id);
   
   @SqlUpdate("update company set product_count=product_count+1 where id=:id and product_count<product_limit")
   boolean increaseProductCountById(@Bind("id") Long id);

@@ -7,9 +7,7 @@ import java.util.Map;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
-import com.stripe.model.checkout.Session;
 import com.stripe.param.CustomerUpdateParams;
-import com.stripe.param.checkout.SessionCreateParams;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
@@ -17,19 +15,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
-import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerInfoDTO;
-import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.models.Plan;
 import io.inprice.common.models.SubsTrans;
-import io.jsonwebtoken.lang.Maps;
 
-public class SubscriptionService {
+class SubscriptionService {
 
   private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
 
@@ -40,7 +34,7 @@ public class SubscriptionService {
     }
   }
 
-  public Response getTransactions() {
+  Response getTransactions() {
     Map<String, List<SubsTrans>> data = new HashMap<>(2);
 
     try (Handle handle = Database.getHandle()) {
@@ -63,56 +57,17 @@ public class SubscriptionService {
     return new Response(data);
   }
 
-  public Response cancel() {
+  SubsTrans getCancellationTrans() {
     SubsTrans trans = new SubsTrans();
     trans.setCompanyId(CurrentUser.getCompanyId());
     trans.setEvent(SubsEvent.SUBSCRIPTION_CANCELLED);
     trans.setSuccessful(Boolean.TRUE);
     trans.setReason(("subscription_cancel"));
     trans.setDescription(("Manual cancellation."));
-    return repository.addTransaction(CurrentUser.getCompanyId(), null, null, trans);
-  }
-  
-  public Response createSession(Integer planId) {
-    Plan plan = PlanDao.getById(planId);
-
-    if (plan != null) {
-      SessionCreateParams params = SessionCreateParams.builder()
-        .setCustomerEmail(CurrentUser.getEmail())
-        .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
-        .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
-        .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
-        .setSuccessUrl(Props.APP_WEB_URL() + "/payment-ok")
-        .setCancelUrl(Props.APP_WEB_URL() + "/payment-cancel")
-        .setClientReferenceId(""+planId)
-        .setSubscriptionData(
-          SessionCreateParams.SubscriptionData
-          .builder()
-              .putMetadata("planId", ""+planId)
-              .putMetadata("companyId", ""+CurrentUser.getCompanyId()
-            ).build())
-        .addLineItem(
-          SessionCreateParams.LineItem
-            .builder()  
-              .setQuantity(1L)
-              .setPrice(plan.getStripePriceId()
-            ).build()
-          )
-        .build();
-
-       try {
-        Session session = Session.create(params);
-        return new Response(Maps.of("sessionId", session.getId()));
-      } catch (StripeException e) {
-        log.error("Failed to create checkout session", e);
-        return Responses.ServerProblem.EXCEPTION;
-      }
-    }
-
-    return Responses.NotFound.PLAN;
+    return trans;
   }
 
-  public Response saveInfo(CustomerInfoDTO dto) {
+  Response saveInfo(CustomerInfoDTO dto) {
     Response res = new Response("Sorry, we are unable to update your invoice info at the moment. We are working on it.");
 
     String problem = validateInvoiceInfo(dto);

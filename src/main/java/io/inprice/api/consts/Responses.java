@@ -8,10 +8,8 @@ public class Responses {
 
   public static final Response OK = new Response(0, "OK");
   public static final Response BAD_REQUEST = new Response(HttpStatus.BAD_REQUEST_400, "Bad request!");
-  public static final Response _401 = new Response(HttpStatus.UNAUTHORIZED_401,
-      "Your session seems to be expired, please sign in again.");
-  public static final Response _403 = new Response(HttpStatus.FORBIDDEN_403,
-      "Your role is not suitable to do this operation.");
+  public static final Response _401 = new Response(HttpStatus.UNAUTHORIZED_401, "Your session seems to be expired, please sign in again.");
+  public static final Response _403 = new Response(HttpStatus.FORBIDDEN_403, "Your role is not suitable to do this operation.");
 
   public static class Invalid {
     private static final int BASE = 100;
@@ -23,8 +21,7 @@ public class Responses {
     public static final Response USER = new Response(BASE + 10, "Invalid user!");
     public static final Response EMAIL = new Response(BASE + 11, "Invalid email!");
     public static final Response PASSWORD = new Response(BASE + 12, "Wrong password!");
-    public static final Response EMAIL_OR_PASSWORD = new Response(BASE + 13,
-        "Invalid email or password!");
+    public static final Response EMAIL_OR_PASSWORD = new Response(BASE + 13, "Invalid email or password!");
     public static final Response NAME = new Response(BASE + 14, "Invalid name!");
 
     public static final Response PRODUCT = new Response(BASE + 20, "Invalid product!");
@@ -46,20 +43,16 @@ public class Responses {
 
   public static class Missing {
     private static final int BASE = 400;
-    public static final Response AUTHORIZATION_HEADER = new Response(BASE + 1,
-        "Authorization header is missing!");
+    public static final Response AUTHORIZATION_HEADER = new Response(BASE + 1, "Authorization header is missing!");
   }
 
   public static class PermissionProblem {
     private static final int BASE = 500;
     public static final Response UNAUTHORIZED = new Response(BASE + 1, "Unauthrozied!");
-    public static final Response ADMIN_ONLY = new Response(BASE + 2,
-        "This operation can be done by an admin!");
-
+    public static final Response ADMIN_ONLY = new Response(BASE + 2, "This operation can be done by an admin!");
     public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to buy a new plan!");
-    public static final Response NO_COMPANY = new Response(BASE + 5,
-        "You have no active company! Please either create a new one or participate in an existing!");
-    public static final Response PRODUCT_LIMIT_PROBLEM = new Response(BASE + 3, "Your products count is reached your plans limit! You need to pass a broader plan to proceed");
+    public static final Response NO_COMPANY = new Response(BASE + 5, "You have no active company! Please either create a new one or participate in an existing!");
+    public static final Response PRODUCT_LIMIT_PROBLEM = new Response(BASE + 7, "Your products count is reached your plans limit! You need to pass a broader plan to proceed");
   }
 
   public static class DataProblem {
@@ -71,40 +64,32 @@ public class Responses {
     public static final Response INTEGRITY_PROBLEM = new Response(BASE + 12, "Integrity problem!");
     public static final Response DUPLICATE = new Response(BASE + 13, "Duplicate error!");
 
+    public static final Response SUBSCRIPTION_PROBLEM = new Response(BASE + 15, "Subscription service is not reachable right now! We are, sorry for this situation and, investigating.");
+
     public static final Response FORM_VALIDATION = new Response(BASE + 20, "Validation error!");
   }
 
   public static class Illegal {
     private static final int BASE = 700;
-    public static final Response TIMED_OUT_FORGOT_PASSWORD = new Response(BASE + 1,
-        "Your session seems to expire, please send us a new forgot password request again!");
-    public static final Response COUPON_ISSUED_FOR_ANOTHER_COMPANY = new Response(BASE + 2,
-        "This coupon is issued for another company!");
+    public static final Response TIMED_OUT_FORGOT_PASSWORD = new Response(BASE + 1, "Your session seems to expire, please send us a new forgot password request again!");
+    public static final Response COUPON_ISSUED_FOR_ANOTHER_COMPANY = new Response(BASE + 2, "This coupon is issued for another company!");
   }
 
   public static class Already {
     private static final int BASE = 800;
-    public static final Response LOGGED_OUT = new Response(BASE + 1,
-        "Seems that you are already logged out!");
-    public static final Response DELETED_MEMBER = new Response(BASE + 2,
-        "This member is already deleted!");
+    public static final Response LOGGED_OUT = new Response(BASE + 1, "Seems that you are already logged out!");
+    public static final Response DELETED_MEMBER = new Response(BASE + 2, "This member is already deleted!");
 
-    public static final Response USED_COUPON = new Response(BASE + 5,
-        "This coupon seems already used!");
+    public static final Response USED_COUPON = new Response(BASE + 5, "This coupon seems already used!");
 
-    public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 6,
-        "You have already an active subscription. You cannot use any coupon!");
-    public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 7,
-        "This account has no active subscription at the moment!");
+    public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 6, "You have already an active subscription. You cannot use any coupon!");
+    public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 7, "This account has no active subscription at the moment!");
 
-    public static final Response REQUESTED_EMAIL = new Response(BASE + 10,
-        "This email is already requested, please wait some time to try again!");
+    public static final Response REQUESTED_EMAIL = new Response(BASE + 10, "This email is already requested, please wait some time to try again!");
 
     public static class Defined {
-      public static final Response COMPANY = new Response(BASE + 20,
-          "Seems that you have already registered this company!");
-      public static final Response MEMBERSHIP = new Response(BASE + 21,
-          "Seems that this user has an account, please sign in with your credentials and manage your memberships under user settings page!");
+      public static final Response COMPANY = new Response(BASE + 20, "Seems that you have already registered this company!");
+      public static final Response MEMBERSHIP = new Response(BASE + 21, "Seems that this user has an account, please sign in with your credentials and manage your memberships under user settings page!");
     }
   }
 
@@ -142,7 +127,6 @@ public class Responses {
 
   public static class NotActive {
     private static final int BASE = 505;
-
     public static final Response INVITATION = new Response(BASE, "Invitation is not active!");
   }
 

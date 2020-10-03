@@ -13,6 +13,10 @@ import io.inprice.common.models.SubsTrans;
 
 public interface SubscriptionDao {
 
+  @SqlQuery("select * from subs_trans where event_id=:eventId")
+  @UseRowMapper(SubsTransMapper.class)
+  SubsTrans findByEventId(@Bind("eventId") String eventId);
+
   @SqlQuery("select * from subs_trans where company_id=:companyId order by created_at desc")
   @UseRowMapper(SubsTransMapper.class)
   List<SubsTrans> findTransListByCompanyId(@Bind("companyId") Long companyId);

@@ -1,4 +1,4 @@
-package io.inprice.api.mapper;
+package io.inprice.api.app.auth.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

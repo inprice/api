@@ -1,4 +1,4 @@
-package io.inprice.api.app.webhooks;
+package io.inprice.api.app.subscription;
 
 import com.stripe.model.Event;
 import com.stripe.net.Webhook;
@@ -20,7 +20,7 @@ public class StripeController implements Controller {
 
   private static final Logger log = LoggerFactory.getLogger(StripeController.class);
 
-  private final StripeService service = Beans.getSingleton(StripeService.class);
+  private static final StripeService service = Beans.getSingleton(StripeService.class);
 
   @Override
   public void addRoutes(Javalin app) {
@@ -32,7 +32,7 @@ public class StripeController implements Controller {
         Event event = Webhook.constructEvent(
           payload, sigHeader, Props.API_KEYS_STRIPE_WEBHOOK()
         );
-        ctx.json(Commons.createResponse(ctx, service.handle(event)));
+        ctx.json(Commons.createResponse(ctx, service.handleHookEvent(event)));
       } catch (Exception e) {
         log.error("An error occurred", e);
         ctx.json(Commons.createResponse(ctx, Responses.BAD_REQUEST));
