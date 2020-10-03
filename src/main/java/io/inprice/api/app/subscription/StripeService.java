@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.CustomerInfoDTO;
+import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
@@ -125,7 +125,7 @@ class StripeService {
             if (charge != null) {
               InvoiceLineItem li = invoice.getLines().getData().get(0);
 
-              CustomerInfoDTO dto = new CustomerInfoDTO();
+              CustomerDTO dto = new CustomerDTO();
               dto.setRenewalDate(new java.sql.Timestamp(li.getPeriod().getEnd() * 1000));
 
               SubsEvent subsEvent = null;
@@ -186,7 +186,7 @@ class StripeService {
     return res;
   }
 
-  Response addTransaction(Long company_id, String subsCustomerId, CustomerInfoDTO dto, SubsTrans trans) {
+  Response addTransaction(Long company_id, String subsCustomerId, CustomerDTO dto, SubsTrans trans) {
     Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
@@ -310,7 +310,7 @@ class StripeService {
     return res[0];
   }
 
-  private boolean updateInvoiceInfo(CustomerInfoDTO dto) {
+  private boolean updateInvoiceInfo(CustomerDTO dto) {
     CustomerUpdateParams.Address address =
       CustomerUpdateParams.Address.builder()
         .setLine1(dto.getAddress1())

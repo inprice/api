@@ -1,4 +1,4 @@
-package io.inprice.api.app.membership.dto;
+package io.inprice.api.app.member.dto;
 
 import java.io.Serializable;
 

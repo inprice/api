@@ -3,7 +3,7 @@ package io.inprice.api.session.info;
 import java.io.Serializable;
 
 import io.inprice.common.meta.UserRole;
-import io.inprice.common.models.Membership;
+import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -43,7 +43,7 @@ public class ForResponse implements Serializable {
     this.role = UserRole.valueOf(forCookie.getRole());
   }
 
-  public ForResponse(ForCookie forCookie, User user, Membership mem) {
+  public ForResponse(ForCookie forCookie, User user, Member mem) {
     this.user = user.getName();
     this.email = forCookie.getEmail();
     this.company = mem.getCompanyName();

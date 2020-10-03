@@ -1,4 +1,4 @@
-package io.inprice.api.app.product_import;
+package io.inprice.api.app.imbort;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
@@ -14,11 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.company.CompanyRepository;
-import io.inprice.api.app.link.LinkRepository;
-import io.inprice.api.app.product.ProductRepository;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.CompetitorDTO;
 import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
@@ -28,13 +24,9 @@ import io.inprice.common.meta.ImportType;
 import io.inprice.common.models.Company;
 import io.inprice.common.utils.URLUtils;
 
-public class ProductGenericImportService implements IProductImportService {
+public class GenericImportService implements ImportService {
 
-  private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
-  private static final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
-  private static final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
-  private static final LinkRepository linkRepository = Beans.getSingleton(LinkRepository.class);
-  private static final Database db = Beans.getSingleton(Database.class);
+  private static final Logger log = LoggerFactory.getLogger(GenericImportService.class);
 
   private static final String ASIN_REGEX = "^(?i)(B0|BT)[0-9A-Z]{8}$";
   private static final String SKU_REGEX = "^[1-3][0-9]{10,11}$";

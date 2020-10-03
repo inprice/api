@@ -9,7 +9,7 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
-import io.inprice.api.dto.CustomerInfoDTO;
+import io.inprice.api.dto.CustomerDTO;
 import io.inprice.common.mappers.CompanyMapper;
 import io.inprice.common.models.Company;
 
@@ -44,7 +44,7 @@ public interface CompanyDao {
     @Bind("currencyFormat") String currencyFormat, @Bind("id") Long id, @Bind("adminId") Long adminId);
 
   @SqlUpdate("update company set title=:title, address_1=:address1, address_2=:address2, postcode=:postcode, city=:city, state=:state, country=:country where id=:id")
-  boolean update(@BindBean("dto") CustomerInfoDTO dto, @Bind("id") Long id);
+  boolean update(@BindBean("dto") CustomerDTO dto, @Bind("id") Long id);
 
   @SqlUpdate("update company set subs_status=:subsStatus, subs_renewal_at=:subsRenewalAt where id=:id")
   boolean updateSubscription(@Bind("subsStatus") String subsStatus, @Bind("subsRenewalAt") Timestamp subsRenewalAt, @Bind("id") Long id);
@@ -55,7 +55,7 @@ public interface CompanyDao {
     "plan_id=:planId, subs_id=:subsId, subs_customer_id=:subsCustomerId, subs_status=:subsStatus, subs_renewal_at=:subsRenewalAt " +
     "where id=:id"
   )
-  boolean update(@BindBean("dto") CustomerInfoDTO dto, @Bind("subsStatus") String subsStatus, @Bind("id") Long id);
+  boolean update(@BindBean("dto") CustomerDTO dto, @Bind("subsStatus") String subsStatus, @Bind("id") Long id);
   
   @SqlUpdate("update company set product_count=product_count+1 where id=:id and product_count<product_limit")
   boolean increaseProductCountById(@Bind("id") Long id);

@@ -1,4 +1,4 @@
-package io.inprice.api.app.product_import;
+package io.inprice.api.app.imbort;
 
 import java.io.StringReader;
 import java.math.BigDecimal;
@@ -15,11 +15,7 @@ import com.opencsv.CSVReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.company.CompanyRepository;
-import io.inprice.api.app.lookup.LookupRepository;
-import io.inprice.api.app.product.ProductRepository;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.ProductDTOValidator;
 import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
@@ -31,13 +27,9 @@ import io.inprice.common.models.Company;
 import io.inprice.common.models.Lookup;
 import io.inprice.common.utils.NumberUtils;
 
-public class ProductCSVImportService implements IProductImportService {
+public class CSVImportService implements ImportService {
 
-  private static final Logger log = LoggerFactory.getLogger(ProductRepository.class);
-  private static final CompanyRepository companyRepository = Beans.getSingleton(CompanyRepository.class);
-  private static final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
-  private static final LookupRepository lookupRepository = Beans.getSingleton(LookupRepository.class);
-  private static final Database db = Beans.getSingleton(Database.class);
+  private static final Logger log = LoggerFactory.getLogger(CSVImportService.class);
 
   private static final int COLUMN_COUNT = 5;
 

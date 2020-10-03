@@ -1,7 +1,7 @@
 package io.inprice.api.app.subscription;
 
 import io.inprice.api.consts.Consts;
-import io.inprice.api.dto.CustomerInfoDTO;
+import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -24,7 +24,7 @@ public class SubscriptionController implements Controller {
     }, AccessRoles.ADMIN_ONLY());
 
     app.post(Consts.Paths.Subscription.SAVE_INFO, (ctx) -> {
-      CustomerInfoDTO dto = ctx.bodyAsClass(CustomerInfoDTO.class);
+      CustomerDTO dto = ctx.bodyAsClass(CustomerDTO.class);
       ctx.json(Commons.createResponse(ctx, service.saveInfo(dto)));
     }, AccessRoles.ADMIN_ONLY());
 

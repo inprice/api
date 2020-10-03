@@ -1,4 +1,4 @@
-package io.inprice.api.app.membership.mapper;
+package io.inprice.api.app.member.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,11 +9,11 @@ import org.jdbi.v3.core.statement.StatementContext;
 import io.inprice.common.mappers.Helper;
 import io.inprice.common.utils.DateUtils;
 
-public class ActiveMembershipMapper implements RowMapper<ActiveMembership> {
+public class ActiveMemberMapper implements RowMapper<ActiveMember> {
 
   @Override
-  public ActiveMembership map(ResultSet rs, StatementContext ctx) throws SQLException {
-    ActiveMembership m = new ActiveMembership();
+  public ActiveMember map(ResultSet rs, StatementContext ctx) throws SQLException {
+    ActiveMember m = new ActiveMember();
 
     m.setId(rs.getLong("id"));
     m.setName(rs.getString("name"));

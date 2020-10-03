@@ -1,10 +1,7 @@
 package io.inprice.api.app.lookup;
 
 import java.util.List;
-import java.util.Map;
 
-import org.jdbi.v3.sqlobject.config.KeyColumn;
-import org.jdbi.v3.sqlobject.config.ValueColumn;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;

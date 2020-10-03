@@ -14,11 +14,13 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.company.dto.CreateDTO;
 import io.inprice.api.app.company.dto.RegisterDTO;
-import io.inprice.api.app.membership.MembershipDao;
+import io.inprice.api.app.member.MemberDao;
 import io.inprice.api.app.token.TokenType;
 import io.inprice.api.app.token.Tokens;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
+import io.inprice.api.app.user.validator.EmailValidator;
+import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.email.EmailSender;
@@ -31,8 +33,6 @@ import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.CurrencyFormats;
-import io.inprice.api.validator.EmailValidator;
-import io.inprice.api.validator.PasswordValidator;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.UserRole;
@@ -240,7 +240,7 @@ class CompanyService {
             batch.add("delete from product " + where);
             batch.add("delete from lookup " + where);
             batch.add("delete from user_session " + where);
-            batch.add("delete from membership " + where);
+            batch.add("delete from member " + where);
             batch.add("delete from subs_trans " + where);
             batch.add("delete from user where id in (select admin_id from company where id="+CurrentUser.getCompanyId()+")");
             batch.add("delete from company where id="+CurrentUser.getCompanyId());
@@ -292,7 +292,7 @@ class CompanyService {
 
   private Response createCompany(Handle handle, Long userId, String userEmail, String companyName, String currencyCode, String currencyFormat) {
     CompanyDao companyDao = handle.attach(CompanyDao.class);
-    MembershipDao membershipDao = handle.attach(MembershipDao.class);
+    MemberDao memberDao = handle.attach(MemberDao.class);
 
     Company company = companyDao.findByNameAndAdminId(companyName, userId);
     if (company == null) {
@@ -305,8 +305,8 @@ class CompanyService {
         );
 
       if (companyId != null) {
-        long membershipId = 
-          membershipDao.insert(
+        long memberId = 
+          memberDao.insert(
             userId,
             userEmail,
             companyId,
@@ -314,7 +314,7 @@ class CompanyService {
             UserStatus.JOINED.name()
           );
 
-        if (membershipId > 0) {
+        if (memberId > 0) {
           log.info("A new user just registered a new company. C.Name: {}, U.Email: {} ", companyName, userEmail);
           return Responses.OK;
         }

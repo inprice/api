@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.CustomerInfoDTO;
+import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
@@ -67,7 +67,7 @@ class SubscriptionService {
     return trans;
   }
 
-  Response saveInfo(CustomerInfoDTO dto) {
+  Response saveInfo(CustomerDTO dto) {
     Response res = new Response("Sorry, we are unable to update your invoice info at the moment. We are working on it.");
 
     String problem = validateInvoiceInfo(dto);
@@ -131,7 +131,7 @@ class SubscriptionService {
     return res;
   }
 
-  private String validateInvoiceInfo(CustomerInfoDTO dto) {
+  private String validateInvoiceInfo(CustomerDTO dto) {
     String problem = null;
 
     if (dto == null) {

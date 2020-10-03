@@ -21,6 +21,9 @@ public interface UserSessionDao {
   @SqlUpdate("delete from user_session where user_id=:userId")
   boolean deleteByUserId(@Bind("userId") Long userId);
 
+  @SqlUpdate("update user_session set accessed_at = now() where _hash=:hash")
+  boolean refreshAccessedAt(@Bind("hash") String hash);
+
   @SqlQuery("select * from user_session where user_id=:userId")
   @UseRowMapper(DBSessionMapper.class)
   List<ForDatabase> findListByUserId(@Bind("userId") Long userId);

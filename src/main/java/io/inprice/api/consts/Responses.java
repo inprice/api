@@ -89,7 +89,7 @@ public class Responses {
 
     public static class Defined {
       public static final Response COMPANY = new Response(BASE + 20, "Seems that you have already registered this company!");
-      public static final Response MEMBERSHIP = new Response(BASE + 21, "Seems that this user has an account, please sign in with your credentials and manage your memberships under user settings page!");
+      public static final Response MEMBERSHIP = new Response(BASE + 21, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");
     }
   }
 

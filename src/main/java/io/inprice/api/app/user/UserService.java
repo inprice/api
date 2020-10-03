@@ -7,9 +7,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
 import io.inprice.api.app.auth.UserSessionDao;
-import io.inprice.api.app.membership.MembershipDao;
+import io.inprice.api.app.member.MemberDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.dto.UserDTO;
+import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LongDTO;
 import io.inprice.api.external.Props;
@@ -20,7 +21,6 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.Timezones;
-import io.inprice.api.validator.PasswordValidator;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.UserStatus;
 import jodd.util.BCrypt;
@@ -70,8 +70,8 @@ public class UserService {
 
   public Response getInvitations() {
     try (Handle handle = Database.getHandle()) {
-      MembershipDao membershipDao = handle.attach(MembershipDao.class);
-      return new Response(membershipDao.findMembershipListByEmailAndStatus(CurrentUser.getEmail(), UserStatus.PENDING.name()));
+      MemberDao memberDao = handle.attach(MemberDao.class);
+      return new Response(memberDao.findMemberListByEmailAndStatus(CurrentUser.getEmail(), UserStatus.PENDING.name()));
     }
   }
 
@@ -91,9 +91,9 @@ public class UserService {
 
   private Response processInvitation(Long id, UserStatus fromStatus, UserStatus toStatus) {
     try (Handle handle = Database.getHandle()) {
-      MembershipDao membershipDao = handle.attach(MembershipDao.class);
+      MemberDao memberDao = handle.attach(MemberDao.class);
 
-      boolean isOK = membershipDao.changeStatus(id, fromStatus.name(), toStatus.name(), CurrentUser.getUserId());
+      boolean isOK = memberDao.changeStatus(id, fromStatus.name(), toStatus.name(), CurrentUser.getUserId());
       if (isOK) {
         return Responses.OK;
       } else {
@@ -102,25 +102,25 @@ public class UserService {
     }
   }
 
-  public Response getMemberships() {
+  public Response getMembers() {
     try (Handle handle = Database.getHandle()) {
-      MembershipDao membershipDao = handle.attach(MembershipDao.class);
+      MemberDao memberDao = handle.attach(MemberDao.class);
 
       List<String> roles = new ArrayList<>(2);
       roles.add(UserStatus.JOINED.name());
       roles.add(UserStatus.LEFT.name());
 
       return new Response(
-        membershipDao.findMembershipListByEmailAndStatusListButNotCompanyId(CurrentUser.getEmail(), CurrentUser.getCompanyId(), roles)
+        memberDao.findMemberListByEmailAndStatusListButNotCompanyId(CurrentUser.getEmail(), CurrentUser.getCompanyId(), roles)
       );
     }
   }
 
-  public Response leaveMembership(LongDTO dto) {
+  public Response leaveMember(LongDTO dto) {
     if (dto.getValue() != null && dto.getValue() > 0) {
       try (Handle handle = Database.getHandle()) {
-        MembershipDao membershipDao = handle.attach(MembershipDao.class);
-        boolean isOK = membershipDao.changeStatus(dto.getValue(), UserStatus.LEFT.name());
+        MemberDao memberDao = handle.attach(MemberDao.class);
+        boolean isOK = memberDao.changeStatus(dto.getValue(), UserStatus.LEFT.name());
         if (isOK) {
           return Responses.OK;
         }

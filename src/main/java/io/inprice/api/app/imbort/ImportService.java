@@ -1,13 +1,10 @@
-package io.inprice.api.app.product_import;
+package io.inprice.api.app.imbort;
 
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.common.meta.ImportType;
 
-/**
- * IProductImportService
- */
-public interface IProductImportService {
+public interface ImportService {
 
   default Response upload( String content) {
     return Responses.DataProblem.NOT_SUITABLE;

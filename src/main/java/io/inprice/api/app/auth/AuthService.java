@@ -15,13 +15,15 @@ import org.slf4j.LoggerFactory;
 import eu.bitwalker.useragentutils.UserAgent;
 import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
-import io.inprice.api.app.membership.MembershipDao;
+import io.inprice.api.app.member.MemberDao;
 import io.inprice.api.app.token.TokenType;
 import io.inprice.api.app.token.Tokens;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.LoginDTO;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.dto.UserDTO;
+import io.inprice.api.app.user.validator.EmailValidator;
+import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.email.EmailSender;
@@ -37,15 +39,12 @@ import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.api.session.info.ForResponse;
-import io.inprice.api.validator.AuthValidator;
-import io.inprice.api.validator.EmailValidator;
-import io.inprice.api.validator.PasswordValidator;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.UserStatus;
-import io.inprice.common.models.Membership;
+import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
 import io.javalin.http.Context;
 import jodd.util.BCrypt;
@@ -59,7 +58,7 @@ public class AuthService {
 
   Response login(Context ctx, LoginDTO dto) {
     if (dto != null) {
-      String problem = AuthValidator.verify(dto);
+      String problem = verifyLogin(dto);
       if (problem == null) {
 
         try (Handle handle = Database.getHandle()) {
@@ -202,10 +201,10 @@ public class AuthService {
 
     try (Handle handle = Database.getHandle()) {
       UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
-      MembershipDao membershipDao = handle.attach(MembershipDao.class);
+      MemberDao memberDao = handle.attach(MemberDao.class);
 
-      List<Membership> membershipList = membershipDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED.name());
-      if (membershipList != null && membershipList.size() > 0) {
+      List<Member> memberList = memberDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED.name());
+      if (memberList != null && memberList.size() > 0) {
 
         List<ForRedis> redisSesList = new ArrayList<>();
         List<ForCookie> sessions = null;
@@ -233,7 +232,7 @@ public class AuthService {
         String ipAddress = ClientSide.getIp(ctx.req);
         UserAgent ua = new UserAgent(ctx.userAgent());
 
-        for (Membership mem : membershipList) {
+        for (Member mem : memberList) {
           ForCookie cookieSes = new ForCookie(user.getEmail(), mem.getRole().name());
           sessions.add(cookieSes);
 
@@ -311,10 +310,10 @@ public class AuthService {
 
         try (Handle handle = Database.getHandle()) {
           UserDao userDao = handle.attach(UserDao.class);
-          MembershipDao membershipDao = handle.attach(MembershipDao.class);
+          MemberDao memberDao = handle.attach(MemberDao.class);
     
-          Membership membership = membershipDao.findListByEmailAndStatusAndCompanyId(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getCompanyId());
-          if (membership != null) {
+          Member member = memberDao.findListByEmailAndStatusAndCompanyId(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getCompanyId());
+          if (member != null) {
 
             User user = userDao.findByEmail(sendDto.getEmail());
             if (user == null) { //user creation
@@ -343,7 +342,7 @@ public class AuthService {
             if (res.isOK()) {
               User newUser = res.getData();
               boolean isActivated = 
-                membershipDao.activate(
+                memberDao.activate(
                   newUser.getId(),
                   UserStatus.JOINED.name(),
                   newUser.getEmail(),
@@ -434,6 +433,14 @@ public class AuthService {
       }
     }
     return null;
+  }
+
+  public static String verifyLogin(LoginDTO dto) {
+    String problem = PasswordValidator.verify(dto, false, false);
+    if (problem == null) {
+      problem = EmailValidator.verify(dto.getEmail());
+    }
+    return problem;
   }
 
 }

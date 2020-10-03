@@ -1,4 +1,4 @@
-package io.inprice.api.app.product_import;
+package io.inprice.api.app.imbort;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,12 +21,12 @@ import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
 
 @Router
-public class ProductImportController implements Controller {
+public class ImportController implements Controller {
 
-  private static final Logger log = LoggerFactory.getLogger(ProductImportController.class);
+  private static final Logger log = LoggerFactory.getLogger(ImportController.class);
 
-  private static final ProductCSVImportService csvImportService = Beans.getSingleton(ProductCSVImportService.class);
-  private static final ProductGenericImportService genericImportService = Beans.getSingleton(ProductGenericImportService.class);
+  private static final CSVImportService csvImportService = Beans.getSingleton(CSVImportService.class);
+  private static final GenericImportService genericImportService = Beans.getSingleton(GenericImportService.class);
 
   @Override
   public void addRoutes(Javalin app) {
@@ -53,11 +53,11 @@ public class ProductImportController implements Controller {
 
   }
 
-  private void upload(Context ctx, String contentType, IProductImportService importService) {
+  private void upload(Context ctx, String contentType, ImportService importService) {
     upload(ctx, contentType, importService, null);
   }
 
-  private void upload(Context ctx, String contentType, IProductImportService importService, ImportType importType) {
+  private void upload(Context ctx, String contentType, ImportService importService, ImportType importType) {
     UploadedFile file = ctx.uploadedFile("file");
     if (file != null && file.getSize() >= 32) { // byte
       if (file.getContentType().equals(contentType)) {

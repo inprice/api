@@ -1,4 +1,4 @@
-package io.inprice.api.dto;
+package io.inprice.api.info;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

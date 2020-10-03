@@ -2,7 +2,7 @@ package io.inprice.api.session.info;
 
 import java.util.Date;
 
-import io.inprice.common.models.Membership;
+import io.inprice.common.models.Member;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,7 +23,7 @@ public class ForRedis extends ForResponse {
   private String hash;
   private Date accessedAt = new Date();
 
-  public ForRedis(ForResponse forResponse, Membership mem, String hash) {
+  public ForRedis(ForResponse forResponse, Member mem, String hash) {
     super(forResponse);
     this.userId = mem.getUserId();
     this.companyId = mem.getCompanyId();

@@ -50,12 +50,12 @@ public class UserController implements Controller {
       }, AccessRoles.ANYONE());
 
       app.get(Consts.Paths.User.MEMBERSHIPS, (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.getMemberships()));
+         ctx.json(Commons.createResponse(ctx, service.getMembers()));
       }, AccessRoles.ANYONE());
 
       app.put(Consts.Paths.User.LEAVE_MEMBERSHIP, (ctx) -> {
          LongDTO dto = ctx.bodyAsClass(LongDTO.class);
-         ctx.json(Commons.createResponse(ctx, service.leaveMembership(dto)));
+         ctx.json(Commons.createResponse(ctx, service.leaveMember(dto)));
       }, AccessRoles.ANYONE());
 
       app.get(Consts.Paths.User.OPENED_SESSIONS, (ctx) -> {

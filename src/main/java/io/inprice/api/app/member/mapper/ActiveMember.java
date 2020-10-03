@@ -1,11 +1,11 @@
-package io.inprice.api.app.membership.mapper;
+package io.inprice.api.app.member.mapper;
 
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class ActiveMembership {
+public class ActiveMember {
   
   private Long id;
   private String name;

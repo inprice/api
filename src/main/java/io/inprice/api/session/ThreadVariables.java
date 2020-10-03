@@ -4,17 +4,17 @@ import io.inprice.api.session.info.ForRedis;
 
 class ThreadVariables {
 
-   private ForRedis session;
+  private ForRedis session;
 
-   ThreadVariables() {
-   }
+  ThreadVariables() {
+  }
 
-   void set(ForRedis session) {
-      this.session = session;
-   }
+  void set(ForRedis session) {
+    this.session = session;
+  }
 
-   ForRedis getSession() {
-      return session;
-   }
+  ForRedis getSession() {
+    return session;
+  }
 
 }

@@ -1,10 +1,10 @@
 package io.inprice.api.app.auth;
 
+import io.inprice.api.app.auth.dto.EmailDTO;
 import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.user.dto.LoginDTO;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.consts.Consts;
-import io.inprice.api.dto.EmailDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.ClientSide;
