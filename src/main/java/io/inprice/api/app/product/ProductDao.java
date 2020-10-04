@@ -19,23 +19,23 @@ import io.inprice.common.models.Product;
 
 public interface ProductDao {
 
-  @SqlQuery("select * from product where id=:code")
+  @SqlQuery("select * from product where code=:code and company_id=:companyId")
   @UseRowMapper(ProductMapper.class)
-  Product findByCode(@Bind("code") String code);
+  Product findByCode(@Bind("code") String code, @Bind("companyId") Long companyId);
     
   @SqlQuery(
     "select p.*, pp.*, brand.name as brand, category.name as category from product as p " +
     "left join product_price as pp on p.last_price_id = pp.id " +
     "left join lookup as brand on p.brand_id = brand.id " +
     "left join lookup as category on p.category_id = category.id " +    
-    " where p.id=:id and p.company_id=:companyId"
+    "where p.id=:id and p.company_id=:companyId"
   )
   @UseRowMapper(ProductMapper.class)
-  Product findByIdAndCompanyId(@Bind("id") Long id, @Bind("id") Long companyId);
+  Product findByIdAndCompanyId(@Bind("id") Long id, @Bind("companyId") Long companyId);
 
   @SqlQuery(
     "select id, code, name from product " +
-    "where company_id=:companyId and code like '%' || :term || '%' or name like '%' || :term || '%' order by name limit <limit>"
+    "where company_id=:companyId and (code like '%' || :term || '%' or name like '%' || :term || '%') order by name limit <limit>"
   )
   @UseRowMapper(SimpleSearchMapper.class)
   List<SimpleSearch> searchSimpleByTermAndCompanyId(@Bind("term") String term, @Bind("companyId") Long companyId, @Define("limit") int limit);

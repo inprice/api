@@ -9,7 +9,7 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.models.Plan;
 
-public class PlanDao {
+public class Plans {
 
   private static Map<Integer, Plan> plansMap;
 
@@ -18,7 +18,7 @@ public class PlanDao {
       new Plan(
         1, 
         "Micro Plan",
-        "Up to 5 products with unlimited competitors.",
+        "Up to 5 products with unlimited links.",
         new BigDecimal(5),
         5,
         "price_1H8hpfBiHTcqawyMTooghKgi"
@@ -26,7 +26,7 @@ public class PlanDao {
       new Plan(
         2, 
         "Micro Plus Plan",
-        "Up to 10 products with unlimited competitors.",
+        "Up to 10 products with unlimited links.",
         new BigDecimal(7),
         10,
         "price_1H8hqXBiHTcqawyMvG5xVsdb"

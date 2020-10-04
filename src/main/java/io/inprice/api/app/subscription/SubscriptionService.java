@@ -40,7 +40,7 @@ class SubscriptionService {
     try (Handle handle = Database.getHandle()) {
       SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
-      List<SubsTrans> allTrans = subscriptionDao.findTransListByCompanyId(CurrentUser.getCompanyId());
+      List<SubsTrans> allTrans = subscriptionDao.findListByCompanyId(CurrentUser.getCompanyId());
       data.put("all", allTrans);
 
       if (allTrans != null && allTrans.size() > 0) {

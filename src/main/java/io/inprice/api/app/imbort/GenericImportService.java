@@ -2,7 +2,6 @@ package io.inprice.api.app.imbort;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,18 +9,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.link.LinkDao;
+import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.ImportType;
 import io.inprice.common.models.Company;
+import io.inprice.common.models.Link;
+import io.inprice.common.models.Product;
 import io.inprice.common.utils.URLUtils;
 
 public class GenericImportService implements ImportService {
@@ -32,25 +37,23 @@ public class GenericImportService implements ImportService {
   private static final String SKU_REGEX = "^[1-3][0-9]{10,11}$";
 
   public Response upload(ImportType importType, String content) {
-    Response res = Responses.DataProblem.DB_PROBLEM;
-
     String identifier = null;
-    String regex = null;
+    final String[] regex = { "" };
 
     switch (importType) {
       case EBAY_SKU: {
-        identifier = "SKU";
-        regex = SKU_REGEX;
+        identifier = "SKU list";
+        regex[0] = SKU_REGEX;
         break;
       }
       case AMAZON_ASIN: {
-        identifier = "ASIN";
-        regex = ASIN_REGEX;
+        identifier = "ASIN list";
+        regex[0] = ASIN_REGEX;
         break;
       }
       case URL: {
-        identifier = "URL";
-        regex = URLUtils.URL_CHECK_REGEX;
+        identifier = "URL list";
+        regex[0] = URLUtils.URL_CHECK_REGEX;
         break;
       }
       case CSV: {
@@ -58,133 +61,117 @@ public class GenericImportService implements ImportService {
       }
     }
 
-    Connection con = null;
+    Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
-    try {
-      con = db.getTransactionalConnection();
-      Company company = companyRepository.findById(con, CurrentUser.getCompanyId());
+    try (Handle handle = Database.getHandle()) {
+      handle.inTransaction(h -> {
+        CompanyDao companyDao = h.attach(CompanyDao.class);
 
-      int allowedCount = company.getProductLimit() - company.getProductCount();
-      if (allowedCount > 0) {
+        Company company = companyDao.findById(CurrentUser.getCompanyId());
+        int allowedCount = company.getProductLimit() - company.getProductCount();
 
-        int actualCount = company.getProductCount();
-        if (actualCount < allowedCount) {
+        Set<String> insertedSet = new HashSet<>();
+        if (allowedCount > 0) {
 
-          Set<String> insertedCodeSet = new HashSet<>();
-          List<Map<String, String>> resultMapList = new ArrayList<>();
+          int actualCount = company.getProductCount();
+          if (actualCount < allowedCount) {
 
-          try (BufferedReader reader = new BufferedReader(new StringReader(content))) {
+            List<Map<String, String>> resultMapList = new ArrayList<>();
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-              if (StringUtils.isBlank(line) || line.trim().startsWith("#")) {
-                continue;
-              }
+            try (BufferedReader reader = new BufferedReader(new StringReader(content))) {
+              LinkDao linkDao = h.attach(LinkDao.class);
+              ProductDao productDao = h.attach(ProductDao.class);
 
-              String result = "";
+              String line;
+              while ((line = reader.readLine()) != null) {
+                if (StringUtils.isBlank(line) || line.trim().startsWith("#")) {
+                  continue;
+                }
 
-              if (actualCount < allowedCount) {
-                boolean exists = insertedCodeSet.contains(line);
-                if (! exists) {
-                  if (line.matches(regex)) {
+                String result = "";
+                if (actualCount < allowedCount) {
 
-                    Response op = null;
+                  boolean exists = insertedSet.contains(line);
+                  if (! exists) {
 
-                    if (ImportType.URL.equals(importType)) {
-                      exists = linkRepository.doesExistByUrl(con, line, null);
-                      if (exists) {
-                        op = Responses.DataProblem.DUPLICATE;
+                    if (line.matches(regex[0])) {
+                      Response op = Responses.NotFound.PRODUCT;
+
+                      if (ImportType.URL.equals(importType)) {
+                        Link link = linkDao.findByUrlHashForImport(DigestUtils.md5Hex(line), CurrentUser.getCompanyId());
+                        if (link != null) {
+                          op = Responses.DataProblem.DUPLICATE;
+                        }
                       } else {
-                        op = Responses.NotFound.PRODUCT;
+                        Product product = productDao.findByCode(line, CurrentUser.getCompanyId());
+                        if (product != null) {
+                          op = Responses.DataProblem.DUPLICATE;
+                        }
+                      }
+
+                      if (op.equals(Responses.NotFound.PRODUCT)) {
+                        String url = null;
+
+                        switch (importType) {
+                          case EBAY_SKU: {
+                            url = Props.PREFIX_FOR_SEARCH_EBAY() + line;
+                            break;
+                          }
+                          case AMAZON_ASIN: {
+                            url = Props.PREFIX_FOR_SEARCH_AMAZON() + line;
+                            break;
+                          }
+                          default:
+                            url = line;
+                            break;
+                        }
+
+                        long id = linkDao.insert(url, DigestUtils.md5Hex(url), null, CurrentUser.getCompanyId());
+                        if (id > 0) {
+                          actualCount++;
+                          insertedSet.add(line);
+                          result = "Added successfully";
+                        } else {
+                          result = Responses.DataProblem.DB_PROBLEM.getReason();
+                        }
+                      } else {
+                        result = "This is already defined!";
                       }
                     } else {
-                      op = productRepository.findByCode(con, line);
-                    }
-
-                    if (op.equals(Responses.NotFound.PRODUCT)) {
-                      LinkDTO link = new LinkDTO();
-                      switch (importType) {
-                        case EBAY_SKU: {
-                          link.setUrl(Props.PREFIX_FOR_SEARCH_EBAY() + line);
-                          break;
-                        }
-                        case AMAZON_ASIN: {
-                          link.setUrl(Props.PREFIX_FOR_SEARCH_AMAZON() + line);
-                          break;
-                        }
-                        default:
-                          link.setUrl(line);
-                          break;
-                      }
-
-                      op = linkRepository.insert(con, link);
-                      if (op.isOK()) {
-                        actualCount++;
-                        insertedCodeSet.add(line);
-                        result = "Added successfully and will be handled in a short while";
-                      } else {
-                        result = op.getReason();
-                      }
-                    } else {
-                      result = "This is already defined!";
+                      result = "Doesn't match the rules!";
                     }
                   } else {
-                    result = "Doesn't match the rules!";
+                    result = "This is already handled. Please see previous rows in the list!";
                   }
                 } else {
-                  result = "This is already handled. Please see previous rows in the list!";
+                  result = "Your product count reached the limit of your plan. Allowed prod. count: " + allowedCount;
                 }
-              } else {
-                result = "Your product count reached the limit of your plan. Allowed prod. count: " + allowedCount;
+
+                Map<String, String> resultMap = new HashMap<>(2);
+                resultMap.put("line", line);
+                resultMap.put("result", result);
+                resultMapList.add(resultMap);
+                if (result.indexOf("reached") > 0) break;
               }
 
-              Map<String, String> resultMap = new HashMap<>(2);
-              resultMap.put("line", line);
-              resultMap.put("result", result);
-              resultMapList.add(resultMap);
-              if (result.indexOf("reached") > 0) break;
+              res[0] = new Response(resultMapList);
             }
 
-            res = new Response(resultMapList);
+          } else {
+            res[0] = new Response("You have reached your plan's maximum product limit. To import more product, please select a broader plan.");
           }
-
         } else {
-          res = new Response("You have reached your plan's maximum product limit.");
+          res[0] = new Response("You haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
         }
 
-      } else {
-        res = new Response("You haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
-      }
-
-      db.commit(con);
-
+        return insertedSet.size() > 0;
+      });
     } catch (Exception e) {
-      if (con != null) {
-        db.rollback(con);
-      }
-      log.error("Failed to import " + identifier + " list.", e);
-      res = Responses.DataProblem.DB_PROBLEM;
-    } finally {
-      if (con != null) {
-        db.close(con);
-      }
+      log.error("An error occurred during importing " + identifier, e);
+      res[0] = Responses.ServerProblem.EXCEPTION;
     }
 
-    return res;
+    return res[0];
   }
-
-  /*
-  boolean doesExistByUrl(Connection con, String url, Long productId) {
-    String urlHash = DigestUtils.md5Hex(url);
-    Link model = db.findSingle(con,
-        String.format(
-        "select *, '' as platform from competitor " + 
-        "where url_hash = '%s' " + 
-        "  and company_id = %d " +
-        "  and product_id " + (productId != null ? " = " + productId : " is null"),
-        urlHash, CurrentUser.getCompanyId()), this::map);
-    return (model != null);
-  }
-  */
 
 }

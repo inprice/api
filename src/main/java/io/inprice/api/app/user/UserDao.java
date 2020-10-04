@@ -10,7 +10,7 @@ import io.inprice.common.mappers.UserMapper;
 import io.inprice.common.models.User;
 
 /**
- * Be careful what you return from select queries since passwordSalt and passwordHash are dangerous columns!
+ * Be careful what you return from select queries since passwordSalt and passwordHash are dangerous fields!
  * 
  */
 public interface UserDao {
@@ -24,13 +24,17 @@ public interface UserDao {
   @UseRowMapper(UserMapper.class)
   User findByEmail(@Bind("email") String email);
 
+  @SqlQuery("select * from user where email=:email")
+  @UseRowMapper(UserMapper.class)
+  User findByEmailWithPassword(@Bind("email") String email);
+
   @SqlQuery("select name from user where email=:email")
   String findUserNameByEmail(@Bind("email") String email);
 
   @SqlUpdate("insert into user (email, name, timezone, password_salt, password_hash) values (:email, :name, :timezone, :salt, :hash)")
   @GetGeneratedKeys("id")
   long insert(@Bind("email") String email, @Bind("name") String name, @Bind("timezone") String timezone,
-      @Bind("passwordSalt") String passwordSalt, @Bind("passwordHash") String passwordHash);
+      @Bind("salt") String passwordSalt, @Bind("hash") String passwordHash);
 
   @SqlUpdate("update user set name=:name, timezone=:timezone where id=:id")
   boolean updateName(@Bind("id") Long id, @Bind("name") String name, @Bind("timezone") String timezone);

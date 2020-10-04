@@ -46,14 +46,13 @@ public interface MemberDao {
 
   @SqlQuery("select * from member where email=:email and status=:status and company_id=:companyId")
   @UseRowMapper(MemberMapper.class)
-  Member findListByEmailAndStatusAndCompanyId(@Bind("email") String email, 
-    @Bind("status") String status, @Bind("companyId") Long companyId);
+  Member findByEmailAndStatus(@Bind("email") String email, @Bind("status") String status, @Bind("companyId") Long companyId);
 
   @SqlQuery(
     "select mem.id, c.name, mem.role, mem.created_at from member as mem " + 
     "left join company as c on c.id = mem.company_id " + 
     "where email=:email " + 
-    "  and mem.status:status " + 
+    "  and mem.status=:status " + 
     "order by mem.created_at desc"
   )
   @UseRowMapper(ActiveMemberMapper.class)
@@ -85,7 +84,7 @@ public interface MemberDao {
   @SqlUpdate("update member set retry=retry+1 where id=:id and retry<3 and status=:status and company_id=:companyId")
   boolean increaseSendingCount(@Bind("id") Long id, @Bind("status") String status, @Bind("companyId") Long companyId);
 
-  @SqlUpdate("update member set status=?, updated_at=now() where id=:id and status != :status and company_id=:companyId")
+  @SqlUpdate("update member set status=:status, updated_at=now() where id=:id and status!=:status and company_id=:companyId")
   boolean setStatusDeleted(@Bind("id") Long id, @Bind("status") String status, @Bind("companyId") Long companyId);
 
   @SqlUpdate("update member set role=:role where id=:id and company_id=:companyId")

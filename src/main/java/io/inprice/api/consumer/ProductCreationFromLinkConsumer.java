@@ -1,7 +1,7 @@
 package io.inprice.api.consumer;
 
 /**
- * Creates products by using competitors' link details
+ * Creates products by using links' link details
  */
 public class ProductCreationFromLinkConsumer {
 
@@ -17,11 +17,11 @@ public class ProductCreationFromLinkConsumer {
         ThreadPools.PRODUCT_CREATION_POOL.submit(() -> {
           ServiceResponse res = Responses.NotFound.COMPETITOR;
           try {
-            Competitor link = JsonConverter.fromJson(new String(body), Competitor.class);
+            Link link = JsonConverter.fromJson(new String(body), Link.class);
             if (link != null) {
               res = createFromLink(link);
               if (! res.isOK()) {
-                log.error("DB problem while activating a competitor!");
+                log.error("DB problem while activating a link!");
               }
             } else {
               log.error("Product creation link is null!");
@@ -42,7 +42,7 @@ public class ProductCreationFromLinkConsumer {
 
 
 
-  public Response createFromLink(Competitor link) {
+  public Response createFromLink(Link link) {
     Connection con = null;
     try {
       con = db.getTransactionalConnection();
@@ -58,7 +58,7 @@ public class ProductCreationFromLinkConsumer {
 
       Response result = insertANewProduct(con, dto);
       if (result.isOK()) {
-        isCompelted = db.executeQuery(String.format("delete from competitor where id=%d", link.getId()),
+        isCompelted = db.executeQuery(String.format("delete from link where id=%d", link.getId()),
             String.format("Failed to delete link to be product. Id: %d", link.getId()));
       }
 

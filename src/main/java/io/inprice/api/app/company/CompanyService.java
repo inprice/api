@@ -33,8 +33,10 @@ import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.CurrencyFormats;
+import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Company;
@@ -50,9 +52,11 @@ class CompanyService {
   private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
 
   Response requestRegistration(RegisterDTO dto) {
-    Response res = RedisClient.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
-    if (!res.isOK())
-      return res;
+    Response res = Responses.OK;
+    if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+      res = RedisClient.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
+    }
+    if (!res.isOK()) return res;
 
     res = validateRegisterDTO(dto);
     if (res.isOK()) {
@@ -70,10 +74,12 @@ class CompanyService {
         }
 
         if (! isCompanyDefined) {
+          String token = Tokens.add(TokenType.REGISTER_REQUEST, dto);
+
           Map<String, Object> dataMap = new HashMap<>(3);
           dataMap.put("user", dto.getEmail().split("@")[0]);
           dataMap.put("company", dto.getCompanyName());
-          dataMap.put("token", Tokens.add(TokenType.REGISTER_REQUEST, dto));
+          dataMap.put("token", token.substring(0,3)+"-"+token.substring(3));
 
           String message = renderer.renderRegisterActivationLink(dataMap);
           emailSender.send(
@@ -144,6 +150,7 @@ class CompanyService {
           }
 
           if (res[0].isOK()) {
+            res[0] = new Response(user);
             Tokens.remove(TokenType.REGISTER_REQUEST, token);
           }
 
@@ -232,10 +239,10 @@ class CompanyService {
 
             Batch batch = h.createBatch();
             batch.add("SET FOREIGN_KEY_CHECKS=0");
-            batch.add("delete from competitor_price " + where);
-            batch.add("delete from competitor_history " + where);
-            batch.add("delete from competitor_spec " + where);
-            batch.add("delete from competitor " + where);
+            batch.add("delete from link_price " + where);
+            batch.add("delete from link_history " + where);
+            batch.add("delete from link_spec " + where);
+            batch.add("delete from link " + where);
             batch.add("delete from product_price " + where);
             batch.add("delete from product " + where);
             batch.add("delete from lookup " + where);

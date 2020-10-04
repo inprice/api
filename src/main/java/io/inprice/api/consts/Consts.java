@@ -76,8 +76,8 @@ public class Consts {
       public static final String IMPORT_AMAZON_ASIN = IMPORT_BASE + "/amazon-asin";
     }
 
-    public static class Competitor {
-      public static final String BASE = "/competitor";
+    public static class Link {
+      public static final String BASE = "/link";
       public static final String SEARCH = BASE + "/search";
       public static final String RENEW = BASE + "/renewed";
       public static final String PAUSE = BASE + "/paused";

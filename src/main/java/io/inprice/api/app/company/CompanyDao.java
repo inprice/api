@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -43,7 +44,11 @@ public interface CompanyDao {
   boolean update(@Bind("name") String name, @Bind("currencyCode") String currencyCode, 
     @Bind("currencyFormat") String currencyFormat, @Bind("id") Long id, @Bind("adminId") Long adminId);
 
-  @SqlUpdate("update company set title=:title, address_1=:address1, address_2=:address2, postcode=:postcode, city=:city, state=:state, country=:country where id=:id")
+  @SqlUpdate(
+    "update company set "+
+    "title=:dto.title, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country " +
+    "where id=:id"
+  )
   boolean update(@BindBean("dto") CustomerDTO dto, @Bind("id") Long id);
 
   @SqlUpdate("update company set subs_status=:subsStatus, subs_renewal_at=:subsRenewalAt where id=:id")
@@ -51,8 +56,8 @@ public interface CompanyDao {
 
   @SqlUpdate(
     "update company " +
-    "set title=:title, address_1=:address1, address_2=:address2, postcode=:postcode, city=:city, state=:state, country=:country, " +
-    "plan_id=:planId, subs_id=:subsId, subs_customer_id=:subsCustomerId, subs_status=:subsStatus, subs_renewal_at=:subsRenewalAt " +
+    "set title=:dto.title, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country, " +
+    "plan_id=:dto.planId, subs_id=:dto.subsId, subs_customer_id=:dto.subsCustomerId, subs_renewal_at=:dto.subsRenewalAt, subs_status=:subsStatus " +
     "where id=:id"
   )
   boolean update(@BindBean("dto") CustomerDTO dto, @Bind("subsStatus") String subsStatus, @Bind("id") Long id);
@@ -62,10 +67,10 @@ public interface CompanyDao {
 
   @SqlUpdate(
     "update company " + 
-    "set plan_id=:planId, subs_status=:subsStatus, subs_renewal_at=DATE_ADD(now(), interval :interval day), product_limit=:productLimit " +
+    "set plan_id=:planId, subs_status=:subsStatus, subs_renewal_at=DATE_ADD(now(), interval <interval> day), product_limit=:productLimit " +
     "where id=:id"
   )
-  boolean updateSubscription(@Bind("id") Long id, @Bind("subsStatus") String subsStatus, @Bind("interval") Integer interval, 
-    @Bind("productLimit") Integer productLimit, @Bind("planId") Integer planId);
+  boolean updateSubscription(@Bind("id") Long id, @Bind("subsStatus") String subsStatus, 
+    @Bind("productLimit") Integer productLimit, @Bind("planId") Integer planId, @Define("interval") Integer interval);
 
 }

@@ -2,7 +2,6 @@ package io.inprice.api.app.imbort;
 
 import java.io.StringReader;
 import java.math.BigDecimal;
-import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,19 +11,25 @@ import java.util.Set;
 
 import com.opencsv.CSVReader;
 
+import org.apache.commons.lang3.StringUtils;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.lookup.LookupDao;
+import io.inprice.api.app.product.ProductCreator;
+import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.ProductDTO;
 import io.inprice.common.meta.LookupType;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.Lookup;
+import io.inprice.common.models.Product;
 import io.inprice.common.utils.NumberUtils;
 
 public class CSVImportService implements ImportService {
@@ -34,130 +39,118 @@ public class CSVImportService implements ImportService {
   private static final int COLUMN_COUNT = 5;
 
   public Response upload(String content) {
-    Response res = Responses.DataProblem.DB_PROBLEM;
+    Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
-    Connection con = null;
+    try (Handle handle = Database.getHandle()) {
+      handle.inTransaction(h -> {
+        CompanyDao companyDao = h.attach(CompanyDao.class);
 
-    try {
-      con = db.getTransactionalConnection();
-      Company company = companyRepository.findById(con, CurrentUser.getCompanyId());
+        Company company = companyDao.findById(CurrentUser.getCompanyId());
+        int allowedCount = company.getProductLimit() - company.getProductCount();
 
-      int allowedCount = company.getProductLimit() - company.getProductCount();
-      if (allowedCount > 0) {
+        Set<String> insertedSet = new HashSet<>();
+        if (allowedCount > 0) {
 
-        int actualCount = company.getProductCount();
-        if (actualCount < allowedCount) {
+          int actualCount = company.getProductCount();
+          if (actualCount < allowedCount) {
 
-          Set<String> insertedCodeSet = new HashSet<>();
-          List<Map<String, String>> resultMapList = new ArrayList<>();
+            List<Map<String, String>> resultMapList = new ArrayList<>();
+  
+            try (CSVReader csvReader = new CSVReader(new StringReader(content))) {
+              LookupDao lookupDao = h.attach(LookupDao.class);
+              ProductDao productDao = h.attach(ProductDao.class);
+  
+              Map<String, Lookup> brandsMap = lookupDao.findMapByType(LookupType.BRAND.name(), CurrentUser.getCompanyId());
+              Map<String, Lookup> categoriesMap = lookupDao.findMapByType(LookupType.CATEGORY.name(), CurrentUser.getCompanyId());
+  
+              String[] values;
+              while ((values = csvReader.readNext()) != null) {
+                if (values.length <= 1 || values[0].trim().isEmpty() || values[0].trim().equals("#")) continue;
+  
+                String result = "";
+  
+                if (actualCount < allowedCount) {
+                  boolean exists = insertedSet.contains(values[0]);
+                  if (! exists) {
+                    if (values.length == COLUMN_COUNT) {
+  
+                      Product product = productDao.findByCode(values[0], CurrentUser.getCompanyId());
+                      if (product == null) {
+  
+                        ProductDTO dto = new ProductDTO();
+                        dto.setCode(SqlHelper.clear(values[0]));
+                        dto.setName(SqlHelper.clear(values[1]));
+                        dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[4])));
+                        dto.setCompanyId(CurrentUser.getCompanyId());
 
-          try (CSVReader csvReader = new CSVReader(new StringReader(content))) {
-
-            Map<String, Lookup> brandsMap = lookupRepository.getMap(LookupType.BRAND);
-            Map<String, Lookup> categoriesMap = lookupRepository.getMap(LookupType.CATEGORY);
-
-            String[] values;
-            while ((values = csvReader.readNext()) != null) {
-              if (values.length <= 1 || values[0].trim().isEmpty() || values[0].trim().equals("#")) continue;
-
-              String result = "";
-
-              if (actualCount < allowedCount) {
-                boolean exists = insertedCodeSet.contains(values[0]);
-                if (! exists) {
-                  if (values.length == COLUMN_COUNT) {
-
-                    Response op = productRepository.findByCode(con, values[0]);
-                    if (! op.isOK()) {
-
-                      int i = 0;
-                      ProductDTO dto = new ProductDTO();
-                      dto.setCode(SqlHelper.clear(values[i++]));
-                      dto.setName(SqlHelper.clear(values[i++]));
-                      String brandName = SqlHelper.clear(values[i++]);
-                      String categoryName = SqlHelper.clear(values[i++]);
-                      dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[i])));
-                      dto.setCompanyId(CurrentUser.getCompanyId());
-
-                      Lookup brand = brandsMap.get(brandName);
-                      if (brand == null) {
-                        brand = lookupRepository.add(con, LookupType.BRAND, brandName);
-                        brandsMap.put(brandName, brand);
-                      }
-                      dto.setBrandId(brand.getId());
-
-                      Lookup category = categoriesMap.get(brandName);
-                      if (category == null) {
-                        category = lookupRepository.add(con, LookupType.CATEGORY, categoryName);
-                        categoriesMap.put(categoryName, category);
-                      }
-                      dto.setCategoryId(category.getId());
-                      
-                      Response isValid = ProductValidator.validate(dto);
-                      if (isValid.isOK()) {
-                        op = productRepository.insertANewProduct(con, dto);
-                        if (op.isOK()) {
+                        String brandName = SqlHelper.clear(values[2]);
+                        String categoryName = SqlHelper.clear(values[3]);
+                        
+                        if (StringUtils.isNotBlank(brandName)) {
+                          Lookup brand = brandsMap.get(brandName);
+                          if (brand == null) {
+                            brand = lookupDao.insert(LookupType.BRAND.name(), brandName, CurrentUser.getCompanyId());
+                            brandsMap.put(brandName, brand);
+                          }
+                          dto.setBrandId(brand.getId());
+                        }
+  
+                        if (StringUtils.isNotBlank(categoryName)) {
+                          Lookup category = categoriesMap.get(categoryName);
+                          if (category == null) {
+                            category = lookupDao.insert(LookupType.CATEGORY.name(), categoryName, CurrentUser.getCompanyId());
+                            categoriesMap.put(categoryName, category);
+                          }
+                          dto.setCategoryId(category.getId());
+                        }
+                        
+                        Response productCreateRes = ProductCreator.create(h, dto);
+                        if (productCreateRes.isOK()) {
                           actualCount++;
-                          insertedCodeSet.add(values[0]);
+                          insertedSet.add(values[0]);
                           result = "Added successfully";
                         } else {
-                          result = op.getReason();
+                          result = productCreateRes.getReason();
                         }
+
                       } else {
-                        StringBuilder sb = new StringBuilder();
-                        for (String problem : isValid.getProblems()) {
-                          if (sb.length() != 0) sb.append(" & ");
-                          sb.append(problem);
-                        }
-                        result = sb.toString();
+                        result = String.format("The code {} is already defined!", values[0]);
                       }
                     } else {
-                      result = "The code " + values[0] + " is already defined!";
+                      result = String.format("Expected col count is %d, but %d. Separator is comma ,", COLUMN_COUNT, values.length);
                     }
                   } else {
-                    result = String.format(
-                      "Expected col count is %d, but %d. Separator is comma ,", COLUMN_COUNT, values.length);
+                    result = "This is already handled. Please see previous rows in the list!";
                   }
                 } else {
-                  result = "This is already handled. Please see previous rows in the list!";
+                  result = "Your product count reached the limit of your plan. Allowed prod. count: " + allowedCount;
                 }
-              } else {
-                result = "Your product count reached the limit of your plan. Allowed prod. count: " + allowedCount;
+  
+                Map<String, String> resultMap = new HashMap<>(2);
+                resultMap.put("line", values[0] + " : " + values[1]);
+                resultMap.put("result", result);
+                resultMapList.add(resultMap);
+                if (result.indexOf("reached") > 0) break;
               }
 
-              Map<String, String> resultMap = new HashMap<>(2);
-              resultMap.put("line", values[0] + " : " + values[1]);
-              resultMap.put("result", result);
-              resultMapList.add(resultMap);
-              if (result.indexOf("reached") > 0) break;
+              res[0] = new Response(resultMapList);
             }
-
-            res = new Response(resultMapList);
+  
+          } else {
+            res[0] = new Response("You have reached your plan's maximum product limit. To import more product, please select a broader plan.");
           }
-
         } else {
-          res = new Response("You have reached your plan's maximum product limit.");
+          res[0] = new Response("You haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
         }
 
-      } else {
-        res = new Response("You haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
-      }
-
-      db.commit(con);
-
+        return insertedSet.size() > 0;
+      });
     } catch (Exception e) {
-      if (con != null) {
-        db.rollback(con);
-      }
-      log.error("Failed to import CSV file.", e);
-      res = Responses.DataProblem.DB_PROBLEM;
-    } finally {
-      if (con != null) {
-        db.close(con);
-      }
+      log.error("An error occurred CSV list", e);
+      res[0] = Responses.ServerProblem.EXCEPTION;
     }
 
-    return res;
+    return res[0];
   }
 
 }

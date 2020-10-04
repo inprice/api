@@ -21,6 +21,7 @@ import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.config.SysProps;
+import io.inprice.common.meta.AppEnv;
 
 public class RedisClient {
 
@@ -71,6 +72,8 @@ public class RedisClient {
   }
 
   public static Response isEmailRequested(RateLimiterType type, String email) {
+    if (!SysProps.APP_ENV().equals(AppEnv.PROD)) return Responses.OK;
+
     boolean exists = requestingEmailsSet.contains(type.name() + email);
     if (exists) {
       return Responses.Already.REQUESTED_EMAIL;

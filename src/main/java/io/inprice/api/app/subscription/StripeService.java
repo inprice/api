@@ -1,6 +1,7 @@
 package io.inprice.api.app.subscription;
 
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.Date;
 
 import com.stripe.exception.StripeException;
@@ -22,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
-import io.inprice.api.app.system.PlanDao;
+import io.inprice.api.app.system.Plans;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.external.Props;
@@ -35,14 +36,13 @@ import io.inprice.common.meta.SubsStatus;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.Plan;
 import io.inprice.common.models.SubsTrans;
-import io.jsonwebtoken.lang.Maps;
 
 class StripeService {
 
   private static final Logger log = LoggerFactory.getLogger(StripeService.class);
 
   Response createCheckoutSession(Integer planId) {
-    Plan plan = PlanDao.getById(planId);
+    Plan plan = Plans.getById(planId);
 
     if (plan != null) {
       SessionCreateParams params = SessionCreateParams.builder()
@@ -70,7 +70,7 @@ class StripeService {
 
        try {
         Session session = Session.create(params);
-        return new Response(Maps.of("sessionId", session.getId()));
+        return new Response(Collections.singletonMap("sessionId", session.getId()));
       } catch (StripeException e) {
         log.error("Failed to create checkout session", e);
         return Responses.ServerProblem.EXCEPTION;

@@ -64,7 +64,7 @@ public class AuthService {
         try (Handle handle = Database.getHandle()) {
           UserDao userDao = handle.attach(UserDao.class);
     
-          User user = userDao.findByEmail(dto.getEmail());
+          User user = userDao.findByEmailWithPassword(dto.getEmail());
           if (user != null) {
             String salt = user.getPasswordSalt();
             String hash = BCrypt.hashpw(dto.getPassword(), salt);
@@ -74,6 +74,8 @@ public class AuthService {
               if (sessionInfo != null && sessionInfo.size() > 0) {
                 return new Response(sessionInfo);
               } else {
+                user.setPasswordSalt(null);
+                user.setPasswordHash(null);
                 return createSession(ctx, user);
               }
             }
@@ -87,7 +89,10 @@ public class AuthService {
   }
 
   Response forgotPassword(String email) {
-    Response res = RedisClient.isEmailRequested(RateLimiterType.FORGOT_PASSWORD, email);
+    Response res = Responses.OK;
+    if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+      res = RedisClient.isEmailRequested(RateLimiterType.FORGOT_PASSWORD, email);
+    }
     if (!res.isOK()) return res;
 
     String problem = EmailValidator.verify(email);
@@ -312,7 +317,7 @@ public class AuthService {
           UserDao userDao = handle.attach(UserDao.class);
           MemberDao memberDao = handle.attach(MemberDao.class);
     
-          Member member = memberDao.findListByEmailAndStatusAndCompanyId(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getCompanyId());
+          Member member = memberDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getCompanyId());
           if (member != null) {
 
             User user = userDao.findByEmail(sendDto.getEmail());
@@ -363,8 +368,10 @@ public class AuthService {
         }
 
       } else {
-        return Responses.Invalid.TOKEN;
+        res = Responses.Invalid.TOKEN;
       }
+
+      return res;
     }
 
     return new Response(problem);

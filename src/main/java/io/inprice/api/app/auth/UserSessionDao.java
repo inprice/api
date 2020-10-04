@@ -33,9 +33,9 @@ public interface UserSessionDao {
 
   @SqlBatch(
     "insert into user_session (_hash, user_id, company_id, ip, os, browser, user_agent) " +
-    "values (:hash, :userId, :companyId, :ip, :os, :browser, :userAgent)"
+    "values (:ses.hash, :ses.userId, :ses.companyId, :ses.ip, :ses.os, :ses.browser, :ses.userAgent)"
   )
-  boolean[] insert(@BindBean List<ForDatabase> sesList);
+  boolean[] insert(@BindBean("ses") List<ForDatabase> sesList);
 
   @SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId and _hash not in (<hashList>)")
   @UseRowMapper(DBSessionMapper.class)

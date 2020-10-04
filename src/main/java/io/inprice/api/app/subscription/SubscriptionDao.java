@@ -19,11 +19,11 @@ public interface SubscriptionDao {
 
   @SqlQuery("select * from subs_trans where company_id=:companyId order by created_at desc")
   @UseRowMapper(SubsTransMapper.class)
-  List<SubsTrans> findTransListByCompanyId(@Bind("companyId") Long companyId);
+  List<SubsTrans> findListByCompanyId(@Bind("companyId") Long companyId);
 
   @SqlUpdate(
-    "insert into subs_trans (company_id, event_source, event_id, event, successful, reason, description, file_url) " + 
-    "values (:trans.companyId, :eventSource, :trans.eventId, :event, :trans.successful, :trans.reason, :trans.description, :trans.fileUrl)"
+    "insert into subs_trans (company_id, event_id, successful, reason, description, file_url, event_source, event) " + 
+    "values (:trans.companyId, :trans.eventId, :trans.successful, :trans.reason, :trans.description, :trans.fileUrl, :eventSource, :event)"
   )
   boolean insertTrans(@BindBean("trans") SubsTrans trans, @Bind("eventSource") String eventSource, @Bind("event") String event);
 

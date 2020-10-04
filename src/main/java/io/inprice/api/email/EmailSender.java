@@ -13,12 +13,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.external.Props;
+import io.inprice.common.config.SysProps;
+import io.inprice.common.meta.AppEnv;
 
 public class EmailSender {
 
-   private static final Logger log = LoggerFactory.getLogger(EmailSender.class);
+  private static final Logger log = LoggerFactory.getLogger(EmailSender.class);
 
-   public void send(String from, String subject, String to, String content) {
+  public void send(String from, String subject, String to, String content) {
+    if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
       Email emailFrom = new Email(from);
       Email emailTo = new Email(to);
       Content emailContent = new Content("text/html", content);
@@ -28,14 +31,18 @@ public class EmailSender {
       SendGrid sg = new SendGrid(Props.API_KEYS_SENDGRID());
       Request request = new Request();
       try {
-         request.setMethod(Method.POST);
-         request.setEndpoint("mail/send");
-         request.setBody(mail.build());
-         sg.api(request);
-         log.info("Email sent to: {}", emailTo.getEmail());
+        request.setMethod(Method.POST);
+        request.setEndpoint("mail/send");
+        request.setBody(mail.build());
+        sg.api(request);
+        log.info("Email sent to: {}", emailTo.getEmail());
       } catch (IOException e) {
-         log.error("Failed to send email, to: {}, body: {}", from, content, e);
+        log.error("Failed to send email, to: {}, body: {}", from, content, e);
       }
-   }
+    } else {
+      log.info("Email sent! From: {}, Subject: {}, To: {}", from, subject, to);
+      log.info(content);
+    }
+  }
 
 }

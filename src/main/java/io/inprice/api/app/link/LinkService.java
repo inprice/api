@@ -30,7 +30,7 @@ class LinkService {
           Link link = linkDao.findByProductIdAndUrlHash(dto.getProductId(), urlHash);
           if (link == null) {
 
-            Link sample = linkDao.findByUrlHash(urlHash);
+            Link sample = linkDao.findSampleByUrlHashAndStatus(urlHash, LinkStatus.AVAILABLE.name());
             if (sample != null) { // if any, lets clone it
               long id = linkDao.insert(link, dto.getProductId(), CurrentUser.getCompanyId());
               if (id > 0) {

@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.app.subscription.SubscriptionDao;
-import io.inprice.api.app.system.PlanDao;
+import io.inprice.api.app.system.Plans;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
@@ -70,7 +70,7 @@ class CouponService {
                     usePlanProdLimit = true;
                   }
 
-                  Plan plan = PlanDao.getById(planId);
+                  Plan plan = Plans.getById(planId);
                   if (usePlanProdLimit) productLimit = plan.getProductLimit();
 
                   boolean isOK = 

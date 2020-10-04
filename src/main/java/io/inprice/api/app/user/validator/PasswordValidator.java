@@ -13,7 +13,7 @@ import jodd.util.BCrypt;
 public class PasswordValidator {
 
   public static String verify(PasswordDTO dto, boolean repeatPassCheck, boolean oldPassCheck) {
-    String problem = Responses.NotFound.USER.getReason();
+    String problem = null;
 
     if (StringUtils.isBlank(dto.getPassword())) {
       problem = "Password cannot be null!";
@@ -32,11 +32,11 @@ public class PasswordValidator {
           User user = userDao.findById(dto.getId());
           if (user != null) {
             final String hash = BCrypt.hashpw(dto.getOldPassword(), user.getPasswordSalt());
-            if (hash.equals(user.getPasswordHash())) {
-              problem = null; //which means everythig is ok!
-            } else {
+            if (! hash.equals(user.getPasswordHash())) {
               problem = "Old password is incorrect!";
             }
+          } else {
+            problem = Responses.NotFound.USER.getReason();
           }
         }
       }

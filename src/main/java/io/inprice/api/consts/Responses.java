@@ -25,7 +25,7 @@ public class Responses {
     public static final Response NAME = new Response(BASE + 14, "Invalid name!");
 
     public static final Response PRODUCT = new Response(BASE + 20, "Invalid product!");
-    public static final Response LINK = new Response(BASE + 21, "Invalid competitor!");
+    public static final Response LINK = new Response(BASE + 21, "Invalid link!");
 
     public static final Response TOKEN = new Response(BASE + 30, "Invalid token!");
     public static final Response EMPTY_FILE = new Response(BASE + 40, "Empty file!");
@@ -116,7 +116,7 @@ public class Responses {
     public static final Response INVITATION = new Response(BASE, "An active invitation not found!");
 
     public static final Response PRODUCT = new Response(BASE, "Product not found!");
-    public static final Response LINK = new Response(BASE, "Competitor not found!");
+    public static final Response LINK = new Response(BASE, "Link not found!");
     public static final Response IMPORT = new Response(BASE, "Import not found!");
 
     public static final Response HISTORY = new Response(BASE, "History not found!");

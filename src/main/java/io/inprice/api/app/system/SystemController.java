@@ -14,7 +14,7 @@ public class SystemController implements Controller {
   public void addRoutes(Javalin app) {
 
     app.get(Consts.Paths.System.PLANS, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, PlanDao.getPlans()));
+      ctx.json(Commons.createResponse(ctx, Plans.getPlans()));
     }, AccessRoles.ANYONE());
 
   }

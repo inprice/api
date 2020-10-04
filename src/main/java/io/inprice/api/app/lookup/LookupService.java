@@ -43,9 +43,9 @@ class LookupService {
         if (lookup != null) {
           data.put("selected", lookup.getId());
         } else {
-          long addedId = lookupDao.insert(CurrentUser.getCompanyId(), dto.getType(), SqlHelper.clear(dto.getNewValue()));
-          if (addedId > 0) {
-            data.put("selected", addedId);
+          Lookup inserted = lookupDao.insert(dto.getType(), SqlHelper.clear(dto.getNewValue()), CurrentUser.getCompanyId());
+          if (inserted != null && inserted.getId() != null) {
+            data.put("selected", inserted.getId());
           }
         }
 
@@ -114,7 +114,7 @@ class LookupService {
   private List<Map<String, Object>> getConvertedList(LookupDao lookupDao, String type) {
     List<Map<String, Object>> data = new ArrayList<>();
 
-    List<Lookup> lookups = lookupDao.findListByCompanyIdAndType(CurrentUser.getCompanyId(), type);
+    List<Lookup> lookups = lookupDao.findListByType(type, CurrentUser.getCompanyId());
     if (lookups != null && lookups.size() > 0) {
       for (Lookup lu: lookups) {
         Map<String, Object> map = new HashMap<>(2);
