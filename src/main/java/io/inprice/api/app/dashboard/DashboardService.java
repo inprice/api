@@ -91,6 +91,8 @@ class DashboardService {
         if (index == null) index = i-1; // it must be OTHERS's index
         result[index] += entry.getValue();
       }
+    } else {
+      result = null;
     }
 
     return result;
@@ -107,6 +109,8 @@ class DashboardService {
       for (Entry<Integer, Integer> entry: positionDistMap.entrySet()) {
         result[entry.getKey()-1] = entry.getValue();
       }
+    } else {
+      result = null;
     }
 
     return result;

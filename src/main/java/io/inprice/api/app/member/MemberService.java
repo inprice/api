@@ -10,8 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
 import io.inprice.api.app.member.dto.InvitationUpdateDTO;
-import io.inprice.api.app.token.TokenType;
-import io.inprice.api.app.token.Tokens;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.consts.Responses;
@@ -20,6 +18,8 @@ import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.api.token.TokenType;
+import io.inprice.api.token.Tokens;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.UserRole;
@@ -55,7 +55,7 @@ class MemberService {
         UserDao userDao = handle.attach(UserDao.class);
         MemberDao memberDao = handle.attach(MemberDao.class);
   
-        Member mem = memberDao.findByEmail(CurrentUser.getEmail(), CurrentUser.getCompanyId());
+        Member mem = memberDao.findByEmail(dto.getEmail(), CurrentUser.getCompanyId());
         if (mem == null) {
           boolean isAdded = memberDao.insertInvitation(dto.getEmail(), dto.getRole().name(), CurrentUser.getCompanyId());
           if (isAdded) {

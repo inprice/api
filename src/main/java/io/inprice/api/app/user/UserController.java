@@ -50,7 +50,7 @@ public class UserController implements Controller {
       }, AccessRoles.ANYONE());
 
       app.get(Consts.Paths.User.MEMBERSHIPS, (ctx) -> {
-         ctx.json(Commons.createResponse(ctx, service.getMembers()));
+         ctx.json(Commons.createResponse(ctx, service.getMemberships()));
       }, AccessRoles.ANYONE());
 
       app.put(Consts.Paths.User.LEAVE_MEMBERSHIP, (ctx) -> {

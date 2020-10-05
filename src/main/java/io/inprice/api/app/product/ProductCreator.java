@@ -16,19 +16,19 @@ public class ProductCreator {
   /**
    * Properly inserts a new product to the database
    * 
-   * @param handle must be in transaction
+   * @param transactional must be in transaction
    * @param dto
    * @return
    */
-  public static Response create(Handle handle, ProductDTO dto) {
+  public static Response create(Handle transactional, ProductDTO dto) {
     Response res = Responses.Invalid.PRODUCT;
 
     if (dto != null) {
 
       String problem = ProductValidator.validate(dto);
       if (problem == null) {
-        CompanyDao companyDao = handle.attach(CompanyDao.class);
-        ProductDao productDao = handle.attach(ProductDao.class);
+        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        ProductDao productDao = transactional.attach(ProductDao.class);
 
         boolean isIncreased = companyDao.increaseProductCountById(dto.getCompanyId());
         if (isIncreased) {

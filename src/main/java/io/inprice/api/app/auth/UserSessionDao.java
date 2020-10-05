@@ -10,8 +10,8 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
-import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.app.auth.mapper.DBSessionMapper;
+import io.inprice.api.session.info.ForDatabase;
 
 public interface UserSessionDao {
 
@@ -35,7 +35,7 @@ public interface UserSessionDao {
     "insert into user_session (_hash, user_id, company_id, ip, os, browser, user_agent) " +
     "values (:ses.hash, :ses.userId, :ses.companyId, :ses.ip, :ses.os, :ses.browser, :ses.userAgent)"
   )
-  boolean[] insert(@BindBean("ses") List<ForDatabase> sesList);
+  void insertBulk(@BindBean("ses") List<ForDatabase> sesList);
 
   @SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId and _hash not in (<hashList>)")
   @UseRowMapper(DBSessionMapper.class)

@@ -1,7 +1,8 @@
-package io.inprice.api.app.token;
+package io.inprice.api.token;
 
 import java.io.Serializable;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.inprice.api.external.RedisClient;
@@ -11,7 +12,13 @@ public class Tokens {
   private static final Random random = new Random();
 
   public static String add(TokenType tokenType, Serializable object) {
-    final String token = generateToken();
+    String token = null;
+    if (TokenType.REGISTER_REQUEST.equals(tokenType)) {
+      token = generateNumericToken();
+    } else {
+      token = generateUUIDToken();
+    }
+
     RedisClient.getTokensMap().put(getKey(tokenType, token), object, tokenType.ttl(), TimeUnit.MILLISECONDS);
     return token;
   }
@@ -39,7 +46,7 @@ public class Tokens {
    * 
    * @return 6-digit randomized token
    */
-  private static String generateToken() {
+  private static String generateNumericToken() {
     String token = ""+(random.nextInt(89999) + 10000);
 
     int total = 0;
@@ -50,4 +57,8 @@ public class Tokens {
     return token+(total%10);
   }
 
+  private static String generateUUIDToken() {
+    return UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
+  }
+ 
 }

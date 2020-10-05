@@ -49,7 +49,7 @@ public interface MemberDao {
   Member findByEmailAndStatus(@Bind("email") String email, @Bind("status") String status, @Bind("companyId") Long companyId);
 
   @SqlQuery(
-    "select mem.id, c.name, mem.role, mem.created_at from member as mem " + 
+    "select mem.id, c.name, mem.role, mem.status, mem.created_at from member as mem " + 
     "left join company as c on c.id = mem.company_id " + 
     "where email=:email " + 
     "  and mem.status=:status " + 
@@ -59,22 +59,21 @@ public interface MemberDao {
   List<ActiveMember> findMemberListByEmailAndStatus(@Bind("email") String email, @Bind("status") String status);
 
   @SqlQuery(
-    "select mem.id, c.name, mem.role, mem.updated_at from member as mem " + 
+    "select mem.id, c.name, mem.role, mem.status, mem.updated_at from member as mem " + 
     "left join company as c on c.id = mem.company_id " + 
     "where email=:email " + 
-    "  and company_id!=:company_id  " + 
+    "  and company_id!=:companyId  " + 
     "  and mem.status in (<statusList>) " + 
     "order by mem.status, mem.updated_at desc"
   )
   @UseRowMapper(ActiveMemberMapper.class)
-  List<ActiveMember> findMemberListByEmailAndStatusListButNotCompanyId(@Bind("email") String email, 
-    @Bind("companyId") Long companyId, @BindList("statusList") List<String> statusList);
+  List<ActiveMember> findMembershipsByEmail(@Bind("email") String email, @Bind("companyId") Long companyId, @BindList("statusList") List<String> statusList);
 
   @SqlUpdate(
     "insert into member (user_id, email, company_id, role, status, updated_at) " + 
     "values (:userId, :email, :companyId, :role, :status, now())"
   )
-  @GetGeneratedKeys("id")
+  @GetGeneratedKeys
   long insert(@Bind("userId") Long userId, @Bind("email") String email, 
     @Bind("companyId") Long companyId, @Bind("role") String role, @Bind("status") String status);
 

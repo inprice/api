@@ -42,8 +42,8 @@ public class CSVImportService implements ImportService {
     Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(h -> {
-        CompanyDao companyDao = h.attach(CompanyDao.class);
+      handle.inTransaction(transaction -> {
+        CompanyDao companyDao = transaction.attach(CompanyDao.class);
 
         Company company = companyDao.findById(CurrentUser.getCompanyId());
         int allowedCount = company.getProductLimit() - company.getProductCount();
@@ -57,8 +57,8 @@ public class CSVImportService implements ImportService {
             List<Map<String, String>> resultMapList = new ArrayList<>();
   
             try (CSVReader csvReader = new CSVReader(new StringReader(content))) {
-              LookupDao lookupDao = h.attach(LookupDao.class);
-              ProductDao productDao = h.attach(ProductDao.class);
+              LookupDao lookupDao = transaction.attach(LookupDao.class);
+              ProductDao productDao = transaction.attach(ProductDao.class);
   
               Map<String, Lookup> brandsMap = lookupDao.findMapByType(LookupType.BRAND.name(), CurrentUser.getCompanyId());
               Map<String, Lookup> categoriesMap = lookupDao.findMapByType(LookupType.CATEGORY.name(), CurrentUser.getCompanyId());
@@ -104,7 +104,7 @@ public class CSVImportService implements ImportService {
                           dto.setCategoryId(category.getId());
                         }
                         
-                        Response productCreateRes = ProductCreator.create(h, dto);
+                        Response productCreateRes = ProductCreator.create(transaction, dto);
                         if (productCreateRes.isOK()) {
                           actualCount++;
                           insertedSet.add(values[0]);

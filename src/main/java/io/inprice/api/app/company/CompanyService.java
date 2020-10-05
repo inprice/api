@@ -15,8 +15,6 @@ import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.company.dto.CreateDTO;
 import io.inprice.api.app.company.dto.RegisterDTO;
 import io.inprice.api.app.member.MemberDao;
-import io.inprice.api.app.token.TokenType;
-import io.inprice.api.app.token.Tokens;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.validator.EmailValidator;
@@ -28,10 +26,14 @@ import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
+import io.inprice.api.helpers.PasswordHelper;
 import io.inprice.api.helpers.SqlHelper;
+import io.inprice.api.info.Pair;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.api.token.TokenType;
+import io.inprice.api.token.Tokens;
 import io.inprice.api.utils.CurrencyFormats;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
@@ -42,7 +44,6 @@ import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.User;
 import io.javalin.http.Context;
-import jodd.util.BCrypt;
 
 class CompanyService {
 
@@ -111,7 +112,7 @@ class CompanyService {
       Map<String, String> clientInfo = ClientSide.getGeoInfo(ctx.req);
 
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(h -> {
+        handle.inTransaction(transaction -> {
           UserDao userDao = handle.attach(UserDao.class);
 
           User user = userDao.findByEmail(dto.getEmail());
@@ -121,16 +122,15 @@ class CompanyService {
             user.setName(dto.getEmail().split("@")[0]);
             user.setTimezone(clientInfo.get(Consts.TIMEZONE));
             user.setCreatedAt(new Date());
-  
-            final String salt = BCrypt.gensalt(Props.APP_SALT_ROUNDS());
-            final String hash = BCrypt.hashpw(dto.getPassword(), salt);
-  
+
+            Pair<String, String> salted = PasswordHelper.generateSaltAndHash(dto.getPassword());
+
             user.setId(
               userDao.insert(
                 user.getEmail(), 
                 user.getName(), 
                 clientInfo.get(Consts.TIMEZONE), 
-                salt, hash
+                salted.getKey(), salted.getValue()
               )
             );
           }
@@ -174,7 +174,7 @@ class CompanyService {
 
     if (res[0].isOK()) {
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(h -> {
+        handle.inTransaction(transaction -> {
           res[0] = 
             createCompany(
               handle,
@@ -184,7 +184,7 @@ class CompanyService {
               dto.getCurrencyCode(),
               dto.getCurrencyFormat()
             );
-          return true;
+          return res[0].isOK();
         });
       }
     }
@@ -223,13 +223,13 @@ class CompanyService {
     final Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(h -> {
-        UserDao userDao = h.attach(UserDao.class);
-        CompanyDao companyDao = h.attach(CompanyDao.class);
-        UserSessionDao sessionDao = h.attach(UserSessionDao.class);
+      handle.inTransaction(transaction -> {
+        UserDao userDao = transaction.attach(UserDao.class);
+        CompanyDao companyDao = transaction.attach(CompanyDao.class);
+        UserSessionDao sessionDao = transaction.attach(UserSessionDao.class);
 
         User user = userDao.findById(CurrentUser.getUserId());
-        String phash = BCrypt.hashpw(password, user.getPasswordSalt());
+        String phash = PasswordHelper.generateHashOnly(password, user.getPasswordSalt());
 
         if (phash.equals(user.getPasswordHash())) {
           Company company = companyDao.findByAdminId(CurrentUser.getCompanyId());
@@ -237,7 +237,7 @@ class CompanyService {
           if (company != null) {
             String where = "where company_id=" + CurrentUser.getCompanyId();
 
-            Batch batch = h.createBatch();
+            Batch batch = transaction.createBatch();
             batch.add("SET FOREIGN_KEY_CHECKS=0");
             batch.add("delete from link_price " + where);
             batch.add("delete from link_history " + where);

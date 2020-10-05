@@ -48,7 +48,7 @@ class CouponService {
     if (CouponManager.isValid(code)) {
 
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(h -> {
+        handle.inTransaction(transaction -> {
           CouponDao couponDao = handle.attach(CouponDao.class);
 
           Coupon coupon = couponDao.findByCode(code);

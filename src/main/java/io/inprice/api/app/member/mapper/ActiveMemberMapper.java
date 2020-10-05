@@ -18,8 +18,9 @@ public class ActiveMemberMapper implements RowMapper<ActiveMember> {
     m.setId(rs.getLong("id"));
     m.setName(rs.getString("name"));
     m.setRole(rs.getString("role"));
+    m.setStatus(rs.getString("status"));
     if (Helper.hasColumn(rs, "updated_at")) m.setDate(DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
-    if (Helper.hasColumn(rs, "created_at")) m.setDate(DateUtils.formatLongDate(rs.getTimestamp("created_at")));
+    if (m.getDate() == null && Helper.hasColumn(rs, "created_at")) m.setDate(DateUtils.formatLongDate(rs.getTimestamp("created_at")));
 
     return m;
   }

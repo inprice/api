@@ -16,8 +16,6 @@ import eu.bitwalker.useragentutils.UserAgent;
 import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
 import io.inprice.api.app.member.MemberDao;
-import io.inprice.api.app.token.TokenType;
-import io.inprice.api.app.token.Tokens;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.LoginDTO;
 import io.inprice.api.app.user.dto.PasswordDTO;
@@ -32,13 +30,17 @@ import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.CookieHelper;
+import io.inprice.api.helpers.PasswordHelper;
 import io.inprice.api.helpers.SessionHelper;
+import io.inprice.api.info.Pair;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.api.session.info.ForResponse;
+import io.inprice.api.token.TokenType;
+import io.inprice.api.token.Tokens;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
@@ -47,7 +49,6 @@ import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
 import io.javalin.http.Context;
-import jodd.util.BCrypt;
 
 public class AuthService {
 
@@ -66,8 +67,8 @@ public class AuthService {
     
           User user = userDao.findByEmailWithPassword(dto.getEmail());
           if (user != null) {
-            String salt = user.getPasswordSalt();
-            String hash = BCrypt.hashpw(dto.getPassword(), salt);
+
+            String hash = PasswordHelper.generateHashOnly(dto.getPassword(), user.getPasswordSalt());
 
             if (hash.equals(user.getPasswordHash())) {
               Map<String, Object> sessionInfo = findSessionInfoByEmail(ctx, user.getEmail());
@@ -139,9 +140,9 @@ public class AuthService {
 
             User user = userDao.findByEmail(email);
             if (user != null) {
-              final String salt = BCrypt.gensalt(Props.APP_SALT_ROUNDS());
-              final String hash = BCrypt.hashpw(dto.getPassword(), salt);
-              boolean isOK = userDao.updatePassword(user.getId(), salt, hash);
+
+              Pair<String, String> salted = PasswordHelper.generateSaltAndHash(dto.getPassword());
+              boolean isOK = userDao.updatePassword(user.getId(), salted.getKey(), salted.getValue());
 
               //closing session
               if (isOK) {
@@ -259,21 +260,9 @@ public class AuthService {
         }
 
         if (dbSesList.size() > 0) {
-          boolean isSaved = false;
-
           if (RedisClient.addSesions(redisSesList)) {
-            boolean[] anyAffected = userSessionDao.insert(dbSesList);
-            if (anyAffected != null && anyAffected.length > 0) {
-              for (boolean b : anyAffected) {
-                if (b) {
-                  isSaved = true;
-                  break;
-                }
-              }
-            }
-          }
 
-          if (isSaved) {
+            userSessionDao.insertBulk(dbSesList);
             String tokenString = SessionHelper.toToken(sessions);
 
             /*
@@ -327,10 +316,8 @@ public class AuthService {
               dto.setEmail(sendDto.getEmail());
               dto.setTimezone(timezone);
 
-              final String salt = BCrypt.gensalt(Props.APP_SALT_ROUNDS());
-              final String hash = BCrypt.hashpw(acceptDto.getPassword(), salt);
-
-              long savedId = userDao.insert(dto.getEmail(), dto.getName(), dto.getTimezone(), salt, hash);
+              Pair<String, String> salted = PasswordHelper.generateSaltAndHash(dto.getPassword());
+              long savedId = userDao.insert(dto.getEmail(), dto.getName(), dto.getTimezone(), salted.getKey(), salted.getValue());
 
               if (savedId > 0) {
                 User newUser = new User(); //user in response is needed for auto login

@@ -108,7 +108,7 @@ public class ProductService {
       if (dto.getPosition() > 1) {
         posClause = " inner join product_price as pp on pp.id = p.last_price_id and pp.position = " + (dto.getPosition()-1);
       } else if (dto.getPosition() == 1) {
-        posField = " 'NOT YET' as position ";
+        posField = " 0 as position ";
         posClause = "";
         criteria.append(" and p.last_price_id is null");
       }
@@ -149,8 +149,8 @@ public class ProductService {
   public Response insert(ProductDTO dto) {
     Response[] res = { Responses.DataProblem.DB_PROBLEM };
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(h -> {
-        res[0] = ProductCreator.create(h, dto);
+      handle.inTransaction(transaction -> {
+        res[0] = ProductCreator.create(transaction, dto);
         return res[0].isOK();
       });
     }
@@ -166,8 +166,8 @@ public class ProductService {
         final Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
         try (Handle handle = Database.getHandle()) {
-          handle.inTransaction(h -> {
-            ProductDao productDao = h.attach(ProductDao.class);
+          handle.inTransaction(transaction -> {
+            ProductDao productDao = transaction.attach(ProductDao.class);
 
             Product product = productDao.findByCode(dto.getCode(), CurrentUser.getCompanyId());
             if (product != null) {
@@ -214,8 +214,8 @@ public class ProductService {
       final String where = String.format("where product_id=%d and company_id=%d", id, CurrentUser.getCompanyId());
 
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(h -> {
-          Batch batch = h.createBatch();
+        handle.inTransaction(transaction -> {
+          Batch batch = transaction.createBatch();
           batch.add("delete from link_price " + where);
           batch.add("delete from link_history " + where);
           batch.add("delete from link_spec " + where);

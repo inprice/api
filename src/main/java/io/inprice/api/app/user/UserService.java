@@ -13,9 +13,10 @@ import io.inprice.api.app.user.dto.UserDTO;
 import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LongDTO;
-import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
+import io.inprice.api.helpers.PasswordHelper;
 import io.inprice.api.helpers.SqlHelper;
+import io.inprice.api.info.Pair;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForCookie;
@@ -23,7 +24,6 @@ import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.Timezones;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.UserStatus;
-import jodd.util.BCrypt;
 
 public class UserService {
 
@@ -53,10 +53,9 @@ public class UserService {
       try (Handle handle = Database.getHandle()) {
         UserDao userDao = handle.attach(UserDao.class);
 
-        final String salt = BCrypt.gensalt(Props.APP_SALT_ROUNDS());
-        final String hash = BCrypt.hashpw(dto.getPassword(), salt);
+        Pair<String, String> salted = PasswordHelper.generateSaltAndHash(dto.getPassword());
+        boolean isOK = userDao.updatePassword(CurrentUser.getUserId(), salted.getKey(), salted.getValue());
 
-        boolean isOK = userDao.updatePassword(CurrentUser.getUserId(), salt, hash);
         if (isOK) {
           return Responses.OK;
         } else {
@@ -102,16 +101,17 @@ public class UserService {
     }
   }
 
-  public Response getMembers() {
+  public Response getMemberships() {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      List<String> roles = new ArrayList<>(2);
-      roles.add(UserStatus.JOINED.name());
-      roles.add(UserStatus.LEFT.name());
+      List<String> statuses = new ArrayList<>(3);
+      statuses.add(UserStatus.JOINED.name());
+      statuses.add(UserStatus.PENDING.name());
+      statuses.add(UserStatus.PAUSED.name());
 
       return new Response(
-        memberDao.findMemberListByEmailAndStatusListButNotCompanyId(CurrentUser.getEmail(), CurrentUser.getCompanyId(), roles)
+        memberDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getCompanyId(), statuses)
       );
     }
   }

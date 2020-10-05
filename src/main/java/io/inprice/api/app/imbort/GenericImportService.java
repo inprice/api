@@ -64,8 +64,8 @@ public class GenericImportService implements ImportService {
     Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(h -> {
-        CompanyDao companyDao = h.attach(CompanyDao.class);
+      handle.inTransaction(transaction -> {
+        CompanyDao companyDao = transaction.attach(CompanyDao.class);
 
         Company company = companyDao.findById(CurrentUser.getCompanyId());
         int allowedCount = company.getProductLimit() - company.getProductCount();
@@ -79,8 +79,8 @@ public class GenericImportService implements ImportService {
             List<Map<String, String>> resultMapList = new ArrayList<>();
 
             try (BufferedReader reader = new BufferedReader(new StringReader(content))) {
-              LinkDao linkDao = h.attach(LinkDao.class);
-              ProductDao productDao = h.attach(ProductDao.class);
+              LinkDao linkDao = transaction.attach(LinkDao.class);
+              ProductDao productDao = transaction.attach(ProductDao.class);
 
               String line;
               while ((line = reader.readLine()) != null) {

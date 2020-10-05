@@ -20,7 +20,7 @@ import io.inprice.common.models.Lookup;
 public interface LookupDao {
 
   @SqlUpdate("insert into lookup (company_id, type, name) values (:companyId, :type, :name)")
-  @GetGeneratedKeys("id")
+  @GetGeneratedKeys
   @RegisterBeanMapper(Lookup.class)
   Lookup insert(@Bind("type") String type, @Bind("name") String name, @Bind("companyId") Long companyId);
 

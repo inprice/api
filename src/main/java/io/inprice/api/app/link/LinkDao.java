@@ -44,7 +44,7 @@ public interface LinkDao {
     "insert into link (url, url_hash, product_id, company_id) " +
     "values (:url, :urlHash, :productId, :companyId)"
   )
-  @GetGeneratedKeys("id")
+  @GetGeneratedKeys
   long insert(@Bind("url") String url, @Bind("urlHash") String urlHash, @Bind("productId") Long productId, @Bind("companyId") Long companyId);
 
   @SqlUpdate(
@@ -52,7 +52,7 @@ public interface LinkDao {
     "values (:link.url, :link.urlHash, :link.sku, :link.name, :link.brand, :link.seller, :link.shipment, :link.status, :link.httpStatus, " +
       ":link.websiteClassName, :link.siteId, :productId, :companyId)"
   )
-  @GetGeneratedKeys("id")
+  @GetGeneratedKeys
   long insert(@BindBean("link") Link sample, @Bind("productId") Long productId, @Bind("companyId") Long companyId);
 
   @SqlUpdate(

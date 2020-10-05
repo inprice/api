@@ -36,7 +36,7 @@ public interface CompanyDao {
     "insert into company (admin_id, name, currency_code, currency_format) " + 
     "values (:adminId, :name, :currencyCode, :currencyFormat)"
   )
-  @GetGeneratedKeys("id")
+  @GetGeneratedKeys
   long insert(@Bind("adminId") Long adminId, @Bind("name") String name, 
     @Bind("currencyCode") String currencyCode, @Bind("currencyFormat") String currencyFormat);
 

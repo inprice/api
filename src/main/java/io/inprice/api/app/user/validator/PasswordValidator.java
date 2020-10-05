@@ -6,9 +6,9 @@ import org.jdbi.v3.core.Handle;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.helpers.PasswordHelper;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.models.User;
-import jodd.util.BCrypt;
 
 public class PasswordValidator {
 
@@ -31,7 +31,7 @@ public class PasswordValidator {
           UserDao userDao = handle.attach(UserDao.class);
           User user = userDao.findById(dto.getId());
           if (user != null) {
-            final String hash = BCrypt.hashpw(dto.getOldPassword(), user.getPasswordSalt());
+            final String hash = PasswordHelper.generateHashOnly(dto.getOldPassword(), user.getPasswordSalt());
             if (! hash.equals(user.getPasswordHash())) {
               problem = "Old password is incorrect!";
             }

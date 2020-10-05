@@ -1,4 +1,4 @@
-package io.inprice.api.app.token;
+package io.inprice.api.token;
 
 public enum TokenType {
 

@@ -190,7 +190,7 @@ class StripeService {
     Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(h -> {
+      handle.inTransaction(transaction -> {
         CompanyDao companyDao = handle.attach(CompanyDao.class);
         SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 

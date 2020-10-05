@@ -32,7 +32,7 @@ public interface UserDao {
   String findUserNameByEmail(@Bind("email") String email);
 
   @SqlUpdate("insert into user (email, name, timezone, password_salt, password_hash) values (:email, :name, :timezone, :salt, :hash)")
-  @GetGeneratedKeys("id")
+  @GetGeneratedKeys
   long insert(@Bind("email") String email, @Bind("name") String name, @Bind("timezone") String timezone,
       @Bind("salt") String passwordSalt, @Bind("hash") String passwordHash);
 
