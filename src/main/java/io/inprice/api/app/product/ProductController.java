@@ -2,6 +2,7 @@ package io.inprice.api.app.product;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.inprice.api.app.product.dto.ProductDTO;
 import io.inprice.api.app.product.dto.ProductSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.framework.Controller;
@@ -10,7 +11,6 @@ import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
-import io.inprice.common.info.ProductDTO;
 import io.javalin.Javalin;
 
 @Router

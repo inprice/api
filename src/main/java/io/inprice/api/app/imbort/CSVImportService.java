@@ -11,24 +11,20 @@ import java.util.Set;
 
 import com.opencsv.CSVReader;
 
-import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
-import io.inprice.api.app.lookup.LookupDao;
 import io.inprice.api.app.product.ProductCreator;
 import io.inprice.api.app.product.ProductDao;
+import io.inprice.api.app.product.dto.ProductDTO;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.info.ProductDTO;
-import io.inprice.common.meta.LookupType;
 import io.inprice.common.models.Company;
-import io.inprice.common.models.Lookup;
 import io.inprice.common.models.Product;
 import io.inprice.common.utils.NumberUtils;
 
@@ -36,7 +32,7 @@ public class CSVImportService implements ImportService {
 
   private static final Logger log = LoggerFactory.getLogger(CSVImportService.class);
 
-  private static final int COLUMN_COUNT = 5;
+  private static final int COLUMN_COUNT = 3;
 
   public Response upload(String content) {
     Response[] res = { Responses.DataProblem.DB_PROBLEM };
@@ -57,11 +53,7 @@ public class CSVImportService implements ImportService {
             List<Map<String, String>> resultMapList = new ArrayList<>();
   
             try (CSVReader csvReader = new CSVReader(new StringReader(content))) {
-              LookupDao lookupDao = transaction.attach(LookupDao.class);
               ProductDao productDao = transaction.attach(ProductDao.class);
-  
-              Map<String, Lookup> brandsMap = lookupDao.findMapByType(LookupType.BRAND.name(), CurrentUser.getCompanyId());
-              Map<String, Lookup> categoriesMap = lookupDao.findMapByType(LookupType.CATEGORY.name(), CurrentUser.getCompanyId());
   
               String[] values;
               while ((values = csvReader.readNext()) != null) {
@@ -83,27 +75,6 @@ public class CSVImportService implements ImportService {
                         dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[4])));
                         dto.setCompanyId(CurrentUser.getCompanyId());
 
-                        String brandName = SqlHelper.clear(values[2]);
-                        String categoryName = SqlHelper.clear(values[3]);
-                        
-                        if (StringUtils.isNotBlank(brandName)) {
-                          Lookup brand = brandsMap.get(brandName);
-                          if (brand == null) {
-                            brand = lookupDao.insert(LookupType.BRAND.name(), brandName, CurrentUser.getCompanyId());
-                            brandsMap.put(brandName, brand);
-                          }
-                          dto.setBrandId(brand.getId());
-                        }
-  
-                        if (StringUtils.isNotBlank(categoryName)) {
-                          Lookup category = categoriesMap.get(categoryName);
-                          if (category == null) {
-                            category = lookupDao.insert(LookupType.CATEGORY.name(), categoryName, CurrentUser.getCompanyId());
-                            categoriesMap.put(categoryName, category);
-                          }
-                          dto.setCategoryId(category.getId());
-                        }
-                        
                         Response productCreateRes = ProductCreator.create(transaction, dto);
                         if (productCreateRes.isOK()) {
                           actualCount++;

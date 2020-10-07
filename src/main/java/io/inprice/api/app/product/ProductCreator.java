@@ -3,10 +3,10 @@ package io.inprice.api.app.product;
 import org.jdbi.v3.core.Handle;
 
 import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.product.dto.ProductDTO;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.validator.ProductValidator;
-import io.inprice.common.info.ProductDTO;
 
 /**
  * This class is used by ProductService and Import services.
@@ -37,12 +37,14 @@ public class ProductCreator {
               dto.getCode(),
               dto.getName(),
               dto.getPrice(),
-              dto.getBrandId(),
-              dto.getCategoryId(),
               dto.getCompanyId()
             );
           if (isInserted) {
             res = Responses.OK;
+            if (dto.getTags() != null && dto.getTags().size() > 0) {
+              ProductTagDao tagDao = transactional.attach(ProductTagDao.class);
+              tagDao.insertTags(dto.getId(), dto.getCompanyId(), dto.getTags());
+            }
           } else {
             res = Responses.DataProblem.DUPLICATE;
           }

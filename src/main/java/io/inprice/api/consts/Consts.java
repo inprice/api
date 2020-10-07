@@ -1,7 +1,5 @@
 package io.inprice.api.consts;
 
-import io.inprice.common.meta.LookupType;
-
 public class Consts {
 
   public static final String SESSION = "INPRICE_AT";
@@ -74,6 +72,11 @@ public class Consts {
       public static final String IMPORT_URL_LIST = IMPORT_BASE + "/url-list";
       public static final String IMPORT_EBAY_SKU = IMPORT_BASE + "/ebay-sku";
       public static final String IMPORT_AMAZON_ASIN = IMPORT_BASE + "/amazon-asin";
+
+      public static class Tag {
+        public static final String BASE = "/product/tag";
+      }
+
     }
 
     public static class Link {
@@ -82,12 +85,6 @@ public class Consts {
       public static final String RENEW = BASE + "/renewed";
       public static final String PAUSE = BASE + "/paused";
       public static final String RESUME = BASE + "/resumed";
-    }
-
-    public static class Lookup {
-      public static final String BASE = "/lookup";
-      public static final String BRAND = BASE + "/" + LookupType.BRAND.name().toLowerCase();
-      public static final String CATEGORY = BASE  + LookupType.CATEGORY.name().toLowerCase();
     }
 
     public static class Subscription {

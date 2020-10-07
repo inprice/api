@@ -243,9 +243,9 @@ class CompanyService {
             batch.add("delete from link_history " + where);
             batch.add("delete from link_spec " + where);
             batch.add("delete from link " + where);
+            batch.add("delete from product_tag " + where);
             batch.add("delete from product_price " + where);
             batch.add("delete from product " + where);
-            batch.add("delete from lookup " + where);
             batch.add("delete from user_session " + where);
             batch.add("delete from member " + where);
             batch.add("delete from subs_trans " + where);
