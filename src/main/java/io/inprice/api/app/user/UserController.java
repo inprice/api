@@ -2,10 +2,10 @@ package io.inprice.api.app.user;
 
 import java.util.List;
 
+import io.inprice.api.app.user.dto.PasswordDTO;
+import io.inprice.api.app.user.dto.UserDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.LongDTO;
-import io.inprice.api.dto.PasswordDTO;
-import io.inprice.api.dto.UserDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -55,7 +55,7 @@ public class UserController implements Controller {
 
       app.put(Consts.Paths.User.LEAVE_MEMBERSHIP, (ctx) -> {
          LongDTO dto = ctx.bodyAsClass(LongDTO.class);
-         ctx.json(Commons.createResponse(ctx, service.leaveMembership(dto)));
+         ctx.json(Commons.createResponse(ctx, service.leaveMember(dto)));
       }, AccessRoles.ANYONE());
 
       app.get(Consts.Paths.User.OPENED_SESSIONS, (ctx) -> {

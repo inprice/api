@@ -1,7 +1,5 @@
 package io.inprice.api.consts;
 
-import io.inprice.common.meta.LookupType;
-
 public class Consts {
 
   public static final String SESSION = "INPRICE_AT";
@@ -49,13 +47,13 @@ public class Consts {
       public static final String ACCEPT_INVITATION = BASE + "/accept-invitation";
       public static final String REJECT_INVITATION = BASE + "/reject-invitation";
       public static final String MEMBERSHIPS = BASE + "/memberships";
-      public static final String LEAVE_MEMBERSHIP = BASE + "/leave-membership";
+      public static final String LEAVE_MEMBERSHIP = BASE + "/leave-member";
       public static final String OPENED_SESSIONS = BASE + "/opened-sessions";
       public static final String CLOSE_ALL_SESSIONS = BASE + "/close-all-sessions";
     }
 
-    public static class Membership {
-      public static final String BASE = "/membership";
+    public static class Member {
+      public static final String BASE = "/member";
       public static final String PAUSE = BASE + "/pause";
       public static final String RESUME = BASE + "/resume";
       public static final String DELETE = BASE + "/delete";
@@ -76,18 +74,12 @@ public class Consts {
       public static final String IMPORT_AMAZON_ASIN = IMPORT_BASE + "/amazon-asin";
     }
 
-    public static class Competitor {
-      public static final String BASE = "/competitor";
+    public static class Link {
+      public static final String BASE = "/link";
       public static final String SEARCH = BASE + "/search";
       public static final String RENEW = BASE + "/renewed";
       public static final String PAUSE = BASE + "/paused";
       public static final String RESUME = BASE + "/resumed";
-    }
-
-    public static class Lookup {
-      public static final String BASE = "/lookup";
-      public static final String BRAND = BASE + "/" + LookupType.BRAND.name().toLowerCase();
-      public static final String CATEGORY = BASE  + LookupType.CATEGORY.name().toLowerCase();
     }
 
     public static class Subscription {
@@ -101,6 +93,11 @@ public class Consts {
     public static class Coupon {
       public static final String BASE = "/coupon";
       public static final String APPLY = BASE + "/apply";
+    }
+
+    public static class Tag {
+      public static final String BASE = "/tag";
+      public static final String PRODUCT = BASE + "/product";
     }
 
     public static class Dashboard {

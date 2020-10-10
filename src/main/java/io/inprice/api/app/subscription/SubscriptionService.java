@@ -1,77 +1,137 @@
 package io.inprice.api.app.subscription;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
+import com.stripe.param.CustomerUpdateParams;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.CustomerInfoDTO;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.dto.CustomerDTO;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.helpers.Beans;
+import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.SubsTrans;
 
-public class SubscriptionService {
+class SubscriptionService {
 
   private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
 
-  private static final SubscriptionRepository repository = Beans.getSingleton(SubscriptionRepository.class);
-
-  public ServiceResponse getInfo() {
-    return repository.getInfo();
+  Response getCurrentCompany() {
+    try (Handle handle = Database.getHandle()) {
+      CompanyDao companyDao = handle.attach(CompanyDao.class);
+      return new Response(companyDao.findById(CurrentUser.getCompanyId()));
+    }
   }
 
-  public ServiceResponse getTransactions() {
-    return repository.getTransactions();
+  Response getTransactions() {
+    Map<String, List<SubsTrans>> data = new HashMap<>(2);
+
+    try (Handle handle = Database.getHandle()) {
+      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+
+      List<SubsTrans> allTrans = subscriptionDao.findListByCompanyId(CurrentUser.getCompanyId());
+      data.put("all", allTrans);
+
+      if (allTrans != null && allTrans.size() > 0) {
+        List<SubsTrans> invoiceTrans = new ArrayList<>();
+        for (SubsTrans st : allTrans) {
+          if (st.getFileUrl() != null) {
+            invoiceTrans.add(st);
+          }
+        }
+        data.put("invoice", invoiceTrans);
+      }
+    }
+
+    return new Response(data);
   }
 
-  public ServiceResponse cancel() {
+  SubsTrans getCancellationTrans() {
     SubsTrans trans = new SubsTrans();
     trans.setCompanyId(CurrentUser.getCompanyId());
     trans.setEvent(SubsEvent.SUBSCRIPTION_CANCELLED);
     trans.setSuccessful(Boolean.TRUE);
     trans.setReason(("subscription_cancel"));
     trans.setDescription(("Manual cancellation."));
-    return repository.addTransaction(CurrentUser.getCompanyId(), null, null, trans);
-  }
-  
-  public ServiceResponse createSession(Integer planId) {
-    return repository.createSession(planId);
+    return trans;
   }
 
-  public ServiceResponse saveInfo(CustomerInfoDTO dto) {
-    ServiceResponse res = new ServiceResponse(Responses.DataProblem.DB_PROBLEM.getStatus(), "DB error!");
+  Response saveInfo(CustomerDTO dto) {
+    Response res = new Response("Sorry, we are unable to update your invoice info at the moment. We are working on it.");
 
     String problem = validateInvoiceInfo(dto);
     if (problem == null) {
 
       dto.setEmail(CurrentUser.getEmail());
-      Customer customer = repository.updateInvoiceInfo(dto);
 
-      if (customer != null) {
-        res = Responses.OK;
-        log.info(CurrentUser.getCompanyName() + " customer info is updated, Id: " + customer.getId());
-      } else {
-        res = new ServiceResponse("Sorry, we are unable to update your invoice info at the moment. We are working on it.");
-        log.error("Failed to update a new customer in Stripe.");
+      CustomerUpdateParams.Address address =
+      CustomerUpdateParams.Address.builder()
+        .setLine1(dto.getAddress1())
+        .setLine2(dto.getAddress2())
+        .setPostalCode(dto.getPostcode())
+        .setCity(dto.getCity())
+        .setState(dto.getState())
+        .setCountry(dto.getCountry())
+      .build();
+
+      CustomerUpdateParams customerParams =
+        CustomerUpdateParams.builder()
+          .setName(dto.getTitle())
+          .setEmail(dto.getEmail())
+          .setAddress(address)
+        .build();
+
+      Customer customer = null;
+
+      try {
+        customer = Customer.retrieve(dto.getCustId()).update(customerParams);
+        if (customer != null) {
+          res = Responses.OK;
+          log.info(CurrentUser.getCompanyName() + " customer info is updated, Id: " + customer.getId());
+          log.info("Customer info is updated. Company: {}, Subs Customer Id: {}, Title: {}, Email: {}", 
+            CurrentUser.getCompanyName(), customer.getId(), dto.getTitle(), dto.getEmail());
+        } else {
+          log.error("Failed to update a new customer in Stripe.");
+        }
+
+      } catch (StripeException e) {
+        log.error("Failed to update a new customer in Stripe", e);
+        log.error("Company: {}, Title: {}, Email: {}", CurrentUser.getCompanyName(), dto.getTitle(), dto.getEmail());
       }
 
       if (res.isOK() && customer != null) {
         dto.setCustId(customer.getId());
-        res = repository.saveCustomerInfo(dto);
+
+        try (Handle handle = Database.getHandle()) {
+          CompanyDao dao = handle.attach(CompanyDao.class);
+          boolean isOK = dao.update(dto, CurrentUser.getCompanyId());
+          if (isOK) {
+            return Responses.OK;
+          } else {
+            return Responses.NotFound.COMPANY;
+          }
+        }
       }
 
     } else {
-      res = new ServiceResponse(problem);
+      res = new Response(problem);
     }
 
     return res;
   }
 
-  private String validateInvoiceInfo(CustomerInfoDTO dto) {
+  private String validateInvoiceInfo(CustomerDTO dto) {
     String problem = null;
 
     if (dto == null) {

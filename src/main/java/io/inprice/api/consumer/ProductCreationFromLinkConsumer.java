@@ -1,36 +1,13 @@
 package io.inprice.api.consumer;
 
-import java.io.IOException;
-
-import com.rabbitmq.client.AMQP;
-import com.rabbitmq.client.Channel;
-import com.rabbitmq.client.Consumer;
-import com.rabbitmq.client.DefaultConsumer;
-import com.rabbitmq.client.Envelope;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.inprice.api.app.product.ProductRepository;
-import io.inprice.api.consts.Responses;
-import io.inprice.api.helpers.ThreadPools;
-import io.inprice.api.info.ServiceResponse;
-import io.inprice.common.config.SysProps;
-import io.inprice.common.helpers.Beans;
-import io.inprice.common.helpers.JsonConverter;
-import io.inprice.common.helpers.RabbitMQ;
-import io.inprice.common.models.Competitor;
-
 /**
- * Creates products by using competitors' link details
+ * Creates products by using links' link details
  */
 public class ProductCreationFromLinkConsumer {
 
-  private static final Logger log = LoggerFactory.getLogger(ProductCreationFromLinkConsumer.class);
-  private static final ProductRepository productRepository = Beans.getSingleton(ProductRepository.class);
-
   public void start() {
-    log.info("Product creation consumer is up and running.");
+    //TODO: bu işlemlerin tamamı Manager projesinde commondao kullanılarak yapılacak
+/*     log.info("Product creation consumer is up and running.");
 
     final Channel channel = RabbitMQ.openChannel();
 
@@ -40,11 +17,11 @@ public class ProductCreationFromLinkConsumer {
         ThreadPools.PRODUCT_CREATION_POOL.submit(() -> {
           ServiceResponse res = Responses.NotFound.COMPETITOR;
           try {
-            Competitor link = JsonConverter.fromJson(new String(body), Competitor.class);
+            Link link = JsonConverter.fromJson(new String(body), Link.class);
             if (link != null) {
-              res = productRepository.createFromLink(link);
+              res = createFromLink(link);
               if (! res.isOK()) {
-                log.error("DB problem while activating a competitor!");
+                log.error("DB problem while activating a link!");
               }
             } else {
               log.error("Product creation link is null!");
@@ -62,6 +39,49 @@ public class ProductCreationFromLinkConsumer {
     } catch (IOException e) {
       log.error("Failed to set a queue for creating products from link.", e);
     }
+
+
+
+  public Response createFromLink(Link link) {
+    Connection con = null;
+    try {
+      con = db.getTransactionalConnection();
+
+      ProductDTO dto = new ProductDTO();
+      dto.setCode(link.getSku());
+      dto.setName(link.getName());
+      dto.setBrandId(lookupRepository.add(con, LookupType.BRAND, link.getBrand()).getId());
+      dto.setPrice(link.getPrice());
+      dto.setCompanyId(link.getCompanyId());
+
+      boolean isCompelted = false;
+
+      Response result = insertANewProduct(con, dto);
+      if (result.isOK()) {
+        isCompelted = db.executeQuery(String.format("delete from link where id=%d", link.getId()),
+            String.format("Failed to delete link to be product. Id: %d", link.getId()));
+      }
+
+      if (isCompelted) {
+        db.commit(con);
+        return Responses.OK;
+      } else {
+        db.rollback(con);
+        return result;
+      }
+
+    } catch (Exception e) {
+      if (con != null)
+        db.rollback(con);
+      log.error("Failed to insert a new product. " + link.toString(), e);
+      return Responses.ServerProblem.EXCEPTION;
+    } finally {
+      if (con != null)
+        db.close(con);
+    }
   }
+
+
+ */  }
 
 }

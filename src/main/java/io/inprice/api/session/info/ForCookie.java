@@ -15,26 +15,26 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ForCookie implements Serializable {
 
-   private static final long serialVersionUID = -2758435636435796934L;
+  private static final long serialVersionUID = -2758435636435796934L;
 
-   @JsonProperty("e")
-   private String email;
+  @JsonProperty("e")
+  private String email;
 
-   @JsonProperty("r")
-   private String role;
+  @JsonProperty("r")
+  private String role;
 
-   @JsonProperty("h")
-   private String hash;
+  @JsonProperty("h")
+  private String hash;
 
-   public ForCookie(String email, String role) {
-      this.email = email;
-      this.role = role;
-      this.hash = UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
-   }
+  public ForCookie(String email, String role) {
+    this.email = email;
+    this.role = role;
+    this.hash = UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
+  }
 
-   @Override
-   public String toString() {
-      return "[email=" + email + ", role=" + role + "]";
-   }
+  @Override
+  public String toString() {
+    return "[email=" + email + ", role=" + role + "]";
+  }
 
 }

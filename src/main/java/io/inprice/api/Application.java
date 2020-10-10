@@ -6,21 +6,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.consts.Global;
-import io.inprice.api.consumer.ProductCreationFromLinkConsumer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.framework.ConfigScanner;
 import io.inprice.api.framework.HandlerInterruptException;
 import io.inprice.api.helpers.ThreadPools;
-import io.inprice.api.info.ServiceResponse;
+import io.inprice.api.info.Response;
 import io.inprice.api.session.AccessGuard;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.helpers.RabbitMQ;
-import io.inprice.common.meta.AppEnv;
 import io.inprice.common.config.SysProps;
-import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.JsonConverter;
+import io.inprice.common.meta.AppEnv;
 import io.javalin.Javalin;
 import io.javalin.core.util.Header;
 import io.javalin.core.util.RouteOverviewPlugin;
@@ -32,7 +29,6 @@ public class Application {
   private static final Logger log = LoggerFactory.getLogger(Application.class);
 
   private static Javalin app;
-  private static final Database db = Beans.getSingleton(Database.class);
 
   public static void main(String[] args) {
     new Thread(() -> {
@@ -41,7 +37,8 @@ public class Application {
       createServer();
       ConfigScanner.scanControllers(app);
 
-      new ProductCreationFromLinkConsumer().start();      
+      //TODO: manager projesinde yapılacak
+      //new ProductCreationFromLinkConsumer().start();      
 
       log.info("APPLICATION STARTED.");
       Global.isApplicationRunning = true;
@@ -64,11 +61,8 @@ public class Application {
       log.info(" - Redis connection is closing...");
       RedisClient.shutdown();
 
-      log.info(" - RabbitMQ connection is closing...");
-      RabbitMQ.closeConnection();
-
       log.info(" - DB connection is closing...");
-      db.shutdown();
+      Database.shutdown();
 
       log.info("ALL SERVICES IS DONE.");
 
@@ -101,7 +95,7 @@ public class Application {
     app.after(ctx -> CurrentUser.cleanup());
 
     app.exception(HandlerInterruptException.class, (e, ctx) -> {
-      ctx.json(new ServiceResponse(e.getStatus(), e.getMessage()));
+      ctx.json(new Response(e.getStatus(), e.getMessage()));
     });
   }
 
