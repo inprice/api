@@ -72,11 +72,6 @@ public class Consts {
       public static final String IMPORT_URL_LIST = IMPORT_BASE + "/url-list";
       public static final String IMPORT_EBAY_SKU = IMPORT_BASE + "/ebay-sku";
       public static final String IMPORT_AMAZON_ASIN = IMPORT_BASE + "/amazon-asin";
-
-      public static class Tag {
-        public static final String BASE = "/product/tag";
-      }
-
     }
 
     public static class Link {
@@ -98,6 +93,11 @@ public class Consts {
     public static class Coupon {
       public static final String BASE = "/coupon";
       public static final String APPLY = BASE + "/apply";
+    }
+
+    public static class Tag {
+      public static final String BASE = "/tag";
+      public static final String PRODUCT = BASE + "/product";
     }
 
     public static class Dashboard {

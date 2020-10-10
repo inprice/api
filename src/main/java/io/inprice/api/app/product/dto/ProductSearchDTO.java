@@ -1,7 +1,5 @@
 package io.inprice.api.app.product.dto;
 
-import java.util.Set;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,6 +11,6 @@ public class ProductSearchDTO {
   private Long position;
   private Boolean loadMore = Boolean.FALSE;
   private Integer rowCount = 0;
-  private Set<String> tags;
+  private String[] selectedTags;
 
 }

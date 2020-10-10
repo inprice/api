@@ -2,13 +2,13 @@ package io.inprice.api.app.product;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.mapper.reflect.BeanMapper;
 import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,9 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.app.product.dto.ProductDTO;
 import io.inprice.api.app.product.dto.ProductSearchDTO;
+import io.inprice.api.app.product.mapper.ProductReducer;
 import io.inprice.api.app.product.mapper.SimpleSearch;
+import io.inprice.api.app.tag.TagDao;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.SqlHelper;
@@ -24,9 +26,9 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.validator.ProductValidator;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.mappers.ProductMapper;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
+import io.inprice.common.models.ProductTag;
 
 public class ProductService {
 
@@ -36,7 +38,7 @@ public class ProductService {
     try (Handle handle = Database.getHandle()) {
       ProductDao productDao = handle.attach(ProductDao.class);
 
-      Product product = productDao.findByIdAndCompanyId(id, CurrentUser.getCompanyId());
+      Product product = productDao.findById(id, CurrentUser.getCompanyId());
       if (product != null) {
         return new Response(product);
       }
@@ -50,7 +52,7 @@ public class ProductService {
     try (Handle handle = Database.getHandle()) {
       ProductDao productDao = handle.attach(ProductDao.class);
 
-      Product product = productDao.findByIdAndCompanyId(id, CurrentUser.getCompanyId());
+      Product product = productDao.findById(id, CurrentUser.getCompanyId());
       if (product != null) {
         dataMap.put("product", product);
 
@@ -88,30 +90,32 @@ public class ProductService {
     //building the criteria up
     //---------------------------------------------------
     StringBuilder criteria = new StringBuilder();
+
+    if (StringUtils.isNotBlank(dto.getTerm())) {
+      criteria.append("where ");
+      criteria.append("p.code like '%");
+      criteria.append(dto.getTerm());
+      criteria.append("%' or ");
+      criteria.append("p.name like '%");
+      criteria.append(dto.getTerm());
+      criteria.append("%' ");
+    } else {
+      criteria.append("where 1=1 ");
+    }
+
     //company
     criteria.append(" and p.company_id = ");
     criteria.append(CurrentUser.getCompanyId());
 
-    if (dto.getTags() != null && dto.getTags().size() > 0) {
-      criteria.append(
-        String.format(
-          " and p.id in (select product_id from product_tag as t where t.company_id=%d and t.name in ('%s')) ",
-          CurrentUser.getCompanyId(), String.join("', '", dto.getTags())
-        )
-      );
+    if (dto.getPosition() != null && dto.getPosition() > 0) {
+      criteria.append(" and p.position = ");
+      criteria.append(dto.getPosition());
     }
 
-    //position is a special case so we need take care of it differently
-    String posField = " pp.position ";
-    String posClause = " left join product_price as pp on pp.id = p.last_price_id ";
-    if (dto.getPosition() != null) {
-      if (dto.getPosition() > 1) {
-        posClause = " inner join product_price as pp on pp.id = p.last_price_id and pp.position = " + (dto.getPosition()-1);
-      } else if (dto.getPosition() == 1) {
-        posField = " 0 as position ";
-        posClause = "";
-        criteria.append(" and p.last_price_id is null");
-      }
+    if (dto.getSelectedTags() != null && dto.getSelectedTags().length > 0) {
+      criteria.append(
+        String.format(" and p.id in (select product_id from product_tag t where t.name in ('%s')) ", String.join("', '", dto.getSelectedTags()))
+      );
     }
 
     //limiting
@@ -126,16 +130,16 @@ public class ProductService {
     try (Handle handle = Database.getHandle()) {
       List<Product> searchResult =
         handle.createQuery(
-          "select p.id, p.code, p.name, p.price, "+posField+", p.updated_at, p.created_at from product as p " + 
-          posClause +
-          " where p.name like '%' || :term || '%' "+ 
+          "select "+ProductDao.PRODUCT_FIELDS+", "+ProductDao.TAG_FIELDS+" from product as p " + 
+          "left join product_tag as pt on pt.product_id = p.id " +
           criteria +
           " order by p.name " +
           limit
         )
-        .bind("term", dto.getTerm())
-        .map(new ProductMapper())
-      .list();
+        .registerRowMapper(BeanMapper.factory(Product.class, "p"))
+        .registerRowMapper(BeanMapper.factory(ProductTag.class, "pt"))
+        .reduceRows(new ProductReducer())
+      .collect(Collectors.toList());
 
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
@@ -182,7 +186,7 @@ public class ProductService {
                   // if product.price().equals(dto.price) then commonDao daki fiyatları düzenleme kısmını çalıştır!!!
                 if (isUpdated) {
                   if (dto.getTagsChanged()) {
-                    ProductTagDao tagDao = transactional.attach(ProductTagDao.class);
+                    TagDao tagDao = transactional.attach(TagDao.class);
                     tagDao.deleteTags(dto.getId(), dto.getCompanyId());
                     if (dto.getTags() != null && dto.getTags().size() > 0) {
                       tagDao.insertTags(dto.getId(), dto.getCompanyId(), dto.getTags());
@@ -255,14 +259,13 @@ public class ProductService {
 
   private void clearSearchDto(ProductSearchDTO dto) {
     dto.setTerm(SqlHelper.clear(dto.getTerm()));
-    if (dto.getTags() != null && dto.getTags().size() > 0) {
-      Set<String> newTags = new HashSet<>(dto.getTags().size());
-      for (String tag: dto.getTags()) {
+    if (dto.getSelectedTags() != null && dto.getSelectedTags().length > 0) {
+      for (int i = 0; i < dto.getSelectedTags().length; i++) {
+        String tag = dto.getSelectedTags()[i];
         if (StringUtils.isNotBlank(tag)) {
-          newTags.add(SqlHelper.clear(tag));
+          dto.getSelectedTags()[i] = SqlHelper.clear(tag);
         }
       }
-      dto.setTags(newTags);
     }
   }
 
