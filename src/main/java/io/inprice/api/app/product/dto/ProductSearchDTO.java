@@ -1,16 +1,14 @@
 package io.inprice.api.app.product.dto;
 
+import io.inprice.api.dto.BaseSearchDTO;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class ProductSearchDTO {
+public class ProductSearchDTO extends BaseSearchDTO {
 
-  private String term;
   private Long position;
-  private Boolean loadMore = Boolean.FALSE;
-  private Integer rowCount = 0;
   private String[] selectedTags;
 
 }

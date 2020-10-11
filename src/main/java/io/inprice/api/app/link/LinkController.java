@@ -1,6 +1,7 @@
 package io.inprice.api.app.link;
 
 import io.inprice.api.app.link.dto.LinkDTO;
+import io.inprice.api.app.link.dto.LinkSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
@@ -46,6 +47,12 @@ public class LinkController implements Controller {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.changeStatus(id, LinkStatus.RESUMED)));
     }, AccessRoles.EDITOR());
+
+    // search
+    app.post(Consts.Paths.Link.SEARCH, (ctx) -> {
+      LinkSearchDTO searchDto = ctx.bodyAsClass(LinkSearchDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.fullSearch(searchDto)));
+    }, AccessRoles.ANYONE());
 
   }
 

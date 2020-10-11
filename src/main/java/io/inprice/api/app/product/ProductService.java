@@ -91,21 +91,16 @@ public class ProductService {
     //---------------------------------------------------
     StringBuilder criteria = new StringBuilder();
 
+    criteria.append("where p.company_id = ");
+    criteria.append(CurrentUser.getCompanyId());
+
     if (StringUtils.isNotBlank(dto.getTerm())) {
-      criteria.append("where ");
-      criteria.append("p.code like '%");
+      criteria.append(" and p.code like '%");
       criteria.append(dto.getTerm());
-      criteria.append("%' or ");
-      criteria.append("p.name like '%");
+      criteria.append("%' or p.name like '%");
       criteria.append(dto.getTerm());
       criteria.append("%' ");
-    } else {
-      criteria.append("where 1=1 ");
     }
-
-    //company
-    criteria.append(" and p.company_id = ");
-    criteria.append(CurrentUser.getCompanyId());
 
     if (dto.getPosition() != null && dto.getPosition() > 0) {
       criteria.append(" and p.position = ");
@@ -143,7 +138,7 @@ public class ProductService {
 
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
-      log.error("Failed in full search for products. ", e);
+      log.error("Failed in full search for products.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
