@@ -112,7 +112,7 @@ class CompanyService {
       Map<String, String> clientInfo = ClientSide.getGeoInfo(ctx.req);
 
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transaction -> {
+        handle.inTransaction(transactional -> {
           UserDao userDao = handle.attach(UserDao.class);
 
           User user = userDao.findByEmail(dto.getEmail());
@@ -174,7 +174,7 @@ class CompanyService {
 
     if (res[0].isOK()) {
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transaction -> {
+        handle.inTransaction(transactional -> {
           res[0] = 
             createCompany(
               handle,
@@ -223,10 +223,10 @@ class CompanyService {
     final Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(transaction -> {
-        UserDao userDao = transaction.attach(UserDao.class);
-        CompanyDao companyDao = transaction.attach(CompanyDao.class);
-        UserSessionDao sessionDao = transaction.attach(UserSessionDao.class);
+      handle.inTransaction(transactional -> {
+        UserDao userDao = transactional.attach(UserDao.class);
+        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        UserSessionDao sessionDao = transactional.attach(UserSessionDao.class);
 
         User user = userDao.findById(CurrentUser.getUserId());
         String phash = PasswordHelper.generateHashOnly(password, user.getPasswordSalt());
@@ -237,7 +237,7 @@ class CompanyService {
           if (company != null) {
             String where = "where company_id=" + CurrentUser.getCompanyId();
 
-            Batch batch = transaction.createBatch();
+            Batch batch = transactional.createBatch();
             batch.add("SET FOREIGN_KEY_CHECKS=0");
             batch.add("delete from link_price " + where);
             batch.add("delete from link_history " + where);

@@ -137,8 +137,8 @@ class LinkService {
       final String where = String.format("where link_id=%d and company_id=%d; ", id, CurrentUser.getCompanyId());
 
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transaction -> {
-          Batch batch = transaction.createBatch();
+        handle.inTransaction(transactional -> {
+          Batch batch = transactional.createBatch();
           batch.add("delete from link_price " + where);
           batch.add("delete from link_history " + where);
           batch.add("delete from link_spec " + where);
@@ -162,7 +162,7 @@ class LinkService {
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
 
-        handle.inTransaction(transaction -> {
+        handle.inTransaction(transactional -> {
           LinkDao linkDao = handle.attach(LinkDao.class);
         
           Link link = linkDao.findById(id);
