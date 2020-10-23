@@ -79,7 +79,7 @@ class DashboardService {
     stats.put(LinkStatus.AVAILABLE.name(), i++);
     stats.put(LinkStatus.NOT_AVAILABLE.name(), i++);
     stats.put(LinkStatus.TOBE_IMPLEMENTED.name(), i++);
-    stats.put(LinkStatus.WONT_BE_IMPLEMENTED.name(), i++);
+    stats.put(LinkStatus.NETWORK_ERROR.name(), i++);
     stats.put(OTHERS, i++);
 
     int[] result = new int[i];

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.jdbi.v3.core.Handle;
@@ -175,7 +176,7 @@ class LinkService {
 
                 switch (link.getStatus()) {
                   case AVAILABLE: {
-                    suitable = (newStatus.equals(LinkStatus.TOBE_RENEWED) || newStatus.equals(LinkStatus.PAUSED));
+                    suitable = (newStatus.equals(LinkStatus.PAUSED));
                     break;
                   }
                   case PAUSED: {
@@ -183,14 +184,9 @@ class LinkService {
                     break;
                   }
                   case TOBE_CLASSIFIED:
-                  case TOBE_RENEWED:
                   case TOBE_IMPLEMENTED:
-                  case IMPLEMENTED:
                   case NOT_AVAILABLE:
-                  case READ_ERROR:
-                  case SOCKET_ERROR:
                   case NETWORK_ERROR:
-                  case CLASS_PROBLEM:
                   case INTERNAL_ERROR: {
                     suitable = (newStatus.equals(LinkStatus.PAUSED));
                     break;
@@ -245,7 +241,7 @@ class LinkService {
     dto.setTerm(SqlHelper.clear(dto.getTerm()));
     if (dto.getStatuses() != null && dto.getStatuses().length > 0) {
       Set<String> newStatusSet = new HashSet<>(dto.getStatuses().length);
-      Set<String> linkNamesSet = LinkStatus.getStringSet();
+      Set<String> linkNamesSet = EnumUtils.getEnumMap(LinkStatus.class).keySet();
 	
       for (int i = 0; i < dto.getStatuses().length; i++) {
         String status = dto.getStatuses()[i];

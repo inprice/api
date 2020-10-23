@@ -77,7 +77,6 @@ public class Consts {
     public static class Link {
       public static final String BASE = "/link";
       public static final String SEARCH = BASE + "s/search";
-      public static final String RENEW = BASE + "/renewed";
       public static final String PAUSE = BASE + "/paused";
       public static final String RESUME = BASE + "/resumed";
     }

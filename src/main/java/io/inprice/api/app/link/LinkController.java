@@ -30,12 +30,6 @@ public class LinkController implements Controller {
       ctx.json(Commons.createResponse(ctx, service.deleteById(id)));
     }, AccessRoles.EDITOR());
 
-    // change status to TOBE_RENEWED
-    app.put(Consts.Paths.Link.RENEW + "/:id", (ctx) -> {
-      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.changeStatus(id, LinkStatus.TOBE_RENEWED)));
-    }, AccessRoles.EDITOR());
-
     // change status to PAUSED
     app.put(Consts.Paths.Link.PAUSE + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
