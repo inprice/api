@@ -20,19 +20,16 @@ import io.inprice.api.app.product.mapper.SimpleSearch;
 import io.inprice.api.app.product.mapper.SimpleSearchMapper;
 import io.inprice.common.mappers.ProductMapper;
 import io.inprice.common.models.Product;
-import io.inprice.common.models.ProductPrice;
 import io.inprice.common.models.ProductTag;
 
 public interface ProductDao {
 
   @SqlQuery(
-    "select "+PRODUCT_FIELDS+", "+PRICE_FIELDS+", "+TAG_FIELDS+" from product as p " +
-    "left join product_price as pp on pp.id = p.last_price_id " +
+    "select "+PRODUCT_FIELDS+", "+TAG_FIELDS+" from product as p " +
     "left join product_tag as pt on pt.product_id = p.id " +
     "where p.id=:id and p.company_id=:companyId"
   )
   @RegisterBeanMapper(value = Product.class, prefix = "p")
-  @RegisterBeanMapper(value = ProductPrice.class, prefix = "pp")
   @RegisterBeanMapper(value = ProductTag.class, prefix = "pt")
   @UseRowReducer(ProductReducer.class)
   Product findById(@Bind("id") Long id, @Bind("companyId") Long companyId);
@@ -80,34 +77,23 @@ public interface ProductDao {
     "p.name as p_name, " +
     "p.price as p_price, " +
     "p.position as p_position, " +
-    "p.last_price_id as p_last_price_id, " +
+    "p.ranking as p_ranking, " +
+    "p.ranking_with as p_ranking_with, " +
+    "p.min_platform as p_min_platform, " +
+    "p.min_seller as p_min_seller, " +
+    "p.min_price as p_min_price, " +
+    "p.min_diff as p_min_diff, " +
+    "p.avg_price as p_avg_price, " +
+    "p.avg_diff as p_avg_diff, " +
+    "p.max_platform as p_max_platform, " +
+    "p.max_seller as p_max_seller, " +
+    "p.max_price as p_max_price, " +
+    "p.max_diff as p_max_diff, " +
+    "p.suggested_price as p_suggested_price, " +
     "p.updated_at as p_updated_at, " +
     "p.created_at as p_created_at, " +
     "p.company_id as p_company_id ";
     
-  final String PRICE_FIELDS = 
-    "pp.id as pp_id, " +
-    "pp.product_id as pp_product_id, " +
-    "pp.price as pp_price, " +
-    "pp.min_platform as pp_min_platform, " +
-    "pp.min_seller as pp_min_seller, " +
-    "pp.min_price as pp_min_price, " +
-    "pp.min_diff as pp_min_diff, " +
-    "pp.avg_price as pp_avg_price, " +
-    "pp.avg_diff as pp_avg_diff, " +
-    "pp.max_platform as pp_max_platform, " +
-    "pp.max_seller as pp_max_seller, " +
-    "pp.max_price as pp_max_price, " +
-    "pp.max_diff as pp_max_diff, " +
-    "pp.links as pp_links, " +
-    "pp.position as pp_position, " +
-    "pp.ranking as pp_ranking, " +
-    "pp.ranking_with as pp_ranking_with, " +
-    "pp.suggested_price as pp_suggested_price, " +
-    "pp.created_at as pp_created_at, " +
-    "pp.product_id as pp_product_id, " +
-    "pp.company_id as pp_company_id ";
-  
   final String TAG_FIELDS = 
     "pt.id as pt_id, " +
     "pt.name as pt_name, " +

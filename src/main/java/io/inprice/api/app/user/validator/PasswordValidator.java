@@ -31,8 +31,7 @@ public class PasswordValidator {
           UserDao userDao = handle.attach(UserDao.class);
           User user = userDao.findById(dto.getId());
           if (user != null) {
-            final String hash = PasswordHelper.generateHashOnly(dto.getOldPassword(), user.getPasswordSalt());
-            if (! hash.equals(user.getPasswordHash())) {
+            if (! PasswordHelper.isValid(dto.getOldPassword(), user.getPassword())) {
               problem = "Old password is incorrect!";
             }
           } else {

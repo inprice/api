@@ -7,7 +7,6 @@ import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 
 import io.inprice.common.models.Product;
-import io.inprice.common.models.ProductPrice;
 import io.inprice.common.models.ProductTag;
 
 public class ProductReducer implements LinkedHashMapRowReducer<Long, Product> {
@@ -16,16 +15,6 @@ public class ProductReducer implements LinkedHashMapRowReducer<Long, Product> {
   public void accumulate(final Map<Long, Product> map, final RowView rowView) {
     final Product product = 
       map.computeIfAbsent(rowView.getColumn("p_id", Long.class), id -> rowView.getRow(Product.class));
-
-    try {
-       if (product.getPriceDetails() == null) {
-        if (rowView.getColumn("pp_id", Long.class) == null) {
-          product.setPriceDetails(new ProductPrice());
-        } else {
-          product.setPriceDetails(rowView.getRow(ProductPrice.class));
-        }
-      }
-    } catch (Exception e) { }
 
     try {
       if (product.getTags() == null) product.setTags(new ArrayList<>());

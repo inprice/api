@@ -27,14 +27,13 @@ import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.PasswordHelper;
-import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.Pair;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
 import io.inprice.api.utils.CurrencyFormats;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
@@ -123,14 +122,12 @@ class CompanyService {
             user.setTimezone(clientInfo.get(Consts.TIMEZONE));
             user.setCreatedAt(new Date());
 
-            Pair<String, String> salted = PasswordHelper.generateSaltAndHash(dto.getPassword());
-
             user.setId(
               userDao.insert(
                 user.getEmail(), 
+                PasswordHelper.getSaltedHash(dto.getPassword()), 
                 user.getName(), 
-                clientInfo.get(Consts.TIMEZONE), 
-                salted.getKey(), salted.getValue()
+                clientInfo.get(Consts.TIMEZONE)
               )
             );
           }
@@ -229,9 +226,8 @@ class CompanyService {
         UserSessionDao sessionDao = transactional.attach(UserSessionDao.class);
 
         User user = userDao.findById(CurrentUser.getUserId());
-        String phash = PasswordHelper.generateHashOnly(password, user.getPasswordSalt());
 
-        if (phash.equals(user.getPasswordHash())) {
+        if (PasswordHelper.isValid(password, user.getPassword())) {
           Company company = companyDao.findByAdminId(CurrentUser.getCompanyId());
 
           if (company != null) {
@@ -244,7 +240,6 @@ class CompanyService {
             batch.add("delete from link_spec " + where);
             batch.add("delete from link " + where);
             batch.add("delete from product_tag " + where);
-            batch.add("delete from product_price " + where);
             batch.add("delete from product " + where);
             batch.add("delete from user_session " + where);
             batch.add("delete from member " + where);

@@ -21,14 +21,15 @@ import io.inprice.api.app.product.mapper.SimpleSearch;
 import io.inprice.api.app.tag.TagDao;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.validator.ProductValidator;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
 import io.inprice.common.models.ProductTag;
+import io.inprice.common.repository.CommonRepository;
 
 public class ProductService {
 
@@ -177,9 +178,14 @@ public class ProductService {
                     dto.getName(),
                     dto.getPrice()
                   );
-                  //TODO: burada yapılacak denetim
-                  // if product.price().equals(dto.price) then commonDao daki fiyatları düzenleme kısmını çalıştır!!!
                 if (isUpdated) {
+
+                  // if product price is changed then all the prices and other 
+                  // indicators (on both product itself and its links) must be adjusted accordingly
+                  if (!product.getPrice().equals(dto.getPrice())) {
+                    CommonRepository.adjustProductPrice(transactional, dto.getId(), dto.getPrice(), null);
+                  }
+
                   if (dto.getTagsChanged()) {
                     TagDao tagDao = transactional.attach(TagDao.class);
                     tagDao.deleteTags(dto.getId(), dto.getCompanyId());
@@ -222,7 +228,6 @@ public class ProductService {
           batch.add("delete from link_history " + where);
           batch.add("delete from link_spec " + where);
           batch.add("delete from link " + where);
-          batch.add("delete from product_price " + where);
           batch.add("delete from product " + where.replace("product_", "")); //this clause is important since determines the success!
           batch.add("update company set product_count=product_count-1 where product_count>0 and id=" + CurrentUser.getCompanyId());
           int[] result = batch.execute();

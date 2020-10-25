@@ -21,13 +21,7 @@ interface DashboardDao {
   @ValueColumn("counter")
   Map<String, Integer> findStatusDists(@Bind("companyId") Long companyId);
 
-  @SqlQuery(
-    "select pp.position, count(1) as counter from product as p " +
-    "inner join product_price as pp on pp.id = p.last_price_id " +
-    "where p.last_price_id is not null " +
-    "  and p.company_id=:companyId " +
-    "group by pp.position"
-  )
+  @SqlQuery("select position, count(1) as counter from product where company_id=:companyId group by position")
   @KeyColumn("position")
   @ValueColumn("counter")
   Map<Integer, Integer> findPositionDists(@Bind("companyId") Long companyId);
@@ -44,11 +38,10 @@ interface DashboardDao {
   List<MRU25Link> findMR25Link(@Bind("companyId") Long companyId);
 
   @SqlQuery(
-    "select p.id, p.name, p.price, p.updated_at, p.created_at, pp.links, pp.ranking, pp.ranking_with from product as p " +
-    "left join product_price as pp on pp.id = p.last_price_id " +
-    "where p.position=:position " +
-    "  and p.company_id=:companyId " +
-    "order by p.updated_at desc " +
+    "select id, name, price, updated_at, created_at, ranking, ranking_with from product " +
+    "where position=:position " +
+    "  and company_id=:companyId " +
+    "order by updated_at desc " +
     "limit 10"
   )
   @UseRowMapper(Most10ProductMapper.class)

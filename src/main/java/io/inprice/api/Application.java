@@ -37,9 +37,6 @@ public class Application {
       createServer();
       ConfigScanner.scanControllers(app);
 
-      //TODO: manager projesinde yapılacak
-      //new ProductCreationFromLinkConsumer().start();      
-
       log.info("APPLICATION STARTED.");
       Global.isApplicationRunning = true;
 

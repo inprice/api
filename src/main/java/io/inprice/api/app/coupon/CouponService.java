@@ -83,7 +83,7 @@ class CouponService {
                     );
 
                   if (isOK) {
-                    isOK = couponDao.updateByCode(coupon.getCode());
+                    isOK = couponDao.applyFor(coupon.getCode(), CurrentUser.getCompanyId());
 
                     if (isOK) {
                       SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);

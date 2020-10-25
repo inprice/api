@@ -32,7 +32,6 @@ import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.CookieHelper;
 import io.inprice.api.helpers.PasswordHelper;
 import io.inprice.api.helpers.SessionHelper;
-import io.inprice.api.info.Pair;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.info.ForCookie;
@@ -68,15 +67,12 @@ public class AuthService {
           User user = userDao.findByEmailWithPassword(dto.getEmail());
           if (user != null) {
 
-            String hash = PasswordHelper.generateHashOnly(dto.getPassword(), user.getPasswordSalt());
-
-            if (hash.equals(user.getPasswordHash())) {
+            if (PasswordHelper.isValid(dto.getPassword(), user.getPassword())) {
               Map<String, Object> sessionInfo = findSessionInfoByEmail(ctx, user.getEmail());
               if (sessionInfo != null && sessionInfo.size() > 0) {
                 return new Response(sessionInfo);
               } else {
-                user.setPasswordSalt(null);
-                user.setPasswordHash(null);
+                user.setPassword(null);
                 return createSession(ctx, user);
               }
             }
@@ -141,8 +137,8 @@ public class AuthService {
             User user = userDao.findByEmail(email);
             if (user != null) {
 
-              Pair<String, String> salted = PasswordHelper.generateSaltAndHash(dto.getPassword());
-              boolean isOK = userDao.updatePassword(user.getId(), salted.getKey(), salted.getValue());
+              String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
+              boolean isOK = userDao.updatePassword(user.getId(), saltedHash);
 
               //closing session
               if (isOK) {
@@ -316,8 +312,8 @@ public class AuthService {
               dto.setEmail(sendDto.getEmail());
               dto.setTimezone(timezone);
 
-              Pair<String, String> salted = PasswordHelper.generateSaltAndHash(dto.getPassword());
-              long savedId = userDao.insert(dto.getEmail(), dto.getName(), dto.getTimezone(), salted.getKey(), salted.getValue());
+              String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
+              long savedId = userDao.insert(dto.getEmail(), saltedHash, dto.getName(), dto.getTimezone());
 
               if (savedId > 0) {
                 User newUser = new User(); //user in response is needed for auto login

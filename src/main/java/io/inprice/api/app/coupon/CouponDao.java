@@ -16,8 +16,8 @@ interface CouponDao {
   @UseRowMapper(CouponMapper.class)
   Coupon findByCode(@Bind("code") String code);
 
-  @SqlUpdate("update coupon set issued_at=now() where code=:code")
-  boolean updateByCode(@Bind("code") String code);
+  @SqlUpdate("update coupon set issued_company_id=:issuedCompanyId, issued_at=now() where code=:code")
+  boolean applyFor(@Bind("code") String code, @Bind("issuedCompanyId") Long issuedCompanyId);
 
   @SqlQuery("select * from coupon where issued_company_id=:issuedCompanyId order by issued_at desc")
   @UseRowMapper(CouponMapper.class)

@@ -24,7 +24,7 @@ public class Props {
   }
 
   public static int APP_SALT_ROUNDS() {
-    String def = SysProps.APP_ENV().equals(AppEnv.PROD) ? "12" : "4";
+    String def = SysProps.APP_ENV().equals(AppEnv.PROD) ? "6" : "1";
     return Integer.parseInt(System.getenv().getOrDefault("APP_SALT_ROUNDS", def));
   }
 
