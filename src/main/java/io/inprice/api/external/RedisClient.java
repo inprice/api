@@ -6,69 +6,46 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.StringUtils;
-import org.redisson.Redisson;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RSetCache;
-import org.redisson.api.RedissonClient;
-import org.redisson.config.Config;
+import org.redisson.api.RTopic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.consts.Global;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.config.SysProps;
+import io.inprice.common.helpers.BaseRedisClient;
+import io.inprice.common.info.StatusChange;
 import io.inprice.common.meta.AppEnv;
+import io.inprice.common.meta.LinkStatus;
+import io.inprice.common.models.Link;
 
 public class RedisClient {
 
   private static final Logger log = LoggerFactory.getLogger(RedisClient.class);
 
-  private static boolean isHealthy;
-  private static RedissonClient client;
+  private static BaseRedisClient baseClient;
+  private static RTopic linkStatusChangeTopic;
 
   private static RSetCache<String> requestingEmailsSet;
   private static RMapCache<String, ForRedis> sessionsMap;
-  private static RMapCache<String, Serializable> tokensMap;
-  private static RMapCache<Long, Map<String, Object>> dashboardsMap;
+
+  public static RMapCache<String, Serializable> tokensMap;
+  public static RMapCache<Long, Map<String, Object>> dashboardsMap;
 
   static {
-    final String redisPass = SysProps.REDIS_PASSWORD();
-    Config config = new Config();
-    config
-      .useSingleServer()
-      .setAddress(String.format("redis://%s:%d", SysProps.REDIS_HOST(), SysProps.REDIS_PORT()))
-      .setPassword(!StringUtils.isBlank(redisPass) ? redisPass : null)
-      .setConnectionPoolSize(10)
-      .setConnectionMinimumIdleSize(1)
-      .setIdleConnectionTimeout(5000)
-      .setTimeout(5000);
+    baseClient = new BaseRedisClient();
+    baseClient.open(() -> {
+      linkStatusChangeTopic = baseClient.getClient().getTopic(SysProps.REDIS_STATUS_CHANGE_TOPIC());
 
-    while (!isHealthy && Global.isApplicationRunning) {
-      try {
-        client = Redisson.create(config);
-
-        requestingEmailsSet = client.getSetCache("api:requesting:emails");
-        sessionsMap = client.getMapCache("api:token:sessions");
-        tokensMap = client.getMapCache("api:tokens");
-        dashboardsMap = client.getMapCache("api:dashboards");
-        isHealthy = true;
-      } catch (Exception e) {
-        log.error("Failed to connect to Redis server, trying again in 3 seconds! " + e.getMessage());
-        try {
-          Thread.sleep(3000);
-        } catch (InterruptedException ignored) { }
-      }
-    }
-
-  }
-
-  public static void shutdown() {
-    if (client != null) client.shutdown();
-    isHealthy = false;
+      requestingEmailsSet = baseClient.getClient().getSetCache("api:requesting:emails");
+      sessionsMap = baseClient.getClient().getMapCache("api:token:sessions");
+      tokensMap = baseClient.getClient().getMapCache("api:tokens");
+      dashboardsMap = baseClient.getClient().getMapCache("api:dashboards");
+    });
   }
 
   public static Response isEmailRequested(RateLimiterType type, String email) {
@@ -116,12 +93,27 @@ public class RedisClient {
     return false;
   }
 
-  public static RMapCache<String, Serializable> getTokensMap() {
-    return tokensMap;
+  /**
+   * For PAUSED and RESUMED links
+   * 
+   * @param change StatusChange
+   */
+  public static void publishLinkStatusChange(StatusChange change) {
+    Link link = change.getLink();
+    if (baseClient.isHealthy()) {
+      if (LinkStatus.PAUSED.equals(link.getStatus()) || LinkStatus.RESUMED.equals(link.getStatus())) {
+      linkStatusChangeTopic.publishAsync(change);
+      } else {
+        log.warn("Link is not suitable to publish on status change topic! Status: {}, Url: {}", link.getStatus(), link.getUrl());
+      }
+    } else {
+      log.warn("Redis connection is not healthy. Publishing active link avoided! Status: {}, Url: {}", link.getStatus(), link.getUrl());
+    }
   }
 
-  public static RMapCache<Long, Map<String, Object>> getDashboardsMap() {
-    return dashboardsMap;
+  public static void shutdown() {
+    linkStatusChangeTopic.removeAllListeners();
+    baseClient.shutdown();
   }
 
 }

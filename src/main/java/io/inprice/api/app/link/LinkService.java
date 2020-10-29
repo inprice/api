@@ -18,9 +18,11 @@ import io.inprice.api.app.link.dto.LinkDTO;
 import io.inprice.api.app.link.dto.LinkSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.SqlHelper;
+import io.inprice.common.info.StatusChange;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.meta.LinkStatus;
@@ -158,62 +160,32 @@ class LinkService {
   }
 
   Response changeStatus(Long id, LinkStatus newStatus) {
-    final Response[] res = { Responses.NotFound.LINK };
+    Response res = Responses.NotFound.LINK;
 
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
+        LinkDao linkDao = handle.attach(LinkDao.class);
 
-        handle.inTransaction(transactional -> {
-          LinkDao linkDao = handle.attach(LinkDao.class);
-        
-          Link link = linkDao.findById(id);
-          if (link != null) {
-
-            if (link.getCompanyId().equals(CurrentUser.getCompanyId())) {
-              if (!link.getStatus().equals(newStatus)) {
-
-                boolean suitable = false;
-
-                switch (link.getStatus()) {
-                  case AVAILABLE: {
-                    suitable = (newStatus.equals(LinkStatus.PAUSED));
-                    break;
-                  }
-                  case PAUSED: {
-                    suitable = (newStatus.equals(LinkStatus.RESUMED));
-                    break;
-                  }
-                  case TOBE_CLASSIFIED:
-                  case TOBE_IMPLEMENTED:
-                  case NOT_AVAILABLE:
-                  case NETWORK_ERROR:
-                  case INTERNAL_ERROR: {
-                    suitable = (newStatus.equals(LinkStatus.PAUSED));
-                    break;
-                  }
-                  default:
-                }
-
-                if (suitable) {
-                  boolean isOK = linkDao.changeStatus(id, newStatus.name(), link.getCompanyId());
-                  if (isOK) {
-                    res[0] = Responses.OK;
-                  }
-                }
-
-              }
-            }
-            if (! res[0].isOK()) res[0] = Responses.DataProblem.NOT_SUITABLE;
+        Link link = linkDao.findById(id);
+        if (link != null) {
+          if (! link.getStatus().equals(newStatus)) {
+            LinkStatus olStatus = link.getStatus();
+            RedisClient.publishLinkStatusChange(
+              new StatusChange(
+                link,
+                olStatus,
+                link.getPrice()
+              )
+            );
+            res = Responses.OK;
           } else {
-            res[0] = Responses.NotFound.LINK;
+            res = Responses.Already.LINK_IN_THIS_STATUS;
           }
-
-          return res[0].isOK();
-        });
+        }
       }
     }
 
-    return res[0];
+    return res;
   }
 
   private Response validate(LinkDTO dto) {

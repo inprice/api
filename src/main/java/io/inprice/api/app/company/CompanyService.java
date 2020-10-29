@@ -112,7 +112,7 @@ class CompanyService {
 
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transactional -> {
-          UserDao userDao = handle.attach(UserDao.class);
+          UserDao userDao = transactional.attach(UserDao.class);
 
           User user = userDao.findByEmail(dto.getEmail());
           if (user == null) {
@@ -135,7 +135,7 @@ class CompanyService {
           if (user.getId() != null) {
             res[0] = 
               createCompany(
-                handle,
+                transactional,
                 user.getId(),
                 user.getEmail(),
                 dto.getCompanyName(),
@@ -174,7 +174,7 @@ class CompanyService {
         handle.inTransaction(transactional -> {
           res[0] = 
             createCompany(
-              handle,
+              transactional,
               CurrentUser.getUserId(),
               CurrentUser.getEmail(),
               dto.getName(),
@@ -292,9 +292,9 @@ class CompanyService {
     }
   }
 
-  private Response createCompany(Handle handle, Long userId, String userEmail, String companyName, String currencyCode, String currencyFormat) {
-    CompanyDao companyDao = handle.attach(CompanyDao.class);
-    MemberDao memberDao = handle.attach(MemberDao.class);
+  private Response createCompany(Handle transactional, Long userId, String userEmail, String companyName, String currencyCode, String currencyFormat) {
+    CompanyDao companyDao = transactional.attach(CompanyDao.class);
+    MemberDao memberDao = transactional.attach(MemberDao.class);
 
     Company company = companyDao.findByNameAndAdminId(companyName, userId);
     if (company == null) {

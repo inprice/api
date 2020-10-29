@@ -70,7 +70,7 @@ public interface CompanyDao {
     "set plan_id=:planId, subs_status=:subsStatus, subs_renewal_at=DATE_ADD(now(), interval <interval> day), product_limit=:productLimit " +
     "where id=:id"
   )
-  boolean updateSubscription(@Bind("id") Long id, @Bind("subsStatus") String subsStatus, 
-    @Bind("productLimit") Integer productLimit, @Bind("planId") Integer planId, @Define("interval") Integer interval);
+  boolean updateSubscription(@Bind("id") Long id, @Bind("subsStatus") String subsStatus, @Bind("planId") Integer planId,
+    @Bind("productLimit") Integer productLimit, @Define("interval") Integer interval);
 
 }

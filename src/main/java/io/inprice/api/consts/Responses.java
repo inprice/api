@@ -86,6 +86,8 @@ public class Responses {
     public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 7, "This account has no active subscription at the moment!");
 
     public static final Response REQUESTED_EMAIL = new Response(BASE + 10, "This email is already requested, please wait some time to try again!");
+    
+    public static final Response LINK_IN_THIS_STATUS = new Response(BASE + 15, "Link is already in this status!");
 
     public static class Defined {
       public static final Response COMPANY = new Response(BASE + 20, "Seems that you have already registered this company!");

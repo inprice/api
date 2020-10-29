@@ -49,14 +49,14 @@ class CouponService {
 
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transactional -> {
-          CouponDao couponDao = handle.attach(CouponDao.class);
+          CouponDao couponDao = transactional.attach(CouponDao.class);
 
           Coupon coupon = couponDao.findByCode(code);
           if (coupon != null) {
             if (coupon.getIssuedAt() == null) {
               if (coupon.getIssuedCompanyId() == null || coupon.getIssuedCompanyId().equals(CurrentUser.getCompanyId())) {
 
-                CompanyDao companyDao = handle.attach(CompanyDao.class);
+                CompanyDao companyDao = transactional.attach(CompanyDao.class);
 
                 Company company = companyDao.findById(CurrentUser.getCompanyId());
                 if (!company.getSubsStatus().equals(SubsStatus.ACTIVE) || !company.getSubsStatus().equals(SubsStatus.COUPONED)) {
@@ -77,16 +77,16 @@ class CouponService {
                     companyDao.updateSubscription(
                       CurrentUser.getCompanyId(),
                       SubsStatus.COUPONED.name(),
-                      coupon.getDays(),
+                      planId,
                       productLimit, 
-                      planId
+                      coupon.getDays()
                     );
 
                   if (isOK) {
                     isOK = couponDao.applyFor(coupon.getCode(), CurrentUser.getCompanyId());
 
                     if (isOK) {
-                      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+                      SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
                       SubsTrans trans = new SubsTrans();
                       trans.setCompanyId(CurrentUser.getCompanyId());

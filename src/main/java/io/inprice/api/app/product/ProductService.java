@@ -1,5 +1,6 @@
 package io.inprice.api.app.product;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,9 @@ import io.inprice.api.validator.ProductValidator;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.models.Link;
+import io.inprice.common.models.LinkHistory;
+import io.inprice.common.models.LinkPrice;
+import io.inprice.common.models.LinkSpec;
 import io.inprice.common.models.Product;
 import io.inprice.common.models.ProductTag;
 import io.inprice.common.repository.CommonRepository;
@@ -58,7 +62,27 @@ public class ProductService {
         dataMap.put("product", product);
 
         LinkDao linkDao = handle.attach(LinkDao.class);
+
+        //finding links
         List<Link> linkList = linkDao.findListByProductIdAndCompanyId(id, CurrentUser.getCompanyId());
+        if (linkList != null && linkList.size() > 0) {
+          int i = 0;
+          Map<Long, Integer> refListToLinks = new HashMap<>(linkList.size());
+          for (Link link: linkList) {
+            link.setPriceList(new ArrayList<>());
+            link.setSpecList(new ArrayList<>());
+            link.setHistoryList(new ArrayList<>());
+            refListToLinks.put(link.getId(), i++);
+          }
+
+          List<LinkSpec> specsList = linkDao.findSpecListByProductId(id); // finding links' specs
+          List<LinkPrice> pricesList = linkDao.findPriceListByProductId(id); // finding links' prices
+          List<LinkHistory> historiesList = linkDao.findHistoryListByProductId(id); // finding links' histories
+          for (LinkSpec linkSpec: specsList) linkList.get(refListToLinks.get(linkSpec.getLinkId())).getSpecList().add(linkSpec);
+          for (LinkPrice linkPrice: pricesList) linkList.get(refListToLinks.get(linkPrice.getLinkId())).getPriceList().add(linkPrice);
+          for (LinkHistory linkHistory: historiesList) linkList.get(refListToLinks.get(linkHistory.getLinkId())).getHistoryList().add(linkHistory);
+        }
+
         if (linkList != null) {
           dataMap.put("links", linkList);
         }

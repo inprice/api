@@ -19,13 +19,13 @@ public class Tokens {
       token = generateUUIDToken();
     }
 
-    RedisClient.getTokensMap().put(getKey(tokenType, token), object, tokenType.ttl(), TimeUnit.MILLISECONDS);
+    RedisClient.tokensMap.put(getKey(tokenType, token), object, tokenType.ttl(), TimeUnit.MILLISECONDS);
     return token;
   }
 
   @SuppressWarnings("unchecked")
   public static <T extends Serializable> T get(TokenType tokenType, String token) {
-    Serializable seri = RedisClient.getTokensMap().get(getKey(tokenType, token));
+    Serializable seri = RedisClient.tokensMap.get(getKey(tokenType, token));
     if (seri != null)
       return (T) seri;
     else
@@ -33,7 +33,7 @@ public class Tokens {
   }
 
   public static boolean remove(TokenType tokenType, String token) {
-    return (RedisClient.getTokensMap().remove(getKey(tokenType, token)) != null);
+    return (RedisClient.tokensMap.remove(getKey(tokenType, token)) != null);
   }
 
   private static String getKey(TokenType tokenType, String token) {

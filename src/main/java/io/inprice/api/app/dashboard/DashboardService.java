@@ -30,7 +30,7 @@ class DashboardService {
 
   Response getReport(boolean refresh) {
     Map<String, Object> report = null;
-    if (! refresh) report = RedisClient.getDashboardsMap().get(CurrentUser.getCompanyId());
+    if (! refresh) report = RedisClient.dashboardsMap.get(CurrentUser.getCompanyId());
 
     if (report == null) {
       report = new HashMap<>(4);
@@ -44,7 +44,7 @@ class DashboardService {
         report.put("links", getLinks(dashboardDao));
         report.put("company", companyDao.findById(CurrentUser.getCompanyId()));
 
-        RedisClient.getDashboardsMap().put(CurrentUser.getCompanyId(), report, 5, TimeUnit.MINUTES);
+        RedisClient.dashboardsMap.put(CurrentUser.getCompanyId(), report, 5, TimeUnit.MINUTES);
         return new Response(report);
     
       } catch (Exception e) {

@@ -191,8 +191,8 @@ class StripeService {
 
     try (Handle handle = Database.getHandle()) {
       handle.inTransaction(transactional -> {
-        CompanyDao companyDao = handle.attach(CompanyDao.class);
-        SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
         SubsTrans oldTrans = subscriptionDao.findByEventId(trans.getEventId());
         if (oldTrans == null) {
