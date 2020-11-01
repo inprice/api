@@ -62,16 +62,42 @@ public interface LinkDao {
   @GetGeneratedKeys
   long insert(@BindBean("link") Link sample, @Bind("productId") Long productId, @Bind("companyId") Long companyId);
 
-  @SqlQuery("select * from link_spec where product_id=:productId order by link_id, _key")
-  @UseRowMapper(LinkSpecMapper.class)
-  List<LinkSpec> findSpecListByProductId(@Bind("productId") Long productId);
+  @SqlQuery("select * from link_history where product_id=:productId order by link_id, created_at desc")
+  @UseRowMapper(LinkHistoryMapper.class)
+  List<LinkHistory> findHistoryListByProductId(@Bind("productId") Long productId);
 
   @SqlQuery("select * from link_price where product_id=:productId order by link_id, created_at desc")
   @UseRowMapper(LinkPriceMapper.class)
   List<LinkPrice> findPriceListByProductId(@Bind("productId") Long productId);
 
-  @SqlQuery("select * from link_history where product_id=:productId order by link_id, created_at desc")
+  @SqlQuery("select * from link_spec where product_id=:productId order by link_id, _key")
+  @UseRowMapper(LinkSpecMapper.class)
+  List<LinkSpec> findSpecListByProductId(@Bind("productId") Long productId);
+
+  @SqlQuery("select * from link_history where link_id=:linkId order by created_at desc")
   @UseRowMapper(LinkHistoryMapper.class)
-  List<LinkHistory> findHistoryListByProductId(@Bind("productId") Long productId);
+  List<LinkHistory> findHistoryListByLinkId(@Bind("linkId") Long linkId);
+
+  @SqlQuery("select * from link_history where link_id=:linkId order by created_at desc limit 3")
+  @UseRowMapper(LinkHistoryMapper.class)
+  List<LinkHistory> findLastThreeHistoryRowsByLinkId(@Bind("linkId") Long linkId);
+
+  @SqlQuery("select * from link_price where link_id=:linkId order by created_at desc")
+  @UseRowMapper(LinkPriceMapper.class)
+  List<LinkPrice> findPriceListByLinkId(@Bind("linkId") Long linkId);
+
+  @SqlQuery("select * from link_spec where link_id=:linkId order by _key")
+  @UseRowMapper(LinkSpecMapper.class)
+  List<LinkSpec> findSpecListByLinkId(@Bind("linkId") Long linkId);
+
+  @SqlUpdate(
+    "insert into link_history (link_id, status, http_status, problem, product_id, company_id) " +
+    "values (:link.id, :link.status, :link.httpStatus, :link.problem, :link.productId, :link.companyId)"
+  )
+  @GetGeneratedKeys
+  long insertHistory(@BindBean("link") Link link);
+
+  @SqlUpdate("update link set pre_status=status, status=:status, last_update=now() where id=:id")
+  boolean toggleStatus(@Bind("id") Long id, @Bind("status") String status);
 
 }

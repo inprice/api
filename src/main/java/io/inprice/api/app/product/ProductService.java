@@ -25,8 +25,8 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.validator.ProductValidator;
-import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
@@ -207,7 +207,7 @@ public class ProductService {
                   // if product price is changed then all the prices and other 
                   // indicators (on both product itself and its links) must be adjusted accordingly
                   if (!product.getPrice().equals(dto.getPrice())) {
-                    CommonRepository.adjustProductPrice(transactional, dto.getId(), dto.getPrice(), null);
+                    CommonRepository.adjustProductPrice(transactional, dto.getId(), null);
                   }
 
                   if (dto.getTagsChanged()) {

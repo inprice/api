@@ -75,7 +75,6 @@ class DashboardService {
   private int[] findLinkStatusDists(DashboardDao dashboardDao) {
     Map<String, Integer> stats = new HashMap<>(6);
     int i = 0;
-    stats.put(LinkStatus.TOBE_CLASSIFIED.name(), i++);
     stats.put(LinkStatus.AVAILABLE.name(), i++);
     stats.put(LinkStatus.NOT_AVAILABLE.name(), i++);
     stats.put(LinkStatus.TOBE_IMPLEMENTED.name(), i++);

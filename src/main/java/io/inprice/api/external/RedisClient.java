@@ -9,8 +9,6 @@ import java.util.concurrent.TimeUnit;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RSetCache;
 import org.redisson.api.RTopic;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
@@ -18,14 +16,9 @@ import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.BaseRedisClient;
-import io.inprice.common.info.StatusChange;
 import io.inprice.common.meta.AppEnv;
-import io.inprice.common.meta.LinkStatus;
-import io.inprice.common.models.Link;
 
 public class RedisClient {
-
-  private static final Logger log = LoggerFactory.getLogger(RedisClient.class);
 
   private static BaseRedisClient baseClient;
   private static RTopic linkStatusChangeTopic;
@@ -91,24 +84,6 @@ public class RedisClient {
       return true;
     }
     return false;
-  }
-
-  /**
-   * For PAUSED and RESUMED links
-   * 
-   * @param change StatusChange
-   */
-  public static void publishLinkStatusChange(StatusChange change) {
-    Link link = change.getLink();
-    if (baseClient.isHealthy()) {
-      if (LinkStatus.PAUSED.equals(link.getStatus()) || LinkStatus.RESUMED.equals(link.getStatus())) {
-      linkStatusChangeTopic.publishAsync(change);
-      } else {
-        log.warn("Link is not suitable to publish on status change topic! Status: {}, Url: {}", link.getStatus(), link.getUrl());
-      }
-    } else {
-      log.warn("Redis connection is not healthy. Publishing active link avoided! Status: {}, Url: {}", link.getStatus(), link.getUrl());
-    }
   }
 
   public static void shutdown() {

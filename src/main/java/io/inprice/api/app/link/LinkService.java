@@ -1,8 +1,11 @@
 package io.inprice.api.app.link;
 
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -18,15 +21,16 @@ import io.inprice.api.app.link.dto.LinkDTO;
 import io.inprice.api.app.link.dto.LinkSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.helpers.SqlHelper;
-import io.inprice.common.info.StatusChange;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Link;
+import io.inprice.common.models.LinkHistory;
+import io.inprice.common.repository.CommonRepository;
+import io.inprice.common.utils.DateUtils;
 
 class LinkService {
 
@@ -141,13 +145,23 @@ class LinkService {
 
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transactional -> {
-          Batch batch = transactional.createBatch();
-          batch.add("delete from link_price " + where);
-          batch.add("delete from link_history " + where);
-          batch.add("delete from link_spec " + where);
-          batch.add("delete from link " + where.replace("link_", "")); //important!!!
-          int[] result = batch.execute();
-          isOK[0] = result[3] > 0;
+          LinkDao linkDao = transactional.attach(LinkDao.class);
+
+          Link deletedLink = linkDao.findById(id);
+          if (deletedLink != null) {
+            Batch batch = transactional.createBatch();
+            batch.add("delete from link_price " + where);
+            batch.add("delete from link_history " + where);
+            batch.add("delete from link_spec " + where);
+            batch.add("delete from link " + where.replace("link_", "")); //important!!!
+            int[] result = batch.execute();
+            isOK[0] = result[3] > 0;
+
+            if (isOK[0] && LinkStatus.AVAILABLE.equals(deletedLink.getStatus())) {
+              CommonRepository.adjustProductPrice(transactional, deletedLink.getProductId(), null);
+            }
+          }
+
           return isOK[0];
         });
       }
@@ -159,28 +173,68 @@ class LinkService {
     return Responses.NotFound.LINK;
   }
 
-  Response changeStatus(Long id, LinkStatus newStatus) {
+  Response toggleStatus(Long id) {
+    Response[] res = { Responses.NotFound.LINK };
+
+    if (id != null && id > 0) {
+      try (Handle handle = Database.getHandle()) {
+        handle.inTransaction(transactional -> {
+          LinkDao linkDao = transactional.attach(LinkDao.class);
+
+          Link link = linkDao.findById(id);
+          if (link != null) {
+
+            //check if he tries too much
+            List<LinkHistory> lastThreeList = linkDao.findLastThreeHistoryRowsByLinkId(id);
+            if (lastThreeList.size() == 3) {
+              LinkHistory row0 = lastThreeList.get(0);
+              LinkHistory row2 = lastThreeList.get(2);
+              if (row0.getStatus().equals(row2.getStatus())) {
+                Date now = new Date();
+                long diff0 = DateUtils.findDayDiff(row0.getCreatedAt(), now);
+                long diff2 = DateUtils.findDayDiff(row2.getCreatedAt(), now);
+                if (diff0 == 0 && diff2 == 0) {
+                  res[0] = Responses.DataProblem.TOO_MANY_TOGGLING;
+                }
+              }
+            }
+
+            if (! res[0].equals(Responses.DataProblem.TOO_MANY_TOGGLING)) {
+              LinkStatus newStatus = (LinkStatus.PAUSED.equals(link.getStatus()) ? link.getPreStatus() : LinkStatus.PAUSED);
+              boolean isOK = linkDao.toggleStatus(id, newStatus.name());
+              if (isOK) {
+                long historyId = linkDao.insertHistory(link);
+                if (historyId > 0) {
+                  if (LinkStatus.AVAILABLE.equals(newStatus)) {
+                    CommonRepository.adjustProductPrice(transactional, link.getProductId(), null);
+                  }
+                res[0] = Responses.OK;
+                }
+              }
+            }
+
+          }
+          return res[0].isOK();
+        });
+      }
+    }
+
+    return res[0];
+  }
+
+  Response getDetails(Long id) {
     Response res = Responses.NotFound.LINK;
 
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
         LinkDao linkDao = handle.attach(LinkDao.class);
-
-        Link link = linkDao.findById(id);
-        if (link != null) {
-          if (! link.getStatus().equals(newStatus)) {
-            LinkStatus olStatus = link.getStatus();
-            RedisClient.publishLinkStatusChange(
-              new StatusChange(
-                link,
-                olStatus,
-                link.getPrice()
-              )
-            );
-            res = Responses.OK;
-          } else {
-            res = Responses.Already.LINK_IN_THIS_STATUS;
-          }
+        Map<String, Object> data = new HashMap<>(3);
+        List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(id);
+        if (historyList != null && historyList.size() > 0) {
+          data.put("historyList", historyList);
+          data.put("priceList", linkDao.findPriceListByLinkId(id));
+          data.put("specList", linkDao.findSpecListByLinkId(id));
+          res = new Response(data);
         }
       }
     }

@@ -20,6 +20,7 @@ public class MRU25LinkMapper implements RowMapper<MRU25Link> {
     m.setSeller(rs.getString("seller"));
     m.setPrice(rs.getBigDecimal("price"));
     m.setStatus(rs.getString("status"));
+    m.setUrl(rs.getString("url"));
 
     if (rs.getTimestamp("last_update") != null) {
       m.setLastUpdate(DateUtils.formatLongDate(rs.getTimestamp("last_update")));
