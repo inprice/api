@@ -206,7 +206,7 @@ public class ProductService {
 
                   // if product price is changed then all the prices and other 
                   // indicators (on both product itself and its links) must be adjusted accordingly
-                  if (!product.getPrice().equals(dto.getPrice())) {
+                  if (product.getPrice().doubleValue() != dto.getPrice().doubleValue()) {
                     CommonRepository.adjustProductPrice(transactional, dto.getId(), null);
                   }
 

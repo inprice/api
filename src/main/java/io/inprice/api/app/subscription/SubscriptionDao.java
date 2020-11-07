@@ -17,7 +17,7 @@ public interface SubscriptionDao {
   @UseRowMapper(SubsTransMapper.class)
   SubsTrans findByEventId(@Bind("eventId") String eventId);
 
-  @SqlQuery("select * from subs_trans where company_id=:companyId order by created_at desc")
+  @SqlQuery("select * from subs_trans where company_id=:companyId order by id desc")
   @UseRowMapper(SubsTransMapper.class)
   List<SubsTrans> findListByCompanyId(@Bind("companyId") Long companyId);
 

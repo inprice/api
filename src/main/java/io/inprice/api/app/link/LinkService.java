@@ -55,6 +55,7 @@ class LinkService {
               long id = linkDao.insert(link, dto.getProductId(), CurrentUser.getCompanyId());
               if (id > 0) {
                 sample.setId(id);
+                linkDao.insertHistory(sample);
                 res = new Response(sample);
               }
             } else {
@@ -65,6 +66,8 @@ class LinkService {
                 sample.setUrl(dto.getUrl());
                 sample.setUrlHash(urlHash);
                 sample.setProductId(dto.getProductId());
+                sample.setCompanyId(CurrentUser.getCompanyId());
+                linkDao.insertHistory(sample);
                 res = new Response(sample);
               }
             }
@@ -203,6 +206,8 @@ class LinkService {
               LinkStatus newStatus = (LinkStatus.PAUSED.equals(link.getStatus()) ? link.getPreStatus() : LinkStatus.PAUSED);
               boolean isOK = linkDao.toggleStatus(id, newStatus.name());
               if (isOK) {
+                link.setPreStatus(link.getStatus());
+                link.setStatus(newStatus);
                 long historyId = linkDao.insertHistory(link);
                 if (historyId > 0) {
                   if (LinkStatus.AVAILABLE.equals(newStatus)) {

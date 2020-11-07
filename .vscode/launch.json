@@ -24,7 +24,7 @@
       "env": {
         "APP_ENV": "DEV",
         "APP_PORT": 4567,
-        "APP_SHOW_QUERIES": true,
+        "APP_SHOW_QUERIES": false,
         "APP_EMAIL_SENDER": "support@inprice.io",
         "APP_WEB_URL": "http://localhost:8080",
         "APP_API_URL": "http://localhost:4567",
