@@ -18,7 +18,7 @@ public class ProductCreator {
   /**
    * Properly inserts a new product to the database
    * 
-   * @param transactional must be in transaction
+   * @param transactional must be in transactional
    * @param dto
    * @return
    */

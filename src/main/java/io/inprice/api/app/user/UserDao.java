@@ -31,15 +31,14 @@ public interface UserDao {
   @SqlQuery("select name from user where email=:email")
   String findUserNameByEmail(@Bind("email") String email);
 
-  @SqlUpdate("insert into user (email, name, timezone, password_salt, password_hash) values (:email, :name, :timezone, :salt, :hash)")
+  @SqlUpdate("insert into user (email, password, name, timezone) values (:email, :saltedHash, :name, :timezone)")
   @GetGeneratedKeys
-  long insert(@Bind("email") String email, @Bind("name") String name, @Bind("timezone") String timezone,
-      @Bind("salt") String passwordSalt, @Bind("hash") String passwordHash);
+  long insert(@Bind("email") String email, @Bind("saltedHash") String saltedHash, @Bind("name") String name, @Bind("timezone") String timezone);
 
   @SqlUpdate("update user set name=:name, timezone=:timezone where id=:id")
   boolean updateName(@Bind("id") Long id, @Bind("name") String name, @Bind("timezone") String timezone);
 
-  @SqlUpdate("update user set password_salt=:salt, password_hash=:hash where id=:id")
-  boolean updatePassword(@Bind("id") Long id, @Bind("salt") String salt, @Bind("hash") String hash);
+  @SqlUpdate("update user set password=:saltedHash where id=:id")
+  boolean updatePassword(@Bind("id") Long id, @Bind("saltedHash") String saltedHash);
 
 }

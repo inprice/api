@@ -27,14 +27,13 @@ import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.PasswordHelper;
-import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.Pair;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
 import io.inprice.api.utils.CurrencyFormats;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
@@ -112,8 +111,8 @@ class CompanyService {
       Map<String, String> clientInfo = ClientSide.getGeoInfo(ctx.req);
 
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transaction -> {
-          UserDao userDao = handle.attach(UserDao.class);
+        handle.inTransaction(transactional -> {
+          UserDao userDao = transactional.attach(UserDao.class);
 
           User user = userDao.findByEmail(dto.getEmail());
           if (user == null) {
@@ -123,14 +122,12 @@ class CompanyService {
             user.setTimezone(clientInfo.get(Consts.TIMEZONE));
             user.setCreatedAt(new Date());
 
-            Pair<String, String> salted = PasswordHelper.generateSaltAndHash(dto.getPassword());
-
             user.setId(
               userDao.insert(
                 user.getEmail(), 
+                PasswordHelper.getSaltedHash(dto.getPassword()), 
                 user.getName(), 
-                clientInfo.get(Consts.TIMEZONE), 
-                salted.getKey(), salted.getValue()
+                clientInfo.get(Consts.TIMEZONE)
               )
             );
           }
@@ -138,7 +135,7 @@ class CompanyService {
           if (user.getId() != null) {
             res[0] = 
               createCompany(
-                handle,
+                transactional,
                 user.getId(),
                 user.getEmail(),
                 dto.getCompanyName(),
@@ -174,10 +171,10 @@ class CompanyService {
 
     if (res[0].isOK()) {
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transaction -> {
+        handle.inTransaction(transactional -> {
           res[0] = 
             createCompany(
-              handle,
+              transactional,
               CurrentUser.getUserId(),
               CurrentUser.getEmail(),
               dto.getName(),
@@ -223,28 +220,26 @@ class CompanyService {
     final Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(transaction -> {
-        UserDao userDao = transaction.attach(UserDao.class);
-        CompanyDao companyDao = transaction.attach(CompanyDao.class);
-        UserSessionDao sessionDao = transaction.attach(UserSessionDao.class);
+      handle.inTransaction(transactional -> {
+        UserDao userDao = transactional.attach(UserDao.class);
+        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        UserSessionDao sessionDao = transactional.attach(UserSessionDao.class);
 
         User user = userDao.findById(CurrentUser.getUserId());
-        String phash = PasswordHelper.generateHashOnly(password, user.getPasswordSalt());
 
-        if (phash.equals(user.getPasswordHash())) {
+        if (PasswordHelper.isValid(password, user.getPassword())) {
           Company company = companyDao.findByAdminId(CurrentUser.getCompanyId());
 
           if (company != null) {
             String where = "where company_id=" + CurrentUser.getCompanyId();
 
-            Batch batch = transaction.createBatch();
+            Batch batch = transactional.createBatch();
             batch.add("SET FOREIGN_KEY_CHECKS=0");
             batch.add("delete from link_price " + where);
             batch.add("delete from link_history " + where);
             batch.add("delete from link_spec " + where);
             batch.add("delete from link " + where);
             batch.add("delete from product_tag " + where);
-            batch.add("delete from product_price " + where);
             batch.add("delete from product " + where);
             batch.add("delete from user_session " + where);
             batch.add("delete from member " + where);
@@ -297,9 +292,9 @@ class CompanyService {
     }
   }
 
-  private Response createCompany(Handle handle, Long userId, String userEmail, String companyName, String currencyCode, String currencyFormat) {
-    CompanyDao companyDao = handle.attach(CompanyDao.class);
-    MemberDao memberDao = handle.attach(MemberDao.class);
+  private Response createCompany(Handle transactional, Long userId, String userEmail, String companyName, String currencyCode, String currencyFormat) {
+    CompanyDao companyDao = transactional.attach(CompanyDao.class);
+    MemberDao memberDao = transactional.attach(MemberDao.class);
 
     Company company = companyDao.findByNameAndAdminId(companyName, userId);
     if (company == null) {

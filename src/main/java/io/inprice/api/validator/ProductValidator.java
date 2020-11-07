@@ -7,8 +7,8 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.api.app.product.dto.ProductDTO;
-import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.common.helpers.SqlHelper;
 
 public class ProductValidator {
   

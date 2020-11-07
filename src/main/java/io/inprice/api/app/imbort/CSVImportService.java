@@ -20,9 +20,9 @@ import io.inprice.api.app.product.ProductCreator;
 import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.app.product.dto.ProductDTO;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.Product;
@@ -38,8 +38,8 @@ public class CSVImportService implements ImportService {
     Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(transaction -> {
-        CompanyDao companyDao = transaction.attach(CompanyDao.class);
+      handle.inTransaction(transactional -> {
+        CompanyDao companyDao = transactional.attach(CompanyDao.class);
 
         Company company = companyDao.findById(CurrentUser.getCompanyId());
         int allowedCount = company.getProductLimit() - company.getProductCount();
@@ -53,7 +53,7 @@ public class CSVImportService implements ImportService {
             List<Map<String, String>> resultMapList = new ArrayList<>();
   
             try (CSVReader csvReader = new CSVReader(new StringReader(content))) {
-              ProductDao productDao = transaction.attach(ProductDao.class);
+              ProductDao productDao = transactional.attach(ProductDao.class);
   
               String[] values;
               while ((values = csvReader.readNext()) != null) {
@@ -75,7 +75,7 @@ public class CSVImportService implements ImportService {
                         dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[4])));
                         dto.setCompanyId(CurrentUser.getCompanyId());
 
-                        Response productCreateRes = ProductCreator.create(transaction, dto);
+                        Response productCreateRes = ProductCreator.create(transactional, dto);
                         if (productCreateRes.isOK()) {
                           actualCount++;
                           insertedSet.add(values[0]);

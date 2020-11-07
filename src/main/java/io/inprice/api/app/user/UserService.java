@@ -15,13 +15,12 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LongDTO;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.PasswordHelper;
-import io.inprice.api.helpers.SqlHelper;
-import io.inprice.api.info.Pair;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.Timezones;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.UserStatus;
 
@@ -53,8 +52,8 @@ public class UserService {
       try (Handle handle = Database.getHandle()) {
         UserDao userDao = handle.attach(UserDao.class);
 
-        Pair<String, String> salted = PasswordHelper.generateSaltAndHash(dto.getPassword());
-        boolean isOK = userDao.updatePassword(CurrentUser.getUserId(), salted.getKey(), salted.getValue());
+        String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
+        boolean isOK = userDao.updatePassword(CurrentUser.getUserId(), saltedHash);
 
         if (isOK) {
           return Responses.OK;

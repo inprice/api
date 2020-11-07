@@ -1,19 +1,64 @@
 package io.inprice.api.helpers;
 
-import io.inprice.api.external.Props;
-import io.inprice.api.info.Pair;
-import jodd.util.BCrypt;
+import java.security.SecureRandom;
+import java.util.Base64;
 
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+
+import io.inprice.api.external.Props;
+
+/**
+ * Copied from
+ * https://stackoverflow.com/questions/2860943/how-can-i-hash-a-password-in-java
+ */
 public class PasswordHelper {
 
-  public static Pair<String, String> generateSaltAndHash(String password) {
-    String salt = BCrypt.gensalt(Props.APP_SALT_ROUNDS());
-    String hash = generateHashOnly(password, salt);
-    return new Pair<String, String>(salt, hash);
+  private static SecureRandom sr;
+  private static SecretKeyFactory skf;
+
+  /**
+   * Computes a salted PBKDF2 hash of given plaintext password suitable for
+   * storing in a database.
+   */
+  public static String getSaltedHash(String password) {
+    try {
+      if (sr == null) {
+        sr = SecureRandom.getInstance("SHA1PRNG");
+      }
+      byte[] seed = sr.generateSeed(32);
+      String hash = hash(password, seed);
+      String salt = Base64.getEncoder().encodeToString(seed);
+      return (hash+salt).replaceAll("=", "");
+    } catch (Exception e) {
+      System.err.println("Failed to generate salted hash for password!");
+    }
+    return null;
   }
 
-  public static String generateHashOnly(String password, String salt) {
-    return BCrypt.hashpw(password, salt);
+  public static boolean isValid(String password, String saltedHash) {
+    String hash = saltedHash.substring(0, 43) + "=";
+    String salt = saltedHash.substring(43) + "=";
+
+    String hashOfInput = hash(password, Base64.getDecoder().decode(salt));
+    return hashOfInput.equals(hash);
+  }
+
+  /**
+   * using PBKDF2 from Sun
+   */
+  private static String hash(String password, byte[] salt) {
+    try {
+      if (skf == null) {
+        skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+      }
+      SecretKey key = skf.generateSecret(new PBEKeySpec(password.toCharArray(), salt, Props.APP_SALT_ROUNDS()*1000, 256));
+      return Base64.getEncoder().encodeToString(key.getEncoded());
+    } catch (Exception e) {
+      System.err.println("Failed to generate hash!");
+    }
+    return null;
   }
 
 }

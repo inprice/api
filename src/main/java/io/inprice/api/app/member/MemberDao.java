@@ -53,7 +53,7 @@ public interface MemberDao {
     "left join company as c on c.id = mem.company_id " + 
     "where email=:email " + 
     "  and mem.status=:status " + 
-    "order by mem.created_at desc"
+    "order by mem.id desc"
   )
   @UseRowMapper(ActiveMemberMapper.class)
   List<ActiveMember> findMemberListByEmailAndStatus(@Bind("email") String email, @Bind("status") String status);

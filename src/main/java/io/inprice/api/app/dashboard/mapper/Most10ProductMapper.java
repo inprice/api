@@ -14,10 +14,9 @@ public class Most10ProductMapper implements RowMapper<Most10Product> {
   public Most10Product map(ResultSet rs, StatementContext ctx) throws SQLException {
     Most10Product m = new Most10Product();
 
-    m.setId(rs.getLong("pid"));
+    m.setId(rs.getLong("id"));
     m.setName(rs.getString("name"));
     m.setPrice(rs.getBigDecimal("price"));
-    m.setLinks(rs.getInt("links"));
     m.setRanking(rs.getInt("ranking"));
     m.setRankingWith(rs.getInt("ranking_with"));
 

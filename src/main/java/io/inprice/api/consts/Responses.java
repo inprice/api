@@ -65,6 +65,7 @@ public class Responses {
     public static final Response DUPLICATE = new Response(BASE + 13, "Duplicate error!");
 
     public static final Response SUBSCRIPTION_PROBLEM = new Response(BASE + 15, "Subscription service is not reachable right now! We are, sorry for this situation and, investigating.");
+    public static final Response TOO_MANY_TOGGLING = new Response(BASE + 17, "You are not allowed to Pause/Resume a link more than twice in the same day!");
 
     public static final Response FORM_VALIDATION = new Response(BASE + 20, "Validation error!");
   }
@@ -86,7 +87,7 @@ public class Responses {
     public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 7, "This account has no active subscription at the moment!");
 
     public static final Response REQUESTED_EMAIL = new Response(BASE + 10, "This email is already requested, please wait some time to try again!");
-
+    
     public static class Defined {
       public static final Response COMPANY = new Response(BASE + 20, "Seems that you have already registered this company!");
       public static final Response MEMBERSHIP = new Response(BASE + 21, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");

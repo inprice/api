@@ -190,9 +190,9 @@ class StripeService {
     Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(transaction -> {
-        CompanyDao companyDao = handle.attach(CompanyDao.class);
-        SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+      handle.inTransaction(transactional -> {
+        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
         SubsTrans oldTrans = subscriptionDao.findByEventId(trans.getEventId());
         if (oldTrans == null) {
@@ -279,7 +279,7 @@ class StripeService {
               }
       
               case PAYMENT_FAILED: {
-                res[0] = Responses.OK; // must be set true so that the transaction can reflect on database
+                res[0] = Responses.OK; // must be set true so that the transactional can reflect on database
                 log.warn("Payment failed! Company Id: {}", companyId);
                 break;
               }

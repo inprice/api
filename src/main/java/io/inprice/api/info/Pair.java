@@ -3,10 +3,12 @@ package io.inprice.api.info;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@ToString
 public class Pair<K, V> {
 
   private K key;

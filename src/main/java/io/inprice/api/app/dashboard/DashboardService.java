@@ -30,7 +30,7 @@ class DashboardService {
 
   Response getReport(boolean refresh) {
     Map<String, Object> report = null;
-    if (! refresh) report = RedisClient.getDashboardsMap().get(CurrentUser.getCompanyId());
+    if (! refresh) report = RedisClient.dashboardsMap.get(CurrentUser.getCompanyId());
 
     if (report == null) {
       report = new HashMap<>(4);
@@ -44,7 +44,7 @@ class DashboardService {
         report.put("links", getLinks(dashboardDao));
         report.put("company", companyDao.findById(CurrentUser.getCompanyId()));
 
-        RedisClient.getDashboardsMap().put(CurrentUser.getCompanyId(), report, 5, TimeUnit.MINUTES);
+        RedisClient.dashboardsMap.put(CurrentUser.getCompanyId(), report, 5, TimeUnit.MINUTES);
         return new Response(report);
     
       } catch (Exception e) {
@@ -75,11 +75,10 @@ class DashboardService {
   private int[] findLinkStatusDists(DashboardDao dashboardDao) {
     Map<String, Integer> stats = new HashMap<>(6);
     int i = 0;
-    stats.put(LinkStatus.TOBE_CLASSIFIED.name(), i++);
     stats.put(LinkStatus.AVAILABLE.name(), i++);
     stats.put(LinkStatus.NOT_AVAILABLE.name(), i++);
     stats.put(LinkStatus.TOBE_IMPLEMENTED.name(), i++);
-    stats.put(LinkStatus.WONT_BE_IMPLEMENTED.name(), i++);
+    stats.put(LinkStatus.NETWORK_ERROR.name(), i++);
     stats.put(OTHERS, i++);
 
     int[] result = new int[i];

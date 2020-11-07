@@ -1,5 +1,6 @@
 package io.inprice.api.app.product;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -21,14 +22,18 @@ import io.inprice.api.app.product.mapper.SimpleSearch;
 import io.inprice.api.app.tag.TagDao;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.helpers.SqlHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.validator.ProductValidator;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.models.Link;
+import io.inprice.common.models.LinkHistory;
+import io.inprice.common.models.LinkPrice;
+import io.inprice.common.models.LinkSpec;
 import io.inprice.common.models.Product;
 import io.inprice.common.models.ProductTag;
+import io.inprice.common.repository.CommonRepository;
 
 public class ProductService {
 
@@ -57,7 +62,27 @@ public class ProductService {
         dataMap.put("product", product);
 
         LinkDao linkDao = handle.attach(LinkDao.class);
+
+        //finding links
         List<Link> linkList = linkDao.findListByProductIdAndCompanyId(id, CurrentUser.getCompanyId());
+        if (linkList != null && linkList.size() > 0) {
+          int i = 0;
+          Map<Long, Integer> refListToLinks = new HashMap<>(linkList.size());
+          for (Link link: linkList) {
+            link.setPriceList(new ArrayList<>());
+            link.setSpecList(new ArrayList<>());
+            link.setHistoryList(new ArrayList<>());
+            refListToLinks.put(link.getId(), i++);
+          }
+
+          List<LinkSpec> specsList = linkDao.findSpecListByProductId(id); // finding links' specs
+          List<LinkPrice> pricesList = linkDao.findPriceListByProductId(id); // finding links' prices
+          List<LinkHistory> historiesList = linkDao.findHistoryListByProductId(id); // finding links' histories
+          for (LinkSpec linkSpec: specsList) linkList.get(refListToLinks.get(linkSpec.getLinkId())).getSpecList().add(linkSpec);
+          for (LinkPrice linkPrice: pricesList) linkList.get(refListToLinks.get(linkPrice.getLinkId())).getPriceList().add(linkPrice);
+          for (LinkHistory linkHistory: historiesList) linkList.get(refListToLinks.get(linkHistory.getLinkId())).getHistoryList().add(linkHistory);
+        }
+
         if (linkList != null) {
           dataMap.put("links", linkList);
         }
@@ -91,21 +116,16 @@ public class ProductService {
     //---------------------------------------------------
     StringBuilder criteria = new StringBuilder();
 
+    criteria.append("where p.company_id = ");
+    criteria.append(CurrentUser.getCompanyId());
+
     if (StringUtils.isNotBlank(dto.getTerm())) {
-      criteria.append("where ");
-      criteria.append("p.code like '%");
+      criteria.append(" and p.code like '%");
       criteria.append(dto.getTerm());
-      criteria.append("%' or ");
-      criteria.append("p.name like '%");
+      criteria.append("%' or p.name like '%");
       criteria.append(dto.getTerm());
       criteria.append("%' ");
-    } else {
-      criteria.append("where 1=1 ");
     }
-
-    //company
-    criteria.append(" and p.company_id = ");
-    criteria.append(CurrentUser.getCompanyId());
 
     if (dto.getPosition() != null && dto.getPosition() > 0) {
       criteria.append(" and p.position = ");
@@ -143,7 +163,7 @@ public class ProductService {
 
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
-      log.error("Failed in full search for products. ", e);
+      log.error("Failed in full search for products.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
@@ -182,9 +202,14 @@ public class ProductService {
                     dto.getName(),
                     dto.getPrice()
                   );
-                  //TODO: burada yapılacak denetim
-                  // if product.price().equals(dto.price) then commonDao daki fiyatları düzenleme kısmını çalıştır!!!
                 if (isUpdated) {
+
+                  // if product price is changed then all the prices and other 
+                  // indicators (on both product itself and its links) must be adjusted accordingly
+                  if (product.getPrice().doubleValue() != dto.getPrice().doubleValue()) {
+                    CommonRepository.adjustProductPrice(transactional, dto.getId(), null);
+                  }
+
                   if (dto.getTagsChanged()) {
                     TagDao tagDao = transactional.attach(TagDao.class);
                     tagDao.deleteTags(dto.getId(), dto.getCompanyId());
@@ -227,7 +252,6 @@ public class ProductService {
           batch.add("delete from link_history " + where);
           batch.add("delete from link_spec " + where);
           batch.add("delete from link " + where);
-          batch.add("delete from product_price " + where);
           batch.add("delete from product " + where.replace("product_", "")); //this clause is important since determines the success!
           batch.add("update company set product_count=product_count-1 where product_count>0 and id=" + CurrentUser.getCompanyId());
           int[] result = batch.execute();
