@@ -66,12 +66,18 @@ public class Consts {
       public static final String SEARCH = BASE + "s/search";
       public static final String TOGGLE_STATUS = BASE + "/toggle";
 
-      public static final String IMPORT_BASE = BASE + "/import";
-      public static final String IMPORTED_PRODUCTS = IMPORT_BASE + "s/search";
-      public static final String IMPORT_CSV = IMPORT_BASE + "/csv";
-      public static final String IMPORT_URL_LIST = IMPORT_BASE + "/url-list";
-      public static final String IMPORT_EBAY_SKU = IMPORT_BASE + "/ebay-sku";
-      public static final String IMPORT_AMAZON_ASIN = IMPORT_BASE + "/amazon-asin";
+      public static final String IMPORT = BASE + "/import";
+      public static final String IMPORT_LIST = IMPORT + "s";
+
+      public static final String IMPORT_CSV_FILE = IMPORT + "/file/csv";
+      public static final String IMPORT_URL_FILE = IMPORT + "/file/url";
+      public static final String IMPORT_EBAY_FILE = IMPORT + "/file/ebay";
+      public static final String IMPORT_AMAZON_FILE = IMPORT + "/file/amazon";
+
+      public static final String IMPORT_CSV_LIST = IMPORT + "/list/csv";
+      public static final String IMPORT_URL_LIST = IMPORT + "/list/url";
+      public static final String IMPORT_EBAY_LIST = IMPORT + "/list/ebay";
+      public static final String IMPORT_AMAZON_LIST = IMPORT + "/list/amazon";
     }
 
     public static class Link {

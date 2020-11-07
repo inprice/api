@@ -29,24 +29,25 @@ import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
 import io.inprice.common.utils.URLUtils;
 
-public class GenericImportService implements ImportService {
+public class URLBasedImportService extends BaseImportService {
 
-  private static final Logger log = LoggerFactory.getLogger(GenericImportService.class);
+  private static final Logger log = LoggerFactory.getLogger(URLBasedImportService.class);
 
   private static final String ASIN_REGEX = "^(?i)(B0|BT)[0-9A-Z]{8}$";
   private static final String SKU_REGEX = "^[1-3][0-9]{10,11}$";
 
-  public Response upload(ImportType importType, String content) {
+  @Override
+  Response upload(ImportType importType, String content) {
     String identifier = null;
     final String[] regex = { "" };
 
     switch (importType) {
-      case EBAY_SKU: {
+      case EBAY: {
         identifier = "SKU list";
         regex[0] = SKU_REGEX;
         break;
       }
-      case AMAZON_ASIN: {
+      case AMAZON: {
         identifier = "ASIN list";
         regex[0] = ASIN_REGEX;
         break;
@@ -113,11 +114,11 @@ public class GenericImportService implements ImportService {
                         String url = null;
 
                         switch (importType) {
-                          case EBAY_SKU: {
+                          case EBAY: {
                             url = Props.PREFIX_FOR_SEARCH_EBAY() + line;
                             break;
                           }
-                          case AMAZON_ASIN: {
+                          case AMAZON: {
                             url = Props.PREFIX_FOR_SEARCH_AMAZON() + line;
                             break;
                           }

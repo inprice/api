@@ -28,13 +28,14 @@ import io.inprice.common.models.Company;
 import io.inprice.common.models.Product;
 import io.inprice.common.utils.NumberUtils;
 
-public class CSVImportService implements ImportService {
+public class CSVImportService extends BaseImportService {
 
   private static final Logger log = LoggerFactory.getLogger(CSVImportService.class);
 
   private static final int COLUMN_COUNT = 3;
 
-  public Response upload(String content) {
+  @Override
+  Response upload(String content) {
     Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
