@@ -22,7 +22,7 @@ public class BaseImportService {
     return Responses.DataProblem.NOT_SUITABLE;
   }
 
-  public Response findById(Long importId) {
+  Response findById(Long importId) {
     try (Handle handle = Database.getHandle()) {
       ImportDao importDao = handle.attach(ImportDao.class);
 

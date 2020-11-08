@@ -67,7 +67,6 @@ public class Consts {
       public static final String TOGGLE_STATUS = BASE + "/toggle";
 
       public static final String IMPORT = BASE + "/import";
-      public static final String IMPORT_LIST = IMPORT + "s";
 
       public static final String IMPORT_CSV_FILE = IMPORT + "/file/csv";
       public static final String IMPORT_URL_FILE = IMPORT + "/file/url";

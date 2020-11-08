@@ -102,7 +102,7 @@ class LinkService {
       criteria.append(dto.getTerm());
       criteria.append("%' or l.seller like '%");
       criteria.append(dto.getTerm());
-      criteria.append("%' or s.name like '%"); // platform!
+      criteria.append("%' or l.platform like '%"); // platform!
       criteria.append(dto.getTerm());
       criteria.append("%' ");
     }
@@ -125,10 +125,9 @@ class LinkService {
     try (Handle handle = Database.getHandle()) {
       List<Link> searchResult =
         handle.createQuery(
-          "select *, s.name as platform from link as l " + 
-          "left join site as s on s.id = l.site_id " +
+          "select * from link as l " + 
           criteria +
-          " order by l.status, s.name, l.last_update " +
+          " order by l.status, l.platform, l.last_update " +
           limit
         )
       .map(new LinkMapper())

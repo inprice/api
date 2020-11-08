@@ -92,8 +92,6 @@ public interface ProductDao {
     "p.suggested_price as p_suggested_price, " +
     "p.updated_at as p_updated_at, " +
     "p.created_at as p_created_at, " +
-    "p.imbort_id as p_company_id, " +
-    "p.imbort_type as p_company_type, " +
     "p.company_id as p_company_id ";
     
   final String TAG_FIELDS = 

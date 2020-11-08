@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.jdbi.v3.sqlobject.config.RegisterBeanMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 
@@ -16,6 +18,10 @@ import io.inprice.common.models.Import;
 import io.inprice.common.models.Link;
 
 public interface ImportDao {
+
+  @SqlUpdate("insert into imbort (type, company_id) values (:type, :companyId)")
+  @GetGeneratedKeys
+  long insert(@Bind("type") String type, @Bind("companyId") Long companyId);
 
   @SqlQuery(
     "select "+IMPORT_FIELDS+", "+IMPORT_ROW_FIELDS+" from imbort as i " +
@@ -40,7 +46,6 @@ public interface ImportDao {
   final String IMPORT_FIELDS = 
     "i.id as i_id, " +
     "i.type as i_type, " +
-    "i.row_count as i_row_count, " +
     "i.created_at as i_created_at ";
 
   final String IMPORT_ROW_FIELDS = 

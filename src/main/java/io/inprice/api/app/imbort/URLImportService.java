@@ -2,11 +2,7 @@ package io.inprice.api.app.imbort;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -23,23 +19,33 @@ import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.SiteFinder;
 import io.inprice.common.meta.ImportType;
+import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
+import io.inprice.common.models.Site;
 import io.inprice.common.utils.URLUtils;
 
-public class URLBasedImportService extends BaseImportService {
+public class URLImportService extends BaseImportService {
 
-  private static final Logger log = LoggerFactory.getLogger(URLBasedImportService.class);
+  private static final Logger log = LoggerFactory.getLogger(URLImportService.class);
 
   private static final String ASIN_REGEX = "^(?i)(B0|BT)[0-9A-Z]{8}$";
   private static final String SKU_REGEX = "^[1-3][0-9]{10,11}$";
 
   @Override
   Response upload(ImportType importType, String content) {
+    if (StringUtils.isBlank(content) || content.length() < 10) { // byte
+      return Responses.Upload.EMPTY;
+    }
+
     String identifier = null;
     final String[] regex = { "" };
+
+    Site ebaySite = SiteFinder.findSiteByUrl(Props.PREFIX_FOR_SEARCH_EBAY());
+    Site amazonSite = SiteFinder.findSiteByUrl(Props.PREFIX_FOR_SEARCH_AMAZON());
 
     switch (importType) {
       case EBAY: {
@@ -58,14 +64,22 @@ public class URLBasedImportService extends BaseImportService {
         break;
       }
       case CSV: {
-        return Responses.PermissionProblem.UNAUTHORIZED;
+        return Responses.Invalid.DATA;
       }
     }
 
-    Response[] res = { Responses.DataProblem.DB_PROBLEM };
+    Response[] res = { Responses.OK };
 
     try (Handle handle = Database.getHandle()) {
       handle.inTransaction(transactional -> {
+
+        ImportDao importDao = transactional.attach(ImportDao.class);
+        long importId = importDao.insert(importType.name(), CurrentUser.getCompanyId());
+        if (importId == 0) {
+          res[0] = Responses.DataProblem.DB_PROBLEM;
+          return false;
+        }
+
         CompanyDao companyDao = transactional.attach(CompanyDao.class);
 
         Company company = companyDao.findById(CurrentUser.getCompanyId());
@@ -77,8 +91,6 @@ public class URLBasedImportService extends BaseImportService {
           int actualCount = company.getProductCount();
           if (actualCount < allowedCount) {
 
-            List<Map<String, String>> resultMapList = new ArrayList<>();
-
             try (BufferedReader reader = new BufferedReader(new StringReader(content))) {
               LinkDao linkDao = transactional.attach(LinkDao.class);
               ProductDao productDao = transactional.attach(ProductDao.class);
@@ -89,80 +101,85 @@ public class URLBasedImportService extends BaseImportService {
                   continue;
                 }
 
-                String result = "";
-                if (actualCount < allowedCount) {
+                String url = null;
+                String problem = null;
+                Site site = null;
+                LinkStatus status = LinkStatus.TOBE_CLASSIFIED;
 
+                if (actualCount < allowedCount) {
                   boolean exists = insertedSet.contains(line);
                   if (! exists) {
 
                     if (line.matches(regex[0])) {
-                      Response op = Responses.NotFound.PRODUCT;
-
                       if (ImportType.URL.equals(importType)) {
                         Link link = linkDao.findByUrlHashForImport(DigestUtils.md5Hex(line), CurrentUser.getCompanyId());
                         if (link != null) {
-                          op = Responses.DataProblem.DUPLICATE;
+                          status = LinkStatus.DUPLICATE;
                         }
                       } else {
                         Product product = productDao.findByCode(line, CurrentUser.getCompanyId());
                         if (product != null) {
-                          op = Responses.DataProblem.DUPLICATE;
+                          status = LinkStatus.DUPLICATE;
                         }
                       }
 
-                      if (op.equals(Responses.NotFound.PRODUCT)) {
-                        String url = null;
-
+                      if (status.equals(LinkStatus.TOBE_CLASSIFIED)) {
                         switch (importType) {
                           case EBAY: {
                             url = Props.PREFIX_FOR_SEARCH_EBAY() + line;
+                            site = ebaySite;
                             break;
                           }
                           case AMAZON: {
                             url = Props.PREFIX_FOR_SEARCH_AMAZON() + line;
+                            site = amazonSite;
                             break;
                           }
                           default:
                             url = line;
+                            site = SiteFinder.findSiteByUrl(url);
                             break;
                         }
 
-                        long id = linkDao.insert(url, DigestUtils.md5Hex(url), null, CurrentUser.getCompanyId());
-                        if (id > 0) {
-                          actualCount++;
-                          insertedSet.add(line);
-                          result = "Added successfully";
-                        } else {
-                          result = Responses.DataProblem.DB_PROBLEM.getReason();
-                        }
                       } else {
-                        result = "This is already defined!";
+                        status = LinkStatus.DUPLICATE;
+                        problem = "Already defined!";
                       }
                     } else {
-                      result = "Doesn't match the rules!";
+                      status = LinkStatus.IMPROPER;
+                      problem = "Doesn't match the rules!";
                     }
                   } else {
-                    result = "This is already handled. Please see previous rows in the list!";
+                    status = LinkStatus.IMPORTED;
+                    problem = "Already imported!";
                   }
                 } else {
-                  result = "Your product count reached the limit of your plan. Allowed prod. count: " + allowedCount;
+                  status = LinkStatus.LIMIT_EXCEEDED;
+                  problem = "Plan limit exceeded!";
                 }
 
-                Map<String, String> resultMap = new HashMap<>(2);
-                resultMap.put("line", line);
-                resultMap.put("result", result);
-                resultMapList.add(resultMap);
-                if (result.indexOf("reached") > 0) break;
+                if (site == null && status.equals(LinkStatus.TOBE_CLASSIFIED)) {
+                  status = LinkStatus.TOBE_IMPLEMENTED;
+                }
+
+                linkDao.importProduct(
+                  url, 
+                  DigestUtils.md5Hex(url), 
+                  status.name(), 
+                  problem, 
+                  (problem != null ? 1 : 0),
+                  (site != null ? site.getClassName() : null),
+                  (site != null ? site.getDomain() : null),
+                  importId,
+                  CurrentUser.getCompanyId()
+                );
               }
-
-              res[0] = new Response(resultMapList);
             }
-
           } else {
-            res[0] = new Response("You have reached your plan's maximum product limit. To import more product, please select a broader plan.");
+            res[0] = new Response("You have reached your plan limit. Please select a broader plan.");
           }
         } else {
-          res[0] = new Response("You haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
+          res[0] = new Response("Seems you haven't chosen a plan yet. Please consider buying a plan.");
         }
 
         return insertedSet.size() > 0;

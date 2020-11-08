@@ -2,28 +2,28 @@ package io.inprice.api.app.imbort;
 
 import java.io.StringReader;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.opencsv.CSVReader;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.app.product.ProductCreator;
 import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.app.product.dto.ProductDTO;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.SqlHelper;
+import io.inprice.common.meta.ImportType;
+import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.Product;
 import io.inprice.common.utils.NumberUtils;
@@ -36,12 +36,20 @@ public class CSVImportService extends BaseImportService {
 
   @Override
   Response upload(String content) {
-    Response[] res = { Responses.DataProblem.DB_PROBLEM };
-
+    Response[] res = { Responses.OK };
+    
     try (Handle handle = Database.getHandle()) {
       handle.inTransaction(transactional -> {
-        CompanyDao companyDao = transactional.attach(CompanyDao.class);
 
+        ImportDao importDao = transactional.attach(ImportDao.class);
+        long importId = importDao.insert(ImportType.CSV.name(), CurrentUser.getCompanyId());
+        if (importId == 0) {
+          res[0] = Responses.DataProblem.DB_PROBLEM;
+          return false;
+        }
+
+        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        
         Company company = companyDao.findById(CurrentUser.getCompanyId());
         int allowedCount = company.getProductLimit() - company.getProductCount();
 
@@ -51,68 +59,73 @@ public class CSVImportService extends BaseImportService {
           int actualCount = company.getProductCount();
           if (actualCount < allowedCount) {
 
-            List<Map<String, String>> resultMapList = new ArrayList<>();
-  
             try (CSVReader csvReader = new CSVReader(new StringReader(content))) {
+              LinkDao linkDao = transactional.attach(LinkDao.class);
               ProductDao productDao = transactional.attach(ProductDao.class);
   
               String[] values;
               while ((values = csvReader.readNext()) != null) {
-                if (values.length <= 1 || values[0].trim().isEmpty() || values[0].trim().equals("#")) continue;
+                if (values.length <= 1 || values[0].trim().isEmpty() || values[0].trim().equals("#")) {
+                  continue;
+                }
   
-                String result = "";
-  
+                String problem = null;
+                LinkStatus status = LinkStatus.AVAILABLE;
+
                 if (actualCount < allowedCount) {
                   boolean exists = insertedSet.contains(values[0]);
                   if (! exists) {
+
                     if (values.length == COLUMN_COUNT) {
-  
                       Product product = productDao.findByCode(values[0], CurrentUser.getCompanyId());
                       if (product == null) {
   
                         ProductDTO dto = new ProductDTO();
                         dto.setCode(SqlHelper.clear(values[0]));
                         dto.setName(SqlHelper.clear(values[1]));
-                        dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[4])));
+                        dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[2])));
                         dto.setCompanyId(CurrentUser.getCompanyId());
 
                         Response productCreateRes = ProductCreator.create(transactional, dto);
-                        if (productCreateRes.isOK()) {
-                          actualCount++;
-                          insertedSet.add(values[0]);
-                          result = "Added successfully";
-                        } else {
-                          result = productCreateRes.getReason();
+                        if (! productCreateRes.isOK()) {
+                          problem = productCreateRes.getReason();
                         }
 
                       } else {
-                        result = String.format("The code {} is already defined!", values[0]);
+                        status = LinkStatus.DUPLICATE;
+                        problem = "Already defined!";
                       }
                     } else {
-                      result = String.format("Expected col count is %d, but %d. Separator is comma ,", COLUMN_COUNT, values.length);
+                      status = LinkStatus.IMPROPER;
+                      problem = String.format("Column count must be %d, but is %d. Separator is comma ,", COLUMN_COUNT, values.length);
                     }
                   } else {
-                    result = "This is already handled. Please see previous rows in the list!";
+                    status = LinkStatus.IMPORTED;
+                    problem = "Already imported!";
                   }
                 } else {
-                  result = "Your product count reached the limit of your plan. Allowed prod. count: " + allowedCount;
+                  status = LinkStatus.LIMIT_EXCEEDED;
+                  problem = "Plan limit exceeded!";
                 }
-  
-                Map<String, String> resultMap = new HashMap<>(2);
-                resultMap.put("line", values[0] + " : " + values[1]);
-                resultMap.put("result", result);
-                resultMapList.add(resultMap);
-                if (result.indexOf("reached") > 0) break;
-              }
 
-              res[0] = new Response(resultMapList);
+                String data = SqlHelper.clear(String.join(",", values));
+                linkDao.importProduct(
+                  data, 
+                  DigestUtils.md5Hex(data), 
+                  status.name(), 
+                  problem, 
+                  (problem != null ? 1 : 0),
+                  null, null,
+                  importId,
+                  CurrentUser.getCompanyId()
+                );
+              }
             }
-  
           } else {
-            res[0] = new Response("You have reached your plan's maximum product limit. To import more product, please select a broader plan.");
+            res[0] = new Response("You have reached your plan limit. Please select a broader plan.");
           }
         } else {
-          res[0] = new Response("You haven't chosen a plan yet. You need to buy a plan to be able to import your products.");
+          res[0] = new Response("Seems you haven't chosen a plan yet. Please consider buying a plan.");
         }
 
         return insertedSet.size() > 0;
