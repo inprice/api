@@ -51,19 +51,17 @@ public class BaseImportService {
     if (importId != null && importId > 0) {
       final boolean[] isOK = { false };
 
-      final String where = 
-        String.format(
-          "where imbort_id=%d and company_id=%d",
-           importId, CurrentUser.getCompanyId()
-        );
+      String where =
+        String.format("import_id=%d and company_id=%d", importId, CurrentUser.getCompanyId());
 
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transactional -> {
           Batch batch = transactional.createBatch();
-          batch.add("delete from link " + where);
-          batch.add("delete from imbort " + where.replace("imbort_", "")); //this clause is important since determines the success!
+          batch.add("delete from link where import_detail_id in (select id from import_detail " + where + ")");
+          batch.add("delete from import_detail " + where);
+          batch.add("delete from import_ " + where.replaceAll("import_", "")); //this clause is important since determines the success!
           int[] result = batch.execute();
-          isOK[0] = result[1] > 0;
+          isOK[0] = result[2] > 0;
           return isOK[0];
         });
       }

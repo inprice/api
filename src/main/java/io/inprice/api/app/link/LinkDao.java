@@ -28,9 +28,9 @@ public interface LinkDao {
   @UseRowMapper(LinkMapper.class)
   Link findSampleByUrlHashAndStatus(@Bind("urlHash") String urlHash, @Bind("status") String status);
 
-  @SqlQuery("select * from link where product_id is null and url_hash=:urlHash and company_id=:companyId limit 1")
+  @SqlQuery("select * from link where product_id is null and url_hash=:urlHash and company_id=:companyId orde by status, last_check desc")
   @UseRowMapper(LinkMapper.class)
-  Link findByUrlHashForImport(@Bind("urlHash") String urlHash, @Bind("companyId") Long companyId);
+  List<Link> findByUrlHashForImport(@Bind("urlHash") String urlHash);
 
   @SqlQuery("select * from link where product_id=:productId and url_hash=:urlHash limit 1")
   @UseRowMapper(LinkMapper.class)
@@ -100,12 +100,12 @@ public interface LinkDao {
   boolean toggleStatus(@Bind("id") Long id, @Bind("status") String status);
 
   @SqlUpdate(
-    "insert into link (url, url_hash, status, problem, retry, class_name, platform, imbort_id, company_id) " +
-    "values (:url, :urlHash, :status, :problem, :retry, :className, :platform, :importId, :companyId)"
+    "insert into link (url, url_hash, status, problem, retry, class_name, platform, import_detail_id, company_id) " +
+    "values (:url, :urlHash, :status, :problem, :retry, :className, :platform, :importDetailId, :companyId)"
   )
   @GetGeneratedKeys
   long importProduct(@Bind("url") String url, @Bind("urlHash") String urlHash, @Bind("status") String status, 
     @Bind("problem") String problem, @Bind("retry") int retry, @Bind("className") String className, 
-    @Bind("platform") String platform, @Bind("importId") Long importId, @Bind("companyId") Long companyId);
+    @Bind("platform") String platform, @Bind("importDetailId") Long importDetailId, @Bind("companyId") Long companyId);
 
 }

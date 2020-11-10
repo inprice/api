@@ -7,13 +7,11 @@ import java.util.Set;
 
 import com.opencsv.CSVReader;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
-import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.app.product.ProductCreator;
 import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.app.product.dto.ProductDTO;
@@ -25,6 +23,7 @@ import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.meta.ImportType;
 import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Company;
+import io.inprice.common.models.ImportDetail;
 import io.inprice.common.models.Product;
 import io.inprice.common.utils.NumberUtils;
 
@@ -60,7 +59,6 @@ public class CSVImportService extends BaseImportService {
           if (actualCount < allowedCount) {
 
             try (CSVReader csvReader = new CSVReader(new StringReader(content))) {
-              LinkDao linkDao = transactional.attach(LinkDao.class);
               ProductDao productDao = transactional.attach(ProductDao.class);
   
               String[] values;
@@ -88,6 +86,7 @@ public class CSVImportService extends BaseImportService {
 
                         Response productCreateRes = ProductCreator.create(transactional, dto);
                         if (! productCreateRes.isOK()) {
+                          status = LinkStatus.IMPROPER;
                           problem = productCreateRes.getReason();
                         }
 
@@ -108,17 +107,15 @@ public class CSVImportService extends BaseImportService {
                   problem = "Plan limit exceeded!";
                 }
 
-                String data = SqlHelper.clear(String.join(",", values));
-                linkDao.importProduct(
-                  data, 
-                  DigestUtils.md5Hex(data), 
-                  status.name(), 
-                  problem, 
-                  (problem != null ? 1 : 0),
-                  null, null,
-                  importId,
-                  CurrentUser.getCompanyId()
-                );
+                ImportDetail impdet = new ImportDetail();
+                impdet.setData(SqlHelper.clear(String.join(",", values)));
+                impdet.setEligible(status.equals(LinkStatus.AVAILABLE));
+                impdet.setImported(impdet.getEligible());
+                impdet.setImportId(importId);
+                impdet.setProblem(problem);
+                impdet.setCompanyId(CurrentUser.getCompanyId());
+                importDao.insertDetail(impdet);
+            
               }
             }
           } else {
@@ -136,6 +133,7 @@ public class CSVImportService extends BaseImportService {
     }
 
     return res[0];
+
   }
 
 }

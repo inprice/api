@@ -3,6 +3,7 @@ package io.inprice.api.app.imbort;
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -13,7 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.app.link.LinkDao;
+import io.inprice.api.app.product.ProductCreator;
 import io.inprice.api.app.product.ProductDao;
+import io.inprice.api.app.product.dto.ProductDTO;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
@@ -23,6 +26,7 @@ import io.inprice.common.helpers.SiteFinder;
 import io.inprice.common.meta.ImportType;
 import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Company;
+import io.inprice.common.models.ImportDetail;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
 import io.inprice.common.models.Site;
@@ -73,8 +77,10 @@ public class URLImportService extends BaseImportService {
     try (Handle handle = Database.getHandle()) {
       handle.inTransaction(transactional -> {
 
+        long companyId = CurrentUser.getCompanyId();
+
         ImportDao importDao = transactional.attach(ImportDao.class);
-        long importId = importDao.insert(importType.name(), CurrentUser.getCompanyId());
+        long importId = importDao.insert(importType.name(), companyId);
         if (importId == 0) {
           res[0] = Responses.DataProblem.DB_PROBLEM;
           return false;
@@ -82,7 +88,7 @@ public class URLImportService extends BaseImportService {
 
         CompanyDao companyDao = transactional.attach(CompanyDao.class);
 
-        Company company = companyDao.findById(CurrentUser.getCompanyId());
+        Company company = companyDao.findById(companyId);
         int allowedCount = company.getProductLimit() - company.getProductCount();
 
         Set<String> insertedSet = new HashSet<>();
@@ -104,43 +110,59 @@ public class URLImportService extends BaseImportService {
                 String url = null;
                 String problem = null;
                 Site site = null;
-                LinkStatus status = LinkStatus.TOBE_CLASSIFIED;
+                Link similar = null;
+                LinkStatus status = LinkStatus.RESOLVED;
 
                 if (actualCount < allowedCount) {
                   boolean exists = insertedSet.contains(line);
                   if (! exists) {
 
                     if (line.matches(regex[0])) {
-                      if (ImportType.URL.equals(importType)) {
-                        Link link = linkDao.findByUrlHashForImport(DigestUtils.md5Hex(line), CurrentUser.getCompanyId());
-                        if (link != null) {
-                          status = LinkStatus.DUPLICATE;
+  
+                      switch (importType) {
+                        case EBAY: {
+                          url = Props.PREFIX_FOR_SEARCH_EBAY() + line;
+                          site = ebaySite;
+                          break;
                         }
-                      } else {
-                        Product product = productDao.findByCode(line, CurrentUser.getCompanyId());
+                        case AMAZON: {
+                          url = Props.PREFIX_FOR_SEARCH_AMAZON() + line;
+                          site = amazonSite;
+                          break;
+                        }
+                        default:
+                          url = line;
+                          site = SiteFinder.findSiteByUrl(url);
+                          if (site == null) status = LinkStatus.TOBE_CLASSIFIED;
+                          break;
+                      }
+
+                      if (! ImportType.URL.equals(importType)) {
+                        Product product = productDao.findByCode(line, companyId);
                         if (product != null) {
                           status = LinkStatus.DUPLICATE;
                         }
                       }
 
-                      if (status.equals(LinkStatus.TOBE_CLASSIFIED)) {
-                        switch (importType) {
-                          case EBAY: {
-                            url = Props.PREFIX_FOR_SEARCH_EBAY() + line;
-                            site = ebaySite;
-                            break;
+                      if (! status.equals(LinkStatus.DUPLICATE)) {
+                        List<Link> linkList = linkDao.findByUrlHashForImport(DigestUtils.md5Hex(url)); // find similar links previously added
+                        if (linkList != null && linkList.size() > 0) {
+                          for (Link link: linkList) {
+                            if (link.getCompanyId().longValue() != companyId) { // if it belongs to another company
+                              if (StringUtils.isNotBlank(link.getSku()) && similar == null) { // one time is enough to clone
+                                similar = link;
+                                status = LinkStatus.RESOLVED;
+                                problem = null;
+                                //we cannot break the loop here since a duplication may occur (see "else" block right below)
+                              }
+                            } else if (link.getImportDetailId() != null) { // already imported
+                              similar = null;
+                              status = LinkStatus.DUPLICATE;
+                              problem = "Already defined!";
+                              break;
+                            }
                           }
-                          case AMAZON: {
-                            url = Props.PREFIX_FOR_SEARCH_AMAZON() + line;
-                            site = amazonSite;
-                            break;
-                          }
-                          default:
-                            url = line;
-                            site = SiteFinder.findSiteByUrl(url);
-                            break;
                         }
-
                       } else {
                         status = LinkStatus.DUPLICATE;
                         problem = "Already defined!";
@@ -158,21 +180,43 @@ public class URLImportService extends BaseImportService {
                   problem = "Plan limit exceeded!";
                 }
 
-                if (site == null && status.equals(LinkStatus.TOBE_CLASSIFIED)) {
-                  status = LinkStatus.TOBE_IMPLEMENTED;
+                if (similar != null) {
+                  ProductDTO dto = new ProductDTO();
+                  dto.setCode(similar.getSku());
+                  dto.setName(similar.getName());
+                  dto.setPrice(similar.getPrice());
+                  dto.setCompanyId(companyId);
+
+                  Response productCreateRes = ProductCreator.create(transactional, dto);
+                  if (! productCreateRes.isOK()) {
+                    status = LinkStatus.IMPROPER;
+                    problem = productCreateRes.getReason();
+                  }
                 }
 
-                linkDao.importProduct(
-                  url, 
-                  DigestUtils.md5Hex(url), 
-                  status.name(), 
-                  problem, 
-                  (problem != null ? 1 : 0),
-                  (site != null ? site.getClassName() : null),
-                  (site != null ? site.getDomain() : null),
-                  importId,
-                  CurrentUser.getCompanyId()
-                );
+                ImportDetail impdet = new ImportDetail();
+                impdet.setData(line);
+                impdet.setEligible(problem != null);
+                impdet.setImported(problem != null && similar != null);
+                impdet.setProblem(problem);
+                impdet.setImportId(importId);
+                impdet.setCompanyId(companyId);
+                importDao.insertDetail(impdet);
+
+                // if it is imported then no need to keep it in links table
+                if (! impdet.getImported()) {
+                  linkDao.importProduct(
+                    url, 
+                    DigestUtils.md5Hex(url), 
+                    status.name(), 
+                    problem, 
+                    (problem != null ? 1 : 0),
+                    (site != null ? site.getClassName() : null),
+                    (site != null ? site.getDomain() : null),
+                    importId,
+                    companyId
+                  );
+                }
               }
             }
           } else {
