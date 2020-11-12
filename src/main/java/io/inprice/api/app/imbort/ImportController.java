@@ -48,6 +48,12 @@ public class ImportController implements Controller {
       ctx.json(Commons.createResponse(ctx, urlImportService.getList()));
     }, AccessRoles.ANYONE());
 
+    // get import details list
+    app.get(Consts.Paths.Product.DETAILS_LIST + "/:id", (ctx) -> {
+      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+      ctx.json(Commons.createResponse(ctx, urlImportService.getDetailsList(id)));
+    }, AccessRoles.ANYONE());
+
     // upload CSV file
     app.post(Consts.Paths.Product.IMPORT_CSV_FILE, (ctx) -> {
       upload(ctx, "text/csv", csvImportService);

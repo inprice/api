@@ -23,6 +23,9 @@ public interface ImportDao {
   @GetGeneratedKeys
   long insert(@Bind("type") String type, @Bind("companyId") Long companyId);
 
+  @SqlUpdate("update import_ set success_count=:successCount, problem_count=:problemCount where id=:id")
+  boolean updateCounts(@Bind("id") Long id, @Bind("successCount") int successCount, @Bind("problemCount") int problemCount);
+
   @SqlQuery(
     "select "+IMPORT_FIELDS+", "+IMPORT_DETAIL_FIELDS+" from import_ as i " +
     "left join import_detail as ir on ir.import_id = i.id " +
@@ -39,7 +42,7 @@ public interface ImportDao {
 
   @SqlQuery("select * from import_detail where import_id=:importId and company_id=:companyId")
   @UseRowMapper(ImportDetailMapper.class)
-  List<ImportDetail> findImportRowsByImportIdAndCompanyId(@Bind("importId") Long importId, @Bind("companyId") Long companyId);
+  List<ImportDetail> findImportRowsByImportId(@Bind("importId") Long importId, @Bind("companyId") Long companyId);
 
   @SqlUpdate("insert into import_detail (data, eligible, imported, problem, import_id, company_id) "+
     "values (:ir.data, :ir.eligible, :ir.imported, :ir.problem, :ir.importId, :ir.companyId)")
@@ -51,7 +54,8 @@ public interface ImportDao {
   final String IMPORT_FIELDS = 
     "i.id as i_id, " +
     "i.type as i_type, " +
-    "i.row_count as i_row_count, " +
+    "i.success_count as i_success_count, " +
+    "i.problem_count as i_problem_count, " +
     "i.created_at as i_created_at ";
 
   final String IMPORT_DETAIL_FIELDS = 

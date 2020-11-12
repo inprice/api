@@ -62,11 +62,12 @@ public class Consts {
 
     public static class Product {
       public static final String BASE = "/product";
-      public static final String EVERYTHING = BASE + "/everything";
+      public static final String LINKS = BASE + "/links";
       public static final String SEARCH = BASE + "s/search";
       public static final String TOGGLE_STATUS = BASE + "/toggle";
 
       public static final String IMPORT = BASE + "/import";
+      public static final String DETAILS_LIST = IMPORT + "/details";
 
       public static final String IMPORT_CSV_FILE = IMPORT + "/file/csv";
       public static final String IMPORT_URL_FILE = IMPORT + "/file/url";

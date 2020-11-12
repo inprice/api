@@ -40,8 +40,12 @@ public class CSVImportService extends BaseImportService {
     try (Handle handle = Database.getHandle()) {
       handle.inTransaction(transactional -> {
 
+        int successCount = 0;
+        int problemCount = 0;
+        long companyId = CurrentUser.getCompanyId();
+
         ImportDao importDao = transactional.attach(ImportDao.class);
-        long importId = importDao.insert(ImportType.CSV.name(), CurrentUser.getCompanyId());
+        long importId = importDao.insert(ImportType.CSV.name(), companyId);
         if (importId == 0) {
           res[0] = Responses.DataProblem.DB_PROBLEM;
           return false;
@@ -49,7 +53,7 @@ public class CSVImportService extends BaseImportService {
 
         CompanyDao companyDao = transactional.attach(CompanyDao.class);
         
-        Company company = companyDao.findById(CurrentUser.getCompanyId());
+        Company company = companyDao.findById(companyId);
         int allowedCount = company.getProductLimit() - company.getProductCount();
 
         Set<String> insertedSet = new HashSet<>();
@@ -75,14 +79,14 @@ public class CSVImportService extends BaseImportService {
                   if (! exists) {
 
                     if (values.length == COLUMN_COUNT) {
-                      Product product = productDao.findByCode(values[0], CurrentUser.getCompanyId());
+                      Product product = productDao.findByCode(values[0], companyId);
                       if (product == null) {
   
                         ProductDTO dto = new ProductDTO();
                         dto.setCode(SqlHelper.clear(values[0]));
                         dto.setName(SqlHelper.clear(values[1]));
                         dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[2])));
-                        dto.setCompanyId(CurrentUser.getCompanyId());
+                        dto.setCompanyId(companyId);
 
                         Response productCreateRes = ProductCreator.create(transactional, dto);
                         if (! productCreateRes.isOK()) {
@@ -107,15 +111,21 @@ public class CSVImportService extends BaseImportService {
                   problem = "Plan limit exceeded!";
                 }
 
+                insertedSet.add(values[0]);
+
+                if (problem != null)
+                  problemCount++;
+                else
+                  successCount++;
+
                 ImportDetail impdet = new ImportDetail();
                 impdet.setData(SqlHelper.clear(String.join(",", values)));
                 impdet.setEligible(status.equals(LinkStatus.AVAILABLE));
                 impdet.setImported(impdet.getEligible());
                 impdet.setImportId(importId);
                 impdet.setProblem(problem);
-                impdet.setCompanyId(CurrentUser.getCompanyId());
+                impdet.setCompanyId(companyId);
                 importDao.insertDetail(impdet);
-            
               }
             }
           } else {
@@ -125,7 +135,13 @@ public class CSVImportService extends BaseImportService {
           res[0] = new Response("Seems you haven't chosen a plan yet. Please consider buying a plan.");
         }
 
-        return insertedSet.size() > 0;
+        boolean isOK = (insertedSet.size() > 0);
+        if (isOK) {
+          isOK = importDao.updateCounts(importId, successCount, problemCount);
+          res[0] = new Response(importId);
+        }
+
+        return isOK;
       });
     } catch (Exception e) {
       log.error("An error occurred CSV list", e);

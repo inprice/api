@@ -29,7 +29,7 @@ import io.inprice.common.models.Company;
 import io.inprice.common.models.ImportDetail;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
-import io.inprice.common.models.Site;
+import io.inprice.common.info.Site;
 import io.inprice.common.utils.URLUtils;
 
 public class URLImportService extends BaseImportService {
@@ -77,6 +77,8 @@ public class URLImportService extends BaseImportService {
     try (Handle handle = Database.getHandle()) {
       handle.inTransaction(transactional -> {
 
+        int successCount = 0;
+        int problemCount = 0;
         long companyId = CurrentUser.getCompanyId();
 
         ImportDao importDao = transactional.attach(ImportDao.class);
@@ -194,6 +196,13 @@ public class URLImportService extends BaseImportService {
                   }
                 }
 
+                insertedSet.add(line);
+
+                if (problem != null)
+                  problemCount++;
+                else
+                  successCount++;
+
                 ImportDetail impdet = new ImportDetail();
                 impdet.setData(line);
                 impdet.setEligible(problem != null);
@@ -201,10 +210,10 @@ public class URLImportService extends BaseImportService {
                 impdet.setProblem(problem);
                 impdet.setImportId(importId);
                 impdet.setCompanyId(companyId);
-                importDao.insertDetail(impdet);
+                long importDetailId = importDao.insertDetail(impdet);
 
                 // if it is imported then no need to keep it in links table
-                if (! impdet.getImported()) {
+                if (! impdet.getImported() && importDetailId > 0) {
                   linkDao.importProduct(
                     url, 
                     DigestUtils.md5Hex(url), 
@@ -213,7 +222,7 @@ public class URLImportService extends BaseImportService {
                     (problem != null ? 1 : 0),
                     (site != null ? site.getClassName() : null),
                     (site != null ? site.getDomain() : null),
-                    importId,
+                    importDetailId,
                     companyId
                   );
                 }
@@ -226,7 +235,12 @@ public class URLImportService extends BaseImportService {
           res[0] = new Response("Seems you haven't chosen a plan yet. Please consider buying a plan.");
         }
 
-        return insertedSet.size() > 0;
+        boolean isOK = (insertedSet.size() > 0);
+        if (isOK) {
+          isOK = importDao.updateCounts(importId, successCount, problemCount);
+        }
+
+        return isOK;
       });
     } catch (Exception e) {
       log.error("An error occurred during importing " + identifier, e);

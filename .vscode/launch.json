@@ -3,20 +3,6 @@
   "configurations": [
     {
       "type": "java",
-      "name": "CodeLens (Launch) - PasswordHelper",
-      "request": "launch",
-      "mainClass": "io.inprice.api.helpers.PasswordHelper",
-      "projectName": "api"
-    },
-    {
-      "type": "java",
-      "name": "CodeLens (Launch) - Test",
-      "request": "launch",
-      "mainClass": "io.inprice.api.Test",
-      "projectName": "api"
-    },
-    {
-      "type": "java",
       "name": "Debug API",
       "request": "launch",
       "projectName": "api",
@@ -24,7 +10,6 @@
       "env": {
         "APP_ENV": "DEV",
         "APP_PORT": 4567,
-        "APP_SHOW_QUERIES": false,
         "APP_EMAIL_SENDER": "support@inprice.io",
         "APP_WEB_URL": "http://localhost:8080",
         "APP_API_URL": "http://localhost:4567",
