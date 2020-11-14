@@ -16,7 +16,7 @@ import io.inprice.api.app.dashboard.mapper.Most10ProductMapper;
 
 interface DashboardDao {
 
-  @SqlQuery("select status, count(1) as counter from link where company_id=:companyId group by status")
+  @SqlQuery("select status, count(1) as counter from link where import_detail_id is null and company_id=:companyId group by status")
   @KeyColumn("status")
   @ValueColumn("counter")
   Map<String, Integer> findStatusDists(@Bind("companyId") Long companyId);
@@ -27,10 +27,10 @@ interface DashboardDao {
   Map<Integer, Integer> findPositionDists(@Bind("companyId") Long companyId);
 
   @SqlQuery(
-    "select p.name as product_name, s.name as platform, l.seller, l.price, l.status, l.url, l.last_update, l.created_at, l.url from link as l " + 
+    "select p.name as product_name, l.platform, l.seller, l.price, l.status, l.url, l.last_update, l.created_at, l.url from link as l " + 
     "inner join product as p on p.id = l.product_id " + 
-    "left join site as s on s.id = l.site_id " + 
-    "where l.company_id=:companyId " +
+    "where l.import_detail_id is null " +
+    "  and l.company_id=:companyId " +
     "order by l.status, l.last_update desc " +
     "limit 25"
   )

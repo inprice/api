@@ -28,18 +28,17 @@ public interface LinkDao {
   @UseRowMapper(LinkMapper.class)
   Link findSampleByUrlHashAndStatus(@Bind("urlHash") String urlHash, @Bind("status") String status);
 
-  @SqlQuery("select * from link where product_id is null and url_hash=:urlHash and company_id=:companyId limit 1")
+  @SqlQuery("select * from link where product_id is null and url_hash=:urlHash order by status, last_check desc")
   @UseRowMapper(LinkMapper.class)
-  Link findByUrlHashForImport(@Bind("urlHash") String urlHash, @Bind("companyId") Long companyId);
+  List<Link> findByUrlHashForImport(@Bind("urlHash") String urlHash);
 
   @SqlQuery("select * from link where product_id=:productId and url_hash=:urlHash limit 1")
   @UseRowMapper(LinkMapper.class)
   Link findByProductIdAndUrlHash(@Bind("productId") Long productId, @Bind("urlHash") String urlHash);
 
   @SqlQuery(
-    "select l.*, s.name as platform, p.price as product_price from link as l " + 
+    "select l.*, p.price as product_price from link as l " + 
     "inner join product as p on p.id = l.product_id " + 
-    "left join site as s on s.id = l.site_id " + 
     "where l.product_id=:productId " +
     "  and l.company_id=:companyId " +
     "order by l.id"
@@ -55,9 +54,9 @@ public interface LinkDao {
   long insert(@Bind("url") String url, @Bind("urlHash") String urlHash, @Bind("productId") Long productId, @Bind("companyId") Long companyId);
 
   @SqlUpdate(
-    "insert into link (url, url_hash, sku, name, brand, seller, shipment, status, http_status, website_class_name, site_id, product_id, company_id) " +
+    "insert into link (url, url_hash, sku, name, brand, seller, shipment, status, http_status, class_name, platform, product_id, company_id) " +
     "values (:link.url, :link.urlHash, :link.sku, :link.name, :link.brand, :link.seller, :link.shipment, :link.status, :link.httpStatus, " +
-      ":link.websiteClassName, :link.siteId, :productId, :companyId)"
+      ":link.className, :link.platform, :productId, :companyId)"
   )
   @GetGeneratedKeys
   long insert(@BindBean("link") Link sample, @Bind("productId") Long productId, @Bind("companyId") Long companyId);
@@ -99,5 +98,14 @@ public interface LinkDao {
 
   @SqlUpdate("update link set pre_status=status, status=:status, last_update=now() where id=:id")
   boolean toggleStatus(@Bind("id") Long id, @Bind("status") String status);
+
+  @SqlUpdate(
+    "insert into link (url, url_hash, status, problem, retry, class_name, platform, import_detail_id, company_id) " +
+    "values (:url, :urlHash, :status, :problem, :retry, :className, :platform, :importDetailId, :companyId)"
+  )
+  @GetGeneratedKeys
+  long importProduct(@Bind("url") String url, @Bind("urlHash") String urlHash, @Bind("status") String status, 
+    @Bind("problem") String problem, @Bind("retry") int retry, @Bind("className") String className, 
+    @Bind("platform") String platform, @Bind("importDetailId") Long importDetailId, @Bind("companyId") Long companyId);
 
 }

@@ -90,7 +90,7 @@ class LinkService {
     //---------------------------------------------------
     StringBuilder criteria = new StringBuilder();
 
-    criteria.append("where l.company_id = ");
+    criteria.append("where l.import_detail_id is null and l.company_id = ");
     criteria.append(CurrentUser.getCompanyId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
@@ -102,7 +102,7 @@ class LinkService {
       criteria.append(dto.getTerm());
       criteria.append("%' or l.seller like '%");
       criteria.append(dto.getTerm());
-      criteria.append("%' or s.name like '%"); // platform!
+      criteria.append("%' or l.platform like '%"); // platform!
       criteria.append(dto.getTerm());
       criteria.append("%' ");
     }
@@ -125,10 +125,9 @@ class LinkService {
     try (Handle handle = Database.getHandle()) {
       List<Link> searchResult =
         handle.createQuery(
-          "select *, s.name as platform from link as l " + 
-          "left join site as s on s.id = l.site_id " +
+          "select * from link as l " + 
           criteria +
-          " order by l.status, s.name, l.last_update " +
+          " order by l.status, l.platform, l.last_update " +
           limit
         )
       .map(new LinkMapper())
@@ -233,13 +232,19 @@ class LinkService {
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
         LinkDao linkDao = handle.attach(LinkDao.class);
-        Map<String, Object> data = new HashMap<>(3);
-        List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(id);
-        if (historyList != null && historyList.size() > 0) {
-          data.put("historyList", historyList);
-          data.put("priceList", linkDao.findPriceListByLinkId(id));
-          data.put("specList", linkDao.findSpecListByLinkId(id));
-          res = new Response(data);
+
+        Link link = linkDao.findById(id);
+        if (link != null) {
+
+          Map<String, Object> data = new HashMap<>(4);
+          List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(id);
+          if (historyList != null && historyList.size() > 0) {
+            data.put("link", link);
+            data.put("historyList", historyList);
+            data.put("priceList", linkDao.findPriceListByLinkId(id));
+            data.put("specList", linkDao.findSpecListByLinkId(id));
+            res = new Response(data);
+          }
         }
       }
     }

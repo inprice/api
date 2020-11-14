@@ -51,7 +51,7 @@ public class ProductService {
     }
   }
 
-  public Response findEverythingById(Long id) {
+  public Response findLinksById(Long id) {
     Map<String, Object> dataMap = new HashMap<>(2);
 
     try (Handle handle = Database.getHandle()) {

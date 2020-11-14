@@ -43,10 +43,10 @@ public class ProductController implements Controller {
       ctx.json(Commons.createResponse(ctx, service.findById(id)));
     }, AccessRoles.ANYONE());
 
-    // find everything by id
-    app.get(Consts.Paths.Product.EVERYTHING + "/:id", (ctx) -> {
+    // find links and more by id
+    app.get(Consts.Paths.Product.LINKS + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.findEverythingById(id)));
+      ctx.json(Commons.createResponse(ctx, service.findLinksById(id)));
     }, AccessRoles.ANYONE());
 
     // toggle active status
