@@ -59,9 +59,19 @@ public class ImportController implements Controller {
       upload(ctx, "text/csv", csvImportService);
     }, AccessRoles.EDITOR());
 
+    // upload CSV list
+    app.post(Consts.Paths.Product.IMPORT_CSV_LIST, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, csvImportService.upload(ctx.body(), false)));
+    }, AccessRoles.EDITOR());
+
     // upload URL file
     app.post(Consts.Paths.Product.IMPORT_URL_FILE, (ctx) -> {
       upload(ctx, "text/plain", urlImportService, ImportType.URL);
+    }, AccessRoles.EDITOR());
+
+    // upload URL list
+    app.post(Consts.Paths.Product.IMPORT_URL_LIST, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, urlImportService.upload(ImportType.URL, ctx.body(), false)));
     }, AccessRoles.EDITOR());
 
     // upload ebay SKU file
@@ -69,29 +79,19 @@ public class ImportController implements Controller {
       upload(ctx, "text/plain", urlImportService, ImportType.EBAY);
     }, AccessRoles.EDITOR());
 
+    // upload ebay SKU list
+    app.post(Consts.Paths.Product.IMPORT_EBAY_LIST, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, urlImportService.upload(ImportType.EBAY, ctx.body(), false)));
+    }, AccessRoles.EDITOR());
+
     // upload amazon ASIN file
     app.post(Consts.Paths.Product.IMPORT_AMAZON_FILE, (ctx) -> {
       upload(ctx, "text/plain", urlImportService, ImportType.AMAZON);
     }, AccessRoles.EDITOR());
 
-    // upload CSV list
-    app.post(Consts.Paths.Product.IMPORT_CSV_LIST, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, csvImportService.upload(ctx.body())));
-    }, AccessRoles.EDITOR());
-
-    // upload URL list
-    app.post(Consts.Paths.Product.IMPORT_URL_LIST, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, urlImportService.upload(ImportType.URL, ctx.body())));
-    }, AccessRoles.EDITOR());
-
-    // upload ebay SKU list
-    app.post(Consts.Paths.Product.IMPORT_EBAY_LIST, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, urlImportService.upload(ImportType.EBAY, ctx.body())));
-    }, AccessRoles.EDITOR());
-
     // upload amazon ASIN list
     app.post(Consts.Paths.Product.IMPORT_AMAZON_LIST, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, urlImportService.upload(ImportType.AMAZON, ctx.body())));
+      ctx.json(Commons.createResponse(ctx, urlImportService.upload(ImportType.AMAZON, ctx.body(), false)));
     }, AccessRoles.EDITOR());
 
   }
@@ -106,8 +106,8 @@ public class ImportController implements Controller {
       if (file.getContentType().equals(contentType)) {
         try {
           String content = IOUtils.toString(file.getContent(), StandardCharsets.UTF_8.name());
-          Response result = (importType == null ? importService.upload(content)
-              : importService.upload(importType, content));
+          Response result = (importType == null ? importService.upload(content, true)
+              : importService.upload(importType, content, true));
           ctx.json(Commons.createResponse(ctx, result));
         } catch (IOException e) {
           log.error("Failed to upload content", e);

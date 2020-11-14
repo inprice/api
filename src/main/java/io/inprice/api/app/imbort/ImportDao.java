@@ -19,9 +19,12 @@ import io.inprice.common.models.ImportDetail;
 
 public interface ImportDao {
 
-  @SqlUpdate("insert into import_ (type, company_id) values (:type, :companyId)")
+  @SqlUpdate("insert into import_ (type, is_file, company_id) values (:type, :isFile, :companyId)")
   @GetGeneratedKeys
-  long insert(@Bind("type") String type, @Bind("companyId") Long companyId);
+  long insert(@Bind("type") String type, @Bind("isFile") Boolean isFile, @Bind("companyId") Long companyId);
+
+  @SqlUpdate("delete from import_ where id=:id")
+  boolean delete(@Bind("id") Long id);
 
   @SqlUpdate("update import_ set success_count=:successCount, problem_count=:problemCount where id=:id")
   boolean updateCounts(@Bind("id") Long id, @Bind("successCount") int successCount, @Bind("problemCount") int problemCount);

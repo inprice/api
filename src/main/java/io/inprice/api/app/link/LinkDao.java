@@ -28,7 +28,7 @@ public interface LinkDao {
   @UseRowMapper(LinkMapper.class)
   Link findSampleByUrlHashAndStatus(@Bind("urlHash") String urlHash, @Bind("status") String status);
 
-  @SqlQuery("select * from link where product_id is null and url_hash=:urlHash and company_id=:companyId orde by status, last_check desc")
+  @SqlQuery("select * from link where product_id is null and url_hash=:urlHash order by status, last_check desc")
   @UseRowMapper(LinkMapper.class)
   List<Link> findByUrlHashForImport(@Bind("urlHash") String urlHash);
 

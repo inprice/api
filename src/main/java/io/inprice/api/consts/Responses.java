@@ -74,6 +74,7 @@ public class Responses {
     private static final int BASE = 700;
     public static final Response TIMED_OUT_FORGOT_PASSWORD = new Response(BASE + 1, "Your session seems to expire, please send us a new forgot password request again!");
     public static final Response COUPON_ISSUED_FOR_ANOTHER_COMPANY = new Response(BASE + 2, "This coupon is issued for another company!");
+    public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
   }
 
   public static class Already {

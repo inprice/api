@@ -17,11 +17,11 @@ import io.inprice.common.models.ImportDetail;
 
 public class BaseImportService {
 
-  Response upload( String content) {
+  Response upload(String content, boolean isFile) {
     return Responses.DataProblem.NOT_SUITABLE;
   }
 
-  Response upload(ImportType importType, String content) {
+  Response upload(ImportType importType, String content, boolean isFile) {
     return Responses.DataProblem.NOT_SUITABLE;
   }
 
@@ -83,7 +83,7 @@ public class BaseImportService {
           batch.add("delete from import_detail " + where);
           batch.add("delete from import_ " + where.replaceAll("import_", "")); //this clause is important since determines the success!
           int[] result = batch.execute();
-          isOK[0] = result[2] > 0;
+          isOK[0] = (result[2] > 0);
           return isOK[0];
         });
       }

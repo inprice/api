@@ -2,7 +2,9 @@ package io.inprice.api.app.imbort;
 
 import java.io.StringReader;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.opencsv.CSVReader;
@@ -34,7 +36,7 @@ public class CSVImportService extends BaseImportService {
   private static final int COLUMN_COUNT = 3;
 
   @Override
-  Response upload(String content) {
+  Response upload(String content, boolean isFile) {
     Response[] res = { Responses.OK };
     
     try (Handle handle = Database.getHandle()) {
@@ -45,7 +47,7 @@ public class CSVImportService extends BaseImportService {
         long companyId = CurrentUser.getCompanyId();
 
         ImportDao importDao = transactional.attach(ImportDao.class);
-        long importId = importDao.insert(ImportType.CSV.name(), companyId);
+        long importId = importDao.insert(ImportType.CSV.name(), isFile, companyId);
         if (importId == 0) {
           res[0] = Responses.DataProblem.DB_PROBLEM;
           return false;
@@ -67,7 +69,7 @@ public class CSVImportService extends BaseImportService {
   
               String[] values;
               while ((values = csvReader.readNext()) != null) {
-                if (values.length <= 1 || values[0].trim().isEmpty() || values[0].trim().equals("#")) {
+                if (values.length != 3 || values[0].trim().isEmpty() || values[0].trim().charAt(0) == '#') {
                   continue;
                 }
   
@@ -138,7 +140,13 @@ public class CSVImportService extends BaseImportService {
         boolean isOK = (insertedSet.size() > 0);
         if (isOK) {
           isOK = importDao.updateCounts(importId, successCount, problemCount);
-          res[0] = new Response(importId);
+          Map<String, Object> data = new HashMap<>(2);
+          data.put("importId", importId);
+          data.put("successes", successCount);
+          res[0] = new Response(data);
+        } else {
+          importDao.delete(importId);
+          res[0] = Responses.Illegal.INCOMPATIBLE_CONTENT;
         }
 
         return isOK;

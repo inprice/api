@@ -2,8 +2,10 @@ package io.inprice.api.app.imbort;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -23,13 +25,13 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SiteFinder;
+import io.inprice.common.info.Site;
 import io.inprice.common.meta.ImportType;
 import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.ImportDetail;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
-import io.inprice.common.info.Site;
 import io.inprice.common.utils.URLUtils;
 
 public class URLImportService extends BaseImportService {
@@ -40,7 +42,7 @@ public class URLImportService extends BaseImportService {
   private static final String SKU_REGEX = "^[1-3][0-9]{10,11}$";
 
   @Override
-  Response upload(ImportType importType, String content) {
+  Response upload(ImportType importType, String content, boolean isFile) {
     if (StringUtils.isBlank(content) || content.length() < 10) { // byte
       return Responses.Upload.EMPTY;
     }
@@ -82,7 +84,7 @@ public class URLImportService extends BaseImportService {
         long companyId = CurrentUser.getCompanyId();
 
         ImportDao importDao = transactional.attach(ImportDao.class);
-        long importId = importDao.insert(importType.name(), companyId);
+        long importId = importDao.insert(importType.name(), isFile, companyId);
         if (importId == 0) {
           res[0] = Responses.DataProblem.DB_PROBLEM;
           return false;
@@ -119,7 +121,7 @@ public class URLImportService extends BaseImportService {
                   boolean exists = insertedSet.contains(line);
                   if (! exists) {
 
-                    if (line.matches(regex[0])) {
+                    if ((! ImportType.URL.equals(importType) && line.matches(regex[0])) || URLUtils.isAValidURL(line)) {
   
                       switch (importType) {
                         case EBAY: {
@@ -157,17 +159,17 @@ public class URLImportService extends BaseImportService {
                                 problem = null;
                                 //we cannot break the loop here since a duplication may occur (see "else" block right below)
                               }
-                            } else if (link.getImportDetailId() != null) { // already imported
+                            } else if (link.getImportDetailId() != null) { // already added
                               similar = null;
                               status = LinkStatus.DUPLICATE;
-                              problem = "Already defined!";
+                              problem = "Already added!";
                               break;
                             }
                           }
                         }
                       } else {
                         status = LinkStatus.DUPLICATE;
-                        problem = "Already defined!";
+                        problem = "Already added!";
                       }
                     } else {
                       status = LinkStatus.IMPROPER;
@@ -205,15 +207,15 @@ public class URLImportService extends BaseImportService {
 
                 ImportDetail impdet = new ImportDetail();
                 impdet.setData(line);
-                impdet.setEligible(problem != null);
-                impdet.setImported(problem != null && similar != null);
+                impdet.setEligible(problem == null);
+                impdet.setImported(false);
                 impdet.setProblem(problem);
                 impdet.setImportId(importId);
                 impdet.setCompanyId(companyId);
                 long importDetailId = importDao.insertDetail(impdet);
 
                 // if it is imported then no need to keep it in links table
-                if (! impdet.getImported() && importDetailId > 0) {
+                if (problem == null && ! impdet.getImported()) {
                   linkDao.importProduct(
                     url, 
                     DigestUtils.md5Hex(url), 
@@ -238,6 +240,13 @@ public class URLImportService extends BaseImportService {
         boolean isOK = (insertedSet.size() > 0);
         if (isOK) {
           isOK = importDao.updateCounts(importId, successCount, problemCount);
+          Map<String, Object> data = new HashMap<>(2);
+          data.put("importId", importId);
+          data.put("successes", successCount);
+          res[0] = new Response(data);
+        } else {
+          importDao.delete(importId);
+          res[0] = Responses.Illegal.INCOMPATIBLE_CONTENT;
         }
 
         return isOK;
