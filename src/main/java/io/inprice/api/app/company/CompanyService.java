@@ -235,6 +235,8 @@ class CompanyService {
 
             Batch batch = transactional.createBatch();
             batch.add("SET FOREIGN_KEY_CHECKS=0");
+            batch.add("delete from import_ " + where);
+            batch.add("delete from import_detail " + where);
             batch.add("delete from link_price " + where);
             batch.add("delete from link_history " + where);
             batch.add("delete from link_spec " + where);
@@ -244,8 +246,9 @@ class CompanyService {
             batch.add("delete from user_session " + where);
             batch.add("delete from member " + where);
             batch.add("delete from subs_trans " + where);
-            batch.add("delete from user where id in (select admin_id from company where id="+CurrentUser.getCompanyId()+")");
-            batch.add("delete from company where id="+CurrentUser.getCompanyId());
+            batch.add("delete from user where id in (select admin_id from company where id=" + CurrentUser.getCompanyId() + ")");
+            batch.add("delete from coupon where issued_company_id=" + CurrentUser.getCompanyId());
+            batch.add("delete from company where id=" + CurrentUser.getCompanyId());
             batch.add("SET FOREIGN_KEY_CHECKS=1");
             batch.execute();
 

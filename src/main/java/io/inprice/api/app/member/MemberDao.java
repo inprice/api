@@ -16,6 +16,8 @@ import io.inprice.common.models.Member;
 
 public interface MemberDao {
 
+  final String COMPANY_FIELDS = ", c.name as company_name, c.free_usage, c.plan_name, c.subs_renewal_at, c.currency_format, c.product_count ";
+
   @SqlQuery("select * from member where id=:id")
   @UseRowMapper(MemberMapper.class)
   Member findById(@Bind("id") Long id);
@@ -25,7 +27,7 @@ public interface MemberDao {
   Member findByEmail(@Bind("email") String email, @Bind("companyId") Long companyId);
 
   @SqlQuery(
-    "select m.*, c.currency_format, c.name as company_name, c.plan_id from member as m " +
+    "select m.*" + COMPANY_FIELDS + " from member as m " +
     "inner join company as c on c.id = m.company_id " + 
     "where m.email != :email " + 
     "  and company_id = :companyId " + 
@@ -35,7 +37,7 @@ public interface MemberDao {
   List<Member> findListByNotEmail(@Bind("email") String email, @Bind("companyId") Long companyId);
 
   @SqlQuery(
-    "select m.*, c.currency_format, c.name as company_name, c.plan_id, c.subs_status, c.subs_renewal_at from member as m " +
+    "select m.*" + COMPANY_FIELDS + " from member as m " +
     "inner join company as c on c.id = m.company_id " + 
     "where m.email=:email " + 
     "  and m.status=:status " + 

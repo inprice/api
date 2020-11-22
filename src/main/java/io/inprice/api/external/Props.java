@@ -28,6 +28,10 @@ public class Props {
     return Integer.parseInt(System.getenv().getOrDefault("APP_SALT_ROUNDS", def));
   }
 
+  public static int APP_DAYS_FOR_FREE_USE() {
+    return Integer.parseInt(System.getenv().getOrDefault("APP_DAYS_FOR_FREE_USE", "30"));
+  }
+
   public static Long TTL_ACCESS_TOKENS() {
     String def = SysProps.APP_ENV().equals(AppEnv.PROD) ? "15m" : "1m";
     String ttl = System.getenv().getOrDefault("TTL_ACCESS_TOKENS", def);

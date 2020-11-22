@@ -12,10 +12,10 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.app.subscription.SubscriptionDao;
-import io.inprice.api.app.system.Plans;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.meta.SubsSource;
@@ -59,26 +59,22 @@ class CouponService {
                 CompanyDao companyDao = transactional.attach(CompanyDao.class);
 
                 Company company = companyDao.findById(CurrentUser.getCompanyId());
-                if (!company.getSubsStatus().equals(SubsStatus.ACTIVE) || !company.getSubsStatus().equals(SubsStatus.COUPONED)) {
+                if (company.getSubsStatus().isOKForCoupon()) {
 
-                  Integer planId = company.getPlanId();
-                  Integer productLimit = company.getProductLimit();
+                  Plan selectedPlan = null;
+                  Plan couponPlan = Plans.findByName(coupon.getPlanName());
+                  Plan companyPlan = (company.getPlanName() != null ? Plans.findByName(company.getPlanName()) : null);
 
-                  boolean usePlanProdLimit = false;
-                  if (company.getPlanId() == null || coupon.getPlanId().compareTo(company.getPlanId()) > 0) {
-                    planId = coupon.getPlanId();
-                    usePlanProdLimit = true;
+                  if (companyPlan == null || couponPlan.getId() > companyPlan.getId()) {
+                    selectedPlan = couponPlan;
                   }
-
-                  Plan plan = Plans.getById(planId);
-                  if (usePlanProdLimit) productLimit = plan.getProductLimit();
 
                   boolean isOK = 
                     companyDao.updateSubscription(
                       CurrentUser.getCompanyId(),
                       SubsStatus.COUPONED.name(),
-                      planId,
-                      productLimit, 
+                      selectedPlan.getName(),
+                      selectedPlan.getProductLimit(), 
                       coupon.getDays()
                     );
 
@@ -101,7 +97,7 @@ class CouponService {
                       
                       if (isOK) {
                         Map<String, Object> data = new HashMap<>(3);
-                        data.put("planId", coupon.getPlanId());
+                        data.put("planName", selectedPlan.getName());
                         data.put("subsStatus", SubsStatus.COUPONED);
                         data.put("subsRenewalAt", DateUtils.addDays(new Date(), coupon.getDays()));
                         log.info("Coupon {}, is issued for {}", coupon.getCode(), company.getName());

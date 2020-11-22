@@ -19,7 +19,11 @@
         "API_KEYS_GELOCATION": "9eac35ec732e43a3a89863fce6cb406a",
         "API_KEYS_SENDGRID": "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",
         "API_KEYS_STRIPE": "sk_test_51H0m4UBiHTcqawyMEfSqMdjwXDwJHzJuWk3WuWJbLIG2fr6zCnIaQc5PKWzKB1hDnp9wRQYPeoOhQpR1OmD7A29K00CJdCwOmQ",
-        "API_KEYS_STRIPE_WEBHOOK": "whsec_dPEMQ48L5HLKV7oeEGyhBZgoxCrTlPWW"
+        "API_KEYS_STRIPE_WEBHOOK": "whsec_dPEMQ48L5HLKV7oeEGyhBZgoxCrTlPWW",
+        "PLAN_PAYMENT_ID_BASIC": "price_1HqDbFBiHTcqawyMNEPRqhki",
+        "PLAN_PAYMENT_ID_STANDARD": "price_1HqDbgBiHTcqawyMxuROLzpI",
+        "PLAN_PAYMENT_ID_PRO": "price_1HqDbvBiHTcqawyM3O86ViBa",
+        "PLAN_PAYMENT_ID_PREMIUM": "price_1HqDcCBiHTcqawyMPlICULg2"
       }
     }
   ]

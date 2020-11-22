@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.Cookie;
-
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -259,22 +257,7 @@ public class AuthService {
           if (RedisClient.addSesions(redisSesList)) {
 
             userSessionDao.insertBulk(dbSesList);
-            String tokenString = SessionHelper.toToken(sessions);
-
-            /*
-            * Please not that: cookies must be deleted in the way they are created below
-            * see ControllerHelper class
-            */
-            Cookie cookie = new Cookie(Consts.SESSION, tokenString);
-            cookie.setHttpOnly(true);
-            cookie.setSecure(true);
-            if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
-              cookie.setDomain(".inprice.io");
-              cookie.setMaxAge(Integer.MAX_VALUE);
-            } else { // for dev and test purposes
-              cookie.setMaxAge(60 * 60 * 24); // for one day
-            }
-            ctx.cookie(cookie);
+            ctx.cookie(CookieHelper.createAuthCookie(SessionHelper.toToken(sessions)));
 
             // the response
             Map<String, Object> map = new HashMap<>(2);

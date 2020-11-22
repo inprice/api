@@ -23,12 +23,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
-import io.inprice.api.app.system.Plans;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.meta.SubsSource;
@@ -42,7 +42,7 @@ class StripeService {
   private static final Logger log = LoggerFactory.getLogger(StripeService.class);
 
   Response createCheckoutSession(Integer planId) {
-    Plan plan = Plans.getById(planId);
+    Plan plan = Plans.findById(planId);
 
     if (plan != null) {
       SessionCreateParams params = SessionCreateParams.builder()
@@ -142,7 +142,7 @@ class StripeService {
                 dto.setCountry(address.getCountry());
                 dto.setCustId(invoice.getCustomer());
                 dto.setSubsId(invoice.getSubscription());
-                dto.setPlanId(Integer.parseInt(li.getMetadata().get("planId")));
+                dto.setPlanName(Plans.findById(Integer.parseInt(li.getMetadata().get("planId"))).getName());
                 subsEvent = SubsEvent.SUBSCRIPTION_STARTED;
               } else {
                 subsEvent = SubsEvent.SUBSCRIPTION_RENEWAL;
@@ -215,8 +215,8 @@ class StripeService {
             switch (trans.getEvent()) {
       
               case SUBSCRIPTION_STARTED: {
-                if (! company.getSubsStatus().equals(SubsStatus.ACTIVE)) {
-                  if (companyDao.update(dto, SubsStatus.ACTIVE.name(), companyId)) {
+                if (company.getSubsStatus().isOKForSubscription()) {
+                  if (companyDao.update(dto, SubsStatus.SUBSCRIBED.name(), companyId)) {
                     boolean isOK = updateInvoiceInfo(dto);
                     if (isOK) {
                       res[0] = Responses.OK;
@@ -234,7 +234,7 @@ class StripeService {
               }
       
               case SUBSCRIPTION_RENEWAL: {
-                if (companyDao.updateSubscription(SubsStatus.ACTIVE.name(), dto.getRenewalDate(), companyId)) {
+                if (companyDao.updateSubscription(SubsStatus.SUBSCRIBED.name(), dto.getRenewalDate(), companyId)) {
                   res[0] = Responses.OK;
                   log.info("Subscription is renewed: Company Id: {}", companyId);
                 } else {
@@ -244,7 +244,7 @@ class StripeService {
               }
       
               case COUPON_USED: {
-                if (! company.getSubsStatus().equals(SubsStatus.ACTIVE)) {
+                if (company.getSubsStatus().isOKForCoupon()) {
                   if (companyDao.update(dto, SubsStatus.COUPONED.name(), companyId)) {
                     res[0] = Responses.OK;
                     log.info("Coupon is used: Company Id: {}, Coupon: {}", companyId, trans.getEventId());
@@ -258,11 +258,11 @@ class StripeService {
               }
       
               case SUBSCRIPTION_CANCELLED: {
-                if (company.getSubsStatus().equals(SubsStatus.ACTIVE) || company.getSubsStatus().equals(SubsStatus.COUPONED)) {
-                  if (company.getSubsStatus().equals(SubsStatus.ACTIVE)) {
-                    trans.setSource(SubsSource.SUBSCRIPTION);
-                  } else {
+                if (company.getSubsStatus().isOKForCancel()) {
+                  if (company.getSubsStatus().equals(SubsStatus.COUPONED)) {
                     trans.setSource(SubsSource.COUPON);
+                  } else {
+                    trans.setSource(SubsSource.SUBSCRIPTION);
                   }
       
                   if (companyDao.updateSubscription(SubsStatus.CANCELLED.name(), new Timestamp(new Date().getTime()), companyId)) {

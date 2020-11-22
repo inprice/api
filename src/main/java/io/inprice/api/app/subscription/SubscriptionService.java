@@ -17,10 +17,16 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
+import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.SubsEvent;
+import io.inprice.common.meta.SubsSource;
+import io.inprice.common.meta.SubsStatus;
+import io.inprice.common.models.Company;
+import io.inprice.common.models.Plan;
 import io.inprice.common.models.SubsTrans;
 
 class SubscriptionService {
@@ -55,6 +61,62 @@ class SubscriptionService {
     }
 
     return new Response(data);
+  }
+
+  Response startFreeUse() {
+    Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
+
+    try (Handle handle = Database.getHandle()) {
+      handle.inTransaction(transactional -> {
+        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+
+        Company company = companyDao.findById(CurrentUser.getCompanyId());
+        if (company != null) {
+
+          if (company.getSubsStatus().isOKForFreeUse()) {
+            Plan basicPlan = Plans.findByName("Basic Plan");
+
+            boolean isOK = companyDao.updateSubscription(
+              CurrentUser.getCompanyId(),
+              SubsStatus.FREE.name(),
+              basicPlan.getName(),
+              basicPlan.getProductLimit(),
+              Props.APP_DAYS_FOR_FREE_USE()
+            );
+
+            if (isOK) {
+              SubsTrans trans = new SubsTrans();
+              trans.setCompanyId(CurrentUser.getCompanyId());
+              trans.setSource(SubsSource.SUBSCRIPTION);
+              trans.setEvent(SubsEvent.FREE_USE);
+              trans.setSuccessful(Boolean.TRUE);
+              trans.setReason("free_subscription_started");
+              trans.setDescription(("Free subscription has been started."));
+              
+              SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+              isOK = subscriptionDao.insertTrans(trans, SubsSource.SUBSCRIPTION.name(), SubsEvent.FREE_USE.name());
+            }
+
+            if (isOK) {
+              res[0] = Responses.OK;
+            }
+
+          } else {
+            if (company.getFreeUsage()) {
+              res[0] = Responses.Already.FREE_USE_APPLIED;
+            } else {
+              res[0] = Responses.Illegal.FREE_FOR_ONLY_NEWCOMERS;
+            }
+          }
+        } else {
+          res[0] = Responses.NotFound.COMPANY;
+        }
+
+        return res[0].equals(Responses.OK);
+      });
+    }
+
+    return res[0];
   }
 
   SubsTrans getCancellationTrans() {
