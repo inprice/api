@@ -18,12 +18,11 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.meta.SubsSource;
-import io.inprice.common.meta.SubsStatus;
+import io.inprice.common.meta.CompanyStatus;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.Coupon;
 import io.inprice.common.models.Plan;
-import io.inprice.common.models.SubsTrans;
+import io.inprice.common.models.CompanyTrans;
 import io.inprice.common.utils.CouponManager;
 
 class CouponService {
@@ -59,7 +58,7 @@ class CouponService {
                 CompanyDao companyDao = transactional.attach(CompanyDao.class);
 
                 Company company = companyDao.findById(CurrentUser.getCompanyId());
-                if (company.getSubsStatus().isOKForCoupon()) {
+                if (company.getStatus().isOKForCoupon()) {
 
                   Plan selectedPlan = null;
                   Plan couponPlan = Plans.findByName(coupon.getPlanName());
@@ -72,7 +71,7 @@ class CouponService {
                   boolean isOK = 
                     companyDao.updateSubscription(
                       CurrentUser.getCompanyId(),
-                      SubsStatus.COUPONED.name(),
+                      CompanyStatus.COUPONED.name(),
                       selectedPlan.getName(),
                       selectedPlan.getProductLimit(), 
                       coupon.getDays()
@@ -84,21 +83,23 @@ class CouponService {
                     if (isOK) {
                       SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
-                      SubsTrans trans = new SubsTrans();
+                      CompanyTrans trans = new CompanyTrans();
                       trans.setCompanyId(CurrentUser.getCompanyId());
                       trans.setEventId(coupon.getCode());
                       trans.setEvent(SubsEvent.COUPON_USED);
-                      trans.setSource(SubsSource.COUPON);
                       trans.setSuccessful(Boolean.TRUE);
                       trans.setReason("coupon");
                       trans.setDescription(coupon.getCode() + " is used.");
 
-                      isOK = subscriptionDao.insertTrans(trans, SubsSource.COUPON.name(), SubsEvent.COUPON_USED.name());
-                      
+                      isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+                      if (isOK) {
+                        isOK = subscriptionDao.insertCompanyStatusHistory(company.getId(), CompanyStatus.COUPONED.name());
+                      }
+                              
                       if (isOK) {
                         Map<String, Object> data = new HashMap<>(3);
                         data.put("planName", selectedPlan.getName());
-                        data.put("subsStatus", SubsStatus.COUPONED);
+                        data.put("companyStatus", CompanyStatus.COUPONED);
                         data.put("subsRenewalAt", DateUtils.addDays(new Date(), coupon.getDays()));
                         log.info("Coupon {}, is issued for {}", coupon.getCode(), company.getName());
                         res[0] = new Response(data);

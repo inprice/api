@@ -45,6 +45,10 @@ public class TemplateRenderer {
       return render("register-activation-link.html", data);
    }
 
+   public String renderSubsciptionCancelled(Map<String, Object> data) {
+      return render("subscription-cancelled.html", data);
+   }
+
    private String render(String name, Map<String, Object> data) {
       try {
          Template template = cfg.getTemplate(name);

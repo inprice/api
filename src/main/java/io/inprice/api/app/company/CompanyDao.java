@@ -54,23 +54,30 @@ public interface CompanyDao {
   @SqlUpdate(
     "update company " +
     "set title=:dto.title, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country, " +
-    "plan_name=:dto.planName, subs_id=:dto.subsId, subs_customer_id=:dto.subsCustomerId, subs_renewal_at=:dto.subsRenewalAt, subs_status=:subsStatus " +
+    "plan_name=:dto.planName, subs_id=:dto.subsId, subs_customer_id=:dto.custId, status=:status, subs_renewal_at=:dto.renewalDate " +
     "where id=:id"
   )
-  boolean update(@BindBean("dto") CustomerDTO dto, @Bind("subsStatus") String subsStatus, @Bind("id") Long id);
+  boolean update(@BindBean("dto") CustomerDTO dto, @Bind("status") String status, @Bind("id") Long id);
   
   @SqlUpdate("update company set product_count=product_count+1 where id=:id and product_count<product_limit")
   boolean increaseProductCountById(@Bind("id") Long id);
 
-  @SqlUpdate("update company set subs_status=:subsStatus, subs_renewal_at=:subsRenewalAt where id=:id")
-  boolean updateSubscription(@Bind("subsStatus") String subsStatus, @Bind("subsRenewalAt") Timestamp subsRenewalAt, @Bind("id") Long id);
+  @SqlUpdate("update company set status=:status, subs_renewal_at=:subsRenewalAt where id=:id")
+  boolean renewSubscription(@Bind("id") Long id, @Bind("status") String status, @Bind("subsRenewalAt") Timestamp subsRenewalAt);
+
+  @SqlUpdate(
+    "update company " +
+    "set subs_id=null, subs_customer_id=null, status='CANCELLED', subs_renewal_at=IF(status = 'SUBSCRIBED', subs_renewal_at, now()) "+
+    "where id=:id"
+  )
+  boolean cancelSubscription(@Bind("id") Long id);
 
   @SqlUpdate(
     "update company " + 
-    "set free_usage=true, plan_name=:planName, subs_status=:subsStatus, subs_renewal_at=DATE_ADD(now(), interval <interval> day), product_limit=:productLimit " +
+    "set plan_name=:planName, status=:status, subs_renewal_at=DATE_ADD(now(), interval <interval> day), product_limit=:productLimit " +
     "where id=:companyId"
   )
-  boolean updateSubscription(@Bind("companyId") Long companyId, @Bind("subsStatus") String subsStatus, 
+  boolean updateSubscription(@Bind("companyId") Long companyId, @Bind("status") String status, 
     @Bind("planName") String planName, @Bind("productLimit") Integer productLimit, @Define("interval") Integer interval);
 
 }

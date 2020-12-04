@@ -25,7 +25,7 @@ public class ForResponse implements Serializable {
   private String company;
   private Boolean freeUsage;
   private String planName;
-  private String subsStatus;
+  private String companyStatus;
   private Date subsRenewalAt;
   private Integer daysToRenewal;
   private String currencyFormat;
@@ -39,14 +39,14 @@ public class ForResponse implements Serializable {
     this.company = forResponse.getCompany();
     this.freeUsage = forResponse.getFreeUsage();
     this.planName = forResponse.getPlanName();
-    this.subsStatus = forResponse.getSubsStatus();
+    this.companyStatus = forResponse.getCompanyStatus();
     this.subsRenewalAt = forResponse.getSubsRenewalAt();
     this.currencyFormat = forResponse.getCurrencyFormat();
     this.timezone = forResponse.getTimezone();
-    this.productCount = forResponse.getProductCount();
     this.role = forResponse.getRole();
+    this.productCount = forResponse.getProductCount();
     if (this.subsRenewalAt != null) {
-      this.daysToRenewal = (int) DateUtils.findDayDiff(this.subsRenewalAt, new Date());
+      this.daysToRenewal = (int) DateUtils.findDayDiff(new Date(), this.subsRenewalAt);
     }
   }
 
@@ -56,14 +56,14 @@ public class ForResponse implements Serializable {
     this.company = forRedis.getCompany();
     this.freeUsage = forRedis.getFreeUsage();
     this.planName = forRedis.getPlanName();
-    this.subsStatus = forRedis.getSubsStatus();
+    this.companyStatus = forRedis.getCompanyStatus();
     this.subsRenewalAt = forRedis.getSubsRenewalAt();
     this.currencyFormat = forRedis.getCurrencyFormat();
     this.timezone = forRedis.getTimezone();
     this.role = UserRole.valueOf(forCookie.getRole());
     this.productCount = forRedis.getProductCount();
     if (this.subsRenewalAt != null) {
-      this.daysToRenewal = (int) DateUtils.findDayDiff(this.subsRenewalAt, new Date());
+      this.daysToRenewal = (int) DateUtils.findDayDiff(new Date(), this.subsRenewalAt);
     }
   }
 
@@ -71,16 +71,15 @@ public class ForResponse implements Serializable {
     this.user = user.getName();
     this.email = forCookie.getEmail();
     this.company = mem.getCompanyName();
-    this.freeUsage = mem.getFreeUsage();
     this.planName = mem.getPlanName();
-    this.subsStatus = mem.getSubsStatus();
+    this.companyStatus = mem.getCompanyStatus().name();
     this.subsRenewalAt = mem.getSubsRenewalAt();
     this.currencyFormat = mem.getCurrencyFormat();
     this.timezone = user.getTimezone();
     this.role = UserRole.valueOf(forCookie.getRole());
     this.productCount = mem.getProductCount();
     if (this.subsRenewalAt != null) {
-      this.daysToRenewal = (int) DateUtils.findDayDiff(this.subsRenewalAt, new Date());
+      this.daysToRenewal = (int) DateUtils.findDayDiff(new Date(), this.subsRenewalAt);
     }
   }
 

@@ -75,7 +75,8 @@ public class Responses {
     public static final Response TIMED_OUT_FORGOT_PASSWORD = new Response(BASE + 1, "Your session seems to expire, please send us a new forgot password request again!");
     public static final Response COUPON_ISSUED_FOR_ANOTHER_COMPANY = new Response(BASE + 2, "This coupon is issued for another company!");
     public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
-    public static final Response FREE_FOR_ONLY_NEWCOMERS = new Response(BASE + 4, "Free use is for only newcomers!");
+    public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "Not suitable for cancelation!");
+    public static final Response NO_FREE_USE_RIGHT = new Response(BASE + 11, "You have no free use!");
   }
 
   public static class Already {
@@ -87,7 +88,6 @@ public class Responses {
 
     public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 6, "You have already an active subscription. You cannot use any coupon!");
     public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 7, "This account has no active subscription at the moment!");
-    public static final Response FREE_USE_APPLIED = new Response(BASE + 8, "This account has already used its free use right!");
 
     public static final Response REQUESTED_EMAIL = new Response(BASE + 10, "This email is already requested, please wait some time to try again!");
     

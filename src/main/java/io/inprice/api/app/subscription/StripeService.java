@@ -1,8 +1,6 @@
 package io.inprice.api.app.subscription;
 
-import java.sql.Timestamp;
 import java.util.Collections;
-import java.util.Date;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.Address;
@@ -13,6 +11,7 @@ import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.Invoice;
 import com.stripe.model.InvoiceLineItem;
 import com.stripe.model.StripeObject;
+import com.stripe.model.Subscription;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.CustomerUpdateParams;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -27,38 +26,52 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
-import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.meta.SubsSource;
-import io.inprice.common.meta.SubsStatus;
+import io.inprice.common.meta.CompanyStatus;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.Plan;
-import io.inprice.common.models.SubsTrans;
+import io.inprice.common.models.CompanyTrans;
 
 class StripeService {
 
   private static final Logger log = LoggerFactory.getLogger(StripeService.class);
 
-  Response createCheckoutSession(Integer planId) {
+  /**
+   * To get a payment, creates checkout session for the user
+   * 
+   * @param email
+   * @param companyId
+   * @param planId
+   * @param sessionNo
+   */
+  Response createCheckoutSession(String email, long companyId, int planId, int sessionNo) {
     Plan plan = Plans.findById(planId);
 
     if (plan != null) {
       SessionCreateParams params = SessionCreateParams.builder()
-        .setCustomerEmail(CurrentUser.getEmail())
+        .setCustomerEmail(email)
         .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
         .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
         .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
-        .setSuccessUrl(Props.APP_WEB_URL() + "/payment-ok")
-        .setCancelUrl(Props.APP_WEB_URL() + "/payment-cancel")
+        .setSuccessUrl(
+          Props.APP_WEB_URL() + "/payment-ok"
+        )
+        .setCancelUrl( 
+          String.format(
+            "%s/%d/app/plans",
+            Props.APP_WEB_URL(), sessionNo
+          )
+        )
         .setClientReferenceId(""+planId)
         .setSubscriptionData(
           SessionCreateParams.SubscriptionData
           .builder()
               .putMetadata("planId", ""+planId)
-              .putMetadata("companyId", ""+CurrentUser.getCompanyId()
+              .putMetadata("companyId", ""+companyId
             ).build())
+        .putMetadata("description", plan.getFeatures().get(0))
         .addLineItem(
           SessionCreateParams.LineItem
             .builder()  
@@ -80,10 +93,48 @@ class StripeService {
     return Responses.NotFound.PLAN;
   }
 
-  Response cancel(SubsTrans trans) {
-    return addTransaction(CurrentUser.getCompanyId(), null, null, trans);
+  /**
+   * Cancel operations should be taken into account immediately.
+   * Instead of waiting cancel hook in handleHookEvent, we manage cancelation things in this method.
+   * 
+   * @param company
+   */
+  Response cancel(Company company) {
+    try {
+      Subscription subscription = Subscription.retrieve(company.getSubsId());
+      Subscription subsResult = subscription.cancel();
+      if (subsResult != null && subsResult.getStatus().equals("canceled")) {
+
+        CompanyTrans trans = new CompanyTrans();
+        trans.setCompanyId(company.getId());
+        trans.setEventId(subsResult.getId());
+        trans.setEvent(SubsEvent.SUBSCRIPTION_CANCELLED);
+        trans.setSuccessful(Boolean.TRUE);
+        trans.setReason(("subscription_cancel"));
+        trans.setDescription(("Manual cancellation."));
+        Response res = addTransaction(company.getId(), company.getSubsId(), null, trans);
+        if (res.isOK()) {
+          log.info("{} is cancelled subscription!", company.getName());
+        }
+        return res;
+
+      } else if (subsResult != null) {
+        log.warn("Unexpected subs status: {}", subsResult.getStatus());
+      } else {
+        log.error("subsResult is null!");
+      }
+    } catch (Exception e) {
+      log.error("Failed to cancel subs", e);
+    }
+    log.error("Subs cancellation problem for Company: {}", company.getId());
+    return Responses.DataProblem.SUBSCRIPTION_PROBLEM;
   }
-  
+
+  /**
+   * Handles failed and successful invoice transactions to manage subscriptions
+   * 
+   * @param event
+   */
   Response handleHookEvent(Event event) {
     Response res = Responses.BAD_REQUEST;
 
@@ -92,30 +143,13 @@ class StripeService {
     StripeObject stripeObject = null;
     if (dataObjectDeserializer.getObject().isPresent()) {
       stripeObject = dataObjectDeserializer.getObject().get();
+    } else {
+      log.error("Stripe version problem. Event: {}", event.getType());
+      return Responses.BAD_REQUEST;
     }
 
     if (stripeObject != null) {
       switch (event.getType()) {
-        case "invoice.payment_failed": {
-          SubsTrans trans = new SubsTrans();
-          Long companyId = null;
-          Invoice invoice = (Invoice) stripeObject;
-          if (invoice.getLines() != null && invoice.getLines().getData() != null && invoice.getLines().getData().size() > 0) {
-            InvoiceLineItem li = invoice.getLines().getData().get(0);
-            trans.setDescription(li.getDescription());
-            if (li.getMetadata().size() > 0) {
-              companyId = Long.parseLong(li.getMetadata().get("companyId"));
-            }
-          }
-          trans.setEventId(event.getId());
-          trans.setEvent(SubsEvent.PAYMENT_FAILED);
-          trans.setSource(SubsSource.SUBSCRIPTION);
-          trans.setSuccessful(Boolean.FALSE);
-          trans.setReason(invoice.getBillingReason());
-          trans.setFileUrl(invoice.getHostedInvoiceUrl());
-          res = addTransaction(companyId, invoice.getCustomer(), null, trans);
-          break;
-        }
 
         case "invoice.payment_succeeded": {
           Invoice invoice = (Invoice) stripeObject;
@@ -153,16 +187,14 @@ class StripeService {
                 companyId = Long.parseLong(li.getMetadata().get("companyId"));
               }
 
-              SubsTrans trans = new SubsTrans();
+              CompanyTrans trans = new CompanyTrans();
               trans.setCompanyId(companyId);
               trans.setEventId(event.getId());
               trans.setEvent(subsEvent);
-              trans.setSource(SubsSource.SUBSCRIPTION);
               trans.setSuccessful(Boolean.TRUE);
               trans.setReason(invoice.getBillingReason());
               trans.setDescription(li.getDescription());
               trans.setFileUrl(invoice.getHostedInvoiceUrl());
-
               res = addTransaction(null, invoice.getCustomer(), dto, trans);
             }
 
@@ -173,7 +205,29 @@ class StripeService {
 
           break;
         }
+
+        case "invoice.payment_failed": {
+          CompanyTrans trans = new CompanyTrans();
+          Long companyId = null;
+          Invoice invoice = (Invoice) stripeObject;
+          if (invoice.getLines() != null && invoice.getLines().getData() != null && invoice.getLines().getData().size() > 0) {
+            InvoiceLineItem li = invoice.getLines().getData().get(0);
+            trans.setDescription(li.getDescription());
+            if (li.getMetadata().size() > 0) {
+              companyId = Long.parseLong(li.getMetadata().get("companyId"));
+            }
+          }
+          trans.setEventId(event.getId());
+          trans.setEvent(SubsEvent.PAYMENT_FAILED);
+          trans.setSuccessful(Boolean.FALSE);
+          trans.setReason(invoice.getBillingReason());
+          trans.setFileUrl(invoice.getHostedInvoiceUrl());
+          res = addTransaction(companyId, invoice.getCustomer(), null, trans);
+          break;
+        }
+
         default: {
+          log.warn("Stripe event -{}- is terminated!", event.getType());
           res = Responses.OK;
           break;
         }
@@ -186,7 +240,7 @@ class StripeService {
     return res;
   }
 
-  Response addTransaction(Long company_id, String subsCustomerId, CustomerDTO dto, SubsTrans trans) {
+  Response addTransaction(Long company_id, String subsCustomerId, CustomerDTO dto, CompanyTrans trans) {
     Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
@@ -194,11 +248,11 @@ class StripeService {
         CompanyDao companyDao = transactional.attach(CompanyDao.class);
         SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
-        SubsTrans oldTrans = subscriptionDao.findByEventId(trans.getEventId());
+        CompanyTrans oldTrans = subscriptionDao.findByEventId(trans.getEventId());
         if (oldTrans == null) {
 
-          Long companyId = null;
-          if (company_id == null && trans != null && trans.getCompanyId() != null) companyId = trans.getCompanyId();
+          Long companyId = company_id;
+          if (companyId == null && trans != null && trans.getCompanyId() != null) companyId = trans.getCompanyId();
 
           Company company = null;
           if (companyId != null) {
@@ -215,8 +269,8 @@ class StripeService {
             switch (trans.getEvent()) {
       
               case SUBSCRIPTION_STARTED: {
-                if (company.getSubsStatus().isOKForSubscription()) {
-                  if (companyDao.update(dto, SubsStatus.SUBSCRIBED.name(), companyId)) {
+                if (company.getStatus().isOKForSubscription()) {
+                  if (companyDao.update(dto, CompanyStatus.SUBSCRIBED.name(), companyId)) {
                     boolean isOK = updateInvoiceInfo(dto);
                     if (isOK) {
                       res[0] = Responses.OK;
@@ -234,7 +288,7 @@ class StripeService {
               }
       
               case SUBSCRIPTION_RENEWAL: {
-                if (companyDao.updateSubscription(SubsStatus.SUBSCRIBED.name(), dto.getRenewalDate(), companyId)) {
+                if (companyDao.renewSubscription(companyId, CompanyStatus.SUBSCRIBED.name(), dto.getRenewalDate())) {
                   res[0] = Responses.OK;
                   log.info("Subscription is renewed: Company Id: {}", companyId);
                 } else {
@@ -244,8 +298,8 @@ class StripeService {
               }
       
               case COUPON_USED: {
-                if (company.getSubsStatus().isOKForCoupon()) {
-                  if (companyDao.update(dto, SubsStatus.COUPONED.name(), companyId)) {
+                if (company.getStatus().isOKForCoupon()) {
+                  if (companyDao.update(dto, CompanyStatus.COUPONED.name(), companyId)) {
                     res[0] = Responses.OK;
                     log.info("Coupon is used: Company Id: {}, Coupon: {}", companyId, trans.getEventId());
                   } else {
@@ -258,18 +312,12 @@ class StripeService {
               }
       
               case SUBSCRIPTION_CANCELLED: {
-                if (company.getSubsStatus().isOKForCancel()) {
-                  if (company.getSubsStatus().equals(SubsStatus.COUPONED)) {
-                    trans.setSource(SubsSource.COUPON);
-                  } else {
-                    trans.setSource(SubsSource.SUBSCRIPTION);
-                  }
-      
-                  if (companyDao.updateSubscription(SubsStatus.CANCELLED.name(), new Timestamp(new Date().getTime()), companyId)) {
+                if (company.getStatus().isOKForCancel()) {
+                  if (companyDao.cancelSubscription(companyId)) {
                     res[0] = Responses.OK;
-                    log.info("Subscription is cancelled: Company Id: {}", companyId);
+                    log.info("Subscription is cancelled: Company: {}, Pre.Status: {}", companyId, company.getStatus());
                   } else {
-                    log.warn("Failed to cancel a subscription: Company Id: {}", companyId);
+                    log.warn("Failed to cancel a subscription: Company: {}, Status: {}", companyId, company.getStatus());
                   }
 
                 } else {
@@ -287,8 +335,20 @@ class StripeService {
             }
       
             if (res[0].isOK()) {
-              boolean isAllRight = subscriptionDao.insertTrans(trans, trans.getSource().name(), trans.getEvent().name());
-              if (! isAllRight) {
+              boolean isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+              if (isOK) {
+                CompanyStatus status = null;
+                if (trans.getEvent().equals(SubsEvent.SUBSCRIPTION_STARTED)) {
+                  status = CompanyStatus.SUBSCRIBED;
+                } else if (trans.getEvent().equals(SubsEvent.SUBSCRIPTION_CANCELLED)) {
+                  status = CompanyStatus.CANCELLED;
+                }
+                if (status != null) {
+                  isOK = subscriptionDao.insertCompanyStatusHistory(company.getId(), status.name());
+                }
+              }
+
+              if (! isOK) {
                 res[0] = Responses.DataProblem.DB_PROBLEM;
               }
             } 

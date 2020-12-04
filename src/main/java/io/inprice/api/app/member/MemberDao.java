@@ -16,7 +16,7 @@ import io.inprice.common.models.Member;
 
 public interface MemberDao {
 
-  final String COMPANY_FIELDS = ", c.name as company_name, c.free_usage, c.plan_name, c.subs_renewal_at, c.currency_format, c.product_count ";
+  final String COMPANY_FIELDS = ", c.name as company_name, c.status as company_status, c.plan_name, c.subs_renewal_at, c.currency_format, c.product_count ";
 
   @SqlQuery("select * from member where id=:id")
   @UseRowMapper(MemberMapper.class)

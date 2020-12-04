@@ -17,21 +17,34 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
+import io.inprice.api.email.EmailSender;
+import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.meta.SubsSource;
-import io.inprice.common.meta.SubsStatus;
+import io.inprice.common.meta.CompanyStatus;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.Plan;
-import io.inprice.common.models.SubsTrans;
+import io.inprice.common.models.CompanyTrans;
 
 class SubscriptionService {
 
   private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
+
+  private final StripeService stripeService = Beans.getSingleton(StripeService.class);
+  private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
+  private final TemplateRenderer templateRenderer = Beans.getSingleton(TemplateRenderer.class);
+
+  Response createCheckoutSession(int planId) {
+    return
+      stripeService.createCheckoutSession(
+        CurrentUser.getEmail(), CurrentUser.getCompanyId(), planId, CurrentUser.getSessionNo()
+      );
+  }
 
   Response getCurrentCompany() {
     try (Handle handle = Database.getHandle()) {
@@ -41,17 +54,17 @@ class SubscriptionService {
   }
 
   Response getTransactions() {
-    Map<String, List<SubsTrans>> data = new HashMap<>(2);
+    Map<String, List<CompanyTrans>> data = new HashMap<>(2);
 
     try (Handle handle = Database.getHandle()) {
       SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
-      List<SubsTrans> allTrans = subscriptionDao.findListByCompanyId(CurrentUser.getCompanyId());
+      List<CompanyTrans> allTrans = subscriptionDao.findListByCompanyId(CurrentUser.getCompanyId());
       data.put("all", allTrans);
 
       if (allTrans != null && allTrans.size() > 0) {
-        List<SubsTrans> invoiceTrans = new ArrayList<>();
-        for (SubsTrans st : allTrans) {
+        List<CompanyTrans> invoiceTrans = new ArrayList<>();
+        for (CompanyTrans st : allTrans) {
           if (st.getFileUrl() != null) {
             invoiceTrans.add(st);
           }
@@ -61,6 +74,26 @@ class SubscriptionService {
     }
 
     return new Response(data);
+  }
+
+  Response cancel() {
+    Response res = getCurrentCompany();
+    if (res.isOK()) {
+      Company company = res.getData();
+      if (company.getStatus().isOKForCancel()) {
+        res = stripeService.cancel(company);
+        if (res.isOK()) {
+          Map<String, Object> dataMap = new HashMap<>(1);
+          dataMap.put("user", CurrentUser.getUserName());
+
+          final String message = templateRenderer.renderSubsciptionCancelled(dataMap);
+          emailSender.send(Props.APP_EMAIL_SENDER(), "Subscription cancel", CurrentUser.getEmail(), message);
+        }
+      } else {
+        res = Responses.Illegal.NOT_SUITABLE_FOR_CANCELLATION;
+      }
+    }
+    return res;
   }
 
   Response startFreeUse() {
@@ -73,28 +106,30 @@ class SubscriptionService {
         Company company = companyDao.findById(CurrentUser.getCompanyId());
         if (company != null) {
 
-          if (company.getSubsStatus().isOKForFreeUse()) {
-            Plan basicPlan = Plans.findByName("Basic Plan");
+          if (company.getStatus().isOKForFreeUse()) {
+            Plan basicPlan = Plans.findById(0); // Basic Plan
 
             boolean isOK = companyDao.updateSubscription(
               CurrentUser.getCompanyId(),
-              SubsStatus.FREE.name(),
+              CompanyStatus.FREE.name(),
               basicPlan.getName(),
               basicPlan.getProductLimit(),
               Props.APP_DAYS_FOR_FREE_USE()
             );
 
             if (isOK) {
-              SubsTrans trans = new SubsTrans();
+              CompanyTrans trans = new CompanyTrans();
               trans.setCompanyId(CurrentUser.getCompanyId());
-              trans.setSource(SubsSource.SUBSCRIPTION);
               trans.setEvent(SubsEvent.FREE_USE);
               trans.setSuccessful(Boolean.TRUE);
               trans.setReason("free_subscription_started");
               trans.setDescription(("Free subscription has been started."));
               
               SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
-              isOK = subscriptionDao.insertTrans(trans, SubsSource.SUBSCRIPTION.name(), SubsEvent.FREE_USE.name());
+              isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+              if (isOK) {
+                isOK = subscriptionDao.insertCompanyStatusHistory(company.getId(), CompanyStatus.FREE.name());
+              }
             }
 
             if (isOK) {
@@ -102,11 +137,7 @@ class SubscriptionService {
             }
 
           } else {
-            if (company.getFreeUsage()) {
-              res[0] = Responses.Already.FREE_USE_APPLIED;
-            } else {
-              res[0] = Responses.Illegal.FREE_FOR_ONLY_NEWCOMERS;
-            }
+            res[0] = Responses.Illegal.NO_FREE_USE_RIGHT;
           }
         } else {
           res[0] = Responses.NotFound.COMPANY;
@@ -117,16 +148,6 @@ class SubscriptionService {
     }
 
     return res[0];
-  }
-
-  SubsTrans getCancellationTrans() {
-    SubsTrans trans = new SubsTrans();
-    trans.setCompanyId(CurrentUser.getCompanyId());
-    trans.setEvent(SubsEvent.SUBSCRIPTION_CANCELLED);
-    trans.setSuccessful(Boolean.TRUE);
-    trans.setReason(("subscription_cancel"));
-    trans.setDescription(("Manual cancellation."));
-    return trans;
   }
 
   Response saveInfo(CustomerDTO dto) {

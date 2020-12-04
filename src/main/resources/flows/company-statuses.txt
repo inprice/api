@@ -1,0 +1,159 @@
+Genel özellikler
+1) STOPPED ve CANCELLED statülerine geçişlerde plan ismi ve product sayıs sıfırlanmayacak.
+2) SUBSCRIBED ve COUPONED durumuna geçişte yeni alınan planın kapasitesi büyük ya da eşite o kullanılacak. Aksi durumda geçiş sadece gerçek ürün sayısı uygunsa olacak.
+3) Aktif durumda olup süresi kalmayan firmalar (günde 1 kez kontrol edilip) STOPPED durumuna geçirilecek ve admin kullanıcısına mail atılacak.
+4) SUBSCRIBED iken her başarılı ve başarısız çekimden sonra kullanıcıya mail atılacak
+5) FREE ve COUPONED iken son 3 gün kala günde birkez olacak şekilde hatırlatma maili atılacak
+6) FREE, COUPONED ve CANCELLED (özel durum için 10. maddeye bakınız) iken SUBSCRIBED durumuna geçerken madde 3 işlemleri yapılacak
+7) Kullanıcı login olduktan sonra
+  a) Kalan süresi varsa
+     i) Ürün sayısı 0 dan büyükse Dashboard a
+    ii) Ürün sayısı 0 sa doğrudan ürün tanıtımları sayfasına
+  b) NOT_SET, CANCELLED veya STOPPED durumundaysa doğrudan Plans sayfasına
+8) CANCELLED olan hesaplardaki son kullanım zamanı (ve plan adı) değiştirilmez, kullanıcı o zamana kadar kullanabilir. Fakat Subscription bilgileri sıfırlanır!
+9) CANCELLED iken SUBSCRIBED olan hesaplar için madde 3 işlemleri yapılacak, ayrıca
+  a) CANCELLED den daha önceki durumu SUBSCRIBED ise ve hesabında kalan günler varsa yeni hesabına eklenecek
+  b) Diğer tüm durumlarda abonelik hemen başlar
+
+İstisnalar
+1) Kullanıcı kredi kartı bilgisini değiştirecekse önce hesabını iptal etmeli
+2) Upgrade / Downgrade durumlarında da hesap iptal etmeli
+3) Fatura başlığı kısmı her durumda erişilebilir olacak
+
+------------------------------
+
+1) NOT_SET (default olarak atanır)
+İlk defa kaydolan her firma bu statüyü alır
+
+Geçemeyeceği statüler: 5, 6
+Geçebileceği statüler: 2, 3, 4
+
+Bu durumda kullanıcıya 
+
+a) Dashboard ve Subscription sayfalarında
+Aktif bir planınız yok, lütfen seçin... şeklinde bir bildirim ile Plans sayfası için buton konulmalı
+
+b) UserMenu de 
+Lütfen bir plan seçin denilerek Plans sayfasına yönlendirilmeli
+
+c) Plans da
+Seçili bir plan olmayacak
+Free kullanım ile başlamanız önerilir... şeklinde bir bildirim gösterilmeli.
+Kullanıcı yeni bir plan seçebilmeli
+
+------------------------------
+
+2) FREE (kullanıcı seçer)
+Sadece bir kereye mahsus olmak üzere, statüsü NOT_SET olan her kullanıcı bu statüye geçebilir
+
+Geçemeyeceği statüler: 1
+Geçebileceği statüler: 3, 4, 5, 6
+
+Bu durumda kullanıcıya 
+
+a) Dashboard, Plans ve Subscription sayfalarında
+Kalan süre varsa 4 günden daha az ise
+Kullanmakta olduğunuz freemium paketi 2 gün sonra sona erecektir diye rahatsız etmeyen basit bir uyarı verilmeli.
+
+Kalan süre yoksa
+Bu durum olamaz, bu durumdaki firmalar süreleri dolduğu an kullanıcıya bir mail atılarak STOPPED statüsüne otomatik olarak alınacaklar
+
+b) UserMenu de 
+Basic Plan | FREEMIUM | Kalan gün sayısı Days Remain (eğer son 3 gün kalmışsa Kırmızı olacak)
+
+c) Plans da
+Plan seçili olacak
+Süreye bakmaksızın, kullanıcı yeni bir plan seçip abone olabilmeli
+
+------------------------------
+
+3) COUPONED (kullanıcı seçer)
+SUBSCRIBED statüsünde olmayan tüm kullanıcılar bu statüye geçebilir
+
+Geçemeyeceği statüler: 1, 2
+Geçebileceği statüler: 4, 5, 6
+
+Bu durumda kullanıcıya 
+
+a) Dashboard, Plans ve Subscription sayfalarında
+Kalan süre 4 günden daha az ise
+Kullanmakta olduğunuz Basic Plan 2 gün sonra sona erecektir diye rahatsız etmeyen basit bir uyarı verilmeli.
+
+Süre kalmamış ise
+Bu durum olamaz, bu durumdaki firmalar süreleri dolduğu an kullanıcıya bir mail atılarak STOPPED statüsüne otomatik olarak alınacaklar
+
+b) UserMenu de 
+Basic Plan | COUPONED | Kalan gün sayısı Days Remain (eğer son 3 gün kalmışsa Kırmızı olacak)
+
+c) Plans da
+Plan seçili olacak
+Süreye bakmaksızın, kullanıcı yeni bir plan seçip abone olabilmeli
+
+------------------------------
+
+4) SUBSCRIBED (kullanıcı seçer)
+Tüm kullanıcılar bu statüye geçebilir
+
+Geçemeyeceği statüler: 1, 2, 3
+Geçebileceği statüler: 5, 6
+
+Bu durumda kullanıcıya 
+
+a) Dashboard, Plans ve Subscription sayfalarında 
+Süre sorunu olmayanlara
+Herhangi bir mesaj gösterilmeyecek
+
+Süresi en fazla 3 güne kadar geçmiş olanlara
+Hesabınızdan tahsilat yapamadık. X (3 günden kalan sayı) gün daha denedikten sonra yine de tahsilat yapamazsak aboneliğinizi durduracağız gibi uygun bir dille uyarı verilmeli.
+
+Aboneliği son tarihinden sonra 3 gün geçmesine rağmen yine de yenilenmemişse
+Bu durumdaki firmalar süreleri dolduğu an kullanıcıya bir mail atılarak STOPPED statüsüne otomatik olarak alınacaklar
+
+b) UserMenu de 
+Basic Plan | SUBSCRIPTION | 2021-04-03 (eğer 3 günlük süre saymaya başlamışsa Kırmızı olacak ve X Days Remain yazacak)
+
+c) Plans da
+(3 günlük kredi zamanı dahil) ilgili plan seçili olacak 
+Kullanıcı yeni bir plan seçemeyecek
+
+------------------------------
+
+5) CANCELLED (kullanıcı seçer)
+Abonelik süresinin bitmesine daha var olan tüm kullanıcılar isteğe bağlı olarak bu statüye geçebilir
+
+Geçemeyeceği statüler: 1, 2
+Geçebileceği statüler: 3, 4, 6
+
+Bu durumda kullanıcıya 
+
+a) Dashboard, Plans ve Subscription sayfalarında 
+X tarihinde aboneliğinizi durdurdunuz. Şuan için aktif bir aboneliğiniz yok gibi uygun bir dille uyarı verilmeli.
+
+b) UserMenu de 
+Lütfen bir plan seçin denilerek Plans sayfasına yönlendirilmeli
+
+c) Plans da
+a maddesindeki uyarı olacak
+Herhangi bir plan seçili olmayacak
+Kullanıcı yeni bir plan seçebilmeli
+
+------------------------------
+
+6) STOPPED (sistem karar verir)
+Abonelik süresi biten tüm kullanıcılar otomatik olarak bu statüye geçerler
+
+Geçemeyeceği statüler: 1, 2, 5
+Geçebileceği statüler: 3, 4
+
+Bu durumda kullanıcıya 
+
+a) Dashboard, Plans ve Subscription sayfalarında 
+X tarihinde aboneliğinizi durduruldu. Şuan için aktif bir aboneliğiniz yok gibi uygun bir dille uyarı verilmeli.
+
+b) UserMenu de 
+Lütfen bir plan seçin denilerek Plans sayfasına yönlendirilmeli
+
+c) Plans da
+a maddesindeki uyarı olacak
+Herhangi bir plan seçili olmayacak
+Kullanıcı yeni bir plan seçebilmeli
