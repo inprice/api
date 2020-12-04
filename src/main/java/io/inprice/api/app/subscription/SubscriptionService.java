@@ -1,6 +1,7 @@
 package io.inprice.api.app.subscription;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,16 +21,17 @@ import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.email.EmailSender;
 import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
+import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.Company;
-import io.inprice.common.models.Plan;
 import io.inprice.common.models.CompanyTrans;
+import io.inprice.common.models.Plan;
 
 class SubscriptionService {
 
@@ -44,13 +46,6 @@ class SubscriptionService {
       stripeService.createCheckoutSession(
         CurrentUser.getEmail(), CurrentUser.getCompanyId(), planId, CurrentUser.getSessionNo()
       );
-  }
-
-  Response getCurrentCompany() {
-    try (Handle handle = Database.getHandle()) {
-      CompanyDao companyDao = handle.attach(CompanyDao.class);
-      return new Response(companyDao.findById(CurrentUser.getCompanyId()));
-    }
   }
 
   Response getTransactions() {
@@ -76,6 +71,13 @@ class SubscriptionService {
     return new Response(data);
   }
 
+  Response getCurrentCompany() {
+    try (Handle handle = Database.getHandle()) {
+      CompanyDao companyDao = handle.attach(CompanyDao.class);
+      return new Response(companyDao.findById(CurrentUser.getCompanyId()));
+    }
+  }
+
   Response cancel() {
     Response res = getCurrentCompany();
     if (res.isOK()) {
@@ -83,10 +85,8 @@ class SubscriptionService {
       if (company.getStatus().isOKForCancel()) {
         res = stripeService.cancel(company);
         if (res.isOK()) {
-          Map<String, Object> dataMap = new HashMap<>(1);
-          dataMap.put("user", CurrentUser.getUserName());
-
-          final String message = templateRenderer.renderSubsciptionCancelled(dataMap);
+          res = Commons.refreshSession(company, CompanyStatus.CANCELLED, null);
+          final String message = templateRenderer.renderSubsciptionCancelled(res.getData());
           emailSender.send(Props.APP_EMAIL_SENDER(), "Subscription cancel", CurrentUser.getEmail(), message);
         }
       } else {
@@ -106,38 +106,42 @@ class SubscriptionService {
         Company company = companyDao.findById(CurrentUser.getCompanyId());
         if (company != null) {
 
-          if (company.getStatus().isOKForFreeUse()) {
-            Plan basicPlan = Plans.findById(0); // Basic Plan
+          if (!company.getStatus().equals(CompanyStatus.FREE)) {
+            if (company.getStatus().isOKForFreeUse()) {
+              Plan basicPlan = Plans.findById(0); // Basic Plan
 
-            boolean isOK = companyDao.updateSubscription(
-              CurrentUser.getCompanyId(),
-              CompanyStatus.FREE.name(),
-              basicPlan.getName(),
-              basicPlan.getProductLimit(),
-              Props.APP_DAYS_FOR_FREE_USE()
-            );
+              boolean isOK = companyDao.startFreeUseOrApplyCoupon(
+                CurrentUser.getCompanyId(),
+                CompanyStatus.FREE.name(),
+                basicPlan.getName(),
+                basicPlan.getProductLimit(),
+                Props.APP_DAYS_FOR_FREE_USE()
+              );
 
-            if (isOK) {
-              CompanyTrans trans = new CompanyTrans();
-              trans.setCompanyId(CurrentUser.getCompanyId());
-              trans.setEvent(SubsEvent.FREE_USE);
-              trans.setSuccessful(Boolean.TRUE);
-              trans.setReason("free_subscription_started");
-              trans.setDescription(("Free subscription has been started."));
-              
-              SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
-              isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
               if (isOK) {
-                isOK = subscriptionDao.insertCompanyStatusHistory(company.getId(), CompanyStatus.FREE.name());
+                CompanyTrans trans = new CompanyTrans();
+                trans.setCompanyId(CurrentUser.getCompanyId());
+                trans.setEvent(SubsEvent.FREE_USE);
+                trans.setSuccessful(Boolean.TRUE);
+                trans.setReason("free_subscription_started");
+                trans.setDescription(("Free subscription has been started."));
+                
+                SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+                isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+                if (isOK) {
+                  isOK = subscriptionDao.insertCompanyStatusHistory(company.getId(), CompanyStatus.FREE.name());
+                }
               }
-            }
 
-            if (isOK) {
-              res[0] = Responses.OK;
-            }
+              if (isOK) {
+                res[0] = Commons.refreshSession(company, CompanyStatus.FREE, new Date());
+              }
 
+            } else {
+              res[0] = Responses.Illegal.NO_FREE_USE_RIGHT;
+            }
           } else {
-            res[0] = Responses.Illegal.NO_FREE_USE_RIGHT;
+            res[0] = Responses.Already.IN_FREE_USE;
           }
         } else {
           res[0] = Responses.NotFound.COMPANY;

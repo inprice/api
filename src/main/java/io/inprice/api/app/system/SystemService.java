@@ -7,6 +7,7 @@ import org.jdbi.v3.core.Handle;
 
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
@@ -27,6 +28,23 @@ public class SystemService {
         data.put("company", company);
         data.put("plans", Plans.getPlans());
         res = new Response(data);
+      }
+    } catch (Exception e) {
+      res = Responses.DataProblem.DB_PROBLEM;
+    }
+
+    return res;
+  }
+
+  Response refreshSession() {
+    Response res = Responses.NotFound.COMPANY;
+
+    try (Handle handle = Database.getHandle()) {
+      CompanyDao companyDao = handle.attach(CompanyDao.class);
+      Company company = companyDao.findById(CurrentUser.getCompanyId());
+
+      if (company != null) {
+        res = Commons.refreshSession(company);
       }
     } catch (Exception e) {
       res = Responses.DataProblem.DB_PROBLEM;

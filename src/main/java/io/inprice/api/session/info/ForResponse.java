@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import io.inprice.common.meta.UserRole;
+import io.inprice.common.models.Company;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
 import io.inprice.common.utils.DateUtils;
@@ -23,21 +24,35 @@ public class ForResponse implements Serializable {
   private String user;
   private String email;
   private String company;
-  private Boolean freeUsage;
   private String planName;
   private String companyStatus;
   private Date subsRenewalAt;
-  private Integer daysToRenewal;
+  private int daysToRenewal;
   private String currencyFormat;
   private String timezone;
   private Integer productCount;
   private UserRole role;
 
+  public ForResponse(Company company, String user, String email, UserRole role, String timezone) {
+    this.user = user;
+    this.email = email;
+    this.company = company.getName();
+    this.planName = company.getPlanName();
+    this.companyStatus = company.getStatus().name();
+    this.subsRenewalAt = company.getSubsRenewalAt();
+    this.currencyFormat = company.getCurrencyFormat();
+    this.timezone = timezone;
+    this.role = role;
+    this.productCount = company.getProductCount();
+    if (this.subsRenewalAt != null) {
+      this.daysToRenewal = (int) DateUtils.findDayDiff(new Date(), this.subsRenewalAt);
+    }
+  }
+
   public ForResponse(ForResponse forResponse) {
     this.user = forResponse.getUser();
     this.email = forResponse.getEmail();
     this.company = forResponse.getCompany();
-    this.freeUsage = forResponse.getFreeUsage();
     this.planName = forResponse.getPlanName();
     this.companyStatus = forResponse.getCompanyStatus();
     this.subsRenewalAt = forResponse.getSubsRenewalAt();
@@ -54,7 +69,6 @@ public class ForResponse implements Serializable {
     this.user = forRedis.getUser();
     this.email = forCookie.getEmail();
     this.company = forRedis.getCompany();
-    this.freeUsage = forRedis.getFreeUsage();
     this.planName = forRedis.getPlanName();
     this.companyStatus = forRedis.getCompanyStatus();
     this.subsRenewalAt = forRedis.getSubsRenewalAt();

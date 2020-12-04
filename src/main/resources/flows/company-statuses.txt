@@ -14,6 +14,7 @@ Genel özellikler
 9) CANCELLED iken SUBSCRIBED olan hesaplar için madde 3 işlemleri yapılacak, ayrıca
   a) CANCELLED den daha önceki durumu SUBSCRIBED ise ve hesabında kalan günler varsa yeni hesabına eklenecek
   b) Diğer tüm durumlarda abonelik hemen başlar
+10) Sadece Aktif statüdeki firmaların linkleri kontrol edilecek
 
 İstisnalar
 1) Kullanıcı kredi kartı bilgisini değiştirecekse önce hesabını iptal etmeli

@@ -270,7 +270,7 @@ class StripeService {
       
               case SUBSCRIPTION_STARTED: {
                 if (company.getStatus().isOKForSubscription()) {
-                  if (companyDao.update(dto, CompanyStatus.SUBSCRIBED.name(), companyId)) {
+                  if (companyDao.startSubscription(dto, CompanyStatus.SUBSCRIBED.name(), companyId)) {
                     boolean isOK = updateInvoiceInfo(dto);
                     if (isOK) {
                       res[0] = Responses.OK;
@@ -297,20 +297,6 @@ class StripeService {
                 break;
               }
       
-              case COUPON_USED: {
-                if (company.getStatus().isOKForCoupon()) {
-                  if (companyDao.update(dto, CompanyStatus.COUPONED.name(), companyId)) {
-                    res[0] = Responses.OK;
-                    log.info("Coupon is used: Company Id: {}, Coupon: {}", companyId, trans.getEventId());
-                  } else {
-                    log.warn("Failed to assign a coupon: Company Id: {}, Coupon: {}", companyId, trans.getEventId());
-                  }
-                } else {
-                  res[0] = Responses.Already.ACTIVE_SUBSCRIPTION;
-                }
-                break;
-              }
-      
               case SUBSCRIPTION_CANCELLED: {
                 if (company.getStatus().isOKForCancel()) {
                   if (companyDao.cancelSubscription(companyId)) {
@@ -331,6 +317,10 @@ class StripeService {
                 log.warn("Payment failed! Company Id: {}", companyId);
                 break;
               }
+
+              default:
+                log.warn("Unexpected event! Company Id: {}, Event: {}", companyId, trans.getEvent().name());
+                break;
       
             }
       

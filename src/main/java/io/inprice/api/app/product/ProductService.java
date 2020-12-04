@@ -267,20 +267,6 @@ public class ProductService {
     return Responses.Invalid.PRODUCT;
   }
 
-  public Response toggleStatus(Long id) {
-    if (id != null && id > 0) {
-      try (Handle handle = Database.getHandle()) {
-        ProductDao productDao = handle.attach(ProductDao.class);
-
-        boolean isOK = productDao.toggleStatus(id, CurrentUser.getCompanyId());
-        if (isOK) {
-          return Responses.OK;
-        }
-      }
-    }
-    return Responses.NotFound.PRODUCT;
-  }
-
   private void clearSearchDto(ProductSearchDTO dto) {
     dto.setTerm(SqlHelper.clear(dto.getTerm()));
     if (dto.getSelectedTags() != null && dto.getSelectedTags().length > 0) {

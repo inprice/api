@@ -1,11 +1,16 @@
 package io.inprice.api.helpers;
 
-import java.util.List;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.jetty.http.HttpStatus;
 
-import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
+import io.inprice.api.session.CurrentUser;
+import io.inprice.api.session.info.ForResponse;
+import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.models.Company;
 import io.javalin.http.Context;
 
 public class Commons {
@@ -15,12 +20,24 @@ public class Commons {
     return serviceResponse;
   }
 
-  public static Response createResponse(List<String> problems) {
-    if (problems.size() > 0) {
-      return new Response(problems);
-    } else {
-      return Responses.OK;
-    }
+  public static Response refreshSession(Company company) {
+    return refreshSession(company, company.getStatus(), company.getSubsRenewalAt());
+  }
+
+  public static Response refreshSession(Company company, CompanyStatus status, Date subsRenewalAt) {
+    company.setStatus(status);
+    company.setSubsRenewalAt(subsRenewalAt);
+    ForResponse session = new ForResponse(
+      company,
+      CurrentUser.getUserName(),
+      CurrentUser.getEmail(),
+      CurrentUser.getRole(),
+      CurrentUser.getUserTimezone()
+    );
+    Map<String, Object> dataMap = new HashMap<>(1);
+    dataMap.put("session", session);
+
+    return new Response(dataMap);
   }
 
 }

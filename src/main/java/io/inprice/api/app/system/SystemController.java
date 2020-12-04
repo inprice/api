@@ -20,6 +20,11 @@ public class SystemController implements Controller {
       ctx.json(Commons.createResponse(ctx, service.getPlans()));
     }, AccessRoles.ANYONE());
 
+    // this is called when subscription is completed successfully in client side!
+    app.get(Consts.Paths.System.REFRESH_SESSION, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, service.refreshSession()));
+    }, AccessRoles.ANYONE());
+
   }
 
 }

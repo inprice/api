@@ -56,9 +56,6 @@ public interface ProductDao {
   boolean update(@Bind("id") Long id, @Bind("companyId") Long companyId,
     @Bind("code") String code, @Bind("name") String name, @Bind("price") BigDecimal price);
 
-  @SqlUpdate("update product set active = not active where id=:id and company_id=:companyId")
-  boolean toggleStatus(@Bind("id") Long id, @Bind("companyId") Long companyId);
-
   @SqlQuery(
     "select position, count(1) as counter from product " +
     "where company_id=:companyId " +
@@ -72,7 +69,6 @@ public interface ProductDao {
   //these are necessary mappings since we need to establish one-to-one and one-to-many relations between tables
   final String PRODUCT_FIELDS = 
     "p.id as p_id, " +
-    "p.active as p_active, " +
     "p.code as p_code, " +
     "p.name as p_name, " +
     "p.price as p_price, " +

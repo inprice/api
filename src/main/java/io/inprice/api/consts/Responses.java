@@ -84,10 +84,11 @@ public class Responses {
     public static final Response LOGGED_OUT = new Response(BASE + 1, "Seems that you are already logged out!");
     public static final Response DELETED_MEMBER = new Response(BASE + 2, "This member is already deleted!");
 
-    public static final Response USED_COUPON = new Response(BASE + 5, "This coupon seems already used!");
+    public static final Response USED_COUPON = new Response(BASE + 4, "This coupon seems already used!");
+    public static final Response IN_FREE_USE = new Response(BASE + 5, "Your Free Use is already active!");
 
-    public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 6, "You have already an active subscription. You cannot use any coupon!");
-    public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 7, "This account has no active subscription at the moment!");
+    public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 7, "You have already an active subscription. You cannot use any coupon!");
+    public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 8, "This account has no active subscription at the moment!");
 
     public static final Response REQUESTED_EMAIL = new Response(BASE + 10, "This email is already requested, please wait some time to try again!");
     

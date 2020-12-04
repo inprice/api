@@ -36,6 +36,10 @@ public class CurrentUser {
     return THREAD_VARIABLES.get().getSession().getUser();
   }
 
+  public static String getUserTimezone() {
+    return THREAD_VARIABLES.get().getSession().getTimezone();
+  }
+
   public static Long getCompanyId() {
     return THREAD_VARIABLES.get().getSession().getCompanyId();
   }

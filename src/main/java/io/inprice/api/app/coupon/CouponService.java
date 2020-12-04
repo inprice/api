@@ -1,9 +1,7 @@
 package io.inprice.api.app.coupon;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang3.time.DateUtils;
 import org.jdbi.v3.core.Handle;
@@ -13,16 +11,17 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.Company;
+import io.inprice.common.models.CompanyTrans;
 import io.inprice.common.models.Coupon;
 import io.inprice.common.models.Plan;
-import io.inprice.common.models.CompanyTrans;
 import io.inprice.common.utils.CouponManager;
 
 class CouponService {
@@ -69,7 +68,7 @@ class CouponService {
                   }
 
                   boolean isOK = 
-                    companyDao.updateSubscription(
+                    companyDao.startFreeUseOrApplyCoupon(
                       CurrentUser.getCompanyId(),
                       CompanyStatus.COUPONED.name(),
                       selectedPlan.getName(),
@@ -97,12 +96,8 @@ class CouponService {
                       }
                               
                       if (isOK) {
-                        Map<String, Object> data = new HashMap<>(3);
-                        data.put("planName", selectedPlan.getName());
-                        data.put("companyStatus", CompanyStatus.COUPONED);
-                        data.put("subsRenewalAt", DateUtils.addDays(new Date(), coupon.getDays()));
+                        res[0] = Commons.refreshSession(company, CompanyStatus.COUPONED, DateUtils.addDays(new Date(), coupon.getDays()));
                         log.info("Coupon {}, is issued for {}", coupon.getCode(), company.getName());
-                        res[0] = new Response(data);
                       }
                     }
                   }
