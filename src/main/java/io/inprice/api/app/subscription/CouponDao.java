@@ -1,4 +1,4 @@
-package io.inprice.api.app.coupon;
+package io.inprice.api.app.subscription;
 
 import java.util.List;
 

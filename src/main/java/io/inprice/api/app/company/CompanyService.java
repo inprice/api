@@ -243,11 +243,12 @@ class CompanyService {
             batch.add("delete from link " + where);
             batch.add("delete from product_tag " + where);
             batch.add("delete from product " + where);
-            batch.add("delete from user_session " + where);
-            batch.add("delete from member " + where);
-            batch.add("delete from subs_trans " + where);
-            batch.add("delete from user where id in (select admin_id from company where id=" + CurrentUser.getCompanyId() + ")");
             batch.add("delete from coupon where issued_company_id=" + CurrentUser.getCompanyId());
+            batch.add("delete from member " + where);
+            batch.add("delete from user_session " + where);
+            batch.add("delete from user where id in (select admin_id from company where id=" + CurrentUser.getCompanyId() + ")");
+            batch.add("delete from company_history " + where);
+            batch.add("delete from company_trans " + where);
             batch.add("delete from company where id=" + CurrentUser.getCompanyId());
             batch.add("SET FOREIGN_KEY_CHECKS=1");
             batch.execute();

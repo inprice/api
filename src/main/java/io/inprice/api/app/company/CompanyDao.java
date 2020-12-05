@@ -75,7 +75,7 @@ public interface CompanyDao {
 
   @SqlUpdate(
     "update company " +
-    "set subs_id=null, subs_customer_id=null, status='CANCELLED', subs_renewal_at=null, last_status_update=now() "+
+    "set subs_id=null, status='CANCELLED', last_status_update=now() "+
     "where id=:id"
   )
   boolean cancelSubscription(@Bind("id") Long id);

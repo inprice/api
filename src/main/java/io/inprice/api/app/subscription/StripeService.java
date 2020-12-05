@@ -1,6 +1,7 @@
 package io.inprice.api.app.subscription;
 
 import java.util.Collections;
+import java.util.Date;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.Address;
@@ -26,13 +27,16 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
+import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.Company;
-import io.inprice.common.models.Plan;
+import io.inprice.common.models.CompanyHistory;
 import io.inprice.common.models.CompanyTrans;
+import io.inprice.common.models.Plan;
+import io.inprice.common.utils.DateUtils;
 
 class StripeService {
 
@@ -46,12 +50,49 @@ class StripeService {
    * @param planId
    * @param sessionNo
    */
-  Response createCheckoutSession(String email, long companyId, int planId, int sessionNo) {
+  Response createCheckoutSession(int planId) {
     Plan plan = Plans.findById(planId);
 
     if (plan != null) {
+
+      String subsCustomerId = null;
+      long trialPeriodDays = 0;
+
+      try (Handle handle = Database.getHandle()) {
+        CompanyDao companyDao = handle.attach(CompanyDao.class);
+        Company company = companyDao.findById(CurrentUser.getCompanyId());
+
+        //finding Customer Id if exists previously
+        subsCustomerId = company.getSubsCustomerId();
+
+        // only broader plan transitions allowed
+        if (company.getProductCount().compareTo(plan.getProductLimit()) <= 0) {
+
+          // if company's current status equals to CANCELLED and previous status equals to SUBSCRIBED 
+          // and also has more than 0 days. the remaining days are added up to new renewal date
+          if (company != null && CompanyStatus.CANCELLED.equals(company.getStatus())) {
+
+            SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+            CompanyHistory prevHistory = subscriptionDao.findPreviousHistoryRowByStatusAndCompanyId(CurrentUser.getCompanyId(), CompanyStatus.SUBSCRIBED.name());
+
+            if (prevHistory != null) {
+              CompanyStatus prevStatus = prevHistory.getStatus();
+              if (CompanyStatus.SUBSCRIBED.equals(prevStatus)) {
+                long diff = DateUtils.findDayDiff(new Date(), company.getSubsRenewalAt());
+                if (diff > 0) {
+                  trialPeriodDays = diff;
+                }
+              }
+            }
+          }
+        } else {
+          return Responses.PermissionProblem.PLAN_TRANSITION_PROBLEM;
+        }
+      }
+
       SessionCreateParams params = SessionCreateParams.builder()
-        .setCustomerEmail(email)
+        .setCustomer(subsCustomerId)
+        .setCustomerEmail(CurrentUser.getEmail())
         .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
         .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
         .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
@@ -61,7 +102,7 @@ class StripeService {
         .setCancelUrl( 
           String.format(
             "%s/%d/app/plans",
-            Props.APP_WEB_URL(), sessionNo
+            Props.APP_WEB_URL(), CurrentUser.getSessionNo()
           )
         )
         .setClientReferenceId(""+planId)
@@ -69,8 +110,10 @@ class StripeService {
           SessionCreateParams.SubscriptionData
           .builder()
               .putMetadata("planId", ""+planId)
-              .putMetadata("companyId", ""+companyId
-            ).build())
+              .putMetadata("companyId", ""+CurrentUser.getCompanyId())
+              .setTrialPeriodDays(trialPeriodDays)
+            .build()
+          )
         .putMetadata("description", plan.getFeatures().get(0))
         .addLineItem(
           SessionCreateParams.LineItem
@@ -270,6 +313,7 @@ class StripeService {
       
               case SUBSCRIPTION_STARTED: {
                 if (company.getStatus().isOKForSubscription()) {
+
                   if (companyDao.startSubscription(dto, CompanyStatus.SUBSCRIBED.name(), companyId)) {
                     boolean isOK = updateInvoiceInfo(dto);
                     if (isOK) {

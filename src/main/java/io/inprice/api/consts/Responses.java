@@ -49,10 +49,11 @@ public class Responses {
   public static class PermissionProblem {
     private static final int BASE = 500;
     public static final Response UNAUTHORIZED = new Response(BASE + 1, "Unauthrozied!");
-    public static final Response ADMIN_ONLY = new Response(BASE + 2, "This operation can be done by an admin!");
+    public static final Response ADMIN_ONLY = new Response(BASE + 2, "This operation can only be done by an admin!");
     public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to buy a new plan!");
     public static final Response NO_COMPANY = new Response(BASE + 5, "You have no active company! Please either create a new one or participate in an existing!");
-    public static final Response PRODUCT_LIMIT_PROBLEM = new Response(BASE + 7, "Your products count is reached your plans limit! You need to pass a broader plan to proceed");
+    public static final Response PRODUCT_LIMIT_PROBLEM = new Response(BASE + 6, "Your products count is reached your plans limit! You need to pass a broader plan to proceed");
+    public static final Response PLAN_TRANSITION_PROBLEM = new Response(BASE + 7, "You need a broader plan. The plan you intend to select allows less than your existing product count!");
   }
 
   public static class DataProblem {

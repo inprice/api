@@ -42,10 +42,7 @@ class SubscriptionService {
   private final TemplateRenderer templateRenderer = Beans.getSingleton(TemplateRenderer.class);
 
   Response createCheckoutSession(int planId) {
-    return
-      stripeService.createCheckoutSession(
-        CurrentUser.getEmail(), CurrentUser.getCompanyId(), planId, CurrentUser.getSessionNo()
-      );
+    return stripeService.createCheckoutSession(planId);
   }
 
   Response getTransactions() {
@@ -123,7 +120,6 @@ class SubscriptionService {
                 trans.setCompanyId(CurrentUser.getCompanyId());
                 trans.setEvent(SubsEvent.FREE_USE);
                 trans.setSuccessful(Boolean.TRUE);
-                trans.setReason("free_subscription_started");
                 trans.setDescription(("Free subscription has been started."));
                 
                 SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);

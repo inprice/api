@@ -105,7 +105,7 @@ public class AuthService {
             dataMap.put("url", Props.APP_WEB_URL() + Consts.Paths.Auth.RESET_PASSWORD);
 
             final String message = templateRenderer.renderForgotPassword(dataMap);
-            emailSender.send(Props.APP_EMAIL_SENDER(), "Reset your password", user.getEmail(), message);
+            emailSender.send(Props.APP_EMAIL_SENDER(), "Reset your password for inprice.io", user.getEmail(), message);
 
             return Responses.OK;
           } catch (Exception e) {
