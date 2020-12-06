@@ -3,20 +3,34 @@
   <body>
     Dear <strong>${user}</strong>,
     <p>
-      We would like to inform you about your approved subscription to inprice. You can use the platform from now on.
+      We would like to inform you that the subscription of your company -
+      ${company} - has been approved. You can use the platform from now on.
     </p>
 
-    <p>
-      Please note that next renewal will be one month later on <strong>${subsRenewalAt}</strong>
-    </p>
+    <div>
+      Please note that:
+
+      <div>Your actual plan is ${plan}</div>
+
+      <div>
+        Your next renewal will be one month later on
+        <strong>${subsRenewalAt}</strong>
+      </div>
+
+      <div>
+        You can check and download your bill from this link
+        <div>${invoiceUrl}</div>
+      </div>
+    </div>
 
     <p>Thank you for using the platform!</p>
 
     <p>
       If you have any questions, please don't hesitate to contact our support.
-      Best regards,
+      We are always happy to getting feedback from you.
     </p>
 
+    <div>Best regards,</div>
     <p>inprice Support Team</p>
   </body>
 </html>

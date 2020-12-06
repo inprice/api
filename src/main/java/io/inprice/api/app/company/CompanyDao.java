@@ -1,9 +1,11 @@
 package io.inprice.api.app.company;
 
 import java.sql.Timestamp;
+import java.util.List;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -79,5 +81,14 @@ public interface CompanyDao {
     "where id=:id"
   )
   boolean cancelSubscription(@Bind("id") Long id);
-  
+
+  @SqlQuery(
+    "select * from company "+
+    "where status in (<statusList>) "+
+    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) > 0 "+
+    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) <= 3"
+  )
+  @UseRowMapper(CompanyMapper.class)
+  List<Company> findAboutToExpiredFreeCompanyList(@BindList("statusList") List<String> statusList);
+
 }

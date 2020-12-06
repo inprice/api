@@ -93,7 +93,13 @@ class CouponService {
 
                         isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
                         if (isOK) {
-                          isOK = subscriptionDao.insertCompanyStatusHistory(company.getId(), CompanyStatus.COUPONED.name());
+                          isOK = 
+                            subscriptionDao.insertCompanyStatusHistory(
+                              company.getId(), 
+                              CompanyStatus.COUPONED.name(),
+                              selectedPlan.getName(),
+                              null, null
+                            );
                         }
                                 
                         if (isOK) {

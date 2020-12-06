@@ -14,6 +14,7 @@ import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.email.EmailSender;
+import io.inprice.api.email.EmailTemplate;
 import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
@@ -170,33 +171,27 @@ class MemberService {
     dataMap.put("admin", CurrentUser.getUserName());
 
     String message = null;
-    String templateName = null;
+    EmailTemplate template = null;
 
     String userName = userDao.findUserNameByEmail(dto.getEmail());
     if (userName != null) {
       dataMap.put("user", userName);
-      templateName = "invitation-for-existing-users";
-      message = renderer.renderInvitationForExistingUsers(dataMap);
+      template = EmailTemplate.INVITATION_FOR_EXISTING_USERS;
     } else {
       dataMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')));
       dataMap.put("token", Tokens.add(TokenType.INVITATION, dto));
       dataMap.put("url", Props.APP_WEB_URL() + "/accept-invitation");
-
-      templateName = "invitation-for-new-users";
-      message = renderer.renderInvitationForNewUsers(dataMap);
+      template = EmailTemplate.INVITATION_FOR_NEW_USERS;
     }
 
-    if (message != null) {
-      emailSender.send(Props.APP_EMAIL_SENDER(),
-          "About your invitation for " + CurrentUser.getCompanyName() + " at inprice.io", dto.getEmail(), message);
+    message = renderer.render(template, dataMap);
 
-      log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getCompanyId());
-      log.info(message);
-      return Responses.OK;
-    } else {
-      log.error("Template error for " + templateName + " --> " + dto);
-      return Responses.ServerProblem.FAILED;
-    }
+    emailSender.send(Props.APP_EMAIL_SENDER(),
+        "About your invitation for " + CurrentUser.getCompanyName() + " at inprice.io", dto.getEmail(), message);
+
+    log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getCompanyId());
+    log.info(message);
+    return Responses.OK;
   }
 
   private String validate(InvitationSendDTO dto) {

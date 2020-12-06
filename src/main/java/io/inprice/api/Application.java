@@ -10,8 +10,8 @@ import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.framework.ConfigScanner;
 import io.inprice.api.framework.HandlerInterruptException;
-import io.inprice.api.helpers.ThreadPools;
 import io.inprice.api.info.Response;
+import io.inprice.api.scheduled.TaskManager;
 import io.inprice.api.session.AccessGuard;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.SysProps;
@@ -42,6 +42,8 @@ public class Application {
 
       Stripe.apiKey = Props.API_KEYS_STRIPE();
 
+			TaskManager.start();
+
     }, "app-starter").start();
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -49,8 +51,8 @@ public class Application {
       Global.isApplicationRunning = false;
       log.info("APPLICATION IS TERMINATING...");
 
-			log.info(" - Thread pools are shutting down...");
-			ThreadPools.shutdown();
+			log.info(" - TaskManager is shutting down...");
+			TaskManager.stop();
 
       log.info(" - Web server is shutting down...");
       app.stop();

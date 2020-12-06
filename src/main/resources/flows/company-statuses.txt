@@ -2,19 +2,21 @@ Genel özellikler
 -- DONE -- 1) STOPPED ve CANCELLED statülerine geçişlerde plan ismi ve product sayıs sıfırlanmayacak.
 -- DONE -- 2) SUBSCRIBED ve COUPONED durumuna geçişte yeni alınan planın kapasitesi büyük ya da eşite o kullanılacak. Aksi durumda geçiş sadece gerçek ürün sayısı uygunsa olacak.
 -- DONE -- 3) Aktif durumda olup süresi kalmayan firmalar (günde 1 kez kontrol edilip) STOPPED durumuna geçirilecek.
-4) SUBSCRIBED iken her başarılı ve başarısız çekimden sonra kullanıcıya mail atılacak
-5) FREE ve COUPONED iken son 3 gün kala günde birkez olacak şekilde hatırlatma maili atılacak
+-- DONE -- 4) SUBSCRIBED iken her başarılı ve başarısız çekimden sonra kullanıcıya mail atılacak
+-- DONE -- 5) FREE ve COUPONED iken son 3 gün kala günde birkez olacak şekilde hatırlatma maili atılacak
 -- DONE -- 6) FREE, COUPONED ve CANCELLED (özel durum için 9. maddeye bakınız) iken SUBSCRIBED durumuna geçerken madde 2 işlemleri yapılacak
+
 7) Kullanıcı login olduktan sonra
   a) Kalan süresi varsa
      i) Ürün sayısı 0 dan büyükse Dashboard a
     ii) Ürün sayısı 0 sa doğrudan ürün tanıtımları sayfasına
-  b) NOT_SET, CANCELLED veya STOPPED durumundaysa doğrudan Plans sayfasına
+  b) Kalan süresi yoksa ve NOT_SET, CANCELLED veya STOPPED durumundaysa doğrudan Plans sayfasına
+
 -- DONE -- 8) CANCELLED olan hesaplardaki son kullanım zamanı (ve plan adı) değiştirilmez, kullanıcı o zamana kadar kullanabilir. Fakat Subscription bilgileri sıfırlanır!
 -- DONE -- 9) CANCELLED iken SUBSCRIBED olan hesaplar için madde 2 işlemleri yapılacak, ayrıca
             a) CANCELLED den daha önceki durumu SUBSCRIBED ise ve hesabında kalan günler varsa yeni hesabına eklenecek
             b) Diğer tüm durumlarda abonelik hemen başlar
-10) Sadece Aktif statüdeki firmaların linkleri kontrol edilecek
+-- DONE --10) Sadece Aktif statüdeki firmaların linkleri kontrol edilecek
 
 İstisnalar
 1) Kullanıcı kredi kartı bilgisini değiştirecekse önce hesabını iptal etmeli

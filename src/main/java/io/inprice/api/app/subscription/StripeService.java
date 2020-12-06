@@ -2,6 +2,8 @@ package io.inprice.api.app.subscription;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.stripe.exception.StripeException;
 import com.stripe.model.Address;
@@ -25,10 +27,14 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
+import io.inprice.api.email.EmailSender;
+import io.inprice.api.email.EmailTemplate;
+import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.CompanyStatus;
 import io.inprice.common.meta.SubsEvent;
@@ -41,6 +47,9 @@ import io.inprice.common.utils.DateUtils;
 class StripeService {
 
   private static final Logger log = LoggerFactory.getLogger(StripeService.class);
+
+  private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
+  private final TemplateRenderer templateRenderer = Beans.getSingleton(TemplateRenderer.class);
 
   /**
    * To get a payment, creates checkout session for the user
@@ -317,6 +326,16 @@ class StripeService {
                   if (companyDao.startSubscription(dto, CompanyStatus.SUBSCRIBED.name(), companyId)) {
                     boolean isOK = updateInvoiceInfo(dto);
                     if (isOK) {
+
+                      Map<String, Object> dataMap = new HashMap<>(5);
+                      dataMap.put("user", dto.getEmail());
+                      dataMap.put("company", dto.getTitle());
+                      dataMap.put("plan", dto.getPlanName());
+                      dataMap.put("invoiceUrl", trans.getFileUrl());
+                      dataMap.put("subsRenewalAt", DateUtils.formatReverseDate(dto.getRenewalDate()));
+                      String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_STARTED, dataMap);
+                      emailSender.send(Props.APP_EMAIL_SENDER(), "Your subscription for inprice just started", dto.getEmail(), message);
+
                       res[0] = Responses.OK;
                       log.info("A new subscription is started: Title: {}, Company Id: {}", dto.getTitle(), companyId);
                     } else {
@@ -333,6 +352,16 @@ class StripeService {
       
               case SUBSCRIPTION_RENEWAL: {
                 if (companyDao.renewSubscription(companyId, CompanyStatus.SUBSCRIBED.name(), dto.getRenewalDate())) {
+
+                  Map<String, Object> dataMap = new HashMap<>(5);
+                  dataMap.put("user", dto.getEmail());
+                  dataMap.put("company", dto.getTitle());
+                  dataMap.put("plan", dto.getPlanName());
+                  dataMap.put("invoiceUrl", trans.getFileUrl());
+                  dataMap.put("subsRenewalAt", DateUtils.formatReverseDate(dto.getRenewalDate()));
+                  String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_RENEWAL, dataMap);
+                  emailSender.send(Props.APP_EMAIL_SENDER(), "Your subscription is extended", dto.getEmail(), message);
+
                   res[0] = Responses.OK;
                   log.info("Subscription is renewed: Company Id: {}", companyId);
                 } else {
@@ -344,6 +373,13 @@ class StripeService {
               case SUBSCRIPTION_CANCELLED: {
                 if (company.getStatus().isOKForCancel()) {
                   if (companyDao.cancelSubscription(companyId)) {
+
+                    Map<String, Object> dataMap = new HashMap<>(5);
+                    dataMap.put("user", dto.getEmail());
+                    dataMap.put("company", dto.getTitle());
+                    String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_CANCELLED, dataMap);
+                    emailSender.send(Props.APP_EMAIL_SENDER(), "Your subscription is cancelled", dto.getEmail(), message);
+  
                     res[0] = Responses.OK;
                     log.info("Subscription is cancelled: Company: {}, Pre.Status: {}", companyId, company.getStatus());
                   } else {
@@ -357,6 +393,27 @@ class StripeService {
               }
       
               case PAYMENT_FAILED: {
+                EmailTemplate template = null;
+
+                Map<String, Object> dataMap = new HashMap<>(4);
+                dataMap.put("user", dto.getEmail());
+                dataMap.put("company", dto.getTitle());
+                if (dto.getRenewalDate() != null) {
+                  long days = 3 + DateUtils.findDayDiff(new Date(), dto.getRenewalDate());
+                  if (days > 0) {
+                    Date lastTryingDate = org.apache.commons.lang3.time.DateUtils.addDays(dto.getRenewalDate(), 3);
+                    dataMap.put("days", days);
+                    dataMap.put("lastTryingDate", DateUtils.formatReverseDate(lastTryingDate));
+                    template = EmailTemplate.PAYMENT_FAILED_HAS_MORE_DAYS;
+                  } else {
+                    template = EmailTemplate.PAYMENT_FAILED_LAST_TIME;
+                  }
+                } else {
+                  template = EmailTemplate.PAYMENT_FAILED_FIRST_TIME;
+                }
+                String message = templateRenderer.render(template, dataMap);
+                emailSender.send(Props.APP_EMAIL_SENDER(), "Your payment failed", dto.getEmail(), message);
+
                 res[0] = Responses.OK; // must be set true so that the transactional can reflect on database
                 log.warn("Payment failed! Company Id: {}", companyId);
                 break;
@@ -367,18 +424,21 @@ class StripeService {
                 break;
       
             }
-      
+
             if (res[0].isOK()) {
               boolean isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
               if (isOK) {
-                CompanyStatus status = null;
                 if (trans.getEvent().equals(SubsEvent.SUBSCRIPTION_STARTED)) {
-                  status = CompanyStatus.SUBSCRIBED;
+                  isOK = 
+                    subscriptionDao.insertCompanyStatusHistory(
+                      company.getId(), 
+                      CompanyStatus.SUBSCRIBED.name(),
+                      dto.getPlanName(),
+                      dto.getSubsId(),
+                      dto.getCustId()
+                    );
                 } else if (trans.getEvent().equals(SubsEvent.SUBSCRIPTION_CANCELLED)) {
-                  status = CompanyStatus.CANCELLED;
-                }
-                if (status != null) {
-                  isOK = subscriptionDao.insertCompanyStatusHistory(company.getId(), status.name());
+                  isOK = subscriptionDao.insertCompanyStatusHistory(company.getId(), CompanyStatus.CANCELLED.name());
                 }
               }
 

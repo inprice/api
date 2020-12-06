@@ -22,6 +22,7 @@ import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.email.EmailSender;
+import io.inprice.api.email.EmailTemplate;
 import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
@@ -81,7 +82,7 @@ class CompanyService {
           dataMap.put("company", dto.getCompanyName());
           dataMap.put("token", token.substring(0,3)+"-"+token.substring(3));
 
-          String message = renderer.renderRegisterActivationLink(dataMap);
+          String message = renderer.render(EmailTemplate.REGISTER_ACTIVATION_LINK, dataMap);
           emailSender.send(
             Props.APP_EMAIL_SENDER(), 
             "About " + dto.getCompanyName() + " registration on inprice.io",

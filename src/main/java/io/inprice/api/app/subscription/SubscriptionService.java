@@ -19,6 +19,7 @@ import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.email.EmailSender;
+import io.inprice.api.email.EmailTemplate;
 import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.helpers.Commons;
@@ -83,7 +84,7 @@ class SubscriptionService {
         res = stripeService.cancel(company);
         if (res.isOK()) {
           res = Commons.refreshSession(company, CompanyStatus.CANCELLED, null);
-          final String message = templateRenderer.renderSubsciptionCancelled(res.getData());
+          final String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_CANCELLED, res.getData());
           emailSender.send(Props.APP_EMAIL_SENDER(), "Subscription cancel", CurrentUser.getEmail(), message);
         }
       } else {
@@ -125,7 +126,13 @@ class SubscriptionService {
                 SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
                 isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
                 if (isOK) {
-                  isOK = subscriptionDao.insertCompanyStatusHistory(company.getId(), CompanyStatus.FREE.name());
+                  isOK = 
+                    subscriptionDao.insertCompanyStatusHistory(
+                      company.getId(),
+                      CompanyStatus.FREE.name(),
+                      basicPlan.getName(),
+                      null, null
+                    );
                 }
               }
 

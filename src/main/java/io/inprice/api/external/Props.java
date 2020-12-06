@@ -68,4 +68,8 @@ public class Props {
     return System.getenv().get("API_KEYS_STRIPE_WEBHOOK");
   }
 
+  public static String TIME_PERIOD_OF_REMINDER_FOR_FREE_COMPANIES() {
+    return System.getenv().getOrDefault("TIME_PERIOD_OF_REMINDER_FOR_FREE_COMPANIES", "1d");
+  }
+
 }

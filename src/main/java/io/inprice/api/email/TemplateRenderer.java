@@ -29,24 +29,8 @@ public class TemplateRenderer {
       cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
    }
 
-   public String renderForgotPassword(Map<String, Object> data) {
-      return render("forgot-password.html", data);
-   }
-
-   public String renderInvitationForNewUsers(Map<String, Object> data) {
-      return render("invitation-for-new-users.html", data);
-   }
-
-   public String renderInvitationForExistingUsers(Map<String, Object> data) {
-      return render("invitation-for-existing-users.html", data);
-   }
-
-   public String renderRegisterActivationLink(Map<String, Object> data) {
-      return render("register-activation-link.html", data);
-   }
-
-   public String renderSubsciptionCancelled(Map<String, Object> data) {
-      return render("subscription-cancelled.html", data);
+   public String render(EmailTemplate emailTemplate, Map<String, Object> data) {
+      return render(emailTemplate.getFileName(), data);
    }
 
    private String render(String name, Map<String, Object> data) {
