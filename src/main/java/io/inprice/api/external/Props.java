@@ -72,4 +72,12 @@ public class Props {
     return System.getenv().getOrDefault("TIME_PERIOD_OF_REMINDER_FOR_FREE_COMPANIES", "1d");
   }
 
+  public static String TIME_PERIOD_OF_STOPPING_FREE_COMPANIES() {
+    return System.getenv().getOrDefault("TIME_PERIOD_OF_STOPPING_FREE_COMPANIES", "1h");
+  }
+
+  public static String TIME_PERIOD_OF_STOPPING_SUBSCRIBED_COMPANIES() {
+    return System.getenv().getOrDefault("TIME_PERIOD_OF_STOPPING_SUBSCRIBED_COMPANIES", "57m");
+  }
+
 }

@@ -75,7 +75,7 @@ public class ReminderForFreeCompanies implements Runnable {
             dataMap.put("model", company.getStatus());
             dataMap.put("days", DateUtils.findDayDiff(company.getSubsRenewalAt(), new Date()));
             dataMap.put("subsRenewalAt", DateUtils.formatReverseDate(company.getSubsRenewalAt()));
-            String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_RENEWAL, dataMap);
+            String message = templateRenderer.render(EmailTemplate.FREE_COMPANY_REMINDER, dataMap);
             emailSender.send(Props.APP_EMAIL_SENDER(), "Your subscription is about to end", user.getEmail(), message);
 
             affected++;

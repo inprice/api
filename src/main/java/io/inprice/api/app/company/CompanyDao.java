@@ -12,6 +12,8 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
+import io.inprice.api.app.company.mapper.CompanyIdUserEmail;
+import io.inprice.api.app.company.mapper.CompanyIdUserEmailMapper;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.common.mappers.CompanyMapper;
 import io.inprice.common.models.Company;
@@ -82,13 +84,33 @@ public interface CompanyDao {
   )
   boolean cancelSubscription(@Bind("id") Long id);
 
+  // only two days remaining (last op. is to sending a final message)
   @SqlQuery(
     "select * from company "+
     "where status in (<statusList>) "+
-    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) > 0 "+
-    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) <= 3"
+    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) > 1 "+
+    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) < 4"
   )
   @UseRowMapper(CompanyMapper.class)
   List<Company> findAboutToExpiredFreeCompanyList(@BindList("statusList") List<String> statusList);
+
+  @SqlQuery("select * from company where status in (<statusList>) and subs_renewal_at <= now()")
+  @UseRowMapper(CompanyMapper.class)
+  List<Company> findExpiredFreeCompanyList(@BindList("statusList") List<String> statusList);
+
+  @SqlQuery(
+    "select c.id, email from company as c " +
+    "inner join user as u on u.id = c.admin_id " +
+    "where c.status='SUBSCRIBED' "+
+    "  and c.subs_renewal_at => now() + interval 4 day"
+  )
+  @UseRowMapper(CompanyIdUserEmailMapper.class)
+  List<CompanyIdUserEmail> findExpiredSubscribedCompanysEmailList();
+
+  @SqlUpdate("update company set status='STOPPED', last_status_update=now() where id=:companyId")
+  boolean stopCompany(@Bind("companyId") long companyId);
+
+  @SqlUpdate("insert into company_history (company_id, status) values (:companyId, :status)")
+  boolean insertCompanyStatusHistory(@Bind("companyId") Long companyId, @Bind("status") String status);
 
 }

@@ -18,11 +18,12 @@ public enum EmailTemplate {
   PAYMENT_FAILED_LAST_TIME("payment-failed-last-time"),
 
   SUBSCRIPTION_STARTED("subscription-started"),
-  SUBSCRIPTION_RENEWAL("subscription-renewal"),
+  SUBSCRIPTION_RENEWAL("subscription-renewed"),
   SUBSCRIPTION_CANCELLED("subscription-cancelled"),
   SUBSCRIPTION_STOPPED("subscription-stopped"),
 
-  REMINDER_FOR_FREE_COMPANIES("reminder-for-free-companies");
+  FREE_COMPANY_REMINDER("free-company-reminder"),
+  FREE_COMPANY_STOPPED("free-company-stopped");
 
   private String fileName;
 

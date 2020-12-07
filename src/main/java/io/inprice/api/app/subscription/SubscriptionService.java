@@ -18,9 +18,6 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
-import io.inprice.api.email.EmailSender;
-import io.inprice.api.email.EmailTemplate;
-import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
@@ -39,8 +36,6 @@ class SubscriptionService {
   private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
 
   private final StripeService stripeService = Beans.getSingleton(StripeService.class);
-  private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
-  private final TemplateRenderer templateRenderer = Beans.getSingleton(TemplateRenderer.class);
 
   Response createCheckoutSession(int planId) {
     return stripeService.createCheckoutSession(planId);
@@ -84,8 +79,6 @@ class SubscriptionService {
         res = stripeService.cancel(company);
         if (res.isOK()) {
           res = Commons.refreshSession(company, CompanyStatus.CANCELLED, null);
-          final String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_CANCELLED, res.getData());
-          emailSender.send(Props.APP_EMAIL_SENDER(), "Subscription cancel", CurrentUser.getEmail(), message);
         }
       } else {
         res = Responses.Illegal.NOT_SUITABLE_FOR_CANCELLATION;

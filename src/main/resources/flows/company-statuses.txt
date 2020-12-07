@@ -7,10 +7,9 @@ Genel özellikler
 -- DONE -- 6) FREE, COUPONED ve CANCELLED (özel durum için 9. maddeye bakınız) iken SUBSCRIBED durumuna geçerken madde 2 işlemleri yapılacak
 
 7) Kullanıcı login olduktan sonra
-  a) Kalan süresi varsa
-     i) Ürün sayısı 0 dan büyükse Dashboard a
-    ii) Ürün sayısı 0 sa doğrudan ürün tanıtımları sayfasına
-  b) Kalan süresi yoksa ve NOT_SET, CANCELLED veya STOPPED durumundaysa doğrudan Plans sayfasına
+  a) Kalan süresi varsa ve ürün sayısı 0 dan büyükse Dashboard a
+  b) Kalan süresi varsa ve ürün sayısı 0 sa doğrudan ürün tanıtımları sayfasına
+  c) NOT_SET, CANCELLED veya STOPPED durumundaysa doğrudan Plans sayfasına
 
 -- DONE -- 8) CANCELLED olan hesaplardaki son kullanım zamanı (ve plan adı) değiştirilmez, kullanıcı o zamana kadar kullanabilir. Fakat Subscription bilgileri sıfırlanır!
 -- DONE -- 9) CANCELLED iken SUBSCRIBED olan hesaplar için madde 2 işlemleri yapılacak, ayrıca
