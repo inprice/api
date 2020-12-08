@@ -6,10 +6,10 @@ Genel özellikler
 -- DONE -- 5) FREE ve COUPONED iken son 3 gün kala günde birkez olacak şekilde hatırlatma maili atılacak
 -- DONE -- 6) FREE, COUPONED ve CANCELLED (özel durum için 9. maddeye bakınız) iken SUBSCRIBED durumuna geçerken madde 2 işlemleri yapılacak
 
-7) Kullanıcı login olduktan sonra
-  a) Kalan süresi varsa ve ürün sayısı 0 dan büyükse Dashboard a
-  b) Kalan süresi varsa ve ürün sayısı 0 sa doğrudan ürün tanıtımları sayfasına
-  c) NOT_SET, CANCELLED veya STOPPED durumundaysa doğrudan Plans sayfasına
+-- DONE -- 7) Kullanıcı login olduktan sonra
+-- DONE --   a) Kalan süresi varsa ve ürün sayısı 0 dan büyükse Dashboard a
+-- DONE --   b) Kalan süresi varsa ve ürün sayısı 0 sa doğrudan ürün tanıtımları sayfasına
+-- DONE --   c) NOT_SET, CANCELLED veya STOPPED durumundaysa doğrudan Plans sayfasına
 
 -- DONE -- 8) CANCELLED olan hesaplardaki son kullanım zamanı (ve plan adı) değiştirilmez, kullanıcı o zamana kadar kullanabilir. Fakat Subscription bilgileri sıfırlanır!
 -- DONE -- 9) CANCELLED iken SUBSCRIBED olan hesaplar için madde 2 işlemleri yapılacak, ayrıca
@@ -18,9 +18,9 @@ Genel özellikler
 -- DONE --10) Sadece Aktif statüdeki firmaların linkleri kontrol edilecek
 
 İstisnalar
-1) Kullanıcı kredi kartı bilgisini değiştirecekse önce hesabını iptal etmeli
-2) Upgrade / Downgrade durumlarında da hesap iptal etmeli
-3) Fatura başlığı kısmı her durumda erişilebilir olacak
+-- DONE -- 1) Kullanıcı kredi kartı bilgisini değiştirecekse önce hesabını iptal etmeli
+-- DONE -- 2) Upgrade / Downgrade durumlarında da hesap iptal etmeli
+-- DONE -- 3) Fatura başlığı kısmı her durumda erişilebilir olacak
 
 ------------------------------
 

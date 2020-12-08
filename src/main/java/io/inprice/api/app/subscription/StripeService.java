@@ -99,6 +99,14 @@ class StripeService {
         }
       }
 
+      // used for adding session data (especially trialPeriodDays for upgraders and downgraders)
+      SessionCreateParams.SubscriptionData.Builder scpBuilder = SessionCreateParams.SubscriptionData.builder()
+        .putMetadata("planId", ""+planId)
+        .putMetadata("companyId", ""+CurrentUser.getCompanyId());
+      if (trialPeriodDays > 0) {
+        scpBuilder = scpBuilder.setTrialPeriodDays(trialPeriodDays);
+      }
+
       SessionCreateParams params = SessionCreateParams.builder()
         .setCustomer(subsCustomerId)
         .setCustomerEmail(CurrentUser.getEmail())
@@ -115,14 +123,7 @@ class StripeService {
           )
         )
         .setClientReferenceId(""+planId)
-        .setSubscriptionData(
-          SessionCreateParams.SubscriptionData
-          .builder()
-              .putMetadata("planId", ""+planId)
-              .putMetadata("companyId", ""+CurrentUser.getCompanyId())
-              .setTrialPeriodDays(trialPeriodDays)
-            .build()
-          )
+        .setSubscriptionData(scpBuilder.build())
         .putMetadata("description", plan.getFeatures().get(0))
         .addLineItem(
           SessionCreateParams.LineItem

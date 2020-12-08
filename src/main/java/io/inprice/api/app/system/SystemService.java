@@ -1,8 +1,5 @@
 package io.inprice.api.app.system;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.jdbi.v3.core.Handle;
 
 import io.inprice.api.app.company.CompanyDao;
@@ -17,23 +14,7 @@ import io.inprice.common.models.Company;
 public class SystemService {
 
   Response getPlans() {
-    Response res = Responses.NotFound.COMPANY;
-
-    try (Handle handle = Database.getHandle()) {
-      CompanyDao companyDao = handle.attach(CompanyDao.class);
-      Company company = companyDao.findById(CurrentUser.getCompanyId());
-
-      if (company != null) {
-        Map<String, Object> data = new HashMap<>(2);
-        data.put("company", company);
-        data.put("plans", Plans.getPlans());
-        res = new Response(data);
-      }
-    } catch (Exception e) {
-      res = Responses.DataProblem.DB_PROBLEM;
-    }
-
-    return res;
+    return new Response(Plans.getPlans());
   }
 
   Response refreshSession() {
