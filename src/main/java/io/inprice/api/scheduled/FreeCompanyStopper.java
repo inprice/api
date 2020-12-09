@@ -5,11 +5,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Global;
 import io.inprice.api.email.EmailSender;
@@ -19,7 +21,9 @@ import io.inprice.api.external.Props;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.Company;
+import io.inprice.common.models.CompanyTrans;
 import io.inprice.common.models.User;
 
 /**
@@ -66,21 +70,37 @@ public class FreeCompanyStopper implements Runnable {
             UserDao userDao = transactional.attach(UserDao.class);
 
             for (Company company: expiredCompanyList) {
-              boolean isOK = companyDao.stopCompany(company.getId());
+              boolean isOK = companyDao.stopCompany(company.getId(), CompanyStatus.STOPPED.name());
               if (isOK) {
-                isOK = companyDao.insertCompanyStatusHistory(company.getId(), CompanyStatus.STOPPED.name());
+
+                CompanyTrans trans = new CompanyTrans();
+                trans.setCompanyId(company.getId());
+                trans.setSuccessful(Boolean.TRUE);
+                trans.setReason(("subscription_cancel"));
+                trans.setDescription(("Manual cancelation."));
+
+                if (CompanyStatus.FREE.equals(company.getStatus()))
+                  trans.setEvent(SubsEvent.FREE_USE_STOPPED);
+                else
+                  trans.setEvent(SubsEvent.COUPON_USE_STOPPED);
+      
+                SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+                isOK = subscriptionDao.insertTrans(trans, trans.getEvent().name());
+                if (isOK) {
+                  isOK = companyDao.insertCompanyStatusHistory(company.getId(), CompanyStatus.STOPPED.name());
+                }
               }
 
               if (isOK) {
                 User user = userDao.findById(company.getId());
-                String model = company.getStatus().equals(CompanyStatus.FREE) ? "FREE USE" : "COUPON";
+
+                String companyName = StringUtils.isNotBlank(company.getTitle()) ? company.getTitle() : company.getName();
 
                 Map<String, Object> dataMap = new HashMap<>(3);
                 dataMap.put("user", user.getEmail());
-                dataMap.put("company", company.getTitle());
-                dataMap.put("model", model);
-                String message = templateRenderer.render(EmailTemplate.FREE_COMPANY_STOPPED, dataMap);
-                emailSender.send(Props.APP_EMAIL_SENDER(), "The last notification for your " + model.toLowerCase() + " in inprice. " + model, user.getEmail(), message);
+                dataMap.put("company", companyName);
+                String message = templateRenderer.render(EmailTemplate.FREE_COMPANY_CANCELLED, dataMap);
+                emailSender.send(Props.APP_EMAIL_SENDER(), "inprice subscription is cancelled.", user.getEmail(), message);
 
                 affected++;
               }

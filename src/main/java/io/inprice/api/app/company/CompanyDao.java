@@ -107,8 +107,8 @@ public interface CompanyDao {
   @UseRowMapper(CompanyIdUserEmailMapper.class)
   List<CompanyIdUserEmail> findExpiredSubscribedCompanysEmailList();
 
-  @SqlUpdate("update company set status='STOPPED', last_status_update=now() where id=:companyId")
-  boolean stopCompany(@Bind("companyId") long companyId);
+  @SqlUpdate("update company set status=:status, last_status_update=now() where id=:companyId")
+  boolean stopCompany(@Bind("companyId") long companyId, @Bind("status") String status);
 
   @SqlUpdate("insert into company_history (company_id, status) values (:companyId, :status)")
   boolean insertCompanyStatusHistory(@Bind("companyId") Long companyId, @Bind("status") String status);

@@ -18,8 +18,6 @@ public class ForRedis extends ForResponse {
 
   private Long userId;
   private Long companyId;
-  private String timezone;
-  private String currencyFormat;
   private String hash;
   private Date accessedAt = new Date();
 

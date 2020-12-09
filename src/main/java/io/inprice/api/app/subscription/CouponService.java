@@ -86,7 +86,7 @@ class CouponService {
                         CompanyTrans trans = new CompanyTrans();
                         trans.setCompanyId(CurrentUser.getCompanyId());
                         trans.setEventId(coupon.getCode());
-                        trans.setEvent(SubsEvent.COUPON_USED);
+                        trans.setEvent(SubsEvent.COUPON_USE_STARTED);
                         trans.setSuccessful(Boolean.TRUE);
                         trans.setReason("coupon");
                         trans.setDescription(coupon.getCode() + " is used.");

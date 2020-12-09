@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
 import io.inprice.api.app.company.mapper.CompanyIdUserEmail;
+import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.consts.Global;
 import io.inprice.api.email.EmailSender;
 import io.inprice.api.email.EmailTemplate;
@@ -18,6 +19,8 @@ import io.inprice.api.external.Props;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.SubsEvent;
+import io.inprice.common.models.CompanyTrans;
 
 /**
  * Stops SUBSCRIBED companies after four days later from their subs renewal date expired.
@@ -55,10 +58,21 @@ public class SubscribedCompanyStopper implements Runnable {
 
           if (expiredCompanyList != null && expiredCompanyList.size() > 0) {
             for (CompanyIdUserEmail idAndEmail: expiredCompanyList) {
-              boolean isOK = companyDao.stopCompany(idAndEmail.getCompanyId());
+              boolean isOK = companyDao.stopCompany(idAndEmail.getCompanyId(), CompanyStatus.STOPPED.name());
+
+              CompanyTrans trans = new CompanyTrans();
+              trans.setCompanyId(idAndEmail.getCompanyId());
+              trans.setEvent(SubsEvent.SUBSCRIPTION_STOPPED);
+              trans.setSuccessful(Boolean.TRUE);
+              trans.setReason(("subscription_cancel"));
+              trans.setDescription(("Manual cancelation."));
+
+              SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+              isOK = subscriptionDao.insertTrans(trans, trans.getEvent().name());
               if (isOK) {
                 isOK = companyDao.insertCompanyStatusHistory(idAndEmail.getCompanyId(), CompanyStatus.STOPPED.name());
               }
+
               if (isOK) {
                 Map<String, Object> dataMap = new HashMap<>(1);
                 dataMap.put("user", idAndEmail.getEmail());

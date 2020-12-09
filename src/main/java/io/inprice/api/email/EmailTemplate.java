@@ -23,6 +23,7 @@ public enum EmailTemplate {
   SUBSCRIPTION_STOPPED("subscription-stopped"),
 
   FREE_COMPANY_REMINDER("free-company-reminder"),
+  FREE_COMPANY_CANCELLED("free-company-cancelled"),
   FREE_COMPANY_STOPPED("free-company-stopped");
 
   private String fileName;
