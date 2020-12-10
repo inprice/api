@@ -88,13 +88,12 @@ class CouponService {
                         trans.setEventId(coupon.getCode());
                         trans.setEvent(SubsEvent.COUPON_USE_STARTED);
                         trans.setSuccessful(Boolean.TRUE);
-                        trans.setReason("coupon");
                         trans.setDescription(coupon.getCode() + " is used.");
 
                         isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
                         if (isOK) {
                           isOK = 
-                            subscriptionDao.insertCompanyStatusHistory(
+                            companyDao.insertStatusHistory(
                               company.getId(), 
                               CompanyStatus.COUPONED.name(),
                               selectedPlan.getName(),

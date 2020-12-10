@@ -64,13 +64,12 @@ public class SubscribedCompanyStopper implements Runnable {
               trans.setCompanyId(idAndEmail.getCompanyId());
               trans.setEvent(SubsEvent.SUBSCRIPTION_STOPPED);
               trans.setSuccessful(Boolean.TRUE);
-              trans.setReason(("subscription_cancel"));
-              trans.setDescription(("Manual cancelation."));
+              trans.setDescription(("Stopped due to payment problem."));
 
               SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
               isOK = subscriptionDao.insertTrans(trans, trans.getEvent().name());
               if (isOK) {
-                isOK = companyDao.insertCompanyStatusHistory(idAndEmail.getCompanyId(), CompanyStatus.STOPPED.name());
+                isOK = companyDao.insertStatusHistory(idAndEmail.getCompanyId(), CompanyStatus.STOPPED.name());
               }
 
               if (isOK) {

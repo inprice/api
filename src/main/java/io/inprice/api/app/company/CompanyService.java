@@ -232,6 +232,8 @@ class CompanyService {
           Company company = companyDao.findByAdminId(CurrentUser.getCompanyId());
 
           if (company != null) {
+            log.info("{} is being deleted. Id: {}...", company.getName(), company.getId());
+
             String where = "where company_id=" + CurrentUser.getCompanyId();
 
             Batch batch = transactional.createBatch();
@@ -260,6 +262,8 @@ class CompanyService {
                 RedisClient.removeSesion(hash);
               }
             }
+
+            log.info("{} is deleted. Id: {}.", company.getName(), company.getId());
             res[0] = Responses.OK;
           } else {
             res[0] = Responses.Invalid.COMPANY;

@@ -132,7 +132,6 @@ class SubscriptionService {
           trans.setCompanyId(company.getId());
           trans.setEventId(subsEventId);
           trans.setSuccessful(Boolean.TRUE);
-          trans.setReason(("subscription_cancel"));
           trans.setDescription(("Manual cancelation."));
 
           switch (company.getStatus()) {
@@ -148,7 +147,7 @@ class SubscriptionService {
           }
 
           SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
-          subscriptionDao.insertTrans(trans, CompanyStatus.CANCELLED.name());
+          subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
           
           res[0] = Commons.refreshSession(company, CompanyStatus.CANCELLED, null);
         }
@@ -193,7 +192,7 @@ class SubscriptionService {
                 isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
                 if (isOK) {
                   isOK = 
-                    subscriptionDao.insertCompanyStatusHistory(
+                    companyDao.insertStatusHistory(
                       company.getId(),
                       CompanyStatus.FREE.name(),
                       basicPlan.getName(),

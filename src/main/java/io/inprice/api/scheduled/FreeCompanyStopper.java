@@ -76,8 +76,7 @@ public class FreeCompanyStopper implements Runnable {
                 CompanyTrans trans = new CompanyTrans();
                 trans.setCompanyId(company.getId());
                 trans.setSuccessful(Boolean.TRUE);
-                trans.setReason(("subscription_cancel"));
-                trans.setDescription(("Manual cancelation."));
+                trans.setDescription(("Expired."));
 
                 if (CompanyStatus.FREE.equals(company.getStatus()))
                   trans.setEvent(SubsEvent.FREE_USE_STOPPED);
@@ -87,7 +86,7 @@ public class FreeCompanyStopper implements Runnable {
                 SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
                 isOK = subscriptionDao.insertTrans(trans, trans.getEvent().name());
                 if (isOK) {
-                  isOK = companyDao.insertCompanyStatusHistory(company.getId(), CompanyStatus.STOPPED.name());
+                  isOK = companyDao.insertStatusHistory(company.getId(), CompanyStatus.STOPPED.name());
                 }
               }
 

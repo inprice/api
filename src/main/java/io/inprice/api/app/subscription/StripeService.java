@@ -427,7 +427,7 @@ class StripeService {
               if (isOK) {
                 if (trans.getEvent().equals(SubsEvent.SUBSCRIPTION_STARTED)) {
                   isOK = 
-                    subscriptionDao.insertCompanyStatusHistory(
+                    companyDao.insertStatusHistory(
                       company.getId(), 
                       CompanyStatus.SUBSCRIBED.name(),
                       dto.getPlanName(),
@@ -435,7 +435,7 @@ class StripeService {
                       dto.getCustId()
                     );
                 } else if (trans.getEvent().equals(SubsEvent.SUBSCRIPTION_CANCELLED)) {
-                  isOK = subscriptionDao.insertCompanyStatusHistory(company.getId(), CompanyStatus.CANCELLED.name());
+                  isOK = companyDao.insertStatusHistory(company.getId(), CompanyStatus.CANCELLED.name());
                 }
               }
 

@@ -111,6 +111,13 @@ public interface CompanyDao {
   boolean stopCompany(@Bind("companyId") long companyId, @Bind("status") String status);
 
   @SqlUpdate("insert into company_history (company_id, status) values (:companyId, :status)")
-  boolean insertCompanyStatusHistory(@Bind("companyId") Long companyId, @Bind("status") String status);
+  boolean insertStatusHistory(@Bind("companyId") Long companyId, @Bind("status") String status);
+
+  @SqlUpdate(
+    "insert into company_history (company_id, status, plan_name, subs_id, subs_customer_id) " +
+    "values (:companyId, :status, :planName, :subsId, :subsCustomerId)"
+  )
+  boolean insertStatusHistory(@Bind("companyId") Long companyId, @Bind("status") String status, 
+    @Bind("planName") String planName, @Bind("subsId") String subsId, @Bind("subsCustomerId") String subsCustomerId);
 
 }
