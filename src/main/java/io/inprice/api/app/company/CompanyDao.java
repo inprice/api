@@ -12,8 +12,8 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
-import io.inprice.api.app.company.mapper.CompanyIdUserEmail;
-import io.inprice.api.app.company.mapper.CompanyIdUserEmailMapper;
+import io.inprice.api.app.company.mapper.CompanyInfo;
+import io.inprice.api.app.company.mapper.CompanyInfoMapper;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.common.mappers.CompanyMapper;
 import io.inprice.common.models.Company;
@@ -99,13 +99,13 @@ public interface CompanyDao {
   List<Company> findExpiredFreeCompanyList(@BindList("statusList") List<String> statusList);
 
   @SqlQuery(
-    "select c.id, email from company as c " +
+    "select c.id, name, email, subs_customer_id from company as c " +
     "inner join user as u on u.id = c.admin_id " +
     "where c.status='SUBSCRIBED' "+
     "  and c.subs_renewal_at => now() + interval 4 day"
   )
-  @UseRowMapper(CompanyIdUserEmailMapper.class)
-  List<CompanyIdUserEmail> findExpiredSubscribedCompanysEmailList();
+  @UseRowMapper(CompanyInfoMapper.class)
+  List<CompanyInfo> findExpiredSubscriberCompanyList();
 
   @SqlUpdate("update company set status=:status, last_status_update=now() where id=:companyId")
   boolean stopCompany(@Bind("companyId") long companyId, @Bind("status") String status);

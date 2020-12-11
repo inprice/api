@@ -252,7 +252,7 @@ public class URLImportService extends BaseImportService {
         return isOK;
       });
     } catch (Exception e) {
-      log.error("An error occurred during importing " + identifier, e);
+      log.error("Failed to import " + identifier, e);
       res[0] = Responses.ServerProblem.EXCEPTION;
     }
 

@@ -4,12 +4,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.stripe.model.Subscription;
+
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
-import io.inprice.api.app.company.mapper.CompanyIdUserEmail;
+import io.inprice.api.app.company.mapper.CompanyInfo;
 import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.consts.Global;
 import io.inprice.api.email.EmailSender;
@@ -53,30 +55,47 @@ public class SubscribedCompanyStopper implements Runnable {
         handle.inTransaction(transactional -> {
           CompanyDao companyDao = transactional.attach(CompanyDao.class);
 
-          List<CompanyIdUserEmail> expiredCompanyList = companyDao.findExpiredSubscribedCompanysEmailList();
+          List<CompanyInfo> expiredCompanyList = companyDao.findExpiredSubscriberCompanyList();
           int affected = 0;
 
           if (expiredCompanyList != null && expiredCompanyList.size() > 0) {
-            for (CompanyIdUserEmail idAndEmail: expiredCompanyList) {
-              boolean isOK = companyDao.stopCompany(idAndEmail.getCompanyId(), CompanyStatus.STOPPED.name());
+            for (CompanyInfo cinfo: expiredCompanyList) {
+
+              //we need to cancel stripe first
+              try {
+                Subscription subscription = Subscription.retrieve(cinfo.getSubsCustomerId());
+                Subscription subsResult = subscription.cancel();
+                if (subsResult != null && subsResult.getStatus().equals("canceled")) {
+                  log.info("Stopping subscription: {} stopped!", cinfo.getName());
+                } else if (subsResult != null) {
+                  log.warn("Stopping subscription: Unexpected subs status: {}", subsResult.getStatus());
+                } else {
+                  log.error("Stopping subscription: subsResult is null!");
+                }
+              } catch (Exception e) {
+                log.error("Stopping subscription: failed " + cinfo.getName(), e);
+              }
+
+              //then company can be cancellable
+              boolean isOK = companyDao.stopCompany(cinfo.getId(), CompanyStatus.STOPPED.name());
 
               CompanyTrans trans = new CompanyTrans();
-              trans.setCompanyId(idAndEmail.getCompanyId());
+              trans.setCompanyId(cinfo.getId());
               trans.setEvent(SubsEvent.SUBSCRIPTION_STOPPED);
               trans.setSuccessful(Boolean.TRUE);
-              trans.setDescription(("Stopped due to payment problem."));
+              trans.setDescription(("Stopped! Final payment failed."));
 
               SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
               isOK = subscriptionDao.insertTrans(trans, trans.getEvent().name());
               if (isOK) {
-                isOK = companyDao.insertStatusHistory(idAndEmail.getCompanyId(), CompanyStatus.STOPPED.name());
+                isOK = companyDao.insertStatusHistory(cinfo.getId(), CompanyStatus.STOPPED.name());
               }
 
               if (isOK) {
                 Map<String, Object> dataMap = new HashMap<>(1);
-                dataMap.put("user", idAndEmail.getEmail());
+                dataMap.put("user", cinfo.getEmail());
                 String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_STOPPED, dataMap);
-                emailSender.send(Props.APP_EMAIL_SENDER(), "The last notification for your subscription to inprice.", idAndEmail.getEmail(), message);
+                emailSender.send(Props.APP_EMAIL_SENDER(), "The last notification for your subscription to inprice.", cinfo.getEmail(), message);
 
                 affected++;
               }
@@ -90,6 +109,8 @@ public class SubscribedCompanyStopper implements Runnable {
           }
           return (affected > 0);
         });
+      } catch (Exception e) {
+        log.error("Failed to trigger " + clazz , e);
       }
       
     } finally {

@@ -120,7 +120,7 @@ public class AuthService {
 
               return Responses.OK;
             } catch (Exception e) {
-              log.error("An error occurred in rendering email for forgetting password", e);
+              log.error("Failed to render email for forgetting password", e);
               return Responses.ServerProblem.EXCEPTION;
             }
           } else {

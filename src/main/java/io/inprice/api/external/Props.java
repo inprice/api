@@ -80,4 +80,8 @@ public class Props {
     return System.getenv().getOrDefault("TIME_PERIOD_OF_STOPPING_SUBSCRIBED_COMPANIES", "57m");
   }
 
+  public static String TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS() {
+    return System.getenv().getOrDefault("TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS", "2h");
+  }
+
 }

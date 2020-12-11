@@ -97,7 +97,7 @@ class CompanyService {
         }
 
       } catch (Exception e) {
-        log.error("An error occurred in rendering email for activating register company", e);
+        log.error("Failed to render email for activating company register", e);
         return Responses.ServerProblem.EXCEPTION;
       }
     }
@@ -250,6 +250,7 @@ class CompanyService {
             batch.add("delete from member " + where);
             batch.add("delete from user_session " + where);
             batch.add("delete from user where id in (select admin_id from company where id=" + CurrentUser.getCompanyId() + ")");
+            batch.add("delete from checkout " + where);
             batch.add("delete from company_history " + where);
             batch.add("delete from company_trans " + where);
             batch.add("delete from company where id=" + CurrentUser.getCompanyId());

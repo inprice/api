@@ -87,6 +87,8 @@ public class ReminderForFreeCompanies implements Runnable {
         } else {
           log.info("No remainder sent to free or couponed companies!");
         }
+      } catch (Exception e) {
+        log.error("Failed to trigger " + clazz , e);
       }
       
     } finally {

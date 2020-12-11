@@ -11,6 +11,7 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.external.Props;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
+import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
 import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
@@ -34,10 +35,14 @@ public class StripeController implements Controller {
         );
         ctx.json(Commons.createResponse(ctx, service.handleHookEvent(event)));
       } catch (Exception e) {
-        log.error("An error occurred", e);
+        log.error("Failed to handle stripe's webhook!", e);
         ctx.json(Commons.createResponse(ctx, Responses.BAD_REQUEST));
       }
     });
+
+    app.post(Consts.Paths.Subscription.CANCEL_CHECKOUT + "/:hash", (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, service.cancelCheckout(ctx.pathParam("hash"))));
+    }, AccessRoles.ANYONE());
 
   }
 

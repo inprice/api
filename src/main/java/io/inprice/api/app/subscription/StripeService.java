@@ -37,8 +37,10 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.meta.CheckoutStatus;
 import io.inprice.common.meta.CompanyStatus;
 import io.inprice.common.meta.SubsEvent;
+import io.inprice.common.models.Checkout;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.CompanyHistory;
 import io.inprice.common.models.CompanyTrans;
@@ -53,12 +55,9 @@ class StripeService {
   private final TemplateRenderer templateRenderer = Beans.getSingleton(TemplateRenderer.class);
 
   /**
-   * To get a payment, creates checkout session for the user
+   * To get a payment, creates checkout session
    * 
-   * @param email
-   * @param companyId
    * @param planId
-   * @param sessionNo
    */
   Response createCheckoutSession(int planId) {
     Plan plan = Plans.findById(planId);
@@ -72,6 +71,19 @@ class StripeService {
       try (Handle handle = Database.getHandle()) {
         CompanyDao companyDao = handle.attach(CompanyDao.class);
         Company company = companyDao.findById(CurrentUser.getCompanyId());
+
+        //check if the last checkout is active
+        CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
+        Checkout checkout = checkoutDao.findLastCheckout(CurrentUser.getCompanyId());
+        if (checkout != null) {
+          if (CheckoutStatus.PENDING.equals(checkout.getStatus())) {
+            long diff = DateUtils.findHourDiff(checkout.getCreatedAt(), new Date());
+            String delay = (diff > 0 ? diff + " hour(s) more" : " a couple of minutes");
+            return new Response("You have an active checkout. Please wait " + delay + " for it to complete.");
+          } else if (CheckoutStatus.SUCCESSFUL.equals(checkout.getStatus()) && CompanyStatus.SUBSCRIBED.equals(company.getStatus())) {
+            return new Response("Your subscription and (last) checkout are successful. You cannot create a new checkout!");
+          }
+        }
 
         //finding Customer Id if exists previously
         subsCustomerId = company.getSubsCustomerId();
@@ -102,10 +114,9 @@ class StripeService {
       }
 
       // used for adding session data (especially trialPeriodDays for upgraders and downgraders)
-      SessionCreateParams.SubscriptionData.Builder scpBuilder = SessionCreateParams.SubscriptionData.builder()
-        .putMetadata("hash", checkoutHash)
-        .putMetadata("companyId", ""+CurrentUser.getCompanyId())
-        .putMetadata("planId", ""+planId);
+      SessionCreateParams.SubscriptionData.Builder scpBuilder = 
+        SessionCreateParams.SubscriptionData.builder().putMetadata("hash", checkoutHash);
+
       if (trialPeriodDays > 0) {
         scpBuilder = scpBuilder.setTrialPeriodDays(trialPeriodDays);
       }
@@ -113,12 +124,12 @@ class StripeService {
       SessionCreateParams params = SessionCreateParams.builder()
         .setCustomer(subsCustomerId)
         .setCustomerEmail(CurrentUser.getEmail())
+        .setClientReferenceId(CurrentUser.getCompanyId().toString())
         .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
         .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
         .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
         .setSuccessUrl(Props.APP_WEB_URL() + "/payment-ok?hash="+checkoutHash)
         .setCancelUrl(Props.APP_WEB_URL() + "/payment-cancel?hash="+checkoutHash)
-        .setClientReferenceId(""+CurrentUser.getCompanyId())
         .setSubscriptionData(scpBuilder.build())
         .putMetadata("description", plan.getFeatures().get(0))
         .addLineItem(
@@ -134,7 +145,7 @@ class StripeService {
         Session session = Session.create(params);
 
         CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
-        boolean isOK = checkoutDao.insert(checkoutHash, session.getId(), CurrentUser.getCompanyId(), planId);
+        boolean isOK = checkoutDao.insert(checkoutHash, session.getId(), CurrentUser.getCompanyId(), plan.getName());
         if (isOK) {
           return new Response(Collections.singletonMap("sessionId", session.getId()));
         } else {
@@ -175,6 +186,23 @@ class StripeService {
     return Responses.DataProblem.SUBSCRIPTION_PROBLEM;
   }
 
+  Response cancelCheckout(String checkoutHash) {
+    try (Handle handle = Database.getHandle()) {
+      if (StringUtils.isNotBlank(checkoutHash)) {
+        CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
+        Checkout checkout = checkoutDao.updateByHash(checkoutHash, CheckoutStatus.CANCELLED.name(), "Cancelled by user.");
+        if (checkout != null) {
+          return Responses.OK;
+        } else {
+          log.error("Failed to cancel checkout! Hash: {}", checkoutHash);
+        }
+      } else {
+        log.error("Failed to get checkout info! Hash is null.");
+      }
+    }
+    return new Response("Failed to find the checkout!");
+  }
+
   /**
    * Handles failed and successful invoice transactions to manage subscriptions
    * 
@@ -204,11 +232,14 @@ class StripeService {
             if (charge != null) {
               InvoiceLineItem li = invoice.getLines().getData().get(0);
 
+              Long companyId = null;
+              SubsEvent subsEvent = null;
+
               CustomerDTO dto = new CustomerDTO();
               dto.setRenewalDate(new java.sql.Timestamp(li.getPeriod().getEnd() * 1000));
 
-              SubsEvent subsEvent = null;
-              if (invoice.getBillingReason().equals("subscription_create")) {
+              //a new subscriber
+              if (invoice.getBillingReason().equals("subscription_create")) { // "subscription_cycle" is for renewals!
                 Address address = charge.getBillingDetails().getAddress();
   
                 dto.setEmail(invoice.getCustomerEmail());
@@ -221,30 +252,57 @@ class StripeService {
                 dto.setCountry(address.getCountry());
                 dto.setCustId(invoice.getCustomer());
                 dto.setSubsId(invoice.getSubscription());
-                dto.setPlanName(Plans.findById(Integer.parseInt(li.getMetadata().get("planId"))).getName());
-                subsEvent = SubsEvent.SUBSCRIPTION_STARTED;
+
+                //the checkout must be completed
+                try (Handle handle = Database.getHandle()) {
+                  CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
+                  String checkoutHash = li.getMetadata().get("hash");
+                  if (StringUtils.isNotBlank(checkoutHash)) {
+                    Checkout checkout = checkoutDao.updateByHash(checkoutHash, CheckoutStatus.SUCCESSFUL.name(), null);
+                    if (checkout != null) {
+                      companyId = checkout.getCompanyId();
+                      dto.setPlanName(checkout.getPlanName());
+                      subsEvent = SubsEvent.SUBSCRIPTION_STARTED;
+                    } else {
+                      log.error("Failed to finish checkout! Hash: {}", checkoutHash);
+                    }
+                  } else {
+                    log.error("Failed to get checkout info! Hash is null.");
+                  }
+                }
+  
               } else {
-                subsEvent = SubsEvent.SUBSCRIPTION_RENEWED;
+
+                try (Handle handle = Database.getHandle()) {
+                  CompanyDao companyDao = handle.attach(CompanyDao.class);
+                  Company company = companyDao.findBySubsCustomerId(invoice.getCustomer());
+                  if (company != null) {
+                    companyId = company.getId();
+                    subsEvent = SubsEvent.SUBSCRIPTION_RENEWED;
+                  } else {
+                    log.error("invoice.payment_succeeded: failed to find company by SubsCustomerId: {}", invoice.getCustomer());
+                  }
+                }
               }
 
-              Long companyId = null;
-              if (li.getMetadata() != null && li.getMetadata().size() > 0) {
-                companyId = Long.parseLong(li.getMetadata().get("companyId"));
+              //companyId must not be null for both a newcomer or a renewal!
+              if (companyId != null) {
+                CompanyTrans trans = new CompanyTrans();
+                trans.setCompanyId(companyId);
+                trans.setEventId(event.getId());
+                trans.setEvent(subsEvent);
+                trans.setSuccessful(Boolean.TRUE);
+                trans.setReason(invoice.getBillingReason());
+                trans.setDescription(li.getDescription());
+                trans.setFileUrl(invoice.getHostedInvoiceUrl());
+                res = addTransaction(null, invoice.getCustomer(), dto, trans);
+              } else {
+                res = Responses.ServerProblem.CHECKOUT_PROBLEM;
               }
-
-              CompanyTrans trans = new CompanyTrans();
-              trans.setCompanyId(companyId);
-              trans.setEventId(event.getId());
-              trans.setEvent(subsEvent);
-              trans.setSuccessful(Boolean.TRUE);
-              trans.setReason(invoice.getBillingReason());
-              trans.setDescription(li.getDescription());
-              trans.setFileUrl(invoice.getHostedInvoiceUrl());
-              res = addTransaction(null, invoice.getCustomer(), dto, trans);
             }
 
           } catch (Exception e) {
-            log.error("An error occurred.", e);
+            log.error("Failed to handle invoice.payment_succeeded event.", e);
             res = Responses.ServerProblem.EXCEPTION;
           }
 
@@ -252,27 +310,70 @@ class StripeService {
         }
 
         case "invoice.payment_failed": {
-          CompanyTrans trans = new CompanyTrans();
-          Long companyId = null;
           Invoice invoice = (Invoice) stripeObject;
-          if (invoice.getLines() != null && invoice.getLines().getData() != null && invoice.getLines().getData().size() > 0) {
-            InvoiceLineItem li = invoice.getLines().getData().get(0);
-            trans.setDescription(li.getDescription());
-            if (li.getMetadata().size() > 0) {
-              companyId = Long.parseLong(li.getMetadata().get("companyId"));
+          Long companyId = null;
+
+          //the checkout must be completed
+          try (Handle handle = Database.getHandle()) {
+            Charge charge = Charge.retrieve(invoice.getCharge());
+            if (charge != null) {
+              InvoiceLineItem li = (
+                invoice.getLines() != null && 
+                invoice.getLines().getData() != null && 
+                invoice.getLines().getData().size() > 0 
+                ? invoice.getLines().getData().get(0) 
+                : null
+              );
+
+              //if it is a first payment of a new subscriber
+              if (li != null) {
+                CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
+                String checkoutHash = li.getMetadata().get("hash");
+                if (StringUtils.isNotBlank(checkoutHash)) {
+                  Checkout checkout = checkoutDao.updateByHash(checkoutHash, CheckoutStatus.FAILED.name(), charge.getFailureMessage());
+                  if (checkout != null) {
+                    companyId = checkout.getCompanyId();
+                  } else {
+                    log.error("Failed to complete the checkout! Hash: {}", checkoutHash);
+                  }
+                } else {
+                  log.error("Failed to get checkout! Hash is null.");
+                }
+              } else { //or an existing subscriber
+                if (companyId == null) {
+                  CompanyDao companyDao = handle.attach(CompanyDao.class);
+                  Company company = companyDao.findBySubsCustomerId(invoice.getCustomer());
+                  if (company != null) {
+                    companyId = company.getId();
+                  } else {
+                    log.error("invoice.payment_failed: failed to find company by SubsCustomerId: {}", invoice.getCustomer());
+                  }
+                }
+              }
             }
+            
+          } catch (Exception e) {
+            companyId = null;
+            log.error("Failed to handle invoice.payment_failed event", e);
           }
-          trans.setEventId(event.getId());
-          trans.setEvent(SubsEvent.PAYMENT_FAILED);
-          trans.setSuccessful(Boolean.FALSE);
-          trans.setReason(invoice.getBillingReason());
-          trans.setFileUrl(invoice.getHostedInvoiceUrl());
-          res = addTransaction(companyId, invoice.getCustomer(), null, trans);
+          
+          //companyId must not be null!
+          if (companyId != null) {
+            CompanyTrans trans = new CompanyTrans();
+            trans.setEventId(event.getId());
+            trans.setEvent(SubsEvent.PAYMENT_FAILED);
+            trans.setSuccessful(Boolean.FALSE);
+            trans.setReason(invoice.getBillingReason());
+            trans.setFileUrl(invoice.getHostedInvoiceUrl());
+            res = addTransaction(companyId, invoice.getCustomer(), null, trans);
+          } else {
+            res = Responses.ServerProblem.CHECKOUT_PROBLEM;
+          }
           break;
         }
 
         default: {
-          log.warn("Stripe event -{}- is terminated!", event.getType());
+          log.warn("Stripe event -{}- happened!", event.getType());
           res = Responses.OK;
           break;
         }

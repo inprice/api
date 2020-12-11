@@ -76,7 +76,7 @@ public class FreeCompanyStopper implements Runnable {
                 CompanyTrans trans = new CompanyTrans();
                 trans.setCompanyId(company.getId());
                 trans.setSuccessful(Boolean.TRUE);
-                trans.setDescription(("Expired."));
+                trans.setDescription(("End of period!"));
 
                 if (CompanyStatus.FREE.equals(company.getStatus()))
                   trans.setEvent(SubsEvent.FREE_USE_STOPPED);
@@ -113,8 +113,10 @@ public class FreeCompanyStopper implements Runnable {
           }
           return (affected > 0);
         });
+      } catch (Exception e) {
+        log.error("Failed to trigger " + clazz , e);
       }
-      
+
     } finally {
       Global.stopTask(clazz);
     }

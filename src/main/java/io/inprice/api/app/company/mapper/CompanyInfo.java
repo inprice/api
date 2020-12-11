@@ -7,9 +7,11 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class CompanyIdUserEmail {
+public class CompanyInfo {
   
-  private Long companyId;
+  private Long id;
+  private Long name;
   private String email;
+  private String subsCustomerId;
 
 }

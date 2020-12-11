@@ -74,7 +74,7 @@ public class Responses {
 
   public static class Illegal {
     private static final int BASE = 700;
-    public static final Response TIMED_OUT_FORGOT_PASSWORD = new Response(BASE + 1, "Your session seems to expire, please send us a new forgot password request again!");
+    public static final Response TIMED_OUT_FORGOT_PASSWORD = new Response(BASE + 1, "Your session seems to expire, please send us a new 'forgot password request' again!");
     public static final Response COUPON_ISSUED_FOR_ANOTHER_COMPANY = new Response(BASE + 2, "This coupon is issued for another company!");
     public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
     public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan, so you cannot cancel!");

@@ -92,6 +92,7 @@ public class Consts {
       public static final String TRANSACTIONS = BASE + "/trans";
       public static final String SAVE_INFO = BASE + "/save-info";
       public static final String START_FREE_USE = BASE + "/free-use";
+      public static final String CANCEL_CHECKOUT = BASE + "/cancel-checkout";
     }
 
     public static class Coupon {
