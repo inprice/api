@@ -55,7 +55,7 @@ public class AccessGuard implements AccessManager {
             ForRedis redisSes = findByHash(token.getHash());
             if (redisSes != null) {
               isDone = true;
-              CurrentUser.set(redisSes, sessionNo);
+              CurrentUser.set(redisSes);
               handler.handle(ctx);
             } else {
               CookieHelper.removeAuthCookie(ctx);

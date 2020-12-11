@@ -32,14 +32,14 @@ public class Responses {
     public static final Response EMPTY_FILE = new Response(BASE + 40, "Empty file!");
 
     public static final Response COUPON = new Response(BASE + 45, "Invalid coupon!");
-
     public static final Response DATA = new Response(BASE + 99, "Invalid data!");
   }
 
   public static class ServerProblem {
     private static final int BASE = 300;
-    public static final Response EXCEPTION = new Response(BASE + 1, "Server error!");
-    public static final Response FAILED = new Response(BASE + 2, "Operation failed!");
+    public static final Response EXCEPTION = new Response(BASE + 1, "Server error! Please contact us via support@inprice.io");
+    public static final Response FAILED = new Response(BASE + 2, "Operation failed! Please contact us via support@inprice.io");
+    public static final Response CHECKOUT_PROBLEM = new Response(BASE + 3, "Checkout problem! Please re-try again. Please inform us via support@inprice.io, if it fails again");
   }
 
   public static class Missing {

@@ -31,6 +31,7 @@ import io.inprice.api.email.EmailSender;
 import io.inprice.api.email.EmailTemplate;
 import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
+import io.inprice.api.helpers.CodeGenerator;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
@@ -64,6 +65,7 @@ class StripeService {
 
     if (plan != null) {
 
+      String checkoutHash = CodeGenerator.hash();
       String subsCustomerId = null;
       long trialPeriodDays = 0;
 
@@ -101,8 +103,9 @@ class StripeService {
 
       // used for adding session data (especially trialPeriodDays for upgraders and downgraders)
       SessionCreateParams.SubscriptionData.Builder scpBuilder = SessionCreateParams.SubscriptionData.builder()
-        .putMetadata("planId", ""+planId)
-        .putMetadata("companyId", ""+CurrentUser.getCompanyId());
+        .putMetadata("hash", checkoutHash)
+        .putMetadata("companyId", ""+CurrentUser.getCompanyId())
+        .putMetadata("planId", ""+planId);
       if (trialPeriodDays > 0) {
         scpBuilder = scpBuilder.setTrialPeriodDays(trialPeriodDays);
       }
@@ -113,16 +116,9 @@ class StripeService {
         .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
         .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
         .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
-        .setSuccessUrl(
-          Props.APP_WEB_URL() + "/payment-ok"
-        )
-        .setCancelUrl( 
-          String.format(
-            "%s/%d/app/plans",
-            Props.APP_WEB_URL(), CurrentUser.getSessionNo()
-          )
-        )
-        .setClientReferenceId(""+planId)
+        .setSuccessUrl(Props.APP_WEB_URL() + "/payment-ok?hash="+checkoutHash)
+        .setCancelUrl(Props.APP_WEB_URL() + "/payment-cancel?hash="+checkoutHash)
+        .setClientReferenceId(""+CurrentUser.getCompanyId())
         .setSubscriptionData(scpBuilder.build())
         .putMetadata("description", plan.getFeatures().get(0))
         .addLineItem(
@@ -134,12 +130,20 @@ class StripeService {
           )
         .build();
 
-       try {
+      try (Handle handle = Database.getHandle()) {
         Session session = Session.create(params);
-        return new Response(Collections.singletonMap("sessionId", session.getId()));
+
+        CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
+        boolean isOK = checkoutDao.insert(checkoutHash, session.getId(), CurrentUser.getCompanyId(), planId);
+        if (isOK) {
+          return new Response(Collections.singletonMap("sessionId", session.getId()));
+        } else {
+          return Responses.ServerProblem.CHECKOUT_PROBLEM;
+        }
+
       } catch (StripeException e) {
         log.error("Failed to create checkout session", e);
-        return Responses.ServerProblem.EXCEPTION;
+        return Responses.ServerProblem.CHECKOUT_PROBLEM;
       }
     }
 
