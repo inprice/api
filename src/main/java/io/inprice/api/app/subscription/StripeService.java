@@ -128,8 +128,16 @@ class StripeService {
         .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
         .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
         .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
-        .setSuccessUrl(Props.APP_WEB_URL() + "/payment-ok?hash="+checkoutHash)
-        .setCancelUrl(Props.APP_WEB_URL() + "/payment-cancel?hash="+checkoutHash)
+        .setSuccessUrl(
+          String.format(
+            "%s/%d/app/payment-ok/%s", Props.APP_WEB_URL(), CurrentUser.getSessionNo(), checkoutHash
+          )
+        )
+        .setCancelUrl(
+          String.format(
+            "%s/%d/app/payment-cancel/%s", Props.APP_WEB_URL(), CurrentUser.getSessionNo(), checkoutHash
+          )
+        )
         .setSubscriptionData(scpBuilder.build())
         .putMetadata("description", plan.getFeatures().get(0))
         .addLineItem(
@@ -190,9 +198,13 @@ class StripeService {
     try (Handle handle = Database.getHandle()) {
       if (StringUtils.isNotBlank(checkoutHash)) {
         CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
-        Checkout checkout = checkoutDao.updateByHash(checkoutHash, CheckoutStatus.CANCELLED.name(), "Cancelled by user.");
+        Checkout checkout = checkoutDao.findByHash(checkoutHash);
         if (checkout != null) {
-          return Responses.OK;
+          if (checkoutDao.update(checkoutHash, CheckoutStatus.CANCELLED.name(), "Cancelled by user.")) {
+            return Responses.OK;
+          } else {
+            log.error("Failed to update checkout! Hash: {}", checkoutHash);
+          }
         } else {
           log.error("Failed to cancel checkout! Hash: {}", checkoutHash);
         }
@@ -200,7 +212,7 @@ class StripeService {
         log.error("Failed to get checkout info! Hash is null.");
       }
     }
-    return new Response("Failed to find the checkout!");
+    return new Response("Failed to find checkout!");
   }
 
   /**
@@ -258,11 +270,15 @@ class StripeService {
                   CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
                   String checkoutHash = li.getMetadata().get("hash");
                   if (StringUtils.isNotBlank(checkoutHash)) {
-                    Checkout checkout = checkoutDao.updateByHash(checkoutHash, CheckoutStatus.SUCCESSFUL.name(), null);
+                    Checkout checkout = checkoutDao.findByHash(checkoutHash);
                     if (checkout != null) {
-                      companyId = checkout.getCompanyId();
-                      dto.setPlanName(checkout.getPlanName());
-                      subsEvent = SubsEvent.SUBSCRIPTION_STARTED;
+                      if (checkoutDao.update(checkoutHash, CheckoutStatus.SUCCESSFUL.name(), null)) {
+                        companyId = checkout.getCompanyId();
+                        dto.setPlanName(checkout.getPlanName());
+                        subsEvent = SubsEvent.SUBSCRIPTION_STARTED;
+                      } else {
+                        log.error("Failed to update checkout! Hash: {}", checkoutHash);
+                      }
                     } else {
                       log.error("Failed to finish checkout! Hash: {}", checkoutHash);
                     }
@@ -330,9 +346,13 @@ class StripeService {
                 CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
                 String checkoutHash = li.getMetadata().get("hash");
                 if (StringUtils.isNotBlank(checkoutHash)) {
-                  Checkout checkout = checkoutDao.updateByHash(checkoutHash, CheckoutStatus.FAILED.name(), charge.getFailureMessage());
+                  Checkout checkout = checkoutDao.findByHash(checkoutHash);
                   if (checkout != null) {
-                    companyId = checkout.getCompanyId();
+                    if (checkoutDao.update(checkoutHash, CheckoutStatus.FAILED.name(), charge.getFailureMessage())) {
+                      companyId = checkout.getCompanyId();
+                    } else {
+                      log.error("Failed to update checkout! Hash: {}", checkoutHash);
+                    }
                   } else {
                     log.error("Failed to complete the checkout! Hash: {}", checkoutHash);
                   }

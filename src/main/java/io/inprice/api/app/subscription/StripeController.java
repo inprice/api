@@ -43,7 +43,7 @@ public class StripeController implements Controller {
     app.post(Consts.Paths.Subscription.CANCEL_CHECKOUT + "/:hash", (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.cancelCheckout(ctx.pathParam("hash"))));
     }, AccessRoles.ANYONE());
-
+    
   }
 
 }
