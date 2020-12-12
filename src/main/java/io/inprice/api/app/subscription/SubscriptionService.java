@@ -34,6 +34,7 @@ import io.inprice.common.models.Company;
 import io.inprice.common.models.CompanyTrans;
 import io.inprice.common.models.Coupon;
 import io.inprice.common.models.Plan;
+import io.inprice.common.utils.NumberUtils;
 
 class SubscriptionService {
 
@@ -83,43 +84,71 @@ class SubscriptionService {
   }
 
   Response cancel() {
-    Response[] res = { Responses.BAD_REQUEST };
+    Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
       handle.inTransaction(transactional -> {
         
         CompanyDao companyDao = transactional.attach(CompanyDao.class);
         Company company = companyDao.findById(CurrentUser.getCompanyId());
-        String subsEventId = null;
 
         if (CurrentUser.getUserId().equals(company.getAdminId())) {
           if (company.getStatus().isOKForCancel()) {
 
+            boolean isOK = false;
+
+            String couponCode = null;
+            Integer days = null;
+            String planName = null;
+    
             if (CompanyStatus.SUBSCRIBED.equals(company.getStatus())) { //if a subscriber
-              res[0] = stripeService.cancel(company);
-              subsEventId = res[0].getData();
-            } else { // if a free user
-              boolean isOK = companyDao.stopCompany(company.getId(), CompanyStatus.CANCELLED.name());
+              res[0] = stripeService.cancel(transactional, company);
+              if (res[0].isOK()) {
+                isOK = true;
+                Map<String, String> dataMap = res[0].getData();
+                couponCode = dataMap.get("couponCode");
+                if (couponCode != null) {
+                  days = NumberUtils.toInteger(dataMap.get("days"));
+                  planName = dataMap.get("planName");
+                }
+              }
+            } else {
+              isOK = true;
+            }
+
+            if (isOK) {
+              isOK = companyDao.stopCompany(company.getId(), CompanyStatus.CANCELLED.name());
               if (isOK) {
-                String model = company.getStatus().equals(CompanyStatus.FREE) ? "FREE USE" : "COUPON";
                 String companyName = StringUtils.isNotBlank(company.getTitle()) ? company.getTitle() : company.getName();
 
-                Map<String, Object> dataMap = new HashMap<>(3);
-                dataMap.put("user", CurrentUser.getEmail());
-                dataMap.put("company", companyName);
-                dataMap.put("model", model);
-                String message = templateRenderer.render(EmailTemplate.FREE_COMPANY_CANCELLED, dataMap);
+                Map<String, Object> mailMap = new HashMap<>(5);
+                mailMap.put("user", CurrentUser.getEmail());
+                mailMap.put("company", companyName);
+                mailMap.put("couponCode", couponCode);
+                mailMap.put("days", days);
+                mailMap.put("planName", planName);
+                String message = 
+                  templateRenderer.render(
+                    (company.getStatus().equals(CompanyStatus.SUBSCRIBED) 
+                      ? (
+                          days == null || days <= 3 
+                          ? EmailTemplate.SUBSCRIPTION_CANCELLED 
+                          : EmailTemplate.SUBSCRIPTION_CANCELLED_COUPONED
+                        )
+                      : EmailTemplate.FREE_COMPANY_CANCELLED
+                    ),
+                    mailMap
+                );
                 emailSender.send(
                   Props.APP_EMAIL_SENDER(), 
-                  "The last notification for your " + model.toLowerCase() + " in inprice. " + model, CurrentUser.getEmail(), 
+                  "Notification about your cancelled plan in inprice.", CurrentUser.getEmail(), 
                   message
                 );
 
                 res[0] = Responses.OK;
-              } else {
-                res[0] = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
               }
             }
+
           } else {
             res[0] = Responses.Illegal.NOT_SUITABLE_FOR_CANCELLATION;
           }
@@ -130,7 +159,6 @@ class SubscriptionService {
         if (res[0].isOK()) {
           CompanyTrans trans = new CompanyTrans();
           trans.setCompanyId(company.getId());
-          trans.setEventId(subsEventId);
           trans.setSuccessful(Boolean.TRUE);
           trans.setDescription(("Manual cancelation."));
 

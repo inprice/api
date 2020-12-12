@@ -84,7 +84,7 @@ public class FreeCompanyStopper implements Runnable {
                   trans.setEvent(SubsEvent.COUPON_USE_STOPPED);
       
                 SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
-                isOK = subscriptionDao.insertTrans(trans, trans.getEvent().name());
+                isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
                 if (isOK) {
                   isOK = companyDao.insertStatusHistory(company.getId(), CompanyStatus.STOPPED.name());
                 }

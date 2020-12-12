@@ -20,6 +20,7 @@ public enum EmailTemplate {
   SUBSCRIPTION_STARTED("subscription-started"),
   SUBSCRIPTION_RENEWAL("subscription-renewed"),
   SUBSCRIPTION_CANCELLED("subscription-cancelled"),
+  SUBSCRIPTION_CANCELLED_COUPONED("subscription-cancelled-couponed"),
   SUBSCRIPTION_STOPPED("subscription-stopped"),
 
   FREE_COMPANY_REMINDER("free-company-reminder"),

@@ -39,7 +39,7 @@ public class Responses {
     private static final int BASE = 300;
     public static final Response EXCEPTION = new Response(BASE + 1, "Server error! Please contact us via support@inprice.io");
     public static final Response FAILED = new Response(BASE + 2, "Operation failed! Please contact us via support@inprice.io");
-    public static final Response CHECKOUT_PROBLEM = new Response(BASE + 3, "Checkout problem! Please re-try again. Please inform us via support@inprice.io, if it fails again");
+    public static final Response CHECKOUT_PROBLEM = new Response(BASE + 3, "Checkout problem! Please inform us via support@inprice.io, if it fails again");
   }
 
   public static class Missing {

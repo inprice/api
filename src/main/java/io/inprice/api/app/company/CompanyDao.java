@@ -102,7 +102,7 @@ public interface CompanyDao {
     "select c.id, c.name, u.email, c.subs_customer_id from company as c " +
     "inner join user as u on u.id = c.admin_id " +
     "where c.status='SUBSCRIBED' "+
-    "  and c.subs_renewal_at >= now() + interval 4 day"
+    "  and c.subs_renewal_at <= now() - interval 3 day"
   )
   @UseRowMapper(CompanyInfoMapper.class)
   List<CompanyInfo> findExpiredSubscriberCompanyList();

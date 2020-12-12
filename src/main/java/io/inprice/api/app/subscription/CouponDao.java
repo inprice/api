@@ -19,6 +19,13 @@ interface CouponDao {
   @SqlUpdate("update coupon set issued_company_id=:issuedCompanyId, issued_at=now() where code=:code")
   boolean applyFor(@Bind("code") String code, @Bind("issuedCompanyId") Long issuedCompanyId);
 
+  @SqlUpdate(
+    "insert into coupon (code, plan_name, days, description) " +
+    "values (:code, :planName, :days, :description)"
+  )
+  boolean create(@Bind("code") String code, @Bind("planName") String planName,
+    @Bind("days") Long days, @Bind("description") String description);
+
   @SqlQuery("select * from coupon where issued_company_id=:issuedCompanyId order by issued_at desc")
   @UseRowMapper(CouponMapper.class)
   List<Coupon> findListByIssuedCompanyId(@Bind("issuedCompanyId") Long issuedCompanyId);

@@ -86,7 +86,7 @@ public class SubscribedCompanyStopper implements Runnable {
               trans.setDescription(("Stopped! Final payment failed."));
 
               SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
-              isOK = subscriptionDao.insertTrans(trans, trans.getEvent().name());
+              isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
               if (isOK) {
                 isOK = companyDao.insertStatusHistory(cinfo.getId(), CompanyStatus.STOPPED.name());
               }
