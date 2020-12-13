@@ -110,7 +110,7 @@ class CouponService {
                     if (! res[0].isOK()) res[0] = Responses.DataProblem.DB_PROBLEM;
 
                   } else {
-                    res[0] = Responses.PermissionProblem.PLAN_TRANSITION_PROBLEM;
+                    res[0] = Responses.PermissionProblem.BROADER_PLAN_NEEDED;
                   }
                 } else {
                   res[0] = Responses.Already.ACTIVE_SUBSCRIPTION;

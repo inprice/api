@@ -18,6 +18,7 @@ import com.stripe.model.StripeObject;
 import com.stripe.model.Subscription;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.CustomerUpdateParams;
+import com.stripe.param.SubscriptionUpdateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 
 import org.apache.commons.lang3.StringUtils;
@@ -44,7 +45,6 @@ import io.inprice.common.meta.CompanyStatus;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.Checkout;
 import io.inprice.common.models.Company;
-import io.inprice.common.models.CompanyHistory;
 import io.inprice.common.models.CompanyTrans;
 import io.inprice.common.models.Plan;
 import io.inprice.common.utils.CouponManager;
@@ -62,7 +62,7 @@ class StripeService {
    * 
    * @param planId
    */
-  Response createCheckoutSession(int planId) {
+  Response createCheckout(int planId) {
     Plan plan = Plans.findById(planId);
 
     if (plan != null) {
@@ -108,7 +108,7 @@ class StripeService {
 
         // only broader plan transitions allowed
         if (company.getProductCount().compareTo(plan.getProductLimit()) > 0) {
-          return Responses.PermissionProblem.PLAN_TRANSITION_PROBLEM;
+          return Responses.PermissionProblem.BROADER_PLAN_NEEDED;
         }
       }
 
@@ -164,6 +164,37 @@ class StripeService {
     }
 
     return Responses.NotFound.PLAN;
+  }
+
+  Response cancelCheckout(String checkoutHash) {
+    try (Handle handle = Database.getHandle()) {
+      if (StringUtils.isNotBlank(checkoutHash)) {
+        CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
+        Checkout checkout = checkoutDao.findByHash(checkoutHash);
+        if (checkout != null) {
+          if (checkoutDao.update(checkoutHash, CheckoutStatus.CANCELLED.name(), "Cancelled by user.")) {
+            return Responses.OK;
+          } else {
+            log.error("Failed to update checkout! Hash: {}", checkoutHash);
+          }
+        } else {
+          log.error("Failed to cancel checkout! Hash: {}", checkoutHash);
+        }
+      } else {
+        log.error("Failed to get checkout info! Hash is null.");
+      }
+    }
+    return new Response("Failed to find checkout!");
+  }
+
+  private String retrieveCheckoutStatus(String checkoutHash, String sessionId) {
+    try {
+      Session session = Session.retrieve(sessionId);
+      if (session != null) return session.getPaymentStatus();
+    } catch (Exception e) {
+      log.error("Failed to retrieve a checkout status. Hash: " + checkoutHash, e);
+    }
+    return null;
   }
 
   /**
@@ -222,35 +253,93 @@ class StripeService {
     return Responses.DataProblem.SUBSCRIPTION_PROBLEM;
   }
 
-  private String retrieveCheckoutStatus(String checkoutHash, String sessionId) {
-    try {
-      Session session = Session.retrieve(sessionId);
-      if (session != null) return session.getPaymentStatus();
-    } catch (Exception e) {
-      log.error("Failed to retrieve a checkout status. Hash: " + checkoutHash, e);
-    }
-    return null;
-  }
+  /**
+   * Upgrades or Downgrads the plan
+   * 
+   */
+  Response changePlan(int newPlanId) {
+    Response res = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
 
-  Response cancelCheckout(String checkoutHash) {
+    Company company = null;
+
     try (Handle handle = Database.getHandle()) {
-      if (StringUtils.isNotBlank(checkoutHash)) {
-        CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
-        Checkout checkout = checkoutDao.findByHash(checkoutHash);
-        if (checkout != null) {
-          if (checkoutDao.update(checkoutHash, CheckoutStatus.CANCELLED.name(), "Cancelled by user.")) {
-            return Responses.OK;
+      CompanyDao companyDao = handle.attach(CompanyDao.class);
+      company = companyDao.findById(CurrentUser.getCompanyId());
+    }
+
+    if (company != null) {
+      if (CompanyStatus.SUBSCRIBED.equals(company.getStatus())) {
+        if (StringUtils.isNotBlank(company.getSubsId())) {
+
+          Plan newPlan = Plans.findById(newPlanId);
+          if (newPlan != null) {
+
+            if (! newPlan.getName().equals(company.getPlanName())) {
+              boolean noNeedABroaderPlan =
+                (company.getProductCount() == 0) || (company.getProductCount().compareTo(newPlan.getProductLimit()) <= 0);
+
+              if (noNeedABroaderPlan) {
+                try {
+                  Subscription subscription = Subscription.retrieve(company.getSubsId());
+
+                  SubscriptionUpdateParams params =
+                    SubscriptionUpdateParams.builder()
+                      .setPaymentBehavior(SubscriptionUpdateParams.PaymentBehavior.PENDING_IF_INCOMPLETE)
+                      .setProrationBehavior(SubscriptionUpdateParams.ProrationBehavior.ALWAYS_INVOICE)
+                      .addItem(
+                        SubscriptionUpdateParams.Item.builder()
+                          .setId(subscription.getItems().getData().get(0).getId())
+                          .setPrice(newPlan.getStripePriceId())
+                          .build())
+                      .build();
+                  
+                  EmailTemplate emailTemplate = null;
+                  Subscription subs = subscription.update(params);
+                  Invoice invoice = Invoice.retrieve(subs.getLatestInvoice());
+
+                  Map<String, Object> dataMap = new HashMap<>(5);
+                  dataMap.put("user", invoice.getCustomerEmail());
+                  dataMap.put("fromPlan", company.getPlanName());
+                  dataMap.put("toPlan", newPlan.getName());
+
+                  if (subs.getPendingUpdate() != null) {
+                    emailTemplate = EmailTemplate.SUBSCRIPTION_CHANGE_FAILED;
+                    invoice.voidInvoice();
+                    res = Responses.NotSuitable.PAYMENT_FAILURE_ON_PLAN_CHANGE;
+                  } else {
+                    emailTemplate = EmailTemplate.SUBSCRIPTION_CHANGE_SUCCESSFUL;
+                    dataMap.put("invoiceUrl", invoice.getHostedInvoiceUrl());
+                    company.setPlanName(newPlan.getName());
+                    company.setProductLimit(newPlan.getProductLimit());
+                    res = Commons.refreshSession(company);
+                  }
+                  String message = templateRenderer.render(emailTemplate, dataMap);
+                  emailSender.send(Props.APP_EMAIL_SENDER(), "Your plan transition", invoice.getCustomerEmail(), message);
+
+                } catch (Exception e) {
+                  log.error("Failed to change plan. Company: " + company.getId() + ", New Plan: " + newPlanId, e);
+                  res = Responses.ServerProblem.EXCEPTION;
+                }
+              } else {
+                res = Responses.PermissionProblem.BROADER_PLAN_NEEDED;
+              }
+            } else {
+              res = Responses.Already.HAS_THE_SAME_PLAN;
+            }
           } else {
-            log.error("Failed to update checkout! Hash: {}", checkoutHash);
+            res = Responses.NotFound.PLAN;
           }
         } else {
-          log.error("Failed to cancel checkout! Hash: {}", checkoutHash);
+          res = Responses.NotFound.SUBSCRIPTION;
         }
       } else {
-        log.error("Failed to get checkout info! Hash is null.");
+        res = Responses.NotSuitable.PLAN_CHANGE;
       }
+    } else {
+      res = Responses.NotFound.COMPANY;
     }
-    return new Response("Failed to find checkout!");
+
+    return res;
   }
 
   /**
@@ -287,70 +376,110 @@ class StripeService {
             dto.setRenewalDate(new java.sql.Timestamp(li.getPeriod().getEnd() * 1000));
             dto.setEmail(invoice.getCustomerEmail());
 
-            //a new subscriber
-            if (invoice.getBillingReason().equals("subscription_create")) { // "subscription_cycle" is for renewals!
+            switch (invoice.getBillingReason()) {
 
-              String title = null;
-              Address address = null;
-
-              if (StringUtils.isNotBlank(invoice.getCharge())) {
-                Charge charge = Charge.retrieve(invoice.getCharge());
-                if (charge != null) {
-                  address = charge.getBillingDetails().getAddress();
-                  title = charge.getBillingDetails().getName();
+              //a new subscriber
+              case "subscription_create": {
+                String title = null;
+                Address address = null;
+  
+                if (StringUtils.isNotBlank(invoice.getCharge())) {
+                  Charge charge = Charge.retrieve(invoice.getCharge());
+                  if (charge != null) {
+                    address = charge.getBillingDetails().getAddress();
+                    title = charge.getBillingDetails().getName();
+                  }
                 }
-              }
-
-              if (address == null) {
-                address = invoice.getCustomerAddress();
-                title = invoice.getCustomerName();
-                log.warn("Invoce: {} is free of charge!", invoice.getId());
-              }
-
-              dto.setTitle(title);
-              dto.setAddress1(address.getLine1());
-              dto.setAddress2(address.getLine2());
-              dto.setPostcode(address.getPostalCode());
-              dto.setCity(address.getCity());
-              dto.setState(address.getState());
-              dto.setCountry(address.getCountry());
-              dto.setCustId(invoice.getCustomer());
-              dto.setSubsId(invoice.getSubscription());
-
-              //the checkout must be completed
-              try (Handle handle = Database.getHandle()) {
-                CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
-                String checkoutHash = li.getMetadata().get("hash");
-                if (StringUtils.isNotBlank(checkoutHash)) {
-                  Checkout checkout = checkoutDao.findByHash(checkoutHash);
-                  if (checkout != null) {
-                    if (checkoutDao.update(checkoutHash, CheckoutStatus.SUCCESSFUL.name(), null)) {
-                      companyId = checkout.getCompanyId();
-                      dto.setPlanName(checkout.getPlanName());
-                      subsEvent = SubsEvent.SUBSCRIPTION_STARTED;
+  
+                if (address == null) {
+                  address = invoice.getCustomerAddress();
+                  title = invoice.getCustomerName();
+                  log.warn("Invoce: {} is free of charge!", invoice.getId());
+                }
+  
+                dto.setTitle(title);
+                dto.setAddress1(address.getLine1());
+                dto.setAddress2(address.getLine2());
+                dto.setPostcode(address.getPostalCode());
+                dto.setCity(address.getCity());
+                dto.setState(address.getState());
+                dto.setCountry(address.getCountry());
+                dto.setCustId(invoice.getCustomer());
+                dto.setSubsId(invoice.getSubscription());
+  
+                //the checkout must be completed
+                try (Handle handle = Database.getHandle()) {
+                  CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
+                  String checkoutHash = li.getMetadata().get("hash");
+                  if (StringUtils.isNotBlank(checkoutHash)) {
+                    Checkout checkout = checkoutDao.findByHash(checkoutHash);
+                    if (checkout != null) {
+                      if (checkoutDao.update(checkoutHash, CheckoutStatus.SUCCESSFUL.name(), null)) {
+                        companyId = checkout.getCompanyId();
+                        dto.setPlanName(checkout.getPlanName());
+                        subsEvent = SubsEvent.SUBSCRIPTION_STARTED;
+                      } else {
+                        log.error("Failed to update checkout! Hash: {}", checkoutHash);
+                      }
                     } else {
-                      log.error("Failed to update checkout! Hash: {}", checkoutHash);
+                      log.error("Failed to finish checkout! Hash: {}", checkoutHash);
                     }
                   } else {
-                    log.error("Failed to finish checkout! Hash: {}", checkoutHash);
+                    log.error("Failed to get checkout info! Hash is null.");
+                  }
+                }
+                break;
+              }
+
+              //renewal
+              case "subscription_cycle": {
+                try (Handle handle = Database.getHandle()) {
+                  CompanyDao companyDao = handle.attach(CompanyDao.class);
+                  Company company = companyDao.findBySubsCustomerId(invoice.getCustomer());
+                  if (company != null) {
+                    companyId = company.getId();
+                    subsEvent = SubsEvent.SUBSCRIPTION_RENEWED;
+                  } else {
+                    log.error("invoice.payment_succeeded & subscription_cycle: failed to find company by SubsCustomerId: {}", invoice.getCustomer());
+                  }
+                }
+                break;
+              }
+
+              //plan changing
+              case "subscription_update": {
+                if (invoice.getStatus().equals("paid")) {
+                  Plan newPlan = Plans.findByPriceId(li.getPrice().getId());
+                  if (newPlan != null) {
+                    try (Handle handle = Database.getHandle()) {
+                      CompanyDao companyDao = handle.attach(CompanyDao.class);
+                      Company company = companyDao.findBySubsCustomerId(invoice.getCustomer());
+                      if (company != null) {
+                        companyId = company.getId();
+                        subsEvent = SubsEvent.SUBSCRIPTION_CHANGED;
+
+                        boolean isOK = companyDao.changePlan(companyId, newPlan.getName(), newPlan.getProductLimit());
+                        if (! isOK) {
+                          companyId = null;
+                          log.error("Failed to change plan! Company: {}, Plan: {}", company.getId(), newPlan.getName());
+                        }
+                      } else {
+                        log.error("invoice.payment_succeeded & subscription_update: failed to find company by SubsCustomerId: {}, Plan: {}", 
+                          invoice.getCustomer(), li.getPrice().getId());
+                      }
+                    }
+                  } else {
+                    log.error("invoice.payment_succeeded & subscription_update: failed to find plan for SubsCustomerId: {}, Plan: {}", 
+                      invoice.getCustomer(), li.getPrice().getId());
                   }
                 } else {
-                  log.error("Failed to get checkout info! Hash is null.");
+                  invoice.voidInvoice();
+                  log.error("invoice.payment_succeeded & subscription_update: invoice is voided for SubsCustomerId: {}, Plan: {}", 
+                      invoice.getCustomer(), li.getPrice().getId());
                 }
+                break;
               }
 
-            } else {
-
-              try (Handle handle = Database.getHandle()) {
-                CompanyDao companyDao = handle.attach(CompanyDao.class);
-                Company company = companyDao.findBySubsCustomerId(invoice.getCustomer());
-                if (company != null) {
-                  companyId = company.getId();
-                  subsEvent = SubsEvent.SUBSCRIPTION_RENEWED;
-                } else {
-                  log.error("invoice.payment_succeeded: failed to find company by SubsCustomerId: {}", invoice.getCustomer());
-                }
-              }
             }
 
             //companyId must not be null for both a newcomer or a renewal!
@@ -365,8 +494,8 @@ class StripeService {
               trans.setFileUrl(invoice.getHostedInvoiceUrl());
               res = addTransaction(null, invoice.getCustomer(), dto, trans);
             } else {
-              log.error("Failed to set companyId!");
-              res = Responses.ServerProblem.CHECKOUT_PROBLEM;
+              log.error("Failed to set companyId, see the previous log rows!");
+              res = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
             }
 
           } catch (Exception e) {

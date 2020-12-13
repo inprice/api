@@ -84,6 +84,13 @@ public interface CompanyDao {
   )
   boolean cancelSubscription(@Bind("id") Long id);
 
+  @SqlUpdate(
+    "update company " + 
+    "set plan_name=:planName, product_limit=:productLimit, last_status_update=now() " +
+    "where id=:companyId"
+  )
+  boolean changePlan(@Bind("companyId") Long companyId, @Bind("planName") String planName, @Bind("productLimit") Integer productLimit);
+
   // only two days remaining (last op. is to sending a final message)
   @SqlQuery(
     "select * from company "+

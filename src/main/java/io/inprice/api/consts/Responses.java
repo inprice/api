@@ -54,7 +54,7 @@ public class Responses {
     public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to buy a new plan!");
     public static final Response NO_COMPANY = new Response(BASE + 5, "You have no active company! Please either create a new one or participate in an existing!");
     public static final Response PRODUCT_LIMIT_PROBLEM = new Response(BASE + 6, "Your products count is reached your plans limit! You need to pass a broader plan to proceed");
-    public static final Response PLAN_TRANSITION_PROBLEM = new Response(BASE + 7, "You need a broader plan. The plan you intend to select allows less than your existing product count!");
+    public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 7, "You need a broader plan. The plan you intend to select allows less than your existing product count!");
   }
 
   public static class DataProblem {
@@ -91,6 +91,7 @@ public class Responses {
 
     public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 7, "You have already an active subscription. You cannot use any coupon!");
     public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 8, "This account has no active subscription at the moment!");
+    public static final Response HAS_THE_SAME_PLAN = new Response(BASE + 10, "You have already this plan at the moment!");
 
     public static final Response REQUESTED_EMAIL = new Response(BASE + 10, "This email is already requested, please wait some time to try again!");
     
@@ -107,6 +108,12 @@ public class Responses {
     public static final Response MUST_BE_TXT = new Response(BASE + 3, "Please upload a text file!");
   }
 
+  public static class NotSuitable {
+    private static final int BASE = 1000;
+    public static final Response PLAN_CHANGE = new Response(BASE + 1, "Seems that you don't have a subsciption. Only subscribers can change their plans!");
+    public static final Response PAYMENT_FAILURE_ON_PLAN_CHANGE = new Response(BASE + 2, "Your payment failed during plan changing! Please try again or use another card!");
+  }
+
   public static class NotFound {
     private static final int BASE = 404;
 
@@ -120,7 +127,8 @@ public class Responses {
     public static final Response USER = new Response(BASE, "User not found!");
     public static final Response EMAIL = new Response(BASE, "Email not found!");
     public static final Response MEMBERSHIP = new Response(BASE, "Member not found!");
-    public static final Response INVITATION = new Response(BASE, "An active invitation not found!");
+    public static final Response INVITATION = new Response(BASE, "Invitation not found!");
+    public static final Response SUBSCRIPTION = new Response(BASE, "Subscription not found!");
 
     public static final Response PRODUCT = new Response(BASE, "Product not found!");
     public static final Response LINK = new Response(BASE, "Link not found!");

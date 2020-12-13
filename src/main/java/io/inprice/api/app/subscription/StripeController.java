@@ -13,6 +13,7 @@ import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
+import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
@@ -40,9 +41,14 @@ public class StripeController implements Controller {
       }
     });
 
+    app.put(Consts.Paths.Subscription.CHANGE_PLAN + "/:new_plan_id", (ctx) -> {
+      Integer newPlanId = ctx.pathParam("new_plan_id", Integer.class).check(it -> it > 0 && it < Plans.getPlans().length).getValue();
+      ctx.json(Commons.createResponse(ctx, service.changePlan(newPlanId)));
+    }, AccessRoles.ADMIN_ONLY());
+
     app.post(Consts.Paths.Subscription.CANCEL_CHECKOUT + "/:hash", (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.cancelCheckout(ctx.pathParam("hash"))));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ADMIN_ONLY());
     
   }
 

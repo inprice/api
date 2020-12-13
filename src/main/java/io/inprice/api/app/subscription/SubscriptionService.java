@@ -45,8 +45,8 @@ class SubscriptionService {
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
   private final TemplateRenderer templateRenderer = Beans.getSingleton(TemplateRenderer.class);
 
-  Response createCheckoutSession(int planId) {
-    return stripeService.createCheckoutSession(planId);
+  Response createCheckout(int planId) {
+    return stripeService.createCheckout(planId);
   }
 
   Response getTransactions() {

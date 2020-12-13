@@ -5,6 +5,7 @@ import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
 
+import io.inprice.common.config.Plans;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.Member;
@@ -26,6 +27,7 @@ public class ForResponse implements Serializable {
   private String user;
   private String email;
   private String company;
+  private Integer planId;
   private String planName;
   private String companyStatus;
   private Boolean everSubscribed;
@@ -51,9 +53,7 @@ public class ForResponse implements Serializable {
     this.productCount = company.getProductCount();
 
     this.everSubscribed = StringUtils.isNotBlank(company.getSubsCustomerId());
-    if (this.subsRenewalAt != null) {
-      this.daysToRenewal = 1 + (int) DateUtils.findDayDiff(new Date(), this.subsRenewalAt);
-    }
+    doTheStandardAssignments();
   }
 
   public ForResponse(ForResponse forResponse) {
@@ -70,9 +70,7 @@ public class ForResponse implements Serializable {
     this.productCount = forResponse.getProductCount();
 
     this.everSubscribed = forResponse.getEverSubscribed();
-    if (this.subsRenewalAt != null) {
-      this.daysToRenewal = 1 + (int) DateUtils.findDayDiff(new Date(), this.subsRenewalAt);
-    }
+    doTheStandardAssignments();
   }
 
   public ForResponse(ForCookie forCookie, ForRedis forRedis) {
@@ -89,9 +87,7 @@ public class ForResponse implements Serializable {
     this.productCount = forRedis.getProductCount();
 
     this.everSubscribed = forRedis.getEverSubscribed();
-    if (this.subsRenewalAt != null) {
-      this.daysToRenewal = 1 + (int) DateUtils.findDayDiff(new Date(), this.subsRenewalAt);
-    }
+    doTheStandardAssignments();
   }
 
   public ForResponse(ForCookie forCookie, User user, Member mem) {
@@ -108,9 +104,17 @@ public class ForResponse implements Serializable {
     this.productCount = mem.getProductCount();
 
     this.everSubscribed = mem.getEverSubscribed();
+    doTheStandardAssignments();
+  }
+
+  private void doTheStandardAssignments() {
     if (this.subsRenewalAt != null) {
       this.daysToRenewal = 1 + (int) DateUtils.findDayDiff(new Date(), this.subsRenewalAt);
     }
+    if (this.planName != null) {
+      this.planId = Plans.findByName(this.planName).getId();
+    }
+
   }
 
 }

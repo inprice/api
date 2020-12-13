@@ -22,7 +22,7 @@ public class SubscriptionController implements Controller {
     // creates checkout session for stripe
     app.post(Consts.Paths.Subscription.CREATE_CHECKOUT + "/:plan_id", (ctx) -> {
       Integer planId = ctx.pathParam("plan_id", Integer.class).check(it -> it > 0 && it < Plans.getPlans().length).getValue();
-      ctx.json(Commons.createResponse(ctx, service.createCheckoutSession(planId)));
+      ctx.json(Commons.createResponse(ctx, service.createCheckout(planId)));
     }, AccessRoles.ADMIN_ONLY());
 
     // cancels a subscription
