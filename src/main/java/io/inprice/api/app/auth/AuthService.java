@@ -23,6 +23,7 @@ import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.email.EmailSender;
+import io.inprice.api.email.EmailTemplate;
 import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
@@ -45,6 +46,7 @@ import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
+import io.inprice.common.models.UserBanned;
 import io.javalin.http.Context;
 
 public class AuthService {
@@ -61,19 +63,25 @@ public class AuthService {
 
         try (Handle handle = Database.getHandle()) {
           UserDao userDao = handle.attach(UserDao.class);
-    
-          User user = userDao.findByEmailWithPassword(dto.getEmail());
-          if (user != null) {
 
-            if (PasswordHelper.isValid(dto.getPassword(), user.getPassword())) {
-              Map<String, Object> sessionInfo = findSessionInfoByEmail(ctx, user.getEmail());
-              if (sessionInfo != null && sessionInfo.size() > 0) {
-                return new Response(sessionInfo);
-              } else {
-                user.setPassword(null);
-                return createSession(ctx, user);
+          UserBanned bannedUser = userDao.findBannedUserByEmail(dto.getEmail());
+          if (bannedUser == null) {
+
+            User user = userDao.findByEmailWithPassword(dto.getEmail());
+            if (user != null) {
+
+              if (PasswordHelper.isValid(dto.getPassword(), user.getPassword())) {
+                Map<String, Object> sessionInfo = findSessionInfoByEmail(ctx, user.getEmail());
+                if (sessionInfo != null && sessionInfo.size() > 0) {
+                  return new Response(sessionInfo);
+                } else {
+                  user.setPassword(null);
+                  return createSession(ctx, user);
+                }
               }
             }
+          } else {
+            return Responses.BANNED_USER;
           }
         }
       } else {
@@ -96,24 +104,30 @@ public class AuthService {
       try (Handle handle = Database.getHandle()) {
         UserDao userDao = handle.attach(UserDao.class);
   
-        User user = userDao.findByEmail(email);
-        if (user != null) {
-          try {
-            Map<String, Object> dataMap = new HashMap<>(3);
-            dataMap.put("user", user.getName());
-            dataMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
-            dataMap.put("url", Props.APP_WEB_URL() + Consts.Paths.Auth.RESET_PASSWORD);
+        UserBanned bannedUser = userDao.findBannedUserByEmail(email);
+        if (bannedUser == null) {
 
-            final String message = templateRenderer.renderForgotPassword(dataMap);
-            emailSender.send(Props.APP_EMAIL_SENDER(), "Reset your password", user.getEmail(), message);
+          User user = userDao.findByEmail(email);
+          if (user != null) {
+            try {
+              Map<String, Object> dataMap = new HashMap<>(3);
+              dataMap.put("user", user.getName());
+              dataMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
+              dataMap.put("url", Props.APP_WEB_URL() + Consts.Paths.Auth.RESET_PASSWORD);
 
-            return Responses.OK;
-          } catch (Exception e) {
-            log.error("An error occurred in rendering email for forgetting password", e);
-            return Responses.ServerProblem.EXCEPTION;
+              final String message = templateRenderer.render(EmailTemplate.FORGOT_PASSWORD, dataMap);
+              emailSender.send(Props.APP_EMAIL_SENDER(), "Reset your password for inprice.io", user.getEmail(), message);
+
+              return Responses.OK;
+            } catch (Exception e) {
+              log.error("Failed to render email for forgetting password", e);
+              return Responses.ServerProblem.EXCEPTION;
+            }
+          } else {
+            return Responses.NotFound.EMAIL;
           }
         } else {
-          return Responses.NotFound.EMAIL;
+          return Responses.BANNED_USER;
         }
       }
     }
@@ -284,55 +298,60 @@ public class AuthService {
         try (Handle handle = Database.getHandle()) {
           UserDao userDao = handle.attach(UserDao.class);
           MemberDao memberDao = handle.attach(MemberDao.class);
-    
-          Member member = memberDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getCompanyId());
-          if (member != null) {
 
-            User user = userDao.findByEmail(sendDto.getEmail());
-            if (user == null) { //user creation
-              UserDTO dto = new UserDTO();
-              dto.setName(sendDto.getEmail().split("@")[0]);
-              dto.setEmail(sendDto.getEmail());
-              dto.setTimezone(timezone);
+          UserBanned bannedUser = userDao.findBannedUserByEmail(sendDto.getEmail());
+          if (bannedUser == null) {
 
-              String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
-              long savedId = userDao.insert(dto.getEmail(), saltedHash, dto.getName(), dto.getTimezone());
+            Member member = memberDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getCompanyId());
+            if (member != null) {
 
-              if (savedId > 0) {
-                User newUser = new User(); //user in response is needed for auto login
-                newUser.setId(savedId);
-                newUser.setEmail(dto.getEmail());
-                newUser.setName(dto.getName());
-                newUser.setTimezone(dto.getTimezone());
-                res = new Response(user);
-              }
-            } else {
-              res = Responses.Already.Defined.MEMBERSHIP;
-            }
+              User user = userDao.findByEmail(sendDto.getEmail());
+              if (user == null) { //user creation
+                UserDTO dto = new UserDTO();
+                dto.setName(sendDto.getEmail().split("@")[0]);
+                dto.setEmail(sendDto.getEmail());
+                dto.setTimezone(timezone);
 
-            if (res.isOK()) {
-              User newUser = res.getData();
-              boolean isActivated = 
-                memberDao.activate(
-                  newUser.getId(),
-                  UserStatus.JOINED.name(),
-                  newUser.getEmail(),
-                  UserStatus.PENDING.name(),
-                  sendDto.getCompanyId()
-                );
+                String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
+                long savedId = userDao.insert(dto.getEmail(), saltedHash, dto.getName(), dto.getTimezone());
 
-              if (isActivated) {
-                Tokens.remove(TokenType.INVITATION, acceptDto.getToken());
+                if (savedId > 0) {
+                  User newUser = new User(); //user in response is needed for auto login
+                  newUser.setId(savedId);
+                  newUser.setEmail(dto.getEmail());
+                  newUser.setName(dto.getName());
+                  newUser.setTimezone(dto.getTimezone());
+                  res = new Response(user);
+                }
               } else {
-                res = Responses.NotFound.MEMBERSHIP;
+                res = Responses.Already.Defined.MEMBERSHIP;
               }
+
+              if (res.isOK()) {
+                User newUser = res.getData();
+                boolean isActivated = 
+                  memberDao.activate(
+                    newUser.getId(),
+                    UserStatus.JOINED.name(),
+                    newUser.getEmail(),
+                    UserStatus.PENDING.name(),
+                    sendDto.getCompanyId()
+                  );
+
+                if (isActivated) {
+                  Tokens.remove(TokenType.INVITATION, acceptDto.getToken());
+                } else {
+                  res = Responses.NotFound.MEMBERSHIP;
+                }
+              }
+      
+            } else {
+              res = Responses.NotActive.INVITATION;
             }
-    
           } else {
-            res = Responses.NotActive.INVITATION;
+            res = Responses.BANNED_USER;
           }
         }
-
       } else {
         res = Responses.Invalid.TOKEN;
       }

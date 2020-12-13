@@ -49,12 +49,6 @@ public class ProductController implements Controller {
       ctx.json(Commons.createResponse(ctx, service.findLinksById(id)));
     }, AccessRoles.ANYONE());
 
-    // toggle active status
-    app.put(Consts.Paths.Product.TOGGLE_STATUS + "/:id", (ctx) -> {
-      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.toggleStatus(id)));
-    }, AccessRoles.EDITOR());
-
     // search
     app.post(Consts.Paths.Product.SEARCH, (ctx) -> {
       Response res = null;

@@ -1,9 +1,7 @@
-package io.inprice.api.app.coupon;
+package io.inprice.api.app.subscription;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang3.time.DateUtils;
 import org.jdbi.v3.core.Handle;
@@ -11,19 +9,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.company.CompanyDao;
-import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.meta.CompanyStatus;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.meta.SubsSource;
-import io.inprice.common.meta.SubsStatus;
 import io.inprice.common.models.Company;
+import io.inprice.common.models.CompanyTrans;
 import io.inprice.common.models.Coupon;
 import io.inprice.common.models.Plan;
-import io.inprice.common.models.SubsTrans;
 import io.inprice.common.utils.CouponManager;
 
 class CouponService {
@@ -54,12 +51,12 @@ class CouponService {
           Coupon coupon = couponDao.findByCode(code);
           if (coupon != null) {
             if (coupon.getIssuedAt() == null) {
-              if (coupon.getIssuedCompanyId() == null || coupon.getIssuedCompanyId().equals(CurrentUser.getCompanyId())) {
 
+              if (coupon.getIssuedCompanyId() == null || coupon.getIssuedCompanyId().equals(CurrentUser.getCompanyId())) {
                 CompanyDao companyDao = transactional.attach(CompanyDao.class);
 
                 Company company = companyDao.findById(CurrentUser.getCompanyId());
-                if (company.getSubsStatus().isOKForCoupon()) {
+                if (company.getStatus().isOKForCoupon()) {
 
                   Plan selectedPlan = null;
                   Plan couponPlan = Plans.findByName(coupon.getPlanName());
@@ -69,44 +66,52 @@ class CouponService {
                     selectedPlan = couponPlan;
                   }
 
-                  boolean isOK = 
-                    companyDao.updateSubscription(
-                      CurrentUser.getCompanyId(),
-                      SubsStatus.COUPONED.name(),
-                      selectedPlan.getName(),
-                      selectedPlan.getProductLimit(), 
-                      coupon.getDays()
-                    );
-
-                  if (isOK) {
-                    isOK = couponDao.applyFor(coupon.getCode(), CurrentUser.getCompanyId());
+                  // only broader plan transitions allowed
+                  if (company.getProductCount().compareTo(selectedPlan.getProductLimit()) <= 0) {
+                    boolean isOK = 
+                      companyDao.startFreeUseOrApplyCoupon(
+                        CurrentUser.getCompanyId(),
+                        CompanyStatus.COUPONED.name(),
+                        selectedPlan.getName(),
+                        selectedPlan.getProductLimit(), 
+                        coupon.getDays()
+                      );
 
                     if (isOK) {
-                      SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+                      isOK = couponDao.applyFor(coupon.getCode(), CurrentUser.getCompanyId());
 
-                      SubsTrans trans = new SubsTrans();
-                      trans.setCompanyId(CurrentUser.getCompanyId());
-                      trans.setEventId(coupon.getCode());
-                      trans.setEvent(SubsEvent.COUPON_USED);
-                      trans.setSource(SubsSource.COUPON);
-                      trans.setSuccessful(Boolean.TRUE);
-                      trans.setReason("coupon");
-                      trans.setDescription(coupon.getCode() + " is used.");
-
-                      isOK = subscriptionDao.insertTrans(trans, SubsSource.COUPON.name(), SubsEvent.COUPON_USED.name());
-                      
                       if (isOK) {
-                        Map<String, Object> data = new HashMap<>(3);
-                        data.put("planName", selectedPlan.getName());
-                        data.put("subsStatus", SubsStatus.COUPONED);
-                        data.put("subsRenewalAt", DateUtils.addDays(new Date(), coupon.getDays()));
-                        log.info("Coupon {}, is issued for {}", coupon.getCode(), company.getName());
-                        res[0] = new Response(data);
+                        SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+
+                        CompanyTrans trans = new CompanyTrans();
+                        trans.setCompanyId(CurrentUser.getCompanyId());
+                        trans.setEventId(coupon.getCode());
+                        trans.setEvent(SubsEvent.COUPON_USE_STARTED);
+                        trans.setSuccessful(Boolean.TRUE);
+                        trans.setDescription(coupon.getCode() + " is used.");
+
+                        isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+                        if (isOK) {
+                          isOK = 
+                            companyDao.insertStatusHistory(
+                              company.getId(), 
+                              CompanyStatus.COUPONED.name(),
+                              selectedPlan.getName(),
+                              null, null
+                            );
+                        }
+                                
+                        if (isOK) {
+                          res[0] = Commons.refreshSession(company, CompanyStatus.COUPONED, DateUtils.addDays(new Date(), coupon.getDays()));
+                          log.info("Coupon {}, is issued for {}", coupon.getCode(), company.getName());
+                        }
                       }
                     }
-                  }
-                  if (! res[0].isOK()) res[0] = Responses.DataProblem.DB_PROBLEM;
+                    if (! res[0].isOK()) res[0] = Responses.DataProblem.DB_PROBLEM;
 
+                  } else {
+                    res[0] = Responses.PermissionProblem.BROADER_PLAN_NEEDED;
+                  }
                 } else {
                   res[0] = Responses.Already.ACTIVE_SUBSCRIPTION;
                 }

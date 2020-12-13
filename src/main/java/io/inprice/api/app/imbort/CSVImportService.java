@@ -152,7 +152,7 @@ public class CSVImportService extends BaseImportService {
         return isOK;
       });
     } catch (Exception e) {
-      log.error("An error occurred CSV list", e);
+      log.error("Failed to upload CSV list", e);
       res[0] = Responses.ServerProblem.EXCEPTION;
     }
 

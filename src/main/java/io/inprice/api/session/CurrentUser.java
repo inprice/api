@@ -12,8 +12,12 @@ public class CurrentUser {
     }
   };
 
-  static void set(ForRedis forRedis) {
-    THREAD_VARIABLES.get().set(forRedis);
+  static void set(ForRedis forRedis, int sessionNo) {
+    THREAD_VARIABLES.get().set(forRedis, sessionNo);
+  }
+
+  public static int getSessionNo() {
+    return THREAD_VARIABLES.get().getSessionNo();
   }
 
   public static String getSessionHash() {
@@ -30,6 +34,10 @@ public class CurrentUser {
 
   public static String getUserName() {
     return THREAD_VARIABLES.get().getSession().getUser();
+  }
+
+  public static String getUserTimezone() {
+    return THREAD_VARIABLES.get().getSession().getTimezone();
   }
 
   public static Long getCompanyId() {

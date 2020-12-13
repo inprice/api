@@ -1,10 +1,10 @@
 package io.inprice.api.session.info;
 
 import java.io.Serializable;
-import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.inprice.api.helpers.CodeGenerator;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -29,7 +29,7 @@ public class ForCookie implements Serializable {
   public ForCookie(String email, String role) {
     this.email = email;
     this.role = role;
-    this.hash = UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
+    this.hash = CodeGenerator.hash();
   }
 
   @Override

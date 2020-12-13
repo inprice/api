@@ -22,6 +22,7 @@ import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.email.EmailSender;
+import io.inprice.api.email.EmailTemplate;
 import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
@@ -81,7 +82,7 @@ class CompanyService {
           dataMap.put("company", dto.getCompanyName());
           dataMap.put("token", token.substring(0,3)+"-"+token.substring(3));
 
-          String message = renderer.renderRegisterActivationLink(dataMap);
+          String message = renderer.render(EmailTemplate.REGISTER_ACTIVATION_LINK, dataMap);
           emailSender.send(
             Props.APP_EMAIL_SENDER(), 
             "About " + dto.getCompanyName() + " registration on inprice.io",
@@ -96,7 +97,7 @@ class CompanyService {
         }
 
       } catch (Exception e) {
-        log.error("An error occurred in rendering email for activating register company", e);
+        log.error("Failed to render email for activating company register", e);
         return Responses.ServerProblem.EXCEPTION;
       }
     }
@@ -231,6 +232,8 @@ class CompanyService {
           Company company = companyDao.findByAdminId(CurrentUser.getCompanyId());
 
           if (company != null) {
+            log.info("{} is being deleted. Id: {}...", company.getName(), company.getId());
+
             String where = "where company_id=" + CurrentUser.getCompanyId();
 
             Batch batch = transactional.createBatch();
@@ -243,11 +246,13 @@ class CompanyService {
             batch.add("delete from link " + where);
             batch.add("delete from product_tag " + where);
             batch.add("delete from product " + where);
-            batch.add("delete from user_session " + where);
-            batch.add("delete from member " + where);
-            batch.add("delete from subs_trans " + where);
-            batch.add("delete from user where id in (select admin_id from company where id=" + CurrentUser.getCompanyId() + ")");
             batch.add("delete from coupon where issued_company_id=" + CurrentUser.getCompanyId());
+            batch.add("delete from member " + where);
+            batch.add("delete from user_session " + where);
+            batch.add("delete from user where id in (select admin_id from company where id=" + CurrentUser.getCompanyId() + ")");
+            batch.add("delete from checkout " + where);
+            batch.add("delete from company_history " + where);
+            batch.add("delete from company_trans " + where);
             batch.add("delete from company where id=" + CurrentUser.getCompanyId());
             batch.add("SET FOREIGN_KEY_CHECKS=1");
             batch.execute();
@@ -258,6 +263,8 @@ class CompanyService {
                 RedisClient.removeSesion(hash);
               }
             }
+
+            log.info("{} is deleted. Id: {}.", company.getName(), company.getId());
             res[0] = Responses.OK;
           } else {
             res[0] = Responses.Invalid.COMPANY;
