@@ -12,6 +12,6 @@ public class CompanyInfo {
   private Long id;
   private Long name;
   private String email;
-  private String subsCustomerId;
+  private String custId;
 
 }

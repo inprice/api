@@ -21,12 +21,12 @@ public class Commons {
   }
 
   public static Response refreshSession(Company company) {
-    return refreshSession(company, company.getStatus(), company.getSubsRenewalAt());
+    return refreshSession(company, company.getStatus(), company.getRenewalAt());
   }
 
-  public static Response refreshSession(Company company, CompanyStatus status, Date subsRenewalAt) {
+  public static Response refreshSession(Company company, CompanyStatus status, Date renewalAt) {
     company.setStatus(status);
-    company.setSubsRenewalAt(subsRenewalAt);
+    company.setRenewalAt(renewalAt);
     ForResponse session = new ForResponse(
       company,
       CurrentUser.getUserName(),

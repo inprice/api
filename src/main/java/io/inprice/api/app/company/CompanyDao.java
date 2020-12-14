@@ -32,9 +32,9 @@ public interface CompanyDao {
   @UseRowMapper(CompanyMapper.class)
   Company findByNameAndAdminId(@Bind("name") String name, @Bind("adminId") Long adminId);
 
-  @SqlQuery("select * from company where subs_customer_id=:subsCustomerId")
+  @SqlQuery("select * from company where cust_id=:custId")
   @UseRowMapper(CompanyMapper.class)
-  Company findBySubsCustomerId(@Bind("subsCustomerId") String subsCustomerId);
+  Company findByCustId(@Bind("custId") String custId);
 
   @SqlUpdate(
     "insert into company (admin_id, name, currency_code, currency_format) " + 
@@ -61,17 +61,17 @@ public interface CompanyDao {
   @SqlUpdate(
     "update company " +
     "set title=:dto.title, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country, " +
-    "plan_name=:dto.planName, subs_id=:dto.subsId, subs_customer_id=:dto.custId, status=:status, subs_renewal_at=:dto.renewalDate, last_status_update=now() " +
+    "plan_name=:dto.planName, product_limit=:productLimit, subs_id=:dto.subsId, cust_id=:dto.custId, status=:status, renewal_at=:dto.renewalDate, last_status_update=now() " +
     "where id=:id"
   )
-  boolean startSubscription(@BindBean("dto") CustomerDTO dto, @Bind("status") String status, @Bind("id") Long id);
+  boolean startSubscription(@BindBean("dto") CustomerDTO dto, @Bind("status") String status, @Bind("productLimit") Integer productLimit, @Bind("id") Long id);
 
-  @SqlUpdate("update company set status=:status, subs_renewal_at=:subsRenewalAt where id=:id")
-  boolean renewSubscription(@Bind("id") Long id, @Bind("status") String status, @Bind("subsRenewalAt") Timestamp subsRenewalAt);
+  @SqlUpdate("update company set status=:status, renewal_at=:renewalAt where id=:id")
+  boolean renewSubscription(@Bind("id") Long id, @Bind("status") String status, @Bind("renewalAt") Timestamp renewalAt);
 
   @SqlUpdate(
     "update company " + 
-    "set plan_name=:planName, status=:status, subs_renewal_at=DATE_ADD(now(), interval <interval> day), product_limit=:productLimit, last_status_update=now() " +
+    "set plan_name=:planName, status=:status, renewal_at=DATE_ADD(now(), interval <interval> day), product_limit=:productLimit, last_status_update=now() " +
     "where id=:companyId"
   )
   boolean startFreeUseOrApplyCoupon(@Bind("companyId") Long companyId, @Bind("status") String status, 
@@ -79,10 +79,10 @@ public interface CompanyDao {
 
   @SqlUpdate(
     "update company " +
-    "set subs_id=null, status='CANCELLED', last_status_update=now() "+
+    "set subs_id=null, plan_name=null, renewal_at=null, status=:status, last_status_update=now() "+
     "where id=:id"
   )
-  boolean cancelSubscription(@Bind("id") Long id);
+  boolean terminate(@Bind("id") Long id, @Bind("status") String status);
 
   @SqlUpdate(
     "update company " + 
@@ -95,36 +95,33 @@ public interface CompanyDao {
   @SqlQuery(
     "select * from company "+
     "where status in (<statusList>) "+
-    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) > 1 "+
-    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) < 4"
+    "  and TIMESTAMPDIFF(DAY, renewal_at, now()) > 1 "+
+    "  and TIMESTAMPDIFF(DAY, renewal_at, now()) < 4"
   )
   @UseRowMapper(CompanyMapper.class)
   List<Company> findAboutToExpiredFreeCompanyList(@BindList("statusList") List<String> statusList);
 
-  @SqlQuery("select * from company where status in (<statusList>) and subs_renewal_at <= now()")
+  @SqlQuery("select * from company where status in (<statusList>) and renewal_at <= now()")
   @UseRowMapper(CompanyMapper.class)
   List<Company> findExpiredFreeCompanyList(@BindList("statusList") List<String> statusList);
 
   @SqlQuery(
-    "select c.id, c.name, u.email, c.subs_customer_id from company as c " +
+    "select c.id, c.name, u.email, c.cust_id from company as c " +
     "inner join user as u on u.id = c.admin_id " +
     "where c.status='SUBSCRIBED' "+
-    "  and c.subs_renewal_at <= now() - interval 3 day"
+    "  and c.renewal_at <= now() - interval 3 day"
   )
   @UseRowMapper(CompanyInfoMapper.class)
   List<CompanyInfo> findExpiredSubscriberCompanyList();
-
-  @SqlUpdate("update company set status=:status, last_status_update=now() where id=:companyId")
-  boolean stopCompany(@Bind("companyId") long companyId, @Bind("status") String status);
 
   @SqlUpdate("insert into company_history (company_id, status) values (:companyId, :status)")
   boolean insertStatusHistory(@Bind("companyId") Long companyId, @Bind("status") String status);
 
   @SqlUpdate(
-    "insert into company_history (company_id, status, plan_name, subs_id, subs_customer_id) " +
-    "values (:companyId, :status, :planName, :subsId, :subsCustomerId)"
+    "insert into company_history (company_id, status, plan_name, subs_id, cust_id) " +
+    "values (:companyId, :status, :planName, :subsId, :custId)"
   )
   boolean insertStatusHistory(@Bind("companyId") Long companyId, @Bind("status") String status, 
-    @Bind("planName") String planName, @Bind("subsId") String subsId, @Bind("subsCustomerId") String subsCustomerId);
+    @Bind("planName") String planName, @Bind("subsId") String subsId, @Bind("custId") String custId);
 
 }

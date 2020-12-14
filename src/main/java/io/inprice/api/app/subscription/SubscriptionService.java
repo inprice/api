@@ -34,7 +34,6 @@ import io.inprice.common.models.Company;
 import io.inprice.common.models.CompanyTrans;
 import io.inprice.common.models.Coupon;
 import io.inprice.common.models.Plan;
-import io.inprice.common.utils.NumberUtils;
 
 class SubscriptionService {
 
@@ -86,102 +85,66 @@ class SubscriptionService {
   Response cancel() {
     Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
 
+    Company[] company = { null };
+
+    //if a subscriber, stripeService will create its own transaction. 
+    //so, we must not extend/cascade any db connection, thus, a new one is handled here in a separated block
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(transactional -> {
-        
-        CompanyDao companyDao = transactional.attach(CompanyDao.class);
-        Company company = companyDao.findById(CurrentUser.getCompanyId());
+      CompanyDao companyDao = handle.attach(CompanyDao.class);
+      company[0] = companyDao.findById(CurrentUser.getCompanyId());
+    }
 
-        if (CurrentUser.getUserId().equals(company.getAdminId())) {
-          if (company.getStatus().isOKForCancel()) {
+    if (CurrentUser.getUserId().equals(company[0].getAdminId())) {
+      if (company[0].getStatus().isOKForCancel()) {
 
-            boolean isOK = false;
+        if (CompanyStatus.SUBSCRIBED.equals(company[0].getStatus())) { //if a subscriber
+          res[0] = stripeService.cancel(company[0]);
+        } else { //free or couponed user
 
-            String couponCode = null;
-            Integer days = null;
-            String planName = null;
-    
-            if (CompanyStatus.SUBSCRIBED.equals(company.getStatus())) { //if a subscriber
-              res[0] = stripeService.cancel(transactional, company);
-              if (res[0].isOK()) {
-                isOK = true;
-                Map<String, String> dataMap = res[0].getData();
-                couponCode = dataMap.get("couponCode");
-                if (couponCode != null) {
-                  days = NumberUtils.toInteger(dataMap.get("days"));
-                  planName = dataMap.get("planName");
+          try (Handle handle = Database.getHandle()) {
+            CompanyDao companyDao = handle.attach(CompanyDao.class);
+            handle.inTransaction(transactional -> {
+      
+              boolean isOK = companyDao.terminate(company[0].getId(), CompanyStatus.CANCELLED.name());
+              if (isOK) {
+
+                CompanyTrans trans = new CompanyTrans();
+                trans.setCompanyId(company[0].getId());
+                trans.setSuccessful(Boolean.TRUE);
+                trans.setDescription(("Manual cancelation."));
+                trans.setEvent(CompanyStatus.COUPONED.equals(company[0].getStatus()) ? SubsEvent.COUPON_USE_CANCELLED : SubsEvent.FREE_USE_CANCELLED);
+
+                SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+                isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+      
+                if (isOK) {
+                  Map<String, Object> mailMap = new HashMap<>(2);
+                  mailMap.put("user", CurrentUser.getEmail());
+                  mailMap.put("company", StringUtils.isNotBlank(company[0].getTitle()) ? company[0].getTitle() : company[0].getName());
+                  String message = templateRenderer.render(EmailTemplate.FREE_COMPANY_CANCELLED, mailMap);
+                  emailSender.send(
+                    Props.APP_EMAIL_SENDER(), 
+                    "Notification about your cancelled plan in inprice.", CurrentUser.getEmail(), 
+                    message
+                  );
+
+                  res[0] = Responses.OK;
                 }
               }
-            } else {
-              isOK = true;
-            }
-
-            if (isOK) {
-              isOK = companyDao.stopCompany(company.getId(), CompanyStatus.CANCELLED.name());
-              if (isOK) {
-                String companyName = StringUtils.isNotBlank(company.getTitle()) ? company.getTitle() : company.getName();
-
-                Map<String, Object> mailMap = new HashMap<>(5);
-                mailMap.put("user", CurrentUser.getEmail());
-                mailMap.put("company", companyName);
-                mailMap.put("couponCode", couponCode);
-                mailMap.put("days", days);
-                mailMap.put("planName", planName);
-                String message = 
-                  templateRenderer.render(
-                    (company.getStatus().equals(CompanyStatus.SUBSCRIBED) 
-                      ? (
-                          days == null || days <= 3 
-                          ? EmailTemplate.SUBSCRIPTION_CANCELLED 
-                          : EmailTemplate.SUBSCRIPTION_CANCELLED_COUPONED
-                        )
-                      : EmailTemplate.FREE_COMPANY_CANCELLED
-                    ),
-                    mailMap
-                );
-                emailSender.send(
-                  Props.APP_EMAIL_SENDER(), 
-                  "Notification about your cancelled plan in inprice.", CurrentUser.getEmail(), 
-                  message
-                );
-
-                res[0] = Responses.OK;
-              }
-            }
-
-          } else {
-            res[0] = Responses.Illegal.NOT_SUITABLE_FOR_CANCELLATION;
+              return res[0].isOK();
+            });
           }
-        } else {
-          res[0] = Responses._403;
         }
 
-        if (res[0].isOK()) {
-          CompanyTrans trans = new CompanyTrans();
-          trans.setCompanyId(company.getId());
-          trans.setSuccessful(Boolean.TRUE);
-          trans.setDescription(("Manual cancelation."));
+      } else {
+        res[0] = Responses.Illegal.NOT_SUITABLE_FOR_CANCELLATION;
+      }
+    } else {
+      res[0] = Responses._403;
+    }
 
-          switch (company.getStatus()) {
-            case COUPONED:
-              trans.setEvent(SubsEvent.COUPON_USE_CANCELLED);
-              break;
-            case SUBSCRIBED:
-              trans.setEvent(SubsEvent.SUBSCRIPTION_CANCELLED);
-              break;
-            default:
-              trans.setEvent(SubsEvent.FREE_USE_CANCELLED);
-              break;
-          }
-
-          SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
-          subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-          
-          res[0] = Commons.refreshSession(company, CompanyStatus.CANCELLED, null);
-        }
-    
-        return res[0].isOK();
-      });
+    if (res[0].isOK()) {
+      res[0] = Commons.refreshSession(company[0], CompanyStatus.CANCELLED, null);
     }
 
     return res[0];

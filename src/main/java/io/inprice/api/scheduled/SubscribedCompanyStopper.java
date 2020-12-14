@@ -63,7 +63,7 @@ public class SubscribedCompanyStopper implements Runnable {
 
               //we need to cancel stripe first
               try {
-                Subscription subscription = Subscription.retrieve(cinfo.getSubsCustomerId());
+                Subscription subscription = Subscription.retrieve(cinfo.getCustId());
                 Subscription subsResult = subscription.cancel();
                 if (subsResult != null && subsResult.getStatus().equals("canceled")) {
                   log.info("Stopping subscription: {} stopped!", cinfo.getName());
@@ -77,7 +77,7 @@ public class SubscribedCompanyStopper implements Runnable {
               }
 
               //then company can be cancellable
-              boolean isOK = companyDao.stopCompany(cinfo.getId(), CompanyStatus.STOPPED.name());
+              boolean isOK = companyDao.terminate(cinfo.getId(), CompanyStatus.STOPPED.name());
 
               CompanyTrans trans = new CompanyTrans();
               trans.setCompanyId(cinfo.getId());

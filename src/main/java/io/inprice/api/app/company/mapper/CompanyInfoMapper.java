@@ -17,7 +17,7 @@ public class CompanyInfoMapper implements RowMapper<CompanyInfo> {
     if (Helper.hasColumn(rs, "id")) m.setId(Helper.nullLongHandler(rs, "id"));
     if (Helper.hasColumn(rs, "name")) m.setEmail(rs.getString("name"));
     if (Helper.hasColumn(rs, "email")) m.setEmail(rs.getString("email"));
-    if (Helper.hasColumn(rs, "subs_customer_id")) m.setSubsCustomerId(rs.getString("subs_customer_id"));
+    if (Helper.hasColumn(rs, "cust_id")) m.setCustId(rs.getString("cust_id"));
 
     return m;
   }

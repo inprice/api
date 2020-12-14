@@ -2,10 +2,10 @@ package io.inprice.api.token;
 
 import java.io.Serializable;
 import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import io.inprice.api.external.RedisClient;
+import io.inprice.api.helpers.CodeGenerator;
 
 public class Tokens {
 
@@ -16,7 +16,7 @@ public class Tokens {
     if (TokenType.REGISTER_REQUEST.equals(tokenType)) {
       token = generateNumericToken();
     } else {
-      token = generateUUIDToken();
+      token = CodeGenerator.hash();
     }
 
     RedisClient.tokensMap.put(getKey(tokenType, token), object, tokenType.ttl(), TimeUnit.MILLISECONDS);
@@ -55,10 +55,6 @@ public class Tokens {
     }
 
     return token+(total%10);
-  }
-
-  private static String generateUUIDToken() {
-    return UUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
   }
  
 }

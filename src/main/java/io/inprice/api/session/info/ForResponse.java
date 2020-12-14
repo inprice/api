@@ -31,7 +31,7 @@ public class ForResponse implements Serializable {
   private String planName;
   private String companyStatus;
   private Boolean everSubscribed;
-  private Date subsRenewalAt;
+  private Date renewalAt;
   private Date lastStatusUpdate;
   private int daysToRenewal;
   private String currencyFormat;
@@ -46,14 +46,14 @@ public class ForResponse implements Serializable {
     this.planName = company.getPlanName();
     this.companyStatus = company.getStatus().name();
     this.lastStatusUpdate = company.getLastStatusUpdate();
-    this.subsRenewalAt = company.getSubsRenewalAt();
+    this.renewalAt = company.getRenewalAt();
     this.currencyFormat = company.getCurrencyFormat();
     this.timezone = timezone;
     this.role = role;
     this.productCount = company.getProductCount();
 
-    this.everSubscribed = StringUtils.isNotBlank(company.getSubsCustomerId());
-    doTheStandardAssignments();
+    this.everSubscribed = StringUtils.isNotBlank(company.getCustId());
+    makeTheStandardAssignments();
   }
 
   public ForResponse(ForResponse forResponse) {
@@ -63,14 +63,14 @@ public class ForResponse implements Serializable {
     this.planName = forResponse.getPlanName();
     this.companyStatus = forResponse.getCompanyStatus();
     this.lastStatusUpdate = forResponse.getLastStatusUpdate();
-    this.subsRenewalAt = forResponse.getSubsRenewalAt();
+    this.renewalAt = forResponse.getRenewalAt();
     this.currencyFormat = forResponse.getCurrencyFormat();
     this.timezone = forResponse.getTimezone();
     this.role = forResponse.getRole();
     this.productCount = forResponse.getProductCount();
 
     this.everSubscribed = forResponse.getEverSubscribed();
-    doTheStandardAssignments();
+    makeTheStandardAssignments();
   }
 
   public ForResponse(ForCookie forCookie, ForRedis forRedis) {
@@ -80,14 +80,14 @@ public class ForResponse implements Serializable {
     this.planName = forRedis.getPlanName();
     this.companyStatus = forRedis.getCompanyStatus();
     this.lastStatusUpdate = forRedis.getLastStatusUpdate();
-    this.subsRenewalAt = forRedis.getSubsRenewalAt();
+    this.renewalAt = forRedis.getRenewalAt();
     this.currencyFormat = forRedis.getCurrencyFormat();
     this.timezone = forRedis.getTimezone();
     this.role = UserRole.valueOf(forCookie.getRole());
     this.productCount = forRedis.getProductCount();
 
     this.everSubscribed = forRedis.getEverSubscribed();
-    doTheStandardAssignments();
+    makeTheStandardAssignments();
   }
 
   public ForResponse(ForCookie forCookie, User user, Member mem) {
@@ -97,24 +97,23 @@ public class ForResponse implements Serializable {
     this.planName = mem.getPlanName();
     this.companyStatus = mem.getCompanyStatus().name();
     this.lastStatusUpdate = mem.getLastStatusUpdate();
-    this.subsRenewalAt = mem.getSubsRenewalAt();
+    this.renewalAt = mem.getRenewalAt();
     this.currencyFormat = mem.getCurrencyFormat();
     this.timezone = user.getTimezone();
     this.role = UserRole.valueOf(forCookie.getRole());
     this.productCount = mem.getProductCount();
 
     this.everSubscribed = mem.getEverSubscribed();
-    doTheStandardAssignments();
+    makeTheStandardAssignments();
   }
 
-  private void doTheStandardAssignments() {
-    if (this.subsRenewalAt != null) {
-      this.daysToRenewal = 1 + (int) DateUtils.findDayDiff(new Date(), this.subsRenewalAt);
+  private void makeTheStandardAssignments() {
+    if (this.renewalAt != null) {
+      this.daysToRenewal = 1 + (int) DateUtils.findDayDiff(new Date(), this.renewalAt);
     }
     if (this.planName != null) {
       this.planId = Plans.findByName(this.planName).getId();
     }
-
   }
 
 }

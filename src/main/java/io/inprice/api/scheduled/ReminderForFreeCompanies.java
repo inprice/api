@@ -73,8 +73,8 @@ public class ReminderForFreeCompanies implements Runnable {
             Map<String, Object> dataMap = new HashMap<>(4);
             dataMap.put("user", user.getName());
             dataMap.put("model", company.getStatus());
-            dataMap.put("days", DateUtils.findDayDiff(company.getSubsRenewalAt(), new Date()));
-            dataMap.put("subsRenewalAt", DateUtils.formatReverseDate(company.getSubsRenewalAt()));
+            dataMap.put("days", DateUtils.findDayDiff(company.getRenewalAt(), new Date()));
+            dataMap.put("renewalAt", DateUtils.formatReverseDate(company.getRenewalAt()));
             String message = templateRenderer.render(EmailTemplate.FREE_COMPANY_REMINDER, dataMap);
             emailSender.send(Props.APP_EMAIL_SENDER(), "Your subscription is about to end", user.getEmail(), message);
 

@@ -70,7 +70,7 @@ public class FreeCompanyStopper implements Runnable {
             UserDao userDao = transactional.attach(UserDao.class);
 
             for (Company company: expiredCompanyList) {
-              boolean isOK = companyDao.stopCompany(company.getId(), CompanyStatus.STOPPED.name());
+              boolean isOK = companyDao.terminate(company.getId(), CompanyStatus.STOPPED.name());
               if (isOK) {
 
                 CompanyTrans trans = new CompanyTrans();
