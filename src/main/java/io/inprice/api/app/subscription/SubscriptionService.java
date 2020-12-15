@@ -1,7 +1,6 @@
 package io.inprice.api.app.subscription;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,10 +101,10 @@ class SubscriptionService {
         } else { //free or couponed user
 
           try (Handle handle = Database.getHandle()) {
-            CompanyDao companyDao = handle.attach(CompanyDao.class);
             handle.inTransaction(transactional -> {
+              SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
       
-              boolean isOK = companyDao.terminate(company[0].getId(), CompanyStatus.CANCELLED.name());
+              boolean isOK = subscriptionDao.terminate(company[0].getId(), CompanyStatus.CANCELLED.name());
               if (isOK) {
 
                 CompanyTrans trans = new CompanyTrans();
@@ -114,21 +113,30 @@ class SubscriptionService {
                 trans.setDescription(("Manual cancelation."));
                 trans.setEvent(CompanyStatus.COUPONED.equals(company[0].getStatus()) ? SubsEvent.COUPON_USE_CANCELLED : SubsEvent.FREE_USE_CANCELLED);
 
-                SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
                 isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
       
                 if (isOK) {
-                  Map<String, Object> mailMap = new HashMap<>(2);
-                  mailMap.put("user", CurrentUser.getEmail());
-                  mailMap.put("company", StringUtils.isNotBlank(company[0].getTitle()) ? company[0].getTitle() : company[0].getName());
-                  String message = templateRenderer.render(EmailTemplate.FREE_COMPANY_CANCELLED, mailMap);
-                  emailSender.send(
-                    Props.APP_EMAIL_SENDER(), 
-                    "Notification about your cancelled plan in inprice.", CurrentUser.getEmail(), 
-                    message
-                  );
+                  CompanyDao companyDao = transactional.attach(CompanyDao.class);
+                  isOK = 
+                    companyDao.insertStatusHistory(
+                      company[0].getId(),
+                      CompanyStatus.CANCELLED.name(),
+                      company[0].getPlanName(),
+                      null, null
+                    );
+                  if (isOK) {
+                    Map<String, Object> mailMap = new HashMap<>(2);
+                    mailMap.put("user", CurrentUser.getEmail());
+                    mailMap.put("company", StringUtils.isNotBlank(company[0].getTitle()) ? company[0].getTitle() : company[0].getName());
+                    String message = templateRenderer.render(EmailTemplate.FREE_COMPANY_CANCELLED, mailMap);
+                    emailSender.send(
+                      Props.APP_EMAIL_SENDER(), 
+                      "Notification about your cancelled plan in inprice.", CurrentUser.getEmail(), 
+                      message
+                    );
 
-                  res[0] = Responses.OK;
+                    res[0] = Responses.OK;
+                  }
                 }
               }
               return res[0].isOK();
@@ -144,7 +152,7 @@ class SubscriptionService {
     }
 
     if (res[0].isOK()) {
-      res[0] = Commons.refreshSession(company[0], CompanyStatus.CANCELLED, null);
+      res[0] = Commons.refreshSession(company[0].getId());
     }
 
     return res[0];
@@ -162,15 +170,18 @@ class SubscriptionService {
 
           if (!company.getStatus().equals(CompanyStatus.FREE)) {
             if (company.getStatus().isOKForFreeUse()) {
+              SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+
               Plan basicPlan = Plans.findById(0); // Basic Plan
 
-              boolean isOK = companyDao.startFreeUseOrApplyCoupon(
-                CurrentUser.getCompanyId(),
-                CompanyStatus.FREE.name(),
-                basicPlan.getName(),
-                basicPlan.getProductLimit(),
-                Props.APP_DAYS_FOR_FREE_USE()
-              );
+              boolean isOK = 
+                subscriptionDao.startFreeUseOrApplyCoupon(
+                  CurrentUser.getCompanyId(),
+                  CompanyStatus.FREE.name(),
+                  basicPlan.getName(),
+                  basicPlan.getProductLimit(),
+                  Props.APP_DAYS_FOR_FREE_USE()
+                );
 
               if (isOK) {
                 CompanyTrans trans = new CompanyTrans();
@@ -179,7 +190,6 @@ class SubscriptionService {
                 trans.setSuccessful(Boolean.TRUE);
                 trans.setDescription(("Free subscription has been started."));
                 
-                SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
                 isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
                 if (isOK) {
                   isOK = 
@@ -193,7 +203,7 @@ class SubscriptionService {
               }
 
               if (isOK) {
-                res[0] = Commons.refreshSession(company, CompanyStatus.FREE, new Date());
+                res[0] = Commons.refreshSession(companyDao, company.getId());
               }
 
             } else {

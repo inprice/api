@@ -76,8 +76,10 @@ public class SubscribedCompanyStopper implements Runnable {
                 log.error("Stopping subscription: failed " + cinfo.getName(), e);
               }
 
+              SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+
               //then company can be cancellable
-              boolean isOK = companyDao.terminate(cinfo.getId(), CompanyStatus.STOPPED.name());
+              boolean isOK = subscriptionDao.terminate(cinfo.getId(), CompanyStatus.STOPPED.name());
 
               CompanyTrans trans = new CompanyTrans();
               trans.setCompanyId(cinfo.getId());
@@ -85,7 +87,6 @@ public class SubscribedCompanyStopper implements Runnable {
               trans.setSuccessful(Boolean.TRUE);
               trans.setDescription(("Stopped! Final payment failed."));
 
-              SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
               isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
               if (isOK) {
                 isOK = companyDao.insertStatusHistory(cinfo.getId(), CompanyStatus.STOPPED.name());

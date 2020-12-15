@@ -9,7 +9,7 @@ Genel özellikler
 -- DONE -- 7) Kullanıcı login olduktan sonra
 -- DONE --   a) Kalan süresi varsa ve ürün sayısı 0 dan büyükse Dashboard a
 -- DONE --   b) Kalan süresi varsa ve ürün sayısı 0 sa doğrudan ürün tanıtımları sayfasına
--- DONE --   c) NOT_SET, CANCELLED veya STOPPED durumundaysa doğrudan Plans sayfasına
+-- DONE --   c) CREATED, CANCELLED veya STOPPED durumundaysa doğrudan Plans sayfasına
 
 -- DONE -- 8) CANCELLED olan hesaplardaki son kullanım zamanı (ve plan adı) değiştirilmez, kullanıcı o zamana kadar kullanabilir. Fakat Subscription bilgileri sıfırlanır!
 -- DONE -- 9) CANCELLED iken SUBSCRIBED olan hesaplar için madde 2 işlemleri yapılacak, ayrıca
@@ -24,7 +24,7 @@ Genel özellikler
 
 ------------------------------
 
-1) NOT_SET (default olarak atanır)
+1) CREATED (default olarak atanır)
 İlk defa kaydolan her firma bu statüyü alır
 
 Geçemeyeceği statüler: 5, 6
@@ -46,7 +46,7 @@ Kullanıcı yeni bir plan seçebilmeli
 ------------------------------
 
 2) FREE (kullanıcı seçer)
-Sadece bir kereye mahsus olmak üzere, statüsü NOT_SET olan her kullanıcı bu statüye geçebilir
+Sadece bir kereye mahsus olmak üzere, statüsü CREATED olan her kullanıcı bu statüye geçebilir
 
 Geçemeyeceği statüler: 1
 Geçebileceği statüler: 3, 4, 5, 6

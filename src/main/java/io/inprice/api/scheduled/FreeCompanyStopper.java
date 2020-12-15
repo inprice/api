@@ -68,9 +68,10 @@ public class FreeCompanyStopper implements Runnable {
 
           if (expiredCompanyList != null && expiredCompanyList.size() > 0) {
             UserDao userDao = transactional.attach(UserDao.class);
+            SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
             for (Company company: expiredCompanyList) {
-              boolean isOK = companyDao.terminate(company.getId(), CompanyStatus.STOPPED.name());
+              boolean isOK = subscriptionDao.terminate(company.getId(), CompanyStatus.STOPPED.name());
               if (isOK) {
 
                 CompanyTrans trans = new CompanyTrans();
@@ -83,7 +84,6 @@ public class FreeCompanyStopper implements Runnable {
                 else
                   trans.setEvent(SubsEvent.COUPON_USE_STOPPED);
       
-                SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
                 isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
                 if (isOK) {
                   isOK = companyDao.insertStatusHistory(company.getId(), CompanyStatus.STOPPED.name());

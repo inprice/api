@@ -39,6 +39,7 @@ import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.AppEnv;
+import io.inprice.common.meta.CompanyStatus;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Company;
@@ -317,6 +318,9 @@ class CompanyService {
         );
 
       if (companyId != null) {
+
+        companyDao.insertStatusHistory(companyId, CompanyStatus.CREATED.name());
+
         long memberId = 
           memberDao.insert(
             userId,

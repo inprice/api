@@ -298,9 +298,7 @@ class StripeService {
                   } else {
                     emailTemplate = EmailTemplate.SUBSCRIPTION_CHANGE_SUCCESSFUL;
                     dataMap.put("invoiceUrl", invoice.getHostedInvoiceUrl());
-                    company.setPlanName(newPlan.getName());
-                    company.setProductLimit(newPlan.getProductLimit());
-                    res = Commons.refreshSession(company);
+                    res = Commons.refreshSession(company.getId());
                   }
                   String message = templateRenderer.render(emailTemplate, dataMap);
                   emailSender.send(Props.APP_EMAIL_SENDER(), "Your plan transition", invoice.getCustomerEmail(), message);
@@ -581,7 +579,7 @@ class StripeService {
                 if (company.getStatus().isOKForSubscription()) {
 
                   Plan plan = Plans.findByName(dto.getPlanName());
-                  if (companyDao.startSubscription(dto, CompanyStatus.SUBSCRIBED.name(), plan.getProductLimit(), companyId)) {
+                  if (subscriptionDao.startSubscription(dto, CompanyStatus.SUBSCRIBED.name(), plan.getProductLimit(), companyId)) {
                     boolean isOK = updateInvoiceInfo(dto);
                     if (isOK) {
 
@@ -611,7 +609,7 @@ class StripeService {
               }
       
               case SUBSCRIPTION_RENEWED: {
-                if (companyDao.renewSubscription(companyId, CompanyStatus.SUBSCRIBED.name(), dto.getRenewalDate())) {
+                if (subscriptionDao.renewSubscription(companyId, CompanyStatus.SUBSCRIBED.name(), dto.getRenewalDate())) {
 
                   String companyName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : company.getName();
 
@@ -655,7 +653,7 @@ class StripeService {
                     if (!isOK) couponCode = null;
                   }
 
-                  isOK = companyDao.terminate(companyId, CompanyStatus.CANCELLED.name());
+                  isOK = subscriptionDao.terminate(companyId, CompanyStatus.CANCELLED.name());
 
                   if (isOK) {
                     String companyName = StringUtils.isNotBlank(company.getTitle()) ? company.getTitle() : company.getName();
@@ -724,7 +722,7 @@ class StripeService {
       
               case SUBSCRIPTION_CHANGED: {
                 Plan newPlan = Plans.findByName(dto.getPlanName());
-                boolean isOK = companyDao.changePlan(companyId, newPlan.getName(), newPlan.getProductLimit());
+                boolean isOK = subscriptionDao.changePlan(companyId, newPlan.getName(), newPlan.getProductLimit());
                 if (isOK) {
                   String companyName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : company.getName();
 

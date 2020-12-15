@@ -1,12 +1,10 @@
 package io.inprice.api.app.company;
 
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
-import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -57,39 +55,6 @@ public interface CompanyDao {
   
   @SqlUpdate("update company set product_count=product_count+1 where id=:id and product_count<product_limit")
   boolean increaseProductCountById(@Bind("id") Long id);
-
-  @SqlUpdate(
-    "update company " +
-    "set title=:dto.title, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country, " +
-    "plan_name=:dto.planName, product_limit=:productLimit, subs_id=:dto.subsId, cust_id=:dto.custId, status=:status, renewal_at=:dto.renewalDate, last_status_update=now() " +
-    "where id=:id"
-  )
-  boolean startSubscription(@BindBean("dto") CustomerDTO dto, @Bind("status") String status, @Bind("productLimit") Integer productLimit, @Bind("id") Long id);
-
-  @SqlUpdate("update company set status=:status, renewal_at=:renewalAt where id=:id")
-  boolean renewSubscription(@Bind("id") Long id, @Bind("status") String status, @Bind("renewalAt") Timestamp renewalAt);
-
-  @SqlUpdate(
-    "update company " + 
-    "set plan_name=:planName, status=:status, renewal_at=DATE_ADD(now(), interval <interval> day), product_limit=:productLimit, last_status_update=now() " +
-    "where id=:companyId"
-  )
-  boolean startFreeUseOrApplyCoupon(@Bind("companyId") Long companyId, @Bind("status") String status, 
-    @Bind("planName") String planName, @Bind("productLimit") Integer productLimit, @Define("interval") Integer interval);
-
-  @SqlUpdate(
-    "update company " +
-    "set subs_id=null, plan_name=null, renewal_at=null, status=:status, last_status_update=now() "+
-    "where id=:id"
-  )
-  boolean terminate(@Bind("id") Long id, @Bind("status") String status);
-
-  @SqlUpdate(
-    "update company " + 
-    "set plan_name=:planName, product_limit=:productLimit, last_status_update=now() " +
-    "where id=:companyId"
-  )
-  boolean changePlan(@Bind("companyId") Long companyId, @Bind("planName") String planName, @Bind("productLimit") Integer productLimit);
 
   // only two days remaining (last op. is to sending a final message)
   @SqlQuery(

@@ -1,9 +1,7 @@
 package io.inprice.api.app.subscription;
 
-import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.lang3.time.DateUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,8 +66,10 @@ class CouponService {
 
                   // only broader plan transitions allowed
                   if (company.getProductCount().compareTo(selectedPlan.getProductLimit()) <= 0) {
+                    SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+
                     boolean isOK = 
-                      companyDao.startFreeUseOrApplyCoupon(
+                      subscriptionDao.startFreeUseOrApplyCoupon(
                         CurrentUser.getCompanyId(),
                         CompanyStatus.COUPONED.name(),
                         selectedPlan.getName(),
@@ -81,8 +81,6 @@ class CouponService {
                       isOK = couponDao.applyFor(coupon.getCode(), CurrentUser.getCompanyId());
 
                       if (isOK) {
-                        SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
-
                         CompanyTrans trans = new CompanyTrans();
                         trans.setCompanyId(CurrentUser.getCompanyId());
                         trans.setEventId(coupon.getCode());
@@ -102,7 +100,7 @@ class CouponService {
                         }
                                 
                         if (isOK) {
-                          res[0] = Commons.refreshSession(company, CompanyStatus.COUPONED, DateUtils.addDays(new Date(), coupon.getDays()));
+                          res[0] = Commons.refreshSession(companyDao, company.getId());
                           log.info("Coupon {}, is issued for {}", coupon.getCode(), company.getName());
                         }
                       }

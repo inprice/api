@@ -9,7 +9,6 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.models.Company;
 
 public class SystemService {
 
@@ -22,11 +21,7 @@ public class SystemService {
 
     try (Handle handle = Database.getHandle()) {
       CompanyDao companyDao = handle.attach(CompanyDao.class);
-      Company company = companyDao.findById(CurrentUser.getCompanyId());
-
-      if (company != null) {
-        res = Commons.refreshSession(company);
-      }
+      res = Commons.refreshSession(companyDao, CurrentUser.getCompanyId());
     } catch (Exception e) {
       res = Responses.DataProblem.DB_PROBLEM;
     }

@@ -3,14 +3,11 @@ package io.inprice.api.session.info;
 import java.io.Serializable;
 import java.util.Date;
 
-import org.apache.commons.lang3.StringUtils;
-
 import io.inprice.common.config.Plans;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.models.Company;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
-import io.inprice.common.utils.DateUtils;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,10 +27,10 @@ public class ForResponse implements Serializable {
   private Integer planId;
   private String planName;
   private String companyStatus;
+  private Date subsStartedAt;
   private Boolean everSubscribed;
   private Date renewalAt;
   private Date lastStatusUpdate;
-  private int daysToRenewal;
   private String currencyFormat;
   private String timezone;
   private Integer productCount;
@@ -45,6 +42,7 @@ public class ForResponse implements Serializable {
     this.company = company.getName();
     this.planName = company.getPlanName();
     this.companyStatus = company.getStatus().name();
+    this.subsStartedAt = company.getSubsStartedAt();
     this.lastStatusUpdate = company.getLastStatusUpdate();
     this.renewalAt = company.getRenewalAt();
     this.currencyFormat = company.getCurrencyFormat();
@@ -52,7 +50,6 @@ public class ForResponse implements Serializable {
     this.role = role;
     this.productCount = company.getProductCount();
 
-    this.everSubscribed = StringUtils.isNotBlank(company.getCustId());
     makeTheStandardAssignments();
   }
 
@@ -62,6 +59,7 @@ public class ForResponse implements Serializable {
     this.company = forResponse.getCompany();
     this.planName = forResponse.getPlanName();
     this.companyStatus = forResponse.getCompanyStatus();
+    this.subsStartedAt = forResponse.getSubsStartedAt();
     this.lastStatusUpdate = forResponse.getLastStatusUpdate();
     this.renewalAt = forResponse.getRenewalAt();
     this.currencyFormat = forResponse.getCurrencyFormat();
@@ -69,7 +67,6 @@ public class ForResponse implements Serializable {
     this.role = forResponse.getRole();
     this.productCount = forResponse.getProductCount();
 
-    this.everSubscribed = forResponse.getEverSubscribed();
     makeTheStandardAssignments();
   }
 
@@ -79,6 +76,7 @@ public class ForResponse implements Serializable {
     this.company = forRedis.getCompany();
     this.planName = forRedis.getPlanName();
     this.companyStatus = forRedis.getCompanyStatus();
+    this.subsStartedAt = forRedis.getSubsStartedAt();
     this.lastStatusUpdate = forRedis.getLastStatusUpdate();
     this.renewalAt = forRedis.getRenewalAt();
     this.currencyFormat = forRedis.getCurrencyFormat();
@@ -86,7 +84,6 @@ public class ForResponse implements Serializable {
     this.role = UserRole.valueOf(forCookie.getRole());
     this.productCount = forRedis.getProductCount();
 
-    this.everSubscribed = forRedis.getEverSubscribed();
     makeTheStandardAssignments();
   }
 
@@ -96,6 +93,7 @@ public class ForResponse implements Serializable {
     this.company = mem.getCompanyName();
     this.planName = mem.getPlanName();
     this.companyStatus = mem.getCompanyStatus().name();
+    this.subsStartedAt = mem.getSubsStartedAt();
     this.lastStatusUpdate = mem.getLastStatusUpdate();
     this.renewalAt = mem.getRenewalAt();
     this.currencyFormat = mem.getCurrencyFormat();
@@ -103,17 +101,14 @@ public class ForResponse implements Serializable {
     this.role = UserRole.valueOf(forCookie.getRole());
     this.productCount = mem.getProductCount();
 
-    this.everSubscribed = mem.getEverSubscribed();
     makeTheStandardAssignments();
   }
 
   private void makeTheStandardAssignments() {
-    if (this.renewalAt != null) {
-      this.daysToRenewal = 1 + (int) DateUtils.findDayDiff(new Date(), this.renewalAt);
-    }
     if (this.planName != null) {
       this.planId = Plans.findByName(this.planName).getId();
     }
+    this.everSubscribed = (this.subsStartedAt != null);
   }
 
 }
