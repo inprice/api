@@ -30,6 +30,10 @@ public class Commons {
 
   public static Response refreshSession(CompanyDao companyDao, Long companyId) {
     Company company = companyDao.findById(companyId);
+    return refreshSession(company);
+  }
+
+  public static Response refreshSession(Company company) {
     ForResponse session = new ForResponse(
       company,
       CurrentUser.getUserName(),

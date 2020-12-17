@@ -61,7 +61,7 @@ public class CompanyController implements Controller {
 
     app.put(Consts.Paths.Company.DELETE, (ctx) -> {
       StringDTO dto = ctx.bodyAsClass(StringDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.deleteEverything(dto.getValue())));
+      ctx.json(Commons.createResponse(ctx, service.deleteCompany(dto.getValue())));
     }, AccessRoles.ADMIN_ONLY());
 
   }

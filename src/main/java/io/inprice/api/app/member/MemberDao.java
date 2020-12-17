@@ -63,6 +63,13 @@ public interface MemberDao {
   List<ActiveMember> findMemberListByEmailAndStatus(@Bind("email") String email, @Bind("status") String status);
 
   @SqlQuery(
+    "select user_id from member as prim " + 
+    "where prim.company_id=:companyId " + 
+    "  and (select count(1) from member as secon where secon.user_id=prim.user_id) <= 1"
+  )
+  List<Long> findUserIdListHavingJustThisCompany(@Bind("companyId") Long companyId);
+
+  @SqlQuery(
     "select mem.id, c.name, mem.role, mem.status, mem.updated_at from member as mem " + 
     "left join company as c on c.id = mem.company_id " + 
     "where email=:email " + 

@@ -98,6 +98,7 @@ public class Responses {
     public static class Defined {
       public static final Response COMPANY = new Response(BASE + 20, "Seems that you have already registered this company!");
       public static final Response MEMBERSHIP = new Response(BASE + 21, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");
+      public static final Response REGISTERED_USER = new Response(BASE + 22, "This user has already registered! Signing up is an option for newcomers! You can use Create Company in the menu after login.");
     }
   }
 

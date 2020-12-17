@@ -27,6 +27,7 @@ import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
+import io.inprice.api.helpers.Commons;
 import io.inprice.api.helpers.PasswordHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
@@ -34,10 +35,10 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
 import io.inprice.api.utils.CurrencyFormats;
-import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.CompanyStatus;
 import io.inprice.common.meta.UserRole;
@@ -65,17 +66,11 @@ class CompanyService {
 
       try (Handle handle = Database.getHandle()) {
         UserDao userDao = handle.attach(UserDao.class);
-        CompanyDao companyDao = handle.attach(CompanyDao.class);
-
-        boolean isCompanyDefined = false;
 
         User user = userDao.findByEmail(dto.getEmail());
-        if (user != null) {
-          Company found = companyDao.findByNameAndAdminId(dto.getCompanyName(), user.getId());
-          isCompanyDefined = (found != null);
-        }
+        boolean isNotARegisteredUser = (user == null);
 
-        if (! isCompanyDefined) {
+        if (isNotARegisteredUser) {
           String token = Tokens.add(TokenType.REGISTER_REQUEST, dto);
 
           Map<String, Object> dataMap = new HashMap<>(3);
@@ -94,7 +89,7 @@ class CompanyService {
 
           return Responses.OK;
         } else {
-          return Responses.Already.Defined.COMPANY;
+          return Responses.Already.Defined.REGISTERED_USER;
         }
 
       } catch (Exception e) {
@@ -183,6 +178,11 @@ class CompanyService {
               dto.getCurrencyCode(),
               dto.getCurrencyFormat()
             );
+          if (res[0].isOK()) {
+            CompanyDao companyDao = transactional.attach(CompanyDao.class);
+            Company company = companyDao.findById(res[0].getData());
+            res[0] = Commons.refreshSession(company);
+          }
           return res[0].isOK();
         });
       }
@@ -218,7 +218,7 @@ class CompanyService {
     return res;
   }
 
-  Response deleteEverything(String password) {
+  Response deleteCompany(String password) {
     final Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
@@ -230,7 +230,7 @@ class CompanyService {
         User user = userDao.findById(CurrentUser.getUserId());
 
         if (PasswordHelper.isValid(password, user.getPassword())) {
-          Company company = companyDao.findByAdminId(CurrentUser.getCompanyId());
+          Company company = companyDao.findByAdminId(CurrentUser.getUserId());
 
           if (company != null) {
             log.info("{} is being deleted. Id: {}...", company.getName(), company.getId());
@@ -248,18 +248,28 @@ class CompanyService {
             batch.add("delete from product_tag " + where);
             batch.add("delete from product " + where);
             batch.add("delete from coupon where issued_company_id=" + CurrentUser.getCompanyId());
+            
+            // in order to keep consistency, 
+            // users having no company other than this must be deleted too!!!
+            MemberDao memberDao = transactional.attach(MemberDao.class);
+            List<Long> unboundMembers = memberDao.findUserIdListHavingJustThisCompany(CurrentUser.getCompanyId());
+            if (unboundMembers != null && ! unboundMembers.isEmpty()) {
+              String userIdList = StringUtils.join(unboundMembers, ",");
+              batch.add("delete from user where id in (" + userIdList + ")");
+            }
+            
             batch.add("delete from member " + where);
             batch.add("delete from user_session " + where);
-            batch.add("delete from user where id in (select admin_id from company where id=" + CurrentUser.getCompanyId() + ")");
             batch.add("delete from checkout " + where);
             batch.add("delete from company_history " + where);
             batch.add("delete from company_trans " + where);
             batch.add("delete from company where id=" + CurrentUser.getCompanyId());
+
             batch.add("SET FOREIGN_KEY_CHECKS=1");
             batch.execute();
 
             List<String> hashList = sessionDao.findHashesByCompanyId(CurrentUser.getCompanyId());
-            if (hashList != null && hashList.size() > 0) {
+            if (hashList != null && ! hashList.isEmpty()) {
               for (String hash : hashList) {
                 RedisClient.removeSesion(hash);
               }
@@ -332,7 +342,7 @@ class CompanyService {
 
         if (memberId > 0) {
           log.info("A new user just registered a new company. C.Name: {}, U.Email: {} ", companyName, userEmail);
-          return Responses.OK;
+          return new Response(companyId);
         }
       }
       return Responses.DataProblem.DB_PROBLEM;
