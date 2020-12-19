@@ -14,6 +14,6 @@ public class EmailDTO implements Serializable {
    private static final long serialVersionUID = 5884990803032543745L;
 
    private String email;
-   private Long companyId;
+   private Long accountId;
 
 }

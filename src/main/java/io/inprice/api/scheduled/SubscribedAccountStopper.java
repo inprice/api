@@ -10,8 +10,8 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.company.CompanyDao;
-import io.inprice.api.app.company.mapper.CompanyInfo;
+import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.account.mapper.AccountInfo;
 import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.consts.Global;
 import io.inprice.api.email.EmailSender;
@@ -20,21 +20,21 @@ import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.models.CompanyTrans;
+import io.inprice.common.models.AccountTrans;
 
 /**
- * Stops SUBSCRIBED companies after four days later from their subs renewal date expired.
+ * Stops SUBSCRIBED accounts after four days later from their subs renewal date expired.
  * Normally, StripeService in api project will handle this properly. 
- * However, a communication problem with stripe may occur and we do not want to miss an expired company.
+ * However, a communication problem with stripe may occur and we do not want to miss an expired account.
  * 
  * @since 2020-12-06
  * @author mdpinar
  */
-public class SubscribedCompanyStopper implements Runnable {
+public class SubscribedAccountStopper implements Runnable {
 
-  private static final Logger log = LoggerFactory.getLogger(SubscribedCompanyStopper.class);
+  private static final Logger log = LoggerFactory.getLogger(SubscribedAccountStopper.class);
   private final String clazz = getClass().getSimpleName();
 
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
@@ -53,13 +53,13 @@ public class SubscribedCompanyStopper implements Runnable {
       log.info(clazz + " is triggered.");
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transactional -> {
-          CompanyDao companyDao = transactional.attach(CompanyDao.class);
+          AccountDao accountDao = transactional.attach(AccountDao.class);
 
-          List<CompanyInfo> expiredCompanyList = companyDao.findExpiredSubscriberCompanyList();
+          List<AccountInfo> expiredAccountList = accountDao.findExpiredSubscriberAccountList();
           int affected = 0;
 
-          if (expiredCompanyList != null && expiredCompanyList.size() > 0) {
-            for (CompanyInfo cinfo: expiredCompanyList) {
+          if (expiredAccountList != null && expiredAccountList.size() > 0) {
+            for (AccountInfo cinfo: expiredAccountList) {
 
               //we need to cancel stripe first
               try {
@@ -78,18 +78,18 @@ public class SubscribedCompanyStopper implements Runnable {
 
               SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
-              //then company can be cancellable
-              boolean isOK = subscriptionDao.terminate(cinfo.getId(), CompanyStatus.STOPPED.name());
+              //then account can be cancellable
+              boolean isOK = subscriptionDao.terminate(cinfo.getId(), AccountStatus.STOPPED.name());
 
-              CompanyTrans trans = new CompanyTrans();
-              trans.setCompanyId(cinfo.getId());
+              AccountTrans trans = new AccountTrans();
+              trans.setAccountId(cinfo.getId());
               trans.setEvent(SubsEvent.SUBSCRIPTION_STOPPED);
               trans.setSuccessful(Boolean.TRUE);
               trans.setDescription(("Stopped! Final payment failed."));
 
               isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
               if (isOK) {
-                isOK = companyDao.insertStatusHistory(cinfo.getId(), CompanyStatus.STOPPED.name());
+                isOK = accountDao.insertStatusHistory(cinfo.getId(), AccountStatus.STOPPED.name());
               }
 
               if (isOK) {
@@ -104,9 +104,9 @@ public class SubscribedCompanyStopper implements Runnable {
           }
 
           if (affected > 0) {
-            log.info("{} subscribed company in total stopped!", affected);
+            log.info("{} subscribed account in total stopped!", affected);
           } else {
-            log.info("No subscribed company to be stopped was found!");
+            log.info("No subscribed account to be stopped was found!");
           }
           return (affected > 0);
         });

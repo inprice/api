@@ -23,11 +23,12 @@ public enum EmailTemplate {
   SUBSCRIPTION_CANCELLED_COUPONED("subscription-cancelled-couponed"),
   SUBSCRIPTION_STOPPED("subscription-stopped"),
   SUBSCRIPTION_CHANGE_SUCCESSFUL("subscription-change-successful"),
+  SUBSCRIPTION_CHANGE_SUCCESSFUL_COUPONED("subscription-change-successful-couponed"),
   SUBSCRIPTION_CHANGE_FAILED("subscription-change-failed"),
 
-  FREE_COMPANY_REMINDER("free-company-reminder"),
-  FREE_COMPANY_CANCELLED("free-company-cancelled"),
-  FREE_COMPANY_STOPPED("free-company-stopped");
+  FREE_ACCOUNT_REMINDER("free-account-reminder"),
+  FREE_ACCOUNT_CANCELLED("free-account-cancelled"),
+  FREE_ACCOUNT_STOPPED("free-account-stopped");
 
   private String fileName;
 

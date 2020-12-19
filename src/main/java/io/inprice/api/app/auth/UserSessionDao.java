@@ -28,12 +28,12 @@ public interface UserSessionDao {
   @UseRowMapper(DBSessionMapper.class)
   List<ForDatabase> findListByUserId(@Bind("userId") Long userId);
 
-  @SqlQuery("select _hash from user_session where company_id=:companyId")
-  List<String> findHashesByCompanyId(@Bind("companyId") Long companyId);
+  @SqlQuery("select _hash from user_session where account_id=:accountId")
+  List<String> findHashesByAccountId(@Bind("accountId") Long accountId);
 
   @SqlBatch(
-    "insert into user_session (_hash, user_id, company_id, ip, os, browser, user_agent) " +
-    "values (:ses.hash, :ses.userId, :ses.companyId, :ses.ip, :ses.os, :ses.browser, :ses.userAgent)"
+    "insert into user_session (_hash, user_id, account_id, ip, os, browser, user_agent) " +
+    "values (:ses.hash, :ses.userId, :ses.accountId, :ses.ip, :ses.os, :ses.browser, :ses.userAgent)"
   )
   void insertBulk(@BindBean("ses") List<ForDatabase> sesList);
 

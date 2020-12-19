@@ -110,7 +110,7 @@ public class UserService {
       statuses.add(UserStatus.PAUSED.name());
 
       return new Response(
-        memberDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getCompanyId(), statuses)
+        memberDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getAccountId(), statuses)
       );
     }
   }

@@ -14,7 +14,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.app.product.ProductCreator;
 import io.inprice.api.app.product.ProductDao;
@@ -28,7 +28,7 @@ import io.inprice.common.helpers.SiteFinder;
 import io.inprice.common.info.Site;
 import io.inprice.common.meta.ImportType;
 import io.inprice.common.meta.LinkStatus;
-import io.inprice.common.models.Company;
+import io.inprice.common.models.Account;
 import io.inprice.common.models.ImportDetail;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
@@ -81,24 +81,24 @@ public class URLImportService extends BaseImportService {
 
         int successCount = 0;
         int problemCount = 0;
-        long companyId = CurrentUser.getCompanyId();
+        long accountId = CurrentUser.getAccountId();
 
         ImportDao importDao = transactional.attach(ImportDao.class);
-        long importId = importDao.insert(importType.name(), isFile, companyId);
+        long importId = importDao.insert(importType.name(), isFile, accountId);
         if (importId == 0) {
           res[0] = Responses.DataProblem.DB_PROBLEM;
           return false;
         }
 
-        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        AccountDao accountDao = transactional.attach(AccountDao.class);
 
-        Company company = companyDao.findById(companyId);
-        int allowedCount = company.getProductLimit() - company.getProductCount();
+        Account account = accountDao.findById(accountId);
+        int allowedCount = account.getProductLimit() - account.getProductCount();
 
         Set<String> insertedSet = new HashSet<>();
         if (allowedCount > 0) {
 
-          int actualCount = company.getProductCount();
+          int actualCount = account.getProductCount();
           if (actualCount < allowedCount) {
 
             try (BufferedReader reader = new BufferedReader(new StringReader(content))) {
@@ -142,7 +142,7 @@ public class URLImportService extends BaseImportService {
                       }
 
                       if (! ImportType.URL.equals(importType)) {
-                        Product product = productDao.findByCode(line, companyId);
+                        Product product = productDao.findByCode(line, accountId);
                         if (product != null) {
                           status = LinkStatus.DUPLICATE;
                         }
@@ -152,7 +152,7 @@ public class URLImportService extends BaseImportService {
                         List<Link> linkList = linkDao.findByUrlHashForImport(DigestUtils.md5Hex(url)); // find similar links previously added
                         if (linkList != null && linkList.size() > 0) {
                           for (Link link: linkList) {
-                            if (link.getCompanyId().longValue() != companyId) { // if it belongs to another company
+                            if (link.getAccountId().longValue() != accountId) { // if it belongs to another account
                               if (StringUtils.isNotBlank(link.getSku()) && similar == null) { // one time is enough to clone
                                 similar = link;
                                 status = LinkStatus.RESOLVED;
@@ -189,7 +189,7 @@ public class URLImportService extends BaseImportService {
                   dto.setCode(similar.getSku());
                   dto.setName(similar.getName());
                   dto.setPrice(similar.getPrice());
-                  dto.setCompanyId(companyId);
+                  dto.setAccountId(accountId);
 
                   Response productCreateRes = ProductCreator.create(transactional, dto);
                   if (! productCreateRes.isOK()) {
@@ -211,7 +211,7 @@ public class URLImportService extends BaseImportService {
                 impdet.setImported(false);
                 impdet.setProblem(problem);
                 impdet.setImportId(importId);
-                impdet.setCompanyId(companyId);
+                impdet.setAccountId(accountId);
                 long importDetailId = importDao.insertDetail(impdet);
 
                 // if it is imported then no need to keep it in links table
@@ -225,7 +225,7 @@ public class URLImportService extends BaseImportService {
                     (site != null ? site.getClassName() : null),
                     (site != null ? site.getDomain() : null),
                     importDetailId,
-                    companyId
+                    accountId
                   );
                 }
               }

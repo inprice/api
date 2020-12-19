@@ -2,7 +2,7 @@ package io.inprice.api.app.product;
 
 import org.jdbi.v3.core.Handle;
 
-import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.product.dto.ProductDTO;
 import io.inprice.api.app.tag.TagDao;
 import io.inprice.api.consts.Responses;
@@ -29,25 +29,25 @@ public class ProductCreator {
 
       String problem = ProductValidator.validate(dto);
       if (problem == null) {
-        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        AccountDao accountDao = transactional.attach(AccountDao.class);
         ProductDao productDao = transactional.attach(ProductDao.class);
 
-        dto.setCompanyId(CurrentUser.getCompanyId());
+        dto.setAccountId(CurrentUser.getAccountId());
 
-        boolean isIncreased = companyDao.increaseProductCountById(dto.getCompanyId());
+        boolean isIncreased = accountDao.increaseProductCountById(dto.getAccountId());
         if (isIncreased) {
           Long id = 
             productDao.insert(
               dto.getCode(),
               dto.getName(),
               dto.getPrice(),
-              dto.getCompanyId()
+              dto.getAccountId()
             );
           if (id != null && id > 0) {
             res = Responses.OK;
             if (dto.getTags() != null && dto.getTags().size() > 0) {
               TagDao tagDao = transactional.attach(TagDao.class);
-              tagDao.insertTags(id, dto.getCompanyId(), dto.getTags());
+              tagDao.insertTags(id, dto.getAccountId(), dto.getTags());
             }
           } else {
             res = Responses.DataProblem.DUPLICATE;

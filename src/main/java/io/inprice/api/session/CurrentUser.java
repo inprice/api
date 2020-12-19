@@ -40,12 +40,12 @@ public class CurrentUser {
     return THREAD_VARIABLES.get().getSession().getTimezone();
   }
 
-  public static Long getCompanyId() {
-    return THREAD_VARIABLES.get().getSession().getCompanyId();
+  public static Long getAccountId() {
+    return THREAD_VARIABLES.get().getSession().getAccountId();
   }
 
-  public static String getCompanyName() {
-    return THREAD_VARIABLES.get().getSession().getCompany();
+  public static String getAccountName() {
+    return THREAD_VARIABLES.get().getSession().getAccount();
   }
 
   public static UserRole getRole() {

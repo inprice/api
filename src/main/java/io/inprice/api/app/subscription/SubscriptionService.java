@@ -14,7 +14,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.email.EmailSender;
@@ -27,10 +27,10 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.models.Company;
-import io.inprice.common.models.CompanyTrans;
+import io.inprice.common.models.Account;
+import io.inprice.common.models.AccountTrans;
 import io.inprice.common.models.Coupon;
 import io.inprice.common.models.Plan;
 
@@ -54,15 +54,15 @@ class SubscriptionService {
       CouponDao couponDao = handle.attach(CouponDao.class);
       SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
-      List<CompanyTrans> allTrans = subscriptionDao.findListByCompanyId(CurrentUser.getCompanyId());
-      List<Coupon> coupons = couponDao.findListByIssuedCompanyId(CurrentUser.getCompanyId());
+      List<AccountTrans> allTrans = subscriptionDao.findListByAccountId(CurrentUser.getAccountId());
+      List<Coupon> coupons = couponDao.findListByIssuedAccountId(CurrentUser.getAccountId());
 
       data.put("all", allTrans);
       data.put("coupons", coupons);
 
       if (allTrans != null && allTrans.size() > 0) {
-        List<CompanyTrans> invoiceTrans = new ArrayList<>();
-        for (CompanyTrans st : allTrans) {
+        List<AccountTrans> invoiceTrans = new ArrayList<>();
+        for (AccountTrans st : allTrans) {
           if (st.getFileUrl() != null) {
             invoiceTrans.add(st);
           }
@@ -74,61 +74,61 @@ class SubscriptionService {
     return new Response(data);
   }
 
-  Response getCurrentCompany() {
+  Response getCurrentAccount() {
     try (Handle handle = Database.getHandle()) {
-      CompanyDao companyDao = handle.attach(CompanyDao.class);
-      return new Response(companyDao.findById(CurrentUser.getCompanyId()));
+      AccountDao accountDao = handle.attach(AccountDao.class);
+      return new Response(accountDao.findById(CurrentUser.getAccountId()));
     }
   }
 
   Response cancel() {
     Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
 
-    Company[] company = { null };
+    Account[] account = { null };
 
     //if a subscriber, stripeService will create its own transaction. 
     //so, we must not extend/cascade any db connection, thus, a new one is handled here in a separated block
     try (Handle handle = Database.getHandle()) {
-      CompanyDao companyDao = handle.attach(CompanyDao.class);
-      company[0] = companyDao.findById(CurrentUser.getCompanyId());
+      AccountDao accountDao = handle.attach(AccountDao.class);
+      account[0] = accountDao.findById(CurrentUser.getAccountId());
     }
 
-    if (CurrentUser.getUserId().equals(company[0].getAdminId())) {
-      if (company[0].getStatus().isOKForCancel()) {
+    if (CurrentUser.getUserId().equals(account[0].getAdminId())) {
+      if (account[0].getStatus().isOKForCancel()) {
 
-        if (CompanyStatus.SUBSCRIBED.equals(company[0].getStatus())) { //if a subscriber
-          res[0] = stripeService.cancel(company[0]);
+        if (AccountStatus.SUBSCRIBED.equals(account[0].getStatus())) { //if a subscriber
+          res[0] = stripeService.cancel(account[0]);
         } else { //free or couponed user
 
           try (Handle handle = Database.getHandle()) {
             handle.inTransaction(transactional -> {
               SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
       
-              boolean isOK = subscriptionDao.terminate(company[0].getId(), CompanyStatus.CANCELLED.name());
+              boolean isOK = subscriptionDao.terminate(account[0].getId(), AccountStatus.CANCELLED.name());
               if (isOK) {
 
-                CompanyTrans trans = new CompanyTrans();
-                trans.setCompanyId(company[0].getId());
+                AccountTrans trans = new AccountTrans();
+                trans.setAccountId(account[0].getId());
                 trans.setSuccessful(Boolean.TRUE);
                 trans.setDescription(("Manual cancelation."));
-                trans.setEvent(CompanyStatus.COUPONED.equals(company[0].getStatus()) ? SubsEvent.COUPON_USE_CANCELLED : SubsEvent.FREE_USE_CANCELLED);
+                trans.setEvent(AccountStatus.COUPONED.equals(account[0].getStatus()) ? SubsEvent.COUPON_USE_CANCELLED : SubsEvent.FREE_USE_CANCELLED);
 
                 isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
       
                 if (isOK) {
-                  CompanyDao companyDao = transactional.attach(CompanyDao.class);
+                  AccountDao accountDao = transactional.attach(AccountDao.class);
                   isOK = 
-                    companyDao.insertStatusHistory(
-                      company[0].getId(),
-                      CompanyStatus.CANCELLED.name(),
-                      company[0].getPlanName(),
+                    accountDao.insertStatusHistory(
+                      account[0].getId(),
+                      AccountStatus.CANCELLED.name(),
+                      account[0].getPlanName(),
                       null, null
                     );
                   if (isOK) {
                     Map<String, Object> mailMap = new HashMap<>(2);
                     mailMap.put("user", CurrentUser.getEmail());
-                    mailMap.put("company", StringUtils.isNotBlank(company[0].getTitle()) ? company[0].getTitle() : company[0].getName());
-                    String message = templateRenderer.render(EmailTemplate.FREE_COMPANY_CANCELLED, mailMap);
+                    mailMap.put("account", StringUtils.isNotBlank(account[0].getTitle()) ? account[0].getTitle() : account[0].getName());
+                    String message = templateRenderer.render(EmailTemplate.FREE_ACCOUNT_CANCELLED, mailMap);
                     emailSender.send(
                       Props.APP_EMAIL_SENDER(), 
                       "Notification about your cancelled plan in inprice.", CurrentUser.getEmail(), 
@@ -152,7 +152,7 @@ class SubscriptionService {
     }
 
     if (res[0].isOK()) {
-      res[0] = Commons.refreshSession(company[0].getId());
+      res[0] = Commons.refreshSession(account[0].getId());
     }
 
     return res[0];
@@ -163,29 +163,29 @@ class SubscriptionService {
 
     try (Handle handle = Database.getHandle()) {
       handle.inTransaction(transactional -> {
-        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        AccountDao accountDao = transactional.attach(AccountDao.class);
 
-        Company company = companyDao.findById(CurrentUser.getCompanyId());
-        if (company != null) {
+        Account account = accountDao.findById(CurrentUser.getAccountId());
+        if (account != null) {
 
-          if (!company.getStatus().equals(CompanyStatus.FREE)) {
-            if (company.getStatus().isOKForFreeUse()) {
+          if (!account.getStatus().equals(AccountStatus.FREE)) {
+            if (account.getStatus().isOKForFreeUse()) {
               SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
               Plan basicPlan = Plans.findById(0); // Basic Plan
 
               boolean isOK = 
                 subscriptionDao.startFreeUseOrApplyCoupon(
-                  CurrentUser.getCompanyId(),
-                  CompanyStatus.FREE.name(),
+                  CurrentUser.getAccountId(),
+                  AccountStatus.FREE.name(),
                   basicPlan.getName(),
                   basicPlan.getProductLimit(),
                   Props.APP_DAYS_FOR_FREE_USE()
                 );
 
               if (isOK) {
-                CompanyTrans trans = new CompanyTrans();
-                trans.setCompanyId(CurrentUser.getCompanyId());
+                AccountTrans trans = new AccountTrans();
+                trans.setAccountId(CurrentUser.getAccountId());
                 trans.setEvent(SubsEvent.FREE_USE_STARTED);
                 trans.setSuccessful(Boolean.TRUE);
                 trans.setDescription(("Free subscription has been started."));
@@ -193,9 +193,9 @@ class SubscriptionService {
                 isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
                 if (isOK) {
                   isOK = 
-                    companyDao.insertStatusHistory(
-                      company.getId(),
-                      CompanyStatus.FREE.name(),
+                    accountDao.insertStatusHistory(
+                      account.getId(),
+                      AccountStatus.FREE.name(),
                       basicPlan.getName(),
                       null, null
                     );
@@ -203,7 +203,7 @@ class SubscriptionService {
               }
 
               if (isOK) {
-                res[0] = Commons.refreshSession(companyDao, company.getId());
+                res[0] = Commons.refreshSession(accountDao, account.getId());
               }
 
             } else {
@@ -213,7 +213,7 @@ class SubscriptionService {
             res[0] = Responses.Already.IN_FREE_USE;
           }
         } else {
-          res[0] = Responses.NotFound.COMPANY;
+          res[0] = Responses.NotFound.ACCOUNT;
         }
 
         return res[0].equals(Responses.OK);
@@ -254,28 +254,28 @@ class SubscriptionService {
         customer = Customer.retrieve(dto.getCustId()).update(customerParams);
         if (customer != null) {
           res = Responses.OK;
-          log.info(CurrentUser.getCompanyName() + " customer info is updated, Id: " + customer.getId());
-          log.info("Customer info is updated. Company: {}, Subs Customer Id: {}, Title: {}, Email: {}", 
-            CurrentUser.getCompanyName(), customer.getId(), dto.getTitle(), dto.getEmail());
+          log.info(CurrentUser.getAccountName() + " customer info is updated, Id: " + customer.getId());
+          log.info("Customer info is updated. Account: {}, Subs Customer Id: {}, Title: {}, Email: {}", 
+            CurrentUser.getAccountName(), customer.getId(), dto.getTitle(), dto.getEmail());
         } else {
           log.error("Failed to update a new customer in Stripe.");
         }
 
       } catch (StripeException e) {
         log.error("Failed to update a new customer in Stripe", e);
-        log.error("Company: {}, Title: {}, Email: {}", CurrentUser.getCompanyName(), dto.getTitle(), dto.getEmail());
+        log.error("Account: {}, Title: {}, Email: {}", CurrentUser.getAccountName(), dto.getTitle(), dto.getEmail());
       }
 
       if (res.isOK() && customer != null) {
         dto.setCustId(customer.getId());
 
         try (Handle handle = Database.getHandle()) {
-          CompanyDao dao = handle.attach(CompanyDao.class);
-          boolean isOK = dao.update(dto, CurrentUser.getCompanyId());
+          AccountDao dao = handle.attach(AccountDao.class);
+          boolean isOK = dao.update(dto, CurrentUser.getAccountId());
           if (isOK) {
             return Responses.OK;
           } else {
-            return Responses.NotFound.COMPANY;
+            return Responses.NotFound.ACCOUNT;
           }
         }
       }

@@ -16,7 +16,7 @@ public class ForDatabase implements Serializable {
 
   private String hash;
   private Long userId;
-  private Long companyId;
+  private Long accountId;
   private String ip;
   private String os;
   private String browser;

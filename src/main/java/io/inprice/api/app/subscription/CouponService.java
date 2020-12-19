@@ -6,17 +6,17 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.models.Company;
-import io.inprice.common.models.CompanyTrans;
+import io.inprice.common.models.Account;
+import io.inprice.common.models.AccountTrans;
 import io.inprice.common.models.Coupon;
 import io.inprice.common.models.Plan;
 import io.inprice.common.utils.CouponManager;
@@ -29,7 +29,7 @@ class CouponService {
     try (Handle handle = Database.getHandle()) {
       CouponDao couponDao = handle.attach(CouponDao.class);
 
-      List<Coupon> coupons = couponDao.findListByIssuedCompanyId(CurrentUser.getCompanyId());
+      List<Coupon> coupons = couponDao.findListByIssuedAccountId(CurrentUser.getAccountId());
       if (coupons != null && coupons.size() > 0) {
         return new Response(coupons);
       }
@@ -50,39 +50,39 @@ class CouponService {
           if (coupon != null) {
             if (coupon.getIssuedAt() == null) {
 
-              if (coupon.getIssuedCompanyId() == null || coupon.getIssuedCompanyId().equals(CurrentUser.getCompanyId())) {
-                CompanyDao companyDao = transactional.attach(CompanyDao.class);
+              if (coupon.getIssuedAccountId() == null || coupon.getIssuedAccountId().equals(CurrentUser.getAccountId())) {
+                AccountDao accountDao = transactional.attach(AccountDao.class);
 
-                Company company = companyDao.findById(CurrentUser.getCompanyId());
-                if (company.getStatus().isOKForCoupon()) {
+                Account account = accountDao.findById(CurrentUser.getAccountId());
+                if (account.getStatus().isOKForCoupon()) {
 
                   Plan selectedPlan = null;
                   Plan couponPlan = Plans.findByName(coupon.getPlanName());
-                  Plan companyPlan = (company.getPlanName() != null ? Plans.findByName(company.getPlanName()) : null);
+                  Plan accountPlan = (account.getPlanName() != null ? Plans.findByName(account.getPlanName()) : null);
 
-                  if (companyPlan == null || couponPlan.getId() > companyPlan.getId()) {
+                  if (accountPlan == null || couponPlan.getId() > accountPlan.getId()) {
                     selectedPlan = couponPlan;
                   }
 
                   // only broader plan transitions allowed
-                  if (company.getProductCount().compareTo(selectedPlan.getProductLimit()) <= 0) {
+                  if (account.getProductCount().compareTo(selectedPlan.getProductLimit()) <= 0) {
                     SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
                     boolean isOK = 
                       subscriptionDao.startFreeUseOrApplyCoupon(
-                        CurrentUser.getCompanyId(),
-                        CompanyStatus.COUPONED.name(),
+                        CurrentUser.getAccountId(),
+                        AccountStatus.COUPONED.name(),
                         selectedPlan.getName(),
                         selectedPlan.getProductLimit(), 
                         coupon.getDays()
                       );
 
                     if (isOK) {
-                      isOK = couponDao.applyFor(coupon.getCode(), CurrentUser.getCompanyId());
+                      isOK = couponDao.applyFor(coupon.getCode(), CurrentUser.getAccountId());
 
                       if (isOK) {
-                        CompanyTrans trans = new CompanyTrans();
-                        trans.setCompanyId(CurrentUser.getCompanyId());
+                        AccountTrans trans = new AccountTrans();
+                        trans.setAccountId(CurrentUser.getAccountId());
                         trans.setEventId(coupon.getCode());
                         trans.setEvent(SubsEvent.COUPON_USE_STARTED);
                         trans.setSuccessful(Boolean.TRUE);
@@ -91,17 +91,17 @@ class CouponService {
                         isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
                         if (isOK) {
                           isOK = 
-                            companyDao.insertStatusHistory(
-                              company.getId(), 
-                              CompanyStatus.COUPONED.name(),
+                            accountDao.insertStatusHistory(
+                              account.getId(), 
+                              AccountStatus.COUPONED.name(),
                               selectedPlan.getName(),
                               null, null
                             );
                         }
                                 
                         if (isOK) {
-                          res[0] = Commons.refreshSession(companyDao, company.getId());
-                          log.info("Coupon {}, is issued for {}", coupon.getCode(), company.getName());
+                          res[0] = Commons.refreshSession(accountDao, account.getId());
+                          log.info("Coupon {}, is issued for {}", coupon.getCode(), account.getName());
                         }
                       }
                     }
@@ -114,7 +114,7 @@ class CouponService {
                   res[0] = Responses.Already.ACTIVE_SUBSCRIPTION;
                 }
               } else {
-                res[0] = Responses.Illegal.COUPON_ISSUED_FOR_ANOTHER_COMPANY;
+                res[0] = Responses.Illegal.COUPON_ISSUED_FOR_ANOTHER_ACCOUNT;
               }
             } else {
               res[0] = Responses.Already.USED_COUPON;

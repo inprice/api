@@ -33,8 +33,8 @@ public class Consts {
       public static final String SEARCH = BASE + "s/search";
     }
 
-    public static class Company {
-      public static final String BASE = "/company";
+    public static class Account {
+      public static final String BASE = "/account";
       public static final String GEO_INFO = BASE + "/geo";
       public static final String DELETE = BASE + "/delete";
     }

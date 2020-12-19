@@ -1,10 +1,10 @@
-package io.inprice.api.app.company;
+package io.inprice.api.app.account;
 
 import java.util.Map;
 
 import io.inprice.api.app.auth.AuthService;
-import io.inprice.api.app.company.dto.CreateDTO;
-import io.inprice.api.app.company.dto.RegisterDTO;
+import io.inprice.api.app.account.dto.CreateDTO;
+import io.inprice.api.app.account.dto.RegisterDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.StringDTO;
 import io.inprice.api.framework.Controller;
@@ -17,9 +17,9 @@ import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
 @Router
-public class CompanyController implements Controller {
+public class AccountController implements Controller {
 
-  private final CompanyService service = Beans.getSingleton(CompanyService.class);
+  private final AccountService service = Beans.getSingleton(AccountService.class);
   private final AuthService authService = Beans.getSingleton(AuthService.class);
 
   @Override
@@ -38,30 +38,30 @@ public class CompanyController implements Controller {
       ctx.json(Commons.createResponse(ctx, res));
     });
 
-    app.get(Consts.Paths.Company.BASE, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getCurrentCompany()));
+    app.get(Consts.Paths.Account.BASE, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, service.getCurrentAccount()));
     }, AccessRoles.ANYONE());
 
-    app.get(Consts.Paths.Company.GEO_INFO, (ctx) -> {
+    app.get(Consts.Paths.Account.GEO_INFO, (ctx) -> {
       Map<String, String> map = ClientSide.getGeoInfo(ctx.req);
       ctx.json(Commons.createResponse(ctx, new Response(map)));
     }, AccessRoles.ANYONE());
 
     // create
-    app.post(Consts.Paths.Company.BASE, (ctx) -> {
+    app.post(Consts.Paths.Account.BASE, (ctx) -> {
       CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
       ctx.json(Commons.createResponse(ctx, service.create(dto)));
     }, AccessRoles.ANYONE());
 
     // update
-    app.put(Consts.Paths.Company.BASE, (ctx) -> {
+    app.put(Consts.Paths.Account.BASE, (ctx) -> {
       CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
       ctx.json(Commons.createResponse(ctx, service.update(dto)));
     }, AccessRoles.ADMIN_ONLY());
 
-    app.put(Consts.Paths.Company.DELETE, (ctx) -> {
+    app.put(Consts.Paths.Account.DELETE, (ctx) -> {
       StringDTO dto = ctx.bodyAsClass(StringDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.deleteCompany(dto.getValue())));
+      ctx.json(Commons.createResponse(ctx, service.deleteAccount(dto.getValue())));
     }, AccessRoles.ADMIN_ONLY());
 
   }

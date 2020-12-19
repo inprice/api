@@ -11,7 +11,7 @@ public class TagService {
   public Response findAll() {
     try (Handle handle = Database.getHandle()) {
       TagDao tagDao = handle.attach(TagDao.class);
-      return new Response(tagDao.findAll(CurrentUser.getCompanyId()));
+      return new Response(tagDao.findAll(CurrentUser.getAccountId()));
     }
   }
 

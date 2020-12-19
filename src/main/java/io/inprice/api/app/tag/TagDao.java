@@ -13,14 +13,14 @@ import io.inprice.common.mappers.ProductTagMapper;
 
 public interface TagDao {
 
-  @SqlQuery("select distinct name from product_tag where company_id=:companyId order by name")
+  @SqlQuery("select distinct name from product_tag where account_id=:accountId order by name")
   @UseRowMapper(ProductTagMapper.class)
-  List<String> findAll(@Bind("companyId") Long companyId);
+  List<String> findAll(@Bind("accountId") Long accountId);
 
-  @SqlUpdate("delete from product_tag where product_id=:productId and company_id=:companyId")
-  void deleteTags(@Bind("productId") Long productId, @Bind("companyId") Long companyId);
+  @SqlUpdate("delete from product_tag where product_id=:productId and account_id=:accountId")
+  void deleteTags(@Bind("productId") Long productId, @Bind("accountId") Long accountId);
 
-  @SqlBatch("insert into product_tag (product_id, company_id, name) values (:productId, :companyId, :tags)")
-  void insertTags(@Bind("productId") Long productId, @Bind("companyId") Long companyId, @Bind("tags") Set<String> tags);
+  @SqlBatch("insert into product_tag (product_id, account_id, name) values (:productId, :accountId, :tags)")
+  void insertTags(@Bind("productId") Long productId, @Bind("accountId") Long accountId, @Bind("tags") Set<String> tags);
 
 }

@@ -14,7 +14,7 @@ public class Responses {
 
   public static class Invalid {
     private static final int BASE = 100;
-    public static final Response COMPANY = new Response(BASE + 1, "Invalid company!");
+    public static final Response ACCOUNT = new Response(BASE + 1, "Invalid account!");
     public static final Response PLAN = new Response(BASE + 3, "Invalid plan!");
     public static final Response TICKET = new Response(BASE + 4, "Invalid ticket!");
     public static final Response INVITATION = new Response(BASE + 5, "Invalid invitation!");
@@ -52,7 +52,7 @@ public class Responses {
     public static final Response UNAUTHORIZED = new Response(BASE + 1, "Unauthrozied!");
     public static final Response ADMIN_ONLY = new Response(BASE + 2, "This operation can only be done by an admin!");
     public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to buy a new plan!");
-    public static final Response NO_COMPANY = new Response(BASE + 5, "You have no active company! Please either create a new one or participate in an existing!");
+    public static final Response NO_ACCOUNT = new Response(BASE + 5, "You have no active account! Please either create a new one or participate in an existing!");
     public static final Response PRODUCT_LIMIT_PROBLEM = new Response(BASE + 6, "Your products count is reached your plans limit! You need to pass a broader plan to proceed");
     public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 7, "You need a broader plan. The plan you intend to select allows less than your existing product count!");
   }
@@ -75,7 +75,7 @@ public class Responses {
   public static class Illegal {
     private static final int BASE = 700;
     public static final Response TIMED_OUT_FORGOT_PASSWORD = new Response(BASE + 1, "Your session seems to expire, please send us a new 'forgot password request' again!");
-    public static final Response COUPON_ISSUED_FOR_ANOTHER_COMPANY = new Response(BASE + 2, "This coupon is issued for another company!");
+    public static final Response COUPON_ISSUED_FOR_ANOTHER_ACCOUNT = new Response(BASE + 2, "This coupon is issued for another account!");
     public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
     public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan, so you cannot cancel!");
     public static final Response NO_FREE_USE_RIGHT = new Response(BASE + 11, "You have no free use!");
@@ -89,16 +89,16 @@ public class Responses {
     public static final Response USED_COUPON = new Response(BASE + 4, "This coupon seems already used!");
     public static final Response IN_FREE_USE = new Response(BASE + 5, "Your Free Use is already active!");
 
-    public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 7, "You have already an active subscription. You cannot use any coupon!");
+    public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 7, "You have an active subscription!");
     public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 8, "This account has no active subscription at the moment!");
     public static final Response HAS_THE_SAME_PLAN = new Response(BASE + 10, "You have already this plan at the moment!");
 
     public static final Response REQUESTED_EMAIL = new Response(BASE + 10, "This email is already requested, please wait some time to try again!");
     
     public static class Defined {
-      public static final Response COMPANY = new Response(BASE + 20, "Seems that you have already registered this company!");
+      public static final Response ACCOUNT = new Response(BASE + 20, "Seems that you have already registered this account!");
       public static final Response MEMBERSHIP = new Response(BASE + 21, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");
-      public static final Response REGISTERED_USER = new Response(BASE + 22, "This user has already registered! Signing up is an option for newcomers! You can use Create Company in the menu after login.");
+      public static final Response REGISTERED_USER = new Response(BASE + 22, "This user has already registered! Signing up is an option for newcomers! You can use Create Account in the menu after login.");
     }
   }
 
@@ -120,7 +120,7 @@ public class Responses {
 
     public static final Response SEARCH_NOT_FOUND = new Response("Nothing found!"); // not an error!
 
-    public static final Response COMPANY = new Response(BASE, "Company not found!");
+    public static final Response ACCOUNT = new Response(BASE, "Account not found!");
     public static final Response PLAN = new Response(BASE, "Plan not found!");
     public static final Response TICKET = new Response(BASE, "Ticket not found!");
     public static final Response COUPON = new Response(BASE, "Coupon not found!");

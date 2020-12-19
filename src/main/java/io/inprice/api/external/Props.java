@@ -68,20 +68,20 @@ public class Props {
     return System.getenv().get("API_KEYS_STRIPE_WEBHOOK");
   }
 
-  public static String TIME_PERIOD_OF_REMINDER_FOR_FREE_COMPANIES() {
-    return System.getenv().getOrDefault("TIME_PERIOD_OF_REMINDER_FOR_FREE_COMPANIES", "1d");
+  public static String TIME_PERIOD_OF_REMINDER_FOR_FREE_ACCOUNTS() {
+    return System.getenv().getOrDefault("TIME_PERIOD_OF_REMINDER_FOR_FREE_ACCOUNTS", "1d");
   }
 
-  public static String TIME_PERIOD_OF_STOPPING_FREE_COMPANIES() {
-    return System.getenv().getOrDefault("TIME_PERIOD_OF_STOPPING_FREE_COMPANIES", "1h");
+  public static String TIME_PERIOD_OF_STOPPING_FREE_ACCOUNTS() {
+    return System.getenv().getOrDefault("TIME_PERIOD_OF_STOPPING_FREE_ACCOUNTS", "1h");
   }
 
-  public static String TIME_PERIOD_OF_STOPPING_SUBSCRIBED_COMPANIES() {
-    return System.getenv().getOrDefault("TIME_PERIOD_OF_STOPPING_SUBSCRIBED_COMPANIES", "57m");
+  public static String TIME_PERIOD_OF_STOPPING_SUBSCRIBED_ACCOUNTS() {
+    return System.getenv().getOrDefault("TIME_PERIOD_OF_STOPPING_SUBSCRIBED_ACCOUNTS", "57m");
   }
 
   public static String TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS() {
-    return System.getenv().getOrDefault("TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS", "30m");
+    return System.getenv().getOrDefault("TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS", "10m");
   }
 
 }

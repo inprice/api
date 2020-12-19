@@ -6,12 +6,12 @@ import java.util.Map;
 import org.eclipse.jetty.http.HttpStatus;
 import org.jdbi.v3.core.Handle;
 
-import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForResponse;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.models.Company;
+import io.inprice.common.models.Account;
 import io.javalin.http.Context;
 
 public class Commons {
@@ -21,21 +21,21 @@ public class Commons {
     return serviceResponse;
   }
 
-  public static Response refreshSession(Long companyId) {
+  public static Response refreshSession(Long accountId) {
     try (Handle handle = Database.getHandle()) {
-      CompanyDao companyDao = handle.attach(CompanyDao.class);
-      return refreshSession(companyDao, companyId);
+      AccountDao accountDao = handle.attach(AccountDao.class);
+      return refreshSession(accountDao, accountId);
     }
   }
 
-  public static Response refreshSession(CompanyDao companyDao, Long companyId) {
-    Company company = companyDao.findById(companyId);
-    return refreshSession(company);
+  public static Response refreshSession(AccountDao accountDao, Long accountId) {
+    Account account = accountDao.findById(accountId);
+    return refreshSession(account);
   }
 
-  public static Response refreshSession(Company company) {
+  public static Response refreshSession(Account account) {
     ForResponse session = new ForResponse(
-      company,
+      account,
       CurrentUser.getUserName(),
       CurrentUser.getEmail(),
       CurrentUser.getRole(),

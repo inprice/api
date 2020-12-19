@@ -29,7 +29,7 @@ public class BaseImportService {
     try (Handle handle = Database.getHandle()) {
       ImportDao importDao = handle.attach(ImportDao.class);
 
-      Import imbort = importDao.findById(importId, CurrentUser.getCompanyId());
+      Import imbort = importDao.findById(importId, CurrentUser.getAccountId());
       if (imbort != null) {
         return new Response(imbort);
       }
@@ -42,7 +42,7 @@ public class BaseImportService {
     try (Handle handle = Database.getHandle()) {
       ImportDao importDao = handle.attach(ImportDao.class);
 
-      List<Import> list = importDao.findListByCompanyId(CurrentUser.getCompanyId());
+      List<Import> list = importDao.findListByAccountId(CurrentUser.getAccountId());
       if (list != null && list.size() > 0) {
         res = new Response(list);
       }
@@ -55,9 +55,9 @@ public class BaseImportService {
     try (Handle handle = Database.getHandle()) {
       ImportDao importDao = handle.attach(ImportDao.class);
 
-      Import imbort = importDao.findById(id, CurrentUser.getCompanyId());
+      Import imbort = importDao.findById(id, CurrentUser.getAccountId());
       if (imbort != null) {
-        List<ImportDetail> list = importDao.findImportRowsByImportId(id, CurrentUser.getCompanyId());
+        List<ImportDetail> list = importDao.findImportRowsByImportId(id, CurrentUser.getAccountId());
         if (list != null && list.size() > 0) {
           Map<String, Object> data = new HashMap<>(2);
           data.put("import", imbort);
@@ -74,7 +74,7 @@ public class BaseImportService {
       final boolean[] isOK = { false };
 
       String where =
-        String.format("where import_id=%d and company_id=%d", importId, CurrentUser.getCompanyId());
+        String.format("where import_id=%d and account_id=%d", importId, CurrentUser.getAccountId());
 
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transactional -> {

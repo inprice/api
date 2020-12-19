@@ -5,7 +5,7 @@ import java.util.Date;
 
 import io.inprice.common.config.Plans;
 import io.inprice.common.meta.UserRole;
-import io.inprice.common.models.Company;
+import io.inprice.common.models.Account;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
 import lombok.Getter;
@@ -23,10 +23,10 @@ public class ForResponse implements Serializable {
 
   private String user;
   private String email;
-  private String company;
+  private String account;
   private Integer planId;
   private String planName;
-  private String companyStatus;
+  private String accountStatus;
   private Date subsStartedAt;
   private Boolean everSubscribed;
   private Date renewalAt;
@@ -36,19 +36,19 @@ public class ForResponse implements Serializable {
   private Integer productCount;
   private UserRole role;
 
-  public ForResponse(Company company, String user, String email, UserRole role, String timezone) {
+  public ForResponse(Account account, String user, String email, UserRole role, String timezone) {
     this.user = user;
     this.email = email;
-    this.company = company.getName();
-    this.planName = company.getPlanName();
-    this.companyStatus = company.getStatus().name();
-    this.subsStartedAt = company.getSubsStartedAt();
-    this.lastStatusUpdate = company.getLastStatusUpdate();
-    this.renewalAt = company.getRenewalAt();
-    this.currencyFormat = company.getCurrencyFormat();
+    this.account = account.getName();
+    this.planName = account.getPlanName();
+    this.accountStatus = account.getStatus().name();
+    this.subsStartedAt = account.getSubsStartedAt();
+    this.lastStatusUpdate = account.getLastStatusUpdate();
+    this.renewalAt = account.getRenewalAt();
+    this.currencyFormat = account.getCurrencyFormat();
     this.timezone = timezone;
     this.role = role;
-    this.productCount = company.getProductCount();
+    this.productCount = account.getProductCount();
 
     makeTheStandardAssignments();
   }
@@ -56,9 +56,9 @@ public class ForResponse implements Serializable {
   public ForResponse(ForResponse forResponse) {
     this.user = forResponse.getUser();
     this.email = forResponse.getEmail();
-    this.company = forResponse.getCompany();
+    this.account = forResponse.getAccount();
     this.planName = forResponse.getPlanName();
-    this.companyStatus = forResponse.getCompanyStatus();
+    this.accountStatus = forResponse.getAccountStatus();
     this.subsStartedAt = forResponse.getSubsStartedAt();
     this.lastStatusUpdate = forResponse.getLastStatusUpdate();
     this.renewalAt = forResponse.getRenewalAt();
@@ -73,9 +73,9 @@ public class ForResponse implements Serializable {
   public ForResponse(ForCookie forCookie, ForRedis forRedis) {
     this.user = forRedis.getUser();
     this.email = forCookie.getEmail();
-    this.company = forRedis.getCompany();
+    this.account = forRedis.getAccount();
     this.planName = forRedis.getPlanName();
-    this.companyStatus = forRedis.getCompanyStatus();
+    this.accountStatus = forRedis.getAccountStatus();
     this.subsStartedAt = forRedis.getSubsStartedAt();
     this.lastStatusUpdate = forRedis.getLastStatusUpdate();
     this.renewalAt = forRedis.getRenewalAt();
@@ -90,9 +90,9 @@ public class ForResponse implements Serializable {
   public ForResponse(ForCookie forCookie, User user, Member mem) {
     this.user = user.getName();
     this.email = forCookie.getEmail();
-    this.company = mem.getCompanyName();
+    this.account = mem.getAccountName();
     this.planName = mem.getPlanName();
-    this.companyStatus = mem.getCompanyStatus().name();
+    this.accountStatus = mem.getAccountStatus().name();
     this.subsStartedAt = mem.getSubsStartedAt();
     this.lastStatusUpdate = mem.getLastStatusUpdate();
     this.renewalAt = mem.getRenewalAt();

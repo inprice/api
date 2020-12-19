@@ -259,7 +259,7 @@ public class AuthService {
           ForDatabase dbSes = new ForDatabase();
           dbSes.setHash(cookieSes.getHash());
           dbSes.setUserId(mem.getUserId());
-          dbSes.setCompanyId(mem.getCompanyId());
+          dbSes.setAccountId(mem.getAccountId());
           dbSes.setIp(ipAddress);
           dbSes.setOs(ua.getOperatingSystem().getName());
           dbSes.setBrowser(ua.getBrowser().getName());
@@ -302,7 +302,7 @@ public class AuthService {
           UserBanned bannedUser = userDao.findBannedUserByEmail(sendDto.getEmail());
           if (bannedUser == null) {
 
-            Member member = memberDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getCompanyId());
+            Member member = memberDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getAccountId());
             if (member != null) {
 
               User user = userDao.findByEmail(sendDto.getEmail());
@@ -335,7 +335,7 @@ public class AuthService {
                     UserStatus.JOINED.name(),
                     newUser.getEmail(),
                     UserStatus.PENDING.name(),
-                    sendDto.getCompanyId()
+                    sendDto.getAccountId()
                   );
 
                 if (isActivated) {
