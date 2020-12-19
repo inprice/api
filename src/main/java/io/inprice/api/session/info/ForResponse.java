@@ -3,14 +3,11 @@ package io.inprice.api.session.info;
 import java.io.Serializable;
 import java.util.Date;
 
-import org.apache.commons.lang3.StringUtils;
-
 import io.inprice.common.config.Plans;
 import io.inprice.common.meta.UserRole;
-import io.inprice.common.models.Company;
+import io.inprice.common.models.Account;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
-import io.inprice.common.utils.DateUtils;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,95 +23,92 @@ public class ForResponse implements Serializable {
 
   private String user;
   private String email;
-  private String company;
+  private String account;
   private Integer planId;
   private String planName;
-  private String companyStatus;
+  private String accountStatus;
+  private Date subsStartedAt;
   private Boolean everSubscribed;
-  private Date subsRenewalAt;
+  private Date renewalAt;
   private Date lastStatusUpdate;
-  private int daysToRenewal;
   private String currencyFormat;
   private String timezone;
   private Integer productCount;
   private UserRole role;
 
-  public ForResponse(Company company, String user, String email, UserRole role, String timezone) {
+  public ForResponse(Account account, String user, String email, UserRole role, String timezone) {
     this.user = user;
     this.email = email;
-    this.company = company.getName();
-    this.planName = company.getPlanName();
-    this.companyStatus = company.getStatus().name();
-    this.lastStatusUpdate = company.getLastStatusUpdate();
-    this.subsRenewalAt = company.getSubsRenewalAt();
-    this.currencyFormat = company.getCurrencyFormat();
+    this.account = account.getName();
+    this.planName = account.getPlanName();
+    this.accountStatus = account.getStatus().name();
+    this.subsStartedAt = account.getSubsStartedAt();
+    this.lastStatusUpdate = account.getLastStatusUpdate();
+    this.renewalAt = account.getRenewalAt();
+    this.currencyFormat = account.getCurrencyFormat();
     this.timezone = timezone;
     this.role = role;
-    this.productCount = company.getProductCount();
+    this.productCount = account.getProductCount();
 
-    this.everSubscribed = StringUtils.isNotBlank(company.getSubsCustomerId());
-    doTheStandardAssignments();
+    makeTheStandardAssignments();
   }
 
   public ForResponse(ForResponse forResponse) {
     this.user = forResponse.getUser();
     this.email = forResponse.getEmail();
-    this.company = forResponse.getCompany();
+    this.account = forResponse.getAccount();
     this.planName = forResponse.getPlanName();
-    this.companyStatus = forResponse.getCompanyStatus();
+    this.accountStatus = forResponse.getAccountStatus();
+    this.subsStartedAt = forResponse.getSubsStartedAt();
     this.lastStatusUpdate = forResponse.getLastStatusUpdate();
-    this.subsRenewalAt = forResponse.getSubsRenewalAt();
+    this.renewalAt = forResponse.getRenewalAt();
     this.currencyFormat = forResponse.getCurrencyFormat();
     this.timezone = forResponse.getTimezone();
     this.role = forResponse.getRole();
     this.productCount = forResponse.getProductCount();
 
-    this.everSubscribed = forResponse.getEverSubscribed();
-    doTheStandardAssignments();
+    makeTheStandardAssignments();
   }
 
   public ForResponse(ForCookie forCookie, ForRedis forRedis) {
     this.user = forRedis.getUser();
     this.email = forCookie.getEmail();
-    this.company = forRedis.getCompany();
+    this.account = forRedis.getAccount();
     this.planName = forRedis.getPlanName();
-    this.companyStatus = forRedis.getCompanyStatus();
+    this.accountStatus = forRedis.getAccountStatus();
+    this.subsStartedAt = forRedis.getSubsStartedAt();
     this.lastStatusUpdate = forRedis.getLastStatusUpdate();
-    this.subsRenewalAt = forRedis.getSubsRenewalAt();
+    this.renewalAt = forRedis.getRenewalAt();
     this.currencyFormat = forRedis.getCurrencyFormat();
     this.timezone = forRedis.getTimezone();
     this.role = UserRole.valueOf(forCookie.getRole());
     this.productCount = forRedis.getProductCount();
 
-    this.everSubscribed = forRedis.getEverSubscribed();
-    doTheStandardAssignments();
+    makeTheStandardAssignments();
   }
 
   public ForResponse(ForCookie forCookie, User user, Member mem) {
     this.user = user.getName();
     this.email = forCookie.getEmail();
-    this.company = mem.getCompanyName();
+    this.account = mem.getAccountName();
     this.planName = mem.getPlanName();
-    this.companyStatus = mem.getCompanyStatus().name();
+    this.accountStatus = mem.getAccountStatus().name();
+    this.subsStartedAt = mem.getSubsStartedAt();
     this.lastStatusUpdate = mem.getLastStatusUpdate();
-    this.subsRenewalAt = mem.getSubsRenewalAt();
+    this.renewalAt = mem.getRenewalAt();
     this.currencyFormat = mem.getCurrencyFormat();
     this.timezone = user.getTimezone();
     this.role = UserRole.valueOf(forCookie.getRole());
     this.productCount = mem.getProductCount();
 
-    this.everSubscribed = mem.getEverSubscribed();
-    doTheStandardAssignments();
+    makeTheStandardAssignments();
   }
 
-  private void doTheStandardAssignments() {
-    if (this.subsRenewalAt != null) {
-      this.daysToRenewal = 1 + (int) DateUtils.findDayDiff(new Date(), this.subsRenewalAt);
-    }
+  private void makeTheStandardAssignments() {
     if (this.planName != null) {
       this.planId = Plans.findByName(this.planName).getId();
     }
-
+    this.everSubscribed = (this.subsStartedAt != null);
   }
 
 }

@@ -40,7 +40,7 @@ class MemberService {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      List<Member> list = memberDao.findListByNotEmail(CurrentUser.getEmail(), CurrentUser.getCompanyId());
+      List<Member> list = memberDao.findListByNotEmail(CurrentUser.getEmail(), CurrentUser.getAccountId());
       if (list != null && list.size() > 0) {
         res = new Response(list);
       }
@@ -56,15 +56,15 @@ class MemberService {
         UserDao userDao = handle.attach(UserDao.class);
         MemberDao memberDao = handle.attach(MemberDao.class);
   
-        Member mem = memberDao.findByEmail(dto.getEmail(), CurrentUser.getCompanyId());
+        Member mem = memberDao.findByEmail(dto.getEmail(), CurrentUser.getAccountId());
         if (mem == null) {
-          boolean isAdded = memberDao.insertInvitation(dto.getEmail(), dto.getRole().name(), CurrentUser.getCompanyId());
+          boolean isAdded = memberDao.insertInvitation(dto.getEmail(), dto.getRole().name(), CurrentUser.getAccountId());
           if (isAdded) {
-            dto.setCompanyId(CurrentUser.getCompanyId());
+            dto.setAccountId(CurrentUser.getAccountId());
             return sendMail(userDao, dto);
           }
         } else {
-          return new Response("A user with " + dto.getEmail() + " address is already added to this company!");
+          return new Response("A user with " + dto.getEmail() + " address is already added to this account!");
         }
       }
     }
@@ -80,12 +80,12 @@ class MemberService {
 
       Member mem = memberDao.findById(memId);
       if (mem != null) {
-        boolean isOK = memberDao.increaseSendingCount(memId, UserStatus.PENDING.name(), CurrentUser.getCompanyId());
+        boolean isOK = memberDao.increaseSendingCount(memId, UserStatus.PENDING.name(), CurrentUser.getAccountId());
         if (isOK) {
           InvitationSendDTO dto = new InvitationSendDTO();
           dto.setEmail(mem.getEmail());
           dto.setRole(mem.getRole());
-          dto.setCompanyId(CurrentUser.getCompanyId());
+          dto.setAccountId(CurrentUser.getAccountId());
           res = sendMail(userDao, dto);
         }
       }
@@ -102,9 +102,9 @@ class MemberService {
 
       Member mem = memberDao.findById(memId);
       if (mem != null) {
-        if (! mem.getCompanyId().equals(CurrentUser.getCompanyId())) {
+        if (! mem.getAccountId().equals(CurrentUser.getAccountId())) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {
-            boolean isOK = memberDao.setStatusDeleted(memId, UserStatus.DELETED.name(), CurrentUser.getCompanyId());
+            boolean isOK = memberDao.setStatusDeleted(memId, UserStatus.DELETED.name(), CurrentUser.getAccountId());
             if (isOK) {
               res = Responses.OK;
             } else {
@@ -130,7 +130,7 @@ class MemberService {
       try (Handle handle = Database.getHandle()) {
         MemberDao memberDao = handle.attach(MemberDao.class);
   
-        boolean isOK = memberDao.changeRole(dto.getId(), dto.getRole().name(), CurrentUser.getCompanyId());
+        boolean isOK = memberDao.changeRole(dto.getId(), dto.getRole().name(), CurrentUser.getAccountId());
         if (isOK) {
           return Responses.OK;
         } else {
@@ -145,7 +145,7 @@ class MemberService {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      boolean isOK = memberDao.pause(id, CurrentUser.getCompanyId());
+      boolean isOK = memberDao.pause(id, CurrentUser.getAccountId());
       if (isOK) {
         return Responses.OK;
       }
@@ -157,7 +157,7 @@ class MemberService {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      boolean isOK = memberDao.resume(id, CurrentUser.getCompanyId());
+      boolean isOK = memberDao.resume(id, CurrentUser.getAccountId());
       if (isOK) {
         return Responses.OK;
       }
@@ -167,7 +167,7 @@ class MemberService {
 
   private Response sendMail(UserDao userDao, InvitationSendDTO dto) {
     Map<String, Object> dataMap = new HashMap<>(5);
-    dataMap.put("company", CurrentUser.getCompanyName());
+    dataMap.put("account", CurrentUser.getAccountName());
     dataMap.put("admin", CurrentUser.getUserName());
 
     String message = null;
@@ -187,9 +187,9 @@ class MemberService {
     message = renderer.render(template, dataMap);
 
     emailSender.send(Props.APP_EMAIL_SENDER(),
-        "About your invitation for " + CurrentUser.getCompanyName() + " at inprice.io", dto.getEmail(), message);
+        "About your invitation for " + CurrentUser.getAccountName() + " at inprice.io", dto.getEmail(), message);
 
-    log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getCompanyId());
+    log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
     log.info(message);
     return Responses.OK;
   }

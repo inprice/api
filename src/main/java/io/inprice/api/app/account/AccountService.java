@@ -1,4 +1,4 @@
-package io.inprice.api.app.company;
+package io.inprice.api.app.account;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -12,8 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.auth.UserSessionDao;
-import io.inprice.api.app.company.dto.CreateDTO;
-import io.inprice.api.app.company.dto.RegisterDTO;
+import io.inprice.api.app.account.dto.CreateDTO;
+import io.inprice.api.app.account.dto.RegisterDTO;
 import io.inprice.api.app.member.MemberDao;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
@@ -27,6 +27,7 @@ import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
+import io.inprice.api.helpers.Commons;
 import io.inprice.api.helpers.PasswordHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
@@ -34,20 +35,21 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
 import io.inprice.api.utils.CurrencyFormats;
-import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.meta.AppEnv;
+import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
-import io.inprice.common.models.Company;
+import io.inprice.common.models.Account;
 import io.inprice.common.models.User;
 import io.javalin.http.Context;
 
-class CompanyService {
+class AccountService {
 
-  private static final Logger log = LoggerFactory.getLogger(CompanyService.class);
+  private static final Logger log = LoggerFactory.getLogger(AccountService.class);
 
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
   private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
@@ -64,28 +66,22 @@ class CompanyService {
 
       try (Handle handle = Database.getHandle()) {
         UserDao userDao = handle.attach(UserDao.class);
-        CompanyDao companyDao = handle.attach(CompanyDao.class);
-
-        boolean isCompanyDefined = false;
 
         User user = userDao.findByEmail(dto.getEmail());
-        if (user != null) {
-          Company found = companyDao.findByNameAndAdminId(dto.getCompanyName(), user.getId());
-          isCompanyDefined = (found != null);
-        }
+        boolean isNotARegisteredUser = (user == null);
 
-        if (! isCompanyDefined) {
+        if (isNotARegisteredUser) {
           String token = Tokens.add(TokenType.REGISTER_REQUEST, dto);
 
           Map<String, Object> dataMap = new HashMap<>(3);
           dataMap.put("user", dto.getEmail().split("@")[0]);
-          dataMap.put("company", dto.getCompanyName());
+          dataMap.put("account", dto.getAccountName());
           dataMap.put("token", token.substring(0,3)+"-"+token.substring(3));
 
           String message = renderer.render(EmailTemplate.REGISTER_ACTIVATION_LINK, dataMap);
           emailSender.send(
             Props.APP_EMAIL_SENDER(), 
-            "About " + dto.getCompanyName() + " registration on inprice.io",
+            "About " + dto.getAccountName() + " registration on inprice.io",
             dto.getEmail(), 
             message
           );
@@ -93,11 +89,11 @@ class CompanyService {
 
           return Responses.OK;
         } else {
-          return Responses.Already.Defined.COMPANY;
+          return Responses.Already.Defined.REGISTERED_USER;
         }
 
       } catch (Exception e) {
-        log.error("Failed to render email for activating company register", e);
+        log.error("Failed to render email for activating account register", e);
         return Responses.ServerProblem.EXCEPTION;
       }
     }
@@ -135,11 +131,11 @@ class CompanyService {
     
           if (user.getId() != null) {
             res[0] = 
-              createCompany(
+              createAccount(
                 transactional,
                 user.getId(),
                 user.getEmail(),
-                dto.getCompanyName(),
+                dto.getAccountName(),
                 clientInfo.get(Consts.CURRENCY_CODE),
                 clientInfo.get(Consts.CURRENCY_FORMAT)
               );
@@ -160,21 +156,21 @@ class CompanyService {
     return res[0];
   }
 
-  Response getCurrentCompany() {
+  Response getCurrentAccount() {
     try (Handle handle = Database.getHandle()) {
-      CompanyDao dao = handle.attach(CompanyDao.class);
-      return new Response(dao.findById(CurrentUser.getCompanyId()));
+      AccountDao dao = handle.attach(AccountDao.class);
+      return new Response(dao.findById(CurrentUser.getAccountId()));
     }
   }
 
   Response create(CreateDTO dto) {
-    final Response[] res = { validateCompanyDTO(dto) };
+    final Response[] res = { validateAccountDTO(dto) };
 
     if (res[0].isOK()) {
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transactional -> {
           res[0] = 
-            createCompany(
+            createAccount(
               transactional,
               CurrentUser.getUserId(),
               CurrentUser.getEmail(),
@@ -182,6 +178,11 @@ class CompanyService {
               dto.getCurrencyCode(),
               dto.getCurrencyFormat()
             );
+          if (res[0].isOK()) {
+            AccountDao accountDao = transactional.attach(AccountDao.class);
+            Account account = accountDao.findById(res[0].getData());
+            res[0] = Commons.refreshSession(account);
+          }
           return res[0].isOK();
         });
       }
@@ -191,19 +192,19 @@ class CompanyService {
   }
 
   Response update(CreateDTO dto) {
-    Response res = validateCompanyDTO(dto);
+    Response res = validateAccountDTO(dto);
 
     if (res.isOK()) {
       boolean isOK = false;
 
       try (Handle handle = Database.getHandle()) {
-        CompanyDao companyDao = handle.attach(CompanyDao.class);
+        AccountDao accountDao = handle.attach(AccountDao.class);
         isOK =
-          companyDao.update(
+          accountDao.update(
             dto.getName(),
             dto.getCurrencyCode(),
             dto.getCurrencyFormat(),
-            CurrentUser.getCompanyId(),
+            CurrentUser.getAccountId(),
             CurrentUser.getUserId()
           );
       }
@@ -217,60 +218,74 @@ class CompanyService {
     return res;
   }
 
-  Response deleteEverything(String password) {
+  Response deleteAccount(String password) {
     final Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
       handle.inTransaction(transactional -> {
         UserDao userDao = transactional.attach(UserDao.class);
-        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        AccountDao accountDao = transactional.attach(AccountDao.class);
         UserSessionDao sessionDao = transactional.attach(UserSessionDao.class);
 
         User user = userDao.findById(CurrentUser.getUserId());
 
         if (PasswordHelper.isValid(password, user.getPassword())) {
-          Company company = companyDao.findByAdminId(CurrentUser.getCompanyId());
+          Account account = accountDao.findByAdminId(CurrentUser.getUserId());
 
-          if (company != null) {
-            log.info("{} is being deleted. Id: {}...", company.getName(), company.getId());
+          if (account != null) {
+            if (! AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
+              log.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
 
-            String where = "where company_id=" + CurrentUser.getCompanyId();
+              String where = "where account_id=" + CurrentUser.getAccountId();
 
-            Batch batch = transactional.createBatch();
-            batch.add("SET FOREIGN_KEY_CHECKS=0");
-            batch.add("delete from import_ " + where);
-            batch.add("delete from import_detail " + where);
-            batch.add("delete from link_price " + where);
-            batch.add("delete from link_history " + where);
-            batch.add("delete from link_spec " + where);
-            batch.add("delete from link " + where);
-            batch.add("delete from product_tag " + where);
-            batch.add("delete from product " + where);
-            batch.add("delete from coupon where issued_company_id=" + CurrentUser.getCompanyId());
-            batch.add("delete from member " + where);
-            batch.add("delete from user_session " + where);
-            batch.add("delete from user where id in (select admin_id from company where id=" + CurrentUser.getCompanyId() + ")");
-            batch.add("delete from checkout " + where);
-            batch.add("delete from company_history " + where);
-            batch.add("delete from company_trans " + where);
-            batch.add("delete from company where id=" + CurrentUser.getCompanyId());
-            batch.add("SET FOREIGN_KEY_CHECKS=1");
-            batch.execute();
-
-            List<String> hashList = sessionDao.findHashesByCompanyId(CurrentUser.getCompanyId());
-            if (hashList != null && hashList.size() > 0) {
-              for (String hash : hashList) {
-                RedisClient.removeSesion(hash);
+              Batch batch = transactional.createBatch();
+              batch.add("SET FOREIGN_KEY_CHECKS=0");
+              batch.add("delete from import_ " + where);
+              batch.add("delete from import_detail " + where);
+              batch.add("delete from link_price " + where);
+              batch.add("delete from link_history " + where);
+              batch.add("delete from link_spec " + where);
+              batch.add("delete from link " + where);
+              batch.add("delete from product_tag " + where);
+              batch.add("delete from product " + where);
+              batch.add("delete from coupon where issued_account_id=" + CurrentUser.getAccountId());
+              
+              // in order to keep consistency, 
+              // users having no account other than this must be deleted too!!!
+              MemberDao memberDao = transactional.attach(MemberDao.class);
+              List<Long> unboundMembers = memberDao.findUserIdListHavingJustThisAccount(CurrentUser.getAccountId());
+              if (unboundMembers != null && ! unboundMembers.isEmpty()) {
+                String userIdList = StringUtils.join(unboundMembers, ",");
+                batch.add("delete from user where id in (" + userIdList + ")");
               }
-            }
+              
+              batch.add("delete from member " + where);
+              batch.add("delete from user_session " + where);
+              batch.add("delete from checkout " + where);
+              batch.add("delete from account_history " + where);
+              batch.add("delete from account_trans " + where);
+              batch.add("delete from account where id=" + CurrentUser.getAccountId());
 
-            log.info("{} is deleted. Id: {}.", company.getName(), company.getId());
-            res[0] = Responses.OK;
+              batch.add("SET FOREIGN_KEY_CHECKS=1");
+              batch.execute();
+
+              List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
+              if (hashList != null && ! hashList.isEmpty()) {
+                for (String hash : hashList) {
+                  RedisClient.removeSesion(hash);
+                }
+              }
+
+              log.info("{} is deleted. Id: {}.", account.getName(), account.getId());
+              res[0] = Responses.OK;
+            } else {
+              res[0] = Responses.Already.ACTIVE_SUBSCRIPTION;
+            }
           } else {
-            res[0] = Responses.Invalid.COMPANY;
+            res[0] = Responses.Invalid.ACCOUNT;
           }
         } else {
-          res[0] = Responses.Invalid.USER;
+          res[0] = Responses.Invalid.PASSWORD;
         }
 
         return res[0].isOK();
@@ -281,7 +296,7 @@ class CompanyService {
   }
 
   private Response validateRegisterDTO(RegisterDTO dto) {
-    Response res = validateCompanyDTO(dto);
+    Response res = validateAccountDTO(dto);
 
     if (res.isOK()) {
       String problem = EmailValidator.verify(dto.getEmail());
@@ -302,53 +317,56 @@ class CompanyService {
     }
   }
 
-  private Response createCompany(Handle transactional, Long userId, String userEmail, String companyName, String currencyCode, String currencyFormat) {
-    CompanyDao companyDao = transactional.attach(CompanyDao.class);
+  private Response createAccount(Handle transactional, Long userId, String userEmail, String accountName, String currencyCode, String currencyFormat) {
+    AccountDao accountDao = transactional.attach(AccountDao.class);
     MemberDao memberDao = transactional.attach(MemberDao.class);
 
-    Company company = companyDao.findByNameAndAdminId(companyName, userId);
-    if (company == null) {
-      Long companyId = 
-        companyDao.insert(
+    Account account = accountDao.findByNameAndAdminId(accountName, userId);
+    if (account == null) {
+      Long accountId = 
+        accountDao.insert(
           userId, 
-          companyName,
+          accountName,
           currencyCode,
           currencyFormat
         );
 
-      if (companyId != null) {
+      if (accountId != null) {
+
+        accountDao.insertStatusHistory(accountId, AccountStatus.CREATED.name());
+
         long memberId = 
           memberDao.insert(
             userId,
             userEmail,
-            companyId,
+            accountId,
             UserRole.ADMIN.name(),
             UserStatus.JOINED.name()
           );
 
         if (memberId > 0) {
-          log.info("A new user just registered a new company. C.Name: {}, U.Email: {} ", companyName, userEmail);
-          return Responses.OK;
+          log.info("A new user just registered a new account. C.Name: {}, U.Email: {} ", accountName, userEmail);
+          return new Response(accountId);
         }
       }
       return Responses.DataProblem.DB_PROBLEM;
     } else {
-      return Responses.Already.Defined.COMPANY;
+      return Responses.Already.Defined.ACCOUNT;
     }
   }
 
-  private Response validateCompanyDTO(CreateDTO dto) {
+  private Response validateAccountDTO(CreateDTO dto) {
     String problem = null;
 
     if (dto == null) {
-      problem = "Invalid company info!";
+      problem = "Invalid account info!";
     }
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getName())) {
-        problem = "Company name cannot be null!";
+        problem = "Account name cannot be null!";
       } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
-        problem = "Company name must be between 3 - 70 chars";
+        problem = "Account name must be between 3 - 70 chars";
       }
     }
 
@@ -387,11 +405,11 @@ class CompanyService {
     }
   }
 
-  private Response validateCompanyDTO(RegisterDTO dto) {
+  private Response validateAccountDTO(RegisterDTO dto) {
     String problem = null;
 
     if (dto == null) {
-      problem = "Invalid company info!";
+      problem = "Invalid account info!";
     }
 
     if (problem == null) {
@@ -399,17 +417,17 @@ class CompanyService {
     }
 
     if (problem == null) {
-      if (StringUtils.isBlank(dto.getCompanyName())) {
-        problem = "Company name cannot be null!";
-      } else if (dto.getCompanyName().length() < 3 || dto.getCompanyName().length() > 70) {
-        problem = "Company name must be between 3 - 70 chars";
+      if (StringUtils.isBlank(dto.getAccountName())) {
+        problem = "Account name cannot be null!";
+      } else if (dto.getAccountName().length() < 3 || dto.getAccountName().length() > 70) {
+        problem = "Account name must be between 3 - 70 chars";
       }
     }
 
     if (problem == null) {
       //cleaning
       dto.setEmail(SqlHelper.clear(dto.getEmail()));
-      dto.setCompanyName(SqlHelper.clear(dto.getCompanyName()));
+      dto.setAccountName(SqlHelper.clear(dto.getAccountName()));
       dto.setPassword(SqlHelper.clear(dto.getPassword()));
       dto.setRepeatPassword(SqlHelper.clear(dto.getRepeatPassword()));
 

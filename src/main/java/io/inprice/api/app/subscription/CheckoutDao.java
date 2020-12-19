@@ -15,12 +15,12 @@ public interface CheckoutDao {
   @UseRowMapper(CheckoutMapper.class)
   Checkout findByHash(@Bind("hash") String hash);
 
-  @SqlQuery("select * from checkout where company_id=:companyId order by created_at desc limit 1")
+  @SqlQuery("select * from checkout where account_id=:accountId order by created_at desc limit 1")
   @UseRowMapper(CheckoutMapper.class)
-  Checkout findLastCheckout(@Bind("companyId") Long companyId);
+  Checkout findLastCheckout(@Bind("accountId") Long accountId);
 
-  @SqlUpdate("insert into checkout (_hash, session_id, company_id, plan_name) values (:hash, :sessionId, :companyId, :planName)")
-  boolean insert(@Bind("hash") String hash, @Bind("sessionId") String sessionId, @Bind("companyId") Long companyId, @Bind("planName") String planName);
+  @SqlUpdate("insert into checkout (_hash, session_id, account_id, plan_name) values (:hash, :sessionId, :accountId, :planName)")
+  boolean insert(@Bind("hash") String hash, @Bind("sessionId") String sessionId, @Bind("accountId") Long accountId, @Bind("planName") String planName);
 
   @SqlUpdate("update checkout set status=:status, description=:description, updated_at=now() where _hash=:hash and status = 'PENDING'")
   boolean update(@Bind("hash") String hash, @Bind("status") String status, @Bind("description") String description);

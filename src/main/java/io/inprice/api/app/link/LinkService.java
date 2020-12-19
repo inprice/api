@@ -52,21 +52,21 @@ class LinkService {
 
             Link sample = linkDao.findSampleByUrlHashAndStatus(urlHash, LinkStatus.AVAILABLE.name());
             if (sample != null) { // if any, lets clone it
-              long id = linkDao.insert(link, dto.getProductId(), CurrentUser.getCompanyId());
+              long id = linkDao.insert(link, dto.getProductId(), CurrentUser.getAccountId());
               if (id > 0) {
                 sample.setId(id);
                 linkDao.insertHistory(sample);
                 res = new Response(sample);
               }
             } else {
-              long id = linkDao.insert(dto.getUrl(), urlHash, dto.getProductId(), CurrentUser.getCompanyId());
+              long id = linkDao.insert(dto.getUrl(), urlHash, dto.getProductId(), CurrentUser.getAccountId());
               if (id > 0) {
                 sample = new Link();
                 sample.setId(id);
                 sample.setUrl(dto.getUrl());
                 sample.setUrlHash(urlHash);
                 sample.setProductId(dto.getProductId());
-                sample.setCompanyId(CurrentUser.getCompanyId());
+                sample.setAccountId(CurrentUser.getAccountId());
                 linkDao.insertHistory(sample);
                 res = new Response(sample);
               }
@@ -90,8 +90,8 @@ class LinkService {
     //---------------------------------------------------
     StringBuilder criteria = new StringBuilder();
 
-    criteria.append("where l.import_detail_id is null and l.company_id = ");
-    criteria.append(CurrentUser.getCompanyId());
+    criteria.append("where l.import_detail_id is null and l.account_id = ");
+    criteria.append(CurrentUser.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
       criteria.append(" and l.sku like '%");
@@ -143,7 +143,7 @@ class LinkService {
   Response deleteById(Long id) {
     if (id != null && id > 0) {
       final boolean[] isOK = { false };
-      final String where = String.format("where link_id=%d and company_id=%d; ", id, CurrentUser.getCompanyId());
+      final String where = String.format("where link_id=%d and account_id=%d; ", id, CurrentUser.getAccountId());
 
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transactional -> {

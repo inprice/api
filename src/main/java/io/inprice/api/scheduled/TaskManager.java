@@ -22,10 +22,10 @@ public class TaskManager {
     int corePoolSize = 4;
     scheduler = Executors.newScheduledThreadPool(corePoolSize);
 
-    loadTask(new FreeCompanyStopper(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_STOPPING_FREE_COMPANIES()));
-    loadTask(new SubscribedCompanyStopper(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_STOPPING_SUBSCRIBED_COMPANIES()));
+    loadTask(new FreeAccountStopper(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_STOPPING_FREE_ACCOUNTS()));
+    loadTask(new SubscribedAccountStopper(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_STOPPING_SUBSCRIBED_ACCOUNTS()));
     loadTask(new PendingCheckoutsCloser(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS()));
-    loadTask(new ReminderForFreeCompanies(), 1, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_REMINDER_FOR_FREE_COMPANIES()));
+    loadTask(new ReminderForFreeAccounts(), 1, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_REMINDER_FOR_FREE_ACCOUNTS()));
 
     log.info("TaskManager is started with {} workers.", corePoolSize);
   }

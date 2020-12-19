@@ -35,19 +35,19 @@ public class SubscriptionController implements Controller {
       ctx.json(Commons.createResponse(ctx, service.startFreeUse()));
     }, AccessRoles.ADMIN_ONLY());
 
-    // returns coupons used by current company
+    // returns coupons used by current account
     app.get(Consts.Paths.Coupon.BASE, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, couponService.getCoupons()));
     }, AccessRoles.ADMIN_ONLY());
 
-    // registers the given coupon to current company
+    // registers the given coupon to current account
     app.put(Consts.Paths.Coupon.APPLY + "/:code", (ctx) -> {
       ctx.json(Commons.createResponse(ctx, couponService.applyCoupon(ctx.pathParam("code"))));
     }, AccessRoles.ADMIN_ONLY());
 
-    // returns current company's info
+    // returns current account's info
     app.get(Consts.Paths.Subscription.BASE, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getCurrentCompany()));
+      ctx.json(Commons.createResponse(ctx, service.getCurrentAccount()));
     }, AccessRoles.ADMIN_ONLY());
 
     // returns all the transactions happened in payment provider
@@ -55,7 +55,7 @@ public class SubscriptionController implements Controller {
       ctx.json(Commons.createResponse(ctx, service.getTransactions()));
     }, AccessRoles.ADMIN_ONLY());
 
-    // updates company's extra info used in invoices
+    // updates account's extra info used in invoices
     app.post(Consts.Paths.Subscription.SAVE_INFO, (ctx) -> {
       CustomerDTO dto = ctx.bodyAsClass(CustomerDTO.class);
       ctx.json(Commons.createResponse(ctx, service.saveInfo(dto)));

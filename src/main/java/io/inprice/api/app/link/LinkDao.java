@@ -40,26 +40,26 @@ public interface LinkDao {
     "select l.*, p.price as product_price from link as l " + 
     "inner join product as p on p.id = l.product_id " + 
     "where l.product_id=:productId " +
-    "  and l.company_id=:companyId " +
+    "  and l.account_id=:accountId " +
     "order by l.id"
   )
   @UseRowMapper(LinkMapper.class)
-  List<Link> findListByProductIdAndCompanyId(@Bind("productId") Long productId, @Bind("companyId") Long companyId);
+  List<Link> findListByProductIdAndAccountId(@Bind("productId") Long productId, @Bind("accountId") Long accountId);
 
   @SqlUpdate(
-    "insert into link (url, url_hash, product_id, company_id) " +
-    "values (:url, :urlHash, :productId, :companyId)"
+    "insert into link (url, url_hash, product_id, account_id) " +
+    "values (:url, :urlHash, :productId, :accountId)"
   )
   @GetGeneratedKeys
-  long insert(@Bind("url") String url, @Bind("urlHash") String urlHash, @Bind("productId") Long productId, @Bind("companyId") Long companyId);
+  long insert(@Bind("url") String url, @Bind("urlHash") String urlHash, @Bind("productId") Long productId, @Bind("accountId") Long accountId);
 
   @SqlUpdate(
-    "insert into link (url, url_hash, sku, name, brand, seller, shipment, status, http_status, class_name, platform, product_id, company_id) " +
+    "insert into link (url, url_hash, sku, name, brand, seller, shipment, status, http_status, class_name, platform, product_id, account_id) " +
     "values (:link.url, :link.urlHash, :link.sku, :link.name, :link.brand, :link.seller, :link.shipment, :link.status, :link.httpStatus, " +
-      ":link.className, :link.platform, :productId, :companyId)"
+      ":link.className, :link.platform, :productId, :accountId)"
   )
   @GetGeneratedKeys
-  long insert(@BindBean("link") Link sample, @Bind("productId") Long productId, @Bind("companyId") Long companyId);
+  long insert(@BindBean("link") Link sample, @Bind("productId") Long productId, @Bind("accountId") Long accountId);
 
   @SqlQuery("select * from link_history where product_id=:productId order by link_id, id desc")
   @UseRowMapper(LinkHistoryMapper.class)
@@ -90,8 +90,8 @@ public interface LinkDao {
   List<LinkSpec> findSpecListByLinkId(@Bind("linkId") Long linkId);
 
   @SqlUpdate(
-    "insert into link_history (link_id, status, http_status, problem, product_id, company_id) " +
-    "values (:link.id, :link.status, :link.httpStatus, :link.problem, :link.productId, :link.companyId)"
+    "insert into link_history (link_id, status, http_status, problem, product_id, account_id) " +
+    "values (:link.id, :link.status, :link.httpStatus, :link.problem, :link.productId, :link.accountId)"
   )
   @GetGeneratedKeys
   long insertHistory(@BindBean("link") Link link);
@@ -100,12 +100,12 @@ public interface LinkDao {
   boolean toggleStatus(@Bind("id") Long id, @Bind("status") String status);
 
   @SqlUpdate(
-    "insert into link (url, url_hash, status, problem, retry, class_name, platform, import_detail_id, company_id) " +
-    "values (:url, :urlHash, :status, :problem, :retry, :className, :platform, :importDetailId, :companyId)"
+    "insert into link (url, url_hash, status, problem, retry, class_name, platform, import_detail_id, account_id) " +
+    "values (:url, :urlHash, :status, :problem, :retry, :className, :platform, :importDetailId, :accountId)"
   )
   @GetGeneratedKeys
   long importProduct(@Bind("url") String url, @Bind("urlHash") String urlHash, @Bind("status") String status, 
     @Bind("problem") String problem, @Bind("retry") int retry, @Bind("className") String className, 
-    @Bind("platform") String platform, @Bind("importDetailId") Long importDetailId, @Bind("companyId") Long companyId);
+    @Bind("platform") String platform, @Bind("importDetailId") Long importDetailId, @Bind("accountId") Long accountId);
 
 }

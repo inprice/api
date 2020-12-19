@@ -1,4 +1,4 @@
-package io.inprice.api.app.company.mapper;
+package io.inprice.api.app.account.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -8,16 +8,16 @@ import org.jdbi.v3.core.statement.StatementContext;
 
 import io.inprice.common.mappers.Helper;
 
-public class CompanyInfoMapper implements RowMapper<CompanyInfo> {
+public class AccountInfoMapper implements RowMapper<AccountInfo> {
 
   @Override
-  public CompanyInfo map(ResultSet rs, StatementContext ctx) throws SQLException {
-    CompanyInfo m = new CompanyInfo();
+  public AccountInfo map(ResultSet rs, StatementContext ctx) throws SQLException {
+    AccountInfo m = new AccountInfo();
 
     if (Helper.hasColumn(rs, "id")) m.setId(Helper.nullLongHandler(rs, "id"));
     if (Helper.hasColumn(rs, "name")) m.setEmail(rs.getString("name"));
     if (Helper.hasColumn(rs, "email")) m.setEmail(rs.getString("email"));
-    if (Helper.hasColumn(rs, "subs_customer_id")) m.setSubsCustomerId(rs.getString("subs_customer_id"));
+    if (Helper.hasColumn(rs, "cust_id")) m.setCustId(rs.getString("cust_id"));
 
     return m;
   }

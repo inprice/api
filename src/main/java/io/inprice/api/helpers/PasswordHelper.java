@@ -7,6 +7,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
+import org.apache.commons.lang3.StringUtils;
+
 import io.inprice.api.external.Props;
 
 /**
@@ -38,6 +40,8 @@ public class PasswordHelper {
   }
 
   public static boolean isValid(String password, String saltedHash) {
+    if (StringUtils.isBlank(password) || StringUtils.isBlank(saltedHash)) return false;
+
     String hash = saltedHash.substring(0, 43) + "=";
     String salt = saltedHash.substring(43) + "=";
 

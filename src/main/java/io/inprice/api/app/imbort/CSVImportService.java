@@ -13,7 +13,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.product.ProductCreator;
 import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.app.product.dto.ProductDTO;
@@ -24,7 +24,7 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.meta.ImportType;
 import io.inprice.common.meta.LinkStatus;
-import io.inprice.common.models.Company;
+import io.inprice.common.models.Account;
 import io.inprice.common.models.ImportDetail;
 import io.inprice.common.models.Product;
 import io.inprice.common.utils.NumberUtils;
@@ -44,24 +44,24 @@ public class CSVImportService extends BaseImportService {
 
         int successCount = 0;
         int problemCount = 0;
-        long companyId = CurrentUser.getCompanyId();
+        long accountId = CurrentUser.getAccountId();
 
         ImportDao importDao = transactional.attach(ImportDao.class);
-        long importId = importDao.insert(ImportType.CSV.name(), isFile, companyId);
+        long importId = importDao.insert(ImportType.CSV.name(), isFile, accountId);
         if (importId == 0) {
           res[0] = Responses.DataProblem.DB_PROBLEM;
           return false;
         }
 
-        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        AccountDao accountDao = transactional.attach(AccountDao.class);
         
-        Company company = companyDao.findById(companyId);
-        int allowedCount = company.getProductLimit() - company.getProductCount();
+        Account account = accountDao.findById(accountId);
+        int allowedCount = account.getProductLimit() - account.getProductCount();
 
         Set<String> insertedSet = new HashSet<>();
         if (allowedCount > 0) {
 
-          int actualCount = company.getProductCount();
+          int actualCount = account.getProductCount();
           if (actualCount < allowedCount) {
 
             try (CSVReader csvReader = new CSVReader(new StringReader(content))) {
@@ -81,14 +81,14 @@ public class CSVImportService extends BaseImportService {
                   if (! exists) {
 
                     if (values.length == COLUMN_COUNT) {
-                      Product product = productDao.findByCode(values[0], companyId);
+                      Product product = productDao.findByCode(values[0], accountId);
                       if (product == null) {
   
                         ProductDTO dto = new ProductDTO();
                         dto.setCode(SqlHelper.clear(values[0]));
                         dto.setName(SqlHelper.clear(values[1]));
                         dto.setPrice(new BigDecimal(NumberUtils.extractPrice(values[2])));
-                        dto.setCompanyId(companyId);
+                        dto.setAccountId(accountId);
 
                         Response productCreateRes = ProductCreator.create(transactional, dto);
                         if (! productCreateRes.isOK()) {
@@ -126,7 +126,7 @@ public class CSVImportService extends BaseImportService {
                 impdet.setImported(impdet.getEligible());
                 impdet.setImportId(importId);
                 impdet.setProblem(problem);
-                impdet.setCompanyId(companyId);
+                impdet.setAccountId(accountId);
                 importDao.insertDetail(impdet);
               }
             }

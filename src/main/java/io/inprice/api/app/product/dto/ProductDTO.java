@@ -18,7 +18,7 @@ public class ProductDTO {
   private BigDecimal price;
   private Long importId;
 
-  private Long companyId;
+  private Long accountId;
   private Set<String> tags;
   private Boolean tagsChanged = Boolean.FALSE;
 

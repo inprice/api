@@ -10,7 +10,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Global;
@@ -20,22 +20,22 @@ import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.models.Company;
-import io.inprice.common.models.CompanyTrans;
+import io.inprice.common.models.Account;
+import io.inprice.common.models.AccountTrans;
 import io.inprice.common.models.User;
 
 /**
- * Stops companies whose statuses are either FREE or COUPONED and subs renewal date expired.
- * Please note that stopping a regular subscriber is subject to another stopper see #SubscribedCompanyStopper
+ * Stops accounts whose statuses are either FREE or COUPONED and subs renewal date expired.
+ * Please note that stopping a regular subscriber is subject to another stopper see #SubscribedAccountStopper
  * 
  * @since 2020-10-25
  * @author mdpinar
  */
-public class FreeCompanyStopper implements Runnable {
+public class FreeAccountStopper implements Runnable {
 
-  private static final Logger log = LoggerFactory.getLogger(FreeCompanyStopper.class);
+  private static final Logger log = LoggerFactory.getLogger(FreeAccountStopper.class);
   private final String clazz = getClass().getSimpleName();
 
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
@@ -54,51 +54,51 @@ public class FreeCompanyStopper implements Runnable {
       log.info(clazz + " is triggered.");
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transactional -> {
-          CompanyDao companyDao = transactional.attach(CompanyDao.class);
+          AccountDao accountDao = transactional.attach(AccountDao.class);
 
-          List<Company> expiredCompanyList = 
-            companyDao.findExpiredFreeCompanyList(
+          List<Account> expiredAccountList = 
+            accountDao.findExpiredFreeAccountList(
               Arrays.asList(
-                CompanyStatus.FREE.name(),
-                CompanyStatus.COUPONED.name()
+                AccountStatus.FREE.name(),
+                AccountStatus.COUPONED.name()
               )
             );
 
           int affected = 0;
 
-          if (expiredCompanyList != null && expiredCompanyList.size() > 0) {
+          if (expiredAccountList != null && expiredAccountList.size() > 0) {
             UserDao userDao = transactional.attach(UserDao.class);
+            SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
-            for (Company company: expiredCompanyList) {
-              boolean isOK = companyDao.stopCompany(company.getId(), CompanyStatus.STOPPED.name());
+            for (Account account: expiredAccountList) {
+              boolean isOK = subscriptionDao.terminate(account.getId(), AccountStatus.STOPPED.name());
               if (isOK) {
 
-                CompanyTrans trans = new CompanyTrans();
-                trans.setCompanyId(company.getId());
+                AccountTrans trans = new AccountTrans();
+                trans.setAccountId(account.getId());
                 trans.setSuccessful(Boolean.TRUE);
                 trans.setDescription(("End of period!"));
 
-                if (CompanyStatus.FREE.equals(company.getStatus()))
+                if (AccountStatus.FREE.equals(account.getStatus()))
                   trans.setEvent(SubsEvent.FREE_USE_STOPPED);
                 else
                   trans.setEvent(SubsEvent.COUPON_USE_STOPPED);
       
-                SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
                 isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
                 if (isOK) {
-                  isOK = companyDao.insertStatusHistory(company.getId(), CompanyStatus.STOPPED.name());
+                  isOK = accountDao.insertStatusHistory(account.getId(), AccountStatus.STOPPED.name());
                 }
               }
 
               if (isOK) {
-                User user = userDao.findById(company.getId());
+                User user = userDao.findById(account.getId());
 
-                String companyName = StringUtils.isNotBlank(company.getTitle()) ? company.getTitle() : company.getName();
+                String accountName = StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName();
 
                 Map<String, Object> dataMap = new HashMap<>(3);
                 dataMap.put("user", user.getEmail());
-                dataMap.put("company", companyName);
-                String message = templateRenderer.render(EmailTemplate.FREE_COMPANY_CANCELLED, dataMap);
+                dataMap.put("account", accountName);
+                String message = templateRenderer.render(EmailTemplate.FREE_ACCOUNT_CANCELLED, dataMap);
                 emailSender.send(Props.APP_EMAIL_SENDER(), "inprice subscription is cancelled.", user.getEmail(), message);
 
                 affected++;
@@ -107,9 +107,9 @@ public class FreeCompanyStopper implements Runnable {
           }
 
           if (affected > 0) {
-            log.info("{} free company in total stopped!", affected);
+            log.info("{} free account in total stopped!", affected);
           } else {
-            log.info("No free company to be stopped was found!");
+            log.info("No free account to be stopped was found!");
           }
           return (affected > 0);
         });

@@ -15,7 +15,7 @@ public class InvitationSendDTO implements Serializable {
 
    private static final long serialVersionUID = 2545602928755294073L;
 
-   private Long companyId;
+   private Long accountId;
    private String email;
    private UserRole role;
    private Date createdAt = new Date();

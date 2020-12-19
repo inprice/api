@@ -11,7 +11,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.dashboard.mapper.Most10Product;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.RedisClient;
@@ -30,21 +30,21 @@ class DashboardService {
 
   Response getReport(boolean refresh) {
     Map<String, Object> report = null;
-    if (! refresh) report = RedisClient.dashboardsMap.get(CurrentUser.getCompanyId());
+    if (! refresh) report = RedisClient.dashboardsMap.get(CurrentUser.getAccountId());
 
     if (report == null) {
       report = new HashMap<>(4);
 
       try (Handle handle = Database.getHandle()) {
-        CompanyDao companyDao = handle.attach(CompanyDao.class);
+        AccountDao accountDao = handle.attach(AccountDao.class);
         DashboardDao dashboardDao = handle.attach(DashboardDao.class);
 
         report.put("date", DateUtils.formatLongDate(new Date()));
         report.put("products", getProducts(dashboardDao));
         report.put("links", getLinks(dashboardDao));
-        report.put("company", companyDao.findById(CurrentUser.getCompanyId()));
+        report.put("account", accountDao.findById(CurrentUser.getAccountId()));
 
-        RedisClient.dashboardsMap.put(CurrentUser.getCompanyId(), report, 5, TimeUnit.MINUTES);
+        RedisClient.dashboardsMap.put(CurrentUser.getAccountId(), report, 5, TimeUnit.MINUTES);
         return new Response(report);
     
       } catch (Exception e) {
@@ -65,7 +65,7 @@ class DashboardService {
   private Map<String, Object> getLinks(DashboardDao dashboardDao) {
     Map<String, Object> result = new HashMap<>(2);
     result.put("statusDists", findLinkStatusDists(dashboardDao));
-    result.put("mru25", dashboardDao.findMR25Link(CurrentUser.getCompanyId()));
+    result.put("mru25", dashboardDao.findMR25Link(CurrentUser.getAccountId()));
     return result;
   }
 
@@ -83,7 +83,7 @@ class DashboardService {
 
     int[] result = new int[i];
 
-    Map<String, Integer> statusDistMap = dashboardDao.findStatusDists(CurrentUser.getCompanyId());
+    Map<String, Integer> statusDistMap = dashboardDao.findStatusDists(CurrentUser.getAccountId());
     if (statusDistMap != null && statusDistMap.size() > 0) {
       for (Entry<String, Integer> entry: statusDistMap.entrySet()) {
         Integer index = stats.get(entry.getKey());
@@ -103,7 +103,7 @@ class DashboardService {
   private int[] findProductPositionDists(DashboardDao dashboardDao) {
     int[] result = new int[5];
 
-    Map<Integer, Integer> positionDistMap = dashboardDao.findPositionDists(CurrentUser.getCompanyId());
+    Map<Integer, Integer> positionDistMap = dashboardDao.findPositionDists(CurrentUser.getAccountId());
     if (positionDistMap != null && positionDistMap.size() > 0) {
       for (Entry<Integer, Integer> entry: positionDistMap.entrySet()) {
         result[entry.getKey()-1] = entry.getValue();
@@ -123,7 +123,7 @@ class DashboardService {
 
     Position[] positions = { Position.LOWEST, Position.HIGHEST };
     for (Position pos: positions) {
-      result.put(pos.name().toLowerCase(), dashboardDao.findMost10Product(pos.ordinal()+1, CurrentUser.getCompanyId()));
+      result.put(pos.name().toLowerCase(), dashboardDao.findMost10Product(pos.ordinal()+1, CurrentUser.getAccountId()));
     }
 
     return result;

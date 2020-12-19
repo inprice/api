@@ -12,11 +12,11 @@ public class UserDTO extends PasswordDTO {
   private String email;
   private String name;
   private String timezone;
-  private Long companyId;
+  private Long accountId;
 
   @Override
   public String toString() {
-    return "[id=" + getId() + ", companyId=" + companyId + ", email=" + email + ", name=" + name + ", timezone=" + timezone + "]";
+    return "[id=" + getId() + ", accountId=" + accountId + ", email=" + email + ", name=" + name + ", timezone=" + timezone + "]";
   }
 
 }

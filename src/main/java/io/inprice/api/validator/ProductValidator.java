@@ -36,7 +36,7 @@ public class ProductValidator {
     }
 
     if (problem == null) {
-      dto.setCompanyId(CurrentUser.getCompanyId());
+      dto.setAccountId(CurrentUser.getAccountId());
       dto.setCode(SqlHelper.clear(dto.getCode()));
       dto.setName(SqlHelper.clear(dto.getName()));
 

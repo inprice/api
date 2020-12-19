@@ -3,6 +3,7 @@ package io.inprice.api.app.subscription;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.stripe.exception.InvalidRequestException;
@@ -26,7 +27,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.company.CompanyDao;
+import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.email.EmailSender;
@@ -41,11 +42,11 @@ import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.CheckoutStatus;
-import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.Checkout;
-import io.inprice.common.models.Company;
-import io.inprice.common.models.CompanyTrans;
+import io.inprice.common.models.Account;
+import io.inprice.common.models.AccountTrans;
 import io.inprice.common.models.Plan;
 import io.inprice.common.utils.CouponManager;
 import io.inprice.common.utils.DateUtils;
@@ -68,15 +69,15 @@ class StripeService {
     if (plan != null) {
 
       String checkoutHash = CodeGenerator.hash();
-      String subsCustomerId = null;
+      String custId = null;
 
       try (Handle handle = Database.getHandle()) {
-        CompanyDao companyDao = handle.attach(CompanyDao.class);
-        Company company = companyDao.findById(CurrentUser.getCompanyId());
+        AccountDao accountDao = handle.attach(AccountDao.class);
+        Account account = accountDao.findById(CurrentUser.getAccountId());
 
         //check if the last checkout is active
         CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
-        Checkout checkout = checkoutDao.findLastCheckout(CurrentUser.getCompanyId());
+        Checkout checkout = checkoutDao.findLastCheckout(CurrentUser.getAccountId());
         if (checkout != null) {
           String message = null;
           if (CheckoutStatus.PENDING.equals(checkout.getStatus())) {
@@ -97,25 +98,25 @@ class StripeService {
             } else {
               message = "Your last checkout is still in PENDING state which is unexpected. We will manage this in a short while.";
             }
-          } else if (CheckoutStatus.SUCCESSFUL.equals(checkout.getStatus()) && CompanyStatus.SUBSCRIBED.equals(company.getStatus())) {
+          } else if (CheckoutStatus.SUCCESSFUL.equals(checkout.getStatus()) && AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
             message = "Your subscription and (last) checkout are successful. You cannot create a new checkout!";
           }
           if (message != null) return new Response(message);
         }
 
         //finding Customer Id if exists previously
-        subsCustomerId = company.getSubsCustomerId();
+        custId = account.getCustId();
 
         // only broader plan transitions allowed
-        if (company.getProductCount().compareTo(plan.getProductLimit()) > 0) {
+        if (account.getProductCount().compareTo(plan.getProductLimit()) > 0) {
           return Responses.PermissionProblem.BROADER_PLAN_NEEDED;
         }
       }
 
       SessionCreateParams params = SessionCreateParams.builder()
-        .setCustomer(subsCustomerId)
-        .setCustomerEmail(StringUtils.isBlank(subsCustomerId) ? CurrentUser.getEmail() : null)
-        .setClientReferenceId(CurrentUser.getCompanyId().toString())
+        .setCustomer(custId)
+        .setCustomerEmail(StringUtils.isBlank(custId) ? CurrentUser.getEmail() : null)
+        .setClientReferenceId(CurrentUser.getAccountId().toString())
         .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
         .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
         .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
@@ -149,7 +150,7 @@ class StripeService {
         Session session = Session.create(params);
 
         CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
-        boolean isOK = checkoutDao.insert(checkoutHash, session.getId(), CurrentUser.getCompanyId(), plan.getName());
+        boolean isOK = checkoutDao.insert(checkoutHash, session.getId(), CurrentUser.getAccountId(), plan.getName());
         if (isOK) {
           return new Response(Collections.singletonMap("sessionId", session.getId()));
         } else {
@@ -202,11 +203,11 @@ class StripeService {
    * Instead of waiting cancel hook in handleHookEvent, we manage cancelation things in this method.
    * 
    */
-  Response cancel(Handle handle, Company company) {
+  Response cancel(Account account) {
     boolean isAlreadyCancelled = false;
     Subscription subsResult = null;
     try {
-      Subscription subscription = Subscription.retrieve(company.getSubsId());
+      Subscription subscription = Subscription.retrieve(account.getSubsId());
       subsResult = subscription.cancel();
     } catch (InvalidRequestException e) {
       isAlreadyCancelled = e.getMessage().indexOf("No such subscription") > -1;
@@ -214,42 +215,31 @@ class StripeService {
       log.error("Failed to cancel subs", e);
     }
 
-    String couponCode = null;
-
-    // if a subscriber cancels while he/she has remaining days to renewal, he/she will be given a coupon to amotise
+    // if a subscriber cancels while he/she has more than more than 3 days to renewal,
+    // he/she will be given a coupon to amortise those days
     if (isAlreadyCancelled || subsResult != null) {
       if (isAlreadyCancelled || subsResult.getStatus().equals("canceled")) {
-        Date now = new Date();
-        long days = DateUtils.findDayDiff(now, company.getSubsRenewalAt());
-        if (isAlreadyCancelled == false && days > 3) {
-          CouponDao couponDao = handle.attach(CouponDao.class);
-          couponCode = CouponManager.generate();
-          boolean isOK = couponDao.create(
-            couponCode,
-            company.getPlanName(),
-            days,
-            String.format(
-              "In exchange for %d usage remaining cancelation at %s",
-              days, DateUtils.formatReverseDate(now)
-            )
-          );
-          if (!isOK) couponCode = null;
-        }
-        Map<String, String> dataMap = new HashMap<>(3);
-        dataMap.put("couponCode", couponCode);
-        if (couponCode != null) {
-          dataMap.put("days", ""+days);
-          dataMap.put("planName", company.getPlanName());
-        }
-        log.info("{} cancelled!", company.getName());
-        return new Response(dataMap);
+
+        CustomerDTO dto = new CustomerDTO();
+        dto.setCustId(account.getCustId());
+        dto.setSubsId(account.getSubsId());
+        dto.setPlanName(account.getPlanName());
+
+        AccountTrans trans = new AccountTrans();
+        trans.setAccountId(account.getId());
+        trans.setEventId(subsResult.getId());
+        trans.setEvent(SubsEvent.SUBSCRIPTION_CANCELLED);
+        trans.setSuccessful(Boolean.TRUE);
+        trans.setDescription("Manuel cancel.");
+        return addTransaction(account.getId(), account.getCustId(), dto, trans);
+
       } else if (subsResult != null) {
         log.error("Unexpected subs status: {}", subsResult.getStatus());
       }
     } else {
       log.error("Not a cancelled subscription and subsResult is null!");
     }
-    log.error("Subs cancellation problem for Company: {}", company.getId());
+    log.error("Subs cancellation problem for Account: {}", account.getId());
     return Responses.DataProblem.SUBSCRIPTION_PROBLEM;
   }
 
@@ -260,27 +250,27 @@ class StripeService {
   Response changePlan(int newPlanId) {
     Response res = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
 
-    Company company = null;
+    Account account = null;
 
     try (Handle handle = Database.getHandle()) {
-      CompanyDao companyDao = handle.attach(CompanyDao.class);
-      company = companyDao.findById(CurrentUser.getCompanyId());
+      AccountDao accountDao = handle.attach(AccountDao.class);
+      account = accountDao.findById(CurrentUser.getAccountId());
     }
 
-    if (company != null) {
-      if (CompanyStatus.SUBSCRIBED.equals(company.getStatus())) {
-        if (StringUtils.isNotBlank(company.getSubsId())) {
+    if (account != null) {
+      if (AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
+        if (StringUtils.isNotBlank(account.getSubsId())) {
 
           Plan newPlan = Plans.findById(newPlanId);
           if (newPlan != null) {
 
-            if (! newPlan.getName().equals(company.getPlanName())) {
+            if (! newPlan.getName().equals(account.getPlanName())) {
               boolean noNeedABroaderPlan =
-                (company.getProductCount() == 0) || (company.getProductCount().compareTo(newPlan.getProductLimit()) <= 0);
+                (account.getProductCount() == 0) || (account.getProductCount().compareTo(newPlan.getProductLimit()) <= 0);
 
               if (noNeedABroaderPlan) {
                 try {
-                  Subscription subscription = Subscription.retrieve(company.getSubsId());
+                  Subscription subscription = Subscription.retrieve(account.getSubsId());
 
                   SubscriptionUpdateParams params =
                     SubscriptionUpdateParams.builder()
@@ -293,31 +283,18 @@ class StripeService {
                           .build())
                       .build();
                   
-                  EmailTemplate emailTemplate = null;
                   Subscription subs = subscription.update(params);
                   Invoice invoice = Invoice.retrieve(subs.getLatestInvoice());
 
-                  Map<String, Object> dataMap = new HashMap<>(5);
-                  dataMap.put("user", invoice.getCustomerEmail());
-                  dataMap.put("fromPlan", company.getPlanName());
-                  dataMap.put("toPlan", newPlan.getName());
-
-                  if (subs.getPendingUpdate() != null) {
-                    emailTemplate = EmailTemplate.SUBSCRIPTION_CHANGE_FAILED;
+                  if (subs.getPendingUpdate() == null) {
+                    res = Commons.refreshSession(account.getId());
+                  } else {
                     invoice.voidInvoice();
                     res = Responses.NotSuitable.PAYMENT_FAILURE_ON_PLAN_CHANGE;
-                  } else {
-                    emailTemplate = EmailTemplate.SUBSCRIPTION_CHANGE_SUCCESSFUL;
-                    dataMap.put("invoiceUrl", invoice.getHostedInvoiceUrl());
-                    company.setPlanName(newPlan.getName());
-                    company.setProductLimit(newPlan.getProductLimit());
-                    res = Commons.refreshSession(company);
                   }
-                  String message = templateRenderer.render(emailTemplate, dataMap);
-                  emailSender.send(Props.APP_EMAIL_SENDER(), "Your plan transition", invoice.getCustomerEmail(), message);
 
                 } catch (Exception e) {
-                  log.error("Failed to change plan. Company: " + company.getId() + ", New Plan: " + newPlanId, e);
+                  log.error("Failed to change plan. Account: " + account.getId() + ", New Plan: " + newPlanId, e);
                   res = Responses.ServerProblem.EXCEPTION;
                 }
               } else {
@@ -336,7 +313,7 @@ class StripeService {
         res = Responses.NotSuitable.PLAN_CHANGE;
       }
     } else {
-      res = Responses.NotFound.COMPANY;
+      res = Responses.NotFound.ACCOUNT;
     }
 
     return res;
@@ -361,63 +338,41 @@ class StripeService {
     }
 
     if (stripeObject != null) {
+
       switch (event.getType()) {
 
         case "invoice.payment_succeeded": {
           Invoice invoice = (Invoice) stripeObject;
+          List<InvoiceLineItem> invoiceItemList = invoice.getLines().getData();
+          InvoiceLineItem firstItem = invoiceItemList.get(0);
+
+          CustomerDTO dto = generateCustDTO(invoice);
+          dto.setRenewalDate(new java.sql.Timestamp(firstItem.getPeriod().getEnd() * 1000));          
+
+          Long accountId = null;
+          SubsEvent subsEvent = null;
+          boolean successful = false;
+          String description = null;
 
           try {
-            InvoiceLineItem li = invoice.getLines().getData().get(0);
-
-            Long companyId = null;
-            SubsEvent subsEvent = null;
-
-            CustomerDTO dto = new CustomerDTO();
-            dto.setRenewalDate(new java.sql.Timestamp(li.getPeriod().getEnd() * 1000));
-            dto.setEmail(invoice.getCustomerEmail());
 
             switch (invoice.getBillingReason()) {
 
               //a new subscriber
               case "subscription_create": {
-                String title = null;
-                Address address = null;
-  
-                if (StringUtils.isNotBlank(invoice.getCharge())) {
-                  Charge charge = Charge.retrieve(invoice.getCharge());
-                  if (charge != null) {
-                    address = charge.getBillingDetails().getAddress();
-                    title = charge.getBillingDetails().getName();
-                  }
-                }
-  
-                if (address == null) {
-                  address = invoice.getCustomerAddress();
-                  title = invoice.getCustomerName();
-                  log.warn("Invoce: {} is free of charge!", invoice.getId());
-                }
-  
-                dto.setTitle(title);
-                dto.setAddress1(address.getLine1());
-                dto.setAddress2(address.getLine2());
-                dto.setPostcode(address.getPostalCode());
-                dto.setCity(address.getCity());
-                dto.setState(address.getState());
-                dto.setCountry(address.getCountry());
-                dto.setCustId(invoice.getCustomer());
-                dto.setSubsId(invoice.getSubscription());
-  
                 //the checkout must be completed
                 try (Handle handle = Database.getHandle()) {
                   CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
-                  String checkoutHash = li.getMetadata().get("hash");
+                  String checkoutHash = firstItem.getMetadata().get("hash");
                   if (StringUtils.isNotBlank(checkoutHash)) {
                     Checkout checkout = checkoutDao.findByHash(checkoutHash);
                     if (checkout != null) {
                       if (checkoutDao.update(checkoutHash, CheckoutStatus.SUCCESSFUL.name(), null)) {
-                        companyId = checkout.getCompanyId();
-                        dto.setPlanName(checkout.getPlanName());
+                        successful = true;
+                        accountId = checkout.getAccountId();
                         subsEvent = SubsEvent.SUBSCRIPTION_STARTED;
+                        description = firstItem.getDescription();
+                        dto.setPlanName(checkout.getPlanName());
                       } else {
                         log.error("Failed to update checkout! Hash: {}", checkoutHash);
                       }
@@ -434,13 +389,15 @@ class StripeService {
               //renewal
               case "subscription_cycle": {
                 try (Handle handle = Database.getHandle()) {
-                  CompanyDao companyDao = handle.attach(CompanyDao.class);
-                  Company company = companyDao.findBySubsCustomerId(invoice.getCustomer());
-                  if (company != null) {
-                    companyId = company.getId();
+                  AccountDao accountDao = handle.attach(AccountDao.class);
+                  Account account = accountDao.findByCustId(invoice.getCustomer());
+                  if (account != null) {
+                    successful = true;
+                    accountId = account.getId();
                     subsEvent = SubsEvent.SUBSCRIPTION_RENEWED;
+                    description = firstItem.getDescription();
                   } else {
-                    log.error("invoice.payment_succeeded & subscription_cycle: failed to find company by SubsCustomerId: {}", invoice.getCustomer());
+                    log.error("invoice.payment_succeeded & subscription_cycle: failed to find account by CustId: {}", invoice.getCustomer());
                   }
                 }
                 break;
@@ -448,53 +405,66 @@ class StripeService {
 
               //plan changing
               case "subscription_update": {
-                if (invoice.getStatus().equals("paid")) {
-                  Plan newPlan = Plans.findByPriceId(li.getPrice().getId());
-                  if (newPlan != null) {
-                    try (Handle handle = Database.getHandle()) {
-                      CompanyDao companyDao = handle.attach(CompanyDao.class);
-                      Company company = companyDao.findBySubsCustomerId(invoice.getCustomer());
-                      if (company != null) {
-                        companyId = company.getId();
-                        subsEvent = SubsEvent.SUBSCRIPTION_CHANGED;
+                Account account = null;
 
-                        boolean isOK = companyDao.changePlan(companyId, newPlan.getName(), newPlan.getProductLimit());
-                        if (! isOK) {
-                          companyId = null;
-                          log.error("Failed to change plan! Company: {}, Plan: {}", company.getId(), newPlan.getName());
+                try (Handle handle = Database.getHandle()) {
+                  AccountDao accountDao = handle.attach(AccountDao.class);
+                  account = accountDao.findByCustId(invoice.getCustomer());
+                }
+
+                if (account != null) {
+                  if (invoice.getStatus().equals("paid")) {
+
+                    Plan newPlan = null;
+                    InvoiceLineItem foundItem = null;
+                    for (InvoiceLineItem ili : invoiceItemList) {
+                      if (ili.getPrice() != null) {
+                        Plan iliPlan = Plans.findByPriceId(ili.getPrice().getId());
+                        if (! iliPlan.getName().equals(account.getPlanName())) {
+                          foundItem = ili;
+                          newPlan = iliPlan;
+                          break;
                         }
-                      } else {
-                        log.error("invoice.payment_succeeded & subscription_update: failed to find company by SubsCustomerId: {}, Plan: {}", 
-                          invoice.getCustomer(), li.getPrice().getId());
                       }
                     }
+
+                    if (newPlan != null) {
+                      successful = true;
+                      accountId = account.getId();
+                      subsEvent = SubsEvent.SUBSCRIPTION_CHANGED;
+                      description = foundItem.getDescription();
+                      dto.setPlanName(newPlan.getName());
+                    } else {
+                      log.error("invoice.payment_succeeded & subscription_update: failed to find plan for CustId: {}", invoice.getCustomer());
+                    }
                   } else {
-                    log.error("invoice.payment_succeeded & subscription_update: failed to find plan for SubsCustomerId: {}, Plan: {}", 
-                      invoice.getCustomer(), li.getPrice().getId());
+                    accountId = account.getId();
+                    subsEvent = SubsEvent.SUBSCRIPTION_CHANGED;
+                    description = firstItem.getDescription();
+                    invoice.voidInvoice();
+                    log.error("invoice.payment_succeeded & subscription_update: invoice is voided for CustId: {}", invoice.getCustomer());
                   }
                 } else {
-                  invoice.voidInvoice();
-                  log.error("invoice.payment_succeeded & subscription_update: invoice is voided for SubsCustomerId: {}, Plan: {}", 
-                      invoice.getCustomer(), li.getPrice().getId());
+                  log.error("invoice.payment_succeeded & subscription_update: failed to find account by CustId: {}", invoice.getCustomer());
                 }
                 break;
               }
 
             }
 
-            //companyId must not be null for both a newcomer or a renewal!
-            if (companyId != null) {
-              CompanyTrans trans = new CompanyTrans();
-              trans.setCompanyId(companyId);
+            //accountId must not be null for both a newcomer or a renewal!
+            if (accountId != null) {
+              AccountTrans trans = new AccountTrans();
+              trans.setAccountId(accountId);
               trans.setEventId(event.getId());
               trans.setEvent(subsEvent);
-              trans.setSuccessful(Boolean.TRUE);
+              trans.setSuccessful(successful);
               trans.setReason(invoice.getBillingReason());
-              trans.setDescription(li.getDescription());
+              trans.setDescription(description);
               trans.setFileUrl(invoice.getHostedInvoiceUrl());
-              res = addTransaction(null, invoice.getCustomer(), dto, trans);
+              res = addTransaction(accountId, invoice.getCustomer(), dto, trans);
             } else {
-              log.error("Failed to set companyId, see the previous log rows!");
+              log.error("Failed to set accountId, see the previous log rows!");
               res = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
             }
 
@@ -508,7 +478,7 @@ class StripeService {
 
         case "invoice.payment_failed": {
           Invoice invoice = (Invoice) stripeObject;
-          Long companyId = null;
+          Long accountId = null;
 
           //the checkout must be completed
           try (Handle handle = Database.getHandle()) {
@@ -530,7 +500,7 @@ class StripeService {
                   Checkout checkout = checkoutDao.findByHash(checkoutHash);
                   if (checkout != null) {
                     if (checkoutDao.update(checkoutHash, CheckoutStatus.FAILED.name(), charge.getFailureMessage())) {
-                      companyId = checkout.getCompanyId();
+                      accountId = checkout.getAccountId();
                     } else {
                       log.error("Failed to update checkout! Hash: {}", checkoutHash);
                     }
@@ -541,34 +511,34 @@ class StripeService {
                   log.error("Failed to get checkout! Hash is null.");
                 }
               } else { //or an existing subscriber
-                if (companyId == null) {
-                  CompanyDao companyDao = handle.attach(CompanyDao.class);
-                  Company company = companyDao.findBySubsCustomerId(invoice.getCustomer());
-                  if (company != null) {
-                    companyId = company.getId();
+                if (accountId == null) {
+                  AccountDao accountDao = handle.attach(AccountDao.class);
+                  Account account = accountDao.findByCustId(invoice.getCustomer());
+                  if (account != null) {
+                    accountId = account.getId();
                   } else {
-                    log.error("invoice.payment_failed: failed to find company by SubsCustomerId: {}", invoice.getCustomer());
+                    log.error("invoice.payment_failed: failed to find account by CustId: {}", invoice.getCustomer());
                   }
                 }
               }
             }
             
           } catch (Exception e) {
-            companyId = null;
+            accountId = null;
             log.error("Failed to handle invoice.payment_failed event", e);
           }
           
-          //companyId must not be null!
-          if (companyId != null) {
-            CompanyTrans trans = new CompanyTrans();
+          //accountId must not be null!
+          if (accountId != null) {
+            AccountTrans trans = new AccountTrans();
             trans.setEventId(event.getId());
             trans.setEvent(SubsEvent.PAYMENT_FAILED);
             trans.setSuccessful(Boolean.FALSE);
             trans.setReason(invoice.getBillingReason());
             trans.setFileUrl(invoice.getHostedInvoiceUrl());
-            res = addTransaction(companyId, invoice.getCustomer(), null, trans);
+            res = addTransaction(accountId, invoice.getCustomer(), null, trans);
           } else {
-            log.error("Failed to set companyId!");
+            log.error("Failed to set accountId!");
             res = Responses.ServerProblem.CHECKOUT_PROBLEM;
           }
           break;
@@ -588,59 +558,60 @@ class StripeService {
     return res;
   }
 
-  Response addTransaction(Long company_id, String subsCustomerId, CustomerDTO dto, CompanyTrans trans) {
+  Response addTransaction(Long account_id, String custId, CustomerDTO dto, AccountTrans trans) {
     Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
       handle.inTransaction(transactional -> {
-        CompanyDao companyDao = transactional.attach(CompanyDao.class);
+        AccountDao accountDao = transactional.attach(AccountDao.class);
         SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
-        CompanyTrans oldTrans = subscriptionDao.findByEventId(trans.getEventId());
+        AccountTrans oldTrans = subscriptionDao.findByEventId(trans.getEventId());
         if (oldTrans == null) {
 
-          Long companyId = company_id;
-          if (companyId == null && trans != null && trans.getCompanyId() != null) companyId = trans.getCompanyId();
+          Long accountId = account_id;
+          if (accountId == null && trans != null && trans.getAccountId() != null) accountId = trans.getAccountId();
 
-          Company company = null;
-          if (companyId != null) {
-            company = companyDao.findById(companyId);
-          } else if (StringUtils.isNotBlank(subsCustomerId)) {
-            company = companyDao.findBySubsCustomerId(subsCustomerId);
+          Account account = null;
+          if (accountId != null) {
+            account = accountDao.findById(accountId);
+          } else if (StringUtils.isNotBlank(custId)) {
+            account = accountDao.findByCustId(custId);
           }
     
-          if (company != null) {
+          if (account != null) {
 
-            if (companyId == null) companyId = company.getId();
-            if (trans.getCompanyId() == null) trans.setCompanyId(companyId);
+            if (accountId == null) accountId = account.getId();
+            if (trans.getAccountId() == null) trans.setAccountId(accountId);
       
             switch (trans.getEvent()) {
       
               case SUBSCRIPTION_STARTED: {
-                if (company.getStatus().isOKForSubscription()) {
+                if (account.getStatus().isOKForSubscription()) {
 
-                  if (companyDao.startSubscription(dto, CompanyStatus.SUBSCRIBED.name(), companyId)) {
+                  Plan plan = Plans.findByName(dto.getPlanName());
+                  if (subscriptionDao.startSubscription(dto, AccountStatus.SUBSCRIBED.name(), plan.getProductLimit(), accountId)) {
                     boolean isOK = updateInvoiceInfo(dto);
                     if (isOK) {
 
-                      String companyName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : company.getName();
+                      String accountName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : account.getName();
 
                       Map<String, Object> dataMap = new HashMap<>(5);
                       dataMap.put("user", dto.getEmail());
-                      dataMap.put("company", companyName);
+                      dataMap.put("account", accountName);
                       dataMap.put("plan", dto.getPlanName());
                       dataMap.put("invoiceUrl", trans.getFileUrl());
-                      dataMap.put("subsRenewalAt", DateUtils.formatReverseDate(dto.getRenewalDate()));
+                      dataMap.put("renewalAt", DateUtils.formatReverseDate(dto.getRenewalDate()));
                       String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_STARTED, dataMap);
                       emailSender.send(Props.APP_EMAIL_SENDER(), "Your subscription for inprice just started", dto.getEmail(), message);
 
                       res[0] = Responses.OK;
-                      log.info("A new subscription is started: Title: {}, Company Id: {}", dto.getTitle(), companyId);
+                      log.info("A new subscription is started: Title: {}, Account Id: {}", dto.getTitle(), accountId);
                     } else {
-                      log.warn("Stripe service error: Title: {}, Company Id: {}", dto.getTitle(), companyId);
+                      log.warn("Stripe service error: Title: {}, Account Id: {}", dto.getTitle(), accountId);
                     }
                   } else {
-                    log.warn("Failed to start a new subscription: Title: {}, Company Id: {}", dto.getTitle(), companyId);
+                    log.warn("Failed to start a new subscription: Title: {}, Account Id: {}", dto.getTitle(), accountId);
                   }
                 } else {
                   res[0] = Responses.Already.ACTIVE_SUBSCRIPTION;
@@ -649,45 +620,79 @@ class StripeService {
               }
       
               case SUBSCRIPTION_RENEWED: {
-                if (companyDao.renewSubscription(companyId, CompanyStatus.SUBSCRIBED.name(), dto.getRenewalDate())) {
+                if (subscriptionDao.renewSubscription(accountId, AccountStatus.SUBSCRIBED.name(), dto.getRenewalDate())) {
 
-                  String companyName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : company.getName();
+                  String accountName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : account.getName();
 
                   Map<String, Object> dataMap = new HashMap<>(5);
                   dataMap.put("user", dto.getEmail());
-                  dataMap.put("company", companyName);
+                  dataMap.put("account", accountName);
                   dataMap.put("plan", dto.getPlanName());
                   dataMap.put("invoiceUrl", trans.getFileUrl());
-                  dataMap.put("subsRenewalAt", DateUtils.formatReverseDate(dto.getRenewalDate()));
+                  dataMap.put("renewalAt", DateUtils.formatReverseDate(dto.getRenewalDate()));
                   String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_RENEWAL, dataMap);
                   emailSender.send(Props.APP_EMAIL_SENDER(), "Your subscription is extended", dto.getEmail(), message);
 
                   res[0] = Responses.OK;
-                  log.info("Subscription is renewed: Company Id: {}", companyId);
+                  log.info("Subscription is renewed: Account Id: {}", accountId);
                 } else {
-                  log.warn("Failed to renew a subscription: Company Id: {}", companyId);
+                  log.warn("Failed to renew a subscription: Account Id: {}", accountId);
                 }
                 break;
               }
       
               case SUBSCRIPTION_CANCELLED: {
-                if (company.getStatus().isOKForCancel()) {
-                  if (companyDao.cancelSubscription(companyId)) {
+                if (account.getStatus().isOKForCancel()) {
+                  String couponCode = null;
+                  Date now = new Date();
+                  long days = DateUtils.findDayDiff(now, account.getRenewalAt());
 
-                    String companyName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : company.getName();
+                  boolean isOK = false;
 
-                    Map<String, Object> dataMap = new HashMap<>(5);
-                    dataMap.put("user", dto.getEmail());
-                    dataMap.put("company", companyName);
-                    String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_CANCELLED, dataMap);
-                    emailSender.send(Props.APP_EMAIL_SENDER(), "inprice subscription is cancelled", dto.getEmail(), message);
-  
-                    res[0] = Responses.OK;
-                    log.info("Subscription is cancelled: Company: {}, Pre.Status: {}", companyId, company.getStatus());
-                  } else {
-                    log.warn("Failed to cancel a subscription: Company: {}, Status: {}", companyId, company.getStatus());
+                  if (days > 3) {
+                    CouponDao couponDao = handle.attach(CouponDao.class);
+                    couponCode = CouponManager.generate();
+                    isOK = couponDao.create(
+                      couponCode,
+                      account.getPlanName(),
+                      days,
+                      "For "+days+" days remaining cancelation"
+                    );
+                    if (!isOK) couponCode = null;
                   }
 
+                  isOK = subscriptionDao.terminate(accountId, AccountStatus.CANCELLED.name());
+
+                  if (isOK) {
+                    String accountName = StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName();
+
+                    Map<String, Object> mailMap = new HashMap<>(5);
+                    mailMap.put("account", accountName);
+                    mailMap.put("user", CurrentUser.getEmail());
+                    if (couponCode != null) {
+                      mailMap.put("couponCode", couponCode);
+                      mailMap.put("days", days);
+                      mailMap.put("planName", account.getPlanName());
+                    }
+                    String message = 
+                      templateRenderer.render(
+                        (
+                          days < 4
+                          ? EmailTemplate.SUBSCRIPTION_CANCELLED
+                          : EmailTemplate.SUBSCRIPTION_CANCELLED_COUPONED
+                        ), mailMap
+                    );
+                    emailSender.send(
+                      Props.APP_EMAIL_SENDER(), 
+                      "Notification about your cancelled plan.", CurrentUser.getEmail(), 
+                      message
+                    );
+
+                    res[0] = Responses.OK;
+                    log.info("Subscription cancelled: Account: {}, Pre.Status: {}", accountId, account.getStatus());
+                  } else {
+                    log.warn("Failed to cancel subscription: Account: {}, Status: {}", accountId, account.getStatus());
+                  }
                 } else {
                   res[0] = Responses.Already.PASSIVE_SUBSCRIPTION;
                 }
@@ -697,11 +702,11 @@ class StripeService {
               case PAYMENT_FAILED: {
                 EmailTemplate template = null;
 
-                String companyName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : company.getName();
+                String accountName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : account.getName();
 
                 Map<String, Object> dataMap = new HashMap<>(4);
                 dataMap.put("user", dto.getEmail());
-                dataMap.put("company", companyName);
+                dataMap.put("account", accountName);
                 if (dto.getRenewalDate() != null) {
                   long days = 3 + DateUtils.findDayDiff(new Date(), dto.getRenewalDate());
                   if (days > 0) {
@@ -719,30 +724,95 @@ class StripeService {
                 emailSender.send(Props.APP_EMAIL_SENDER(), "Your payment failed", dto.getEmail(), message);
 
                 res[0] = Responses.OK; // must be set true so that the transactional can reflect on database
-                log.warn("Payment failed! Company Id: {}", companyId);
+                log.warn("Payment failed! Account Id: {}", accountId);
+                break;
+              }
+      
+              case SUBSCRIPTION_CHANGED: {
+                Plan newPlan = Plans.findByName(dto.getPlanName());
+                boolean isOK = subscriptionDao.changePlan(accountId, newPlan.getName(), newPlan.getProductLimit());
+                if (isOK) {
+
+                  //if it is a downgrade an there are more than three days to renewal date
+                  //user is given a coupon to compansate those days
+                  String couponCode = null;
+                  long days = 0;
+                  Plan oldPlan = Plans.findByName(account.getPlanName());
+                  if (newPlan.getId().intValue() < oldPlan.getId().intValue()) {
+                    days = DateUtils.findDayDiff(new Date(), account.getRenewalAt());
+                    if (days > 3) {
+                      couponCode = CouponManager.generate();
+                      CouponDao couponDao = handle.attach(CouponDao.class);
+                      couponDao.create(
+                        couponCode,
+                        account.getPlanName(),
+                        days,
+                        "For "+days+" days remaining after downgrade operation"
+                      );
+                    }
+                  }
+
+                  String accountName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : account.getName();
+
+                  Map<String, Object> dataMap = new HashMap<>(7);
+                  dataMap.put("user", dto.getEmail());
+                  dataMap.put("account", accountName);
+                  dataMap.put("fromPlan", account.getPlanName());
+                  dataMap.put("toPlan", newPlan.getName());
+                  dataMap.put("invoiceUrl", trans.getFileUrl());
+                  dataMap.put("days", days);
+                  dataMap.put("couponCode", couponCode);
+                  String message = templateRenderer.render(
+                    (
+                      trans.getSuccessful() 
+                      ? (couponCode != null ? EmailTemplate.SUBSCRIPTION_CHANGE_SUCCESSFUL_COUPONED : EmailTemplate.SUBSCRIPTION_CHANGE_SUCCESSFUL)
+                      : EmailTemplate.SUBSCRIPTION_CHANGE_FAILED
+                    ), dataMap
+                  );
+                  emailSender.send(Props.APP_EMAIL_SENDER(), "Your account plan has changed to " + newPlan.getName(), dto.getEmail(), message);
+                  
+                  res[0] = Responses.OK;
+                  log.info("Subscription is changed to {}. Account: {}", newPlan.getName(), accountId);
+
+                } else {
+                  log.error("Failed to change plan! Account: {}, Plan: {}", account.getId(), newPlan.getName());
+                }
+
                 break;
               }
 
               default:
-                log.warn("Unexpected event! Company Id: {}, Event: {}", companyId, trans.getEvent().name());
+                log.warn("Unexpected event! Account Id: {}, Event: {}", accountId, trans.getEvent().name());
                 break;
       
             }
 
             if (res[0].isOK()) {
               boolean isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+
               if (isOK) {
-                if (trans.getEvent().equals(SubsEvent.SUBSCRIPTION_STARTED)) {
-                  isOK = 
-                    companyDao.insertStatusHistory(
-                      company.getId(), 
-                      CompanyStatus.SUBSCRIBED.name(),
-                      dto.getPlanName(),
-                      dto.getSubsId(),
-                      dto.getCustId()
-                    );
-                } else if (trans.getEvent().equals(SubsEvent.SUBSCRIPTION_CANCELLED)) {
-                  isOK = companyDao.insertStatusHistory(company.getId(), CompanyStatus.CANCELLED.name());
+                switch (trans.getEvent()) {
+
+                  case SUBSCRIPTION_STARTED:
+                  case SUBSCRIPTION_CHANGED: {
+                    isOK = 
+                      accountDao.insertStatusHistory(
+                        account.getId(), 
+                        AccountStatus.SUBSCRIBED.name(),
+                        dto.getPlanName(),
+                        dto.getSubsId(),
+                        dto.getCustId()
+                      );
+                    break;
+                  }
+
+                  case SUBSCRIPTION_CANCELLED: {
+                    isOK = accountDao.insertStatusHistory(account.getId(), AccountStatus.CANCELLED.name());
+                    break;
+                  }
+
+                  default:
+                    break;
                 }
               }
 
@@ -752,8 +822,8 @@ class StripeService {
             } 
 
           } else {
-            log.warn("Company not found! Event: {}, Id: {}", trans.getEvent(), trans.getEventId());
-            res[0] = Responses.NotFound.COMPANY;
+            log.warn("Account not found! Event: {}, Id: {}", trans.getEvent(), trans.getEventId());
+            res[0] = Responses.NotFound.ACCOUNT;
           }
     
         } else {
@@ -766,6 +836,39 @@ class StripeService {
     }
 
     return res[0];
+  }
+
+  private CustomerDTO generateCustDTO(Invoice invoice) {
+    CustomerDTO dto = new CustomerDTO();
+    dto.setEmail(invoice.getCustomerEmail());
+
+    Address address = null;
+    if (StringUtils.isNotBlank(invoice.getCharge())) {
+      try {
+        Charge charge = Charge.retrieve(invoice.getCharge());
+        address = charge.getBillingDetails().getAddress();
+        dto.setTitle(charge.getBillingDetails().getName());
+      } catch (StripeException e) {
+        log.warn("Problem with getting charge from the invoce: " + invoice.getId(), e);
+      }
+    }
+
+    if (address == null) {
+      address = invoice.getCustomerAddress();
+      dto.setTitle(invoice.getCustomerName());
+      log.warn("Invoce: {} is free of charge!", invoice.getId());
+    }
+
+    dto.setAddress1(address.getLine1());
+    dto.setAddress2(address.getLine2());
+    dto.setPostcode(address.getPostalCode());
+    dto.setCity(address.getCity());
+    dto.setState(address.getState());
+    dto.setCountry(address.getCountry());
+    dto.setCustId(invoice.getCustomer());
+    dto.setSubsId(invoice.getSubscription());
+
+    return dto;
   }
 
   private boolean updateInvoiceInfo(CustomerDTO dto) {

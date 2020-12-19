@@ -1,4 +1,4 @@
-package io.inprice.api.app.company.dto;
+package io.inprice.api.app.account.dto;
 
 import java.io.Serializable;
 
@@ -12,7 +12,7 @@ public class RegisterDTO implements Serializable {
   private static final long serialVersionUID = 7416774892611386665L;
 
   private String email;
-  private String companyName;
+  private String accountName;
   private String password;
   private String repeatPassword;
 

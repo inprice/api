@@ -19,9 +19,9 @@ import io.inprice.common.models.ImportDetail;
 
 public interface ImportDao {
 
-  @SqlUpdate("insert into import_ (type, is_file, company_id) values (:type, :isFile, :companyId)")
+  @SqlUpdate("insert into import_ (type, is_file, account_id) values (:type, :isFile, :accountId)")
   @GetGeneratedKeys
-  long insert(@Bind("type") String type, @Bind("isFile") Boolean isFile, @Bind("companyId") Long companyId);
+  long insert(@Bind("type") String type, @Bind("isFile") Boolean isFile, @Bind("accountId") Long accountId);
 
   @SqlUpdate("delete from import_ where id=:id")
   boolean delete(@Bind("id") Long id);
@@ -32,23 +32,23 @@ public interface ImportDao {
   @SqlQuery(
     "select "+IMPORT_FIELDS+", "+IMPORT_DETAIL_FIELDS+" from import_ as i " +
     "left join import_detail as ir on ir.import_id = i.id " +
-    "where i.id=:id and i.company_id=:companyId"
+    "where i.id=:id and i.account_id=:accountId"
   )
   @RegisterBeanMapper(value = Import.class, prefix = "i")
   @RegisterBeanMapper(value = ImportDetail.class, prefix = "ir")
   @UseRowReducer(ImportRowReducer.class)
-  Import findById(@Bind("id") Long id, @Bind("companyId") Long companyId);
+  Import findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
-  @SqlQuery("select * from import_ where company_id=:companyId order by id desc")
+  @SqlQuery("select * from import_ where account_id=:accountId order by id desc")
   @UseRowMapper(ImportMapper.class)
-  List<Import> findListByCompanyId(@Bind("companyId") Long companyId);
+  List<Import> findListByAccountId(@Bind("accountId") Long accountId);
 
-  @SqlQuery("select * from import_detail where import_id=:importId and company_id=:companyId")
+  @SqlQuery("select * from import_detail where import_id=:importId and account_id=:accountId")
   @UseRowMapper(ImportDetailMapper.class)
-  List<ImportDetail> findImportRowsByImportId(@Bind("importId") Long importId, @Bind("companyId") Long companyId);
+  List<ImportDetail> findImportRowsByImportId(@Bind("importId") Long importId, @Bind("accountId") Long accountId);
 
-  @SqlUpdate("insert into import_detail (data, eligible, imported, problem, import_id, company_id) "+
-    "values (:ir.data, :ir.eligible, :ir.imported, :ir.problem, :ir.importId, :ir.companyId)")
+  @SqlUpdate("insert into import_detail (data, eligible, imported, problem, import_id, account_id) "+
+    "values (:ir.data, :ir.eligible, :ir.imported, :ir.problem, :ir.importId, :ir.accountId)")
   @GetGeneratedKeys
   long insertDetail(@BindBean("ir") ImportDetail ir);
 

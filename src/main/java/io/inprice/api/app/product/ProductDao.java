@@ -27,43 +27,43 @@ public interface ProductDao {
   @SqlQuery(
     "select "+PRODUCT_FIELDS+", "+TAG_FIELDS+" from product as p " +
     "left join product_tag as pt on pt.product_id = p.id " +
-    "where p.id=:id and p.company_id=:companyId"
+    "where p.id=:id and p.account_id=:accountId"
   )
   @RegisterBeanMapper(value = Product.class, prefix = "p")
   @RegisterBeanMapper(value = ProductTag.class, prefix = "pt")
   @UseRowReducer(ProductReducer.class)
-  Product findById(@Bind("id") Long id, @Bind("companyId") Long companyId);
+  Product findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
-  @SqlQuery("select * from product where code=:code and company_id=:companyId")
+  @SqlQuery("select * from product where code=:code and account_id=:accountId")
   @UseRowMapper(ProductMapper.class)
-  Product findByCode(@Bind("code") String code, @Bind("companyId") Long companyId);
+  Product findByCode(@Bind("code") String code, @Bind("accountId") Long accountId);
 
   @SqlQuery(
     "select id, code, name from product " +
-    "where company_id=:companyId and (code like '%' || :term || '%' or name like '%' || :term || '%') order by name limit <limit>"
+    "where account_id=:accountId and (code like '%' || :term || '%' or name like '%' || :term || '%') order by name limit <limit>"
   )
   @UseRowMapper(SimpleSearchMapper.class)
-  List<SimpleSearch> searchSimpleByTermAndCompanyId(@Bind("term") String term, @Bind("companyId") Long companyId, @Define("limit") int limit);
+  List<SimpleSearch> searchSimpleByTermAndAccountId(@Bind("term") String term, @Bind("accountId") Long accountId, @Define("limit") int limit);
 
-  @SqlUpdate("insert into product (code, name, price, company_id) values (:code, :name, :price, :companyId)")
+  @SqlUpdate("insert into product (code, name, price, account_id) values (:code, :name, :price, :accountId)")
   @GetGeneratedKeys()
-  long insert(@Bind("code") String code, @Bind("name") String name, @Bind("price") BigDecimal price, @Bind("companyId") Long companyId);
+  long insert(@Bind("code") String code, @Bind("name") String name, @Bind("price") BigDecimal price, @Bind("accountId") Long accountId);
 
   @SqlUpdate(
     "update product set code=:code, name=:name, price=:price " +
-    "where id=:id and company_id=:companyId"
+    "where id=:id and account_id=:accountId"
   )
-  boolean update(@Bind("id") Long id, @Bind("companyId") Long companyId,
+  boolean update(@Bind("id") Long id, @Bind("accountId") Long accountId,
     @Bind("code") String code, @Bind("name") String name, @Bind("price") BigDecimal price);
 
   @SqlQuery(
     "select position, count(1) as counter from product " +
-    "where company_id=:companyId " +
+    "where account_id=:accountId " +
     "group by position "
   )
   @KeyColumn("position")
   @ValueColumn("counter")
-  Map<Integer, Integer> findPositionDists(@Bind("companyId") Long companyId);
+  Map<Integer, Integer> findPositionDists(@Bind("accountId") Long accountId);
 
   //look at ProductReducer class
   //these are necessary mappings since we need to establish one-to-one and one-to-many relations between tables
@@ -88,12 +88,12 @@ public interface ProductDao {
     "p.suggested_price as p_suggested_price, " +
     "p.updated_at as p_updated_at, " +
     "p.created_at as p_created_at, " +
-    "p.company_id as p_company_id ";
+    "p.account_id as p_account_id ";
     
   final String TAG_FIELDS = 
     "pt.id as pt_id, " +
     "pt.name as pt_name, " +
     "pt.product_id as pt_product_id, " +
-    "pt.company_id as pt_company_id ";
+    "pt.account_id as pt_account_id ";
 
 }

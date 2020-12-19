@@ -3,7 +3,7 @@ package io.inprice.api.dto;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
-import io.inprice.common.meta.CompanyStatus;
+import io.inprice.common.meta.AccountStatus;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -27,7 +27,7 @@ public class CustomerDTO implements Serializable {
   private String subsId;
   private String custId;
   private String planName;
-  private CompanyStatus companyStatus;
+  private AccountStatus accountStatus;
   private Timestamp renewalDate;
 
 }

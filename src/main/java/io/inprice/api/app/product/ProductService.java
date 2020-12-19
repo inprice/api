@@ -43,7 +43,7 @@ public class ProductService {
     try (Handle handle = Database.getHandle()) {
       ProductDao productDao = handle.attach(ProductDao.class);
 
-      Product product = productDao.findById(id, CurrentUser.getCompanyId());
+      Product product = productDao.findById(id, CurrentUser.getAccountId());
       if (product != null) {
         return new Response(product);
       }
@@ -57,14 +57,14 @@ public class ProductService {
     try (Handle handle = Database.getHandle()) {
       ProductDao productDao = handle.attach(ProductDao.class);
 
-      Product product = productDao.findById(id, CurrentUser.getCompanyId());
+      Product product = productDao.findById(id, CurrentUser.getAccountId());
       if (product != null) {
         dataMap.put("product", product);
 
         LinkDao linkDao = handle.attach(LinkDao.class);
 
         //finding links
-        List<Link> linkList = linkDao.findListByProductIdAndCompanyId(id, CurrentUser.getCompanyId());
+        List<Link> linkList = linkDao.findListByProductIdAndAccountId(id, CurrentUser.getAccountId());
         if (linkList != null && linkList.size() > 0) {
           int i = 0;
           Map<Long, Integer> refListToLinks = new HashMap<>(linkList.size());
@@ -98,9 +98,9 @@ public class ProductService {
       ProductDao productDao = handle.attach(ProductDao.class);
 
       List<SimpleSearch> productList = 
-        productDao.searchSimpleByTermAndCompanyId(
+        productDao.searchSimpleByTermAndAccountId(
           SqlHelper.clear(term), 
-          CurrentUser.getCompanyId(), 
+          CurrentUser.getAccountId(), 
           Consts.ROW_LIMIT_FOR_LISTS
         );
 
@@ -116,8 +116,8 @@ public class ProductService {
     //---------------------------------------------------
     StringBuilder criteria = new StringBuilder();
 
-    criteria.append("where p.company_id = ");
-    criteria.append(CurrentUser.getCompanyId());
+    criteria.append("where p.account_id = ");
+    criteria.append(CurrentUser.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
       criteria.append(" and p.code like '%");
@@ -191,13 +191,13 @@ public class ProductService {
           handle.inTransaction(transactional -> {
             ProductDao productDao = transactional.attach(ProductDao.class);
 
-            Product product = productDao.findByCode(dto.getCode(), CurrentUser.getCompanyId());
+            Product product = productDao.findByCode(dto.getCode(), CurrentUser.getAccountId());
             if (product != null) {
               if (product.getId().equals(dto.getId())) {
                 boolean isUpdated = 
                   productDao.update(
                     dto.getId(),
-                    dto.getCompanyId(),
+                    dto.getAccountId(),
                     dto.getCode(),
                     dto.getName(),
                     dto.getPrice()
@@ -212,9 +212,9 @@ public class ProductService {
 
                   if (dto.getTagsChanged()) {
                     TagDao tagDao = transactional.attach(TagDao.class);
-                    tagDao.deleteTags(dto.getId(), dto.getCompanyId());
+                    tagDao.deleteTags(dto.getId(), dto.getAccountId());
                     if (dto.getTags() != null && dto.getTags().size() > 0) {
-                      tagDao.insertTags(dto.getId(), dto.getCompanyId(), dto.getTags());
+                      tagDao.insertTags(dto.getId(), dto.getAccountId(), dto.getTags());
                     }
                   }
                   res[0] = Responses.OK;
@@ -243,7 +243,7 @@ public class ProductService {
   Response deleteById(Long id) {
     if (id != null && id > 0) {
       final boolean[] isOK = { false };
-      final String where = String.format("where product_id=%d and company_id=%d", id, CurrentUser.getCompanyId());
+      final String where = String.format("where product_id=%d and account_id=%d", id, CurrentUser.getAccountId());
 
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transactional -> {
@@ -253,7 +253,7 @@ public class ProductService {
           batch.add("delete from link_spec " + where);
           batch.add("delete from link " + where);
           batch.add("delete from product " + where.replace("product_", "")); //this clause is important since determines the success!
-          batch.add("update company set product_count=product_count-1 where product_count>0 and id=" + CurrentUser.getCompanyId());
+          batch.add("update account set product_count=product_count-1 where product_count>0 and id=" + CurrentUser.getAccountId());
           int[] result = batch.execute();
           isOK[0] = result[5] > 0;
           return isOK[0];
