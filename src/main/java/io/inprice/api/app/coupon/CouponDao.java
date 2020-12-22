@@ -1,4 +1,4 @@
-package io.inprice.api.app.subscription;
+package io.inprice.api.app.coupon;
 
 import java.util.List;
 
@@ -10,7 +10,7 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import io.inprice.common.mappers.CouponMapper;
 import io.inprice.common.models.Coupon;
 
-interface CouponDao {
+public interface CouponDao {
 
   @SqlQuery("select * from coupon where code=:code")
   @UseRowMapper(CouponMapper.class)

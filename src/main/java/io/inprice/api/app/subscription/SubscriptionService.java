@@ -31,7 +31,6 @@ import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.AccountTrans;
-import io.inprice.common.models.Coupon;
 import io.inprice.common.models.Plan;
 
 class SubscriptionService {
@@ -51,14 +50,10 @@ class SubscriptionService {
     Map<String, Object> data = new HashMap<>(3);
 
     try (Handle handle = Database.getHandle()) {
-      CouponDao couponDao = handle.attach(CouponDao.class);
       SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
       List<AccountTrans> allTrans = subscriptionDao.findListByAccountId(CurrentUser.getAccountId());
-      List<Coupon> coupons = couponDao.findListByIssuedAccountId(CurrentUser.getAccountId());
-
       data.put("all", allTrans);
-      data.put("coupons", coupons);
 
       if (allTrans != null && allTrans.size() > 0) {
         List<AccountTrans> invoiceTrans = new ArrayList<>();
@@ -86,7 +81,7 @@ class SubscriptionService {
 
     Account[] account = { null };
 
-    //if a subscriber, stripeService will create its own transaction. 
+    //stripeService will create its own transaction. 
     //so, we must not extend/cascade any db connection, thus, a new one is handled here in a separated block
     try (Handle handle = Database.getHandle()) {
       AccountDao accountDao = handle.attach(AccountDao.class);
@@ -229,55 +224,68 @@ class SubscriptionService {
     String problem = validateInvoiceInfo(dto);
     if (problem == null) {
 
-      dto.setEmail(CurrentUser.getEmail());
-
-      CustomerUpdateParams.Address address =
-      CustomerUpdateParams.Address.builder()
-        .setLine1(dto.getAddress1())
-        .setLine2(dto.getAddress2())
-        .setPostalCode(dto.getPostcode())
-        .setCity(dto.getCity())
-        .setState(dto.getState())
-        .setCountry(dto.getCountry())
-      .build();
-
-      CustomerUpdateParams customerParams =
-        CustomerUpdateParams.builder()
-          .setName(dto.getTitle())
-          .setEmail(dto.getEmail())
-          .setAddress(address)
-        .build();
-
-      Customer customer = null;
-
-      try {
-        customer = Customer.retrieve(dto.getCustId()).update(customerParams);
-        if (customer != null) {
-          res = Responses.OK;
-          log.info(CurrentUser.getAccountName() + " customer info is updated, Id: " + customer.getId());
-          log.info("Customer info is updated. Account: {}, Subs Customer Id: {}, Title: {}, Email: {}", 
-            CurrentUser.getAccountName(), customer.getId(), dto.getTitle(), dto.getEmail());
-        } else {
-          log.error("Failed to update a new customer in Stripe.");
-        }
-
-      } catch (StripeException e) {
-        log.error("Failed to update a new customer in Stripe", e);
-        log.error("Account: {}, Title: {}, Email: {}", CurrentUser.getAccountName(), dto.getTitle(), dto.getEmail());
+      Account account = null;
+      try (Handle handle = Database.getHandle()) {
+        AccountDao dao = handle.attach(AccountDao.class);
+        account = dao.findById(CurrentUser.getAccountId());
       }
 
-      if (res.isOK() && customer != null) {
-        dto.setCustId(customer.getId());
+      if (account != null) {
+        if (StringUtils.isNotBlank(account.getCustId())) {
 
-        try (Handle handle = Database.getHandle()) {
-          AccountDao dao = handle.attach(AccountDao.class);
-          boolean isOK = dao.update(dto, CurrentUser.getAccountId());
-          if (isOK) {
-            return Responses.OK;
-          } else {
-            return Responses.NotFound.ACCOUNT;
+          CustomerUpdateParams.Address address =
+            CustomerUpdateParams.Address.builder()
+              .setLine1(dto.getAddress1())
+              .setLine2(dto.getAddress2())
+              .setPostalCode(dto.getPostcode())
+              .setCity(dto.getCity())
+              .setState(dto.getState())
+              .setCountry(dto.getCountry())
+            .build();
+
+          CustomerUpdateParams customerParams =
+            CustomerUpdateParams.builder()
+              .setName(dto.getTitle())
+              .setEmail(CurrentUser.getEmail())
+              .setAddress(address)
+            .build();
+
+          Customer customer = null;
+
+          try {
+            customer = Customer.retrieve(account.getCustId()).update(customerParams);
+            if (customer != null) {
+              res = Responses.OK;
+              log.info(CurrentUser.getAccountName() + " customer info is updated, Id: " + customer.getId());
+              log.info("Customer info is updated. Account: {}, Subs Customer Id: {}, Title: {}, Email: {}", 
+                CurrentUser.getAccountName(), customer.getId(), dto.getTitle(), CurrentUser.getEmail());
+            } else {
+              log.error("Failed to update a new customer in Stripe.");
+            }
+
+          } catch (StripeException e) {
+            log.error("Failed to update a new customer in Stripe", e);
+            log.error("Account: {}, Title: {}, Email: {}", CurrentUser.getAccountName(), dto.getTitle(), CurrentUser.getEmail());
           }
+
+          if (res.isOK() && customer != null) {
+            dto.setCustId(customer.getId());
+
+            try (Handle handle = Database.getHandle()) {
+              AccountDao dao = handle.attach(AccountDao.class);
+              boolean isOK = dao.update(dto, CurrentUser.getAccountId());
+              if (isOK) {
+                res = Responses.OK;
+              } else {
+                res = Responses.NotFound.ACCOUNT;
+              }
+            }
+          }
+        } else {
+          res = Responses.Already.PASSIVE_SUBSCRIPTION;
         }
+      } else {
+        res = Responses.NotFound.ACCOUNT;
       }
 
     } else {
@@ -292,12 +300,6 @@ class SubscriptionService {
 
     if (dto == null) {
       problem = "Invalid customer data!";
-    }
-
-    if (problem == null) {
-      if (StringUtils.isBlank(dto.getCustId())) {
-        problem = "Customer id cannot be null!";
-      }
     }
 
     if (problem == null) {

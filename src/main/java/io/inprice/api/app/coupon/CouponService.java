@@ -1,4 +1,4 @@
-package io.inprice.api.app.subscription;
+package io.inprice.api.app.coupon;
 
 import java.util.List;
 
@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
@@ -21,9 +22,36 @@ import io.inprice.common.models.Coupon;
 import io.inprice.common.models.Plan;
 import io.inprice.common.utils.CouponManager;
 
-class CouponService {
+public class CouponService {
 
   private static final Logger log = LoggerFactory.getLogger(CouponService.class);
+
+  public String createCoupon(Handle handle, long accountId, SubsEvent subsEvent, String planName, long days, String description) {
+    String couponCode = CouponManager.generate();
+
+    CouponDao couponDao = handle.attach(CouponDao.class);
+    boolean isOK = couponDao.create(
+      couponCode,
+      planName,
+      days,
+      description
+    );
+
+    if (isOK) {
+      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+      AccountTrans trans = new AccountTrans();
+      trans.setAccountId(accountId);
+      trans.setEvent(subsEvent);
+      trans.setSuccessful(Boolean.TRUE);
+      trans.setReason(description);
+      trans.setDescription("Issued coupon code: " + couponCode);
+      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+    } else {
+      couponCode = null;
+    }
+
+    return couponCode;
+  }
 
   Response getCoupons() {
     try (Handle handle = Database.getHandle()) {

@@ -57,7 +57,7 @@ public interface SubscriptionDao {
 
   @SqlUpdate(
     "update account " +
-    "set subs_id=null, plan_name=null, renewal_at=null, status=:status, last_status_update=now() "+
+    "set cust_id=null, subs_id=null, plan_name=null, renewal_at=null, status=:status, last_status_update=now() "+
     "where id=:id"
   )
   boolean terminate(@Bind("id") Long id, @Bind("status") String status);

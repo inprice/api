@@ -14,7 +14,6 @@ import io.javalin.Javalin;
 public class SubscriptionController implements Controller {
 
   private static final SubscriptionService service = Beans.getSingleton(SubscriptionService.class);
-  private static final CouponService couponService = Beans.getSingleton(CouponService.class);
 
   @Override
   public void addRoutes(Javalin app) {
@@ -33,16 +32,6 @@ public class SubscriptionController implements Controller {
     // starts free use
     app.post(Consts.Paths.Subscription.START_FREE_USE, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.startFreeUse()));
-    }, AccessRoles.ADMIN_ONLY());
-
-    // returns coupons used by current account
-    app.get(Consts.Paths.Coupon.BASE, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, couponService.getCoupons()));
-    }, AccessRoles.ADMIN_ONLY());
-
-    // registers the given coupon to current account
-    app.put(Consts.Paths.Coupon.APPLY + "/:code", (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, couponService.applyCoupon(ctx.pathParam("code"))));
     }, AccessRoles.ADMIN_ONLY());
 
     // returns current account's info

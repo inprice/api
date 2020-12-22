@@ -59,44 +59,44 @@ public class SubscribedAccountStopper implements Runnable {
           int affected = 0;
 
           if (expiredAccountList != null && expiredAccountList.size() > 0) {
-            for (AccountInfo cinfo: expiredAccountList) {
+            for (AccountInfo accinfo: expiredAccountList) {
 
               //we need to cancel stripe first
               try {
-                Subscription subscription = Subscription.retrieve(cinfo.getCustId());
+                Subscription subscription = Subscription.retrieve(accinfo.getCustId());
                 Subscription subsResult = subscription.cancel();
                 if (subsResult != null && subsResult.getStatus().equals("canceled")) {
-                  log.info("Stopping subscription: {} stopped!", cinfo.getName());
+                  log.info("Stopping subscription: {} stopped!", accinfo.getName());
                 } else if (subsResult != null) {
                   log.warn("Stopping subscription: Unexpected subs status: {}", subsResult.getStatus());
                 } else {
                   log.error("Stopping subscription: subsResult is null!");
                 }
               } catch (Exception e) {
-                log.error("Stopping subscription: failed " + cinfo.getName(), e);
+                log.error("Stopping subscription: failed " + accinfo.getName(), e);
               }
 
               SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
 
               //then account can be cancellable
-              boolean isOK = subscriptionDao.terminate(cinfo.getId(), AccountStatus.STOPPED.name());
+              boolean isOK = subscriptionDao.terminate(accinfo.getId(), AccountStatus.STOPPED.name());
 
               AccountTrans trans = new AccountTrans();
-              trans.setAccountId(cinfo.getId());
+              trans.setAccountId(accinfo.getId());
               trans.setEvent(SubsEvent.SUBSCRIPTION_STOPPED);
               trans.setSuccessful(Boolean.TRUE);
               trans.setDescription(("Stopped! Final payment failed."));
 
               isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
               if (isOK) {
-                isOK = accountDao.insertStatusHistory(cinfo.getId(), AccountStatus.STOPPED.name());
+                isOK = accountDao.insertStatusHistory(accinfo.getId(), AccountStatus.STOPPED.name());
               }
 
               if (isOK) {
                 Map<String, Object> dataMap = new HashMap<>(1);
-                dataMap.put("user", cinfo.getEmail());
+                dataMap.put("user", accinfo.getEmail());
                 String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_STOPPED, dataMap);
-                emailSender.send(Props.APP_EMAIL_SENDER(), "The last notification for your subscription to inprice.", cinfo.getEmail(), message);
+                emailSender.send(Props.APP_EMAIL_SENDER(), "The last notification for your subscription to inprice.", accinfo.getEmail(), message);
 
                 affected++;
               }
