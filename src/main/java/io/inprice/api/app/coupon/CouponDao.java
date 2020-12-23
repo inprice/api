@@ -16,18 +16,23 @@ public interface CouponDao {
   @UseRowMapper(CouponMapper.class)
   Coupon findByCode(@Bind("code") String code);
 
-  @SqlUpdate("update coupon set issued_account_id=:issuedAccountId, issued_at=now() where code=:code")
-  boolean applyFor(@Bind("code") String code, @Bind("issuedAccountId") Long issuedAccountId);
+  @SqlUpdate("update coupon set issued_id=:issuedId, issued_at=now() where code=:code")
+  boolean applyFor(@Bind("code") String code, @Bind("issuedId") Long issuedId);
 
   @SqlUpdate(
-    "insert into coupon (code, plan_name, days, description) " +
-    "values (:code, :planName, :days, :description)"
+    "insert into coupon (code, plan_name, days, description, issuer_id) " +
+    "values (:code, :planName, :days, :description, :issuerId)"
   )
   boolean create(@Bind("code") String code, @Bind("planName") String planName,
-    @Bind("days") Long days, @Bind("description") String description);
+    @Bind("days") Long days, @Bind("description") String description, @Bind("issuerId") Long issuerId);
 
-  @SqlQuery("select * from coupon where issued_account_id=:issuedAccountId order by issued_at desc")
+  @SqlQuery(
+    "select * from coupon " + 
+    "where (issued_id=:accountId) " + 
+    "   or (issuer_id=:accountId and issued_id is null) " +
+    "order by issued_at desc"
+  )
   @UseRowMapper(CouponMapper.class)
-  List<Coupon> findListByIssuedAccountId(@Bind("issuedAccountId") Long issuedAccountId);
+  List<Coupon> findListByAccountId(@Bind("accountId") Long accountId);
 
 }

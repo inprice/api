@@ -28,13 +28,13 @@ public class CouponService {
 
   public String createCoupon(Handle handle, long accountId, SubsEvent subsEvent, String planName, long days, String description) {
     String couponCode = CouponManager.generate();
-
     CouponDao couponDao = handle.attach(CouponDao.class);
     boolean isOK = couponDao.create(
       couponCode,
       planName,
       days,
-      description
+      description,
+      CurrentUser.getAccountId()
     );
 
     if (isOK) {
@@ -57,7 +57,7 @@ public class CouponService {
     try (Handle handle = Database.getHandle()) {
       CouponDao couponDao = handle.attach(CouponDao.class);
 
-      List<Coupon> coupons = couponDao.findListByIssuedAccountId(CurrentUser.getAccountId());
+      List<Coupon> coupons = couponDao.findListByAccountId(CurrentUser.getAccountId());
       if (coupons != null && coupons.size() > 0) {
         return new Response(coupons);
       }
@@ -78,7 +78,7 @@ public class CouponService {
           if (coupon != null) {
             if (coupon.getIssuedAt() == null) {
 
-              if (coupon.getIssuedAccountId() == null || coupon.getIssuedAccountId().equals(CurrentUser.getAccountId())) {
+              if (coupon.getIssuedId() == null || coupon.getIssuedId().equals(CurrentUser.getAccountId())) {
                 AccountDao accountDao = transactional.attach(AccountDao.class);
 
                 Account account = accountDao.findById(CurrentUser.getAccountId());
