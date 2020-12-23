@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.coupon.CouponService;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.email.EmailSender;
@@ -41,19 +42,20 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.meta.CheckoutStatus;
 import io.inprice.common.meta.AccountStatus;
+import io.inprice.common.meta.CheckoutStatus;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.models.Checkout;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.AccountTrans;
+import io.inprice.common.models.Checkout;
 import io.inprice.common.models.Plan;
-import io.inprice.common.utils.CouponManager;
 import io.inprice.common.utils.DateUtils;
 
 class StripeService {
 
   private static final Logger log = LoggerFactory.getLogger(StripeService.class);
+
+  private final CouponService couponService  = Beans.getSingleton(CouponService.class);
 
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
   private final TemplateRenderer templateRenderer = Beans.getSingleton(TemplateRenderer.class);
@@ -69,7 +71,6 @@ class StripeService {
     if (plan != null) {
 
       String checkoutHash = CodeGenerator.hash();
-      String custId = null;
 
       try (Handle handle = Database.getHandle()) {
         AccountDao accountDao = handle.attach(AccountDao.class);
@@ -104,9 +105,6 @@ class StripeService {
           if (message != null) return new Response(message);
         }
 
-        //finding Customer Id if exists previously
-        custId = account.getCustId();
-
         // only broader plan transitions allowed
         if (account.getProductCount().compareTo(plan.getProductLimit()) > 0) {
           return Responses.PermissionProblem.BROADER_PLAN_NEEDED;
@@ -114,8 +112,7 @@ class StripeService {
       }
 
       SessionCreateParams params = SessionCreateParams.builder()
-        .setCustomer(custId)
-        .setCustomerEmail(StringUtils.isBlank(custId) ? CurrentUser.getEmail() : null)
+        .setCustomerEmail(CurrentUser.getEmail())
         .setClientReferenceId(CurrentUser.getAccountId().toString())
         .addPaymentMethodType(SessionCreateParams.PaymentMethodType.CARD)
         .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
@@ -499,11 +496,7 @@ class StripeService {
                 if (StringUtils.isNotBlank(checkoutHash)) {
                   Checkout checkout = checkoutDao.findByHash(checkoutHash);
                   if (checkout != null) {
-                    if (checkoutDao.update(checkoutHash, CheckoutStatus.FAILED.name(), charge.getFailureMessage())) {
-                      accountId = checkout.getAccountId();
-                    } else {
-                      log.error("Failed to update checkout! Hash: {}", checkoutHash);
-                    }
+                    checkoutDao.update(checkoutHash, CheckoutStatus.FAILED.name(), charge.getFailureMessage());
                   } else {
                     log.error("Failed to complete the checkout! Hash: {}", checkoutHash);
                   }
@@ -538,7 +531,7 @@ class StripeService {
             trans.setFileUrl(invoice.getHostedInvoiceUrl());
             res = addTransaction(accountId, invoice.getCustomer(), null, trans);
           } else {
-            log.error("Failed to set accountId!");
+            log.error("User's credit card failed!");
             res = Responses.ServerProblem.CHECKOUT_PROBLEM;
           }
           break;
@@ -643,22 +636,22 @@ class StripeService {
       
               case SUBSCRIPTION_CANCELLED: {
                 if (account.getStatus().isOKForCancel()) {
-                  String couponCode = null;
                   Date now = new Date();
                   long days = DateUtils.findDayDiff(now, account.getRenewalAt());
-
+                  
                   boolean isOK = false;
+                  String couponCode = null;
 
                   if (days > 3) {
-                    CouponDao couponDao = handle.attach(CouponDao.class);
-                    couponCode = CouponManager.generate();
-                    isOK = couponDao.create(
-                      couponCode,
-                      account.getPlanName(),
-                      days,
-                      "For "+days+" days remaining cancelation"
-                    );
-                    if (!isOK) couponCode = null;
+                    couponCode = 
+                      couponService.createCoupon(
+                        transactional, 
+                        account.getId(), 
+                        trans.getEvent(), 
+                        account.getPlanName(), 
+                        days, 
+                        "For "+days+" days remaining cancelation"
+                      );
                   }
 
                   isOK = subscriptionDao.terminate(accountId, AccountStatus.CANCELLED.name());
@@ -738,17 +731,19 @@ class StripeService {
                   String couponCode = null;
                   long days = 0;
                   Plan oldPlan = Plans.findByName(account.getPlanName());
+
                   if (newPlan.getId().intValue() < oldPlan.getId().intValue()) {
                     days = DateUtils.findDayDiff(new Date(), account.getRenewalAt());
                     if (days > 3) {
-                      couponCode = CouponManager.generate();
-                      CouponDao couponDao = handle.attach(CouponDao.class);
-                      couponDao.create(
-                        couponCode,
-                        account.getPlanName(),
-                        days,
-                        "For "+days+" days remaining after downgrade operation"
-                      );
+                      couponCode = 
+                        couponService.createCoupon(
+                          transactional, 
+                          account.getId(), 
+                          trans.getEvent(), 
+                          oldPlan.getName(), 
+                          days, 
+                          "For "+days+" days remaining after downgrade operation"
+                        );
                     }
                   }
 

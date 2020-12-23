@@ -81,7 +81,7 @@ public class Props {
   }
 
   public static String TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS() {
-    return System.getenv().getOrDefault("TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS", "10m");
+    return System.getenv().getOrDefault("TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS", "5m");
   }
 
 }
