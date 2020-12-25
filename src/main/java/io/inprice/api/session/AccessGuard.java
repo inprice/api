@@ -62,7 +62,7 @@ public class AccessGuard implements AccessManager {
             }
           } else {
             isDone = true;
-            ctx.json(Commons.createResponse(ctx, Responses._401));
+            ctx.json(Commons.createResponse(ctx, Responses._403));
           }
         }
       }

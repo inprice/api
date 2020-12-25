@@ -37,12 +37,12 @@ public class SubscriptionController implements Controller {
     // returns current account's info
     app.get(Consts.Paths.Subscription.BASE, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getCurrentAccount()));
-    }, AccessRoles.ADMIN_ONLY());
+    }, AccessRoles.ANYONE());
 
     // returns all the transactions happened in payment provider
     app.get(Consts.Paths.Subscription.TRANSACTIONS, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getTransactions()));
-    }, AccessRoles.ADMIN_ONLY());
+    }, AccessRoles.ANYONE());
 
     // updates account's extra info used in invoices
     app.post(Consts.Paths.Subscription.SAVE_INFO, (ctx) -> {

@@ -16,15 +16,15 @@ public class CouponController implements Controller {
   @Override
   public void addRoutes(Javalin app) {
 
-    // returns coupons used by current account
+    // returns coupons managed by current account
     app.get(Consts.Paths.Coupon.BASE, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getCoupons()));
-    }, AccessRoles.EDITOR());
+    }, AccessRoles.ANYONE());
 
     // registers the given coupon to current account
     app.put(Consts.Paths.Coupon.APPLY + "/:code", (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.applyCoupon(ctx.pathParam("code"))));
-    }, AccessRoles.EDITOR());
+    }, AccessRoles.ADMIN_ONLY());
 
   }
 
