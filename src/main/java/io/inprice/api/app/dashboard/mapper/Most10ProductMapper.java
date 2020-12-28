@@ -17,6 +17,7 @@ public class Most10ProductMapper implements RowMapper<Most10Product> {
     m.setId(rs.getLong("id"));
     m.setName(rs.getString("name"));
     m.setPrice(rs.getBigDecimal("price"));
+    m.setLinkCount(rs.getInt("link_count"));
     m.setRanking(rs.getInt("ranking"));
     m.setRankingWith(rs.getInt("ranking_with"));
 
