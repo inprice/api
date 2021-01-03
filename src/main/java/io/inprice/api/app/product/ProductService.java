@@ -252,6 +252,7 @@ public class ProductService {
           batch.add("delete from link_history " + where);
           batch.add("delete from link_spec " + where);
           batch.add("delete from link " + where);
+          batch.add("delete from product_tag " + where);
           batch.add("delete from product " + where.replace("product_", "")); //this clause is important since determines the success!
           batch.add("update account set product_count=product_count-1 where product_count>0 and id=" + CurrentUser.getAccountId());
           int[] result = batch.execute();

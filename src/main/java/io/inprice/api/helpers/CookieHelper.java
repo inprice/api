@@ -15,9 +15,9 @@ public class CookieHelper {
   public static Cookie createAuthCookie(String token) {
     Cookie cookie = new Cookie(Consts.SESSION, token);
     cookie.setHttpOnly(true);
-    cookie.setSecure(true);
     if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
-      cookie.setDomain(".inprice.io");
+      //cookie.setDomain(".inprice.io");
+      cookie.setSecure(true);
       cookie.setMaxAge(Integer.MAX_VALUE);
     } else { // for dev and test purposes
       cookie.setMaxAge(60 * 60 * 24); // for one day

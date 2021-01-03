@@ -15,7 +15,7 @@ public class Most10Product implements Serializable {
   private Long id;
   private String name;
   private BigDecimal price;
-  private Integer links;
+  private Integer linkCount;
   private Integer ranking;
   private Integer rankingWith;
   private String lastUpdate;

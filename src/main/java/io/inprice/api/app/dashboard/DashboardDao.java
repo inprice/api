@@ -38,7 +38,7 @@ interface DashboardDao {
   List<MRU25Link> findMR25Link(@Bind("accountId") Long accountId);
 
   @SqlQuery(
-    "select id, name, price, updated_at, created_at, ranking, ranking_with from product " +
+    "select id, name, price, updated_at, created_at, link_count, ranking, ranking_with from product " +
     "where position=:position " +
     "  and account_id=:accountId " +
     "order by updated_at desc " +

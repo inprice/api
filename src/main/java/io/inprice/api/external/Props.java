@@ -29,7 +29,7 @@ public class Props {
   }
 
   public static int APP_DAYS_FOR_FREE_USE() {
-    return Integer.parseInt(System.getenv().getOrDefault("APP_DAYS_FOR_FREE_USE", "30"));
+    return Integer.parseInt(System.getenv().getOrDefault("APP_DAYS_FOR_FREE_USE", "15"));
   }
 
   public static Long TTL_ACCESS_TOKENS() {

@@ -1,6 +1,5 @@
 package io.inprice.api.app.subscription;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -149,7 +148,10 @@ class StripeService {
         CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
         boolean isOK = checkoutDao.insert(checkoutHash, session.getId(), CurrentUser.getAccountId(), plan.getName());
         if (isOK) {
-          return new Response(Collections.singletonMap("sessionId", session.getId()));
+          Map<String, Object> dataMap = new HashMap<>(2);
+          dataMap.put("hash", checkoutHash);
+          dataMap.put("sessionId", session.getId());
+          return new Response(dataMap);
         } else {
           log.error("Failed to insert checkout!");
           return Responses.ServerProblem.CHECKOUT_PROBLEM;
@@ -170,9 +172,7 @@ class StripeService {
         CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
         Checkout checkout = checkoutDao.findByHash(checkoutHash);
         if (checkout != null) {
-          if (checkoutDao.update(checkoutHash, CheckoutStatus.CANCELLED.name(), "Cancelled by user.")) {
-            return Responses.OK;
-          } else {
+          if (! checkoutDao.update(checkoutHash, CheckoutStatus.CANCELLED.name(), "Cancelled by user.")) {
             log.error("Failed to update checkout! Hash: {}", checkoutHash);
           }
         } else {
@@ -182,7 +182,7 @@ class StripeService {
         log.error("Failed to get checkout info! Hash is null.");
       }
     }
-    return new Response("Failed to find checkout!");
+    return Responses.OK;
   }
 
   private String retrieveCheckoutStatus(String checkoutHash, String sessionId) {

@@ -73,6 +73,7 @@ public interface ProductDao {
     "p.name as p_name, " +
     "p.price as p_price, " +
     "p.position as p_position, " +
+    "p.link_count as p_link_count, " +
     "p.ranking as p_ranking, " +
     "p.ranking_with as p_ranking_with, " +
     "p.min_platform as p_min_platform, " +
