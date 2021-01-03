@@ -29,6 +29,12 @@ public class LinkController implements Controller {
       ctx.json(Commons.createResponse(ctx, service.deleteById(id)));
     }, AccessRoles.EDITOR());
 
+    // change status to PAUSED | RESUMED
+    app.put(Consts.Paths.Link.TOGGLE + "/:id", (ctx) -> {
+      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+      ctx.json(Commons.createResponse(ctx, service.toggleStatus(id)));
+    }, AccessRoles.EDITOR());
+
     // search
     app.post(Consts.Paths.Link.SEARCH, (ctx) -> {
       LinkSearchDTO searchDto = ctx.bodyAsClass(LinkSearchDTO.class);
