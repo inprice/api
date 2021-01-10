@@ -13,15 +13,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.external.Props;
-import io.inprice.common.config.SysProps;
-import io.inprice.common.meta.AppEnv;
 
 public class EmailSender {
 
   private static final Logger log = LoggerFactory.getLogger(EmailSender.class);
 
   public void send(String from, String subject, String to, String content) {
-    if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+    //if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
       Email emailFrom = new Email(from);
       Email emailTo = new Email(to);
       Content emailContent = new Content("text/html", content);
@@ -39,10 +37,10 @@ public class EmailSender {
       } catch (IOException e) {
         log.error("Failed to send email, to: {}, body: {}", from, content, e);
       }
-    } else {
-      log.info("Email sent! From: {}, Subject: {}, To: {}", from, subject, to);
-      log.info(content);
-    }
+    //} else {
+    //  log.info("Email sent! From: {}, Subject: {}, To: {}", from, subject, to);
+    //  log.info(content);
+    //}
   }
 
 }

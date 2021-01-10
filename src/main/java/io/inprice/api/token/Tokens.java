@@ -13,7 +13,7 @@ public class Tokens {
 
   public static String add(TokenType tokenType, Serializable object) {
     String token = null;
-    if (TokenType.REGISTER_REQUEST.equals(tokenType)) {
+    if (TokenType.REGISTRATION_REQUEST.equals(tokenType)) {
       token = generateNumericToken();
     } else {
       token = CodeGenerator.hash();

@@ -71,14 +71,14 @@ class AccountService {
         boolean isNotARegisteredUser = (user == null);
 
         if (isNotARegisteredUser) {
-          String token = Tokens.add(TokenType.REGISTER_REQUEST, dto);
+          String token = Tokens.add(TokenType.REGISTRATION_REQUEST, dto);
 
           Map<String, Object> dataMap = new HashMap<>(3);
           dataMap.put("user", dto.getEmail().split("@")[0]);
           dataMap.put("account", dto.getAccountName());
-          dataMap.put("token", token.substring(0,3)+"-"+token.substring(3));
+          dataMap.put("token", token);
 
-          String message = renderer.render(EmailTemplate.REGISTER_ACTIVATION_LINK, dataMap);
+          String message = renderer.render(EmailTemplate.REGISTRATION_REQUEST, dataMap);
           emailSender.send(
             Props.APP_EMAIL_SENDER(), 
             "About " + dto.getAccountName() + " registration on inprice.io",
@@ -103,7 +103,7 @@ class AccountService {
   Response completeRegistration(Context ctx, String token) {
     final Response[] res = { Responses.Invalid.TOKEN };
 
-    RegisterDTO dto = Tokens.get(TokenType.REGISTER_REQUEST, token);
+    RegisterDTO dto = Tokens.get(TokenType.REGISTRATION_REQUEST, token);
     if (dto != null) {
       Map<String, String> clientInfo = ClientSide.getGeoInfo(ctx.req);
 
@@ -144,8 +144,20 @@ class AccountService {
           }
 
           if (res[0].isOK()) {
+            Map<String, Object> dataMap = new HashMap<>(2);
+            dataMap.put("email", dto.getEmail());
+            dataMap.put("account", dto.getAccountName());
+  
+            String message = renderer.render(EmailTemplate.REGISTRATION_COMPLETE, dataMap);
+            emailSender.send(
+              Props.APP_EMAIL_SENDER(), 
+              "Welcome to inprice: " + dto.getAccountName(),
+              dto.getEmail(), 
+              message
+            );
+
             res[0] = new Response(user);
-            Tokens.remove(TokenType.REGISTER_REQUEST, token);
+            Tokens.remove(TokenType.REGISTRATION_REQUEST, token);
           }
 
           return res[0].isOK();
@@ -248,7 +260,7 @@ class AccountService {
               batch.add("delete from link " + where);
               batch.add("delete from product_tag " + where);
               batch.add("delete from product " + where);
-              batch.add("delete from coupon where issued_account_id=" + CurrentUser.getAccountId());
+              batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
               
               // in order to keep consistency, 
               // users having no account other than this must be deleted too!!!

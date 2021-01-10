@@ -1,7 +1,7 @@
 package io.inprice.api.email;
 
 /**
- * Refers to email template files under resource/templates folder.
+ * Refers to email template files under resource/templates-inlined folder.
  * 
  * @since 2020-12-06
  * @author mdpinar
@@ -9,7 +9,10 @@ package io.inprice.api.email;
 public enum EmailTemplate {
   
   FORGOT_PASSWORD("forgot-password"),
-  REGISTER_ACTIVATION_LINK("register-activation-link"),
+
+  REGISTRATION_REQUEST("registration-request"),
+  REGISTRATION_COMPLETE("registration-complete"),
+
   INVITATION_FOR_NEW_USERS("invitation-for-new-users"),
   INVITATION_FOR_EXISTING_USERS("invitation-for-existing-users"),
 

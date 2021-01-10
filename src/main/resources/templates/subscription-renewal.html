@@ -1,27 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-  <body>
-    Dear <strong>${user}</strong>,
-    <p>
-      We are happy to inform you that we have received your payment.
-      The subscription of your account - ${account} - is extended to ${renewalAt}.
-    </p>
+<h1>Dear ${user}</h1>,
 
-    <p>Your actual plan is ${plan}</p>
+<p>
+  We are happy to inform you that we have received your payment.
+  The subscription for your account ${account} is extended to ${renewalAt}.
+</p>
 
-    <p>
-      You can check and download your bill from this link
-      <div>${invoiceUrl}</div>
-    </p>
+<p>Your actual plan is ${plan}</p>
 
-    <p>Thank you for using the platform!</p>
-
-    <p>
-      If you have any questions, please don't hesitate to contact our support.
-      We are always happy to getting feedback from you.
-    </p>
-
-    <div>Best regards,</div>
-    <p>inprice Support Team</p>
-  </body>
-</html>
+<!-- Action -->
+<table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0" role="presentation">
+  <tr>
+    <td align="center">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" role="presentation">
+        <tr>
+          <td align="center">
+            <a href="${invoiceUrl}" class="f-fallback button button--green" target="_blank">Download the invoice</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

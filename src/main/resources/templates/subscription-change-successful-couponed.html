@@ -1,38 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-  <body>
-    Dear <strong>${user}</strong>,
-    <p>
-      We are happy to inform you that we have received your payment.
-      And, your plan transition from - ${fromPlan} - to - ${toPlan} - has been successfully completed.
-    </p>
+<h1>Dear ${user}</h1>,
 
-    <p>Your actual plan is now ${toPlan}</p>
+<p>
+  We are happy to inform you that we have received your payment.
+  And, your plan transition from ${fromPlan} to <strong>${toPlan}</strong> has been successfully completed.
+</p>
 
-    <div>
-      We have issued a coupon for the days remaining after you downgraded. Here are the details; You
-      are free to use it whenever you want. You can use it in another account or
-      even give away it to one of your friends
-      <ul>
-        <li>Coupon: <strong>${couponCode}</strong></li>
-        <li>Plan: <strong>${fromPlan}</strong></li>
-        <li>Days: <strong>${days}</strong></li>
-      </ul>
-    </div>
+<p>Your actual plan is now ${toPlan}</p>
 
-    <p>
-      You can check and download your bill stemming from transition from the link below
-      <div>${invoiceUrl}</div>
-    </p>
+<div class="f-fallback">
+  We have issued a coupon for the days remaining after you downgraded. Here are the details; You
+  are free to use it whenever you want. You can use it in another account or
+  even give away it to one of your friends
+</div>
 
-    <p>Thank you for using the platform!</p>
+<table class="attributes" width="100%" cellpadding="0" cellspacing="0" role="presentation">
+  <tr>
+    <td class="attributes_content">
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <th class="f-fallback col_key">Coupon</th>
+          <td class="f-fallback col_value">${couponCode}</td>
+        </tr>
+        <tr>
+          <th class="f-fallback col_key">Plan</th>
+          <td class="f-fallback col_value">${planName}</td>
+        </tr>
+        <tr>
+          <th class="f-fallback col_key">Days</th>
+          <td class="f-fallback col_value">${days}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
 
-    <p>
-      If you have any questions, please don't hesitate to contact our support.
-      We are always happy to getting feedback from you.
-    </p>
-
-    <div>Best regards,</div>
-    <p>inprice Support Team</p>
-  </body>
-</html>
+<!-- Action -->
+<table class="body-action" align="center" width="100%" cellpadding="0" cellspacing="0" role="presentation">
+  <tr>
+    <td align="center">
+      <table width="100%" border="0" cellspacing="0" cellpadding="0" role="presentation">
+        <tr>
+          <td align="center">
+            <a href="${invoiceUrl}" class="f-fallback button button--green" target="_blank">Download the invoice</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>

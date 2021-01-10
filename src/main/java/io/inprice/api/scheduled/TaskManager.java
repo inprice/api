@@ -19,13 +19,14 @@ public class TaskManager {
   public static void start() {
     log.info("TaskManager is starting...");
 
-    int corePoolSize = 4;
+    int corePoolSize = 3;
     scheduler = Executors.newScheduledThreadPool(corePoolSize);
 
     loadTask(new FreeAccountStopper(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_STOPPING_FREE_ACCOUNTS()));
     loadTask(new SubscribedAccountStopper(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_STOPPING_SUBSCRIBED_ACCOUNTS()));
-    loadTask(new PendingCheckoutsCloser(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS()));
     loadTask(new ReminderForFreeAccounts(), 1, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_REMINDER_FOR_FREE_ACCOUNTS()));
+    //TODO: after subscription done
+    //loadTask(new PendingCheckoutsCloser(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS()));
 
     log.info("TaskManager is started with {} workers.", corePoolSize);
   }

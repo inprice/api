@@ -1,36 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-  <body>
-    Dear <strong>${user}</strong>,
-    <p>
-      We would like to inform you that the subscription of your account -
-      ${account} - has been approved. You can use the platform from now on.
-    </p>
+<h1>Dear ${user}</h1>,
 
-    <div>
-      Please note that:
+<p>
+  We would like to inform you that the subscription for your account
+  ${account} has been approved. You can use the platform from now on.
+</p>
 
-      <div>Your actual plan is ${plan}</div>
+<div class="f-fallback align-center"><strong>Your subscription details</strong></div>
 
-      <div>
-        Your next renewal will be one month later on
-        <strong>${renewalAt}</strong>
-      </div>
-
-      <div>
-        You can check and download your bill from this link
-        <div>${invoiceUrl}</div>
-      </div>
-    </div>
-
-    <p>Thank you for using the platform!</p>
-
-    <p>
-      If you have any questions, please don't hesitate to contact our support.
-      We are always happy to getting feedback from you.
-    </p>
-
-    <div>Best regards,</div>
-    <p>inprice Support Team</p>
-  </body>
-</html>
+<table class="attributes" width="100%" cellpadding="0" cellspacing="0" role="presentation">
+  <tr>
+    <td class="attributes_content">
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <th class="f-fallback col_key">Plan</th>
+          <td class="f-fallback col_value">${plan}</td>
+        </tr>
+        <tr>
+          <th class="f-fallback col_key">Renewal</th>
+          <td class="f-fallback col_value">${renewalAt}</td>
+        </tr>
+        <tr>
+          <th class="f-fallback col_key">Invoice</th>
+          <td class="f-fallback col_value">${invoiceUrl}</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
