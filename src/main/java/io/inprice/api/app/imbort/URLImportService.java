@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.app.product.ProductCreator;
-import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.app.product.dto.ProductDTO;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.Props;
@@ -31,7 +30,6 @@ import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.ImportDetail;
 import io.inprice.common.models.Link;
-import io.inprice.common.models.Product;
 import io.inprice.common.utils.URLUtils;
 
 public class URLImportService extends BaseImportService {
@@ -103,7 +101,6 @@ public class URLImportService extends BaseImportService {
 
             try (BufferedReader reader = new BufferedReader(new StringReader(content))) {
               LinkDao linkDao = transactional.attach(LinkDao.class);
-              ProductDao productDao = transactional.attach(ProductDao.class);
 
               String line;
               while ((line = reader.readLine()) != null) {
@@ -115,7 +112,7 @@ public class URLImportService extends BaseImportService {
                 String problem = null;
                 Site site = null;
                 Link similar = null;
-                LinkStatus status = LinkStatus.RESOLVED;
+                LinkStatus status = LinkStatus.TOBE_IMPLEMENTED;
 
                 if (actualCount < allowedCount) {
                   boolean exists = insertedSet.contains(line);
@@ -127,35 +124,36 @@ public class URLImportService extends BaseImportService {
                         case EBAY: {
                           url = Props.PREFIX_FOR_SEARCH_EBAY() + line;
                           site = ebaySite;
+                          status = LinkStatus.TOBE_CLASSIFIED;
                           break;
                         }
                         case AMAZON: {
                           url = Props.PREFIX_FOR_SEARCH_AMAZON() + line;
                           site = amazonSite;
+                          status = LinkStatus.TOBE_CLASSIFIED;
                           break;
                         }
                         default:
                           url = line;
                           site = SiteFinder.findSiteByUrl(url);
-                          if (site == null) status = LinkStatus.TOBE_CLASSIFIED;
+                          if (site != null) {
+                            if (StringUtils.isNotBlank(site.getStatus())) {
+                              status = LinkStatus.valueOf(site.getStatus());
+                              problem = String.format("%s is in %s status!", site.getName(), site.getStatus().replaceAll("_", " ").toLowerCase());
+                            } else {
+                              status = LinkStatus.TOBE_CLASSIFIED;
+                            }
+                          }
                           break;
                       }
 
-                      if (! ImportType.URL.equals(importType)) {
-                        Product product = productDao.findByCode(line, accountId);
-                        if (product != null) {
-                          status = LinkStatus.DUPLICATE;
-                        }
-                      }
-
-                      if (! status.equals(LinkStatus.DUPLICATE)) {
+                      if (status.equals(LinkStatus.TOBE_CLASSIFIED)) { //which means the link is suitable
                         List<Link> linkList = linkDao.findByUrlHashForImport(DigestUtils.md5Hex(url)); // find similar links previously added
                         if (linkList != null && linkList.size() > 0) {
                           for (Link link: linkList) {
                             if (link.getAccountId().longValue() != accountId) { // if it belongs to another account
                               if (StringUtils.isNotBlank(link.getSku()) && similar == null) { // one time is enough to clone
                                 similar = link;
-                                status = LinkStatus.RESOLVED;
                                 problem = null;
                                 //we cannot break the loop here since a duplication may occur (see "else" block right below)
                               }
@@ -167,9 +165,6 @@ public class URLImportService extends BaseImportService {
                             }
                           }
                         }
-                      } else {
-                        status = LinkStatus.DUPLICATE;
-                        problem = "Already added!";
                       }
                     } else {
                       status = LinkStatus.IMPROPER;
@@ -214,8 +209,7 @@ public class URLImportService extends BaseImportService {
                 impdet.setAccountId(accountId);
                 long importDetailId = importDao.insertDetail(impdet);
 
-                // if it is imported then no need to keep it in links table
-                if (problem == null && ! impdet.getImported()) {
+                if (similar == null && problem == null) {
                   linkDao.importProduct(
                     url, 
                     DigestUtils.md5Hex(url), 
