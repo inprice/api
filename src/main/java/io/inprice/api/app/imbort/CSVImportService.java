@@ -125,7 +125,7 @@ public class CSVImportService extends BaseImportService {
                 impdet.setEligible(status.equals(LinkStatus.AVAILABLE));
                 impdet.setImported(impdet.getEligible());
                 impdet.setImportId(importId);
-                impdet.setProblem(problem);
+                impdet.setStatus(problem != null ? problem : "IMPORTED");
                 impdet.setAccountId(accountId);
                 importDao.insertDetail(impdet);
               }
@@ -146,7 +146,7 @@ public class CSVImportService extends BaseImportService {
           res[0] = new Response(data);
         } else {
           importDao.delete(importId);
-          res[0] = Responses.Illegal.INCOMPATIBLE_CONTENT;
+          //res[0] = Responses.Illegal.INCOMPATIBLE_CONTENT;
         }
 
         return isOK;

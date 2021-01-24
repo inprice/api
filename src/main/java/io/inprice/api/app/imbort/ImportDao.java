@@ -47,8 +47,8 @@ public interface ImportDao {
   @UseRowMapper(ImportDetailMapper.class)
   List<ImportDetail> findImportRowsByImportId(@Bind("importId") Long importId, @Bind("accountId") Long accountId);
 
-  @SqlUpdate("insert into import_detail (data, eligible, imported, problem, import_id, account_id) "+
-    "values (:ir.data, :ir.eligible, :ir.imported, :ir.problem, :ir.importId, :ir.accountId)")
+  @SqlUpdate("insert into import_detail (data, eligible, imported, status, import_id, account_id) "+
+    "values (:ir.data, :ir.eligible, :ir.imported, :ir.status, :ir.importId, :ir.accountId)")
   @GetGeneratedKeys
   long insertDetail(@BindBean("ir") ImportDetail ir);
 
@@ -66,7 +66,7 @@ public interface ImportDao {
     "ir.data as ir_data, " +
     "ir.eligible as ir_eligible, " +
     "ir.imported as ir_imported, " +
-    "ir.problem as ir_problem, " +
+    "ir.status as ir_status, " +
     "ir.last_check as ir_last_check, " +
     "ir.import_id as ir_import_id ";
 

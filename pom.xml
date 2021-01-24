@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <groupId>io.inprice</groupId>
   <artifactId>api</artifactId>
@@ -9,10 +10,11 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <!-- package will created in target folder. look for the jar file, conf and lib folders -->
+  <!-- package will created in target folder. look for the jar file, conf 
+    and lib folders -->
 
   <!-- How to package : mvn clean install -->
-  <!-- How to run     : java -cp lib/*:./api-1.0.0.jar io.inprice.api.Application -->
+  <!-- How to run : java -cp lib/*:./api-1.0.0.jar io.inprice.api.Application -->
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -27,7 +29,7 @@
       <artifactId>common</artifactId>
       <version>1.0.0</version>
     </dependency>
-  
+
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
@@ -169,7 +171,7 @@
       <version>3.14.4</version>
     </dependency>
 
-    <!-- CSS Inlining  -->
+    <!-- CSS Inlining -->
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
