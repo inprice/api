@@ -66,6 +66,7 @@ public class Consts {
       public static final String SEARCH = BASE + "s/search";
 
       public static final String IMPORT = BASE + "/import";
+      public static final String DETAIL = IMPORT + "/detail";
       public static final String DETAILS_LIST = IMPORT + "/details";
 
       public static final String IMPORT_CSV_FILE = IMPORT + "/file/csv";

@@ -27,6 +27,7 @@ public class Responses {
 
     public static final Response PRODUCT = new Response(BASE + 20, "Invalid product!");
     public static final Response LINK = new Response(BASE + 21, "Invalid link!");
+    public static final Response IMPORT_ROW = new Response(BASE + 22, "Invalid import row!");
 
     public static final Response TOKEN = new Response(BASE + 30, "Invalid token!");
     public static final Response EMPTY_FILE = new Response(BASE + 40, "Empty file!");

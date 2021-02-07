@@ -54,8 +54,8 @@ public interface LinkDao {
   long insert(@Bind("url") String url, @Bind("urlHash") String urlHash, @Bind("productId") Long productId, @Bind("accountId") Long accountId);
 
   @SqlUpdate(
-    "insert into link (url, url_hash, sku, name, brand, seller, shipment, status, last_http_status, platform_id, product_id, account_id) " +
-    "values (:link.url, :link.urlHash, :link.sku, :link.name, :link.brand, :link.seller, :link.shipment, :link.status, :link.lastHttpStatus, " +
+    "insert into link (url, url_hash, sku, name, brand, seller, shipment, status, http_status, platform_id, product_id, account_id) " +
+    "values (:link.url, :link.urlHash, :link.sku, :link.name, :link.brand, :link.seller, :link.shipment, :link.status, :link.httpStatus, " +
       ":link.platformId, :productId, :accountId)"
   )
   @GetGeneratedKeys
@@ -90,8 +90,8 @@ public interface LinkDao {
   List<LinkSpec> findSpecListByLinkId(@Bind("linkId") Long linkId);
 
   @SqlUpdate(
-    "insert into link_history (link_id, status, last_http_status, last_problem, product_id, account_id) " +
-    "values (:link.id, :link.status, :link.lastHttpStatus, :link.lastProblem, :link.productId, :link.accountId)"
+    "insert into link_history (link_id, status, http_status, problem, product_id, account_id) " +
+    "values (:link.id, :link.status, :link.httpStatus, :link.problem, :link.productId, :link.accountId)"
   )
   @GetGeneratedKeys
   long insertHistory(@BindBean("link") Link link);
