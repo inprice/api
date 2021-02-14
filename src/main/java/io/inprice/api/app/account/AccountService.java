@@ -76,7 +76,7 @@ class AccountService {
           Map<String, Object> dataMap = new HashMap<>(3);
           dataMap.put("user", dto.getEmail().split("@")[0]);
           dataMap.put("account", dto.getAccountName());
-          dataMap.put("token", token);
+          dataMap.put("token", token.substring(0,3)+"-"+token.substring(3));
 
           String message = renderer.render(EmailTemplate.REGISTRATION_REQUEST, dataMap);
           emailSender.send(

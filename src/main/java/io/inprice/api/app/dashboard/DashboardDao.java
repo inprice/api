@@ -27,8 +27,9 @@ interface DashboardDao {
   Map<Integer, Integer> findPositionDists(@Bind("accountId") Long accountId);
 
   @SqlQuery(
-    "select p.name as product_name, l.platform, l.seller, l.price, l.status, l.url, l.last_update, l.created_at, l.url from link as l " + 
-    "inner join product as p on p.id = l.product_id " + 
+    "select p.name as product_name, plt.domain as platform, l.seller, l.price, l.status, l.url, l.last_update, l.created_at, l.url from link as l " + 
+		"inner join product as p on p.id = l.product_id " + 
+    "left join platform as plt on plt.id = l.platform_id " + 
     "where l.import_detail_id is null " +
     "  and l.account_id=:accountId " +
     "order by l.status, l.last_update desc " +

@@ -24,7 +24,7 @@ public interface LinkDao {
   @UseRowMapper(LinkMapper.class)
   Link findById(@Bind("id") Long id);
 
-  @SqlQuery("select * from link where url_hash=:urlHash and (status=:status or pre_status=:status) limit 1")
+  @SqlQuery("select * from link where url_hash=:urlHash and status=:status or pre_status=:status) limit 1")
   @UseRowMapper(LinkMapper.class)
   Link findSampleByUrlHashAndStatus(@Bind("urlHash") String urlHash, @Bind("status") String status);
 
@@ -54,9 +54,9 @@ public interface LinkDao {
   long insert(@Bind("url") String url, @Bind("urlHash") String urlHash, @Bind("productId") Long productId, @Bind("accountId") Long accountId);
 
   @SqlUpdate(
-    "insert into link (url, url_hash, sku, name, brand, seller, shipment, status, http_status, class_name, platform, product_id, account_id) " +
+    "insert into link (url, url_hash, sku, name, brand, seller, shipment, status, http_status, platform_id, product_id, account_id) " +
     "values (:link.url, :link.urlHash, :link.sku, :link.name, :link.brand, :link.seller, :link.shipment, :link.status, :link.httpStatus, " +
-      ":link.className, :link.platform, :productId, :accountId)"
+      ":link.platformId, :productId, :accountId)"
   )
   @GetGeneratedKeys
   long insert(@BindBean("link") Link sample, @Bind("productId") Long productId, @Bind("accountId") Long accountId);
@@ -100,12 +100,12 @@ public interface LinkDao {
   boolean toggleStatus(@Bind("id") Long id, @Bind("status") String status);
 
   @SqlUpdate(
-    "insert into link (url, url_hash, status, problem, retry, class_name, platform, import_detail_id, account_id) " +
-    "values (:url, :urlHash, :status, :problem, :retry, :className, :platform, :importDetailId, :accountId)"
+    "insert into link (url, url_hash, status, problem, retry, platform_id, import_detail_id, account_id) " +
+    "values (:url, :urlHash, :status, :problem, :retry, :platformId, :importDetailId, :accountId)"
   )
   @GetGeneratedKeys
   long importProduct(@Bind("url") String url, @Bind("urlHash") String urlHash, @Bind("status") String status, 
-    @Bind("problem") String problem, @Bind("retry") int retry, @Bind("className") String className, 
-    @Bind("platform") String platform, @Bind("importDetailId") Long importDetailId, @Bind("accountId") Long accountId);
+    @Bind("problem") String problem, @Bind("retry") int retry, @Bind("platformId") Long platformId, 
+    @Bind("importDetailId") Long importDetailId, @Bind("accountId") Long accountId);
 
 }

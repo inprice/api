@@ -23,16 +23,16 @@ import io.inprice.api.external.Props;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.helpers.SiteFinder;
-import io.inprice.common.info.Site;
 import io.inprice.common.meta.ImportType;
 import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.ImportDetail;
 import io.inprice.common.models.Link;
+import io.inprice.common.models.Platform;
+import io.inprice.common.repository.PlatformRepository;
 import io.inprice.common.utils.URLUtils;
 
-public class URLImportService extends BaseImportService {
+class URLImportService extends BaseImportService {
 
   private static final Logger log = LoggerFactory.getLogger(URLImportService.class);
 
@@ -48,8 +48,8 @@ public class URLImportService extends BaseImportService {
     String identifier = null;
     final String[] regex = { "" };
 
-    Site ebaySite = SiteFinder.findSiteByUrl(Props.PREFIX_FOR_SEARCH_EBAY());
-    Site amazonSite = SiteFinder.findSiteByUrl(Props.PREFIX_FOR_SEARCH_AMAZON());
+    Platform[] ebaySite = { null };
+    Platform[] amazonSite = { null };
 
     switch (importType) {
       case EBAY: {
@@ -110,7 +110,7 @@ public class URLImportService extends BaseImportService {
 
                 String url = null;
                 String problem = null;
-                Site site = null;
+                Platform platform = null;
                 Link similar = null;
                 LinkStatus status = LinkStatus.TOBE_IMPLEMENTED;
 
@@ -122,24 +122,30 @@ public class URLImportService extends BaseImportService {
   
                       switch (importType) {
                         case EBAY: {
+                          if (ebaySite[0] == null) {
+                            ebaySite[0] = PlatformRepository.findByUrl(handle, Props.PREFIX_FOR_SEARCH_EBAY());
+                          }
                           url = Props.PREFIX_FOR_SEARCH_EBAY() + line;
-                          site = ebaySite;
+                          platform = ebaySite[0];
                           status = LinkStatus.TOBE_CLASSIFIED;
                           break;
                         }
                         case AMAZON: {
+                          if (amazonSite[0] == null) {
+                            amazonSite[0] = PlatformRepository.findByUrl(handle, Props.PREFIX_FOR_SEARCH_AMAZON());
+                          }
                           url = Props.PREFIX_FOR_SEARCH_AMAZON() + line;
-                          site = amazonSite;
+                          platform = amazonSite[0];
                           status = LinkStatus.TOBE_CLASSIFIED;
                           break;
                         }
                         default:
                           url = line;
-                          site = SiteFinder.findSiteByUrl(url);
-                          if (site != null) {
-                            if (StringUtils.isNotBlank(site.getStatus())) {
-                              status = LinkStatus.valueOf(site.getStatus());
-                              problem = String.format("%s is in %s status!", site.getName(), site.getStatus().replaceAll("_", " ").toLowerCase());
+                          platform = PlatformRepository.findByUrl(handle, url);
+                          if (platform != null) {
+                            if (platform.getStatus() != null) {
+                              status = platform.getStatus();
+                              problem = platform.getProblem();
                             } else {
                               status = LinkStatus.TOBE_CLASSIFIED;
                             }
@@ -204,7 +210,7 @@ public class URLImportService extends BaseImportService {
                 impdet.setData(line);
                 impdet.setEligible(problem == null);
                 impdet.setImported(false);
-                impdet.setProblem(problem);
+                impdet.setStatus(problem != null ? problem : "TOBE CLASSIFIED");
                 impdet.setImportId(importId);
                 impdet.setAccountId(accountId);
                 long importDetailId = importDao.insertDetail(impdet);
@@ -216,8 +222,7 @@ public class URLImportService extends BaseImportService {
                     status.name(), 
                     problem, 
                     (problem != null ? 1 : 0),
-                    (site != null ? site.getClassName() : null),
-                    (site != null ? site.getDomain() : null),
+                    (platform != null ? platform.getId() : null),
                     importDetailId,
                     accountId
                   );
@@ -240,7 +245,7 @@ public class URLImportService extends BaseImportService {
           res[0] = new Response(data);
         } else {
           importDao.delete(importId);
-          res[0] = Responses.Illegal.INCOMPATIBLE_CONTENT;
+          //res[0] = Responses.Illegal.INCOMPATIBLE_CONTENT;
         }
 
         return isOK;

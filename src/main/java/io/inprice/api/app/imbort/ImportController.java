@@ -36,11 +36,17 @@ public class ImportController implements Controller {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, urlImportService.findById(id)));
     }, AccessRoles.ANYONE());
-
-    // delete
+    
+    // delete import list
     app.delete(Consts.Paths.Product.IMPORT + "/:id", (ctx) -> {
+    	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+    	ctx.json(Commons.createResponse(ctx, urlImportService.deleteById(id)));
+    }, AccessRoles.EDITOR());
+
+    // delete import row
+    app.delete(Consts.Paths.Product.DETAIL + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, urlImportService.deleteById(id)));
+      ctx.json(Commons.createResponse(ctx, urlImportService.deleteRowById(id)));
     }, AccessRoles.EDITOR());
 
     // get import list

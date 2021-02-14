@@ -68,6 +68,28 @@ public class BaseImportService {
     }
     return res;
   }
+  
+  Response deleteRowById(Long rowId) {
+  	if (rowId != null && rowId > 0) {
+  		final boolean[] isOK = { false };
+
+  		try (Handle handle = Database.getHandle()) {
+  			handle.inTransaction(transactional -> {
+  				Batch batch = transactional.createBatch();
+  				batch.add("delete from link where import_detail_id = " + rowId);
+  				batch.add("delete from import_detail where id = " + rowId);
+  				int[] result = batch.execute();
+  				isOK[0] = (result[1] > 0);
+  				return isOK[0];
+  			});
+  		}
+  		
+  		if (isOK[0]) {
+  			return Responses.OK;
+  		}
+  	}
+  	return Responses.Invalid.IMPORT_ROW;
+  }
 
   Response deleteById(Long importId) {
     if (importId != null && importId > 0) {
