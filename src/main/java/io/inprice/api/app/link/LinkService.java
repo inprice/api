@@ -17,10 +17,10 @@ import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.link.dto.LinkDTO;
 import io.inprice.api.app.link.dto.LinkSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.LinkDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
@@ -47,25 +47,25 @@ class LinkService {
           LinkDao linkDao = handle.attach(LinkDao.class);
 
           String urlHash = DigestUtils.md5Hex(dto.getUrl());
-          Link link = linkDao.findByProductIdAndUrlHash(dto.getProductId(), urlHash);
+          Link link = linkDao.findByGroupIdAndUrlHash(dto.getGroupId(), urlHash);
           if (link == null) {
 
-            Link sample = linkDao.findSampleByUrlHashAndStatus(urlHash, LinkStatus.AVAILABLE.name());
+            Link sample = linkDao.findSampleByUrlHashAndStatus(urlHash, LinkStatus.AVAILABLE);
             if (sample != null) { // if any, lets clone it
-              long id = linkDao.insert(link, dto.getProductId(), CurrentUser.getAccountId());
+              long id = linkDao.insert(link, dto.getGroupId(), CurrentUser.getAccountId());
               if (id > 0) {
                 sample.setId(id);
                 linkDao.insertHistory(sample);
                 res = new Response(sample);
               }
             } else {
-              long id = linkDao.insert(dto.getUrl(), urlHash, dto.getProductId(), CurrentUser.getAccountId());
+              long id = linkDao.insert(dto.getUrl(), urlHash, dto.getGroupId(), CurrentUser.getAccountId());
               if (id > 0) {
                 sample = new Link();
                 sample.setId(id);
                 sample.setUrl(dto.getUrl());
                 sample.setUrlHash(urlHash);
-                sample.setProductId(dto.getProductId());
+                sample.setGroupId(dto.getGroupId());
                 sample.setAccountId(CurrentUser.getAccountId());
                 linkDao.insertHistory(sample);
                 res = new Response(sample);
@@ -90,7 +90,7 @@ class LinkService {
     //---------------------------------------------------
     StringBuilder criteria = new StringBuilder();
 
-    criteria.append("where l.import_detail_id is null and l.account_id = ");
+    criteria.append("where l.account_id = ");
     criteria.append(CurrentUser.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
@@ -109,7 +109,7 @@ class LinkService {
 
     if (dto.getStatuses() != null && dto.getStatuses().length > 0) {
       criteria.append(
-        String.format(" and l.status in ('%s') ", String.join("', '", dto.getStatuses()))
+        String.format(" and l.status_group in ('%s') ", String.join("', '", dto.getStatuses()))
       );
     }
 
@@ -128,7 +128,7 @@ class LinkService {
           "select *, plt.domain as platform from link as l " + 
       		"left join platform as plt on plt.id = l.platform_id " + 
           criteria +
-          " order by l.status, plt.domain, l.last_update " +
+          " order by l.status_group, l.last_update, plt.domain " +
           limit
         )
       .map(new LinkMapper())
@@ -147,12 +147,12 @@ class LinkService {
       final String where = String.format("where link_id=%d and account_id=%d; ", id, CurrentUser.getAccountId());
 
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transactional -> {
-          LinkDao linkDao = transactional.attach(LinkDao.class);
+        handle.inTransaction(transaction -> {
+          LinkDao linkDao = transaction.attach(LinkDao.class);
 
           Link deletedLink = linkDao.findById(id);
           if (deletedLink != null) {
-            Batch batch = transactional.createBatch();
+            Batch batch = transaction.createBatch();
             batch.add("delete from link_price " + where);
             batch.add("delete from link_history " + where);
             batch.add("delete from link_spec " + where);
@@ -161,7 +161,7 @@ class LinkService {
             isOK[0] = result[3] > 0;
 
             if (isOK[0] && LinkStatus.AVAILABLE.equals(deletedLink.getStatus())) {
-              CommonRepository.adjustProductPrice(transactional, deletedLink.getProductId(), null);
+              CommonRepository.refreshGroup(transaction, deletedLink.getGroupId());
             }
           }
 
@@ -181,8 +181,8 @@ class LinkService {
 
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transactional -> {
-          LinkDao linkDao = transactional.attach(LinkDao.class);
+        handle.inTransaction(transaction -> {
+          LinkDao linkDao = transaction.attach(LinkDao.class);
 
           Link link = linkDao.findById(id);
           if (link != null) {
@@ -204,14 +204,14 @@ class LinkService {
 
             if (! res[0].equals(Responses.DataProblem.TOO_MANY_TOGGLING)) {
               LinkStatus newStatus = (LinkStatus.PAUSED.equals(link.getStatus()) ? link.getPreStatus() : LinkStatus.PAUSED);
-              boolean isOK = linkDao.toggleStatus(id, newStatus.name());
+              boolean isOK = linkDao.toggleStatus(id, newStatus, newStatus.getGroup());
               if (isOK) {
                 link.setPreStatus(link.getStatus());
                 link.setStatus(newStatus);
                 long historyId = linkDao.insertHistory(link);
                 if (historyId > 0) {
                   if (LinkStatus.AVAILABLE.equals(newStatus)) {
-                    CommonRepository.adjustProductPrice(transactional, link.getProductId(), null);
+                    CommonRepository.refreshGroup(transaction, link.getGroupId());
                   }
                 res[0] = Responses.OK;
                 }
@@ -261,8 +261,8 @@ class LinkService {
     }
 
     if (problem == null) {
-      if (dto.getProductId() == null || dto.getProductId() < 1) {
-        problem = "Product id cannot be null!";
+      if (dto.getGroupId() == null || dto.getGroupId() < 1) {
+        problem = "Group id cannot be null!";
       }
     }
 

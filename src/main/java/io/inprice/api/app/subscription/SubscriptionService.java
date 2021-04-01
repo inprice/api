@@ -96,8 +96,8 @@ class SubscriptionService {
         } else { //free or couponed user
 
           try (Handle handle = Database.getHandle()) {
-            handle.inTransaction(transactional -> {
-              SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+            handle.inTransaction(transaction -> {
+              SubscriptionDao subscriptionDao = transaction.attach(SubscriptionDao.class);
       
               boolean isOK = subscriptionDao.terminate(account[0].getId(), AccountStatus.CANCELLED.name());
               if (isOK) {
@@ -111,7 +111,7 @@ class SubscriptionService {
                 isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
       
                 if (isOK) {
-                  AccountDao accountDao = transactional.attach(AccountDao.class);
+                  AccountDao accountDao = transaction.attach(AccountDao.class);
                   isOK = 
                     accountDao.insertStatusHistory(
                       account[0].getId(),
@@ -157,15 +157,15 @@ class SubscriptionService {
     Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(transactional -> {
-        AccountDao accountDao = transactional.attach(AccountDao.class);
+      handle.inTransaction(transaction -> {
+        AccountDao accountDao = transaction.attach(AccountDao.class);
 
         Account account = accountDao.findById(CurrentUser.getAccountId());
         if (account != null) {
 
           if (!account.getStatus().equals(AccountStatus.FREE)) {
             if (account.getStatus().isOKForFreeUse()) {
-              SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+              SubscriptionDao subscriptionDao = transaction.attach(SubscriptionDao.class);
 
               Plan basicPlan = Plans.findById(0); // Basic Plan
 
@@ -174,7 +174,7 @@ class SubscriptionService {
                   CurrentUser.getAccountId(),
                   AccountStatus.FREE.name(),
                   basicPlan.getName(),
-                  basicPlan.getProductLimit(),
+                  basicPlan.getLinkLimit(),
                   Props.APP_DAYS_FOR_FREE_USE()
                 );
 

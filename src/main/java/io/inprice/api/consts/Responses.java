@@ -25,12 +25,9 @@ public class Responses {
     public static final Response EMAIL_OR_PASSWORD = new Response(BASE + 13, "Invalid email or password!");
     public static final Response NAME = new Response(BASE + 14, "Invalid name!");
 
-    public static final Response PRODUCT = new Response(BASE + 20, "Invalid product!");
+    public static final Response GROUP = new Response(BASE + 20, "Invalid group!");
     public static final Response LINK = new Response(BASE + 21, "Invalid link!");
-    public static final Response IMPORT_ROW = new Response(BASE + 22, "Invalid import row!");
-
     public static final Response TOKEN = new Response(BASE + 30, "Invalid token!");
-    public static final Response EMPTY_FILE = new Response(BASE + 40, "Empty file!");
 
     public static final Response COUPON = new Response(BASE + 45, "Invalid coupon!");
     public static final Response DATA = new Response(BASE + 99, "Invalid data!");
@@ -54,8 +51,8 @@ public class Responses {
     public static final Response ADMIN_ONLY = new Response(BASE + 2, "This operation can only be done by an admin!");
     public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to buy a new plan!");
     public static final Response NO_ACCOUNT = new Response(BASE + 5, "You have no active account! Please either create a new one or participate in an existing!");
-    public static final Response PRODUCT_LIMIT_PROBLEM = new Response(BASE + 6, "Your products count is reached your plans limit! You need to pass a broader plan to proceed");
-    public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 7, "You need a broader plan. The plan you intend to select allows less than your existing product count!");
+    public static final Response LIMIT_PROBLEM = new Response(BASE + 6, "Your link count is reached your plans limit! You need to pass a broader plan to proceed");
+    public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 7, "You need a broader plan. The plan you intend to select allows less than your existing link count!");
   }
 
   public static class DataProblem {
@@ -80,6 +77,7 @@ public class Responses {
     public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
     public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan, so you cannot cancel!");
     public static final Response NO_FREE_USE_RIGHT = new Response(BASE + 11, "You have no free use!");
+    public static final Response DEFAULT_GROUP_DELETE = new Response(BASE + 12, "You cannot delete default group!");
   }
 
   public static class Already {
@@ -100,20 +98,21 @@ public class Responses {
       public static final Response ACCOUNT = new Response(BASE + 20, "Seems that you have already registered this account!");
       public static final Response MEMBERSHIP = new Response(BASE + 21, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");
       public static final Response REGISTERED_USER = new Response(BASE + 22, "This user has already registered! Signing up is an option for newcomers! You can use Create Account in the menu after login.");
+      public static final Response GROUP = new Response(BASE + 25, "You have already a group having the same name!");
     }
   }
 
-  public static class Upload {
+  public static class NotAllowed {
     private static final int BASE = 900;
-    public static final Response EMPTY = new Response(BASE + 1, "File is empty!");
-    public static final Response MUST_BE_CSV = new Response(BASE + 2, "Please upload a CSV file!");
-    public static final Response MUST_BE_TXT = new Response(BASE + 3, "Please upload a text file!");
+    public static final Response NO_LINK_LIMIT = new Response(BASE + 1, "You have reached max link number of your plan!");
+    public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload max 100 URLs at once!");
   }
 
   public static class NotSuitable {
     private static final int BASE = 1000;
     public static final Response PLAN_CHANGE = new Response(BASE + 1, "Seems that you don't have a subsciption. Only subscribers can change their plans!");
     public static final Response PAYMENT_FAILURE_ON_PLAN_CHANGE = new Response(BASE + 2, "Your payment failed during plan changing! Please try again or use another card!");
+    public static final Response EMPTY_URL_LIST = new Response(BASE + 3, "URL List is empty!");
   }
 
   public static class NotFound {
@@ -132,9 +131,8 @@ public class Responses {
     public static final Response INVITATION = new Response(BASE, "Invitation not found!");
     public static final Response SUBSCRIPTION = new Response(BASE, "Subscription not found!");
 
-    public static final Response PRODUCT = new Response(BASE, "Product not found!");
+    public static final Response GROUP = new Response(BASE, "Group not found!");
     public static final Response LINK = new Response(BASE, "Link not found!");
-    public static final Response IMPORT = new Response(BASE, "Import not found!");
 
     public static final Response HISTORY = new Response(BASE, "History not found!");
     public static final Response TRANSACTION = new Response(BASE, "Transaction not found!");

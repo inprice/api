@@ -105,7 +105,7 @@ class StripeService {
         }
 
         // only broader plan transitions allowed
-        if (account.getProductCount().compareTo(plan.getProductLimit()) > 0) {
+        if (account.getLinkCount().compareTo(plan.getLinkLimit()) > 0) {
           return Responses.PermissionProblem.BROADER_PLAN_NEEDED;
         }
       }
@@ -263,7 +263,7 @@ class StripeService {
 
             if (! newPlan.getName().equals(account.getPlanName())) {
               boolean noNeedABroaderPlan =
-                (account.getProductCount() == 0) || (account.getProductCount().compareTo(newPlan.getProductLimit()) <= 0);
+                (account.getLinkCount() == 0) || (account.getLinkCount().compareTo(newPlan.getLinkLimit()) <= 0);
 
               if (noNeedABroaderPlan) {
                 try {
@@ -555,9 +555,9 @@ class StripeService {
     Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(transactional -> {
-        AccountDao accountDao = transactional.attach(AccountDao.class);
-        SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+      handle.inTransaction(transaction -> {
+        AccountDao accountDao = transaction.attach(AccountDao.class);
+        SubscriptionDao subscriptionDao = transaction.attach(SubscriptionDao.class);
 
         AccountTrans oldTrans = subscriptionDao.findByEventId(trans.getEventId());
         if (oldTrans == null) {
@@ -583,7 +583,7 @@ class StripeService {
                 if (account.getStatus().isOKForSubscription()) {
 
                   Plan plan = Plans.findByName(dto.getPlanName());
-                  if (subscriptionDao.startSubscription(dto, AccountStatus.SUBSCRIBED.name(), plan.getProductLimit(), accountId)) {
+                  if (subscriptionDao.startSubscription(dto, AccountStatus.SUBSCRIBED.name(), plan.getLinkLimit(), accountId)) {
                     boolean isOK = updateInvoiceInfo(dto);
                     if (isOK) {
 
@@ -645,7 +645,7 @@ class StripeService {
                   if (days > 3) {
                     couponCode = 
                       couponService.createCoupon(
-                        transactional, 
+                        transaction, 
                         account.getId(), 
                         trans.getEvent(), 
                         account.getPlanName(), 
@@ -716,14 +716,14 @@ class StripeService {
                 String message = templateRenderer.render(template, dataMap);
                 emailSender.send(Props.APP_EMAIL_SENDER(), "Your payment failed", dto.getEmail(), message);
 
-                res[0] = Responses.OK; // must be set true so that the transactional can reflect on database
+                res[0] = Responses.OK; // must be set true so that the transaction can reflect on database
                 log.warn("Payment failed! Account Id: {}", accountId);
                 break;
               }
       
               case SUBSCRIPTION_CHANGED: {
                 Plan newPlan = Plans.findByName(dto.getPlanName());
-                boolean isOK = subscriptionDao.changePlan(accountId, newPlan.getName(), newPlan.getProductLimit());
+                boolean isOK = subscriptionDao.changePlan(accountId, newPlan.getName(), newPlan.getLinkLimit());
                 if (isOK) {
 
                   //if it is a downgrade an there are more than three days to renewal date
@@ -737,7 +737,7 @@ class StripeService {
                     if (days > 3) {
                       couponCode = 
                         couponService.createCoupon(
-                          transactional, 
+                          transaction, 
                           account.getId(), 
                           trans.getEvent(), 
                           oldPlan.getName(), 

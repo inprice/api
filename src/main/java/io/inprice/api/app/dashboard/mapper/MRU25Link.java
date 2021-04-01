@@ -12,12 +12,13 @@ public class MRU25Link implements Serializable {
   
   private static final long serialVersionUID = 2062234416267369942L;
 
-  private String productName;
+  private String groupName;
   private String seller;
+  private String platform;
+  private String url;
   private BigDecimal price;
   private String status;
-  private String url;
+  private String level;
   private String lastUpdate;
-  private String platform;
 
 }

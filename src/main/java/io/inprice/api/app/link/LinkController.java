@@ -1,8 +1,8 @@
 package io.inprice.api.app.link;
 
-import io.inprice.api.app.link.dto.LinkDTO;
 import io.inprice.api.app.link.dto.LinkSearchDTO;
 import io.inprice.api.consts.Consts;
+import io.inprice.api.dto.LinkDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;

@@ -12,13 +12,14 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import io.inprice.api.app.member.mapper.ActiveMember;
 import io.inprice.api.app.member.mapper.ActiveMemberMapper;
 import io.inprice.common.mappers.MemberMapper;
+import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Member;
 
 public interface MemberDao {
 
   final String ACCOUNT_FIELDS = 
-    ", c.name as account_name, c.status as account_status, c.cust_id, c.subs_started_at, " +
-    "c.last_status_update, c.plan_name, c.renewal_at, c.currency_format, c.product_count ";
+    ", a.name as account_name, a.status as account_status, a.cust_id, a.subs_started_at, " +
+    "a.last_status_update, a.plan_name, a.renewal_at, a.currency_format, a.link_count ";
 
   @SqlQuery("select * from member where id=:id")
   @UseRowMapper(MemberMapper.class)
@@ -30,7 +31,7 @@ public interface MemberDao {
 
   @SqlQuery(
     "select m.*" + ACCOUNT_FIELDS + " from member as m " +
-    "inner join account as c on c.id = m.account_id " + 
+    "inner join account as a on a.id = m.account_id " + 
     "where m.email != :email " + 
     "  and account_id = :accountId " + 
     "order by m.email"
@@ -40,7 +41,7 @@ public interface MemberDao {
 
   @SqlQuery(
     "select m.*" + ACCOUNT_FIELDS + " from member as m " +
-    "inner join account as c on c.id = m.account_id " + 
+    "inner join account as a on a.id = m.account_id " + 
     "where m.email=:email " + 
     "  and m.status=:status " + 
     "order by m.role, m.created_at"
@@ -106,14 +107,14 @@ public interface MemberDao {
   @SqlUpdate("update member set status=:newStatus, updated_at=now() where id=:id")
   boolean changeStatus(@Bind("id") Long id, @Bind("newStatus") String newStatus);
 
-  @SqlUpdate("update member set pre_status=status, status='PAUSED', updated_at=now() where id=:id and account_id=:accountId and status!='PAUSED")
+  @SqlUpdate("update member set pre_status=status, status='PAUSED', status_group=:statusGroup, updated_at=now() where id=:id and account_id=:accountId and status!='PAUSED")
   boolean pause(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
-  @SqlUpdate("update member set status=pre_status, pre_status='PAUSED', updated_at=now() where id=:id and account_id=:accountId and status='PAUSED")
+  @SqlUpdate("update member set status=pre_status, pre_status='PAUSED', status_group=:statusGroup, updated_at=now() where id=:id and account_id=:accountId and status='PAUSED")
   boolean resume(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
   @SqlUpdate("update member set user_id=:userId, status=:newStatus, updated_at=now() where email=:email and status=:oldStatus and account_id=:accountId")
-  boolean activate(@Bind("userId") Long userId, @Bind("oldStatus") String oldStatus, 
-    @Bind("newStatus") String newStatus, @Bind("email") String email, @Bind("accountId") Long accountId);
+  boolean activate(@Bind("userId") Long userId, @Bind("oldStatus") UserStatus oldStatus, 
+    @Bind("newStatus") UserStatus newStatus, @Bind("email") String email, @Bind("accountId") Long accountId);
 
 }

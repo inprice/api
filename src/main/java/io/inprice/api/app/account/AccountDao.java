@@ -53,10 +53,10 @@ public interface AccountDao {
   )
   boolean update(@BindBean("dto") CustomerDTO dto, @Bind("id") Long id);
   
-  @SqlUpdate("update account set product_count=product_count+1 where id=:id and product_count<product_limit")
-  boolean increaseProductCountById(@Bind("id") Long id);
+  @SqlUpdate("update account set link_count=link_count+:count where id=:id")
+  boolean increaseLinkCount(@Bind("id") Long id, @Bind("count") Integer count);
 
-  // only two days remaining (last op. is to sending a final message)
+  // finds only those accounts who have two days remaining
   @SqlQuery(
     "select * from account "+
     "where status in (<statusList>) "+

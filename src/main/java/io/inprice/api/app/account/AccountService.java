@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.auth.UserSessionDao;
+import io.inprice.api.app.group.GroupDao;
 import io.inprice.api.app.account.dto.CreateDTO;
 import io.inprice.api.app.account.dto.RegisterDTO;
 import io.inprice.api.app.member.MemberDao;
@@ -108,8 +109,8 @@ class AccountService {
       Map<String, String> clientInfo = ClientSide.getGeoInfo(ctx.req);
 
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transactional -> {
-          UserDao userDao = transactional.attach(UserDao.class);
+        handle.inTransaction(transaction -> {
+          UserDao userDao = transaction.attach(UserDao.class);
 
           User user = userDao.findByEmail(dto.getEmail());
           if (user == null) {
@@ -132,7 +133,7 @@ class AccountService {
           if (user.getId() != null) {
             res[0] = 
               createAccount(
-                transactional,
+                transaction,
                 user.getId(),
                 user.getEmail(),
                 dto.getAccountName(),
@@ -180,10 +181,10 @@ class AccountService {
 
     if (res[0].isOK()) {
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transactional -> {
+        handle.inTransaction(transaction -> {
           res[0] = 
             createAccount(
-              transactional,
+              transaction,
               CurrentUser.getUserId(),
               CurrentUser.getEmail(),
               dto.getName(),
@@ -191,7 +192,7 @@ class AccountService {
               dto.getCurrencyFormat()
             );
           if (res[0].isOK()) {
-            AccountDao accountDao = transactional.attach(AccountDao.class);
+            AccountDao accountDao = transaction.attach(AccountDao.class);
             Account account = accountDao.findById(res[0].getData());
             res[0] = Commons.refreshSession(account);
           }
@@ -234,10 +235,10 @@ class AccountService {
     final Response[] res = { Responses.DataProblem.DB_PROBLEM };
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(transactional -> {
-        UserDao userDao = transactional.attach(UserDao.class);
-        AccountDao accountDao = transactional.attach(AccountDao.class);
-        UserSessionDao sessionDao = transactional.attach(UserSessionDao.class);
+      handle.inTransaction(transaction -> {
+        UserDao userDao = transaction.attach(UserDao.class);
+        AccountDao accountDao = transaction.attach(AccountDao.class);
+        UserSessionDao sessionDao = transaction.attach(UserSessionDao.class);
 
         User user = userDao.findById(CurrentUser.getUserId());
 
@@ -250,21 +251,18 @@ class AccountService {
 
               String where = "where account_id=" + CurrentUser.getAccountId();
 
-              Batch batch = transactional.createBatch();
+              Batch batch = transaction.createBatch();
               batch.add("SET FOREIGN_KEY_CHECKS=0");
-              batch.add("delete from import_ " + where);
-              batch.add("delete from import_detail " + where);
               batch.add("delete from link_price " + where);
               batch.add("delete from link_history " + where);
               batch.add("delete from link_spec " + where);
               batch.add("delete from link " + where);
-              batch.add("delete from product_tag " + where);
-              batch.add("delete from product " + where);
+              batch.add("delete from link_group " + where);
               batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
               
               // in order to keep consistency, 
               // users having no account other than this must be deleted too!!!
-              MemberDao memberDao = transactional.attach(MemberDao.class);
+              MemberDao memberDao = transaction.attach(MemberDao.class);
               List<Long> unboundMembers = memberDao.findUserIdListHavingJustThisAccount(CurrentUser.getAccountId());
               if (unboundMembers != null && ! unboundMembers.isEmpty()) {
                 String userIdList = StringUtils.join(unboundMembers, ",");
@@ -329,9 +327,10 @@ class AccountService {
     }
   }
 
-  private Response createAccount(Handle transactional, Long userId, String userEmail, String accountName, String currencyCode, String currencyFormat) {
-    AccountDao accountDao = transactional.attach(AccountDao.class);
-    MemberDao memberDao = transactional.attach(MemberDao.class);
+  private Response createAccount(Handle transaction, Long userId, String userEmail, String accountName, String currencyCode, String currencyFormat) {
+    AccountDao accountDao = transaction.attach(AccountDao.class);
+    MemberDao memberDao = transaction.attach(MemberDao.class);
+    GroupDao groupDao = transaction.attach(GroupDao.class);
 
     Account account = accountDao.findByNameAndAdminId(accountName, userId);
     if (account == null) {
@@ -344,9 +343,7 @@ class AccountService {
         );
 
       if (accountId != null) {
-
         accountDao.insertStatusHistory(accountId, AccountStatus.CREATED.name());
-
         long memberId = 
           memberDao.insert(
             userId,
@@ -357,7 +354,9 @@ class AccountService {
           );
 
         if (memberId > 0) {
-          log.info("A new user just registered a new account. C.Name: {}, U.Email: {} ", accountName, userEmail);
+        	groupDao.createDefault("DEFAULT GROUP", accountId);
+
+          log.info("A new user registered: {} - {} ", userEmail, accountName);
           return new Response(accountId);
         }
       }

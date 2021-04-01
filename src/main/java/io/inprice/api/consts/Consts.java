@@ -60,24 +60,12 @@ public class Consts {
       public static final String CHANGE_ROLE = BASE + "/change-role";
     }
 
-    public static class Product {
-      public static final String BASE = "/product";
-      public static final String LINKS = BASE + "/links";
+    public static class Group {
+      public static final String BASE = "/group";
       public static final String SEARCH = BASE + "s/search";
-
-      public static final String IMPORT = BASE + "/import";
-      public static final String DETAIL = IMPORT + "/detail";
-      public static final String DETAILS_LIST = IMPORT + "/details";
-
-      public static final String IMPORT_CSV_FILE = IMPORT + "/file/csv";
-      public static final String IMPORT_URL_FILE = IMPORT + "/file/url";
-      public static final String IMPORT_EBAY_FILE = IMPORT + "/file/ebay";
-      public static final String IMPORT_AMAZON_FILE = IMPORT + "/file/amazon";
-
-      public static final String IMPORT_CSV_LIST = IMPORT + "/list/csv";
-      public static final String IMPORT_URL_LIST = IMPORT + "/list/url";
-      public static final String IMPORT_EBAY_LIST = IMPORT + "/list/ebay";
-      public static final String IMPORT_AMAZON_LIST = IMPORT + "/list/amazon";
+      public static final String LINKS = BASE + "/links";
+      public static final String IMPORT_LINKS = BASE + "/import";
+      public static final String MOVE_LINKS = BASE + "/move-links";
     }
 
     public static class Link {
@@ -101,11 +89,6 @@ public class Consts {
     public static class Coupon {
       public static final String BASE = "/coupon";
       public static final String APPLY = BASE + "/apply";
-    }
-
-    public static class Tag {
-      public static final String BASE = "/tag";
-      public static final String PRODUCT = BASE + "/product";
     }
 
     public static class Dashboard {

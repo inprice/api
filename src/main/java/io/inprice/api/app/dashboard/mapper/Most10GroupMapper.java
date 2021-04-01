@@ -8,18 +8,19 @@ import org.jdbi.v3.core.statement.StatementContext;
 
 import io.inprice.common.utils.DateUtils;
 
-public class Most10ProductMapper implements RowMapper<Most10Product> {
+public class Most10GroupMapper implements RowMapper<Most10Group> {
 
   @Override
-  public Most10Product map(ResultSet rs, StatementContext ctx) throws SQLException {
-    Most10Product m = new Most10Product();
+  public Most10Group map(ResultSet rs, StatementContext ctx) throws SQLException {
+    Most10Group m = new Most10Group();
 
     m.setId(rs.getLong("id"));
     m.setName(rs.getString("name"));
+    m.setActives(rs.getInt("actives"));
+    m.setTryings(rs.getInt("tryings"));
+    m.setWaitings(rs.getInt("waitings"));
+    m.setProblems(rs.getInt("problems"));
     m.setPrice(rs.getBigDecimal("price"));
-    m.setLinkCount(rs.getInt("link_count"));
-    m.setRanking(rs.getInt("ranking"));
-    m.setRankingWith(rs.getInt("ranking_with"));
 
     if (rs.getTimestamp("updated_at") != null) {
       m.setLastUpdate(DateUtils.formatLongDate(rs.getTimestamp("updated_at")));

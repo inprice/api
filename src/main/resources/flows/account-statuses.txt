@@ -1,5 +1,5 @@
 Genel özellikler
--- DONE -- 1) STOPPED ve CANCELLED statülerine geçişlerde plan ismi ve product sayıs sıfırlanmayacak.
+-- DONE -- 1) STOPPED ve CANCELLED statülerine geçişlerde plan ismi ve link sayıs sıfırlanmayacak.
 -- DONE -- 2) SUBSCRIBED ve COUPONED durumuna geçişte yeni alınan planın kapasitesi büyük ya da eşite o kullanılacak. Aksi durumda geçiş sadece gerçek ürün sayısı uygunsa olacak.
 -- DONE -- 3) Aktif durumda olup süresi kalmayan firmalar (günde 1 kez kontrol edilip) STOPPED durumuna geçirilecek.
 -- DONE -- 4) SUBSCRIBED iken her başarılı ve başarısız çekimden sonra kullanıcıya mail atılacak

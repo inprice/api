@@ -71,15 +71,15 @@ public class CouponService {
     if (CouponManager.isValid(code)) {
 
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transactional -> {
-          CouponDao couponDao = transactional.attach(CouponDao.class);
+        handle.inTransaction(transaction -> {
+          CouponDao couponDao = transaction.attach(CouponDao.class);
 
           Coupon coupon = couponDao.findByCode(code);
           if (coupon != null) {
             if (coupon.getIssuedAt() == null) {
 
               if (coupon.getIssuedId() == null || coupon.getIssuedId().equals(CurrentUser.getAccountId())) {
-                AccountDao accountDao = transactional.attach(AccountDao.class);
+                AccountDao accountDao = transaction.attach(AccountDao.class);
 
                 Account account = accountDao.findById(CurrentUser.getAccountId());
                 if (account.getStatus().isOKForCoupon()) {
@@ -93,15 +93,15 @@ public class CouponService {
                   }
 
                   // only broader plan transitions allowed
-                  if (account.getProductCount().compareTo(selectedPlan.getProductLimit()) <= 0) {
-                    SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+                  if (account.getLinkCount().compareTo(selectedPlan.getLinkLimit()) <= 0) {
+                    SubscriptionDao subscriptionDao = transaction.attach(SubscriptionDao.class);
 
                     boolean isOK = 
                       subscriptionDao.startFreeUseOrApplyCoupon(
                         CurrentUser.getAccountId(),
                         AccountStatus.COUPONED.name(),
                         selectedPlan.getName(),
-                        selectedPlan.getProductLimit(), 
+                        selectedPlan.getLinkLimit(), 
                         coupon.getDays()
                       );
 

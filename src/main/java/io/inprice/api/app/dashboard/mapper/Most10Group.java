@@ -8,16 +8,17 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Most10Product implements Serializable {
+public class Most10Group implements Serializable {
   
   private static final long serialVersionUID = -1701445492576224844L;
 
   private Long id;
   private String name;
+  private Integer actives;
+  private Integer waitings;
+  private Integer tryings;
+  private Integer problems;
   private BigDecimal price;
-  private Integer linkCount;
-  private Integer ranking;
-  private Integer rankingWith;
   private String lastUpdate;
 
 }
