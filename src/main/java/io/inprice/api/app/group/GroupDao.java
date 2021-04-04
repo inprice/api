@@ -34,9 +34,6 @@ public interface GroupDao {
   @GetGeneratedKeys()
   long insert(@Bind("name") String name, @Bind("price") BigDecimal price, @Bind("accountId") Long accountId);
 
-  @SqlUpdate("insert into link_group (name, defauld, account_id) values (:name, true, :accountId)")
-  void createDefault(@Bind("name") String name, @Bind("accountId") Long accountId);
-  
   @SqlUpdate("update link_group set name=:name, price=:price where id=:id and account_id=:accountId")
   boolean update(@Bind("id") Long id, @Bind("name") String name, @Bind("price") BigDecimal price, @Bind("accountId") Long accountId);
 

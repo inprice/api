@@ -25,7 +25,7 @@ interface DashboardDao {
   @SqlQuery("select level, count(1) as counter from link_group where account_id=:accountId group by level")
   @KeyColumn("level")
   @ValueColumn("counter")
-  Map<Integer, Integer> findLevelDists(@Bind("accountId") Long accountId);
+  Map<String, Integer> findLevelDists(@Bind("accountId") Long accountId);
 
   @SqlQuery(
     "select g.name as group_name, p.domain as platform, l.seller, l.price, l.status, l.level, l.url, l.last_update, l.created_at, l.url from link as l " + 

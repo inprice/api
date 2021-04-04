@@ -4,9 +4,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +23,7 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.GroupDTO;
 import io.inprice.api.dto.LinkDTO;
 import io.inprice.api.dto.LinkMoveDTO;
-import io.inprice.api.dto.URLImportDTO;
+import io.inprice.api.dto.LinkBulkInsertDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
@@ -77,10 +79,10 @@ class GroupService {
         LinkDao linkDao = handle.attach(LinkDao.class);
 
         //finding links
-        List<Link> linkList = linkDao.findListByGroupIdAndAccountId(id, CurrentUser.getAccountId());
+        List<Link> linkList = linkDao.findListByGroupId(id, CurrentUser.getAccountId());
         if (linkList != null && linkList.size() > 0) {
           int i = 0;
-          Map<Long, Integer> refListToLinks = new HashMap<>(linkList.size());
+          Map<Long, Integer> refListToLinks = new LinkedHashMap<>(linkList.size());
           for (Link link: linkList) {
             link.setPriceList(new ArrayList<>());
             link.setSpecList(new ArrayList<>());
@@ -215,6 +217,8 @@ class GroupService {
 
   Response delete(Long id) {
     if (id != null && id > 0) {
+
+      final int[] counts = { 0, 0 };
       final boolean[] isOK = { false };
 
       try (Handle handle = Database.getHandle()) {
@@ -223,44 +227,48 @@ class GroupService {
       	LinkGroup group = groupDao.findById(id, CurrentUser.getAccountId());
       	
       	if (group != null) {
-      		if (Boolean.FALSE.equals(group.getDefauld())) {
       			
-      			if (group.getLinkCount() > 0) {
-        			final String where = String.format("where group_id=%d and account_id=%d", id, CurrentUser.getAccountId());
-              handle.inTransaction(transaction -> {
-                Batch batch = transaction.createBatch();
-                batch.add("delete from link_price " + where);
-                batch.add("delete from link_history " + where);
-                batch.add("delete from link_spec " + where);
-                batch.add("delete from link_group " + where.replace("group_", "")); //this determines the success!
-                batch.add("delete from link " + where);
-                batch.add(
-              		String.format(
-            				"update account set link_count=link_count-%d where id=%d", 
-            				group.getLinkCount(), CurrentUser.getAccountId()
-          				)
-            		);
-                int[] result = batch.execute();
-                isOK[0] = result[3] > 0;
-                return isOK[0]; //for the most inner code block (not for the method!)
-              });
-      			} else {
-      				isOK[0] = groupDao.delete(id, CurrentUser.getAccountId());
-      			}
-        	} else {
-        		return Responses.Illegal.DEFAULT_GROUP_DELETE;
-        	}
+    			if (group.getLinkCount() > 0) {
+      			final String where = String.format("where group_id=%d and account_id=%d", id, CurrentUser.getAccountId());
+            handle.inTransaction(transaction -> {
+              Batch batch = transaction.createBatch();
+              batch.add("delete from link_price " + where);
+              batch.add("delete from link_history " + where);
+              batch.add("delete from link_spec " + where);
+              batch.add("delete from link_group " + where.replace("group_", "")); //this determines the success!
+              batch.add("delete from link " + where);
+              batch.add(
+            		String.format(
+          				"update account set link_count=link_count-%d where id=%d", 
+          				group.getLinkCount(), CurrentUser.getAccountId()
+        				)
+          		);
+              int[] result = batch.execute();
+              isOK[0] = result[3] > 0;
+              if (isOK[0]) {
+              	int linkCount = transaction.attach(AccountDao.class).findLinkCount(CurrentUser.getAccountId());
+              	counts[0] = linkCount;
+              	counts[1] = group.getLinkCount();
+              }
+              return isOK[0]; //for the most inner code block (not for the method!)
+            });
+    			} else {
+    				isOK[0] = groupDao.delete(id, CurrentUser.getAccountId());
+    			}
       	}
       }
 
       if (isOK[0]) {
-        return Responses.OK;
+        Map<String, Object> data = new HashMap<>(2);
+        data.put("count", counts[0]);
+        data.put("linkCount", counts[1]);
+        return new Response(data);
       }
     }
     return Responses.Invalid.GROUP;
   }
 
-  Response bulkInsert(URLImportDTO dto) {
+  Response bulkInsert(LinkBulkInsertDTO dto) {
     Response[] res = { validate(dto) };
 
     if (res[0].isOK()) {
@@ -270,7 +278,7 @@ class GroupService {
   
           Account account = accountDao.findById(CurrentUser.getAccountId());
           int allowedLinkCount = (account.getLinkLimit() - account.getLinkCount());
-          List<String> urlList = res[0].getData();
+          Set<String> urlList = res[0].getData();
   
           if (allowedLinkCount > 0) {
           	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
@@ -304,10 +312,12 @@ class GroupService {
           }
   
           if (res[0].isOK()) {
-            boolean isOK = accountDao.increaseLinkCount(dto.getGroupId(), urlList.size());
+            boolean isOK = accountDao.changeLinkCount(dto.getGroupId(), urlList.size());
             if (isOK) {
-              Map<String, Object> data = new HashMap<>(1);
+            	int linkCount = accountDao.findLinkCount(CurrentUser.getAccountId());
+              Map<String, Object> data = new HashMap<>(2);
               data.put("count", urlList.size());
+              data.put("linkCount", linkCount);
               res[0] = new Response(data);
             }
           }
@@ -329,7 +339,7 @@ class GroupService {
     if (StringUtils.isBlank(dto.getName())) {
       problem = "Name cannot be null!";
     } else if (dto.getName().length() < 3 || dto.getName().length() > 500) {
-      problem = "Name must be between 3 and 125 chars!";
+      problem = "Name must be between 3 and 128 chars!";
     }
     
     if (problem == null) {
@@ -346,16 +356,16 @@ class GroupService {
     return problem;
   }
   
-  private Response validate(URLImportDTO dto) {
+  private Response validate(LinkBulkInsertDTO dto) {
     Response res = null;
 
   	if (dto == null) res = Responses.Invalid.DATA;
   	if (res == null && (dto.getGroupId() == null || dto.getGroupId() <= 0)) res = Responses.Invalid.GROUP;
-    if (res == null && StringUtils.isBlank(dto.getContent())) res = Responses.NotSuitable.EMPTY_URL_LIST;
+    if (res == null && StringUtils.isBlank(dto.getLinksText())) res = Responses.NotSuitable.EMPTY_URL_LIST;
 
-    LinkedHashSet<String> urlList = null;
+    Set<String> urlList = null;
     if (res == null) {
-      String[] tempRows = dto.getContent().split("\n");
+      String[] tempRows = dto.getLinksText().split("\n");
       if (tempRows.length < 1) {
       	res = Responses.NotSuitable.EMPTY_URL_LIST;
       }

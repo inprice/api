@@ -96,19 +96,8 @@ class DashboardService {
   /**
    * finding group distributions by the Levels
    */
-  private int[] findGroupLevelDists(DashboardDao dashboardDao) {
-    int[] result = new int[5];
-
-    Map<Integer, Integer> levelDistMap = dashboardDao.findLevelDists(CurrentUser.getAccountId());
-    if (levelDistMap != null && levelDistMap.size() > 0) {
-      for (Entry<Integer, Integer> entry: levelDistMap.entrySet()) {
-        result[entry.getKey()-1] = entry.getValue();
-      }
-    } else {
-      result = null;
-    }
-
-    return result;
+  private Map<String, Integer> findGroupLevelDists(DashboardDao dashboardDao) {
+    return dashboardDao.findLevelDists(CurrentUser.getAccountId());
   }
 
   /**

@@ -17,6 +17,7 @@ import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.link.dto.LinkSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
@@ -70,6 +71,14 @@ class LinkService {
                 linkDao.insertHistory(sample);
                 res = new Response(sample);
               }
+            }
+
+            if (sample.getId() != null) { //meaning that it is inserted successfully!
+            	int linkCount = handle.attach(AccountDao.class).findLinkCount(CurrentUser.getAccountId());
+              Map<String, Object> data = new HashMap<>(2);
+              data.put("model", sample);
+              data.put("linkCount", linkCount);
+              res = new Response(data);
             }
 
           } else {
@@ -158,10 +167,14 @@ class LinkService {
             batch.add("delete from link_spec " + where);
             batch.add("delete from link " + where.replace("link_", "")); //important!!!
             int[] result = batch.execute();
+            
             isOK[0] = result[3] > 0;
 
-            if (isOK[0] && LinkStatus.AVAILABLE.equals(deletedLink.getStatus())) {
-              CommonRepository.refreshGroup(transaction, deletedLink.getGroupId());
+            if (isOK[0]) {
+            	if (LinkStatus.AVAILABLE.equals(deletedLink.getStatus())) {
+                CommonRepository.refreshGroup(transaction, deletedLink.getGroupId());
+              }
+            	transaction.attach(AccountDao.class).changeLinkCount(CurrentUser.getAccountId(), -1);
             }
           }
 

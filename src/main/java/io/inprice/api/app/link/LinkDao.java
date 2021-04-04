@@ -42,10 +42,10 @@ public interface LinkDao {
     "inner join link_group as g on g.id = l.group_id " + 
     "where l.group_id=:groupId " +
     "  and l.account_id=:accountId " +
-    "order by l.id"
+    "order by l.status_group, l.last_check desc"
   )
   @UseRowMapper(LinkMapper.class)
-  List<Link> findListByGroupIdAndAccountId(@Bind("groupId") Long groupId, @Bind("accountId") Long accountId);
+  List<Link> findListByGroupId(@Bind("groupId") Long groupId, @Bind("accountId") Long accountId);
 
   @SqlUpdate(
     "insert into link (url, url_hash, group_id, account_id) " +

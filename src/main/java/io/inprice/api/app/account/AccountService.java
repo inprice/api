@@ -1,5 +1,6 @@
 package io.inprice.api.app.account;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -354,8 +355,7 @@ class AccountService {
           );
 
         if (memberId > 0) {
-        	groupDao.createDefault("DEFAULT GROUP", accountId);
-
+        	groupDao.insert("DEFAULT GROUP", BigDecimal.ZERO, accountId);
           log.info("A new user registered: {} - {} ", userEmail, accountName);
           return new Response(accountId);
         }

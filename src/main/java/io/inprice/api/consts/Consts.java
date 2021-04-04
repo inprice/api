@@ -64,7 +64,7 @@ public class Consts {
       public static final String BASE = "/group";
       public static final String SEARCH = BASE + "s/search";
       public static final String LINKS = BASE + "/links";
-      public static final String IMPORT_LINKS = BASE + "/import";
+      public static final String IMPORT_LINKS = LINKS + "/import";
       public static final String MOVE_LINKS = BASE + "/move-links";
     }
 

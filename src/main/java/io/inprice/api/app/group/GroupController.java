@@ -3,7 +3,7 @@ package io.inprice.api.app.group;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.GroupDTO;
 import io.inprice.api.dto.LinkMoveDTO;
-import io.inprice.api.dto.URLImportDTO;
+import io.inprice.api.dto.LinkBulkInsertDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -44,7 +44,7 @@ public class GroupController implements Controller {
 
     // import links
     app.post(Consts.Paths.Group.IMPORT_LINKS, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.bulkInsert(ctx.bodyAsClass(URLImportDTO.class))));
+      ctx.json(Commons.createResponse(ctx, service.bulkInsert(ctx.bodyAsClass(LinkBulkInsertDTO.class))));
     }, AccessRoles.EDITOR());
 
     // update

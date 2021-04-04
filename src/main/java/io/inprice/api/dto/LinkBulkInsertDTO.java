@@ -7,9 +7,9 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class URLImportDTO {
+public class LinkBulkInsertDTO {
 
   private Long groupId;
-  private String content;
+  private String linksText;
   
 }

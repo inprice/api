@@ -14,7 +14,10 @@ import io.inprice.api.app.account.mapper.AccountInfo;
 import io.inprice.api.app.account.mapper.AccountInfoMapper;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.common.mappers.AccountMapper;
+import io.inprice.common.mappers.UserUsedMapper;
+import io.inprice.common.meta.PermType;
 import io.inprice.common.models.Account;
+import io.inprice.common.models.UserUsed;
 
 public interface AccountDao {
 
@@ -54,7 +57,7 @@ public interface AccountDao {
   boolean update(@BindBean("dto") CustomerDTO dto, @Bind("id") Long id);
   
   @SqlUpdate("update account set link_count=link_count+:count where id=:id")
-  boolean increaseLinkCount(@Bind("id") Long id, @Bind("count") Integer count);
+  boolean changeLinkCount(@Bind("id") Long id, @Bind("count") Integer count);
 
   // finds only those accounts who have two days remaining
   @SqlQuery(
@@ -88,5 +91,15 @@ public interface AccountDao {
   )
   boolean insertStatusHistory(@Bind("accountId") Long accountId, @Bind("status") String status, 
     @Bind("planName") String planName, @Bind("subsId") String subsId, @Bind("custId") String custId);
+  
+  @SqlQuery("select * from user_used where email=:email and perm_type=:permType")
+  @UseRowMapper(UserUsedMapper.class)
+  UserUsed hasUserUsedByEmail(@Bind("email") String email, @Bind("permType") PermType permType);
 
+  @SqlUpdate("insert into user_used (email, perm_type) values (:email, :permType)")
+  void insertUserUsed(@Bind("email") String email, @Bind("permType") PermType permType);
+
+  @SqlQuery("select link_count from account where id=:id")
+  int findLinkCount(@Bind("id") Long id);
+  
 }

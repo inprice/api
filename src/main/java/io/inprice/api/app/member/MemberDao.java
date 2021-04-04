@@ -19,7 +19,7 @@ public interface MemberDao {
 
   final String ACCOUNT_FIELDS = 
     ", a.name as account_name, a.status as account_status, a.cust_id, a.subs_started_at, " +
-    "a.last_status_update, a.plan_name, a.renewal_at, a.currency_format, a.link_count ";
+    "a.last_status_update, a.plan_name, a.renewal_at, a.currency_format, a.link_limit, a.link_count ";
 
   @SqlQuery("select * from member where id=:id")
   @UseRowMapper(MemberMapper.class)

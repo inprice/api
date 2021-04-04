@@ -77,7 +77,6 @@ public class Responses {
     public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
     public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan, so you cannot cancel!");
     public static final Response NO_FREE_USE_RIGHT = new Response(BASE + 11, "You have no free use!");
-    public static final Response DEFAULT_GROUP_DELETE = new Response(BASE + 12, "You cannot delete default group!");
   }
 
   public static class Already {
@@ -86,7 +85,8 @@ public class Responses {
     public static final Response DELETED_MEMBER = new Response(BASE + 2, "This member is already deleted!");
 
     public static final Response USED_COUPON = new Response(BASE + 4, "This coupon seems already used!");
-    public static final Response IN_FREE_USE = new Response(BASE + 5, "Your Free Use is already active!");
+    public static final Response FREE_USE_USED = new Response(BASE + 5, "You have already used your free use previously!");
+    public static final Response IN_FREE_USE = new Response(BASE + 6, "Your Free Use is already active!");
 
     public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 7, "You have an active subscription!");
     public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 8, "This account has no active subscription at the moment!");
