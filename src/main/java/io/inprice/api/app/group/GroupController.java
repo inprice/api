@@ -2,7 +2,6 @@ package io.inprice.api.app.group;
 
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.GroupDTO;
-import io.inprice.api.dto.LinkMoveDTO;
 import io.inprice.api.dto.LinkBulkInsertDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
@@ -20,9 +19,14 @@ public class GroupController implements Controller {
   public void addRoutes(Javalin app) {
 
     // find by id
-    app.get(Consts.Paths.Group.BASE + "/:id", (ctx) -> {
-      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.findById(id)));
+  	app.get(Consts.Paths.Group.BASE + "/:id", (ctx) -> {
+  		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+  		ctx.json(Commons.createResponse(ctx, service.findById(id)));
+  	}, AccessRoles.ANYONE());
+  	
+    app.get(Consts.Paths.Group.BASE, (ctx) -> {
+    	Long exclude = ctx.queryParam("exclude", Long.class).getValue();
+      ctx.json(Commons.createResponse(ctx, service.getList(exclude)));
     }, AccessRoles.ANYONE());
 
     // find links and more by id
@@ -56,11 +60,6 @@ public class GroupController implements Controller {
     app.delete(Consts.Paths.Group.BASE + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.delete(id)));
-    }, AccessRoles.EDITOR());
-
-    // move links to under another group
-    app.put(Consts.Paths.Group.MOVE_LINKS, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.moveLinks(ctx.bodyAsClass(LinkMoveDTO.class))));
     }, AccessRoles.EDITOR());
 
   }

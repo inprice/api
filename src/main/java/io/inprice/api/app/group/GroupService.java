@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -19,21 +18,17 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.link.LinkDao;
+import io.inprice.api.app.link.LinkHelper;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.GroupDTO;
-import io.inprice.api.dto.LinkDTO;
-import io.inprice.api.dto.LinkMoveDTO;
 import io.inprice.api.dto.LinkBulkInsertDTO;
+import io.inprice.api.dto.LinkDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.models.Account;
-import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkGroup;
-import io.inprice.common.models.LinkHistory;
-import io.inprice.common.models.LinkPrice;
-import io.inprice.common.models.LinkSpec;
 import io.inprice.common.repository.CommonRepository;
 import io.inprice.common.utils.URLUtils;
 
@@ -52,6 +47,13 @@ class GroupService {
       return Responses.NotFound.GROUP;
     }
   }
+  
+  Response getList(Long exclude) {
+  	try (Handle handle = Database.getHandle()) {
+  		GroupDao groupDao = handle.attach(GroupDao.class);
+  		return new Response(groupDao.getList((exclude != null ? exclude : 0), CurrentUser.getAccountId()));
+  	}
+  }
 
   Response search(String term) {
     try (Handle handle = Database.getHandle()) {
@@ -60,48 +62,21 @@ class GroupService {
       if (StringUtils.isNotBlank(term)) {
       	list = groupDao.search(SqlHelper.clear(term) + "%", CurrentUser.getAccountId());
       } else {
-      	list = groupDao.getList(CurrentUser.getAccountId());
+      	list = groupDao.getList(0L, CurrentUser.getAccountId());
       }
     	return new Response(list);
     }
   }
 
   Response findLinksById(Long id) {
-    Map<String, Object> dataMap = new HashMap<>(2);
-
     try (Handle handle = Database.getHandle()) {
       GroupDao groupDao = handle.attach(GroupDao.class);
 
       LinkGroup group = groupDao.findById(id, CurrentUser.getAccountId());
       if (group != null) {
+      	Map<String, Object> dataMap = new HashMap<>(2);
         dataMap.put("group", group);
-
-        LinkDao linkDao = handle.attach(LinkDao.class);
-
-        //finding links
-        List<Link> linkList = linkDao.findListByGroupId(id, CurrentUser.getAccountId());
-        if (linkList != null && linkList.size() > 0) {
-          int i = 0;
-          Map<Long, Integer> refListToLinks = new LinkedHashMap<>(linkList.size());
-          for (Link link: linkList) {
-            link.setPriceList(new ArrayList<>());
-            link.setSpecList(new ArrayList<>());
-            link.setHistoryList(new ArrayList<>());
-            refListToLinks.put(link.getId(), i++);
-          }
-
-          List<LinkSpec> specsList = linkDao.findSpecListByGroupId(id); // finding links' specs
-          List<LinkPrice> pricesList = linkDao.findPriceListByGroupId(id); // finding links' prices
-          List<LinkHistory> historiesList = linkDao.findHistoryListByGroupId(id); // finding links' histories
-          for (LinkSpec linkSpec: specsList) linkList.get(refListToLinks.get(linkSpec.getLinkId())).getSpecList().add(linkSpec);
-          for (LinkPrice linkPrice: pricesList) linkList.get(refListToLinks.get(linkPrice.getLinkId())).getPriceList().add(linkPrice);
-          for (LinkHistory linkHistory: historiesList) linkList.get(refListToLinks.get(linkHistory.getLinkId())).getHistoryList().add(linkHistory);
-        }
-
-        if (linkList != null) {
-          dataMap.put("links", linkList);
-        }
-
+        dataMap.put("links", LinkHelper.findDetailedLinkList(id, handle.attach(LinkDao.class)));
         return new Response(dataMap);
       }
     }
@@ -183,38 +158,6 @@ class GroupService {
     return Responses.Invalid.GROUP;
   }
 
-  /**
-   * Moves links from one to another.
-   * Two operation is enough; a) setting new group id for all the selected links and b) refreshing group numbers
-   * 
-   */
-  Response moveLinks(LinkMoveDTO dto) {
-  	if (dto != null && dto.getToGroupId() != null && dto.getToGroupId() > 0) {
-      if (dto.getLinkIdList() != null && dto.getLinkIdList().size() > 0) {
-
-      	try (Handle handle = Database.getHandle()) {
-        	handle.inTransaction(transaction -> {
-            LinkDao linkDao = transaction.attach(LinkDao.class);
-  
-          	List<Long> groupIdList = linkDao.findGroupIdList(dto.getLinkIdList(), CurrentUser.getAccountId());
-          	if (groupIdList != null && groupIdList.size() > 0) {
-          		long affected = linkDao.changeGroupId(dto.getLinkIdList(), dto.getToGroupId());
-          		if (affected == dto.getLinkIdList().size()) {
-            		groupIdList.add(dto.getToGroupId());
-            		for (Long groupId: groupIdList) {
-            			CommonRepository.refreshGroup(transaction, groupId);
-            		}
-          		}
-            }
-            return true;
-        	});
-      	}
-      	return Responses.OK;
-      }
-    }
-  	return Responses.Invalid.DATA;
-  }
-
   Response delete(Long id) {
     if (id != null && id > 0) {
 
@@ -275,15 +218,16 @@ class GroupService {
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transaction -> {
           AccountDao accountDao = transaction.attach(AccountDao.class);
+      		LinkDao linkDao = transaction.attach(LinkDao.class);
   
           Account account = accountDao.findById(CurrentUser.getAccountId());
           int allowedLinkCount = (account.getLinkLimit() - account.getLinkCount());
           Set<String> urlList = res[0].getData();
+          urlList.remove("");
   
           if (allowedLinkCount > 0) {
           	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
   
-          		LinkDao linkDao = transaction.attach(LinkDao.class);
           		List<LinkDTO> linkList = new ArrayList<>(urlList.size());
           		for (Iterator<String> it = urlList.iterator(); it.hasNext();) {
   							LinkDTO link = new LinkDTO();
@@ -315,9 +259,10 @@ class GroupService {
             boolean isOK = accountDao.changeLinkCount(dto.getGroupId(), urlList.size());
             if (isOK) {
             	int linkCount = accountDao.findLinkCount(CurrentUser.getAccountId());
-              Map<String, Object> data = new HashMap<>(2);
+              Map<String, Object> data = new HashMap<>(3);
               data.put("count", urlList.size());
               data.put("linkCount", linkCount);
+              data.put("links", LinkHelper.findDetailedLinkList(dto.getGroupId(), linkDao));
               res[0] = new Response(data);
             }
           }
@@ -343,7 +288,7 @@ class GroupService {
     }
     
     if (problem == null) {
-    	if (dto.getPrice() != null && (dto.getPrice().compareTo(BigDecimal.ONE) < 0 || dto.getPrice().compareTo(new BigDecimal(9_999_999)) > 0)) {
+    	if (dto.getPrice() != null && (dto.getPrice().compareTo(BigDecimal.ZERO) < 0 || dto.getPrice().compareTo(new BigDecimal(9_999_999)) > 0)) {
     		problem = "Price is out of reasonable range!";
     	}
     }

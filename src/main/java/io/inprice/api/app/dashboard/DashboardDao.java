@@ -28,11 +28,11 @@ interface DashboardDao {
   Map<String, Integer> findLevelDists(@Bind("accountId") Long accountId);
 
   @SqlQuery(
-    "select g.name as group_name, p.domain as platform, l.seller, l.price, l.status, l.level, l.url, l.last_update, l.created_at, l.url from link as l " + 
+    "select g.name as group_name, p.domain as platform, l.seller, l.price, l.status, l.level, l.url, l.updated_at, l.created_at, l.url from link as l " + 
 		"inner join link_group as g on g.id = l.group_id " + 
     "left join platform as p on p.id = l.platform_id " + 
     "where l.account_id=:accountId " +
-    "order by l.status, l.last_update desc " +
+    "order by l.status, l.updated_at desc " +
     "limit 25"
   )
   @UseRowMapper(MRU25LinkMapper.class)

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -22,6 +23,8 @@ import io.inprice.api.app.link.dto.LinkSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LinkDTO;
+import io.inprice.api.dto.LinkDeleteDTO;
+import io.inprice.api.dto.LinkMoveDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
@@ -137,7 +140,7 @@ class LinkService {
           "select *, plt.domain as platform from link as l " + 
       		"left join platform as plt on plt.id = l.platform_id " + 
           criteria +
-          " order by l.status_group, l.last_update, plt.domain " +
+          " order by l.status_group, l.updated_at, plt.domain " +
           limit
         )
       .map(new LinkMapper())
@@ -150,43 +153,101 @@ class LinkService {
     }
   }
 
-  Response deleteById(Long id) {
-    if (id != null && id > 0) {
-      final boolean[] isOK = { false };
-      final String where = String.format("where link_id=%d and account_id=%d; ", id, CurrentUser.getAccountId());
+  Response delete(LinkDeleteDTO dto) {
+  	Response[] res = { Responses.NotFound.LINK };
+
+    if (dto != null && dto.getLinkIdSet() != null && dto.getLinkIdSet().size() > 0) {
+    	int count = dto.getLinkIdSet().size();
+    	
+    	String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
+    	
+      final String where = String.format("where link_id in (%s) and account_id=%d ", joinedIds, CurrentUser.getAccountId());
 
       try (Handle handle = Database.getHandle()) {
         handle.inTransaction(transaction -> {
           LinkDao linkDao = transaction.attach(LinkDao.class);
 
-          Link deletedLink = linkDao.findById(id);
-          if (deletedLink != null) {
-            Batch batch = transaction.createBatch();
-            batch.add("delete from link_price " + where);
-            batch.add("delete from link_history " + where);
-            batch.add("delete from link_spec " + where);
-            batch.add("delete from link " + where.replace("link_", "")); //important!!!
-            int[] result = batch.execute();
-            
-            isOK[0] = result[3] > 0;
-
-            if (isOK[0]) {
-            	if (LinkStatus.AVAILABLE.equals(deletedLink.getStatus())) {
-                CommonRepository.refreshGroup(transaction, deletedLink.getGroupId());
-              }
-            	transaction.attach(AccountDao.class).changeLinkCount(CurrentUser.getAccountId(), -1);
+          Batch batch = transaction.createBatch();
+          batch.add("delete from link_price " + where);
+          batch.add("delete from link_history " + where);
+          batch.add("delete from link_spec " + where);
+          batch.add("delete from link " + where.replace("link_", "")); //important!!!
+					batch.add(
+						String.format(
+							"update account set link_count=link_count-%d where id=%d",
+							count, CurrentUser.getAccountId()
+						)
+					);
+					int[] result = batch.execute();
+          
+          if (result[3] > 0) {
+            Map<Long, String> groupAndStatus = linkDao.findGroupIdAndStatus(dto.getLinkIdSet());
+          	if (groupAndStatus != null && groupAndStatus.size() > 0) {
+          		for (Entry<Long, String> entry: groupAndStatus.entrySet()) {
+        				if (LinkStatus.AVAILABLE.name().equals(entry.getValue())) {
+        					CommonRepository.refreshGroup(transaction, entry.getKey());
+        				}
+        			}
             }
+        		res[0] = getResponseWithLinkCount(transaction);
           }
 
-          return isOK[0];
+          return res[0].isOK();
         });
       }
 
-      if (isOK[0]) {
-        return Responses.OK;
+    }
+  	return res[0];
+  }
+
+  /**
+   * Moves links from one to another.
+   * Two operation is enough; a) setting new group id for all the selected links and b) refreshing group numbers
+   * 
+   */
+  Response moveTo(LinkMoveDTO dto) {
+  	Response[] res = { Responses.Invalid.DATA };
+
+  	if (dto != null && dto.getToGroupId() != null && dto.getToGroupId() > 0) {
+      if (dto.getLinkIdSet() != null && dto.getLinkIdSet().size() > 0) {
+
+      	try (Handle handle = Database.getHandle()) {
+        	handle.inTransaction(transaction -> {
+            LinkDao linkDao = transaction.attach(LinkDao.class);
+  
+          	Set<Long> foundGroupIdSet = linkDao.findGroupIdList(dto.getLinkIdSet(), CurrentUser.getAccountId());
+          	if (foundGroupIdSet != null && foundGroupIdSet.size() > 0) {
+          		int affected = linkDao.changeGroupId(dto.getLinkIdSet(), dto.getToGroupId());
+          		if (affected == dto.getLinkIdSet().size()) {
+            		foundGroupIdSet.add(dto.getToGroupId());
+            		for (Long groupId: foundGroupIdSet) {
+            			CommonRepository.refreshGroup(transaction, groupId); //this call automatically refreshes link counts
+            		}
+
+            		if (dto.getFromGroupId() != null) {
+                	Map<String, Object> dataMap = new HashMap<>(1);
+                  dataMap.put("links", LinkHelper.findDetailedLinkList(dto.getFromGroupId(), handle.attach(LinkDao.class)));
+                  res[0] = new Response(dataMap);
+            		} else { // meaning that it is called from link search page (not from detailed group page)!
+            			res[0] = Responses.OK;
+            		}
+          		}
+            }
+            return true;
+        	});
+      	}
       }
     }
-    return Responses.NotFound.LINK;
+
+  	return res[0];
+  }
+
+  private Response getResponseWithLinkCount(Handle trans) {
+  	AccountDao accountDao = trans.attach(AccountDao.class);
+  	int linkCount = accountDao.findLinkCount(CurrentUser.getAccountId());
+    Map<String, Object> data = new HashMap<>(1);
+    data.put("linkCount", linkCount);
+    return new Response(data);
   }
 
   Response toggleStatus(Long id) {

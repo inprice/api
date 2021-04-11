@@ -10,12 +10,11 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class LinkMoveDTO implements Serializable {
+public class LinkDeleteDTO implements Serializable {
 
-	private static final long serialVersionUID = -4093444125338195428L;
+	private static final long serialVersionUID = 8504119602766630634L;
 
 	private Long fromGroupId;
-	private Long toGroupId;
   private Set<Long> linkIdSet;
 
 }

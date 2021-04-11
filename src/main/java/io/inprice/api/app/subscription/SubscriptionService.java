@@ -164,7 +164,7 @@ class SubscriptionService {
         
         //checks if the user has already used free use right before!
         UserUsed hasUsed = accountDao.hasUserUsedByEmail(CurrentUser.getEmail(), PermType.FREE_USE);
-        if (hasUsed == null || hasUsed.getAllowed().equals(Boolean.TRUE)) {
+        if (hasUsed == null || hasUsed.getWhitelisted().equals(Boolean.TRUE)) {
 
           Account account = accountDao.findById(CurrentUser.getAccountId());
           if (account != null) {
@@ -200,7 +200,7 @@ class SubscriptionService {
                         basicPlan.getName(),
                         null, null
                       );
-                    accountDao.insertUserUsed(CurrentUser.getEmail(), PermType.FREE_USE);
+                    if (hasUsed == null) accountDao.insertUserUsed(CurrentUser.getEmail(), PermType.FREE_USE);
                   }
                 }
   

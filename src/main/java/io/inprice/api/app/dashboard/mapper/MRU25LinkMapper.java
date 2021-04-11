@@ -23,10 +23,10 @@ public class MRU25LinkMapper implements RowMapper<MRU25Link> {
     m.setStatus(rs.getString("status"));
     m.setLevel(rs.getString("level"));
 
-    if (rs.getTimestamp("last_update") != null) {
-      m.setLastUpdate(DateUtils.formatLongDate(rs.getTimestamp("last_update")));
+    if (rs.getTimestamp("updated_at") != null) {
+      m.setUpdatedAt(DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
     } else {
-      m.setLastUpdate(DateUtils.formatLongDate(rs.getTimestamp("created_at")));
+      m.setUpdatedAt(DateUtils.formatLongDate(rs.getTimestamp("created_at")));
     }
 
     String platform = rs.getString("platform");

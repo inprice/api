@@ -77,7 +77,7 @@ class StripeService {
 
         //check if the last checkout is active
         CheckoutDao checkoutDao = handle.attach(CheckoutDao.class);
-        Checkout checkout = checkoutDao.findLastCheckout(CurrentUser.getAccountId());
+        Checkout checkout = checkoutDao.findCheckedAtout(CurrentUser.getAccountId());
         if (checkout != null) {
           String message = null;
           if (CheckoutStatus.PENDING.equals(checkout.getStatus())) {

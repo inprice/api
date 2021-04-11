@@ -22,9 +22,9 @@ public interface GroupDao {
   @UseRowMapper(LinkGroupMapper.class)
   LinkGroup findByName(@Bind("name") String name, @Bind("accountId") Long accountId);
   
-  @SqlQuery("select * from link_group where account_id = :accountId order by name")
+  @SqlQuery("select * from link_group where id!=:excludedId and account_id = :accountId order by name")
   @UseRowMapper(LinkGroupMapper.class)
-  List<LinkGroup> getList(@Bind("accountId") Long accountId);
+  List<LinkGroup> getList(@Bind("excludedId") Long excludedId, @Bind("accountId") Long accountId);
 
   @SqlQuery("select * from link_group where name like :term and account_id = :accountId order by name")
   @UseRowMapper(LinkGroupMapper.class)

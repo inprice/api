@@ -19,6 +19,6 @@ public class Most10Group implements Serializable {
   private Integer tryings;
   private Integer problems;
   private BigDecimal price;
-  private String lastUpdate;
+  private String updatedAt;
 
 }

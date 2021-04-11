@@ -23,9 +23,9 @@ public class Most10GroupMapper implements RowMapper<Most10Group> {
     m.setPrice(rs.getBigDecimal("price"));
 
     if (rs.getTimestamp("updated_at") != null) {
-      m.setLastUpdate(DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
+      m.setUpdatedAt(DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
     } else {
-      m.setLastUpdate(DateUtils.formatLongDate(rs.getTimestamp("created_at")));
+      m.setUpdatedAt(DateUtils.formatLongDate(rs.getTimestamp("created_at")));
     }
 
     return m;

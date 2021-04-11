@@ -1,7 +1,11 @@
 package io.inprice.api.app.link;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import org.jdbi.v3.sqlobject.config.KeyColumn;
+import org.jdbi.v3.sqlobject.config.ValueColumn;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -42,7 +46,7 @@ public interface LinkDao {
     "inner join link_group as g on g.id = l.group_id " + 
     "where l.group_id=:groupId " +
     "  and l.account_id=:accountId " +
-    "order by l.status_group, l.last_check desc"
+    "order by l.status_group, l.checked_at desc"
   )
   @UseRowMapper(LinkMapper.class)
   List<Link> findListByGroupId(@Bind("groupId") Long groupId, @Bind("accountId") Long accountId);
@@ -103,13 +107,18 @@ public interface LinkDao {
   @GetGeneratedKeys
   long insertHistory(@BindBean("link") Link link);
 
-  @SqlUpdate("update link set pre_status=status, status=:status, status_group=:statusGroup, last_update=now() where id=:id")
+  @SqlUpdate("update link set pre_status=status, status=:status, status_group=:statusGroup, updated_at=now() where id=:id")
   boolean toggleStatus(@Bind("id") Long id, @Bind("status") LinkStatus status, @Bind("statusGroup") LinkStatusGroup statusGroup);
   
-  @SqlQuery("update link set group_id=:toGroupId where id in (<linkIdList>) and group_id != :toGroupId")
-  long changeGroupId(@BindList("linkIdList") List<Long> linkIdList, @Bind("toGroupId") Long toGroupId);
+  @SqlUpdate("update link set group_id=:groupId where id in (<linkIdSet>) and group_id != :groupId")
+  int changeGroupId(@BindList("linkIdSet") Set<Long> linkIdSet, @Bind("groupId") Long groupId);
 
-  @SqlQuery("select distinct(group_id) from link where id in (<linkIdList>) and account_id=:account_id order by status_group")
-  List<Long> findGroupIdList(@BindList("linkIdList") List<Long> linkIdList, @Bind("accountId") Long accountId);
+  @SqlQuery("select group_id from link where id in (<linkIdSet>) and account_id=:accountId order by status_group")
+  Set<Long> findGroupIdList(@BindList("linkIdSet") Set<Long> linkIdSet, @Bind("accountId") Long accountId);
+
+  @SqlQuery("select group_id, status from link where id in (<linkIdSet>)")
+  @KeyColumn("group_id")
+  @ValueColumn("status")
+  Map<Long, String> findGroupIdAndStatus(@BindList("linkIdSet") Set<Long> linkIdSet);
 
 }
