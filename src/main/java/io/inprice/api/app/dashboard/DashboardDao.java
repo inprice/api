@@ -13,7 +13,7 @@ import io.inprice.api.app.dashboard.mapper.MRU25Link;
 import io.inprice.api.app.dashboard.mapper.MRU25LinkMapper;
 import io.inprice.api.app.dashboard.mapper.Most10Group;
 import io.inprice.api.app.dashboard.mapper.Most10GroupMapper;
-import io.inprice.common.meta.Level;
+import io.inprice.common.meta.GroupLevel;
 
 interface DashboardDao {
 
@@ -46,6 +46,6 @@ interface DashboardDao {
     "limit 10"
   )
   @UseRowMapper(Most10GroupMapper.class)
-  List<Most10Group> findMost10Group(@Bind("level") Level level, @Bind("accountId") Long accountId);
+  List<Most10Group> findMost10Group(@Bind("level") GroupLevel level, @Bind("accountId") Long accountId);
 
 }

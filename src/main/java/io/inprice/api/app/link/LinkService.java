@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -33,7 +32,7 @@ import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
-import io.inprice.common.repository.CommonRepository;
+import io.inprice.common.repository.CommonDao;
 import io.inprice.common.utils.DateUtils;
 
 class LinkService {
@@ -181,14 +180,17 @@ class LinkService {
 					int[] result = batch.execute();
           
           if (result[3] > 0) {
-            Map<Long, String> groupAndStatus = linkDao.findGroupIdAndStatus(dto.getLinkIdSet());
-          	if (groupAndStatus != null && groupAndStatus.size() > 0) {
-          		for (Entry<Long, String> entry: groupAndStatus.entrySet()) {
-        				if (LinkStatus.AVAILABLE.name().equals(entry.getValue())) {
-        					CommonRepository.refreshGroup(transaction, entry.getKey());
-        				}
-        			}
-            }
+          	CommonDao commonDao = transaction.attach(CommonDao.class);
+          	if (dto.getFromGroupId() != null) { //single group
+          		commonDao.refreshGroup(dto.getFromGroupId());
+          	} else {
+              Set<Long> groupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
+            	if (groupIdSet != null && groupIdSet.size() > 0) {
+            		for (Long groupId: groupIdSet) {
+            			commonDao.refreshGroup(groupId);
+          			}
+              }
+          	}
         		res[0] = getResponseWithLinkCount(transaction);
           }
 
@@ -219,9 +221,11 @@ class LinkService {
           	if (foundGroupIdSet != null && foundGroupIdSet.size() > 0) {
           		int affected = linkDao.changeGroupId(dto.getLinkIdSet(), dto.getToGroupId());
           		if (affected == dto.getLinkIdSet().size()) {
+          			CommonDao commonDao = transaction.attach(CommonDao.class);
+          			
             		foundGroupIdSet.add(dto.getToGroupId());
             		for (Long groupId: foundGroupIdSet) {
-            			CommonRepository.refreshGroup(transaction, groupId); //this call automatically refreshes link counts
+            			commonDao.refreshGroup(groupId);
             		}
 
             		if (dto.getFromGroupId() != null) {
@@ -284,10 +288,9 @@ class LinkService {
                 link.setStatus(newStatus);
                 long historyId = linkDao.insertHistory(link);
                 if (historyId > 0) {
-                  if (LinkStatus.AVAILABLE.equals(newStatus)) {
-                    CommonRepository.refreshGroup(transaction, link.getGroupId());
-                  }
-                res[0] = Responses.OK;
+            			CommonDao commonDao = transaction.attach(CommonDao.class);
+            			commonDao.refreshGroup(link.getGroupId());
+            			res[0] = Responses.OK;
                 }
               }
             }

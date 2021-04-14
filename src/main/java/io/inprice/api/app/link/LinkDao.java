@@ -1,11 +1,8 @@
 package io.inprice.api.app.link;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.jdbi.v3.sqlobject.config.KeyColumn;
-import org.jdbi.v3.sqlobject.config.ValueColumn;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
@@ -116,9 +113,7 @@ public interface LinkDao {
   @SqlQuery("select group_id from link where id in (<linkIdSet>) and account_id=:accountId order by status_group")
   Set<Long> findGroupIdList(@BindList("linkIdSet") Set<Long> linkIdSet, @Bind("accountId") Long accountId);
 
-  @SqlQuery("select group_id, status from link where id in (<linkIdSet>)")
-  @KeyColumn("group_id")
-  @ValueColumn("status")
-  Map<Long, String> findGroupIdAndStatus(@BindList("linkIdSet") Set<Long> linkIdSet);
+  @SqlQuery("select group_id from link where id in (<linkIdSet>)")
+  Set<Long> findGroupIdSet(@BindList("linkIdSet") Set<Long> linkIdSet);
 
 }

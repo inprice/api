@@ -29,7 +29,7 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.LinkGroup;
-import io.inprice.common.repository.CommonRepository;
+import io.inprice.common.repository.CommonDao;
 import io.inprice.common.utils.URLUtils;
 
 class GroupService {
@@ -138,7 +138,8 @@ class GroupService {
                 // if base price is changed then all the prices and other 
                 // indicators (on both group itself and its links) must be re-calculated accordingly
                 if (found.getPrice().doubleValue() != dto.getPrice().doubleValue()) {
-                  CommonRepository.refreshGroup(transaction, dto.getId());
+            			CommonDao commonDao = transaction.attach(CommonDao.class);
+            			commonDao.refreshGroup(dto.getId());
                 }
                 res[0] = Responses.OK;
               }
@@ -171,33 +172,31 @@ class GroupService {
       	
       	if (group != null) {
       			
-    			if (group.getLinkCount() > 0) {
-      			final String where = String.format("where group_id=%d and account_id=%d", id, CurrentUser.getAccountId());
-            handle.inTransaction(transaction -> {
-              Batch batch = transaction.createBatch();
-              batch.add("delete from link_price " + where);
-              batch.add("delete from link_history " + where);
-              batch.add("delete from link_spec " + where);
-              batch.add("delete from link_group " + where.replace("group_", "")); //this determines the success!
-              batch.add("delete from link " + where);
-              batch.add(
-            		String.format(
-          				"update account set link_count=link_count-%d where id=%d", 
-          				group.getLinkCount(), CurrentUser.getAccountId()
-        				)
-          		);
-              int[] result = batch.execute();
-              isOK[0] = result[3] > 0;
-              if (isOK[0]) {
-              	int linkCount = transaction.attach(AccountDao.class).findLinkCount(CurrentUser.getAccountId());
-              	counts[0] = linkCount;
-              	counts[1] = group.getLinkCount();
-              }
-              return isOK[0]; //for the most inner code block (not for the method!)
-            });
-    			} else {
-    				isOK[0] = groupDao.delete(id, CurrentUser.getAccountId());
-    			}
+    			final String where = String.format("where group_id=%d and account_id=%d", id, CurrentUser.getAccountId());
+          handle.inTransaction(transaction -> {
+            Batch batch = transaction.createBatch();
+            batch.add("delete from link_price " + where);
+            batch.add("delete from link_history " + where);
+            batch.add("delete from link_spec " + where);
+            batch.add("delete from link " + where);
+            batch.add("delete from link_group " + where.replace("group_", "")); //this determines the success!
+            batch.add(
+          		String.format(
+        				"update account set link_count=link_count-%d where id=%d", 
+        				group.getLinkCount(), CurrentUser.getAccountId()
+      				)
+        		);
+            int[] result = batch.execute();
+            isOK[0] = result[4] > 0;
+            if (isOK[0]) {
+            	AccountDao accountDao = transaction.attach(AccountDao.class);
+            	accountDao.changeLinkCount(id, group.getLinkCount()*-1);
+            	int linkCount = accountDao.findLinkCount(CurrentUser.getAccountId());
+            	counts[0] = linkCount;
+            	counts[1] = group.getLinkCount();
+            }
+            return isOK[0]; //for the most inner code block (not for the method!)
+          });
       	}
       }
 
@@ -256,15 +255,13 @@ class GroupService {
           }
   
           if (res[0].isOK()) {
-            boolean isOK = accountDao.changeLinkCount(dto.getGroupId(), urlList.size());
-            if (isOK) {
-            	int linkCount = accountDao.findLinkCount(CurrentUser.getAccountId());
-              Map<String, Object> data = new HashMap<>(3);
-              data.put("count", urlList.size());
-              data.put("linkCount", linkCount);
-              data.put("links", LinkHelper.findDetailedLinkList(dto.getGroupId(), linkDao));
-              res[0] = new Response(data);
-            }
+            accountDao.changeLinkCount(dto.getGroupId(), urlList.size());
+          	int linkCount = accountDao.findLinkCount(CurrentUser.getAccountId());
+            Map<String, Object> data = new HashMap<>(3);
+            data.put("count", urlList.size());
+            data.put("linkCount", linkCount);
+            data.put("links", LinkHelper.findDetailedLinkList(dto.getGroupId(), linkDao));
+            res[0] = new Response(data);
           }
   
           return res[0].isOK(); //not for method but the closest transaction block!
