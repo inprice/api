@@ -1,8 +1,10 @@
 package io.inprice.api.app.link;
 
-import io.inprice.api.app.link.dto.LinkDTO;
 import io.inprice.api.app.link.dto.LinkSearchDTO;
 import io.inprice.api.consts.Consts;
+import io.inprice.api.dto.LinkDTO;
+import io.inprice.api.dto.LinkDeleteDTO;
+import io.inprice.api.dto.LinkMoveDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -22,11 +24,17 @@ public class LinkController implements Controller {
     app.post(Consts.Paths.Link.BASE, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.insert(ctx.bodyAsClass(LinkDTO.class))));
     }, AccessRoles.EDITOR());
-
+    
     // delete
-    app.delete(Consts.Paths.Link.BASE + "/:id", (ctx) -> {
-      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.deleteById(id)));
+    app.delete(Consts.Paths.Link.BASE, (ctx) -> {
+    	LinkDeleteDTO ldDto = ctx.bodyAsClass(LinkDeleteDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.delete(ldDto)));
+    }, AccessRoles.EDITOR());
+
+    // move links to under another group
+    app.post(Consts.Paths.Link.MOVE, (ctx) -> {
+    	LinkMoveDTO lmDto = ctx.bodyAsClass(LinkMoveDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.moveTo(lmDto)));
     }, AccessRoles.EDITOR());
 
     // change status to PAUSED | RESUMED

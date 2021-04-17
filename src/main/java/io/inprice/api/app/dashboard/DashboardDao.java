@@ -11,41 +11,41 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
 import io.inprice.api.app.dashboard.mapper.MRU25Link;
 import io.inprice.api.app.dashboard.mapper.MRU25LinkMapper;
-import io.inprice.api.app.dashboard.mapper.Most10Product;
-import io.inprice.api.app.dashboard.mapper.Most10ProductMapper;
+import io.inprice.api.app.dashboard.mapper.Most10Group;
+import io.inprice.api.app.dashboard.mapper.Most10GroupMapper;
+import io.inprice.common.meta.GroupLevel;
 
 interface DashboardDao {
 
-  @SqlQuery("select status, count(1) as counter from link where import_detail_id is null and account_id=:accountId group by status")
-  @KeyColumn("status")
+  @SqlQuery("select status_group, count(1) as counter from link where account_id=:accountId group by status_group")
+  @KeyColumn("status_group")
   @ValueColumn("counter")
-  Map<String, Integer> findStatusDists(@Bind("accountId") Long accountId);
+  Map<String, Integer> findStatusGroupDists(@Bind("accountId") Long accountId);
 
-  @SqlQuery("select position, count(1) as counter from product where account_id=:accountId group by position")
-  @KeyColumn("position")
+  @SqlQuery("select level, count(1) as counter from link_group where account_id=:accountId group by level")
+  @KeyColumn("level")
   @ValueColumn("counter")
-  Map<Integer, Integer> findPositionDists(@Bind("accountId") Long accountId);
+  Map<String, Integer> findLevelDists(@Bind("accountId") Long accountId);
 
   @SqlQuery(
-    "select p.name as product_name, plt.domain as platform, l.seller, l.price, l.status, l.url, l.last_update, l.created_at, l.url from link as l " + 
-		"inner join product as p on p.id = l.product_id " + 
-    "left join platform as plt on plt.id = l.platform_id " + 
-    "where l.import_detail_id is null " +
-    "  and l.account_id=:accountId " +
-    "order by l.status, l.last_update desc " +
+    "select g.name as group_name, p.domain as platform, l.seller, l.price, l.status, l.level, l.url, l.updated_at, l.created_at, l.url from link as l " + 
+		"inner join link_group as g on g.id = l.group_id " + 
+    "left join platform as p on p.id = l.platform_id " + 
+    "where l.account_id=:accountId " +
+    "order by l.status, l.updated_at desc " +
     "limit 25"
   )
   @UseRowMapper(MRU25LinkMapper.class)
   List<MRU25Link> findMR25Link(@Bind("accountId") Long accountId);
 
   @SqlQuery(
-    "select id, name, price, updated_at, created_at, link_count, ranking, ranking_with from product " +
-    "where position=:position " +
+    "select * from link_group " +
+    "where level=:level " +
     "  and account_id=:accountId " +
     "order by updated_at desc " +
     "limit 10"
   )
-  @UseRowMapper(Most10ProductMapper.class)
-  List<Most10Product> findMost10Product(@Bind("position") Integer position, @Bind("accountId") Long accountId);
+  @UseRowMapper(Most10GroupMapper.class)
+  List<Most10Group> findMost10Group(@Bind("level") GroupLevel level, @Bind("accountId") Long accountId);
 
 }

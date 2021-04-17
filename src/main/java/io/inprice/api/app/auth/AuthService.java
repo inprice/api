@@ -332,9 +332,9 @@ public class AuthService {
                 boolean isActivated = 
                   memberDao.activate(
                     newUser.getId(),
-                    UserStatus.JOINED.name(),
+                    UserStatus.PENDING,
+                    UserStatus.JOINED,
                     newUser.getEmail(),
-                    UserStatus.PENDING.name(),
                     sendDto.getAccountId()
                   );
 

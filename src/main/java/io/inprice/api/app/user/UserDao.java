@@ -43,7 +43,7 @@ public interface UserDao {
   @SqlUpdate("update user set password=:saltedHash where id=:id")
   boolean updatePassword(@Bind("id") Long id, @Bind("saltedHash") String saltedHash);
 
-  @SqlQuery("select * from user_banned where email=:email")
+  @SqlQuery("select * from user_banned where email=:email and voided=false")
   @UseRowMapper(UserBannedMapper.class)
   UserBanned findBannedUserByEmail(@Bind("email") String email);
 

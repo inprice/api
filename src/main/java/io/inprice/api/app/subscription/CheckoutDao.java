@@ -17,7 +17,7 @@ public interface CheckoutDao {
 
   @SqlQuery("select * from checkout where account_id=:accountId order by created_at desc limit 1")
   @UseRowMapper(CheckoutMapper.class)
-  Checkout findLastCheckout(@Bind("accountId") Long accountId);
+  Checkout findCheckedAtout(@Bind("accountId") Long accountId);
 
   @SqlUpdate("insert into checkout (_hash, session_id, account_id, plan_name) values (:hash, :sessionId, :accountId, :planName)")
   boolean insert(@Bind("hash") String hash, @Bind("sessionId") String sessionId, @Bind("accountId") Long accountId, @Bind("planName") String planName);

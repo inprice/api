@@ -33,7 +33,8 @@ public class ForResponse implements Serializable {
   private Date lastStatusUpdate;
   private String currencyFormat;
   private String timezone;
-  private Integer productCount;
+  private Integer linkLimit;
+  private Integer linkCount;
   private UserRole role;
 
   public ForResponse(Account account, String user, String email, UserRole role, String timezone) {
@@ -48,7 +49,8 @@ public class ForResponse implements Serializable {
     this.currencyFormat = account.getCurrencyFormat();
     this.timezone = timezone;
     this.role = role;
-    this.productCount = account.getProductCount();
+    this.linkLimit = account.getLinkLimit();
+    this.linkCount = account.getLinkCount();
 
     makeTheStandardAssignments();
   }
@@ -65,7 +67,8 @@ public class ForResponse implements Serializable {
     this.currencyFormat = forResponse.getCurrencyFormat();
     this.timezone = forResponse.getTimezone();
     this.role = forResponse.getRole();
-    this.productCount = forResponse.getProductCount();
+    this.linkLimit = forResponse.getLinkLimit();
+    this.linkCount = forResponse.getLinkCount();
 
     makeTheStandardAssignments();
   }
@@ -82,7 +85,8 @@ public class ForResponse implements Serializable {
     this.currencyFormat = forRedis.getCurrencyFormat();
     this.timezone = forRedis.getTimezone();
     this.role = UserRole.valueOf(forCookie.getRole());
-    this.productCount = forRedis.getProductCount();
+    this.linkLimit = forRedis.getLinkLimit();
+    this.linkCount = forRedis.getLinkCount();
 
     makeTheStandardAssignments();
   }
@@ -99,7 +103,8 @@ public class ForResponse implements Serializable {
     this.currencyFormat = mem.getCurrencyFormat();
     this.timezone = user.getTimezone();
     this.role = UserRole.valueOf(forCookie.getRole());
-    this.productCount = mem.getProductCount();
+    this.linkLimit = mem.getLinkLimit();
+    this.linkCount = mem.getLinkCount();
 
     makeTheStandardAssignments();
   }

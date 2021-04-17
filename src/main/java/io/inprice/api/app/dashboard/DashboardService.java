@@ -12,21 +12,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
-import io.inprice.api.app.dashboard.mapper.Most10Product;
+import io.inprice.api.app.dashboard.mapper.Most10Group;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.meta.LinkStatus;
-import io.inprice.common.meta.Position;
+import io.inprice.common.meta.GroupLevel;
+import io.inprice.common.meta.LinkStatusGroup;
 import io.inprice.common.utils.DateUtils;
 
 class DashboardService {
 
   private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
-
-  private final String OTHERS = "OTHERS";
 
   Response getReport(boolean refresh) {
     Map<String, Object> report = null;
@@ -40,7 +38,7 @@ class DashboardService {
         DashboardDao dashboardDao = handle.attach(DashboardDao.class);
 
         report.put("date", DateUtils.formatLongDate(new Date()));
-        report.put("products", getProducts(dashboardDao));
+        report.put("groups", getGroups(dashboardDao));
         report.put("links", getLinks(dashboardDao));
         report.put("account", accountDao.findById(CurrentUser.getAccountId()));
 
@@ -55,10 +53,10 @@ class DashboardService {
     return Responses.DataProblem.DB_PROBLEM;
   }
 
-  private Map<String, Object> getProducts(DashboardDao dashboardDao) {
+  private Map<String, Object> getGroups(DashboardDao dashboardDao) {
     Map<String, Object> result = new HashMap<>(2);
-    result.put("extremePrices", find10ProductsHavingExtremePrices(dashboardDao));
-    result.put("positionDists", findProductPositionDists(dashboardDao));
+    result.put("extremePrices", find10GroupsHavingExtremePrices(dashboardDao));
+    result.put("levelDists", findGroupLevelDists(dashboardDao));
     return result;
   }
 
@@ -75,19 +73,17 @@ class DashboardService {
   private int[] findLinkStatusDists(DashboardDao dashboardDao) {
     Map<String, Integer> stats = new HashMap<>(6);
     int i = 0;
-    stats.put(LinkStatus.AVAILABLE.name(), i++);
-    stats.put(LinkStatus.NOT_AVAILABLE.name(), i++);
-    stats.put(LinkStatus.TOBE_IMPLEMENTED.name(), i++);
-    stats.put(LinkStatus.NETWORK_ERROR.name(), i++);
-    stats.put(OTHERS, i++);
+    stats.put(LinkStatusGroup.ACTIVE.name(), i++);
+    stats.put(LinkStatusGroup.WAITING.name(), i++);
+    stats.put(LinkStatusGroup.TRYING.name(), i++);
+    stats.put(LinkStatusGroup.PROBLEM.name(), i++);
 
     int[] result = new int[i];
 
-    Map<String, Integer> statusDistMap = dashboardDao.findStatusDists(CurrentUser.getAccountId());
-    if (statusDistMap != null && statusDistMap.size() > 0) {
-      for (Entry<String, Integer> entry: statusDistMap.entrySet()) {
+    Map<String, Integer> statusGroupDistMap = dashboardDao.findStatusGroupDists(CurrentUser.getAccountId());
+    if (statusGroupDistMap != null && statusGroupDistMap.size() > 0) {
+      for (Entry<String, Integer> entry: statusGroupDistMap.entrySet()) {
         Integer index = stats.get(entry.getKey());
-        if (index == null) index = i-1; // it must be OTHERS's index
         result[index] += entry.getValue();
       }
     } else {
@@ -98,32 +94,21 @@ class DashboardService {
   }
 
   /**
-   * finding product distributions by the Positions
+   * finding group distributions by the Levels
    */
-  private int[] findProductPositionDists(DashboardDao dashboardDao) {
-    int[] result = new int[5];
-
-    Map<Integer, Integer> positionDistMap = dashboardDao.findPositionDists(CurrentUser.getAccountId());
-    if (positionDistMap != null && positionDistMap.size() > 0) {
-      for (Entry<Integer, Integer> entry: positionDistMap.entrySet()) {
-        result[entry.getKey()-1] = entry.getValue();
-      }
-    } else {
-      result = null;
-    }
-
-    return result;
+  private Map<String, Integer> findGroupLevelDists(DashboardDao dashboardDao) {
+    return dashboardDao.findLevelDists(CurrentUser.getAccountId());
   }
 
   /**
-   * finding 10 Products having lowest / highest prices
+   * finding 10 Groups having lowest / highest prices
    */
-  private Map<String, List<Most10Product>> find10ProductsHavingExtremePrices(DashboardDao dashboardDao) {
-    Map<String, List<Most10Product>> result = new HashMap<>(2);
+  private Map<String, List<Most10Group>> find10GroupsHavingExtremePrices(DashboardDao dashboardDao) {
+    Map<String, List<Most10Group>> result = new HashMap<>(2);
 
-    Position[] positions = { Position.LOWEST, Position.HIGHEST };
-    for (Position pos: positions) {
-      result.put(pos.name().toLowerCase(), dashboardDao.findMost10Product(pos.ordinal()+1, CurrentUser.getAccountId()));
+    GroupLevel[] selected = { GroupLevel.LOWEST, GroupLevel.HIGHEST };
+    for (GroupLevel level: selected) {
+      result.put(level.name(), dashboardDao.findMost10Group(level, CurrentUser.getAccountId()));
     }
 
     return result;

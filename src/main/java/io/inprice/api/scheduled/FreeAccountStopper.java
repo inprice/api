@@ -53,8 +53,8 @@ public class FreeAccountStopper implements Runnable {
 
       log.info(clazz + " is triggered.");
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transactional -> {
-          AccountDao accountDao = transactional.attach(AccountDao.class);
+        handle.inTransaction(transaction -> {
+          AccountDao accountDao = transaction.attach(AccountDao.class);
 
           List<Account> expiredAccountList = 
             accountDao.findExpiredFreeAccountList(
@@ -67,8 +67,8 @@ public class FreeAccountStopper implements Runnable {
           int affected = 0;
 
           if (expiredAccountList != null && expiredAccountList.size() > 0) {
-            UserDao userDao = transactional.attach(UserDao.class);
-            SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+            UserDao userDao = transaction.attach(UserDao.class);
+            SubscriptionDao subscriptionDao = transaction.attach(SubscriptionDao.class);
 
             for (Account account: expiredAccountList) {
               boolean isOK = subscriptionDao.terminate(account.getId(), AccountStatus.STOPPED.name());

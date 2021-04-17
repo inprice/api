@@ -52,8 +52,8 @@ public class SubscribedAccountStopper implements Runnable {
 
       log.info(clazz + " is triggered.");
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transactional -> {
-          AccountDao accountDao = transactional.attach(AccountDao.class);
+        handle.inTransaction(transaction -> {
+          AccountDao accountDao = transaction.attach(AccountDao.class);
 
           List<AccountInfo> expiredAccountList = accountDao.findExpiredSubscriberAccountList();
           int affected = 0;
@@ -76,7 +76,7 @@ public class SubscribedAccountStopper implements Runnable {
                 log.error("Stopping subscription: failed " + accinfo.getName(), e);
               }
 
-              SubscriptionDao subscriptionDao = transactional.attach(SubscriptionDao.class);
+              SubscriptionDao subscriptionDao = transaction.attach(SubscriptionDao.class);
 
               //then account can be cancellable
               boolean isOK = subscriptionDao.terminate(accinfo.getId(), AccountStatus.STOPPED.name());

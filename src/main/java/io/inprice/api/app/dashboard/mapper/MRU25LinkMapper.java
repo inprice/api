@@ -16,16 +16,17 @@ public class MRU25LinkMapper implements RowMapper<MRU25Link> {
   public MRU25Link map(ResultSet rs, StatementContext ctx) throws SQLException {
     MRU25Link m = new MRU25Link();
 
-    m.setProductName(rs.getString("product_name"));
+    m.setGroupName(rs.getString("group_name"));
     m.setSeller(rs.getString("seller"));
+    m.setUrl(rs.getString("url"));
     m.setPrice(rs.getBigDecimal("price"));
     m.setStatus(rs.getString("status"));
-    m.setUrl(rs.getString("url"));
+    m.setLevel(rs.getString("level"));
 
-    if (rs.getTimestamp("last_update") != null) {
-      m.setLastUpdate(DateUtils.formatLongDate(rs.getTimestamp("last_update")));
+    if (rs.getTimestamp("updated_at") != null) {
+      m.setUpdatedAt(DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
     } else {
-      m.setLastUpdate(DateUtils.formatLongDate(rs.getTimestamp("created_at")));
+      m.setUpdatedAt(DateUtils.formatLongDate(rs.getTimestamp("created_at")));
     }
 
     String platform = rs.getString("platform");
