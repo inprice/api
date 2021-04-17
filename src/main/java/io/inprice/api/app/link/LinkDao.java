@@ -39,11 +39,12 @@ public interface LinkDao {
   Link findByGroupIdAndUrlHash(@Bind("groupId") Long groupId, @Bind("urlHash") String urlHash);
 
   @SqlQuery(
-    "select l.*, g.price as group_price from link as l " + 
-    "inner join link_group as g on g.id = l.group_id " + 
+    "select l.*, p.name as platform_name, g.price as group_price from link as l " + 
+		"inner join link_group as g on g.id = l.group_id " + 
+    "left join platform as p on p.id = l.platform_id " + 
     "where l.group_id=:groupId " +
     "  and l.account_id=:accountId " +
-    "order by l.status_group, l.checked_at desc"
+    "order by l.status_group, l.level, l.price"
   )
   @UseRowMapper(LinkMapper.class)
   List<Link> findListByGroupId(@Bind("groupId") Long groupId, @Bind("accountId") Long accountId);
