@@ -260,7 +260,11 @@ class AccountService {
               batch.add("delete from link " + where);
               batch.add("delete from link_group " + where);
               batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
-              
+              batch.add("delete from alarm " + where);
+              batch.add("delete from ticket " + where);
+              batch.add("delete from notice " + where);
+              batch.add("delete from user_notice " + where);
+              		
               // in order to keep consistency, 
               // users having no account other than this must be deleted too!!!
               MemberDao memberDao = transaction.attach(MemberDao.class);

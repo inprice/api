@@ -7,12 +7,10 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
-import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
-import io.inprice.api.dto.LinkDTO;
 import io.inprice.common.mappers.LinkHistoryMapper;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.mappers.LinkPriceMapper;
@@ -49,31 +47,6 @@ public interface LinkDao {
   @UseRowMapper(LinkMapper.class)
   List<Link> findListByGroupId(@Bind("groupId") Long groupId, @Bind("accountId") Long accountId);
 
-  @SqlUpdate(
-    "insert into link (url, url_hash, group_id, account_id) " +
-    "values (:url, :urlHash, :groupId, :accountId)"
-  )
-  @GetGeneratedKeys
-  long insert(@Bind("url") String url, @Bind("urlHash") String urlHash, @Bind("groupId") Long groupId, @Bind("accountId") Long accountId);
-
-  @SqlBatch(
-		"insert into link (url, url_hash, group_id, account_id) " +
-    "values (:link.url, :link.urlHash, :link.groupId, :link.accountId)"
-  )
-  void bulkInsert(@BindBean("link") List<LinkDTO> linkList);
-  
-  @SqlUpdate(
-    "insert into link (url, url_hash, sku, name, brand, seller, shipment, status, http_status, platform_id, group_id, account_id) " +
-    "values (:link.url, :link.urlHash, :link.sku, :link.name, :link.brand, :link.seller, :link.shipment, :link.status, :link.httpStatus, " +
-      ":link.platformId, :groupId, :accountId)"
-  )
-  @GetGeneratedKeys
-  long insert(@BindBean("link") Link sample, @Bind("groupId") Long groupId, @Bind("accountId") Long accountId);
-
-  @SqlQuery("select * from link_history where group_id=:groupId order by link_id, id desc")
-  @UseRowMapper(LinkHistoryMapper.class)
-  List<LinkHistory> findHistoryListByGroupId(@Bind("groupId") Long groupId);
-
   @SqlQuery("select * from link_price where group_id=:groupId order by link_id, id desc")
   @UseRowMapper(LinkPriceMapper.class)
   List<LinkPrice> findPriceListByGroupId(@Bind("groupId") Long groupId);
@@ -81,6 +54,10 @@ public interface LinkDao {
   @SqlQuery("select * from link_spec where group_id=:groupId order by link_id, _key")
   @UseRowMapper(LinkSpecMapper.class)
   List<LinkSpec> findSpecListByGroupId(@Bind("groupId") Long groupId);
+
+  @SqlQuery("select * from link_history where group_id=:groupId order by link_id, id desc")
+  @UseRowMapper(LinkHistoryMapper.class)
+  List<LinkHistory> findHistoryListByGroupId(@Bind("groupId") Long groupId);
 
   @SqlQuery("select * from link_history where link_id=:linkId order by id desc")
   @UseRowMapper(LinkHistoryMapper.class)
@@ -99,8 +76,16 @@ public interface LinkDao {
   List<LinkSpec> findSpecListByLinkId(@Bind("linkId") Long linkId);
 
   @SqlUpdate(
-    "insert into link_history (link_id, status, http_status, problem, group_id, account_id) " +
-    "values (:link.id, :link.status, :link.httpStatus, :link.problem, :link.groupId, :link.accountId)"
+    "insert into link (url, url_hash, sku, name, brand, seller, shipment, status, http_status, platform_id, group_id, account_id) " +
+    "values (:link.url, :link.urlHash, :link.sku, :link.name, :link.brand, :link.seller, :link.shipment, :link.status, :link.httpStatus, " +
+      ":link.platformId, :link.groupId, :link.accountId)"
+  )
+  @GetGeneratedKeys
+  long insert(@BindBean("link") Link sample);
+
+  @SqlUpdate(
+    "insert into link_history (link_id, status, http_status, group_id, account_id) " +
+    "values (:link.id, :link.status, :link.httpStatus, :link.groupId, :link.accountId)"
   )
   @GetGeneratedKeys
   long insertHistory(@BindBean("link") Link link);
@@ -108,9 +93,6 @@ public interface LinkDao {
   @SqlUpdate("update link set pre_status=status, status=:status, status_group=:statusGroup, updated_at=now() where id=:id")
   boolean toggleStatus(@Bind("id") Long id, @Bind("status") LinkStatus status, @Bind("statusGroup") LinkStatusGroup statusGroup);
   
-  @SqlUpdate("update link set group_id=:groupId where id in (<linkIdSet>) and group_id != :groupId")
-  int changeGroupId(@BindList("linkIdSet") Set<Long> linkIdSet, @Bind("groupId") Long groupId);
-
   @SqlQuery("select group_id from link where id in (<linkIdSet>) and account_id=:accountId order by status_group")
   Set<Long> findGroupIdList(@BindList("linkIdSet") Set<Long> linkIdSet, @Bind("accountId") Long accountId);
 

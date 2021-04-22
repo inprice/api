@@ -18,7 +18,7 @@ import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.meta.GroupLevel;
+import io.inprice.common.meta.Level;
 import io.inprice.common.meta.LinkStatusGroup;
 import io.inprice.common.utils.DateUtils;
 
@@ -106,8 +106,8 @@ class DashboardService {
   private Map<String, List<Most10Group>> find10GroupsHavingExtremePrices(DashboardDao dashboardDao) {
     Map<String, List<Most10Group>> result = new HashMap<>(2);
 
-    GroupLevel[] selected = { GroupLevel.LOWEST, GroupLevel.HIGHEST };
-    for (GroupLevel level: selected) {
+    Level[] selected = { Level.LOWEST, Level.HIGHEST };
+    for (Level level: selected) {
       result.put(level.name(), dashboardDao.findMost10Group(level, CurrentUser.getAccountId()));
     }
 

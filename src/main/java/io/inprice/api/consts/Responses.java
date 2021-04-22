@@ -98,7 +98,7 @@ public class Responses {
       public static final Response ACCOUNT = new Response(BASE + 20, "Seems that you have already registered this account!");
       public static final Response MEMBERSHIP = new Response(BASE + 21, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");
       public static final Response REGISTERED_USER = new Response(BASE + 22, "This user has already registered! Signing up is an option for newcomers! You can use Create Account in the menu after login.");
-      public static final Response GROUP = new Response(BASE + 25, "You have already a group having the same name!");
+      public static final Response GROUP = new Response(BASE + 25, "You already have a group having the same name!");
     }
   }
 

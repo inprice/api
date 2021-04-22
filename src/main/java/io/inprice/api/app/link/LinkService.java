@@ -1,5 +1,6 @@
 package io.inprice.api.app.link;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -7,8 +8,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.validator.routines.UrlValidator;
@@ -18,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.group.GroupDao;
 import io.inprice.api.app.link.dto.LinkSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
@@ -26,11 +30,14 @@ import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.common.converters.GroupRefreshResultConverter;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
+import io.inprice.common.info.GroupRefreshResult;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Link;
+import io.inprice.common.models.LinkGroup;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.repository.CommonDao;
 import io.inprice.common.utils.DateUtils;
@@ -50,29 +57,23 @@ class LinkService {
           LinkDao linkDao = handle.attach(LinkDao.class);
 
           String urlHash = DigestUtils.md5Hex(dto.getUrl());
-          Link link = linkDao.findByGroupIdAndUrlHash(dto.getGroupId(), urlHash);
-          if (link == null) {
+          Link found = linkDao.findByGroupIdAndUrlHash(dto.getGroupId(), urlHash);
 
+          if (found == null) {
             Link sample = linkDao.findSampleByUrlHashAndStatus(urlHash, LinkStatus.AVAILABLE);
-            if (sample != null) { // if any, lets clone it
-              long id = linkDao.insert(link, dto.getGroupId(), CurrentUser.getAccountId());
-              if (id > 0) {
-                sample.setId(id);
-                linkDao.insertHistory(sample);
-                res = new Response(sample);
-              }
-            } else {
-              long id = linkDao.insert(dto.getUrl(), urlHash, dto.getGroupId(), CurrentUser.getAccountId());
-              if (id > 0) {
-                sample = new Link();
-                sample.setId(id);
-                sample.setUrl(dto.getUrl());
-                sample.setUrlHash(urlHash);
-                sample.setGroupId(dto.getGroupId());
-                sample.setAccountId(CurrentUser.getAccountId());
-                linkDao.insertHistory(sample);
-                res = new Response(sample);
-              }
+            if (sample == null) {
+            	sample = new Link();
+              sample.setUrl(dto.getUrl());
+              sample.setUrlHash(urlHash);
+            }
+          	sample.setGroupId(dto.getGroupId());
+          	sample.setAccountId(dto.getAccountId());
+
+          	long id = linkDao.insert(sample);
+            if (id > 0) {
+              sample.setId(id);
+              linkDao.insertHistory(sample);
+              res = new Response(sample);
             }
 
             if (sample.getId() != null) { //meaning that it is inserted successfully!
@@ -82,7 +83,6 @@ class LinkService {
               data.put("linkCount", linkCount);
               res = new Response(data);
             }
-
           } else {
             res = Responses.DataProblem.ALREADY_EXISTS;
           }
@@ -167,6 +167,7 @@ class LinkService {
           LinkDao linkDao = transaction.attach(LinkDao.class);
 
           Batch batch = transaction.createBatch();
+          batch.add("delete from alarm " + where);
           batch.add("delete from link_price " + where);
           batch.add("delete from link_history " + where);
           batch.add("delete from link_spec " + where);
@@ -182,12 +183,14 @@ class LinkService {
           if (result[3] > 0) {
           	CommonDao commonDao = transaction.attach(CommonDao.class);
           	if (dto.getFromGroupId() != null) { //single group
-          		commonDao.refreshGroup(dto.getFromGroupId());
+          		GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(dto.getFromGroupId()));
+          		System.out.println(" -- GRR for Deleted LINK(s) : " + dto.getFromGroupId() + " -- " + grr);
           	} else {
               Set<Long> groupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
             	if (groupIdSet != null && groupIdSet.size() > 0) {
             		for (Long groupId: groupIdSet) {
-            			commonDao.refreshGroup(groupId);
+            			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(groupId));
+            			System.out.println(" -- GRR for Deleted LINK(s) : " + groupId + " -- " + grr);
           			}
               }
           	}
@@ -210,34 +213,63 @@ class LinkService {
   Response moveTo(LinkMoveDTO dto) {
   	Response[] res = { Responses.Invalid.DATA };
 
-  	if (dto != null && dto.getToGroupId() != null && dto.getToGroupId() > 0) {
+  	if (dto != null && (dto.getToGroupId() != null && dto.getToGroupId() > 0) || StringUtils.isNotBlank(dto.getToGroupName())) {
       if (dto.getLinkIdSet() != null && dto.getLinkIdSet().size() > 0) {
 
       	try (Handle handle = Database.getHandle()) {
         	handle.inTransaction(transaction -> {
-            LinkDao linkDao = transaction.attach(LinkDao.class);
-  
-          	Set<Long> foundGroupIdSet = linkDao.findGroupIdList(dto.getLinkIdSet(), CurrentUser.getAccountId());
-          	if (foundGroupIdSet != null && foundGroupIdSet.size() > 0) {
-          		int affected = linkDao.changeGroupId(dto.getLinkIdSet(), dto.getToGroupId());
-          		if (affected == dto.getLinkIdSet().size()) {
-          			CommonDao commonDao = transaction.attach(CommonDao.class);
-          			
-            		foundGroupIdSet.add(dto.getToGroupId());
-            		for (Long groupId: foundGroupIdSet) {
-            			commonDao.refreshGroup(groupId);
-            		}
+        		
+        		if (dto.getToGroupId() == null && StringUtils.isNotBlank(dto.getToGroupName())) {
+        			GroupDao groupDao = handle.attach(GroupDao.class);
+        			LinkGroup found = groupDao.findByName(dto.getToGroupName().trim(), CurrentUser.getAccountId());
+        			if (found == null) { //creating a new group
+        				dto.setToGroupId(groupDao.insert(dto.getToGroupName().trim(), BigDecimal.ZERO, CurrentUser.getAccountId()));
+        			} else {
+          			res[0] = Responses.Already.Defined.GROUP;
+        			}
+        		}
 
-            		if (dto.getFromGroupId() != null) {
-                	Map<String, Object> dataMap = new HashMap<>(1);
-                  dataMap.put("links", LinkHelper.findDetailedLinkList(dto.getFromGroupId(), handle.attach(LinkDao.class)));
-                  res[0] = new Response(dataMap);
-            		} else { // meaning that it is called from link search page (not from detailed group page)!
-            			res[0] = Responses.OK;
-            		}
-          		}
-            }
-            return true;
+        		if (!res[0].equals(Responses.Already.Defined.GROUP)) {
+          		LinkDao linkDao = transaction.attach(LinkDao.class);
+              
+            	Set<Long> foundGroupIdSet = linkDao.findGroupIdList(dto.getLinkIdSet(), CurrentUser.getAccountId());
+            	if (foundGroupIdSet != null && foundGroupIdSet.size() > 0) {
+          			String joinedIds = dto.getLinkIdSet().stream().map(String::valueOf).collect(Collectors.joining(","));
+          			final String 
+          				updatePart = 
+          					String.format(
+        							"set group_id = %d where link_id in (%s) and group_id=%d and account_id=%d", 
+        							dto.getToGroupId(), joinedIds, dto.getFromGroupId(), CurrentUser.getAccountId()
+      							);
+          			
+                Batch batch = transaction.createBatch();
+                batch.add("update alarm " + updatePart);
+                batch.add("update link_price " + updatePart);
+                batch.add("update link_history " + updatePart);
+                batch.add("update link_spec " + updatePart);
+                batch.add("update link " + updatePart.replace("link_", "")); //important!!!
+      					int[] result = batch.execute();
+
+      					if (result[4] > 0) {
+            			CommonDao commonDao = transaction.attach(CommonDao.class);
+            			
+              		foundGroupIdSet.add(dto.getToGroupId());
+              		for (Long groupId: foundGroupIdSet) {
+              			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(groupId));
+              			System.out.println(" -- GRR for Moved LINK(s) : " + groupId + " -- " + grr);
+              		}
+  
+              		if (dto.getFromGroupId() != null) {
+                  	Map<String, Object> dataMap = new HashMap<>(1);
+                    dataMap.put("links", LinkHelper.findDetailedLinkList(dto.getFromGroupId(), handle.attach(LinkDao.class)));
+                    res[0] = new Response(dataMap);
+              		} else { // meaning that it is called from link search page (not from detailed group page)!
+              			res[0] = Responses.OK;
+              		}
+      					}
+              }
+        		}
+            return res[0].isOK();
         	});
       	}
       }
@@ -289,7 +321,8 @@ class LinkService {
                 long historyId = linkDao.insertHistory(link);
                 if (historyId > 0) {
             			CommonDao commonDao = transaction.attach(CommonDao.class);
-            			commonDao.refreshGroup(link.getGroupId());
+            			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(link.getGroupId()));
+            			System.out.println(" -- GRR for Toggled LINK(s) : " + link.getGroupId() + " -- " + grr);
             			res[0] = Responses.OK;
                 }
               }

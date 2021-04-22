@@ -63,6 +63,7 @@ public class Consts {
     public static class Group {
       public static final String BASE = "/group";
       public static final String SEARCH = BASE + "s/search";
+      public static final String ID_NAME_PAIRS = BASE + "/pairs";
       public static final String LINKS = BASE + "/links";
       public static final String IMPORT_LINKS = LINKS + "/import";
     }

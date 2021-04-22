@@ -9,6 +9,7 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
+import io.inprice.common.mappers.IdNamePairMapper;
 import io.inprice.common.mappers.LinkGroupMapper;
 import io.inprice.common.models.LinkGroup;
 
@@ -21,10 +22,14 @@ public interface GroupDao {
   @SqlQuery("select * from link_group where name=:name and account_id=:accountId")
   @UseRowMapper(LinkGroupMapper.class)
   LinkGroup findByName(@Bind("name") String name, @Bind("accountId") Long accountId);
-  
-  @SqlQuery("select * from link_group where id!=:excludedId and account_id = :accountId order by name")
+
+  @SqlQuery("select * from link_group where account_id = :accountId order by name")
   @UseRowMapper(LinkGroupMapper.class)
-  List<LinkGroup> getList(@Bind("excludedId") Long excludedId, @Bind("accountId") Long accountId);
+  List<LinkGroup> getList(@Bind("accountId") Long accountId);
+
+  @SqlQuery("select id, name from link_group where id!=:excludedId and account_id = :accountId order by name")
+  @UseRowMapper(IdNamePairMapper.class)
+  List<IdNamePairMapper> getIdNameList(@Bind("excludedId") Long excludedId, @Bind("accountId") Long accountId);
 
   @SqlQuery("select * from link_group where name like :term and account_id = :accountId order by name")
   @UseRowMapper(LinkGroupMapper.class)

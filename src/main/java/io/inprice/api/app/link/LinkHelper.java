@@ -26,11 +26,19 @@ public class LinkHelper {
       }
 
       List<LinkSpec> specsList = linkDao.findSpecListByGroupId(groupId); // finding links' specs
+      for (LinkSpec linkSpec: specsList) {
+      	linkList.get(refListToLinks.get(linkSpec.getLinkId())).getSpecList().add(linkSpec);
+      }
+
       List<LinkPrice> pricesList = linkDao.findPriceListByGroupId(groupId); // finding links' prices
+      for (LinkPrice linkPrice: pricesList) {
+      	linkList.get(refListToLinks.get(linkPrice.getLinkId())).getPriceList().add(linkPrice);
+      }
+
       List<LinkHistory> historiesList = linkDao.findHistoryListByGroupId(groupId); // finding links' histories
-      for (LinkSpec linkSpec: specsList) linkList.get(refListToLinks.get(linkSpec.getLinkId())).getSpecList().add(linkSpec);
-      for (LinkPrice linkPrice: pricesList) linkList.get(refListToLinks.get(linkPrice.getLinkId())).getPriceList().add(linkPrice);
-      for (LinkHistory linkHistory: historiesList) linkList.get(refListToLinks.get(linkHistory.getLinkId())).getHistoryList().add(linkHistory);
+      for (LinkHistory linkHistory: historiesList) {
+      	linkList.get(refListToLinks.get(linkHistory.getLinkId())).getHistoryList().add(linkHistory);
+      }
     }
   	return linkList;
   }

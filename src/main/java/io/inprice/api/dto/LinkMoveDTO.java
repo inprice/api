@@ -16,6 +16,7 @@ public class LinkMoveDTO implements Serializable {
 
 	private Long fromGroupId;
 	private Long toGroupId;
+	private String toGroupName; //in order to create new group if only if toGroupId is null!
   private Set<Long> linkIdSet;
 
 }

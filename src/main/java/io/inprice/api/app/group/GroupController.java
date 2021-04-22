@@ -24,9 +24,9 @@ public class GroupController implements Controller {
   		ctx.json(Commons.createResponse(ctx, service.findById(id)));
   	}, AccessRoles.ANYONE());
   	
-    app.get(Consts.Paths.Group.BASE, (ctx) -> {
-    	Long exclude = ctx.queryParam("exclude", Long.class).getValue();
-      ctx.json(Commons.createResponse(ctx, service.getList(exclude)));
+    app.get(Consts.Paths.Group.ID_NAME_PAIRS + "/:id", (ctx) -> {
+  		Long excludedId = ctx.pathParam("id", Long.class).getValue();
+      ctx.json(Commons.createResponse(ctx, service.getIdNameList(excludedId)));
     }, AccessRoles.ANYONE());
 
     // find links and more by id

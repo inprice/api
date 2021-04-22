@@ -22,12 +22,15 @@ import io.inprice.api.app.link.LinkHelper;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.GroupDTO;
 import io.inprice.api.dto.LinkBulkInsertDTO;
-import io.inprice.api.dto.LinkDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.common.converters.GroupRefreshResultConverter;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
+import io.inprice.common.info.GroupRefreshResult;
+import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Account;
+import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkGroup;
 import io.inprice.common.repository.CommonDao;
 import io.inprice.common.utils.URLUtils;
@@ -48,10 +51,10 @@ class GroupService {
     }
   }
   
-  Response getList(Long exclude) {
+  Response getIdNameList(Long exclude) {
   	try (Handle handle = Database.getHandle()) {
   		GroupDao groupDao = handle.attach(GroupDao.class);
-  		return new Response(groupDao.getList((exclude != null ? exclude : 0), CurrentUser.getAccountId()));
+  		return new Response(groupDao.getIdNameList((exclude != null ? exclude : 0), CurrentUser.getAccountId()));
   	}
   }
 
@@ -62,7 +65,7 @@ class GroupService {
       if (StringUtils.isNotBlank(term)) {
       	list = groupDao.search(SqlHelper.clear(term) + "%", CurrentUser.getAccountId());
       } else {
-      	list = groupDao.getList(0L, CurrentUser.getAccountId());
+      	list = groupDao.getList(CurrentUser.getAccountId());
       }
     	return new Response(list);
     }
@@ -139,7 +142,8 @@ class GroupService {
                 // indicators (on both group itself and its links) must be re-calculated accordingly
                 if (found.getPrice().doubleValue() != dto.getPrice().doubleValue()) {
             			CommonDao commonDao = transaction.attach(CommonDao.class);
-            			commonDao.refreshGroup(dto.getId());
+            			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(dto.getId()));
+            			System.out.println(" -- GRR for GROUP -- " + grr);
                 }
                 res[0] = Responses.OK;
               }
@@ -175,6 +179,7 @@ class GroupService {
     			final String where = String.format("where group_id=%d and account_id=%d", id, CurrentUser.getAccountId());
           handle.inTransaction(transaction -> {
             Batch batch = transaction.createBatch();
+            batch.add("delete from alarm " + where);
             batch.add("delete from link_price " + where);
             batch.add("delete from link_history " + where);
             batch.add("delete from link_spec " + where);
@@ -227,16 +232,19 @@ class GroupService {
           if (allowedLinkCount > 0) {
           	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
   
-          		List<LinkDTO> linkList = new ArrayList<>(urlList.size());
           		for (Iterator<String> it = urlList.iterator(); it.hasNext();) {
-  							LinkDTO link = new LinkDTO();
+  							Link link = new Link();
   							link.setUrl(it.next());
   							link.setUrlHash(DigestUtils.md5Hex(link.getUrl()));
   							link.setGroupId(dto.getGroupId());
   							link.setAccountId(CurrentUser.getAccountId());
-  							linkList.add(link);
+
+  							long id = linkDao.insert(link);
+
+  							link.setId(id);
+  							link.setStatus(LinkStatus.TOBE_CLASSIFIED);
+  							linkDao.insertHistory(link);
   						}
-          		linkDao.bulkInsert(linkList);
           		
           		GroupDao groupDao = transaction.attach(GroupDao.class);
           		groupDao.increaseWaitingsCount(dto.getGroupId(), urlList.size());
