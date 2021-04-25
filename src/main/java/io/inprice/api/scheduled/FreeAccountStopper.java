@@ -50,69 +50,73 @@ public class FreeAccountStopper implements Runnable {
 
     try {
       Global.startTask(clazz);
-
       log.info(clazz + " is triggered.");
+
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transaction -> {
-          AccountDao accountDao = transaction.attach(AccountDao.class);
+      	handle.begin();
 
-          List<Account> expiredAccountList = 
-            accountDao.findExpiredFreeAccountList(
-              Arrays.asList(
-                AccountStatus.FREE.name(),
-                AccountStatus.COUPONED.name()
-              )
-            );
+        AccountDao accountDao = handle.attach(AccountDao.class);
+        List<Account> expiredAccountList = 
+          accountDao.findExpiredFreeAccountList(
+            Arrays.asList(
+              AccountStatus.FREE.name(),
+              AccountStatus.COUPONED.name()
+            )
+          );
 
-          int affected = 0;
+        int affected = 0;
 
-          if (expiredAccountList != null && expiredAccountList.size() > 0) {
-            UserDao userDao = transaction.attach(UserDao.class);
-            SubscriptionDao subscriptionDao = transaction.attach(SubscriptionDao.class);
+        if (expiredAccountList != null && expiredAccountList.size() > 0) {
+          UserDao userDao = handle.attach(UserDao.class);
+          SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
-            for (Account account: expiredAccountList) {
-              boolean isOK = subscriptionDao.terminate(account.getId(), AccountStatus.STOPPED.name());
+          for (Account account: expiredAccountList) {
+            boolean isOK = subscriptionDao.terminate(account.getId(), AccountStatus.STOPPED.name());
+            if (isOK) {
+
+              AccountTrans trans = new AccountTrans();
+              trans.setAccountId(account.getId());
+              trans.setSuccessful(Boolean.TRUE);
+              trans.setDescription(("End of period!"));
+
+              if (AccountStatus.FREE.equals(account.getStatus()))
+                trans.setEvent(SubsEvent.FREE_USE_STOPPED);
+              else
+                trans.setEvent(SubsEvent.COUPON_USE_STOPPED);
+    
+              isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
               if (isOK) {
-
-                AccountTrans trans = new AccountTrans();
-                trans.setAccountId(account.getId());
-                trans.setSuccessful(Boolean.TRUE);
-                trans.setDescription(("End of period!"));
-
-                if (AccountStatus.FREE.equals(account.getStatus()))
-                  trans.setEvent(SubsEvent.FREE_USE_STOPPED);
-                else
-                  trans.setEvent(SubsEvent.COUPON_USE_STOPPED);
-      
-                isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-                if (isOK) {
-                  isOK = accountDao.insertStatusHistory(account.getId(), AccountStatus.STOPPED.name());
-                }
-              }
-
-              if (isOK) {
-                User user = userDao.findById(account.getId());
-
-                String accountName = StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName();
-
-                Map<String, Object> dataMap = new HashMap<>(3);
-                dataMap.put("user", user.getEmail());
-                dataMap.put("account", accountName);
-                String message = templateRenderer.render(EmailTemplate.FREE_ACCOUNT_STOPPED, dataMap);
-                emailSender.send(Props.APP_EMAIL_SENDER(), "Your inprice subscription is stopped.", user.getEmail(), message);
-
-                affected++;
+                isOK = accountDao.insertStatusHistory(account.getId(), AccountStatus.STOPPED.name());
               }
             }
-          }
 
-          if (affected > 0) {
-            log.info("{} free account in total stopped!", affected);
-          } else {
-            log.info("No free account to be stopped was found!");
+            if (isOK) {
+              User user = userDao.findById(account.getId());
+
+              String accountName = StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName();
+
+              Map<String, Object> dataMap = new HashMap<>(3);
+              dataMap.put("user", user.getEmail());
+              dataMap.put("account", accountName);
+              String message = templateRenderer.render(EmailTemplate.FREE_ACCOUNT_STOPPED, dataMap);
+              emailSender.send(Props.APP_EMAIL_SENDER(), "Your inprice subscription is stopped.", user.getEmail(), message);
+
+              affected++;
+            }
           }
-          return (affected > 0);
-        });
+        }
+
+        if (affected > 0) {
+          log.info("{} free account in total stopped!", affected);
+        } else {
+          log.info("No free account to be stopped was found!");
+        }
+        
+        if (affected > 0)
+        	handle.commit();
+        else
+        	handle.rollback();
+
       } catch (Exception e) {
         log.error("Failed to trigger " + clazz , e);
       }

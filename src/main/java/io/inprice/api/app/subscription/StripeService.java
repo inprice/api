@@ -228,7 +228,7 @@ class StripeService {
         trans.setEvent(SubsEvent.SUBSCRIPTION_CANCELLED);
         trans.setSuccessful(Boolean.TRUE);
         trans.setDescription("Manuel cancel.");
-        return addTransaction(account.getId(), account.getCustId(), dto, trans);
+        return addhandle(account.getId(), account.getCustId(), dto, trans);
 
       } else if (subsResult != null) {
         log.error("Unexpected subs status: {}", subsResult.getStatus());
@@ -317,7 +317,7 @@ class StripeService {
   }
 
   /**
-   * Handles failed and successful invoice transactions to manage subscriptions
+   * Handles failed and successful invoice handles to manage subscriptions
    * 
    * @param event
    */
@@ -459,7 +459,7 @@ class StripeService {
               trans.setReason(invoice.getBillingReason());
               trans.setDescription(description);
               trans.setFileUrl(invoice.getHostedInvoiceUrl());
-              res = addTransaction(accountId, invoice.getCustomer(), dto, trans);
+              res = addhandle(accountId, invoice.getCustomer(), dto, trans);
             } else {
               log.error("Failed to set accountId, see the previous log rows!");
               res = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
@@ -529,7 +529,7 @@ class StripeService {
             trans.setSuccessful(Boolean.FALSE);
             trans.setReason(invoice.getBillingReason());
             trans.setFileUrl(invoice.getHostedInvoiceUrl());
-            res = addTransaction(accountId, invoice.getCustomer(), null, trans);
+            res = addhandle(accountId, invoice.getCustomer(), null, trans);
           } else {
             log.error("User's credit card failed!");
             res = Responses.ServerProblem.CHECKOUT_PROBLEM;
@@ -551,286 +551,288 @@ class StripeService {
     return res;
   }
 
-  Response addTransaction(Long account_id, String custId, CustomerDTO dto, AccountTrans trans) {
-    Response[] res = { Responses.DataProblem.SUBSCRIPTION_PROBLEM };
+  Response addhandle(Long account_id, String custId, CustomerDTO dto, AccountTrans trans) {
+    Response response = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(transaction -> {
-        AccountDao accountDao = transaction.attach(AccountDao.class);
-        SubscriptionDao subscriptionDao = transaction.attach(SubscriptionDao.class);
+    	handle.begin();
 
-        AccountTrans oldTrans = subscriptionDao.findByEventId(trans.getEventId());
-        if (oldTrans == null) {
+      AccountDao accountDao = handle.attach(AccountDao.class);
+      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+      AccountTrans oldTrans = subscriptionDao.findByEventId(trans.getEventId());
 
-          Long accountId = account_id;
-          if (accountId == null && trans != null && trans.getAccountId() != null) accountId = trans.getAccountId();
+      if (oldTrans == null) {
+        Long accountId = account_id;
+        if (accountId == null && trans != null && trans.getAccountId() != null) accountId = trans.getAccountId();
 
-          Account account = null;
-          if (accountId != null) {
-            account = accountDao.findById(accountId);
-          } else if (StringUtils.isNotBlank(custId)) {
-            account = accountDao.findByCustId(custId);
-          }
+        Account account = null;
+        if (accountId != null) {
+          account = accountDao.findById(accountId);
+        } else if (StringUtils.isNotBlank(custId)) {
+          account = accountDao.findByCustId(custId);
+        }
+  
+        if (account != null) {
+
+          if (accountId == null) accountId = account.getId();
+          if (trans.getAccountId() == null) trans.setAccountId(accountId);
     
-          if (account != null) {
+          switch (trans.getEvent()) {
+    
+            case SUBSCRIPTION_STARTED: {
+              if (account.getStatus().isOKForSubscription()) {
 
-            if (accountId == null) accountId = account.getId();
-            if (trans.getAccountId() == null) trans.setAccountId(accountId);
-      
-            switch (trans.getEvent()) {
-      
-              case SUBSCRIPTION_STARTED: {
-                if (account.getStatus().isOKForSubscription()) {
-
-                  Plan plan = Plans.findByName(dto.getPlanName());
-                  if (subscriptionDao.startSubscription(dto, AccountStatus.SUBSCRIBED.name(), plan.getLinkLimit(), accountId)) {
-                    boolean isOK = updateInvoiceInfo(dto);
-                    if (isOK) {
-
-                      String accountName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : account.getName();
-
-                      Map<String, Object> dataMap = new HashMap<>(5);
-                      dataMap.put("user", dto.getEmail());
-                      dataMap.put("account", accountName);
-                      dataMap.put("plan", dto.getPlanName());
-                      dataMap.put("invoiceUrl", trans.getFileUrl());
-                      dataMap.put("renewalAt", DateUtils.formatReverseDate(dto.getRenewalDate()));
-                      String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_STARTED, dataMap);
-                      emailSender.send(Props.APP_EMAIL_SENDER(), "Your subscription for inprice just started", dto.getEmail(), message);
-
-                      res[0] = Responses.OK;
-                      log.info("A new subscription is started: Title: {}, Account Id: {}", dto.getTitle(), accountId);
-                    } else {
-                      log.warn("Stripe service error: Title: {}, Account Id: {}", dto.getTitle(), accountId);
-                    }
-                  } else {
-                    log.warn("Failed to start a new subscription: Title: {}, Account Id: {}", dto.getTitle(), accountId);
-                  }
-                } else {
-                  res[0] = Responses.Already.ACTIVE_SUBSCRIPTION;
-                }
-                break;
-              }
-      
-              case SUBSCRIPTION_RENEWED: {
-                if (subscriptionDao.renewSubscription(accountId, AccountStatus.SUBSCRIBED.name(), dto.getRenewalDate())) {
-
-                  String accountName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : account.getName();
-
-                  Map<String, Object> dataMap = new HashMap<>(5);
-                  dataMap.put("user", dto.getEmail());
-                  dataMap.put("account", accountName);
-                  dataMap.put("plan", dto.getPlanName());
-                  dataMap.put("invoiceUrl", trans.getFileUrl());
-                  dataMap.put("renewalAt", DateUtils.formatReverseDate(dto.getRenewalDate()));
-                  String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_RENEWAL, dataMap);
-                  emailSender.send(Props.APP_EMAIL_SENDER(), "Your subscription is extended", dto.getEmail(), message);
-
-                  res[0] = Responses.OK;
-                  log.info("Subscription is renewed: Account Id: {}", accountId);
-                } else {
-                  log.warn("Failed to renew a subscription: Account Id: {}", accountId);
-                }
-                break;
-              }
-      
-              case SUBSCRIPTION_CANCELLED: {
-                if (account.getStatus().isOKForCancel()) {
-                  Date now = new Date();
-                  long days = DateUtils.findDayDiff(now, account.getRenewalAt());
-                  
-                  boolean isOK = false;
-                  String couponCode = null;
-
-                  if (days > 3) {
-                    couponCode = 
-                      couponService.createCoupon(
-                        transaction, 
-                        account.getId(), 
-                        trans.getEvent(), 
-                        account.getPlanName(), 
-                        days, 
-                        "For "+days+" days remaining cancelation"
-                      );
-                  }
-
-                  isOK = subscriptionDao.terminate(accountId, AccountStatus.CANCELLED.name());
-
+                Plan plan = Plans.findByName(dto.getPlanName());
+                if (subscriptionDao.startSubscription(dto, AccountStatus.SUBSCRIBED.name(), plan.getLinkLimit(), accountId)) {
+                  boolean isOK = updateInvoiceInfo(dto);
                   if (isOK) {
-                    String accountName = StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName();
 
-                    Map<String, Object> mailMap = new HashMap<>(5);
-                    mailMap.put("account", accountName);
-                    mailMap.put("user", CurrentUser.getEmail());
-                    if (couponCode != null) {
-                      mailMap.put("couponCode", couponCode);
-                      mailMap.put("days", days);
-                      mailMap.put("planName", account.getPlanName());
-                    }
-                    String message = 
-                      templateRenderer.render(
-                        (
-                          days < 4
-                          ? EmailTemplate.SUBSCRIPTION_CANCELLED
-                          : EmailTemplate.SUBSCRIPTION_CANCELLED_COUPONED
-                        ), mailMap
-                    );
-                    emailSender.send(
-                      Props.APP_EMAIL_SENDER(), 
-                      "Notification about your cancelled plan.", CurrentUser.getEmail(), 
-                      message
-                    );
+                    String accountName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : account.getName();
 
-                    res[0] = Responses.OK;
-                    log.info("Subscription cancelled: Account: {}, Pre.Status: {}", accountId, account.getStatus());
+                    Map<String, Object> dataMap = new HashMap<>(5);
+                    dataMap.put("user", dto.getEmail());
+                    dataMap.put("account", accountName);
+                    dataMap.put("plan", dto.getPlanName());
+                    dataMap.put("invoiceUrl", trans.getFileUrl());
+                    dataMap.put("renewalAt", DateUtils.formatReverseDate(dto.getRenewalDate()));
+                    String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_STARTED, dataMap);
+                    emailSender.send(Props.APP_EMAIL_SENDER(), "Your subscription for inprice just started", dto.getEmail(), message);
+
+                    response = Responses.OK;
+                    log.info("A new subscription is started: Title: {}, Account Id: {}", dto.getTitle(), accountId);
                   } else {
-                    log.warn("Failed to cancel subscription: Account: {}, Status: {}", accountId, account.getStatus());
+                    log.warn("Stripe service error: Title: {}, Account Id: {}", dto.getTitle(), accountId);
                   }
                 } else {
-                  res[0] = Responses.Already.PASSIVE_SUBSCRIPTION;
+                  log.warn("Failed to start a new subscription: Title: {}, Account Id: {}", dto.getTitle(), accountId);
                 }
-                break;
+              } else {
+                response = Responses.Already.ACTIVE_SUBSCRIPTION;
               }
-      
-              case PAYMENT_FAILED: {
-                EmailTemplate template = null;
+              break;
+            }
+    
+            case SUBSCRIPTION_RENEWED: {
+              if (subscriptionDao.renewSubscription(accountId, AccountStatus.SUBSCRIBED.name(), dto.getRenewalDate())) {
 
                 String accountName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : account.getName();
 
-                Map<String, Object> dataMap = new HashMap<>(4);
+                Map<String, Object> dataMap = new HashMap<>(5);
                 dataMap.put("user", dto.getEmail());
                 dataMap.put("account", accountName);
-                if (dto.getRenewalDate() != null) {
-                  long days = 3 + DateUtils.findDayDiff(new Date(), dto.getRenewalDate());
-                  if (days > 0) {
-                    Date lastTryingDate = org.apache.commons.lang3.time.DateUtils.addDays(dto.getRenewalDate(), 3);
-                    dataMap.put("days", days);
-                    dataMap.put("lastTryingDate", DateUtils.formatReverseDate(lastTryingDate));
-                    template = EmailTemplate.PAYMENT_FAILED_HAS_MORE_DAYS;
-                  } else {
-                    template = EmailTemplate.PAYMENT_FAILED_LAST_TIME;
-                  }
-                } else {
-                  template = EmailTemplate.PAYMENT_FAILED_FIRST_TIME;
-                }
-                String message = templateRenderer.render(template, dataMap);
-                emailSender.send(Props.APP_EMAIL_SENDER(), "Your payment failed", dto.getEmail(), message);
+                dataMap.put("plan", dto.getPlanName());
+                dataMap.put("invoiceUrl", trans.getFileUrl());
+                dataMap.put("renewalAt", DateUtils.formatReverseDate(dto.getRenewalDate()));
+                String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_RENEWAL, dataMap);
+                emailSender.send(Props.APP_EMAIL_SENDER(), "Your subscription is extended", dto.getEmail(), message);
 
-                res[0] = Responses.OK; // must be set true so that the transaction can reflect on database
-                log.warn("Payment failed! Account Id: {}", accountId);
-                break;
+                response = Responses.OK;
+                log.info("Subscription is renewed: Account Id: {}", accountId);
+              } else {
+                log.warn("Failed to renew a subscription: Account Id: {}", accountId);
               }
-      
-              case SUBSCRIPTION_CHANGED: {
-                Plan newPlan = Plans.findByName(dto.getPlanName());
-                boolean isOK = subscriptionDao.changePlan(accountId, newPlan.getName(), newPlan.getLinkLimit());
+              break;
+            }
+    
+            case SUBSCRIPTION_CANCELLED: {
+              if (account.getStatus().isOKForCancel()) {
+                Date now = new Date();
+                long days = DateUtils.findDayDiff(now, account.getRenewalAt());
+                
+                boolean isOK = false;
+                String couponCode = null;
+
+                if (days > 3) {
+                  couponCode = 
+                    couponService.createCoupon(
+                      handle, 
+                      account.getId(), 
+                      trans.getEvent(), 
+                      account.getPlanName(), 
+                      days, 
+                      "For "+days+" days remaining cancelation"
+                    );
+                }
+
+                isOK = subscriptionDao.terminate(accountId, AccountStatus.CANCELLED.name());
+
                 if (isOK) {
+                  String accountName = StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName();
 
-                  //if it is a downgrade an there are more than three days to renewal date
-                  //user is given a coupon to compansate those days
-                  String couponCode = null;
-                  long days = 0;
-                  Plan oldPlan = Plans.findByName(account.getPlanName());
-
-                  if (newPlan.getId().intValue() < oldPlan.getId().intValue()) {
-                    days = DateUtils.findDayDiff(new Date(), account.getRenewalAt());
-                    if (days > 3) {
-                      couponCode = 
-                        couponService.createCoupon(
-                          transaction, 
-                          account.getId(), 
-                          trans.getEvent(), 
-                          oldPlan.getName(), 
-                          days, 
-                          "For "+days+" days remaining after downgrade operation"
-                        );
-                    }
+                  Map<String, Object> mailMap = new HashMap<>(5);
+                  mailMap.put("account", accountName);
+                  mailMap.put("user", CurrentUser.getEmail());
+                  if (couponCode != null) {
+                    mailMap.put("couponCode", couponCode);
+                    mailMap.put("days", days);
+                    mailMap.put("planName", account.getPlanName());
                   }
-
-                  String accountName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : account.getName();
-
-                  Map<String, Object> dataMap = new HashMap<>(7);
-                  dataMap.put("user", dto.getEmail());
-                  dataMap.put("account", accountName);
-                  dataMap.put("fromPlan", account.getPlanName());
-                  dataMap.put("toPlan", newPlan.getName());
-                  dataMap.put("invoiceUrl", trans.getFileUrl());
-                  dataMap.put("days", days);
-                  dataMap.put("couponCode", couponCode);
-                  String message = templateRenderer.render(
-                    (
-                      trans.getSuccessful() 
-                      ? (couponCode != null ? EmailTemplate.SUBSCRIPTION_CHANGE_SUCCESSFUL_COUPONED : EmailTemplate.SUBSCRIPTION_CHANGE_SUCCESSFUL)
-                      : EmailTemplate.SUBSCRIPTION_CHANGE_FAILED
-                    ), dataMap
+                  String message = 
+                    templateRenderer.render(
+                      (
+                        days < 4
+                        ? EmailTemplate.SUBSCRIPTION_CANCELLED
+                        : EmailTemplate.SUBSCRIPTION_CANCELLED_COUPONED
+                      ), mailMap
                   );
-                  emailSender.send(Props.APP_EMAIL_SENDER(), "Your account plan has changed to " + newPlan.getName(), dto.getEmail(), message);
-                  
-                  res[0] = Responses.OK;
-                  log.info("Subscription is changed to {}. Account: {}", newPlan.getName(), accountId);
+                  emailSender.send(
+                    Props.APP_EMAIL_SENDER(), 
+                    "Notification about your cancelled plan.", CurrentUser.getEmail(), 
+                    message
+                  );
 
+                  response = Responses.OK;
+                  log.info("Subscription cancelled: Account: {}, Pre.Status: {}", accountId, account.getStatus());
                 } else {
-                  log.error("Failed to change plan! Account: {}, Plan: {}", account.getId(), newPlan.getName());
+                  log.warn("Failed to cancel subscription: Account: {}, Status: {}", accountId, account.getStatus());
+                }
+              } else {
+                response = Responses.Already.PASSIVE_SUBSCRIPTION;
+              }
+              break;
+            }
+    
+            case PAYMENT_FAILED: {
+              EmailTemplate template = null;
+
+              String accountName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : account.getName();
+
+              Map<String, Object> dataMap = new HashMap<>(4);
+              dataMap.put("user", dto.getEmail());
+              dataMap.put("account", accountName);
+              if (dto.getRenewalDate() != null) {
+                long days = 3 + DateUtils.findDayDiff(new Date(), dto.getRenewalDate());
+                if (days > 0) {
+                  Date lastTryingDate = org.apache.commons.lang3.time.DateUtils.addDays(dto.getRenewalDate(), 3);
+                  dataMap.put("days", days);
+                  dataMap.put("lastTryingDate", DateUtils.formatReverseDate(lastTryingDate));
+                  template = EmailTemplate.PAYMENT_FAILED_HAS_MORE_DAYS;
+                } else {
+                  template = EmailTemplate.PAYMENT_FAILED_LAST_TIME;
+                }
+              } else {
+                template = EmailTemplate.PAYMENT_FAILED_FIRST_TIME;
+              }
+              String message = templateRenderer.render(template, dataMap);
+              emailSender.send(Props.APP_EMAIL_SENDER(), "Your payment failed", dto.getEmail(), message);
+
+              response = Responses.OK; // must be set true so that the handle can reflect on database
+              log.warn("Payment failed! Account Id: {}", accountId);
+              break;
+            }
+    
+            case SUBSCRIPTION_CHANGED: {
+              Plan newPlan = Plans.findByName(dto.getPlanName());
+              boolean isOK = subscriptionDao.changePlan(accountId, newPlan.getName(), newPlan.getLinkLimit());
+              if (isOK) {
+
+                //if it is a downgrade an there are more than three days to renewal date
+                //user is given a coupon to compansate those days
+                String couponCode = null;
+                long days = 0;
+                Plan oldPlan = Plans.findByName(account.getPlanName());
+
+                if (newPlan.getId().intValue() < oldPlan.getId().intValue()) {
+                  days = DateUtils.findDayDiff(new Date(), account.getRenewalAt());
+                  if (days > 3) {
+                    couponCode = 
+                      couponService.createCoupon(
+                        handle, 
+                        account.getId(), 
+                        trans.getEvent(), 
+                        oldPlan.getName(), 
+                        days, 
+                        "For "+days+" days remaining after downgrade operation"
+                      );
+                  }
                 }
 
-                break;
+                String accountName = StringUtils.isNotBlank(dto.getTitle()) ? dto.getTitle() : account.getName();
+
+                Map<String, Object> dataMap = new HashMap<>(7);
+                dataMap.put("user", dto.getEmail());
+                dataMap.put("account", accountName);
+                dataMap.put("fromPlan", account.getPlanName());
+                dataMap.put("toPlan", newPlan.getName());
+                dataMap.put("invoiceUrl", trans.getFileUrl());
+                dataMap.put("days", days);
+                dataMap.put("couponCode", couponCode);
+                String message = templateRenderer.render(
+                  (
+                    trans.getSuccessful() 
+                    ? (couponCode != null ? EmailTemplate.SUBSCRIPTION_CHANGE_SUCCESSFUL_COUPONED : EmailTemplate.SUBSCRIPTION_CHANGE_SUCCESSFUL)
+                    : EmailTemplate.SUBSCRIPTION_CHANGE_FAILED
+                  ), dataMap
+                );
+                emailSender.send(Props.APP_EMAIL_SENDER(), "Your account plan has changed to " + newPlan.getName(), dto.getEmail(), message);
+                
+                response = Responses.OK;
+                log.info("Subscription is changed to {}. Account: {}", newPlan.getName(), accountId);
+
+              } else {
+                log.error("Failed to change plan! Account: {}, Plan: {}", account.getId(), newPlan.getName());
               }
 
-              default:
-                log.warn("Unexpected event! Account Id: {}, Event: {}", accountId, trans.getEvent().name());
-                break;
-      
+              break;
             }
 
-            if (res[0].isOK()) {
-              boolean isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-
-              if (isOK) {
-                switch (trans.getEvent()) {
-
-                  case SUBSCRIPTION_STARTED:
-                  case SUBSCRIPTION_CHANGED: {
-                    isOK = 
-                      accountDao.insertStatusHistory(
-                        account.getId(), 
-                        AccountStatus.SUBSCRIBED.name(),
-                        dto.getPlanName(),
-                        dto.getSubsId(),
-                        dto.getCustId()
-                      );
-                    break;
-                  }
-
-                  case SUBSCRIPTION_CANCELLED: {
-                    isOK = accountDao.insertStatusHistory(account.getId(), AccountStatus.CANCELLED.name());
-                    break;
-                  }
-
-                  default:
-                    break;
-                }
-              }
-
-              if (! isOK) {
-                res[0] = Responses.DataProblem.DB_PROBLEM;
-              }
-            } 
-
-          } else {
-            log.warn("Account not found! Event: {}, Id: {}", trans.getEvent(), trans.getEventId());
-            res[0] = Responses.NotFound.ACCOUNT;
-          }
+            default:
+              log.warn("Unexpected event! Account Id: {}, Event: {}", accountId, trans.getEvent().name());
+              break;
     
+          }
+
+          if (response.isOK()) {
+            boolean isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+
+            if (isOK) {
+              switch (trans.getEvent()) {
+
+                case SUBSCRIPTION_STARTED:
+                case SUBSCRIPTION_CHANGED: {
+                  isOK = 
+                    accountDao.insertStatusHistory(
+                      account.getId(), 
+                      AccountStatus.SUBSCRIBED.name(),
+                      dto.getPlanName(),
+                      dto.getSubsId(),
+                      dto.getCustId()
+                    );
+                  break;
+                }
+
+                case SUBSCRIPTION_CANCELLED: {
+                  isOK = accountDao.insertStatusHistory(account.getId(), AccountStatus.CANCELLED.name());
+                  break;
+                }
+
+                default:
+                  break;
+              }
+            }
+
+            if (! isOK) {
+              response = Responses.DataProblem.DB_PROBLEM;
+            }
+          } 
+
         } else {
-          log.warn("Idompotent event! Event: {}, Id: {}", trans.getEvent(), trans.getEventId());
-          res[0] = Responses.DataProblem.ALREADY_EXISTS;
+          log.warn("Account not found! Event: {}, Id: {}", trans.getEvent(), trans.getEventId());
+          response = Responses.NotFound.ACCOUNT;
         }
   
-        return res[0].isOK();
-      });
+      } else {
+        log.warn("Idompotent event! Event: {}, Id: {}", trans.getEvent(), trans.getEventId());
+        response = Responses.DataProblem.ALREADY_EXISTS;
+      }
+
+      if (response.isOK())
+      	handle.commit();
+      else
+      	handle.rollback();
     }
 
-    return res[0];
+    return response;
   }
 
   private CustomerDTO generateCustDTO(Invoice invoice) {

@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.link.LinkDao;
-import io.inprice.api.app.link.LinkHelper;
+import io.inprice.api.app.link.LinkRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.GroupDTO;
 import io.inprice.api.dto.LinkBulkInsertDTO;
@@ -79,7 +79,7 @@ class GroupService {
       if (group != null) {
       	Map<String, Object> dataMap = new HashMap<>(2);
         dataMap.put("group", group);
-        dataMap.put("links", LinkHelper.findDetailedLinkList(id, handle.attach(LinkDao.class)));
+        dataMap.put("links", LinkRepository.findDetailedLinkList(id, CurrentUser.getAccountId(), handle.attach(LinkDao.class)));
         return new Response(dataMap);
       }
     }
@@ -102,7 +102,10 @@ class GroupService {
                 dto.getAccountId()
               );
           	if (id != null && id > 0) {
-              return Responses.OK;
+          		found = groupDao.findById(id, CurrentUser.getAccountId());
+              Map<String, LinkGroup> data = new HashMap<>(1);
+              data.put("group", found);
+              return new Response(data);
             }
           } else {
           	return Responses.Already.Defined.GROUP;
@@ -122,39 +125,55 @@ class GroupService {
       String problem = validate(dto);
       if (problem == null) {
 
-        final Response[] res = { Responses.DataProblem.DB_PROBLEM };
+        Response response = Responses.DataProblem.DB_PROBLEM;
 
         try (Handle handle = Database.getHandle()) {
-          handle.inTransaction(transaction -> {
-            GroupDao groupDao = transaction.attach(GroupDao.class);
+        	handle.begin();
 
-            LinkGroup found = groupDao.findById(dto.getId(), CurrentUser.getAccountId());
-            if (found != null) {
-              boolean isUpdated = 
-                groupDao.update(
-                  dto.getId(),
-                  dto.getName(),
-                  dto.getPrice(),
-                  dto.getAccountId()
-                );
-              if (isUpdated) {
-                // if base price is changed then all the prices and other 
-                // indicators (on both group itself and its links) must be re-calculated accordingly
-                if (found.getPrice().doubleValue() != dto.getPrice().doubleValue()) {
-            			CommonDao commonDao = transaction.attach(CommonDao.class);
-            			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(dto.getId()));
-            			System.out.println(" -- GRR for GROUP -- " + grr);
-                }
-                res[0] = Responses.OK;
+          GroupDao groupDao = handle.attach(GroupDao.class);
+          LinkGroup found = groupDao.findById(dto.getId(), CurrentUser.getAccountId());
+
+          if (found != null) {
+            boolean isUpdated = 
+              groupDao.update(
+                dto.getId(),
+                dto.getName(),
+                dto.getPrice(),
+                dto.getAccountId()
+              );
+            if (isUpdated) {
+              // if base price is changed then all the prices and other 
+              // indicators (on both group itself and its links) must be re-calculated accordingly
+              if (found.getPrice().doubleValue() != dto.getPrice().doubleValue()) {
+          			CommonDao commonDao = handle.attach(CommonDao.class);
+          			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(dto.getId()));
+
+                //for returning data!
+          			found.setLevel(grr.getLevel());
+          			found.setTotal(grr.getTotal());
+          			found.setMinPrice(grr.getMinPrice());
+          			found.setAvgPrice(grr.getAvgPrice());
+          			found.setMaxPrice(grr.getMaxPrice());
+          			System.out.println(" -- GRR for GROUP -- " + grr);
               }
-            } else {
-              res[0] = Responses.NotFound.GROUP;
+              //for returning data!
+              found.setName(dto.getName());
+              found.setPrice(dto.getPrice());
+              
+              Map<String, LinkGroup> data = new HashMap<>(1);
+              data.put("group", found);
+              response = new Response(data);
             }
+          } else {
+          	response = Responses.NotFound.GROUP;
+          }
 
-            return res[0].isOK();
-          });
+          if (response.isOK())
+          	handle.commit();
+          else
+          	handle.rollback();
         }
-        return res[0];
+        return response;
 
       } else {
         return new Response(problem);
@@ -164,123 +183,123 @@ class GroupService {
   }
 
   Response delete(Long id) {
+  	Response response = Responses.Invalid.GROUP;
+  	
     if (id != null && id > 0) {
-
-      final int[] counts = { 0, 0 };
-      final boolean[] isOK = { false };
-
       try (Handle handle = Database.getHandle()) {
-      	
       	GroupDao groupDao = handle.attach(GroupDao.class);
       	LinkGroup group = groupDao.findById(id, CurrentUser.getAccountId());
       	
       	if (group != null) {
+        	handle.begin();
       			
     			final String where = String.format("where group_id=%d and account_id=%d", id, CurrentUser.getAccountId());
-          handle.inTransaction(transaction -> {
-            Batch batch = transaction.createBatch();
-            batch.add("delete from alarm " + where);
-            batch.add("delete from link_price " + where);
-            batch.add("delete from link_history " + where);
-            batch.add("delete from link_spec " + where);
-            batch.add("delete from link " + where);
-            batch.add("delete from link_group " + where.replace("group_", "")); //this determines the success!
-            batch.add(
-          		String.format(
-        				"update account set link_count=link_count-%d where id=%d", 
-        				group.getLinkCount(), CurrentUser.getAccountId()
-      				)
-        		);
-            int[] result = batch.execute();
-            isOK[0] = result[4] > 0;
-            if (isOK[0]) {
-            	AccountDao accountDao = transaction.attach(AccountDao.class);
-            	accountDao.changeLinkCount(id, group.getLinkCount()*-1);
-            	int linkCount = accountDao.findLinkCount(CurrentUser.getAccountId());
-            	counts[0] = linkCount;
-            	counts[1] = group.getLinkCount();
-            }
-            return isOK[0]; //for the most inner code block (not for the method!)
-          });
+          Batch batch = handle.createBatch();
+          batch.add("delete from alarm " + where);
+          batch.add("delete from link_price " + where);
+          batch.add("delete from link_history " + where);
+          batch.add("delete from link_spec " + where);
+          batch.add("delete from link " + where);
+          batch.add("delete from link_group " + where.replace("group_", "")); //this determines the success!
+          batch.add(
+        		String.format(
+      				"update account set link_count=link_count-%d where id=%d", 
+      				group.getLinkCount(), CurrentUser.getAccountId()
+    				)
+      		);
+          int[] result = batch.execute();
+          
+          System.out.println("---- group.getLinkCount -----" + group.getLinkCount());
+
+          if (result[5] > 0) {
+            Map<String, Object> data = new HashMap<>(1);
+            data.put("count", group.getLinkCount());
+            response = new Response(data);
+            handle.commit();
+          } else {
+          	handle.rollback();
+      		}
       	}
       }
-
-      if (isOK[0]) {
-        Map<String, Object> data = new HashMap<>(2);
-        data.put("count", counts[0]);
-        data.put("linkCount", counts[1]);
-        return new Response(data);
-      }
     }
-    return Responses.Invalid.GROUP;
+
+    return response;
   }
 
   Response bulkInsert(LinkBulkInsertDTO dto) {
-    Response[] res = { validate(dto) };
+    Response response = validate(dto);
 
-    if (res[0].isOK()) {
+    if (response.isOK()) {
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transaction -> {
-          AccountDao accountDao = transaction.attach(AccountDao.class);
-      		LinkDao linkDao = transaction.attach(LinkDao.class);
-  
-          Account account = accountDao.findById(CurrentUser.getAccountId());
-          int allowedLinkCount = (account.getLinkLimit() - account.getLinkCount());
-          Set<String> urlList = res[0].getData();
-          urlList.remove("");
-  
-          if (allowedLinkCount > 0) {
-          	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
-  
-          		for (Iterator<String> it = urlList.iterator(); it.hasNext();) {
-  							Link link = new Link();
-  							link.setUrl(it.next());
-  							link.setUrlHash(DigestUtils.md5Hex(link.getUrl()));
-  							link.setGroupId(dto.getGroupId());
-  							link.setAccountId(CurrentUser.getAccountId());
+      	handle.begin();
 
-  							long id = linkDao.insert(link);
+        AccountDao accountDao = handle.attach(AccountDao.class);
+        GroupDao groupDao = handle.attach(GroupDao.class);
+    		LinkDao linkDao = handle.attach(LinkDao.class);
 
-  							link.setId(id);
-  							link.setStatus(LinkStatus.TOBE_CLASSIFIED);
-  							linkDao.insertHistory(link);
-  						}
-          		
-          		GroupDao groupDao = transaction.attach(GroupDao.class);
-          		groupDao.increaseWaitingsCount(dto.getGroupId(), urlList.size());
+        Account account = accountDao.findById(CurrentUser.getAccountId());
+        int allowedLinkCount = (account.getLinkLimit() - account.getLinkCount());
+        Set<String> urlList = response.getData();
+        urlList.remove("");
 
-          		res[0] = Responses.OK;
-  
-            } else {
-            	if (urlList.size() > 100) {
-            		res[0] = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
-            	} else if (urlList.size() > allowedLinkCount) {
-            		res[0] = new Response("You can add max " + allowedLinkCount + " links more!");
-            	}
-            }
+        if (allowedLinkCount > 0) {
+        	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
+
+        		for (Iterator<String> it = urlList.iterator(); it.hasNext();) {
+							Link link = new Link();
+							link.setUrl(it.next());
+							link.setUrlHash(DigestUtils.md5Hex(link.getUrl()));
+							link.setGroupId(dto.getGroupId());
+							link.setAccountId(CurrentUser.getAccountId());
+
+							long id = linkDao.insert(link);
+
+							link.setId(id);
+							link.setStatus(LinkStatus.TOBE_CLASSIFIED);
+							linkDao.insertHistory(link);
+						}
+        		groupDao.increaseWaitingsCount(dto.getGroupId(), urlList.size());
+
+        		response = Responses.OK;
+
           } else {
-            res[0] = Responses.NotAllowed.NO_LINK_LIMIT;
+          	if (urlList.size() > 100) {
+          		response = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
+          	} else if (urlList.size() > allowedLinkCount) {
+          		response = new Response("You can add max " + allowedLinkCount + " links more!");
+          	}
           }
-  
-          if (res[0].isOK()) {
-            accountDao.changeLinkCount(dto.getGroupId(), urlList.size());
-          	int linkCount = accountDao.findLinkCount(CurrentUser.getAccountId());
-            Map<String, Object> data = new HashMap<>(3);
-            data.put("count", urlList.size());
-            data.put("linkCount", linkCount);
-            data.put("links", LinkHelper.findDetailedLinkList(dto.getGroupId(), linkDao));
-            res[0] = new Response(data);
+        } else {
+          response = Responses.NotAllowed.NO_LINK_LIMIT;
+        }
+
+        if (response.isOK()) {
+        	LinkGroup group = groupDao.findById(dto.getGroupId(), CurrentUser.getAccountId());
+
+        	accountDao.increaseLinkCount(CurrentUser.getAccountId(), urlList.size());
+        	int accountLinkCount = account.getLinkCount() + urlList.size();
+
+          Map<String, Object> data = new HashMap<>(4);
+        	data.put("group", group);
+        	data.put("count", urlList.size());
+        	data.put("linkCount", accountLinkCount);
+          if (!dto.getFromSearchPage()) {
+          	data.put("links", LinkRepository.findDetailedLinkList(dto.getGroupId(), CurrentUser.getAccountId(), linkDao));
           }
-  
-          return res[0].isOK(); //not for method but the closest transaction block!
-        });
+          response = new Response(data);
+        }
+
+        if (response.isOK())
+        	handle.commit();
+        else
+        	handle.rollback();
       } catch (Exception e) {
         log.error("Failed to import URL list!", e);
-        res[0] = Responses.ServerProblem.EXCEPTION;
+        response = Responses.ServerProblem.EXCEPTION;
       }
     }
 
-    return res[0];
+    return response;
   }
   
   private String validate(GroupDTO dto) {
