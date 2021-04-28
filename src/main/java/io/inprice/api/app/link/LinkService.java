@@ -82,7 +82,8 @@ class LinkService {
     try (Handle handle = Database.getHandle()) {
       List<Link> searchResult =
         handle.createQuery(
-          "select *, plt.domain as platform from link as l " + 
+          "select *, plt.domain as platform, g.name as group_name from link as l " + 
+      		"inner join link_group as g on g.id = l.group_id " + 
       		"left join platform as plt on plt.id = l.platform_id " + 
           criteria +
           " order by l.status_group, l.updated_at, plt.domain " +
@@ -195,8 +196,8 @@ class LinkService {
         			final String 
         				updatePart = 
         					String.format(
-      							"set group_id = %d where link_id in (%s) and group_id=%d and account_id=%d", 
-      							dto.getToGroupId(), joinedIds, dto.getFromGroupId(), CurrentUser.getAccountId()
+      							"set group_id=%d where link_id in (%s) and group_id!=%d and account_id=%d", 
+      							dto.getToGroupId(), joinedIds, dto.getToGroupId(), CurrentUser.getAccountId()
     							);
         			
               Batch batch = handle.createBatch();
@@ -249,18 +250,13 @@ class LinkService {
       try (Handle handle = Database.getHandle()) {
         LinkDao linkDao = handle.attach(LinkDao.class);
 
-        Link link = linkDao.findById(id);
-        if (link != null) {
-
-          Map<String, Object> data = new HashMap<>(4);
-          List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(id);
-          if (historyList != null && historyList.size() > 0) {
-            data.put("link", link);
-            data.put("historyList", historyList);
-            data.put("priceList", linkDao.findPriceListByLinkId(id));
-            data.put("specList", linkDao.findSpecListByLinkId(id));
-            res = new Response(data);
-          }
+        Map<String, Object> data = new HashMap<>(4);
+        List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(id);
+        if (historyList != null && historyList.size() > 0) {
+          data.put("historyList", historyList);
+          data.put("priceList", linkDao.findPriceListByLinkId(id));
+          data.put("specList", linkDao.findSpecListByLinkId(id));
+          res = new Response(data);
         }
       }
     }
