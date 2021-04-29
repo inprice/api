@@ -101,6 +101,7 @@ public class Consts {
       public static final String BASE = "/app";
       public static final String PLANS = BASE + "/plans";
       public static final String REFRESH_SESSION = BASE + "/refresh-session";
+      public static final String STATISTICS = BASE + "/statistics";
     }
 
     public static class Webhook {

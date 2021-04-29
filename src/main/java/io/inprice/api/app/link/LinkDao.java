@@ -23,6 +23,8 @@ import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
 
 public interface LinkDao {
+	
+	final String PLATFORM_FIELDS = "p.name as platform_name, p.currency_code, p.currency_format, p.country ";
 
   @SqlQuery("select * from link where id=:id")
   @UseRowMapper(LinkMapper.class)
@@ -37,7 +39,7 @@ public interface LinkDao {
   Link findByGroupIdAndUrlHash(@Bind("groupId") Long groupId, @Bind("urlHash") String urlHash);
 
   @SqlQuery(
-    "select l.*, p.name as platform_name, g.price as group_price from link as l " + 
+    "select l.*, " + PLATFORM_FIELDS + ", g.price as group_price from link as l " + 
 		"inner join link_group as g on g.id = l.group_id " + 
     "left join platform as p on p.id = l.platform_id " + 
     "where l.group_id=:groupId " +

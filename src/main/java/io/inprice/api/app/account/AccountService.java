@@ -12,10 +12,10 @@ import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.auth.UserSessionDao;
-import io.inprice.api.app.group.GroupDao;
 import io.inprice.api.app.account.dto.CreateDTO;
 import io.inprice.api.app.account.dto.RegisterDTO;
+import io.inprice.api.app.auth.UserSessionDao;
+import io.inprice.api.app.group.GroupDao;
 import io.inprice.api.app.member.MemberDao;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
@@ -41,8 +41,8 @@ import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
-import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.AccountStatus;
+import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Account;
@@ -103,71 +103,74 @@ class AccountService {
   }
 
   Response completeRegistration(Context ctx, String token) {
-    final Response[] res = { Responses.Invalid.TOKEN };
+    Response response = Responses.Invalid.TOKEN;
 
     RegisterDTO dto = Tokens.get(TokenType.REGISTRATION_REQUEST, token);
     if (dto != null) {
       Map<String, String> clientInfo = ClientSide.getGeoInfo(ctx.req);
 
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transaction -> {
-          UserDao userDao = transaction.attach(UserDao.class);
+      	handle.begin();
 
-          User user = userDao.findByEmail(dto.getEmail());
-          if (user == null) {
-            user = new User();
-            user.setEmail(dto.getEmail());
-            user.setName(dto.getEmail().split("@")[0]);
-            user.setTimezone(clientInfo.get(Consts.TIMEZONE));
-            user.setCreatedAt(new Date());
+        UserDao userDao = handle.attach(UserDao.class);
 
-            user.setId(
-              userDao.insert(
-                user.getEmail(), 
-                PasswordHelper.getSaltedHash(dto.getPassword()), 
-                user.getName(), 
-                clientInfo.get(Consts.TIMEZONE)
-              )
-            );
-          }
-    
-          if (user.getId() != null) {
-            res[0] = 
-              createAccount(
-                transaction,
-                user.getId(),
-                user.getEmail(),
-                dto.getAccountName(),
-                clientInfo.get(Consts.CURRENCY_CODE),
-                clientInfo.get(Consts.CURRENCY_FORMAT)
-              );
-          } else {
-            res[0] = Responses.NotFound.USER;
-          }
+        User user = userDao.findByEmail(dto.getEmail());
+        if (user == null) {
+          user = new User();
+          user.setEmail(dto.getEmail());
+          user.setName(dto.getEmail().split("@")[0]);
+          user.setTimezone(clientInfo.get(Consts.TIMEZONE));
+          user.setCreatedAt(new Date());
 
-          if (res[0].isOK()) {
-            Map<String, Object> dataMap = new HashMap<>(2);
-            dataMap.put("email", dto.getEmail());
-            dataMap.put("account", dto.getAccountName());
+          user.setId(
+            userDao.insert(
+              user.getEmail(), 
+              PasswordHelper.getSaltedHash(dto.getPassword()), 
+              user.getName(), 
+              clientInfo.get(Consts.TIMEZONE)
+            )
+          );
+        }
   
-            String message = renderer.render(EmailTemplate.REGISTRATION_COMPLETE, dataMap);
-            emailSender.send(
-              Props.APP_EMAIL_SENDER(), 
-              "Welcome to inprice: " + dto.getAccountName(),
-              dto.getEmail(), 
-              message
+        if (user.getId() != null) {
+          response = 
+            createAccount(
+              handle,
+              user.getId(),
+              user.getEmail(),
+              dto.getAccountName(),
+              clientInfo.get(Consts.CURRENCY_CODE),
+              clientInfo.get(Consts.CURRENCY_FORMAT)
             );
+        } else {
+          response = Responses.NotFound.USER;
+        }
 
-            res[0] = new Response(user);
-            Tokens.remove(TokenType.REGISTRATION_REQUEST, token);
-          }
+        if (response.isOK()) {
+          Map<String, Object> dataMap = new HashMap<>(2);
+          dataMap.put("email", dto.getEmail());
+          dataMap.put("account", dto.getAccountName());
 
-          return res[0].isOK();
-        });
+          String message = renderer.render(EmailTemplate.REGISTRATION_COMPLETE, dataMap);
+          emailSender.send(
+            Props.APP_EMAIL_SENDER(), 
+            "Welcome to inprice: " + dto.getAccountName(),
+            dto.getEmail(), 
+            message
+          );
+
+          response = new Response(user);
+          Tokens.remove(TokenType.REGISTRATION_REQUEST, token);
+        }
+
+        if (response.isOK())
+        	handle.commit();
+        else
+        	handle.rollback();
       }
     }
 
-    return res[0];
+    return response;
   }
 
   Response getCurrentAccount() {
@@ -178,31 +181,35 @@ class AccountService {
   }
 
   Response create(CreateDTO dto) {
-    final Response[] res = { validateAccountDTO(dto) };
+    Response response = validateAccountDTO(dto);
 
-    if (res[0].isOK()) {
+    if (response.isOK()) {
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transaction -> {
-          res[0] = 
-            createAccount(
-              transaction,
-              CurrentUser.getUserId(),
-              CurrentUser.getEmail(),
-              dto.getName(),
-              dto.getCurrencyCode(),
-              dto.getCurrencyFormat()
-            );
-          if (res[0].isOK()) {
-            AccountDao accountDao = transaction.attach(AccountDao.class);
-            Account account = accountDao.findById(res[0].getData());
-            res[0] = Commons.refreshSession(account);
-          }
-          return res[0].isOK();
-        });
+      	handle.begin();
+
+        response = 
+          createAccount(
+            handle,
+            CurrentUser.getUserId(),
+            CurrentUser.getEmail(),
+            dto.getName(),
+            dto.getCurrencyCode(),
+            dto.getCurrencyFormat()
+          );
+        if (response.isOK()) {
+          AccountDao accountDao = handle.attach(AccountDao.class);
+          Account account = accountDao.findById(response.getData());
+          response = Commons.refreshSession(account);
+        }
+
+        if (response.isOK())
+        	handle.commit();
+        else
+        	handle.rollback();
       }
     }
 
-    return res[0];
+    return response;
   }
 
   Response update(CreateDTO dto) {
@@ -233,81 +240,84 @@ class AccountService {
   }
 
   Response deleteAccount(String password) {
-    final Response[] res = { Responses.DataProblem.DB_PROBLEM };
+    Response response = Responses.DataProblem.DB_PROBLEM;
 
     try (Handle handle = Database.getHandle()) {
-      handle.inTransaction(transaction -> {
-        UserDao userDao = transaction.attach(UserDao.class);
-        AccountDao accountDao = transaction.attach(AccountDao.class);
-        UserSessionDao sessionDao = transaction.attach(UserSessionDao.class);
+    	handle.begin();
 
-        User user = userDao.findById(CurrentUser.getUserId());
+      UserDao userDao = handle.attach(UserDao.class);
+      AccountDao accountDao = handle.attach(AccountDao.class);
+      UserSessionDao sessionDao = handle.attach(UserSessionDao.class);
 
-        if (PasswordHelper.isValid(password, user.getPassword())) {
-          Account account = accountDao.findByAdminId(CurrentUser.getUserId());
+      User user = userDao.findById(CurrentUser.getUserId());
 
-          if (account != null) {
-            if (! AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
-              log.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
+      if (PasswordHelper.isValid(password, user.getPassword())) {
+        Account account = accountDao.findByAdminId(CurrentUser.getUserId());
 
-              String where = "where account_id=" + CurrentUser.getAccountId();
+        if (account != null) {
+          if (! AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
+            log.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
 
-              Batch batch = transaction.createBatch();
-              batch.add("SET FOREIGN_KEY_CHECKS=0");
-              batch.add("delete from link_price " + where);
-              batch.add("delete from link_history " + where);
-              batch.add("delete from link_spec " + where);
-              batch.add("delete from link " + where);
-              batch.add("delete from link_group " + where);
-              batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
-              batch.add("delete from alarm " + where);
-              batch.add("delete from ticket " + where);
-              batch.add("delete from notice " + where);
-              batch.add("delete from user_notice " + where);
-              		
-              // in order to keep consistency, 
-              // users having no account other than this must be deleted too!!!
-              MemberDao memberDao = transaction.attach(MemberDao.class);
-              List<Long> unboundMembers = memberDao.findUserIdListHavingJustThisAccount(CurrentUser.getAccountId());
-              if (unboundMembers != null && ! unboundMembers.isEmpty()) {
-                String userIdList = StringUtils.join(unboundMembers, ",");
-                batch.add("delete from user where id in (" + userIdList + ")");
-              }
-              
-              batch.add("delete from member " + where);
-              batch.add("delete from user_session " + where);
-              batch.add("delete from checkout " + where);
-              batch.add("delete from account_history " + where);
-              batch.add("delete from account_trans " + where);
-              batch.add("delete from account where id=" + CurrentUser.getAccountId());
+            String where = "where account_id=" + CurrentUser.getAccountId();
 
-              batch.add("SET FOREIGN_KEY_CHECKS=1");
-              batch.execute();
-
-              List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
-              if (hashList != null && ! hashList.isEmpty()) {
-                for (String hash : hashList) {
-                  RedisClient.removeSesion(hash);
-                }
-              }
-
-              log.info("{} is deleted. Id: {}.", account.getName(), account.getId());
-              res[0] = Responses.OK;
-            } else {
-              res[0] = Responses.Already.ACTIVE_SUBSCRIPTION;
+            Batch batch = handle.createBatch();
+            batch.add("SET FOREIGN_KEY_CHECKS=0");
+            batch.add("delete from link_price " + where);
+            batch.add("delete from link_history " + where);
+            batch.add("delete from link_spec " + where);
+            batch.add("delete from link " + where);
+            batch.add("delete from link_group " + where);
+            batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
+            batch.add("delete from alarm " + where);
+            batch.add("delete from ticket " + where);
+            batch.add("delete from notice " + where);
+            batch.add("delete from user_notice " + where);
+            		
+            // in order to keep consistency, 
+            // users having no account other than this must be deleted too!!!
+            MemberDao memberDao = handle.attach(MemberDao.class);
+            List<Long> unboundMembers = memberDao.findUserIdListHavingJustThisAccount(CurrentUser.getAccountId());
+            if (unboundMembers != null && ! unboundMembers.isEmpty()) {
+              String userIdList = StringUtils.join(unboundMembers, ",");
+              batch.add("delete from user where id in (" + userIdList + ")");
             }
+            
+            batch.add("delete from member " + where);
+            batch.add("delete from user_session " + where);
+            batch.add("delete from checkout " + where);
+            batch.add("delete from account_history " + where);
+            batch.add("delete from account_trans " + where);
+            batch.add("delete from account where id=" + CurrentUser.getAccountId());
+
+            batch.add("SET FOREIGN_KEY_CHECKS=1");
+            batch.execute();
+
+            List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
+            if (hashList != null && ! hashList.isEmpty()) {
+              for (String hash : hashList) {
+                RedisClient.removeSesion(hash);
+              }
+            }
+
+            log.info("{} is deleted. Id: {}.", account.getName(), account.getId());
+            response = Responses.OK;
           } else {
-            res[0] = Responses.Invalid.ACCOUNT;
+            response = Responses.Already.ACTIVE_SUBSCRIPTION;
           }
         } else {
-          res[0] = Responses.Invalid.PASSWORD;
+          response = Responses.Invalid.ACCOUNT;
         }
+      } else {
+        response = Responses.Invalid.PASSWORD;
+      }
 
-        return res[0].isOK();
-      });
+      if (response.isOK())
+      	handle.commit();
+      else
+      	handle.rollback();
     }
 
-    return res[0];
+    return response;
   }
 
   private Response validateRegisterDTO(RegisterDTO dto) {
@@ -332,10 +342,10 @@ class AccountService {
     }
   }
 
-  private Response createAccount(Handle transaction, Long userId, String userEmail, String accountName, String currencyCode, String currencyFormat) {
-    AccountDao accountDao = transaction.attach(AccountDao.class);
-    MemberDao memberDao = transaction.attach(MemberDao.class);
-    GroupDao groupDao = transaction.attach(GroupDao.class);
+  private Response createAccount(Handle handle, Long userId, String userEmail, String accountName, String currencyCode, String currencyFormat) {
+    AccountDao accountDao = handle.attach(AccountDao.class);
+    MemberDao memberDao = handle.attach(MemberDao.class);
+    GroupDao groupDao = handle.attach(GroupDao.class);
 
     Account account = accountDao.findByNameAndAdminId(accountName, userId);
     if (account == null) {

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -43,7 +44,7 @@ public interface GroupDao {
   boolean update(@Bind("id") Long id, @Bind("name") String name, @Bind("price") BigDecimal price, @Bind("accountId") Long accountId);
 
   //called after bulkInsert
-  @SqlUpdate("update link_group set waitings=waitings+:waitings where id=:id")
-  boolean increaseWaitingsCount(@Bind("id") Long id, @Bind("waitings") Integer waitings);
+  @SqlUpdate("update link_group set waitings=waitings + <count> where id=:id")
+  boolean increaseWaitingsCount(@Bind("id") Long id, @Define("count") Integer count);
 
 }

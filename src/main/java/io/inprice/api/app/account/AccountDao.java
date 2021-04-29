@@ -5,6 +5,7 @@ import java.util.List;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -56,8 +57,8 @@ public interface AccountDao {
   )
   boolean update(@BindBean("dto") CustomerDTO dto, @Bind("id") Long id);
   
-  @SqlUpdate("update account set link_count=link_count+:count where id=:id")
-  boolean changeLinkCount(@Bind("id") Long id, @Bind("count") Integer count);
+  @SqlUpdate("update account set link_count=link_count+<count> where id=:id")
+  boolean increaseLinkCount(@Bind("id") Long id, @Define("count") Integer count);
 
   // finds only those accounts who have two days remaining
   @SqlQuery(
@@ -98,8 +99,5 @@ public interface AccountDao {
 
   @SqlUpdate("insert into user_used (email, perm_type) values (:email, :permType)")
   void insertUserUsed(@Bind("email") String email, @Bind("permType") PermType permType);
-
-  @SqlQuery("select link_count from account where id=:id")
-  int findLinkCount(@Bind("id") Long id);
   
 }

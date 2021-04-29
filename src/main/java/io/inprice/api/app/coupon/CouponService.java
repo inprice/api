@@ -66,98 +66,100 @@ public class CouponService {
   }
 
   Response applyCoupon(String code) {
-    Response[] res = { Responses.Invalid.COUPON };
+    Response response = Responses.Invalid.COUPON;
 
     if (CouponManager.isValid(code)) {
 
       try (Handle handle = Database.getHandle()) {
-        handle.inTransaction(transaction -> {
-          CouponDao couponDao = transaction.attach(CouponDao.class);
+      	handle.begin();
 
-          Coupon coupon = couponDao.findByCode(code);
-          if (coupon != null) {
-            if (coupon.getIssuedAt() == null) {
+        CouponDao couponDao = handle.attach(CouponDao.class);
+        Coupon coupon = couponDao.findByCode(code);
 
-              if (coupon.getIssuedId() == null || coupon.getIssuedId().equals(CurrentUser.getAccountId())) {
-                AccountDao accountDao = transaction.attach(AccountDao.class);
+        if (coupon != null) {
+          if (coupon.getIssuedAt() == null) {
 
-                Account account = accountDao.findById(CurrentUser.getAccountId());
-                if (account.getStatus().isOKForCoupon()) {
+            if (coupon.getIssuedId() == null || coupon.getIssuedId().equals(CurrentUser.getAccountId())) {
+              AccountDao accountDao = handle.attach(AccountDao.class);
 
-                  Plan selectedPlan = null;
-                  Plan couponPlan = Plans.findByName(coupon.getPlanName());
-                  Plan accountPlan = (account.getPlanName() != null ? Plans.findByName(account.getPlanName()) : null);
+              Account account = accountDao.findById(CurrentUser.getAccountId());
+              if (account.getStatus().isOKForCoupon()) {
 
-                  if (accountPlan == null || couponPlan.getId() > accountPlan.getId()) {
-                    selectedPlan = couponPlan;
-                  }
+                Plan selectedPlan = null;
+                Plan couponPlan = Plans.findByName(coupon.getPlanName());
+                Plan accountPlan = (account.getPlanName() != null ? Plans.findByName(account.getPlanName()) : null);
 
-                  // only broader plan transitions allowed
-                  if (account.getLinkCount().compareTo(selectedPlan.getLinkLimit()) <= 0) {
-                    SubscriptionDao subscriptionDao = transaction.attach(SubscriptionDao.class);
+                if (accountPlan == null || couponPlan.getId() > accountPlan.getId()) {
+                  selectedPlan = couponPlan;
+                }
 
-                    boolean isOK = 
-                      subscriptionDao.startFreeUseOrApplyCoupon(
-                        CurrentUser.getAccountId(),
-                        AccountStatus.COUPONED.name(),
-                        selectedPlan.getName(),
-                        selectedPlan.getLinkLimit(), 
-                        coupon.getDays()
-                      );
+                // only broader plan transitions allowed
+                if (account.getLinkCount().compareTo(selectedPlan.getLinkLimit()) <= 0) {
+                  SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+
+                  boolean isOK = 
+                    subscriptionDao.startFreeUseOrApplyCoupon(
+                      CurrentUser.getAccountId(),
+                      AccountStatus.COUPONED.name(),
+                      selectedPlan.getName(),
+                      selectedPlan.getLinkLimit(), 
+                      coupon.getDays()
+                    );
+
+                  if (isOK) {
+                    isOK = couponDao.applyFor(coupon.getCode(), CurrentUser.getAccountId());
 
                     if (isOK) {
-                      isOK = couponDao.applyFor(coupon.getCode(), CurrentUser.getAccountId());
+                      AccountTrans trans = new AccountTrans();
+                      trans.setAccountId(CurrentUser.getAccountId());
+                      trans.setEventId(coupon.getCode());
+                      trans.setEvent(SubsEvent.COUPON_USE_STARTED);
+                      trans.setSuccessful(Boolean.TRUE);
+                      trans.setDescription(coupon.getCode() + " is used.");
 
+                      isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
                       if (isOK) {
-                        AccountTrans trans = new AccountTrans();
-                        trans.setAccountId(CurrentUser.getAccountId());
-                        trans.setEventId(coupon.getCode());
-                        trans.setEvent(SubsEvent.COUPON_USE_STARTED);
-                        trans.setSuccessful(Boolean.TRUE);
-                        trans.setDescription(coupon.getCode() + " is used.");
-
-                        isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-                        if (isOK) {
-                          isOK = 
-                            accountDao.insertStatusHistory(
-                              account.getId(), 
-                              AccountStatus.COUPONED.name(),
-                              selectedPlan.getName(),
-                              null, null
-                            );
-                        }
-                                
-                        if (isOK) {
-                          res[0] = Commons.refreshSession(accountDao, account.getId());
-                          log.info("Coupon {}, is issued for {}", coupon.getCode(), account.getName());
-                        }
+                        isOK = 
+                          accountDao.insertStatusHistory(
+                            account.getId(), 
+                            AccountStatus.COUPONED.name(),
+                            selectedPlan.getName(),
+                            null, null
+                          );
+                      }
+                              
+                      if (isOK) {
+                        response = Commons.refreshSession(accountDao, account.getId());
+                        log.info("Coupon {}, is issued for {}", coupon.getCode(), account.getName());
                       }
                     }
-                    if (! res[0].isOK()) res[0] = Responses.DataProblem.DB_PROBLEM;
-
-                  } else {
-                    res[0] = Responses.PermissionProblem.BROADER_PLAN_NEEDED;
                   }
+                  if (! response.isOK()) response = Responses.DataProblem.DB_PROBLEM;
+
                 } else {
-                  res[0] = Responses.Already.ACTIVE_SUBSCRIPTION;
+                  response = Responses.PermissionProblem.BROADER_PLAN_NEEDED;
                 }
               } else {
-                res[0] = Responses.Illegal.COUPON_ISSUED_FOR_ANOTHER_ACCOUNT;
+                response = Responses.Already.ACTIVE_SUBSCRIPTION;
               }
             } else {
-              res[0] = Responses.Already.USED_COUPON;
+              response = Responses.Illegal.COUPON_ISSUED_FOR_ANOTHER_ACCOUNT;
             }
           } else {
-            res[0] = Responses.Invalid.COUPON;
+            response = Responses.Already.USED_COUPON;
           }
-  
-          return res[0].isOK();
-        });
+        } else {
+          response = Responses.Invalid.COUPON;
+        }
 
+        if (response.isOK())
+        	handle.commit();
+        else
+        	handle.rollback();
       }
     }
 
-    return res[0];
+    return response;
   }
 
 }
