@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.link.LinkDao;
-import io.inprice.api.app.link.LinkRepository;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.GroupDTO;
 import io.inprice.api.dto.LinkBulkInsertDTO;
@@ -73,13 +72,14 @@ class GroupService {
 
   Response findLinksById(Long id) {
     try (Handle handle = Database.getHandle()) {
-      GroupDao groupDao = handle.attach(GroupDao.class);
+    	GroupDao groupDao = handle.attach(GroupDao.class);
+      LinkDao linkDao = handle.attach(LinkDao.class);
 
       LinkGroup group = groupDao.findById(id, CurrentUser.getAccountId());
       if (group != null) {
       	Map<String, Object> dataMap = new HashMap<>(2);
         dataMap.put("group", group);
-        dataMap.put("links", LinkRepository.findDetailedLinkList(id, CurrentUser.getAccountId(), handle.attach(LinkDao.class)));
+        dataMap.put("links", linkDao.findListByGroupId(id, CurrentUser.getAccountId()));
         return new Response(dataMap);
       }
     }
@@ -284,7 +284,7 @@ class GroupService {
         	data.put("count", urlList.size());
         	data.put("linkCount", accountLinkCount);
           if (!dto.getFromSearchPage()) {
-          	data.put("links", LinkRepository.findDetailedLinkList(dto.getGroupId(), CurrentUser.getAccountId(), linkDao));
+          	data.put("links", linkDao.findListByGroupId(dto.getGroupId(), CurrentUser.getAccountId()));
           }
           response = new Response(data);
         }

@@ -2,11 +2,11 @@ package io.inprice.api.app.link.dto;
 
 public enum SearchBy {
 
+	Name("l.name"),
+	Seller("seller"),
+	Brand("brand"),
 	SKU("sku"),
-  NAME("name"),
-  BRAND("brand"),
-  SELLER("seller"),
-  PLATFORM("domain");
+  Platform("domain");
 
   private String fieldName;
   
@@ -17,5 +17,5 @@ public enum SearchBy {
 	public String getFieldName() {
 		return fieldName;
 	}
-	
+
 }

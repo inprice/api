@@ -2,13 +2,15 @@ package io.inprice.api.app.link.dto;
 
 public enum OrderBy {
 
+	Name("l.name"),
+	Seller("seller"),
+	Brand("brand"),
 	SKU("sku"),
-  NAME("name"),
-  BRAND("brand"),
-  SELLER("seller"),
-  PLATFORM("domain"),
-  LAST_CHECKED("checked_at"),
-  LAST_UPDATED("updated_at");
+  Platform("domain"),
+  Level("l.level"),
+  Price("l.price"),
+  Last_Checked("checked_at"),
+  Last_Updated("updated_at");
 
   private String fieldName;
   
