@@ -1,15 +1,14 @@
 package io.inprice.api.app.link;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.statement.Batch;
@@ -17,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.group.GroupDao;
-import io.inprice.api.app.link.dto.LinkSearchDTO;
+import io.inprice.api.app.link.dto.SearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LinkDeleteDTO;
@@ -29,18 +28,20 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.GroupRefreshResult;
 import io.inprice.common.mappers.LinkMapper;
-import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkGroup;
 import io.inprice.common.models.LinkHistory;
+import io.inprice.common.models.LinkPrice;
+import io.inprice.common.models.LinkSpec;
 import io.inprice.common.repository.CommonDao;
+import io.inprice.common.repository.PlatformDao;
 
 class LinkService {
 
   private static final Logger log = LoggerFactory.getLogger(LinkService.class);
 
-  public Response fullSearch(LinkSearchDTO dto) {
-    clearSearchDto(dto);
+  public Response search(SearchDTO dto) {
+  	if (dto.getTerm() != null) dto.setTerm(SqlHelper.clear(dto.getTerm()));
 
     //---------------------------------------------------
     //building the criteria up
@@ -51,23 +52,23 @@ class LinkService {
     criteria.append(CurrentUser.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-      criteria.append(" and l.sku like '%");
+    	criteria.append(" and ");
+    	criteria.append(dto.getSearchBy().getFieldName());
+      criteria.append(" like '%");
       criteria.append(dto.getTerm());
-      criteria.append("%' or l.name like '%");
-      criteria.append(dto.getTerm());
-      criteria.append("%' or l.brand like '%");
-      criteria.append(dto.getTerm());
-      criteria.append("%' or l.seller like '%");
-      criteria.append(dto.getTerm());
-      criteria.append("%' or plt.domain like '%");
-      criteria.append(dto.getTerm());
-      criteria.append("%' ");
+      criteria.append("%'");
+    }
+    
+    if (dto.getLevels() != null && dto.getLevels().size() > 0) {
+    	criteria.append(
+  			String.format(" and l.level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
+			);
     }
 
-    if (dto.getStatuses() != null && dto.getStatuses().length > 0) {
-      criteria.append(
-        String.format(" and l.status_group in ('%s') ", String.join("', '", dto.getStatuses()))
-      );
+    if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
+    	criteria.append(
+		    String.format(" and status_group in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
+			);
     }
 
     //limiting
@@ -82,15 +83,22 @@ class LinkService {
     try (Handle handle = Database.getHandle()) {
       List<Link> searchResult =
         handle.createQuery(
-          "select *, plt.domain as platform, g.name as group_name from link as l " + 
+          "select l.*, g.name as group_name, " + PlatformDao.FIELDS + " from link as l " + 
       		"inner join link_group as g on g.id = l.group_id " + 
-      		"left join platform as plt on plt.id = l.platform_id " + 
+      		"left join platform as p on p.id = l.platform_id " + 
           criteria +
-          " order by l.status_group, l.updated_at, plt.domain " +
+          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
           limit
         )
       .map(new LinkMapper())
       .list();
+      
+      System.out.println("select l.*, g.name as group_name, " + PlatformDao.FIELDS + " from link as l " + 
+      		"inner join link_group as g on g.id = l.group_id " + 
+      		"left join platform as p on p.id = l.platform_id " + 
+          criteria +
+          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
+          limit);
 
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
@@ -143,7 +151,7 @@ class LinkService {
             }
         	}
         	
-          if (dto.getFromGroupId() != null) { //meaning that it is called from group definition (not from links page)
+          if (dto.getFromGroupId() != null) { //meaning that it is called from group definition (not from links search page)
           	LinkGroup group = handle.attach(GroupDao.class).findById(dto.getFromGroupId(), CurrentUser.getAccountId());
           	Map<String, Object> data = new HashMap<>(1);
             data.put("group", group);
@@ -217,13 +225,13 @@ class LinkService {
             			System.out.println(" -- GRR for Moved LINK(s) : " + groupId + " -- " + grr);
             		}
 
-            		if (dto.getFromGroupId() != null) { //meaning that it is called from group definition (not from links page)
+            		if (dto.getFromGroupId() != null) { //meaning that it is called from group definition (not from links search page)
                   GroupDao groupDao = handle.attach(GroupDao.class);
                 	LinkGroup group = groupDao.findById(dto.getFromGroupId(), CurrentUser.getAccountId());
 
                 	Map<String, Object> data = new HashMap<>(2);
                 	data.put("group", group);
-                  data.put("links", LinkRepository.findDetailedLinkList(dto.getFromGroupId(), CurrentUser.getAccountId(), handle.attach(LinkDao.class)));
+                  data.put("links", linkDao.findListByGroupId(dto.getFromGroupId(), CurrentUser.getAccountId()));
                   response = new Response(data);
             		} else {
             			response = Responses.OK;
@@ -250,12 +258,23 @@ class LinkService {
       try (Handle handle = Database.getHandle()) {
         LinkDao linkDao = handle.attach(LinkDao.class);
 
-        Map<String, Object> data = new HashMap<>(4);
-        List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(id);
-        if (historyList != null && historyList.size() > 0) {
+        Link link = linkDao.findById(id);
+        if (link != null) {
+          List<LinkSpec> specList = linkDao.findSpecListByLinkId(link.getId());
+          List<LinkPrice> priceList = linkDao.findPriceListByLinkId(link.getId());
+          List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(link.getId());
+
+          if (specList == null) specList = new ArrayList<>();
+          if (priceList == null) priceList = new ArrayList<>();
+          if (historyList == null) historyList = new ArrayList<>();
+        
+          if (StringUtils.isNotBlank(link.getSku())) specList.add(0, new LinkSpec("Code", link.getSku()));
+          if (StringUtils.isNotBlank(link.getBrand())) specList.add(0, new LinkSpec("Brand", link.getBrand()));
+          
+          Map<String, Object> data = new HashMap<>(3);
+          data.put("specList", specList);
+          data.put("priceList", priceList);
           data.put("historyList", historyList);
-          data.put("priceList", linkDao.findPriceListByLinkId(id));
-          data.put("specList", linkDao.findSpecListByLinkId(id));
           res = new Response(data);
         }
       }
@@ -264,21 +283,6 @@ class LinkService {
     return res;
   }
 
-  private void clearSearchDto(LinkSearchDTO dto) {
-    dto.setTerm(SqlHelper.clear(dto.getTerm()));
-    if (dto.getStatuses() != null && dto.getStatuses().length > 0) {
-      Set<String> newStatusSet = new HashSet<>(dto.getStatuses().length);
-      Set<String> linkNamesSet = EnumUtils.getEnumMap(LinkStatus.class).keySet();
-	
-      for (int i = 0; i < dto.getStatuses().length; i++) {
-        String status = dto.getStatuses()[i];
-        if (StringUtils.isNotBlank(status)) {
-          if (linkNamesSet.contains(status)) newStatusSet.add(status);
-        }
-      }
-      dto.setStatuses(newStatusSet.toArray(new String[0]));
-    }
-  }
   /*
   Response toggleStatus(Long id) {
     Response response = Responses.NotFound.LINK;

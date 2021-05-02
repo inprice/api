@@ -8,7 +8,7 @@ import lombok.Setter;
 public class BaseSearchDTO {
 
   private String term;
-  private Boolean loadMore = Boolean.FALSE;
   private Integer rowCount = 0;
+  private Boolean loadMore = Boolean.FALSE;
 
 }

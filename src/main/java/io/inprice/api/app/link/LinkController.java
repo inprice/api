@@ -1,6 +1,6 @@
 package io.inprice.api.app.link;
 
-import io.inprice.api.app.link.dto.LinkSearchDTO;
+import io.inprice.api.app.link.dto.SearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
@@ -33,8 +33,8 @@ public class LinkController implements Controller {
 
     // search
     app.post(Consts.Paths.Link.SEARCH, (ctx) -> {
-      LinkSearchDTO searchDto = ctx.bodyAsClass(LinkSearchDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.fullSearch(searchDto)));
+      SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.search(dto)));
     }, AccessRoles.ANYONE());
     
     // get details
