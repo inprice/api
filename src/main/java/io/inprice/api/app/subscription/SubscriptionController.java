@@ -46,8 +46,12 @@ public class SubscriptionController implements Controller {
 
     // updates account's extra info used in invoices
     app.post(Consts.Paths.Subscription.SAVE_INFO, (ctx) -> {
-      CustomerDTO dto = ctx.bodyAsClass(CustomerDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.saveInfo(dto)));
+    	try {
+        CustomerDTO dto = ctx.bodyAsClass(CustomerDTO.class);
+        ctx.json(Commons.createResponse(ctx, service.saveInfo(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
     }, AccessRoles.ADMIN_ONLY());
 
   }

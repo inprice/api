@@ -72,9 +72,17 @@ class LinkService {
     }
 
     //limiting
-    String limit = " limit " + Consts.ROW_LIMIT_FOR_LISTS;
-    if (dto.getLoadMore() && dto.getRowCount() >= Consts.ROW_LIMIT_FOR_LISTS) {
-      limit = " limit " + dto.getRowCount() + ", " + Consts.ROW_LIMIT_FOR_LISTS;
+    String limit = "";
+    if (dto.getRowLimit() < Consts.LOWER_ROW_LIMIT_FOR_LISTS && dto.getRowLimit() <= Consts.UPPER_ROW_LIMIT_FOR_LISTS) {
+    	dto.setRowLimit(Consts.LOWER_ROW_LIMIT_FOR_LISTS);
+    }
+    if (dto.getRowLimit() > Consts.UPPER_ROW_LIMIT_FOR_LISTS) {
+    	dto.setRowLimit(Consts.UPPER_ROW_LIMIT_FOR_LISTS);
+    }
+    if (dto.getLoadMore()) {
+      limit = " limit " + dto.getRowCount() + ", " + dto.getRowLimit();
+    } else {
+    	limit = " limit " + dto.getRowLimit();
     }
 
     //---------------------------------------------------
@@ -92,13 +100,6 @@ class LinkService {
         )
       .map(new LinkMapper())
       .list();
-      
-      System.out.println("select l.*, g.name as group_name, " + PlatformDao.FIELDS + " from link as l " + 
-      		"inner join link_group as g on g.id = l.group_id " + 
-      		"left join platform as p on p.id = l.platform_id " + 
-          criteria +
-          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
-          limit);
 
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {

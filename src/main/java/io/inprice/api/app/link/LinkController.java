@@ -21,20 +21,32 @@ public class LinkController implements Controller {
     
     // delete
     app.delete(Consts.Paths.Link.BASE, (ctx) -> {
-    	LinkDeleteDTO ldDto = ctx.bodyAsClass(LinkDeleteDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.delete(ldDto)));
+    	try {
+      	LinkDeleteDTO ldDto = ctx.bodyAsClass(LinkDeleteDTO.class);
+        ctx.json(Commons.createResponse(ctx, service.delete(ldDto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
     }, AccessRoles.EDITOR());
 
     // move links to under another group
     app.post(Consts.Paths.Link.MOVE, (ctx) -> {
-    	LinkMoveDTO lmDto = ctx.bodyAsClass(LinkMoveDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.moveTo(lmDto)));
+    	try {
+      	LinkMoveDTO lmDto = ctx.bodyAsClass(LinkMoveDTO.class);
+        ctx.json(Commons.createResponse(ctx, service.moveTo(lmDto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
     }, AccessRoles.EDITOR());
 
     // search
     app.post(Consts.Paths.Link.SEARCH, (ctx) -> {
-      SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.search(dto)));
+    	try {
+    		SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
+    		ctx.json(Commons.createResponse(ctx, service.search(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
     }, AccessRoles.ANYONE());
     
     // get details

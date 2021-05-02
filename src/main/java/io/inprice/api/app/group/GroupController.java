@@ -43,23 +43,38 @@ public class GroupController implements Controller {
     
     // insert
     app.post(Consts.Paths.Group.BASE, (ctx) -> {
-    	ctx.json(Commons.createResponse(ctx, service.insert(ctx.bodyAsClass(GroupDTO.class))));
-    }, AccessRoles.EDITOR());
-
-    // import links
-    app.post(Consts.Paths.Group.IMPORT_LINKS, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.bulkInsert(ctx.bodyAsClass(LinkBulkInsertDTO.class))));
+    	try {
+    		GroupDTO dto = ctx.bodyAsClass(GroupDTO.class);
+      	ctx.json(Commons.createResponse(ctx, service.insert(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
     }, AccessRoles.EDITOR());
 
     // update
     app.put(Consts.Paths.Group.BASE, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.update(ctx.bodyAsClass(GroupDTO.class))));
+    	try {
+    		GroupDTO dto = ctx.bodyAsClass(GroupDTO.class);
+        ctx.json(Commons.createResponse(ctx, service.update(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
     }, AccessRoles.EDITOR());
 
     // delete
     app.delete(Consts.Paths.Group.BASE + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.delete(id)));
+    }, AccessRoles.EDITOR());
+
+    // import links
+    app.post(Consts.Paths.Group.IMPORT_LINKS, (ctx) -> {
+    	try {
+    		LinkBulkInsertDTO dto = ctx.bodyAsClass(LinkBulkInsertDTO.class);
+        ctx.json(Commons.createResponse(ctx, service.bulkInsert(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
     }, AccessRoles.EDITOR());
 
   }

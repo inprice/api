@@ -26,8 +26,12 @@ public class AccountController implements Controller {
   public void addRoutes(Javalin app) {
 
     app.post(Consts.Paths.Auth.REQUEST_REGISTRATION, (ctx) -> {
-      RegisterDTO dto = ctx.bodyAsClass(RegisterDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.requestRegistration(dto)));
+    	try {
+        RegisterDTO dto = ctx.bodyAsClass(RegisterDTO.class);
+        ctx.json(Commons.createResponse(ctx, service.requestRegistration(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
     });
 
     app.post(Consts.Paths.Auth.COMPLETE_REGISTRATION, (ctx) -> {
@@ -49,14 +53,22 @@ public class AccountController implements Controller {
 
     // create
     app.post(Consts.Paths.Account.BASE, (ctx) -> {
-      CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.create(dto)));
+    	try {
+        CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
+        ctx.json(Commons.createResponse(ctx, service.create(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
     }, AccessRoles.ANYONE());
 
     // update
     app.put(Consts.Paths.Account.BASE, (ctx) -> {
-      CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.update(dto)));
+    	try {
+        CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
+        ctx.json(Commons.createResponse(ctx, service.update(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
     }, AccessRoles.ADMIN_ONLY());
 
     app.put(Consts.Paths.Account.DELETE, (ctx) -> {
