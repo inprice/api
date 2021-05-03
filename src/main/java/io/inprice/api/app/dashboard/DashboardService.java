@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
-import io.inprice.api.app.dashboard.mapper.Most10Group;
+import io.inprice.api.app.dashboard.mapper.GroupSummary;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.Response;
@@ -55,14 +55,15 @@ class DashboardService {
 
   private Map<String, Object> getGroups(DashboardDao dashboardDao) {
     Map<String, Object> result = new HashMap<>(2);
-    result.put("extremePrices", find10GroupsHavingExtremePrices(dashboardDao));
-    result.put("levelDists", findGroupLevelDists(dashboardDao));
+    result.put("levelSeries", findGroupLevelSeries(dashboardDao));
+    result.put("extremePrices", findNGroupsHavingExtremePrices(dashboardDao));
     return result;
   }
 
   private Map<String, Object> getLinks(DashboardDao dashboardDao) {
-    Map<String, Object> result = new HashMap<>(2);
-    result.put("statusDists", findLinkStatusDists(dashboardDao));
+    Map<String, Object> result = new HashMap<>(3);
+    result.put("statusGroupSeries", findLinkStatusGroupSeries(dashboardDao));
+    result.put("levelSeries", findLinkLevelSeries(dashboardDao));
     result.put("mru25", dashboardDao.findMR25Link(CurrentUser.getAccountId()));
     return result;
   }
@@ -70,12 +71,12 @@ class DashboardService {
   /**
    * finding link distributions by the LinkStatus
    */
-  private int[] findLinkStatusDists(DashboardDao dashboardDao) {
-    Map<String, Integer> stats = new HashMap<>(6);
+  private int[] findLinkStatusGroupSeries(DashboardDao dashboardDao) {
+    Map<String, Integer> stats = new HashMap<>(4);
     int i = 0;
     stats.put(LinkStatusGroup.ACTIVE.name(), i++);
-    stats.put(LinkStatusGroup.WAITING.name(), i++);
     stats.put(LinkStatusGroup.TRYING.name(), i++);
+    stats.put(LinkStatusGroup.WAITING.name(), i++);
     stats.put(LinkStatusGroup.PROBLEM.name(), i++);
 
     int[] result = new int[i];
@@ -92,23 +93,57 @@ class DashboardService {
 
     return result;
   }
-
+  
   /**
    * finding group distributions by the Levels
    */
-  private Map<String, Integer> findGroupLevelDists(DashboardDao dashboardDao) {
-    return dashboardDao.findLevelDists(CurrentUser.getAccountId());
+  private int[] findGroupLevelSeries(DashboardDao dashboardDao) {
+    Map<String, Integer> levelDistMap = dashboardDao.findGroupLevelDists(CurrentUser.getAccountId());
+    return findSeries(levelDistMap, dashboardDao);
   }
 
   /**
-   * finding 10 Groups having lowest / highest prices
+   * finding link distributions by the Levels
    */
-  private Map<String, List<Most10Group>> find10GroupsHavingExtremePrices(DashboardDao dashboardDao) {
-    Map<String, List<Most10Group>> result = new HashMap<>(2);
+  private int[] findLinkLevelSeries(DashboardDao dashboardDao) {
+    Map<String, Integer> levelDistMap = dashboardDao.findLinkLevelDists(CurrentUser.getAccountId());
+    return findSeries(levelDistMap, dashboardDao);
+  }
+  
+  /**
+   * finding N (means the number) Groups having lowest / highest prices
+   */
+  private Map<String, List<GroupSummary>> findNGroupsHavingExtremePrices(DashboardDao dashboardDao) {
+  	Map<String, List<GroupSummary>> result = new HashMap<>(2);
+  	
+  	Level[] selected = { Level.LOWEST, Level.HIGHEST };
+  	for (Level level: selected) {
+  		result.put(level.name(), dashboardDao.findMostNGroup(5, level, CurrentUser.getAccountId()));
+  	}
+  	
+  	return result;
+  }
 
-    Level[] selected = { Level.LOWEST, Level.HIGHEST };
-    for (Level level: selected) {
-      result.put(level.name(), dashboardDao.findMost10Group(level, CurrentUser.getAccountId()));
+  private int[] findSeries(Map<String, Integer> dataMap, DashboardDao dashboardDao) {
+    Map<String, Integer> stats = new HashMap<>(7);
+    int i = 0;
+    stats.put(Level.LOWEST.name(), i++);
+    stats.put(Level.HIGHEST.name(), i++);
+    stats.put(Level.LOWER.name(), i++);
+    stats.put(Level.AVERAGE.name(), i++);
+    stats.put(Level.HIGHER.name(), i++);
+    stats.put(Level.EQUAL.name(), i++);
+    stats.put(Level.NA.name(), i++);
+
+    int[] result = new int[i];
+
+    if (dataMap != null && dataMap.size() > 0) {
+      for (Entry<String, Integer> entry: dataMap.entrySet()) {
+        Integer index = stats.get(entry.getKey());
+        result[index] += entry.getValue();
+      }
+    } else {
+      result = null;
     }
 
     return result;
