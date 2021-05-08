@@ -7,14 +7,9 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.stripe.exception.StripeException;
-import com.stripe.model.Customer;
-import com.stripe.param.CustomerUpdateParams;
 
 import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.email.EmailSender;
@@ -24,7 +19,6 @@ import io.inprice.api.external.Props;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.AccountStatus;
@@ -37,38 +31,16 @@ import io.inprice.common.models.UserUsed;
 
 class SubscriptionService {
 
-  private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
+  //private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
 
-  private final StripeService stripeService = Beans.getSingleton(StripeService.class);
+  //private final StripeService stripeService = Beans.getSingleton(StripeService.class);
 
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
   private final TemplateRenderer templateRenderer = Beans.getSingleton(TemplateRenderer.class);
 
   Response createCheckout(int planId) {
-    return stripeService.createCheckout(planId);
-  }
-
-  Response getTransactions() {
-    Map<String, Object> data = new HashMap<>(3);
-
-    try (Handle handle = Database.getHandle()) {
-      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
-
-      List<AccountTrans> allTrans = subscriptionDao.findListByAccountId(CurrentUser.getAccountId());
-      data.put("all", allTrans);
-
-      if (allTrans != null && allTrans.size() > 0) {
-        List<AccountTrans> invoiceTrans = new ArrayList<>();
-        for (AccountTrans st : allTrans) {
-          if (st.getFileUrl() != null) {
-            invoiceTrans.add(st);
-          }
-        }
-        data.put("invoice", invoiceTrans);
-      }
-    }
-
-    return new Response(data);
+    //return stripeService.createCheckout(planId);
+  	return Responses.BAD_REQUEST;
   }
 
   Response getCurrentAccount() {
@@ -94,7 +66,7 @@ class SubscriptionService {
       if (account.getStatus().isOKForCancel()) {
 
         if (AccountStatus.SUBSCRIBED.equals(account.getStatus())) { //if a subscriber
-          response = stripeService.cancel(account);
+          //response = stripeService.cancel(account);
         } else { //free or couponed user
 
           try (Handle handle = Database.getHandle()) {
@@ -118,8 +90,7 @@ class SubscriptionService {
                   accountDao.insertStatusHistory(
                     account.getId(),
                     AccountStatus.CANCELLED.name(),
-                    account.getPlanName(),
-                    null, null
+                    account.getPlanId()
                   );
                 if (isOK) {
                   Map<String, Object> mailMap = new HashMap<>(2);
@@ -173,16 +144,16 @@ class SubscriptionService {
 
           if (!account.getStatus().equals(AccountStatus.FREE)) {
             if (account.getStatus().isOKForFreeUse()) {
+            	PlanDao planDao = handle.attach(PlanDao.class);
               SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
-              Plan basicPlan = Plans.findById(0); // Basic Plan
+              Plan basicPlan = planDao.findByName("Basic Plan");
 
               boolean isOK = 
                 subscriptionDao.startFreeUseOrApplyCoupon(
                   CurrentUser.getAccountId(),
                   AccountStatus.FREE.name(),
-                  basicPlan.getName(),
-                  basicPlan.getLinkLimit(),
+                  basicPlan.getId(),
                   Props.APP_DAYS_FOR_FREE_USE()
                 );
 
@@ -199,8 +170,7 @@ class SubscriptionService {
                     accountDao.insertStatusHistory(
                       account.getId(),
                       AccountStatus.FREE.name(),
-                      basicPlan.getName(),
-                      null, null
+                      basicPlan.getId()
                     );
                   if (hasUsed == null) accountDao.insertUserUsed(CurrentUser.getEmail(), PermType.FREE_USE);
                 }
@@ -232,76 +202,65 @@ class SubscriptionService {
     return response;
   }
 
+  Response getInfo() {
+    Map<String, Object> data = new HashMap<>(3);
+
+    try (Handle handle = Database.getHandle()) {
+      AccountDao dao = handle.attach(AccountDao.class);
+      Account account = dao.findById(CurrentUser.getAccountId());
+      if (account != null) {
+      	Map<String, Object> info = new HashMap<>(7);
+      	info.put("title", account.getTitle());
+      	info.put("address1", account.getAddress1());
+      	info.put("address2", account.getAddress2());
+      	info.put("postcode", account.getPostcode());
+      	info.put("city", account.getCity());
+      	info.put("state", account.getState());
+      	info.put("country", account.getCountry());
+      	data.put("info", info);
+      	
+        SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+        
+        List<AccountTrans> allTrans = subscriptionDao.findListByAccountId(CurrentUser.getAccountId());
+        data.put("transactions", allTrans);
+  
+        if (allTrans != null && allTrans.size() > 0) {
+          List<AccountTrans> invoiceTrans = new ArrayList<>();
+          for (AccountTrans st : allTrans) {
+            if (st.getFileUrl() != null) {
+              invoiceTrans.add(st);
+            }
+          }
+          data.put("invoices", invoiceTrans);
+        }
+      } else {
+      	return Responses.NotFound.ACCOUNT;
+      }
+    }
+
+    return new Response(data);
+  }
+
   Response saveInfo(CustomerDTO dto) {
-    Response res = new Response("Sorry, we are unable to update your invoice info at the moment. We are working on it.");
+  	Response res = Responses.NotFound.ACCOUNT;
 
     String problem = validateInvoiceInfo(dto);
-    if (problem == null) {
 
+    if (problem == null) {
       Account account = null;
       try (Handle handle = Database.getHandle()) {
         AccountDao dao = handle.attach(AccountDao.class);
         account = dao.findById(CurrentUser.getAccountId());
-      }
 
-      if (account != null) {
-        if (StringUtils.isNotBlank(account.getCustId())) {
-
-          CustomerUpdateParams.Address address =
-            CustomerUpdateParams.Address.builder()
-              .setLine1(dto.getAddress1())
-              .setLine2(dto.getAddress2())
-              .setPostalCode(dto.getPostcode())
-              .setCity(dto.getCity())
-              .setState(dto.getState())
-              .setCountry(dto.getCountry())
-            .build();
-
-          CustomerUpdateParams customerParams =
-            CustomerUpdateParams.builder()
-              .setName(dto.getTitle())
-              .setEmail(CurrentUser.getEmail())
-              .setAddress(address)
-            .build();
-
-          Customer customer = null;
-
-          try {
-            customer = Customer.retrieve(account.getCustId()).update(customerParams);
-            if (customer != null) {
-              res = Responses.OK;
-              log.info(CurrentUser.getAccountName() + " customer info is updated, Id: " + customer.getId());
-              log.info("Customer info is updated. Account: {}, Subs Customer Id: {}, Title: {}, Email: {}", 
-                CurrentUser.getAccountName(), customer.getId(), dto.getTitle(), CurrentUser.getEmail());
-            } else {
-              log.error("Failed to update a new customer in Stripe.");
-            }
-
-          } catch (StripeException e) {
-            log.error("Failed to update a new customer in Stripe", e);
-            log.error("Account: {}, Title: {}, Email: {}", CurrentUser.getAccountName(), dto.getTitle(), CurrentUser.getEmail());
+        if (account != null) {
+          boolean isOK = dao.update(dto, CurrentUser.getAccountId());
+          if (isOK) {
+            res = Responses.OK;
+          } else {
+          	res = Responses.DataProblem.DB_PROBLEM;
           }
-
-          if (res.isOK() && customer != null) {
-            dto.setCustId(customer.getId());
-
-            try (Handle handle = Database.getHandle()) {
-              AccountDao dao = handle.attach(AccountDao.class);
-              boolean isOK = dao.update(dto, CurrentUser.getAccountId());
-              if (isOK) {
-                res = Responses.OK;
-              } else {
-                res = Responses.NotFound.ACCOUNT;
-              }
-            }
-          }
-        } else {
-          res = Responses.Already.PASSIVE_SUBSCRIPTION;
         }
-      } else {
-        res = Responses.NotFound.ACCOUNT;
       }
-
     } else {
       res = new Response(problem);
     }

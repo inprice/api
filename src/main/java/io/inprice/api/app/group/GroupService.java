@@ -236,38 +236,44 @@ class GroupService {
         AccountDao accountDao = handle.attach(AccountDao.class);
         GroupDao groupDao = handle.attach(GroupDao.class);
     		LinkDao linkDao = handle.attach(LinkDao.class);
+    		
+    		Set<String> urlList = null;
 
         Account account = accountDao.findById(CurrentUser.getAccountId());
-        int allowedLinkCount = (account.getLinkLimit() - account.getLinkCount());
-        Set<String> urlList = response.getData();
-        urlList.remove("");
-
-        if (allowedLinkCount > 0) {
-        	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
-
-        		for (Iterator<String> it = urlList.iterator(); it.hasNext();) {
-							Link link = new Link();
-							link.setUrl(it.next());
-							link.setUrlHash(DigestUtils.md5Hex(link.getUrl()));
-							link.setGroupId(dto.getGroupId());
-							link.setAccountId(CurrentUser.getAccountId());
-
-							long id = linkDao.insert(link);
-
-							link.setId(id);
-							link.setStatus(LinkStatus.TOBE_CLASSIFIED);
-							linkDao.insertHistory(link);
-						}
-        		groupDao.increaseWaitingsCount(dto.getGroupId(), urlList.size());
-
-        		response = Responses.OK;
-
+        if (account.getPlan() != null) {
+          int allowedLinkCount = (account.getPlan().getLinkLimit() - account.getLinkCount());
+          urlList = response.getData();
+          urlList.remove("");
+  
+          if (allowedLinkCount > 0) {
+          	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
+  
+          		for (Iterator<String> it = urlList.iterator(); it.hasNext();) {
+  							Link link = new Link();
+  							link.setUrl(it.next());
+  							link.setUrlHash(DigestUtils.md5Hex(link.getUrl()));
+  							link.setGroupId(dto.getGroupId());
+  							link.setAccountId(CurrentUser.getAccountId());
+  
+  							long id = linkDao.insert(link);
+  
+  							link.setId(id);
+  							link.setStatus(LinkStatus.TOBE_CLASSIFIED);
+  							linkDao.insertHistory(link);
+  						}
+          		groupDao.increaseWaitingsCount(dto.getGroupId(), urlList.size());
+  
+          		response = Responses.OK;
+  
+            } else {
+            	if (urlList.size() > 100) {
+            		response = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
+            	} else if (urlList.size() > allowedLinkCount) {
+            		response = new Response("You can add max " + allowedLinkCount + " links more!");
+            	}
+            }
           } else {
-          	if (urlList.size() > 100) {
-          		response = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
-          	} else if (urlList.size() > allowedLinkCount) {
-          		response = new Response("You can add max " + allowedLinkCount + " links more!");
-          	}
+            response = Responses.NotAllowed.HAVE_NO_PLAN;
           }
         } else {
           response = Responses.NotAllowed.NO_LINK_LIMIT;

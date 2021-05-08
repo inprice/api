@@ -19,8 +19,8 @@ public interface CheckoutDao {
   @UseRowMapper(CheckoutMapper.class)
   Checkout findCheckedAtout(@Bind("accountId") Long accountId);
 
-  @SqlUpdate("insert into checkout (_hash, session_id, account_id, plan_name) values (:hash, :sessionId, :accountId, :planName)")
-  boolean insert(@Bind("hash") String hash, @Bind("sessionId") String sessionId, @Bind("accountId") Long accountId, @Bind("planName") String planName);
+  @SqlUpdate("insert into checkout (_hash, session_id, account_id, plan_id) values (:hash, :sessionId, :accountId, :planId)")
+  boolean insert(@Bind("hash") String hash, @Bind("sessionId") String sessionId, @Bind("accountId") Long accountId, @Bind("planId") Integer planId);
 
   @SqlUpdate("update checkout set status=:status, description=:description, updated_at=now() where _hash=:hash and status = 'PENDING'")
   boolean update(@Bind("hash") String hash, @Bind("status") String status, @Bind("description") String description);

@@ -38,35 +38,35 @@ public interface SubscriptionDao {
 
   @SqlUpdate(
     "update account " +
-    "set title=:dto.title, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country, plan_name=:dto.planName, " +
-    "link_limit=:linkLimit, subs_id=:dto.subsId, cust_id=:dto.custId, status=:status, renewal_at=:dto.renewalDate, subs_started_at=now(), last_status_update=now() " +
+    "set title=:dto.title, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country, " +
+    "plan_id=:dto.planId, status=:status, subs_renewal_at=:dto.renewalDate, subs_started_at=now(), last_status_update=now() " +
     "where id=:id"
   )
   boolean startSubscription(@BindBean("dto") CustomerDTO dto, @Bind("status") String status, @Bind("linkLimit") Integer linkLimit, @Bind("id") Long id);
 
-  @SqlUpdate("update account set status=:status, renewal_at=:renewalAt where id=:id")
-  boolean renewSubscription(@Bind("id") Long id, @Bind("status") String status, @Bind("renewalAt") Timestamp renewalAt);
+  @SqlUpdate("update account set status=:status, subs_renewal_at=:renewalAt where id=:id")
+  boolean renewSubscription(@Bind("id") Long id, @Bind("status") String status, @Bind("subsRenewalAt") Timestamp subsRenewalAt);
 
   @SqlUpdate(
     "update account " + 
-    "set plan_name=:planName, status=:status, renewal_at=DATE_ADD(now(), interval <interval> day), link_limit=:linkLimit, last_status_update=now() " +
+    "set plan_id=:planId, status=:status, subs_renewal_at=DATE_ADD(now(), interval <interval> day), last_status_update=now() " +
     "where id=:accountId"
   )
   boolean startFreeUseOrApplyCoupon(@Bind("accountId") Long accountId, @Bind("status") String status, 
-    @Bind("planName") String planName, @Bind("linkLimit") Integer linkLimit, @Define("interval") Integer interval);
+    @Bind("planId") Integer planId, @Define("interval") Integer interval);
 
   @SqlUpdate(
     "update account " +
-    "set cust_id=null, subs_id=null, plan_name=null, renewal_at=null, status=:status, last_status_update=now() "+
+    "set subs_renewal_at=null, status=:status, last_status_update=now() "+
     "where id=:id"
   )
   boolean terminate(@Bind("id") Long id, @Bind("status") String status);
 
   @SqlUpdate(
     "update account " + 
-    "set plan_name=:planName, link_limit=:linkLimit, subs_started_at=now(), last_status_update=now() " +
+    "set plan_id=:planId, subs_started_at=now(), last_status_update=now() " +
     "where id=:accountId"
   )
-  boolean changePlan(@Bind("accountId") Long accountId, @Bind("planName") String planName, @Bind("linkLimit") Integer linkLimit);
+  boolean changePlan(@Bind("accountId") Long accountId, @Bind("planId") Integer planId);
 
 }

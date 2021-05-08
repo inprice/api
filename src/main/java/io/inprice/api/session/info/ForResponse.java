@@ -3,7 +3,6 @@ package io.inprice.api.session.info;
 import java.io.Serializable;
 import java.util.Date;
 
-import io.inprice.common.config.Plans;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.Member;
@@ -24,96 +23,81 @@ public class ForResponse implements Serializable {
   private String user;
   private String email;
   private String account;
+  private String accountStatus;
   private Integer planId;
   private String planName;
-  private String accountStatus;
-  private Date subsStartedAt;
-  private Boolean everSubscribed;
-  private Date renewalAt;
-  private Date lastStatusUpdate;
-  private String currencyFormat;
-  private String timezone;
-  private Integer linkLimit;
   private Integer linkCount;
+  private Date subsStartedAt;
+  private Date subsRenewalAt;
+  private Date lastStatusUpdate;
+  private String timezone;
+  private String currencyFormat;
   private UserRole role;
 
   public ForResponse(Account account, String user, String email, UserRole role, String timezone) {
     this.user = user;
     this.email = email;
     this.account = account.getName();
-    this.planName = account.getPlanName();
     this.accountStatus = account.getStatus().name();
-    this.subsStartedAt = account.getSubsStartedAt();
-    this.lastStatusUpdate = account.getLastStatusUpdate();
-    this.renewalAt = account.getRenewalAt();
-    this.currencyFormat = account.getCurrencyFormat();
-    this.timezone = timezone;
-    this.role = role;
-    this.linkLimit = account.getLinkLimit();
+    if (account.getPlan() != null) {
+    	this.planId = account.getPlan().getId();
+    	this.planName = account.getPlan().getName();
+    }
     this.linkCount = account.getLinkCount();
-
-    makeTheStandardAssignments();
+    this.subsStartedAt = account.getSubsStartedAt();
+    this.subsRenewalAt = account.getSubsRenewalAt();
+    this.lastStatusUpdate = account.getLastStatusUpdate();
+    this.timezone = timezone;
+    this.currencyFormat = account.getCurrencyFormat();
+    this.role = role;
   }
 
   public ForResponse(ForResponse forResponse) {
     this.user = forResponse.getUser();
     this.email = forResponse.getEmail();
     this.account = forResponse.getAccount();
-    this.planName = forResponse.getPlanName();
     this.accountStatus = forResponse.getAccountStatus();
-    this.subsStartedAt = forResponse.getSubsStartedAt();
-    this.lastStatusUpdate = forResponse.getLastStatusUpdate();
-    this.renewalAt = forResponse.getRenewalAt();
-    this.currencyFormat = forResponse.getCurrencyFormat();
-    this.timezone = forResponse.getTimezone();
-    this.role = forResponse.getRole();
-    this.linkLimit = forResponse.getLinkLimit();
+    this.planId = forResponse.getPlanId();
+    this.planName = forResponse.getPlanName();
     this.linkCount = forResponse.getLinkCount();
-
-    makeTheStandardAssignments();
+    this.subsStartedAt = forResponse.getSubsStartedAt();
+    this.subsRenewalAt = forResponse.getSubsRenewalAt();
+    this.lastStatusUpdate = forResponse.getLastStatusUpdate();
+    this.timezone = forResponse.getTimezone();
+    this.currencyFormat = forResponse.getCurrencyFormat();
+    this.role = forResponse.getRole();
   }
 
   public ForResponse(ForCookie forCookie, ForRedis forRedis) {
     this.user = forRedis.getUser();
     this.email = forCookie.getEmail();
     this.account = forRedis.getAccount();
-    this.planName = forRedis.getPlanName();
     this.accountStatus = forRedis.getAccountStatus();
-    this.subsStartedAt = forRedis.getSubsStartedAt();
-    this.lastStatusUpdate = forRedis.getLastStatusUpdate();
-    this.renewalAt = forRedis.getRenewalAt();
-    this.currencyFormat = forRedis.getCurrencyFormat();
-    this.timezone = forRedis.getTimezone();
-    this.role = UserRole.valueOf(forCookie.getRole());
-    this.linkLimit = forRedis.getLinkLimit();
+    this.planId = forRedis.getPlanId();
+    this.planName = forRedis.getPlanName();
     this.linkCount = forRedis.getLinkCount();
-
-    makeTheStandardAssignments();
+    this.subsStartedAt = forRedis.getSubsStartedAt();
+    this.subsRenewalAt = forRedis.getSubsRenewalAt();
+    this.lastStatusUpdate = forRedis.getLastStatusUpdate();
+    this.timezone = forRedis.getTimezone();
+    this.currencyFormat = forRedis.getCurrencyFormat();
+    this.role = UserRole.valueOf(forCookie.getRole());
   }
 
   public ForResponse(ForCookie forCookie, User user, Member mem) {
     this.user = user.getName();
     this.email = forCookie.getEmail();
     this.account = mem.getAccountName();
-    this.planName = mem.getPlanName();
     this.accountStatus = mem.getAccountStatus().name();
-    this.subsStartedAt = mem.getSubsStartedAt();
-    this.lastStatusUpdate = mem.getLastStatusUpdate();
-    this.renewalAt = mem.getRenewalAt();
-    this.currencyFormat = mem.getCurrencyFormat();
-    this.timezone = user.getTimezone();
-    this.role = UserRole.valueOf(forCookie.getRole());
-    this.linkLimit = mem.getLinkLimit();
+    this.planId = mem.getPlanId();
+    this.planName = mem.getPlanName();
     this.linkCount = mem.getLinkCount();
-
-    makeTheStandardAssignments();
-  }
-
-  private void makeTheStandardAssignments() {
-    if (this.planName != null) {
-      this.planId = Plans.findByName(this.planName).getId();
-    }
-    this.everSubscribed = (this.subsStartedAt != null);
+    this.subsStartedAt = mem.getSubsStartedAt();
+    this.subsRenewalAt = mem.getSubsRenewalAt();
+    this.lastStatusUpdate = mem.getLastStatusUpdate();
+    this.timezone = user.getTimezone();
+    this.currencyFormat = mem.getCurrencyFormat();
+    this.role = UserRole.valueOf(forCookie.getRole());
   }
 
 }

@@ -18,9 +18,11 @@ import io.inprice.common.models.Member;
 public interface MemberDao {
 
   final String ACCOUNT_FIELDS = 
-    ", a.name as account_name, a.status as account_status, a.cust_id, a.subs_started_at, " +
-    "a.last_status_update, a.plan_name, a.renewal_at, a.currency_format, a.link_limit, a.link_count ";
+    ", a.name as account_name, a.status as account_status, a.subs_started_at, " +
+    "a.subs_renewal_at, a.last_status_update, a.plan_id, a.currency_format, a.link_count, a.alarm_count ";
 
+  final String PLAN_FIELDS = ", p.name as plan_name, p.link_limit, p.alarm_limit ";
+  
   @SqlQuery("select * from member where id=:id")
   @UseRowMapper(MemberMapper.class)
   Member findById(@Bind("id") Long id);
@@ -30,18 +32,20 @@ public interface MemberDao {
   Member findByEmail(@Bind("email") String email, @Bind("accountId") Long accountId);
 
   @SqlQuery(
-    "select m.*" + ACCOUNT_FIELDS + " from member as m " +
+    "select m.*" + ACCOUNT_FIELDS + PLAN_FIELDS + " from member as m " +
     "inner join account as a on a.id = m.account_id " + 
+    "left join plan as p on p.id = a.plan_id " + 
     "where m.email != :email " + 
-    "  and account_id = :accountId " + 
+    "  and m.account_id = :accountId " + 
     "order by m.email"
   )
   @UseRowMapper(MemberMapper.class)
   List<Member> findListByNotEmail(@Bind("email") String email, @Bind("accountId") Long accountId);
 
   @SqlQuery(
-    "select m.*" + ACCOUNT_FIELDS + " from member as m " +
+    "select m.*" + ACCOUNT_FIELDS + PLAN_FIELDS + " from member as m " +
     "inner join account as a on a.id = m.account_id " + 
+    "left join plan as p on p.id = a.plan_id " + 
     "where m.email=:email " + 
     "  and m.status=:status " + 
     "order by m.role, m.created_at"

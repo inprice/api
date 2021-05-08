@@ -80,8 +80,8 @@ public class Consts {
     public static class Subscription {
       public static final String BASE = "/subscription";
       public static final String CANCEL = BASE + "/cancel";
-      public static final String TRANSACTIONS = BASE + "/trans";
       public static final String SAVE_INFO = BASE + "/save-info";
+      public static final String GET_INFO = BASE + "/get-info";
       public static final String START_FREE_USE = BASE + "/free-use";
       public static final String CREATE_CHECKOUT = BASE + "/create-checkout";
       public static final String CANCEL_CHECKOUT = BASE + "/cancel-checkout";
@@ -103,10 +103,6 @@ public class Consts {
       public static final String PLANS = BASE + "/plans";
       public static final String REFRESH_SESSION = BASE + "/refresh-session";
       public static final String STATISTICS = BASE + "/statistics";
-    }
-
-    public static class Webhook {
-      public static final String STRIPE = "/stripe/webhook";
     }
 
   }

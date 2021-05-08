@@ -22,7 +22,11 @@ import io.inprice.common.models.UserUsed;
 
 public interface AccountDao {
 
-  @SqlQuery("select * from account where id=:id")
+  @SqlQuery(
+		"select a.*, p.name as plan_name, p.link_limit, p.alarm_limit from account as a " +
+		"left join plan as p on p.id = a.plan_id " +
+		"where a.id=:id"
+	)
   @UseRowMapper(AccountMapper.class)
   Account findById(@Bind("id") Long id);
 
@@ -33,10 +37,6 @@ public interface AccountDao {
   @SqlQuery("select * from account where name=:name and admin_id=:adminId")
   @UseRowMapper(AccountMapper.class)
   Account findByNameAndAdminId(@Bind("name") String name, @Bind("adminId") Long adminId);
-
-  @SqlQuery("select * from account where cust_id=:custId")
-  @UseRowMapper(AccountMapper.class)
-  Account findByCustId(@Bind("custId") String custId);
 
   @SqlUpdate(
     "insert into account (admin_id, name, currency_code, currency_format) " + 
@@ -64,21 +64,21 @@ public interface AccountDao {
   @SqlQuery(
     "select * from account "+
     "where status in (<statusList>) "+
-    "  and TIMESTAMPDIFF(DAY, renewal_at, now()) > 1 "+
-    "  and TIMESTAMPDIFF(DAY, renewal_at, now()) < 4"
+    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) > 1 "+
+    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) < 4"
   )
   @UseRowMapper(AccountMapper.class)
   List<Account> findAboutToExpiredFreeAccountList(@BindList("statusList") List<String> statusList);
 
-  @SqlQuery("select * from account where status in (<statusList>) and renewal_at <= now()")
+  @SqlQuery("select * from account where status in (<statusList>) and subs_renewal_at <= now()")
   @UseRowMapper(AccountMapper.class)
   List<Account> findExpiredFreeAccountList(@BindList("statusList") List<String> statusList);
 
   @SqlQuery(
-    "select c.id, c.name, u.email, c.cust_id from account as c " +
+    "select c.id, c.name, u.email from account as c " +
     "inner join user as u on u.id = c.admin_id " +
     "where c.status='SUBSCRIBED' "+
-    "  and c.renewal_at <= now() - interval 3 day"
+    "  and c.subs_renewal_at <= now() - interval 3 day"
   )
   @UseRowMapper(AccountInfoMapper.class)
   List<AccountInfo> findExpiredSubscriberAccountList();
@@ -87,11 +87,10 @@ public interface AccountDao {
   boolean insertStatusHistory(@Bind("accountId") Long accountId, @Bind("status") String status);
 
   @SqlUpdate(
-    "insert into account_history (account_id, status, plan_name, subs_id, cust_id) " +
-    "values (:accountId, :status, :planName, :subsId, :custId)"
+    "insert into account_history (account_id, status, plan_id) " +
+    "values (:accountId, :status, :planId)"
   )
-  boolean insertStatusHistory(@Bind("accountId") Long accountId, @Bind("status") String status, 
-    @Bind("planName") String planName, @Bind("subsId") String subsId, @Bind("custId") String custId);
+  boolean insertStatusHistory(@Bind("accountId") Long accountId, @Bind("status") String status, @Bind("planId") Integer planId);
   
   @SqlQuery("select * from user_used where email=:email and perm_type=:permType")
   @UseRowMapper(UserUsedMapper.class)

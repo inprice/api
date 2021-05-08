@@ -20,10 +20,10 @@ public interface CouponDao {
   boolean applyFor(@Bind("code") String code, @Bind("issuedId") Long issuedId);
 
   @SqlUpdate(
-    "insert into coupon (code, plan_name, days, description, issuer_id) " +
-    "values (:code, :planName, :days, :description, :issuerId)"
+    "insert into coupon (code, plan_id, days, description, issuer_id) " +
+    "values (:code, :planId, :days, :description, :issuerId)"
   )
-  boolean create(@Bind("code") String code, @Bind("planName") String planName,
+  boolean create(@Bind("code") String code, @Bind("planId") Integer planId,
     @Bind("days") Long days, @Bind("description") String description, @Bind("issuerId") Long issuerId);
 
   @SqlQuery(

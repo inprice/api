@@ -1,7 +1,5 @@
 package io.inprice.api;
 
-import com.stripe.Stripe;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +37,6 @@ public class Application {
 
       log.info("APPLICATION STARTED.");
       Global.isApplicationRunning = true;
-
-      Stripe.apiKey = Props.API_KEYS_STRIPE();
 
 			TaskManager.start();
 

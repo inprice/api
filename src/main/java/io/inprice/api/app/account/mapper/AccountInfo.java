@@ -12,6 +12,5 @@ public class AccountInfo {
   private Long id;
   private Long name;
   private String email;
-  private String custId;
 
 }

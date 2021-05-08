@@ -1,28 +1,12 @@
 package io.inprice.api.scheduled;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.stripe.model.Subscription;
-
-import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.account.AccountDao;
-import io.inprice.api.app.account.mapper.AccountInfo;
-import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.consts.Global;
 import io.inprice.api.email.EmailSender;
-import io.inprice.api.email.EmailTemplate;
 import io.inprice.api.email.TemplateRenderer;
-import io.inprice.api.external.Props;
 import io.inprice.common.helpers.Beans;
-import io.inprice.common.helpers.Database;
-import io.inprice.common.meta.AccountStatus;
-import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.models.AccountTrans;
 
 /**
  * Stops SUBSCRIBED accounts after four days later from their subs renewal date expired.
@@ -50,6 +34,8 @@ public class SubscribedAccountStopper implements Runnable {
     try {
       Global.startTask(clazz);
       log.info(clazz + " is triggered.");
+      
+      /*
 
       try (Handle handle = Database.getHandle()) {
       	handle.begin();
@@ -117,7 +103,7 @@ public class SubscribedAccountStopper implements Runnable {
       } catch (Exception e) {
         log.error("Failed to trigger " + clazz , e);
       }
-      
+      */
     } finally {
       Global.stopTask(clazz);
     }

@@ -60,14 +60,6 @@ public class Props {
     return System.getenv().get("API_KEYS_GELOCATION");
   }
 
-  public static String API_KEYS_STRIPE() {
-    return System.getenv().get("API_KEYS_STRIPE");
-  }
-
-  public static String API_KEYS_STRIPE_WEBHOOK() {
-    return System.getenv().get("API_KEYS_STRIPE_WEBHOOK");
-  }
-
   public static String TIME_PERIOD_OF_REMINDER_FOR_FREE_ACCOUNTS() {
     return System.getenv().getOrDefault("TIME_PERIOD_OF_REMINDER_FOR_FREE_ACCOUNTS", "1d");
   }

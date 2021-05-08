@@ -8,11 +8,11 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.subscription.SubscriptionDao;
+import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.SubsEvent;
@@ -26,12 +26,12 @@ public class CouponService {
 
   private static final Logger log = LoggerFactory.getLogger(CouponService.class);
 
-  public String createCoupon(Handle handle, long accountId, SubsEvent subsEvent, String planName, long days, String description) {
+  public String createCoupon(Handle handle, long accountId, SubsEvent subsEvent, Integer planId, long days, String description) {
     String couponCode = CouponManager.generate();
     CouponDao couponDao = handle.attach(CouponDao.class);
     boolean isOK = couponDao.create(
       couponCode,
-      planName,
+      planId,
       days,
       description,
       CurrentUser.getAccountId()
@@ -81,28 +81,23 @@ public class CouponService {
 
             if (coupon.getIssuedId() == null || coupon.getIssuedId().equals(CurrentUser.getAccountId())) {
               AccountDao accountDao = handle.attach(AccountDao.class);
+              PlanDao planDao = handle.attach(PlanDao.class);
 
               Account account = accountDao.findById(CurrentUser.getAccountId());
               if (account.getStatus().isOKForCoupon()) {
 
-                Plan selectedPlan = null;
-                Plan couponPlan = Plans.findByName(coupon.getPlanName());
-                Plan accountPlan = (account.getPlanName() != null ? Plans.findByName(account.getPlanName()) : null);
+              	Plan couponPlan = planDao.findById(coupon.getPlanId());
+              	if (account.getLinkCount() == null) account.setLinkCount(0);
 
-                if (accountPlan == null || couponPlan.getId() > accountPlan.getId()) {
-                  selectedPlan = couponPlan;
-                }
-
-                // only broader plan transitions allowed
-                if (account.getLinkCount().compareTo(selectedPlan.getLinkLimit()) <= 0) {
+              	// if account's current link count is equal or less then coupon's limit
+                if (account.getLinkCount().compareTo(couponPlan.getLinkLimit()) <= 0) {
                   SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
                   boolean isOK = 
                     subscriptionDao.startFreeUseOrApplyCoupon(
                       CurrentUser.getAccountId(),
                       AccountStatus.COUPONED.name(),
-                      selectedPlan.getName(),
-                      selectedPlan.getLinkLimit(), 
+                      couponPlan.getId(),
                       coupon.getDays()
                     );
 
@@ -123,8 +118,7 @@ public class CouponService {
                           accountDao.insertStatusHistory(
                             account.getId(), 
                             AccountStatus.COUPONED.name(),
-                            selectedPlan.getName(),
-                            null, null
+                            couponPlan.getId()
                           );
                       }
                               

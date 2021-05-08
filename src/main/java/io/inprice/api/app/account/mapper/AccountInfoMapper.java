@@ -17,7 +17,6 @@ public class AccountInfoMapper implements RowMapper<AccountInfo> {
     if (Helper.hasColumn(rs, "id")) m.setId(Helper.nullLongHandler(rs, "id"));
     if (Helper.hasColumn(rs, "name")) m.setEmail(rs.getString("name"));
     if (Helper.hasColumn(rs, "email")) m.setEmail(rs.getString("email"));
-    if (Helper.hasColumn(rs, "cust_id")) m.setCustId(rs.getString("cust_id"));
 
     return m;
   }

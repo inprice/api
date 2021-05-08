@@ -6,7 +6,6 @@ import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
-import io.inprice.common.config.Plans;
 import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
@@ -18,9 +17,9 @@ public class SubscriptionController implements Controller {
   @Override
   public void addRoutes(Javalin app) {
 
-    // creates checkout session for stripe
+    // creates checkout session
     app.post(Consts.Paths.Subscription.CREATE_CHECKOUT + "/:plan_id", (ctx) -> {
-      Integer planId = ctx.pathParam("plan_id", Integer.class).check(it -> it > 0 && it < Plans.getPlans().length).getValue();
+      Integer planId = ctx.pathParam("plan_id", Integer.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.createCheckout(planId)));
     }, AccessRoles.ADMIN_ONLY());
 
@@ -40,8 +39,8 @@ public class SubscriptionController implements Controller {
     }, AccessRoles.ANYONE());
 
     // returns all the transactions happened in payment provider
-    app.get(Consts.Paths.Subscription.TRANSACTIONS, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getTransactions()));
+    app.get(Consts.Paths.Subscription.GET_INFO, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, service.getInfo()));
     }, AccessRoles.ANYONE());
 
     // updates account's extra info used in invoices

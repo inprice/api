@@ -24,10 +24,8 @@ public class CustomerDTO implements Serializable {
   private String state;
   private String country;
 
-  private String subsId;
-  private String custId;
-  private String planName;
+  private Integer planId;
   private AccountStatus accountStatus;
-  private Timestamp renewalDate;
+  private Timestamp subsRenewalDate;
 
 }
