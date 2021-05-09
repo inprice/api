@@ -1,7 +1,9 @@
 package io.inprice.api.app.ticket;
 
 import io.inprice.api.consts.Consts;
+import io.inprice.api.dto.IdTextDTO;
 import io.inprice.api.dto.TicketDTO;
+import io.inprice.api.dto.TicketCSatDTO;
 import io.inprice.api.framework.Controller;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -16,12 +18,22 @@ public class TicketController implements Controller {
 
   @Override
   public void addRoutes(Javalin app) {
-    
+
     // insert
-    app.post(Consts.Paths.Group.BASE, (ctx) -> {
+    app.post(Consts.Paths.Ticket.BASE, (ctx) -> {
     	try {
     		TicketDTO dto = ctx.bodyAsClass(TicketDTO.class);
       	ctx.json(Commons.createResponse(ctx, service.insert(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
+    }, AccessRoles.ANYONE());
+    
+    // update
+    app.put(Consts.Paths.Ticket.BASE, (ctx) -> {
+    	try {
+    		IdTextDTO dto = ctx.bodyAsClass(IdTextDTO.class);
+    		ctx.json(Commons.createResponse(ctx, service.update(dto)));
     	} catch (Exception e) {
     		ctx.status(400);
     	}
@@ -59,6 +71,16 @@ public class TicketController implements Controller {
   	// finds unread tickets
     app.get(Consts.Paths.Ticket.LIST, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.findUnreadList()));
+    }, AccessRoles.ANYONE());
+
+    // sets customer satisfaction level
+    app.put(Consts.Paths.Ticket.SET_CSAT_LEVEL, (ctx) -> {
+    	try {
+    		TicketCSatDTO dto = ctx.bodyAsClass(TicketCSatDTO.class);
+      	ctx.json(Commons.createResponse(ctx, service.setSatisfaction(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    	}
     }, AccessRoles.ANYONE());
 
   }

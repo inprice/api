@@ -11,6 +11,7 @@ import lombok.ToString;
 @ToString
 public class TicketDTO {
 
+	private Long id;
 	private TicketType type;
   private TicketSubject subject;
   private String query;

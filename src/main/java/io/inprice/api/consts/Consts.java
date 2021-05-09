@@ -99,6 +99,7 @@ public class Consts {
       public static final String MARK_ALL_AS_READ = BASE + "/mark-all-as-read";
       public static final String LIST = BASE + "s";
       public static final String SEARCH = LIST + "/search";
+      public static final String SET_CSAT_LEVEL = BASE + "/set-csat-level";
     }
 
     public static class Dashboard {
