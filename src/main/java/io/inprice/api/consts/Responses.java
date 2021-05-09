@@ -53,6 +53,7 @@ public class Responses {
     public static final Response NO_ACCOUNT = new Response(BASE + 5, "You have no active account! Please either create a new one or participate in an existing!");
     public static final Response LIMIT_PROBLEM = new Response(BASE + 6, "Your link count is reached your plans limit! You need to pass a broader plan to proceed");
     public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 7, "You need a broader plan. The plan you intend to select allows less than your existing link count!");
+    public static final Response WRONG_USER = new Response(BASE + 8, "You are not allowed to do this operation!");
   }
 
   public static class DataProblem {
@@ -107,6 +108,7 @@ public class Responses {
     public static final Response NO_LINK_LIMIT = new Response(BASE + 1, "You have reached max link number of your plan!");
     public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload max 100 URLs at once!");
     public static final Response HAVE_NO_PLAN = new Response(BASE, "You haven't picked a plan yet!");
+    public static final Response DELETE = new Response(BASE, "You aren't allowed to delete this!");
   }
 
   public static class NotSuitable {

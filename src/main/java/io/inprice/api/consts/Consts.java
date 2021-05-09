@@ -87,10 +87,18 @@ public class Consts {
       public static final String CANCEL_CHECKOUT = BASE + "/cancel-checkout";
       public static final String CHANGE_PLAN = BASE + "/change-plan";
     }
-
+    
     public static class Coupon {
-      public static final String BASE = "/coupon";
-      public static final String APPLY = BASE + "/apply";
+    	public static final String BASE = "/coupon";
+    	public static final String APPLY = BASE + "/apply";
+    }
+
+    public static class Ticket {
+      public static final String BASE = "/ticket";
+      public static final String TOGGLE_MARK_AS_READ = BASE + "/mark-as-read";
+      public static final String MARK_ALL_AS_READ = BASE + "/mark-all-as-read";
+      public static final String LIST = BASE + "s";
+      public static final String SEARCH = LIST + "/search";
     }
 
     public static class Dashboard {

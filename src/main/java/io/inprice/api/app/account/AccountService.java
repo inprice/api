@@ -389,7 +389,7 @@ class AccountService {
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getName())) {
-        problem = "Account name cannot be null!";
+        problem = "Account name cannot be empty!";
       } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
         problem = "Account name must be between 3 - 70 chars";
       }
@@ -443,7 +443,7 @@ class AccountService {
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getAccountName())) {
-        problem = "Account name cannot be null!";
+        problem = "Account name cannot be empty!";
       } else if (dto.getAccountName().length() < 3 || dto.getAccountName().length() > 70) {
         problem = "Account name must be between 3 - 70 chars";
       }

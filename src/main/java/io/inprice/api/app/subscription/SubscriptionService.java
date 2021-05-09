@@ -277,7 +277,7 @@ class SubscriptionService {
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getTitle())) {
-        problem = "Title cannot be null!";
+        problem = "Title cannot be empty!";
       } else if (dto.getTitle().length() < 3 || dto.getTitle().length() > 255) {
         problem = "Title must be between 3 - 255 chars";
       }
@@ -285,7 +285,7 @@ class SubscriptionService {
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getAddress1())) {
-        problem = "Address line 1 cannot be null!";
+        problem = "Address line 1 cannot be empty!";
       } else if (dto.getAddress1().length() > 255) {
         problem = "Address line 1 must be less than 255 chars";
       }
@@ -305,7 +305,7 @@ class SubscriptionService {
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getCity())) {
-        problem = "City cannot be null!";
+        problem = "City cannot be empty!";
       } else if (dto.getCity().length() < 2 || dto.getCity().length() > 8) {
         problem = "City must be between 2-70 chars";
       }
@@ -319,7 +319,7 @@ class SubscriptionService {
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getCountry())) {
-        problem = "Country code cannot be null!";
+        problem = "Country code cannot be empty!";
       } else if (dto.getCountry().length() != 2) {
         problem = "Country code must be 2 chars";
       }
