@@ -2,7 +2,7 @@ package io.inprice.api.app.subscription;
 
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.CustomerDTO;
-import io.inprice.api.framework.Controller;
+import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
@@ -10,7 +10,7 @@ import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
 @Router
-public class SubscriptionController implements Controller {
+public class SubscriptionController extends AbstractController {
 
   private static final SubscriptionService service = Beans.getSingleton(SubscriptionService.class);
 
@@ -21,17 +21,17 @@ public class SubscriptionController implements Controller {
     app.post(Consts.Paths.Subscription.CREATE_CHECKOUT + "/:plan_id", (ctx) -> {
       Integer planId = ctx.pathParam("plan_id", Integer.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.createCheckout(planId)));
-    }, AccessRoles.ADMIN_ONLY());
+    }, AccessRoles.ADMIN());
 
     // cancels a subscription
     app.put(Consts.Paths.Subscription.CANCEL, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.cancel()));
-    }, AccessRoles.ADMIN_ONLY());
+    }, AccessRoles.ADMIN());
 
     // starts free use
     app.post(Consts.Paths.Subscription.START_FREE_USE, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.startFreeUse()));
-    }, AccessRoles.ADMIN_ONLY());
+    }, AccessRoles.ADMIN());
 
     // returns current account's info
     app.get(Consts.Paths.Subscription.BASE, (ctx) -> {
@@ -50,8 +50,9 @@ public class SubscriptionController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.saveInfo(dto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
-    }, AccessRoles.ADMIN_ONLY());
+    }, AccessRoles.ADMIN());
 
   }
 

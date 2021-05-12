@@ -1,7 +1,7 @@
 package io.inprice.api.app.coupon;
 
 import io.inprice.api.consts.Consts;
-import io.inprice.api.framework.Controller;
+import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
@@ -9,7 +9,7 @@ import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
 @Router
-public class CouponController implements Controller {
+public class CouponController extends AbstractController {
 
   private static final CouponService service = Beans.getSingleton(CouponService.class);
 
@@ -24,7 +24,7 @@ public class CouponController implements Controller {
     // registers the given coupon to current account
     app.put(Consts.Paths.Coupon.APPLY + "/:code", (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.applyCoupon(ctx.pathParam("code"))));
-    }, AccessRoles.ADMIN_ONLY());
+    }, AccessRoles.ADMIN());
 
   }
 

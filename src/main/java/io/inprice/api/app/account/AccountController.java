@@ -2,12 +2,12 @@ package io.inprice.api.app.account;
 
 import java.util.Map;
 
-import io.inprice.api.app.auth.AuthService;
 import io.inprice.api.app.account.dto.CreateDTO;
 import io.inprice.api.app.account.dto.RegisterDTO;
+import io.inprice.api.app.auth.AuthService;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.StringDTO;
-import io.inprice.api.framework.Controller;
+import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.ClientSide;
@@ -17,7 +17,7 @@ import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
 @Router
-public class AccountController implements Controller {
+public class AccountController extends AbstractController {
 
   private final AccountService service = Beans.getSingleton(AccountService.class);
   private final AuthService authService = Beans.getSingleton(AuthService.class);
@@ -31,6 +31,7 @@ public class AccountController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.requestRegistration(dto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
     });
 
@@ -58,6 +59,7 @@ public class AccountController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.create(dto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
     }, AccessRoles.ANYONE());
 
@@ -68,13 +70,14 @@ public class AccountController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.update(dto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
-    }, AccessRoles.ADMIN_ONLY());
+    }, AccessRoles.ADMIN());
 
     app.put(Consts.Paths.Account.DELETE, (ctx) -> {
       StringDTO dto = ctx.bodyAsClass(StringDTO.class);
       ctx.json(Commons.createResponse(ctx, service.deleteAccount(dto.getValue())));
-    }, AccessRoles.ADMIN_ONLY());
+    }, AccessRoles.ADMIN());
 
   }
 

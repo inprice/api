@@ -8,35 +8,38 @@ import io.javalin.core.security.Role;
 
 public class AccessRoles {
 
-   private static Set<Role> ROLES_OF_ANYONE;
-   private static Set<Role> ROLES_OF_EDITOR;
-   private static Set<Role> ROLES_OF_ADMIN;
+	private static Set<Role> SUPER_ROLES = new HashSet<>(1);
+	private static Set<Role> ADMIN_ROLES = new HashSet<>(2);
+	private static Set<Role> EDITOR_ROLES = new HashSet<>(3);
+	private static Set<Role> ANYONE_ROLES = new HashSet<>(4);
+	
+	static {
+		SUPER_ROLES.add(ShadowRoles.SUPER);
 
-   public static Set<Role> ADMIN_ONLY() {
-      if (ROLES_OF_ADMIN == null) {
-         ROLES_OF_ADMIN = new HashSet<>(1);
-         ROLES_OF_ADMIN.add(ShadowRoles.ADMIN);
-      }
-      return ROLES_OF_ADMIN;
-   }
+		ADMIN_ROLES.addAll(SUPER_ROLES);
+		ADMIN_ROLES.add(ShadowRoles.ADMIN);
 
-   public static Set<Role> EDITOR() {
-      if (ROLES_OF_EDITOR == null) {
-         ROLES_OF_EDITOR = new HashSet<>(2);
-         ROLES_OF_EDITOR.add(ShadowRoles.ADMIN);
-         ROLES_OF_EDITOR.add(ShadowRoles.EDITOR);
-      }
-      return ROLES_OF_EDITOR;
-   }
+		EDITOR_ROLES.addAll(ADMIN_ROLES);
+		EDITOR_ROLES.add(ShadowRoles.EDITOR);
 
-   public static Set<Role> ANYONE() {
-      if (ROLES_OF_ANYONE == null) {
-         ROLES_OF_ANYONE = new HashSet<>(3);
-         ROLES_OF_ANYONE.add(ShadowRoles.ADMIN);
-         ROLES_OF_ANYONE.add(ShadowRoles.EDITOR);
-         ROLES_OF_ANYONE.add(ShadowRoles.VIEWER);
-      }
-      return ROLES_OF_ANYONE;
-   }
+		ANYONE_ROLES.addAll(EDITOR_ROLES);
+		ANYONE_ROLES.add(ShadowRoles.VIEWER);
+	}
+	
+	public static Set<Role> SUPER_ONLY() {
+		return ADMIN_ROLES;
+	}
+
+	public static Set<Role> ADMIN() {
+		return ADMIN_ROLES;
+	}
+
+	public static Set<Role> EDITOR() {
+		return EDITOR_ROLES;
+	}
+
+	public static Set<Role> ANYONE() {
+		return ANYONE_ROLES;
+	}
 
 }

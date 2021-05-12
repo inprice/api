@@ -21,33 +21,19 @@ public interface TicketDao {
 	)
 	boolean insert(@BindBean("dto") TicketDTO dto);
 
-	@SqlUpdate("update ticket set query=:query where id=:id")
-	boolean update(@Bind("id") Long id, @Bind("query") String query);
-	
+	@SqlUpdate("update ticket set type=:dto.type, subject=:dto.subject, query=:dto.query where id=:dto.id")
+	boolean update(@BindBean("dto") TicketDTO dto);
+
 	@SqlQuery("select * from ticket where id=:id and account_id=:accountId")
 	@UseRowMapper(TicketMapper.class)
 	Ticket findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
   @SqlUpdate("delete from ticket where id=:id and replied_at is null")
   boolean delete(@Bind("id") Long id, @Bind("accountId") Long accountId);
-  
-  @SqlUpdate("update ticket set is_read=!is_read where id=:id and user_id=:userId")
-  boolean markAsRead(@Bind("id") Long id, @Bind("userId") Long userId);
-
-  @SqlUpdate("update ticket set is_read=true where is_read=false and user_id=:userId")
-  boolean markAllAsRead(@Bind("userId") Long userId);
-
-  @SqlQuery("select * from ticket where (query like :term or reply like :term) and account_id=:accountId order by created_at desc")
-  @UseRowMapper(TicketMapper.class)
-  List<Ticket> search(@Bind("term") String term, @Bind("accountId") Long accountId);
 
   @SqlQuery("select * from ticket where account_id=:accountId order by created_at desc")
   @UseRowMapper(TicketMapper.class)
   List<Ticket> getList(@Bind("accountId") Long accountId);
-
-  @SqlQuery("select * from ticket where is_read=false and user_id=:userId order by created_at desc")
-  @UseRowMapper(TicketMapper.class)
-  List<Ticket> findUnreadListByUserId(@Bind("userId") Long userId);
 
 	@SqlUpdate("update ticket set csat_level=:level, csat_reason=:reason, csated_at=now() where id=:id")
 	boolean setCSatLevel(@Bind("id") Long id, @Bind("level") TicketCSatLevel level, @Bind("reason") String reason);

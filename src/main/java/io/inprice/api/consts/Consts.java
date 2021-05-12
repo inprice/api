@@ -95,10 +95,7 @@ public class Consts {
 
     public static class Ticket {
       public static final String BASE = "/ticket";
-      public static final String TOGGLE_MARK_AS_READ = BASE + "/mark-as-read";
-      public static final String MARK_ALL_AS_READ = BASE + "/mark-all-as-read";
-      public static final String LIST = BASE + "s";
-      public static final String SEARCH = LIST + "/search";
+      public static final String SEARCH = BASE + "s/search";
       public static final String SET_CSAT_LEVEL = BASE + "/set-csat-level";
     }
 

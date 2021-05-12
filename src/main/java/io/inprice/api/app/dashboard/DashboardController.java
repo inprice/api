@@ -1,7 +1,7 @@
 package io.inprice.api.app.dashboard;
 
 import io.inprice.api.consts.Consts;
-import io.inprice.api.framework.Controller;
+import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
@@ -9,7 +9,7 @@ import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
 @Router
-public class DashboardController implements Controller {
+public class DashboardController extends AbstractController {
 
   private static final DashboardService service = Beans.getSingleton(DashboardService.class);
 

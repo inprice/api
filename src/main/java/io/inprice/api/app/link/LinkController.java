@@ -4,7 +4,7 @@ import io.inprice.api.app.link.dto.SearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
-import io.inprice.api.framework.Controller;
+import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
@@ -12,7 +12,7 @@ import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
 @Router
-public class LinkController implements Controller {
+public class LinkController extends AbstractController {
 
   private static final LinkService service = Beans.getSingleton(LinkService.class);
 
@@ -26,6 +26,7 @@ public class LinkController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.delete(ldDto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
     }, AccessRoles.EDITOR());
 
@@ -36,6 +37,7 @@ public class LinkController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.moveTo(lmDto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
     }, AccessRoles.EDITOR());
 
@@ -46,6 +48,7 @@ public class LinkController implements Controller {
     		ctx.json(Commons.createResponse(ctx, service.search(dto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
     }, AccessRoles.ANYONE());
     

@@ -12,11 +12,10 @@ import lombok.Setter;
 @Setter
 public class SearchDTO extends BaseSearchDTO {
 
-	//null means ALL
-	private SearchBy searchBy = SearchBy.Name;
+	private SearchBy searchBy = SearchBy.NAME;
   private Set<Level> levels;
   private Set<LinkStatusGroup> statuses;
-  private OrderBy orderBy = OrderBy.Name;
-  private OrderDir orderDir = OrderDir.Ascending;
+  private OrderBy orderBy = OrderBy.NAME;
+  private OrderDir orderDir = OrderDir.ASC;
 
 }
