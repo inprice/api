@@ -19,7 +19,7 @@ public interface MemberDao {
 
   final String ACCOUNT_FIELDS = 
     ", a.name as account_name, a.status as account_status, a.subs_started_at, " +
-    "a.subs_renewal_at, a.last_status_update, a.plan_id, a.currency_format, a.link_count, a.alarm_count ";
+    "a.subs_renewal_at, a.last_status_update, a.plan_id, a.currency_format, a.user_count, a.link_count, a.alarm_count ";
 
   final String PLAN_FIELDS = ", p.name as plan_name, p.link_limit, p.alarm_limit ";
   

@@ -3,7 +3,7 @@ package io.inprice.api.app.group;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.GroupDTO;
 import io.inprice.api.dto.LinkBulkInsertDTO;
-import io.inprice.api.framework.Controller;
+import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
@@ -11,7 +11,7 @@ import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
 @Router
-public class GroupController implements Controller {
+public class GroupController extends AbstractController {
 
   private static final GroupService service = Beans.getSingleton(GroupService.class);
 
@@ -48,6 +48,7 @@ public class GroupController implements Controller {
       	ctx.json(Commons.createResponse(ctx, service.insert(dto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
     }, AccessRoles.EDITOR());
 
@@ -58,6 +59,7 @@ public class GroupController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.update(dto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
     }, AccessRoles.EDITOR());
 
@@ -74,6 +76,7 @@ public class GroupController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.bulkInsert(dto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
     }, AccessRoles.EDITOR());
 

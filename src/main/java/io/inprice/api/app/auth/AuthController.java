@@ -5,7 +5,7 @@ import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.user.dto.LoginDTO;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.consts.Consts;
-import io.inprice.api.framework.Controller;
+import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.Commons;
@@ -15,7 +15,7 @@ import io.inprice.common.models.User;
 import io.javalin.Javalin;
 
 @Router
-public class AuthController implements Controller {
+public class AuthController extends AbstractController {
 
   private static final AuthService service = Beans.getSingleton(AuthService.class);
 
@@ -28,6 +28,7 @@ public class AuthController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.login(ctx, dto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
     });
 
@@ -37,6 +38,7 @@ public class AuthController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.forgotPassword(dto.getEmail())));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
     });
 
@@ -46,6 +48,7 @@ public class AuthController implements Controller {
         ctx.json(Commons.createResponse(ctx, service.resetPassword(ctx, dto)));
     	} catch (Exception e) {
     		ctx.status(400);
+    		logForInvalidData(ctx, e);
     	}
     });
 

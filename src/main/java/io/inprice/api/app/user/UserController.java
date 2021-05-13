@@ -2,11 +2,14 @@ package io.inprice.api.app.user;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.dto.UserDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.LongDTO;
-import io.inprice.api.framework.Controller;
+import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
@@ -17,8 +20,10 @@ import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
 @Router
-public class UserController implements Controller {
+public class UserController extends AbstractController {
 
+  private static final Logger log = LoggerFactory.getLogger(UserController.class);
+	
 	private static final UserService service = Beans.getSingleton(UserService.class);
 
 	@Override
@@ -30,6 +35,7 @@ public class UserController implements Controller {
 				dto.setId(CurrentUser.getUserId());
 				ctx.json(Commons.createResponse(ctx, service.updatePassword(dto)));
 			} catch (Exception e) {
+    		logForInvalidData(ctx, e);
 				ctx.status(400);
 			}
 		}, AccessRoles.ANYONE());
@@ -39,6 +45,7 @@ public class UserController implements Controller {
 				UserDTO dto = ctx.bodyAsClass(UserDTO.class);
 				ctx.json(Commons.createResponse(ctx, service.update(dto)));
 			} catch (Exception e) {
+    		logForInvalidData(ctx, e);
 				ctx.status(400);
 			}
 		}, AccessRoles.ANYONE());
@@ -52,6 +59,7 @@ public class UserController implements Controller {
 				LongDTO dto = ctx.bodyAsClass(LongDTO.class);
 				ctx.json(Commons.createResponse(ctx, service.acceptInvitation(dto)));
 			} catch (Exception e) {
+    		logForInvalidData(ctx, e);
 				ctx.status(400);
 			}
 		}, AccessRoles.ANYONE());
@@ -61,6 +69,7 @@ public class UserController implements Controller {
 				LongDTO dto = ctx.bodyAsClass(LongDTO.class);
 				ctx.json(Commons.createResponse(ctx, service.rejectInvitation(dto)));
 			} catch (Exception e) {
+    		logForInvalidData(ctx, e);
 				ctx.status(400);
 			}
 		}, AccessRoles.ANYONE());
@@ -74,6 +83,7 @@ public class UserController implements Controller {
 				LongDTO dto = ctx.bodyAsClass(LongDTO.class);
 				ctx.json(Commons.createResponse(ctx, service.leaveMember(dto)));
 			} catch (Exception e) {
+    		logForInvalidData(ctx, e);
 				ctx.status(400);
 			}
 		}, AccessRoles.ANYONE());

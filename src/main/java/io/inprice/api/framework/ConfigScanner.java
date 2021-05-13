@@ -22,7 +22,7 @@ public class ConfigScanner {
       for (Class<?> clazz : controllerSet) {
          try {
             log.info(String.format("  + %s : OK", clazz.getSimpleName()));
-            ((Controller) clazz.newInstance()).addRoutes(app);
+            ((AbstractController) clazz.newInstance()).addRoutes(app);
          } catch (Exception e) {
             log.error("Error in scanning Router methods.", e);
          }

@@ -16,7 +16,7 @@ public class PasswordValidator {
     String problem = null;
 
     if (StringUtils.isBlank(dto.getPassword())) {
-      problem = "Password cannot be null!";
+      problem = "Password cannot be empty!";
     } else if (dto.getPassword().length() < 4 || dto.getPassword().length() > 16) {
       problem = "Password length must be between 4 and 16 chars!";
     } else if (repeatPassCheck && !dto.getPassword().equals(dto.getRepeatPassword())) {
@@ -25,7 +25,7 @@ public class PasswordValidator {
 
     if (problem == null && oldPassCheck) {
       if (StringUtils.isBlank(dto.getOldPassword())) {
-        problem = "Old password cannot be null!";
+        problem = "Old password cannot be empty!";
       } else {
         try (Handle handle = Database.getHandle()) {
           UserDao userDao = handle.attach(UserDao.class);
