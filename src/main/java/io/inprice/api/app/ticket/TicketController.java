@@ -65,7 +65,7 @@ public class TicketController extends AbstractController {
     }, AccessRoles.ANYONE());
 
     // sets customer satisfaction level
-    app.put(Consts.Paths.Ticket.SET_CSAT_LEVEL, (ctx) -> {
+    app.post(Consts.Paths.Ticket.SET_CSAT, (ctx) -> {
     	try {
     		TicketCSatDTO dto = ctx.bodyAsClass(TicketCSatDTO.class);
       	ctx.json(Commons.createResponse(ctx, service.setSatisfaction(dto)));

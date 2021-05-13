@@ -96,7 +96,7 @@ public class Consts {
     public static class Ticket {
       public static final String BASE = "/ticket";
       public static final String SEARCH = BASE + "s/search";
-      public static final String SET_CSAT_LEVEL = BASE + "/set-csat-level";
+      public static final String SET_CSAT = BASE + "/csat";
     }
 
     public static class Dashboard {

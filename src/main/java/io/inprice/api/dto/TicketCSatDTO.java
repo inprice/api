@@ -16,6 +16,6 @@ public class TicketCSatDTO implements Serializable {
 
 	private Long id;
 	private TicketCSatLevel level;
-  private String reason;
+  private String assessment;
 
 }

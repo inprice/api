@@ -35,7 +35,7 @@ public interface TicketDao {
   @UseRowMapper(TicketMapper.class)
   List<Ticket> getList(@Bind("accountId") Long accountId);
 
-	@SqlUpdate("update ticket set csat_level=:level, csat_reason=:reason, csated_at=now() where id=:id")
-	boolean setCSatLevel(@Bind("id") Long id, @Bind("level") TicketCSatLevel level, @Bind("reason") String reason);
+	@SqlUpdate("update ticket set csat_level=:level, csat_assessment=:assessment, csated_at=now() where id=:id")
+	boolean setCSatLevel(@Bind("id") Long id, @Bind("level") TicketCSatLevel level, @Bind("assessment") String assessment);
 
 }

@@ -15,7 +15,8 @@ public abstract class AbstractController {
 
 	protected void logForInvalidData(Context ctx, Exception e) {
 		log.error("Failed to handle request! User: {}, Account: {}, IP: {}, Path: {}", CurrentUser.getUserId(),
-		    CurrentUser.getAccountName(), ctx.ip(), ctx.path(), e);
+				CurrentUser.getAccountName(), ctx.ip(), ctx.path(), e);
+		log.error(ctx.body());
 	}
 
 }

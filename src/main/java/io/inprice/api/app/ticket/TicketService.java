@@ -21,7 +21,6 @@ import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.TicketMapper;
 import io.inprice.common.meta.TicketCSatLevel;
 import io.inprice.common.meta.UserRole;
-import io.inprice.common.models.Link;
 import io.inprice.common.models.Ticket;
 
 /**
@@ -191,9 +190,9 @@ public class TicketService {
     
     			Ticket ticket = ticketDao.findById(dto.getId(), CurrentUser.getAccountId());
     			if (ticket != null) {
-    			  if (ticket.getRepliedAt() != null && ticket.getCsatLevel() == null) {
+    			  if (ticket.getRepliedAt() != null) {
     					if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
-    						boolean isOK = ticketDao.setCSatLevel(dto.getId(), dto.getLevel(), dto.getReason());
+    						boolean isOK = ticketDao.setCSatLevel(dto.getId(), dto.getLevel(), dto.getAssessment());
     						if (isOK)
     							return Responses.OK;
     					} else {
@@ -251,10 +250,16 @@ public class TicketService {
 			problem = "Level cannot be empty!";
 		}
 		
-		if (problem == null && dto.getLevel().ordinal() > TicketCSatLevel.GOOD.ordinal() && StringUtils.isBlank(dto.getReason())) {
-			problem = "Please help us! " + dto.getLevel() + " level requires your assessment.";
+		if (problem == null && dto.getLevel().ordinal() > TicketCSatLevel.GOOD.ordinal() && StringUtils.isBlank(dto.getAssessment())) {
+			problem = dto.getLevel() + " level requires your assessment.";
 		}
-		
+
+		if (problem == null && StringUtils.isNotBlank(dto.getAssessment())) {
+  		if (dto.getAssessment().length() < 12 || dto.getAssessment().length() > 255) {
+  			problem = "If given, assessment must be between 12-255 chars!";
+  		}
+		}
+
 		return problem;
 	}
 
