@@ -102,7 +102,7 @@ class MemberService {
 
       Member mem = memberDao.findById(memId);
       if (mem != null) {
-        if (mem.getAccountId().equals(CurrentUser.getAccountId())) {
+        if (! mem.getAccountId().equals(CurrentUser.getAccountId())) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {
             boolean isOK = memberDao.setStatusDeleted(memId, UserStatus.DELETED.name(), CurrentUser.getAccountId());
             if (isOK) {

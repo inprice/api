@@ -94,6 +94,9 @@ public class SystemService {
       	userLimit = account.getPlan().getUserLimit();
       	linkLimit = account.getPlan().getLinkLimit();
       	alarmLimit = account.getPlan().getAlarmLimit();
+      	if (userLimit == null) userLimit = 1;
+      	if (linkLimit == null) linkLimit = 0;
+      	if (alarmLimit == null) alarmLimit = 0;
       }
 
       Map<String, Integer> data = new HashMap<>(9);
