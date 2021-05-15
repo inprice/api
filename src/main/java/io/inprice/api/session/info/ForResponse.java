@@ -34,6 +34,8 @@ public class ForResponse implements Serializable {
   private String currencyFormat;
   private UserRole role;
 
+  private Long accountId; //for only super users!
+  
   public ForResponse(Account account, String user, String email, UserRole role, String timezone) {
     this.user = user;
     this.email = email;
@@ -98,6 +100,18 @@ public class ForResponse implements Serializable {
     this.timezone = user.getTimezone();
     this.currencyFormat = mem.getCurrencyFormat();
     this.role = UserRole.valueOf(forCookie.getRole());
+  }
+
+  public ForResponse(Long accountId, String username, String email, String timezone) {
+  	this.accountId = accountId;
+    this.user = username;
+    this.email = email;
+    this.timezone = timezone;
+  	this.role = UserRole.SUPER;
+    this.account = "NOT SELECTED";
+    this.accountStatus = "UNKNOWN";
+    this.planId = 0;
+    this.linkCount = 0;
   }
 
 }

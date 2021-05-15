@@ -20,7 +20,7 @@ public class MemberController extends AbstractController {
 
     app.get(Consts.Paths.Member.BASE, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getList()));
-    }, AccessRoles.ADMIN());
+    }, AccessRoles.ADMIN_OR_SUPER());
 
     app.post(Consts.Paths.Member.BASE, (ctx) -> {
     	try {

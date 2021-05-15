@@ -2,7 +2,6 @@ package io.inprice.api.external;
 
 import io.inprice.common.config.SysProps;
 import io.inprice.common.meta.AppEnv;
-import io.inprice.common.utils.DateUtils;
 
 public class Props {
 
@@ -32,24 +31,8 @@ public class Props {
     return Integer.parseInt(System.getenv().getOrDefault("APP_DAYS_FOR_FREE_USE", "14"));
   }
 
-  public static Long TTL_ACCESS_TOKENS() {
-    String def = SysProps.APP_ENV().equals(AppEnv.PROD) ? "15m" : "1m";
-    String ttl = System.getenv().getOrDefault("TTL_ACCESS_TOKENS", def);
-    return DateUtils.parseTimePeriodAsMillis(ttl);
-  }
-
-  public static Long TTL_REFRESH_TOKENS() {
-    String def = SysProps.APP_ENV().equals(AppEnv.PROD) ? "1h" : "3m";
-    String ttl = System.getenv().getOrDefault("TTL_REFRESH_TOKENS", def);
-    return DateUtils.parseTimePeriodAsMillis(ttl);
-  }
-
-  public static String PREFIX_FOR_SEARCH_EBAY() {
-    return System.getenv().getOrDefault("PREFIX_FOR_SEARCH_EBAY", "https://www.ebay.com/itm/");
-  }
-
-  public static String PREFIX_FOR_SEARCH_AMAZON() {
-    return System.getenv().getOrDefault("PREFIX_FOR_SEARCH_AMAZON", "https://www.amazon.com/dp/");
+	public static int TTL_NORMAL_COOKIES() {
+		return Integer.parseInt(System.getenv().getOrDefault("TTL_NORMAL_COOKIES", "3600")); //one hour
   }
 
   public static String API_KEYS_SENDGRID() {

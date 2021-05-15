@@ -4,12 +4,14 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
+import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.common.mappers.IdNamePairMapper;
 import io.inprice.common.mappers.LinkGroupMapper;
 import io.inprice.common.models.LinkGroup;
@@ -24,17 +26,19 @@ public interface GroupDao {
   @UseRowMapper(LinkGroupMapper.class)
   LinkGroup findByName(@Bind("name") String name, @Bind("accountId") Long accountId);
 
-  @SqlQuery("select * from link_group where account_id = :accountId order by name")
-  @UseRowMapper(LinkGroupMapper.class)
-  List<LinkGroup> getList(@Bind("accountId") Long accountId);
-
   @SqlQuery("select id, name from link_group where id!=:excludedId and account_id = :accountId order by name")
   @UseRowMapper(IdNamePairMapper.class)
   List<IdNamePairMapper> getIdNameList(@Bind("excludedId") Long excludedId, @Bind("accountId") Long accountId);
 
-  @SqlQuery("select * from link_group where name like :term and account_id = :accountId order by name")
+  @SqlQuery(
+		"select * from link_group " +
+		"where name like :dto.term " +
+		"  and account_id = :dto.accountId " +
+		"order by name " +
+		"limit :dto.rowCount, :dto.rowLimit "
+	)
   @UseRowMapper(LinkGroupMapper.class)
-  List<LinkGroup> search(@Bind("term") String term, @Bind("accountId") Long accountId);
+	List<LinkGroup> search(@BindBean("dto") BaseSearchDTO dto);
 
   @SqlUpdate("insert into link_group (name, price, account_id) values (:name, :price, :accountId)")
   @GetGeneratedKeys()

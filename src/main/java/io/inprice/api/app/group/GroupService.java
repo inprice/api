@@ -19,10 +19,12 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.dto.GroupDTO;
 import io.inprice.api.dto.LinkBulkInsertDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.converters.GroupRefreshResultConverter;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
@@ -57,16 +59,10 @@ class GroupService {
   	}
   }
 
-  Response search(String term) {
+  Response search(BaseSearchDTO dto) {
     try (Handle handle = Database.getHandle()) {
       GroupDao groupDao = handle.attach(GroupDao.class);
-      List<LinkGroup> list = null;
-      if (StringUtils.isNotBlank(term)) {
-      	list = groupDao.search(SqlHelper.clear(term) + "%", CurrentUser.getAccountId());
-      } else {
-      	list = groupDao.getList(CurrentUser.getAccountId());
-      }
-    	return new Response(list);
+    	return new Response(groupDao.search(DTOHelper.normalizeSearch(dto)));
     }
   }
 

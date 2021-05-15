@@ -108,7 +108,7 @@ public class Responses {
     public static final Response NO_LINK_LIMIT = new Response(BASE + 1, "You have reached max link number of your plan!");
     public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload max 100 URLs at once!");
     public static final Response HAVE_NO_PLAN = new Response(BASE, "You haven't picked a plan yet!");
-    public static final Response UPDATE = new Response(BASE, "You aren't allowed to update this!");
+    public static final Response UPDATE = new Response(BASE, "This record is not suitable for update!");
   }
 
   public static class NotSuitable {

@@ -28,7 +28,7 @@ public class TicketController extends AbstractController {
     		ctx.status(400);
     		logForInvalidData(ctx, e);
     	}
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_EXCEPT_SUPER());
     
     // update
     app.put(Consts.Paths.Ticket.BASE, (ctx) -> {
@@ -39,7 +39,7 @@ public class TicketController extends AbstractController {
     		ctx.status(400);
     		logForInvalidData(ctx, e);
     	}
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
   	// finds a ticket by id
     app.get(Consts.Paths.Ticket.BASE + "/:id", (ctx) -> {
@@ -51,7 +51,7 @@ public class TicketController extends AbstractController {
     app.delete(Consts.Paths.Ticket.BASE + "/:id", (ctx) -> {
   		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.delete(id)));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
     // search
     app.post(Consts.Paths.Ticket.SEARCH, (ctx) -> {
@@ -73,7 +73,7 @@ public class TicketController extends AbstractController {
     		ctx.status(400);
     		logForInvalidData(ctx, e);
     	}
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
   }
 

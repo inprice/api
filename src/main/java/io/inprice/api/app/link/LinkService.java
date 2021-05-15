@@ -17,15 +17,14 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.group.GroupDao;
 import io.inprice.api.app.link.dto.SearchDTO;
-import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.converters.GroupRefreshResultConverter;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.GroupRefreshResult;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.models.Link;
@@ -41,48 +40,34 @@ class LinkService {
   private static final Logger log = LoggerFactory.getLogger(LinkService.class);
 
   public Response search(SearchDTO dto) {
-  	if (dto.getTerm() != null) dto.setTerm(SqlHelper.clear(dto.getTerm()));
+  	dto = DTOHelper.normalizeSearch(dto);
 
     //---------------------------------------------------
     //building the criteria up
     //---------------------------------------------------
-    StringBuilder criteria = new StringBuilder();
+    StringBuilder crit = new StringBuilder();
 
-    criteria.append("where l.account_id = ");
-    criteria.append(CurrentUser.getAccountId());
+    crit.append("where l.account_id = ");
+    crit.append(dto.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	criteria.append(" and ");
-    	criteria.append(dto.getSearchBy().getFieldName());
-      criteria.append(" like '%");
-      criteria.append(dto.getTerm());
-      criteria.append("%'");
+    	crit.append(" and ");
+    	crit.append(dto.getSearchBy().getFieldName());
+      crit.append(" like '%");
+      crit.append(dto.getTerm());
+      crit.append("%'");
     }
     
     if (dto.getLevels() != null && dto.getLevels().size() > 0) {
-    	criteria.append(
+    	crit.append(
   			String.format(" and l.level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
 			);
     }
 
     if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
-    	criteria.append(
+    	crit.append(
 		    String.format(" and status_group in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
-    }
-
-    //limiting
-    String limit = "";
-    if (dto.getRowLimit() < Consts.LOWER_ROW_LIMIT_FOR_LISTS && dto.getRowLimit() <= Consts.UPPER_ROW_LIMIT_FOR_LISTS) {
-    	dto.setRowLimit(Consts.LOWER_ROW_LIMIT_FOR_LISTS);
-    }
-    if (dto.getRowLimit() > Consts.UPPER_ROW_LIMIT_FOR_LISTS) {
-    	dto.setRowLimit(Consts.UPPER_ROW_LIMIT_FOR_LISTS);
-    }
-    if (dto.getLoadMore()) {
-      limit = " limit " + dto.getRowCount() + ", " + dto.getRowLimit();
-    } else {
-    	limit = " limit " + dto.getRowLimit();
     }
 
     //---------------------------------------------------
@@ -94,9 +79,9 @@ class LinkService {
           "select l.*, g.name as group_name, " + PlatformDao.FIELDS + " from link as l " + 
       		"inner join link_group as g on g.id = l.group_id " + 
       		"left join platform as p on p.id = l.platform_id " + 
-          criteria +
+          crit +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
-          limit
+          " limit " + dto.getRowCount() + ", " + dto.getRowLimit()
         )
       .map(new LinkMapper())
       .list();

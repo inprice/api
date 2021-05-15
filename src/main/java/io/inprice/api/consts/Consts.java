@@ -2,7 +2,8 @@ package io.inprice.api.consts;
 
 public class Consts {
 
-  public static final String SESSION = "INPRICE_AT";
+	public static final String SESSION = "INPRICE_AT";
+  public static final String SUPER_SESSION = "INPRICE_SAT";
   public static final String SESSION_NO = "X-Session";
 
   public static final String IP = "ip";
@@ -103,12 +104,19 @@ public class Consts {
       public static final String BASE = "/dashboard";
       public static final String REFRESH = BASE + "/refresh";
     }
-
+    
     public static class System {
-      public static final String BASE = "/app";
-      public static final String PLANS = BASE + "/plans";
-      public static final String REFRESH_SESSION = BASE + "/refresh-session";
-      public static final String STATISTICS = BASE + "/statistics";
+    	public static final String BASE = "/app";
+    	public static final String PLANS = BASE + "/plans";
+    	public static final String REFRESH_SESSION = BASE + "/refresh-session";
+    	public static final String STATISTICS = BASE + "/statistics";
+    }
+
+    public static class Super {
+      public static final String BASE = "/sys";
+      public static final String ACCOUNT = BASE + "/account";
+      public static final String ACCOUNT_BIND = ACCOUNT + "/bind";
+      public static final String ACCOUNT_UNBIND = ACCOUNT + "/unbind";
     }
 
   }

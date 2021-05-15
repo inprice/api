@@ -71,13 +71,34 @@ public class AuthService {
             if (user != null) {
 
               if (PasswordHelper.isValid(dto.getPassword(), user.getPassword())) {
-                Map<String, Object> sessionInfo = findSessionInfoByEmail(ctx, user.getEmail());
-                if (sessionInfo != null && sessionInfo.size() > 0) {
-                  return new Response(sessionInfo);
-                } else {
-                  user.setPassword(null);
-                  return createSession(ctx, user);
-                }
+              	user.setPassword(null);
+
+              	if (user.isPrivileged()) { //if a super user!
+              		ctx.cookie(CookieHelper.createSuperCookie(SessionHelper.toTokenForSuper(user)));
+
+                  List<ForResponse> sesList = new ArrayList<>(1);
+                  sesList.add(
+                		new ForResponse(
+              				null,
+              				user.getName(),
+              				user.getEmail(),
+              				user.getPassword()
+          					)
+              		);
+
+                  Map<String, Object> sesInfoMap = new HashMap<>(3);
+                  sesInfoMap.put("sessionNo", 0);
+                  sesInfoMap.put("sessions", sesList);
+                  sesInfoMap.put("isPriviledge", Boolean.TRUE);
+              		return new Response(sesInfoMap);
+              	} else {
+                  Map<String, Object> sesInfo = findSessionInfoByEmail(ctx, user.getEmail());
+                  if (sesInfo != null && sesInfo.size() > 0) {
+                    return new Response(sesInfo);
+                  } else {
+                    return createSession(ctx, user);
+                  }
+              	}
               }
             }
           } else {
@@ -179,13 +200,17 @@ public class AuthService {
   }
 
   Response logout(Context ctx) {
-    if (ctx.cookieMap().containsKey(Consts.SESSION)) {
-      CookieHelper.removeAuthCookie(ctx);
+    if (ctx.cookieMap().containsKey(Consts.SUPER_SESSION)) {
+      CookieHelper.removeSuperCookie(ctx);
+    }
+
+  	if (ctx.cookieMap().containsKey(Consts.SESSION)) {
+      CookieHelper.removeUserCookie(ctx);
 
       String tokenString = ctx.cookie(Consts.SESSION);
       if (StringUtils.isNotBlank(tokenString)) {
 
-        List<ForCookie> sessions = SessionHelper.fromToken(tokenString);
+        List<ForCookie> sessions = SessionHelper.fromTokenForUser(tokenString);
         if (sessions != null && sessions.size() > 0) {
           
           List<String> hashList = new ArrayList<>(sessions.size());
@@ -228,7 +253,7 @@ public class AuthService {
         if (ctx.cookieMap().containsKey(Consts.SESSION)) {
           String tokenString = ctx.cookie(Consts.SESSION);
           if (StringUtils.isNotBlank(tokenString)) {
-            sessions = SessionHelper.fromToken(tokenString);
+            sessions = SessionHelper.fromTokenForUser(tokenString);
           }
         }
         if (sessions == null) {
@@ -271,7 +296,7 @@ public class AuthService {
           if (RedisClient.addSesions(redisSesList)) {
 
             userSessionDao.insertBulk(dbSesList);
-            ctx.cookie(CookieHelper.createAuthCookie(SessionHelper.toToken(sessions)));
+            ctx.cookie(CookieHelper.createUserCookie(SessionHelper.toTokenForUser(sessions)));
 
             // the response
             Map<String, Object> map = new HashMap<>(2);
@@ -391,7 +416,7 @@ public class AuthService {
       String tokenString = ctx.cookie(Consts.SESSION);
       if (StringUtils.isNotBlank(tokenString)) {
 
-        List<ForCookie> sessions = SessionHelper.fromToken(tokenString);
+        List<ForCookie> sessions = SessionHelper.fromTokenForUser(tokenString);
         if (sessions != null && sessions.size() > 0) {
 
           Integer sessionNo = null;

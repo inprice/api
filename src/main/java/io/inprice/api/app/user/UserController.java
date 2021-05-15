@@ -2,9 +2,6 @@ package io.inprice.api.app.user;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.dto.UserDTO;
 import io.inprice.api.consts.Consts;
@@ -22,8 +19,6 @@ import io.javalin.Javalin;
 @Router
 public class UserController extends AbstractController {
 
-  private static final Logger log = LoggerFactory.getLogger(UserController.class);
-	
 	private static final UserService service = Beans.getSingleton(UserService.class);
 
 	@Override
@@ -38,7 +33,7 @@ public class UserController extends AbstractController {
     		logForInvalidData(ctx, e);
 				ctx.status(400);
 			}
-		}, AccessRoles.ANYONE());
+		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.put(Consts.Paths.User.UPDATE, (ctx) -> {
 			try {
@@ -48,7 +43,7 @@ public class UserController extends AbstractController {
     		logForInvalidData(ctx, e);
 				ctx.status(400);
 			}
-		}, AccessRoles.ANYONE());
+		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.get(Consts.Paths.User.INVITATIONS, (ctx) -> {
 			ctx.json(Commons.createResponse(ctx, service.getInvitations()));
@@ -62,7 +57,7 @@ public class UserController extends AbstractController {
     		logForInvalidData(ctx, e);
 				ctx.status(400);
 			}
-		}, AccessRoles.ANYONE());
+		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.put(Consts.Paths.User.REJECT_INVITATION, (ctx) -> {
 			try {
@@ -72,7 +67,7 @@ public class UserController extends AbstractController {
     		logForInvalidData(ctx, e);
 				ctx.status(400);
 			}
-		}, AccessRoles.ANYONE());
+		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.get(Consts.Paths.User.MEMBERSHIPS, (ctx) -> {
 			ctx.json(Commons.createResponse(ctx, service.getMemberships()));
@@ -86,17 +81,17 @@ public class UserController extends AbstractController {
     		logForInvalidData(ctx, e);
 				ctx.status(400);
 			}
-		}, AccessRoles.ANYONE());
+		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.get(Consts.Paths.User.OPENED_SESSIONS, (ctx) -> {
 			String tokenString = ctx.cookie(Consts.SESSION);
-			List<ForCookie> cookieSesList = SessionHelper.fromToken(tokenString);
+			List<ForCookie> cookieSesList = SessionHelper.fromTokenForUser(tokenString);
 			ctx.json(Commons.createResponse(ctx, service.getOpenedSessions(cookieSesList)));
 		}, AccessRoles.ANYONE());
 
 		app.post(Consts.Paths.User.CLOSE_ALL_SESSIONS, (ctx) -> {
 			ctx.json(Commons.createResponse(ctx, service.closeAllSessions()));
-		}, AccessRoles.ANYONE());
+		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 	}
 

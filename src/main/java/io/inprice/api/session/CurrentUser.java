@@ -2,7 +2,15 @@ package io.inprice.api.session;
 
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.meta.UserRole;
+import io.inprice.common.models.User;
 
+/**
+ * Manages two type of users; a) Super user, b) Normal users
+ * Super user has time limited token while normals have unlimeted ones!
+ * 
+ * @author mdpinar
+ *
+ */
 public class CurrentUser {
 
   private final static ThreadLocal<ThreadVariables> THREAD_VARIABLES = new ThreadLocal<ThreadVariables>() {
@@ -11,7 +19,13 @@ public class CurrentUser {
       return new ThreadVariables();
     }
   };
-
+  
+  //for super user
+  static void set(User superUser) {
+    THREAD_VARIABLES.get().set(superUser);
+  }
+  
+  //for normal users
   static void set(ForRedis forRedis, int sessionNo) {
     THREAD_VARIABLES.get().set(forRedis, sessionNo);
   }
@@ -25,31 +39,59 @@ public class CurrentUser {
   }
 
   public static Long getUserId() {
-    return THREAD_VARIABLES.get().getSession().getUserId();
+  	if (THREAD_VARIABLES.get().getSuperUser() != null) {
+  		return THREAD_VARIABLES.get().getSuperUser().getId();
+  	} else {
+  		return THREAD_VARIABLES.get().getSession().getUserId();
+  	}
   }
 
   public static String getEmail() {
-    return THREAD_VARIABLES.get().getSession().getEmail();
+  	if (THREAD_VARIABLES.get().getSuperUser() != null) {
+  		return THREAD_VARIABLES.get().getSuperUser().getEmail();
+  	} else {
+  		return THREAD_VARIABLES.get().getSession().getEmail();
+  	}
   }
 
   public static String getUserName() {
-    return THREAD_VARIABLES.get().getSession().getUser();
+  	if (THREAD_VARIABLES.get().getSuperUser() != null) {
+  		return THREAD_VARIABLES.get().getSuperUser().getName();
+  	} else {
+  		return THREAD_VARIABLES.get().getSession().getUser();
+  	}
   }
 
   public static String getUserTimezone() {
-    return THREAD_VARIABLES.get().getSession().getTimezone();
+  	if (THREAD_VARIABLES.get().getSuperUser() != null) {
+  		return THREAD_VARIABLES.get().getSuperUser().getTimezone();
+  	} else {
+  		return THREAD_VARIABLES.get().getSession().getTimezone();
+  	}
   }
 
   public static Long getAccountId() {
-    return THREAD_VARIABLES.get().getSession().getAccountId();
+  	if (THREAD_VARIABLES.get().getSuperUser() != null) {
+  		return THREAD_VARIABLES.get().getAccountId();
+  	} else {
+  		return THREAD_VARIABLES.get().getSession().getAccountId();
+  	}
   }
 
-  public static String getAccountName() {
-    return THREAD_VARIABLES.get().getSession().getAccount();
+	public static String getAccountName() {
+  	if (THREAD_VARIABLES.get().getSuperUser() != null) {
+  		return "inprice.io";
+  	} else {
+  		return THREAD_VARIABLES.get().getSession().getAccount();
+  	}
   }
 
   public static UserRole getRole() {
-    return THREAD_VARIABLES.get().getSession().getRole();
+  	if (THREAD_VARIABLES.get().getSuperUser() != null) {
+  		return UserRole.SUPER;
+  	} else {
+  		return THREAD_VARIABLES.get().getSession().getRole();
+  	}
   }
 
   public static void cleanup() {

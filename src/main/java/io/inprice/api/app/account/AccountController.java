@@ -61,7 +61,7 @@ public class AccountController extends AbstractController {
     		ctx.status(400);
     		logForInvalidData(ctx, e);
     	}
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
     // update
     app.put(Consts.Paths.Account.BASE, (ctx) -> {
