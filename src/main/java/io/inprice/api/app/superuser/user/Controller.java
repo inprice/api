@@ -1,6 +1,7 @@
 package io.inprice.api.app.superuser.user;
 
 import io.inprice.api.consts.Consts;
+import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.dto.IdTextDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
@@ -16,9 +17,20 @@ public class Controller extends AbstractController {
 
   @Override
   public void addRoutes(Javalin app) {
-    
+
+    // search
+    app.post(Consts.Paths.Super.User._BASE, (ctx) -> {
+    	try {
+    		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
+    		ctx.json(Commons.createResponse(ctx, service.search(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    		logForInvalidData(ctx, e);
+    	}
+    }, AccessRoles.SUPER_ONLY());
+
     // ban
-    app.put(Consts.Paths.Super.User.BAN + "/:id", (ctx) -> {
+    app.post(Consts.Paths.Super.User.BAN, (ctx) -> {
     	try {
     		IdTextDTO dto = ctx.bodyAsClass(IdTextDTO.class);
     		ctx.json(Commons.createResponse(ctx, service.ban(dto)));

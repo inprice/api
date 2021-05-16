@@ -15,27 +15,27 @@ import io.inprice.common.models.User;
 public interface Dao {
 
   @SqlQuery(
-		"select a.id as xid, a.name, u.email, currency_code, country from account as a " +
-		"inner join user as u on u.id = a.admin_id " +
-		"where a.name like :dto.term " +
-		"order by a.name " +
+		"select * from user " +
+		"where email like :dto.term " +
+		"  and privileged = false " +
+		"order by email " +
 		"limit :dto.rowCount, :dto.rowLimit "
 	)
   @UseRowMapper(UserMapper.class)
 	List<User> search(@BindBean("dto") BaseSearchDTO dto);
 	
 	@SqlQuery(
-		"select a.*, p.name as plan_name from account as a "+
-		"left join plan as p on p.id = a.plan_id " +
-		"where a.id=:id"
+		"select * from user "+
+		"  and privileged = false " +
+		"where id=:id"
 	)
   @UseRowMapper(UserMapper.class)
 	User findById(@Bind("id") Long id);
 	
-	@SqlUpdate("update user set banned=true, ban_reason=:reason banned_at=now() where id=:id")
+	@SqlUpdate("update user set banned=true, ban_reason=:reason, banned_at=now() where id=:id")
 	boolean ban(@Bind("id") Long id, @Bind("reason") String reason);
 
-	@SqlUpdate("update user set banned=false, ban_reason=null banned_at=null where id=:id")
+	@SqlUpdate("update user set banned=false, ban_reason=null, banned_at=null where id=:id")
 	boolean revokeBan(@Bind("id") Long id);
 
 }

@@ -3,7 +3,6 @@ package io.inprice.api.app.superuser.user;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
-import io.inprice.api.app.superuser.account.Dao;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
@@ -31,8 +30,8 @@ class Service {
   	}
   	if (problem == null 
   			&& (StringUtils.isBlank(dto.getText()) 
-  					|| dto.getText().length() < 3 || dto.getText().length() > 128)) {
-  		problem = "Reason must be between 3-128 chars!";
+  					|| dto.getText().length() < 5 || dto.getText().length() > 128)) {
+  		problem = "Reason must be between 5-128 chars!";
   	}
   	
   	if (problem == null) {
@@ -40,7 +39,7 @@ class Service {
   			UserDao userDao = handle.attach(UserDao.class);
   			User user = userDao.findById(dto.getId());
   			if (user != null) {
-  				if (user.isBanned()) {
+  				if (! user.isBanned()) {
   					Dao superDao = handle.attach(Dao.class);
   					boolean isOK = superDao.ban(dto.getId(), dto.getText());
   					if (isOK) {
@@ -63,7 +62,7 @@ class Service {
       	UserDao userDao = handle.attach(UserDao.class);
       	User user = userDao.findById(id);
       	if (user != null) {
-      		if (! user.isBanned()) {
+      		if (user.isBanned()) {
       			Dao superDao = handle.attach(Dao.class);
       			boolean isOK = superDao.revokeBan(id);
       			if (isOK) {
