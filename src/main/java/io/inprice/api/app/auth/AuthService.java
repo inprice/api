@@ -46,7 +46,6 @@ import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
-import io.inprice.common.models.UserBanned;
 import io.javalin.http.Context;
 
 public class AuthService {
@@ -64,11 +63,9 @@ public class AuthService {
         try (Handle handle = Database.getHandle()) {
           UserDao userDao = handle.attach(UserDao.class);
 
-          UserBanned bannedUser = userDao.findBannedUserByEmail(dto.getEmail());
-          if (bannedUser == null) {
-
-            User user = userDao.findByEmailWithPassword(dto.getEmail());
-            if (user != null) {
+          User user = userDao.findByEmailWithPassword(dto.getEmail());
+          if (user != null) {
+          	if (!user.isBanned()) {
 
               if (PasswordHelper.isValid(dto.getPassword(), user.getPassword())) {
               	user.setPassword(null);
@@ -100,9 +97,9 @@ public class AuthService {
                   }
               	}
               }
+            } else {
+              return Responses.BANNED_USER;
             }
-          } else {
-            return Responses.BANNED_USER;
           }
         }
       } else {
@@ -125,11 +122,9 @@ public class AuthService {
       try (Handle handle = Database.getHandle()) {
         UserDao userDao = handle.attach(UserDao.class);
   
-        UserBanned bannedUser = userDao.findBannedUserByEmail(email);
-        if (bannedUser == null) {
-
-          User user = userDao.findByEmail(email);
-          if (user != null) {
+        User user = userDao.findByEmail(email);
+        if (user != null) {
+        	if (! user.isBanned()) {
             try {
               Map<String, Object> dataMap = new HashMap<>(3);
               dataMap.put("user", user.getName());
@@ -145,14 +140,12 @@ public class AuthService {
               return Responses.ServerProblem.EXCEPTION;
             }
           } else {
-            return Responses.NotFound.EMAIL;
+            return Responses.BANNED_USER;
           }
-        } else {
-          return Responses.BANNED_USER;
         }
       }
     }
-    return Responses.Invalid.EMAIL;
+    return Responses.NotFound.EMAIL;
   }
 
   Response resetPassword(Context ctx, PasswordDTO dto) {
@@ -322,15 +315,14 @@ public class AuthService {
 
         try (Handle handle = Database.getHandle()) {
           UserDao userDao = handle.attach(UserDao.class);
-          MemberDao memberDao = handle.attach(MemberDao.class);
 
-          UserBanned bannedUser = userDao.findBannedUserByEmail(sendDto.getEmail());
-          if (bannedUser == null) {
+          User user = userDao.findByEmail(sendDto.getEmail());
+          if (user == null || !user.isBanned()) {
 
-            Member member = memberDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getAccountId());
+          	MemberDao memberDao = handle.attach(MemberDao.class);
+          	Member member = memberDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getAccountId());
             if (member != null) {
 
-              User user = userDao.findByEmail(sendDto.getEmail());
               if (user == null) { //user creation
                 UserDTO dto = new UserDTO();
                 dto.setName(sendDto.getEmail().split("@")[0]);

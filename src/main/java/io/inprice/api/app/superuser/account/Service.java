@@ -1,10 +1,10 @@
-package io.inprice.api.app.superuser;
+package io.inprice.api.app.superuser.account;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
 import io.inprice.api.app.coupon.CouponService;
-import io.inprice.api.app.superuser.dto.CreateCouponDTO;
+import io.inprice.api.app.superuser.account.dto.CreateCouponDTO;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
@@ -21,21 +21,21 @@ import io.inprice.common.models.Account;
 import io.inprice.common.models.User;
 import io.javalin.http.Context;
 
-class SuperService {
+class Service {
 
   private static final CouponService couponService = Beans.getSingleton(CouponService.class);
-	
-	Response searchAccount(BaseSearchDTO dto) {
+
+	Response search(BaseSearchDTO dto) {
   	try (Handle handle = Database.getHandle()) {
-    	SuperDao superDao = handle.attach(SuperDao.class);
-    	return new Response(superDao.searchAccount(DTOHelper.normalizeSearch(dto)));
+    	Dao superDao = handle.attach(Dao.class);
+    	return new Response(superDao.search(DTOHelper.normalizeSearch(dto)));
     }
 	}
 
-  Response bindAccount(Context ctx, Long id) {
+  Response bind(Context ctx, Long id) {
     try (Handle handle = Database.getHandle()) {
-    	SuperDao superDao = handle.attach(SuperDao.class);
-      Account account = superDao.findAccountById(id);
+    	Dao superDao = handle.attach(Dao.class);
+      Account account = superDao.findById(id);
       if (account != null) {
       	ForResponse session = 
     			new ForResponse(
@@ -65,7 +65,7 @@ class SuperService {
     return Responses.NotFound.ACCOUNT;
   }
 
-  Response unbindAccount(Context ctx) {
+  Response unbind(Context ctx) {
     try (Handle handle = Database.getHandle()) {
     	boolean isOK = refreshSuperCookie(handle, ctx, null);
     	if (isOK) {
@@ -81,7 +81,7 @@ class SuperService {
     }
     return Responses.BAD_REQUEST;
   }
-  
+
   private boolean refreshSuperCookie(Handle handle, Context ctx, Long accountId) {
     UserDao userDao = handle.attach(UserDao.class);
     User user = userDao.findById(CurrentUser.getUserId());
@@ -127,5 +127,5 @@ class SuperService {
 		}
 		return new Response(problem);
   }
-
+  
 }

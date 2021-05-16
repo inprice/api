@@ -35,42 +35,39 @@ public class CouponService {
     	AccountDao accountDao = handle.attach(AccountDao.class);
     	Account account = accountDao.findById(accountId);
   		if (account != null) {
-  			if (! AccountStatus.SUSPENDED.equals(account.getStatus())) {
   				
-  	  		if (account.getUserCount() <= plan.getUserLimit() 
-  	  				&& account.getLinkCount() <= plan.getLinkLimit() 
-  	  				&& account.getAlarmCount() <= plan.getAlarmLimit()) {
+	  		if (account.getUserCount() <= plan.getUserLimit() 
+	  				&& account.getLinkCount() <= plan.getLinkLimit() 
+	  				&& account.getAlarmCount() <= plan.getAlarmLimit()) {
 
-  	  	    String couponCode = CouponManager.generate();
-  	  	    CouponDao couponDao = handle.attach(CouponDao.class);
-  	  	    boolean isOK = couponDao.create(
-  	  	      couponCode,
-  	  	      planId,
-  	  	      days,
-  	  	      description,
-  	  	      accountId
-  	  	    );
+	  	    String couponCode = CouponManager.generate();
+	  	    CouponDao couponDao = handle.attach(CouponDao.class);
+	  	    boolean isOK = couponDao.create(
+	  	      couponCode,
+	  	      planId,
+	  	      days,
+	  	      description,
+	  	      accountId
+	  	    );
 
-  	  	    if (isOK) {
-  	  	      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
-  	  	      AccountTrans trans = new AccountTrans();
-  	  	      trans.setAccountId(accountId);
-  	  	      trans.setEvent(subsEvent);
-  	  	      trans.setSuccessful(Boolean.TRUE);
-  	  	      trans.setReason(description);
-  	  	      trans.setDescription("Issued coupon code: " + couponCode);
-  	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-  	  	      return new Response(Collections.singletonMap("code", couponCode));
-  	  	    } else {
-  	  	    	return new Response("An error occurred, we will be looking for this!");
-  	  	    }
-  	  			
-  				} else {
-  					return new Response("Account current limits are greater than this plan's!");
-  				}
-  			} else {
-  				return Responses.Illegal.SUSPENDED_ACCOUNT;
-  			}
+	  	    if (isOK) {
+	  	      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+	  	      AccountTrans trans = new AccountTrans();
+	  	      trans.setAccountId(accountId);
+	  	      trans.setEvent(subsEvent);
+	  	      trans.setSuccessful(Boolean.TRUE);
+	  	      trans.setReason(description);
+	  	      trans.setDescription("Issued coupon code: " + couponCode);
+	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+	  	      return new Response(Collections.singletonMap("code", couponCode));
+	  	    } else {
+	  	    	return new Response("An error occurred, we will be looking for this!");
+	  	    }
+	  			
+				} else {
+					return new Response("Account current limits are greater than the plan's!");
+				}
+
   		} else {
   			return Responses.NotFound.ACCOUNT;
   		}

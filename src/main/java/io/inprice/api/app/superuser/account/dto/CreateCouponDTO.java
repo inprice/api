@@ -1,4 +1,4 @@
-package io.inprice.api.app.superuser.dto;
+package io.inprice.api.app.superuser.account.dto;
 
 import java.io.Serializable;
 

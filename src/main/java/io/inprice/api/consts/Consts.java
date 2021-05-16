@@ -114,10 +114,20 @@ public class Consts {
 
     public static class Super {
       public static final String BASE = "/sys";
-      public static final String ACCOUNT = BASE + "/account";
-      public static final String ACCOUNT_BIND = ACCOUNT + "/bind";
-      public static final String ACCOUNT_UNBIND = ACCOUNT + "/unbind";
-      public static final String ACCOUNT_COUPON = ACCOUNT + "/coupon";
+
+      public static class Account {
+      	public static final String _BASE = BASE + "/account";
+        public static final String BIND = _BASE + "/bind";
+        public static final String UNBIND = _BASE + "/unbind";
+        public static final String COUPON = _BASE + "/coupon";
+      }
+
+      public static class User {
+      	public static final String _BASE = BASE + "/user";
+        public static final String BAN = _BASE + "/ban";
+        public static final String REVOKE_BAN = BAN + "-revoke";
+      }
+
     }
 
   }

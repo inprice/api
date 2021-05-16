@@ -10,7 +10,7 @@ public class Responses {
   public static final Response BAD_REQUEST = new Response(HttpStatus.BAD_REQUEST_400, "Bad request!");
   public static final Response _401 = new Response(HttpStatus.UNAUTHORIZED_401, "Your session seems to be expired, please sign in again.");
   public static final Response _403 = new Response(HttpStatus.FORBIDDEN_403, "Your role is not suitable to do this operation.");
-  public static final Response BANNED_USER = new Response(HttpStatus.FORBIDDEN_403, "You are banned to use the platform.");
+  public static final Response BANNED_USER = new Response(HttpStatus.FORBIDDEN_403, "This email is banned!");
 
   public static class Invalid {
     private static final int BASE = 100;
@@ -78,7 +78,6 @@ public class Responses {
     public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
     public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan, so you cannot cancel!");
     public static final Response NO_FREE_USE_RIGHT = new Response(BASE + 11, "You have no free use!");
-    public static final Response SUSPENDED_ACCOUNT = new Response(BASE + 15, "This account has been suspended!");
     public static final Response BANNED_USER = new Response(BASE + 16, "This user has been banned!");
   }
 
@@ -96,6 +95,9 @@ public class Responses {
     public static final Response HAS_THE_SAME_PLAN = new Response(BASE + 10, "You have already this plan at the moment!");
 
     public static final Response REQUESTED_EMAIL = new Response(BASE + 14, "This email is already requested, please wait some time to try again!");
+
+    public static final Response BANNED_USER = new Response(BASE + 25, "This user is already banned!");
+    public static final Response NOT_BANNED_USER = new Response(BASE + 26, "This user is not banned!");
     
     public static class Defined {
       public static final Response ACCOUNT = new Response(BASE + 20, "Seems that you have already registered this account!");
