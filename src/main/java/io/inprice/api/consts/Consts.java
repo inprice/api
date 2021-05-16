@@ -117,6 +117,7 @@ public class Consts {
       public static final String ACCOUNT = BASE + "/account";
       public static final String ACCOUNT_BIND = ACCOUNT + "/bind";
       public static final String ACCOUNT_UNBIND = ACCOUNT + "/unbind";
+      public static final String ACCOUNT_COUPON = ACCOUNT + "/coupon";
     }
 
   }

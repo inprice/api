@@ -78,6 +78,8 @@ public class Responses {
     public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
     public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan, so you cannot cancel!");
     public static final Response NO_FREE_USE_RIGHT = new Response(BASE + 11, "You have no free use!");
+    public static final Response SUSPENDED_ACCOUNT = new Response(BASE + 15, "This account has been suspended!");
+    public static final Response BANNED_USER = new Response(BASE + 16, "This user has been banned!");
   }
 
   public static class Already {
@@ -93,7 +95,7 @@ public class Responses {
     public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 8, "This account has no active subscription at the moment!");
     public static final Response HAS_THE_SAME_PLAN = new Response(BASE + 10, "You have already this plan at the moment!");
 
-    public static final Response REQUESTED_EMAIL = new Response(BASE + 10, "This email is already requested, please wait some time to try again!");
+    public static final Response REQUESTED_EMAIL = new Response(BASE + 14, "This email is already requested, please wait some time to try again!");
     
     public static class Defined {
       public static final Response ACCOUNT = new Response(BASE + 20, "Seems that you have already registered this account!");
@@ -107,8 +109,8 @@ public class Responses {
     private static final int BASE = 900;
     public static final Response NO_LINK_LIMIT = new Response(BASE + 1, "You have reached max link number of your plan!");
     public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload max 100 URLs at once!");
-    public static final Response HAVE_NO_PLAN = new Response(BASE, "You haven't picked a plan yet!");
-    public static final Response UPDATE = new Response(BASE, "This record is not suitable for update!");
+    public static final Response HAVE_NO_PLAN = new Response(BASE + 3, "You haven't picked a plan yet!");
+    public static final Response UPDATE = new Response(BASE + 4, "This record is not suitable for update!");
   }
 
   public static class NotSuitable {

@@ -1,5 +1,6 @@
 package io.inprice.api.app.superuser;
 
+import io.inprice.api.app.superuser.dto.CreateCouponDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.framework.AbstractController;
@@ -33,9 +34,21 @@ public class SuperController extends AbstractController {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.bindAccount(ctx, id)));
     }, AccessRoles.SUPER_ONLY());
-
+    
+    // unbind account
     app.post(Consts.Paths.Super.ACCOUNT_UNBIND, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.unbindAccount(ctx)));
+    	ctx.json(Commons.createResponse(ctx, service.unbindAccount(ctx)));
+    }, AccessRoles.SUPER_ONLY());
+
+    // create coupon
+    app.post(Consts.Paths.Super.ACCOUNT_COUPON, (ctx) -> {
+    	try {
+    		CreateCouponDTO dto = ctx.bodyAsClass(CreateCouponDTO.class);
+    		ctx.json(Commons.createResponse(ctx, service.createCoupon(dto)));
+    	} catch (Exception e) {
+    		ctx.status(400);
+    		logForInvalidData(ctx, e);
+    	}
     }, AccessRoles.SUPER_ONLY());
 
   }
