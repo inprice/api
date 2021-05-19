@@ -20,24 +20,14 @@ public class Controller extends AbstractController {
 
     // search
     app.post(Consts.Paths.Super.User._BASE, (ctx) -> {
-    	try {
-    		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
-    		ctx.json(Commons.createResponse(ctx, service.search(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+  		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
+  		ctx.json(Commons.createResponse(ctx, service.search(dto)));
     }, AccessRoles.SUPER_ONLY());
 
     // ban
     app.post(Consts.Paths.Super.User.BAN, (ctx) -> {
-    	try {
-    		IdTextDTO dto = ctx.bodyAsClass(IdTextDTO.class);
-    		ctx.json(Commons.createResponse(ctx, service.ban(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+  		IdTextDTO dto = ctx.bodyAsClass(IdTextDTO.class);
+  		ctx.json(Commons.createResponse(ctx, service.ban(dto)));
     }, AccessRoles.SUPER_ONLY());
 
     // revoke ban

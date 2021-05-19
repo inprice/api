@@ -11,7 +11,6 @@ import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.helpers.SessionHelper;
-import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForCookie;
 import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
@@ -25,24 +24,13 @@ public class UserController extends AbstractController {
 	public void addRoutes(Javalin app) {
 
 		app.put(Consts.Paths.User.PASSWORD, (ctx) -> {
-			try {
-				PasswordDTO dto = ctx.bodyAsClass(PasswordDTO.class);
-				dto.setId(CurrentUser.getUserId());
-				ctx.json(Commons.createResponse(ctx, service.updatePassword(dto)));
-			} catch (Exception e) {
-    		logForInvalidData(ctx, e);
-				ctx.status(400);
-			}
+			PasswordDTO dto = ctx.bodyAsClass(PasswordDTO.class);
+			ctx.json(Commons.createResponse(ctx, service.updatePassword(dto)));
 		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.put(Consts.Paths.User.UPDATE, (ctx) -> {
-			try {
-				UserDTO dto = ctx.bodyAsClass(UserDTO.class);
-				ctx.json(Commons.createResponse(ctx, service.update(dto)));
-			} catch (Exception e) {
-    		logForInvalidData(ctx, e);
-				ctx.status(400);
-			}
+			UserDTO dto = ctx.bodyAsClass(UserDTO.class);
+			ctx.json(Commons.createResponse(ctx, service.update(dto)));
 		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.get(Consts.Paths.User.INVITATIONS, (ctx) -> {
@@ -50,23 +38,13 @@ public class UserController extends AbstractController {
 		}, AccessRoles.ANYONE());
 
 		app.put(Consts.Paths.User.ACCEPT_INVITATION, (ctx) -> {
-			try {
-				LongDTO dto = ctx.bodyAsClass(LongDTO.class);
-				ctx.json(Commons.createResponse(ctx, service.acceptInvitation(dto)));
-			} catch (Exception e) {
-    		logForInvalidData(ctx, e);
-				ctx.status(400);
-			}
+			LongDTO dto = ctx.bodyAsClass(LongDTO.class);
+			ctx.json(Commons.createResponse(ctx, service.acceptInvitation(dto)));
 		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.put(Consts.Paths.User.REJECT_INVITATION, (ctx) -> {
-			try {
-				LongDTO dto = ctx.bodyAsClass(LongDTO.class);
-				ctx.json(Commons.createResponse(ctx, service.rejectInvitation(dto)));
-			} catch (Exception e) {
-    		logForInvalidData(ctx, e);
-				ctx.status(400);
-			}
+			LongDTO dto = ctx.bodyAsClass(LongDTO.class);
+			ctx.json(Commons.createResponse(ctx, service.rejectInvitation(dto)));
 		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.get(Consts.Paths.User.MEMBERSHIPS, (ctx) -> {
@@ -74,13 +52,8 @@ public class UserController extends AbstractController {
 		}, AccessRoles.ANYONE());
 
 		app.put(Consts.Paths.User.LEAVE_MEMBERSHIP, (ctx) -> {
-			try {
-				LongDTO dto = ctx.bodyAsClass(LongDTO.class);
-				ctx.json(Commons.createResponse(ctx, service.leaveMember(dto)));
-			} catch (Exception e) {
-    		logForInvalidData(ctx, e);
-				ctx.status(400);
-			}
+			LongDTO dto = ctx.bodyAsClass(LongDTO.class);
+			ctx.json(Commons.createResponse(ctx, service.leaveMember(dto)));
 		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.get(Consts.Paths.User.OPENED_SESSIONS, (ctx) -> {

@@ -45,13 +45,8 @@ public class SubscriptionController extends AbstractController {
 
     // updates account's extra info used in invoices
     app.post(Consts.Paths.Subscription.SAVE_INFO, (ctx) -> {
-    	try {
-        CustomerDTO dto = ctx.bodyAsClass(CustomerDTO.class);
-        ctx.json(Commons.createResponse(ctx, service.saveInfo(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+      CustomerDTO dto = ctx.bodyAsClass(CustomerDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.saveInfo(dto)));
     }, AccessRoles.ADMIN());
 
   }

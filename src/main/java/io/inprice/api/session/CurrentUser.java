@@ -34,6 +34,10 @@ public class CurrentUser {
     return THREAD_VARIABLES.get().getSessionNo();
   }
 
+  public static boolean hasSession() {
+    return THREAD_VARIABLES.get() != null && THREAD_VARIABLES.get().getSession() != null;
+  }
+
   public static String getSessionHash() {
     return THREAD_VARIABLES.get().getSession().getHash();
   }

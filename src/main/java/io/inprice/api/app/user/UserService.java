@@ -47,7 +47,9 @@ public class UserService {
   }
 
   public Response updatePassword(PasswordDTO dto) {
-    String problem = PasswordValidator.verify(dto, true, true);
+		dto.setId(CurrentUser.getUserId());
+
+		String problem = PasswordValidator.verify(dto, true, true);
     if (problem == null) {
 
       try (Handle handle = Database.getHandle()) {

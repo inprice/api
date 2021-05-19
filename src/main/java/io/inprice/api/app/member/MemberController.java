@@ -23,13 +23,8 @@ public class MemberController extends AbstractController {
     }, AccessRoles.ADMIN_OR_SUPER());
 
     app.post(Consts.Paths.Member.BASE, (ctx) -> {
-    	try {
-        InvitationSendDTO dto = ctx.bodyAsClass(InvitationSendDTO.class);
-        ctx.json(Commons.createResponse(ctx, service.invite(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+      InvitationSendDTO dto = ctx.bodyAsClass(InvitationSendDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.invite(dto)));
     }, AccessRoles.ADMIN());
 
     app.post(Consts.Paths.Member.BASE + "/:mem_id", (ctx) -> {
@@ -43,13 +38,8 @@ public class MemberController extends AbstractController {
     }, AccessRoles.ADMIN());
 
     app.put(Consts.Paths.Member.CHANGE_ROLE, (ctx) -> {
-    	try {
-        InvitationUpdateDTO dto = ctx.bodyAsClass(InvitationUpdateDTO.class);
-        ctx.json(Commons.createResponse(ctx, service.changeRole(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+      InvitationUpdateDTO dto = ctx.bodyAsClass(InvitationUpdateDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.changeRole(dto)));
     }, AccessRoles.ADMIN());
 
     app.put(Consts.Paths.Member.PAUSE + "/:mem_id", (ctx) -> {

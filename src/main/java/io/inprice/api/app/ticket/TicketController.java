@@ -21,24 +21,14 @@ public class TicketController extends AbstractController {
 
     // insert
     app.post(Consts.Paths.Ticket.BASE, (ctx) -> {
-    	try {
-    		TicketDTO dto = ctx.bodyAsClass(TicketDTO.class);
-      	ctx.json(Commons.createResponse(ctx, service.insert(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+  		TicketDTO dto = ctx.bodyAsClass(TicketDTO.class);
+    	ctx.json(Commons.createResponse(ctx, service.insert(dto)));
     }, AccessRoles.ANYONE_EXCEPT_SUPER());
     
     // update
     app.put(Consts.Paths.Ticket.BASE, (ctx) -> {
-    	try {
-    		TicketDTO dto = ctx.bodyAsClass(TicketDTO.class);
-    		ctx.json(Commons.createResponse(ctx, service.update(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+  		TicketDTO dto = ctx.bodyAsClass(TicketDTO.class);
+  		ctx.json(Commons.createResponse(ctx, service.update(dto)));
     }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
   	// finds a ticket by id
@@ -55,24 +45,14 @@ public class TicketController extends AbstractController {
 
     // search
     app.post(Consts.Paths.Ticket.SEARCH, (ctx) -> {
-    	try {
-    		SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
-    		ctx.json(Commons.createResponse(ctx, service.search(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+  		SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
+  		ctx.json(Commons.createResponse(ctx, service.search(dto)));
     }, AccessRoles.ANYONE());
 
     // sets customer satisfaction level
     app.post(Consts.Paths.Ticket.SET_CSAT, (ctx) -> {
-    	try {
-    		TicketCSatDTO dto = ctx.bodyAsClass(TicketCSatDTO.class);
-      	ctx.json(Commons.createResponse(ctx, service.setSatisfaction(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+  		TicketCSatDTO dto = ctx.bodyAsClass(TicketCSatDTO.class);
+    	ctx.json(Commons.createResponse(ctx, service.setSatisfaction(dto)));
     }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
   }

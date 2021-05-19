@@ -6,7 +6,7 @@ import io.inprice.api.info.Response;
 
 public class Responses {
 
-  public static final Response OK = new Response(0, "OK");
+  public static final Response OK = new Response(HttpStatus.OK_200, "OK");
   public static final Response BAD_REQUEST = new Response(HttpStatus.BAD_REQUEST_400, "Bad request!");
   public static final Response _401 = new Response(HttpStatus.UNAUTHORIZED_401, "Your session seems to be expired, please sign in again.");
   public static final Response _403 = new Response(HttpStatus.FORBIDDEN_403, "Your role is not suitable to do this operation.");

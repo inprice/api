@@ -20,13 +20,8 @@ public class Controller extends AbstractController {
 
     // search
     app.post(Consts.Paths.Super.Account._BASE, (ctx) -> {
-    	try {
-    		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
-    		ctx.json(Commons.createResponse(ctx, service.search(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+  		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
+  		ctx.json(Commons.createResponse(ctx, service.search(dto)));
     }, AccessRoles.SUPER_ONLY());
 
     // bind
@@ -42,13 +37,8 @@ public class Controller extends AbstractController {
 
     // create coupon
     app.post(Consts.Paths.Super.Account.COUPON, (ctx) -> {
-    	try {
-    		CreateCouponDTO dto = ctx.bodyAsClass(CreateCouponDTO.class);
-    		ctx.json(Commons.createResponse(ctx, service.createCoupon(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+  		CreateCouponDTO dto = ctx.bodyAsClass(CreateCouponDTO.class);
+  		ctx.json(Commons.createResponse(ctx, service.createCoupon(dto)));
     }, AccessRoles.SUPER_ONLY());
 
   }

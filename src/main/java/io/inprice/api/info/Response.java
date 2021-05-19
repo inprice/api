@@ -1,6 +1,5 @@
 package io.inprice.api.info;
 
-import java.util.List;
 import io.inprice.api.consts.Responses;
 
 public final class Response {
@@ -8,21 +7,20 @@ public final class Response {
    private int status;
    private String reason;
    private Object data;
-   private List<String> problems;
+
+   public Response(Object data) {
+      this.status = Responses.OK.getStatus();
+      this.data = data;
+   }
 
    public Response(String reason) {
-      this.status = 400;
+  	 this.status = Responses.BAD_REQUEST.getStatus();
       this.reason = reason;
    }
 
    public Response(int status, String reason) {
       this.status = status;
       this.reason = reason;
-   }
-
-   public Response(Object data) {
-      this.status = Responses.OK.getStatus();
-      this.data = data;
    }
 
    public boolean isOK() {
@@ -40,10 +38,6 @@ public final class Response {
    @SuppressWarnings("unchecked")
    public <T> T getData() {
       return (T) data;
-   }
-
-   public List<String> getProblems() {
-      return problems;
    }
 
 }
