@@ -73,9 +73,8 @@ public class RedisClient {
     sessionsMap.putAll(map);
   }
 
-  public static boolean removeSesion(String hash) {
-    ForRedis ses = sessionsMap.remove(hash);
-    return ses != null;
+  public static void removeSesion(String hash) {
+    sessionsMap.removeAsync(hash);
   }
 
   public static boolean refreshSesion(String hash) {
@@ -89,14 +88,6 @@ public class RedisClient {
   }
 
   public static void addUserLog(AccessLog userLog) {
-  	/*
-  	if (StringUtils.isNotBlank(userLog.getReqBody())) {
-  		userLog.setReqBody(Base64.getEncoder().encodeToString(userLog.getReqBody().getBytes()));
-  	}
-  	if (StringUtils.isNotBlank(userLog.getResBody())) {
-  		userLog.setResBody(Base64.getEncoder().encodeToString(userLog.getResBody().getBytes()));
-  	}
-  	*/
   	userLog.setCreatedAt(new Date());
   	userLogQueue.add(userLog);
   }

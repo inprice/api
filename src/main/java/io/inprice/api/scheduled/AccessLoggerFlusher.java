@@ -38,8 +38,8 @@ public class AccessLoggerFlusher implements Runnable {
       	
         PreparedBatch batch = 
       		handle.prepareBatch(
-    				"insert into analytics_access_log (user_id, user_email, user_role, account_id, account_name, ip, path, path_ext, method, req_body, res_body, status, elapsed, created_at) "+
-    				"values (:log.userId, :log.userEmail, :log.userRole, :log.accountId, :log.accountName, :log.ip, :log.path, :log.pathExt, :log.method, :log.reqBody, :log.resBody, :log.status, :log.elapsed, :log.createdAt)"
+    				"insert into analytics_access_log (user_id, user_email, user_role, account_id, account_name, ip, path, path_ext, method, req_body, res_body, status, elapsed, is_slow, created_at) "+
+    				"values (:log.userId, :log.userEmail, :log.userRole, :log.accountId, :log.accountName, :log.ip, :log.path, :log.pathExt, :log.method, :log.reqBody, :log.resBody, :log.status, :log.elapsed, :log.isSlow, :log.createdAt)"
 					);
         int remaining = 0;
         while (! RedisClient.userLogQueue.isEmpty()) {

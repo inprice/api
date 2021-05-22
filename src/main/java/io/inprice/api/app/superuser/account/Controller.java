@@ -24,6 +24,12 @@ public class Controller extends AbstractController {
   		ctx.json(Commons.createResponse(ctx, service.search(dto)));
     }, AccessRoles.SUPER_ONLY());
 
+    // fetch details
+    app.get(Consts.Paths.Super.User._BASE + "/:id", (ctx) -> {
+    	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+  		ctx.json(Commons.createResponse(ctx, service.fetchDetails(id)));
+    }, AccessRoles.SUPER_ONLY());
+
     // bind
     app.put(Consts.Paths.Super.Account.BIND + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();

@@ -1,5 +1,9 @@
 package io.inprice.api.app.superuser.account;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
@@ -18,18 +22,39 @@ import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.Account;
+import io.inprice.common.models.AccountHistory;
+import io.inprice.common.models.AccountTrans;
 import io.inprice.common.models.User;
 import io.javalin.http.Context;
 
 class Service {
 
   private static final CouponService couponService = Beans.getSingleton(CouponService.class);
+  
+  Response search(BaseSearchDTO dto) {
+  	try (Handle handle = Database.getHandle()) {
+  		Dao superDao = handle.attach(Dao.class);
+  		return new Response(superDao.search(DTOHelper.normalizeSearch(dto)));
+  	}
+  }
 
-	Response search(BaseSearchDTO dto) {
+	Response fetchDetails(Long id) {
   	try (Handle handle = Database.getHandle()) {
     	Dao superDao = handle.attach(Dao.class);
-    	return new Response(superDao.search(DTOHelper.normalizeSearch(dto)));
+    	Account account = superDao.findById(id);
+
+    	if (account != null) {
+    		List<AccountTrans> transList = superDao.fetchTransactions(id);
+    		List<AccountHistory> historyList = superDao.fetchHistory(id);
+
+    		Map<String, Object> data = new HashMap<>(3);
+    		data.put("account", account);
+    		data.put("transList", transList);
+    		data.put("historyList", historyList);
+    		return new Response(data);
+    	}
     }
+  	return Responses.NotFound.ACCOUNT;
 	}
 
   Response bind(Context ctx, Long id) {

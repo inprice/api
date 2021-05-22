@@ -27,9 +27,12 @@ public interface UserSessionDao {
   @SqlQuery("select * from user_session where user_id=:userId")
   @UseRowMapper(DBSessionMapper.class)
   List<ForDatabase> findListByUserId(@Bind("userId") Long userId);
-
+  
   @SqlQuery("select _hash from user_session where account_id=:accountId")
   List<String> findHashesByAccountId(@Bind("accountId") Long accountId);
+
+  @SqlQuery("select _hash from user_session where user_id=:userId")
+  List<String> findHashesByUserId(@Bind("userId") Long userId);
 
   @SqlBatch(
     "insert into user_session (_hash, user_id, account_id, ip, os, browser, user_agent) " +

@@ -115,14 +115,16 @@ public class Application {
   		int elapsed = 0;
   		Long started = ctx.sessionAttribute("started");
     	if (started != null) {
-    		elapsed = (int)(System.currentTimeMillis()-started)/10;
+    		elapsed = (int)(System.currentTimeMillis()-started);
     	}
+    	
+    	boolean isSlow = (elapsed > Props.SERVICE_EXECUTION_THRESHOLD);
 
     	boolean
     		beLogged =
-    			ctx.res.getStatus() != 200
-    			|| elapsed > Props.SERVICE_EXECUTION_THRESHOLD
-    			|| (ctx.method() != "GET" && !ctx.path().matches("(?i).*search.*"));
+  				isSlow
+    			|| ctx.res.getStatus() != 200
+    			|| (ctx.method() != "GET" && !ctx.path().matches("(?i).*search.*|(?i).*\"term\":.*"));
 
   		if (beLogged) {
     		AccessLog userLog = new AccessLog();
@@ -135,8 +137,13 @@ public class Application {
     		}
     		userLog.setIp(ctx.ip());
     		userLog.setMethod(ctx.method());
-    		userLog.setPath(ctx.path());
     		userLog.setElapsed(elapsed);
+    		userLog.setIsSlow(isSlow);
+    		userLog.setPath(ctx.path());
+
+    		if (StringUtils.isNotBlank(ctx.req.getQueryString())) {
+    			userLog.setPathExt("?" + ctx.req.getQueryString());
+    		}
     		
     		if (e != null) {
     			userLog.setStatus(e.getStatus());
@@ -157,9 +164,6 @@ public class Application {
       		userLog.setReqBody(reqBody.replaceAll("(?:ssword).*\"", "ssword\":\"***\""));
       	}
 
-    		if (StringUtils.isNotBlank(ctx.req.getQueryString())) {
-    			userLog.setPathExt("?" + ctx.req.getQueryString());
-    		}
     		RedisClient.addUserLog(userLog);
     	}
   	}

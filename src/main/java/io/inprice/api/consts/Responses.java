@@ -10,7 +10,7 @@ public class Responses {
   public static final Response BAD_REQUEST = new Response(HttpStatus.BAD_REQUEST_400, "Bad request!");
   public static final Response _401 = new Response(HttpStatus.UNAUTHORIZED_401, "Your session seems to be expired, please sign in again.");
   public static final Response _403 = new Response(HttpStatus.FORBIDDEN_403, "Your role is not suitable to do this operation.");
-  public static final Response BANNED_USER = new Response(HttpStatus.FORBIDDEN_403, "This email is banned!");
+  public static final Response BANNED_USER = new Response(HttpStatus.FORBIDDEN_403, "Banned user!");
 
   public static class Invalid {
     private static final int BASE = 100;
@@ -51,9 +51,11 @@ public class Responses {
     public static final Response ADMIN_ONLY = new Response(BASE + 2, "This operation can only be done by an admin!");
     public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to buy a new plan!");
     public static final Response NO_ACCOUNT = new Response(BASE + 5, "You have no active account! Please either create a new one or participate in an existing!");
-    public static final Response LIMIT_PROBLEM = new Response(BASE + 6, "Your link count is reached your plans limit! You need to pass a broader plan to proceed");
-    public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 7, "You need a broader plan. The plan you intend to select allows less than your existing link count!");
-    public static final Response WRONG_USER = new Response(BASE + 8, "You are not allowed to do this operation!");
+    public static final Response USER_LIMIT_PROBLEM = new Response(BASE + 6, "Your user count is reached your plans limit!");
+    public static final Response LINK_LIMIT_PROBLEM = new Response(BASE + 7, "Your link count is reached your plans limit! You need to pass a broader plan to proceed");
+    public static final Response ALARM_LIMIT_PROBLEM = new Response(BASE + 8, "Your alarm count is reached your plans limit! You need to pass a broader plan to proceed");
+    public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 10, "You need a broader plan. The plan you intend to select allows less than your existing link count!");
+    public static final Response WRONG_USER = new Response(BASE + 11, "You are not allowed to do this operation!");
   }
 
   public static class DataProblem {
@@ -78,7 +80,7 @@ public class Responses {
     public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
     public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan, so you cannot cancel!");
     public static final Response NO_FREE_USE_RIGHT = new Response(BASE + 11, "You have no free use!");
-    public static final Response BANNED_USER = new Response(BASE + 16, "This user has been banned!");
+    public static final Response BANNED_USER = new Response(BASE + 16, "Banned user!");
   }
 
   public static class Already {

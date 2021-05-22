@@ -79,17 +79,21 @@ class AccountService {
           dataMap.put("user", dto.getEmail().split("@")[0]);
           dataMap.put("account", dto.getAccountName());
           dataMap.put("token", token.substring(0,3)+"-"+token.substring(3));
+          
+          if (!SysProps.APP_ENV.equals(AppEnv.PROD)) {
+          	return new Response(dataMap);
+          } else {
+            String message = renderer.render(EmailTemplate.REGISTRATION_REQUEST, dataMap);
+            emailSender.send(
+              Props.APP_EMAIL_SENDER, 
+              "About " + dto.getAccountName() + " registration on inprice.io",
+              dto.getEmail(), 
+              message
+            );
+            RedisClient.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
+            return Responses.OK;
+          }
 
-          String message = renderer.render(EmailTemplate.REGISTRATION_REQUEST, dataMap);
-          emailSender.send(
-            Props.APP_EMAIL_SENDER, 
-            "About " + dto.getAccountName() + " registration on inprice.io",
-            dto.getEmail(), 
-            message
-          );
-          RedisClient.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
-
-          return Responses.OK;
         } else {
           return Responses.Already.Defined.REGISTERED_USER;
         }
@@ -151,6 +155,8 @@ class AccountService {
           dataMap.put("email", dto.getEmail());
           dataMap.put("account", dto.getAccountName());
 
+          //TODO: kullanici icin bir notifikasyon yayinlanacak!
+          /*
           String message = renderer.render(EmailTemplate.REGISTRATION_COMPLETE, dataMap);
           emailSender.send(
             Props.APP_EMAIL_SENDER, 
@@ -158,6 +164,7 @@ class AccountService {
             dto.getEmail(), 
             message
           );
+          */
 
           response = new Response(user);
           Tokens.remove(TokenType.REGISTRATION_REQUEST, token);

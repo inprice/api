@@ -125,19 +125,23 @@ public class AuthService {
         User user = userDao.findByEmail(email);
         if (user != null) {
         	if (! user.isBanned()) {
-            try {
-              Map<String, Object> dataMap = new HashMap<>(3);
-              dataMap.put("user", user.getName());
-              dataMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
-              dataMap.put("url", Props.APP_WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
-
-              final String message = templateRenderer.render(EmailTemplate.FORGOT_PASSWORD, dataMap);
-              emailSender.send(Props.APP_EMAIL_SENDER, "Reset your password for inprice.io", user.getEmail(), message);
-
-              return Responses.OK;
-            } catch (Exception e) {
-              log.error("Failed to render email for forgetting password", e);
-              return Responses.ServerProblem.EXCEPTION;
+        		if (! user.isPrivileged()) {
+              try {
+                Map<String, Object> dataMap = new HashMap<>(3);
+                dataMap.put("user", user.getName());
+                dataMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
+                dataMap.put("url", Props.APP_WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
+  
+                final String message = templateRenderer.render(EmailTemplate.FORGOT_PASSWORD, dataMap);
+                emailSender.send(Props.APP_EMAIL_SENDER, "Reset your password for inprice.io", user.getEmail(), message);
+  
+                return Responses.OK;
+              } catch (Exception e) {
+                log.error("Failed to render email for forgetting password", e);
+                return Responses.ServerProblem.EXCEPTION;
+              }
+            } else {
+              return Responses.NotAllowed.UPDATE;
             }
           } else {
             return Responses.BANNED_USER;
@@ -163,24 +167,33 @@ public class AuthService {
             User user = userDao.findByEmail(email);
             if (user != null) {
 
-              String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
-              boolean isOK = userDao.updatePassword(user.getId(), saltedHash);
-
-              //closing session
-              if (isOK) {
-                Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
-                List<ForDatabase> sessions = userSessionDao.findListByUserId(user.getId());
-                if (sessions != null && sessions.size() > 0) {
-                  for (ForDatabase ses : sessions) {
-                    RedisClient.removeSesion(ses.getHash());
+            	if (! user.isBanned()) {
+            		if (! user.isPrivileged()) {
+            	
+                  String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
+                  boolean isOK = userDao.updatePassword(user.getId(), saltedHash);
+    
+                  //closing session
+                  if (isOK) {
+                    Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
+                    List<ForDatabase> sessions = userSessionDao.findListByUserId(user.getId());
+                    if (sessions != null && sessions.size() > 0) {
+                      for (ForDatabase ses : sessions) {
+                        RedisClient.removeSesion(ses.getHash());
+                      }
+                      userSessionDao.deleteByUserId(user.getId());
+                    }
+                    return createSession(ctx, user);
+    
+                  } else {
+                    Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
+                    return Responses.NotFound.EMAIL;
                   }
-                  userSessionDao.deleteByUserId(user.getId());
+                } else {
+                  return Responses.NotAllowed.UPDATE;
                 }
-                return createSession(ctx, user);
-
               } else {
-                Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
-                return Responses.NotFound.EMAIL;
+                return Responses.BANNED_USER;
               }
             }
           }
@@ -205,14 +218,13 @@ public class AuthService {
 
         List<ForCookie> sessions = SessionHelper.fromTokenForUser(tokenString);
         if (sessions != null && sessions.size() > 0) {
-          
+
           List<String> hashList = new ArrayList<>(sessions.size());
           for (ForCookie ses : sessions) {
             RedisClient.removeSesion(ses.getHash());
             hashList.add(ses.getHash());
-            log.info("Logout {}", ses.toString());
           }
-      
+
           boolean isOK = false;
           if (hashList.size() > 0) {
             try (Handle handle = Database.getHandle()) {

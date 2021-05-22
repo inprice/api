@@ -23,7 +23,7 @@ import io.inprice.common.models.UserUsed;
 public interface AccountDao {
 
   @SqlQuery(
-		"select a.*, p.name as plan_name, p.link_limit, p.alarm_limit from account as a " +
+		"select a.*, p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit from account as a " +
 		"left join plan as p on p.id = a.plan_id " +
 		"where a.id=:id"
 	)
@@ -104,5 +104,11 @@ public interface AccountDao {
 
   @SqlUpdate("insert into user_used (email, perm_type) values (:email, :permType)")
   void insertUserUsed(@Bind("email") String email, @Bind("permType") PermType permType);
+  
+  @SqlUpdate("update account set pre_status=status, status='BANNED', last_status_update=now() where admin_id=:userId")
+  int banAllBoundAccountsOfUser(@Bind("userId") Long userId);
+
+  @SqlUpdate("update account set status=pre_status, pre_status='BANNED', last_status_update=now() where admin_id=:userId")
+  int revokeBanAllBoundAccountsOfUser(@Bind("userId") Long userId);
   
 }

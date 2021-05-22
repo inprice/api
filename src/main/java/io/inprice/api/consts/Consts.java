@@ -11,7 +11,7 @@ public class Consts {
   public static final String CURRENCY_CODE = "currencyCode";
   public static final String CURRENCY_FORMAT = "currencyFormat";
 
-  public static final int LOWER_ROW_LIMIT_FOR_LISTS = 5;
+  public static final int LOWER_ROW_LIMIT_FOR_LISTS = 25;
   public static final int UPPER_ROW_LIMIT_FOR_LISTS = 100;
 
   public static class Paths {
