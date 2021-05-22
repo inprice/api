@@ -82,7 +82,7 @@ public class SubscribedAccountStopper implements Runnable {
               Map<String, Object> dataMap = new HashMap<>(1);
               dataMap.put("user", accinfo.getEmail());
               String message = templateRenderer.render(EmailTemplate.SUBSCRIPTION_STOPPED, dataMap);
-              emailSender.send(Props.APP_EMAIL_SENDER(), "The last notification for your subscription to inprice.", accinfo.getEmail(), message);
+              emailSender.send(Props.APP_EMAIL_SENDER, "The last notification for your subscription to inprice.", accinfo.getEmail(), message);
 
               affected++;
             }

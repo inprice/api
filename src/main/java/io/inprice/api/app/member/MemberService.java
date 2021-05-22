@@ -180,13 +180,13 @@ class MemberService {
     } else {
       dataMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')));
       dataMap.put("token", Tokens.add(TokenType.INVITATION, dto));
-      dataMap.put("url", Props.APP_WEB_URL() + "/accept-invitation");
+      dataMap.put("url", Props.APP_WEB_URL + "/accept-invitation");
       template = EmailTemplate.INVITATION_FOR_NEW_USERS;
     }
 
     message = renderer.render(template, dataMap);
 
-    emailSender.send(Props.APP_EMAIL_SENDER(),
+    emailSender.send(Props.APP_EMAIL_SENDER,
         "About your invitation for " + CurrentUser.getAccountName() + " at inprice.io", dto.getEmail(), message);
 
     log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());

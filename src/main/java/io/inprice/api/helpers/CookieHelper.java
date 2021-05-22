@@ -16,7 +16,7 @@ public class CookieHelper {
 	public static Cookie createUserCookie(String token) {
 		Cookie cookie = new Cookie(Consts.SESSION, token);
 		cookie.setHttpOnly(true);
-		if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+		if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
 			cookie.setSecure(true);
 		}
 		cookie.setMaxAge(Integer.MAX_VALUE);
@@ -32,10 +32,10 @@ public class CookieHelper {
   public static Cookie createSuperCookie(String token) {
     Cookie cookie = new Cookie(Consts.SUPER_SESSION, token);
     cookie.setHttpOnly(true);
-    if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+    if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
     	cookie.setSecure(true);
     }
-    cookie.setMaxAge(Props.TTL_NORMAL_COOKIES()); // one hour
+    cookie.setMaxAge(Props.TTL_FOR_COOKIES); // one hour
     return cookie;
   }
 

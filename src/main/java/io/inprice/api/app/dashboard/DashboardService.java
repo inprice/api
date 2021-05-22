@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -14,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.dashboard.mapper.GroupSummary;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.Response;
+import io.inprice.api.lib.ExpiringConcurrentHashMap;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.Level;
@@ -26,9 +25,11 @@ class DashboardService {
 
   private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
 
+  private Map<Long, Map<String, Object>> expiringMap = new ExpiringConcurrentHashMap<>(5 * 60 * 1000); //expires in 5 mins
+
   Response getReport(boolean refresh) {
     Map<String, Object> report = null;
-    if (! refresh) report = RedisClient.dashboardsMap.get(CurrentUser.getAccountId());
+    if (! refresh) report = expiringMap.get(CurrentUser.getAccountId());
 
     if (report == null) {
       report = new HashMap<>(4);
@@ -42,7 +43,7 @@ class DashboardService {
         report.put("links", getLinks(dashboardDao));
         report.put("account", accountDao.findById(CurrentUser.getAccountId()));
 
-        RedisClient.dashboardsMap.put(CurrentUser.getAccountId(), report, 5, TimeUnit.MINUTES);
+        expiringMap.put(CurrentUser.getAccountId(), report);
         return new Response(report);
     
       } catch (Exception e) {

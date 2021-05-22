@@ -99,7 +99,7 @@ public class FreeAccountStopper implements Runnable {
               dataMap.put("user", user.getEmail());
               dataMap.put("account", accountName);
               String message = templateRenderer.render(EmailTemplate.FREE_ACCOUNT_STOPPED, dataMap);
-              emailSender.send(Props.APP_EMAIL_SENDER(), "Your inprice subscription is stopped.", user.getEmail(), message);
+              emailSender.send(Props.APP_EMAIL_SENDER, "Your inprice subscription is stopped.", user.getEmail(), message);
 
               affected++;
             }

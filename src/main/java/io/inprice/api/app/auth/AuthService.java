@@ -111,7 +111,7 @@ public class AuthService {
 
   Response forgotPassword(String email) {
     Response res = Responses.OK;
-    if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+    if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
       res = RedisClient.isEmailRequested(RateLimiterType.FORGOT_PASSWORD, email);
     }
     if (!res.isOK()) return res;
@@ -129,10 +129,10 @@ public class AuthService {
               Map<String, Object> dataMap = new HashMap<>(3);
               dataMap.put("user", user.getName());
               dataMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
-              dataMap.put("url", Props.APP_WEB_URL() + Consts.Paths.Auth.RESET_PASSWORD);
+              dataMap.put("url", Props.APP_WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
 
               final String message = templateRenderer.render(EmailTemplate.FORGOT_PASSWORD, dataMap);
-              emailSender.send(Props.APP_EMAIL_SENDER(), "Reset your password for inprice.io", user.getEmail(), message);
+              emailSender.send(Props.APP_EMAIL_SENDER, "Reset your password for inprice.io", user.getEmail(), message);
 
               return Responses.OK;
             } catch (Exception e) {

@@ -7,6 +7,10 @@ public final class Response {
    private int status;
    private String reason;
    private Object data;
+   
+   Response() {
+  	 
+   }
 
    public Response(Object data) {
       this.status = Responses.OK.getStatus();

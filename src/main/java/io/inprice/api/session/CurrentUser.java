@@ -99,7 +99,6 @@ public class CurrentUser {
   }
 
   public static void cleanup() {
-    THREAD_VARIABLES.set(null);
     THREAD_VARIABLES.remove();
   }
 

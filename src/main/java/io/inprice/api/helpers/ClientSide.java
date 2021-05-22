@@ -71,7 +71,7 @@ public class ClientSide {
         String res = 
           HttpHelper.GET(
             httpClient, String.format("https://api.ipgeolocation.io/ipgeo?apiKey=%s&ip=%s",
-              Props.API_KEYS_GELOCATION(), URLEncoder.encode(ip, "UTF-8")
+              Props.API_KEYS_GELOCATION, URLEncoder.encode(ip, "UTF-8")
             )
           );
         if (res != null) {

@@ -19,14 +19,14 @@ public class EmailSender {
   private static final Logger log = LoggerFactory.getLogger(EmailSender.class);
 
   public void send(String from, String subject, String to, String content) {
-    //if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+    //if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
       Email emailFrom = new Email(from);
       Email emailTo = new Email(to);
       Content emailContent = new Content("text/html", content);
 
       Mail mail = new Mail(emailFrom, subject, emailTo, emailContent);
 
-      SendGrid sg = new SendGrid(Props.API_KEYS_SENDGRID());
+      SendGrid sg = new SendGrid(Props.API_KEYS_SENDGRID);
       Request request = new Request();
       try {
         request.setMethod(Method.POST);

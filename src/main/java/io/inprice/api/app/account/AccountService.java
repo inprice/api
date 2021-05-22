@@ -58,7 +58,7 @@ class AccountService {
 
   Response requestRegistration(RegisterDTO dto) {
     Response res = Responses.OK;
-    if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+    if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
       res = RedisClient.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
     }
     if (!res.isOK()) return res;
@@ -82,7 +82,7 @@ class AccountService {
 
           String message = renderer.render(EmailTemplate.REGISTRATION_REQUEST, dataMap);
           emailSender.send(
-            Props.APP_EMAIL_SENDER(), 
+            Props.APP_EMAIL_SENDER, 
             "About " + dto.getAccountName() + " registration on inprice.io",
             dto.getEmail(), 
             message
@@ -153,7 +153,7 @@ class AccountService {
 
           String message = renderer.render(EmailTemplate.REGISTRATION_COMPLETE, dataMap);
           emailSender.send(
-            Props.APP_EMAIL_SENDER(), 
+            Props.APP_EMAIL_SENDER, 
             "Welcome to inprice: " + dto.getAccountName(),
             dto.getEmail(), 
             message

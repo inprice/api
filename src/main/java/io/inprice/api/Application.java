@@ -10,6 +10,7 @@ import io.inprice.api.external.RedisClient;
 import io.inprice.api.framework.ConfigScanner;
 import io.inprice.api.framework.HandlerInterruptException;
 import io.inprice.api.info.Response;
+import io.inprice.api.scheduled.AccessLoggerFlusher;
 import io.inprice.api.scheduled.TaskManager;
 import io.inprice.api.session.AccessGuard;
 import io.inprice.api.session.CurrentUser;
@@ -17,7 +18,7 @@ import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.JsonConverter;
 import io.inprice.common.meta.AppEnv;
-import io.inprice.common.models.UserLog;
+import io.inprice.common.models.analytics.AccessLog;
 import io.javalin.Javalin;
 import io.javalin.core.util.Header;
 import io.javalin.core.util.RouteOverviewPlugin;
@@ -47,6 +48,9 @@ public class Application {
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 
+    	// in case of any access log remains
+    	new AccessLoggerFlusher().run();
+    	
       Global.isApplicationRunning = false;
       log.info("APPLICATION IS TERMINATING...");
 
@@ -75,38 +79,37 @@ public class Application {
       config.showJavalinBanner = false;
       config.requestCacheSize = 8192L;
 
-      if (SysProps.APP_ENV().equals(AppEnv.DEV)) {
+      if (SysProps.APP_ENV.equals(AppEnv.DEV)) {
         config.registerPlugin(new RouteOverviewPlugin("/routes"));
       }
 
       config.accessManager(new AccessGuard());
 
       JavalinJackson.configure(JsonConverter.mapper);
-    }).start(Props.APP_PORT());
+    }).start(Props.APP_PORT);
 
     app.before(ctx -> {
       if (ctx.method() == "OPTIONS") {
         ctx.header(Header.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
-      } else if (ctx.method() != "GET") {
+      } else {
       	ctx.sessionAttribute("started", System.currentTimeMillis());
-      	ctx.sessionAttribute("body", ctx.body());
+    		ctx.sessionAttribute("body", ctx.body());
       }
     });
 
     app.after(ctx -> {
     	if (ctx.method() != "OPTIONS") {
-      	logAccess(ctx);
-      	CurrentUser.cleanup();
+      	logAccess(ctx, null);
     	}
     });
 
     app.exception(HandlerInterruptException.class, (e, ctx) -> {
-    	logAccess(ctx);
+    	logAccess(ctx, e);
       ctx.json(new Response(e.getStatus(), e.getMessage()));
     });
   }
   
-  private static void logAccess(Context ctx) {
+  private static void logAccess(Context ctx, HandlerInterruptException e) {
   	if (ctx.method() != "OPTIONS") {
 
   		int elapsed = 0;
@@ -115,10 +118,14 @@ public class Application {
     		elapsed = (int)(System.currentTimeMillis()-started)/10;
     	}
 
-    	boolean beLogged = (elapsed >= 1000) || (ctx.method() != "GET" && !ctx.path().matches("(?i).*search.*"));
+    	boolean
+    		beLogged =
+    			ctx.res.getStatus() != 200
+    			|| elapsed > Props.SERVICE_EXECUTION_THRESHOLD
+    			|| (ctx.method() != "GET" && !ctx.path().matches("(?i).*search.*"));
 
   		if (beLogged) {
-    		UserLog userLog = new UserLog();
+    		AccessLog userLog = new AccessLog();
     		if (CurrentUser.hasSession()) {
       		userLog.setUserId(CurrentUser.getUserId());
       		userLog.setUserEmail(CurrentUser.getEmail());
@@ -129,21 +136,34 @@ public class Application {
     		userLog.setIp(ctx.ip());
     		userLog.setMethod(ctx.method());
     		userLog.setPath(ctx.path());
-    		userLog.setResCode(ctx.res.getStatus());
-    		userLog.setResBody(ctx.resultString());
     		userLog.setElapsed(elapsed);
+    		
+    		if (e != null) {
+    			userLog.setStatus(e.getStatus());
+    			userLog.setResBody(e.getMessage());
+    		} else {
+    			userLog.setStatus(ctx.res.getStatus());
+    			if (ctx.resultString() != null) {
+      			Response res = JsonConverter.fromJson(ctx.resultString(), Response.class);
+      			userLog.setStatus(res.getStatus());
+      			if (res.getStatus() != 200) {
+      				userLog.setResBody(res.getReason());
+      			}
+    			}
+    		}
 
       	String reqBody = ctx.sessionAttribute("body");
       	if (StringUtils.isNotBlank(reqBody)) {
-      		userLog.setReqBody(reqBody.replaceAll("(?:ssword)\\W+\\w+", "ssword\":\"***"));
+      		userLog.setReqBody(reqBody.replaceAll("(?:ssword).*\"", "ssword\":\"***\""));
       	}
 
     		if (StringUtils.isNotBlank(ctx.req.getQueryString())) {
     			userLog.setPathExt("?" + ctx.req.getQueryString());
     		}
-    		System.out.println(userLog);
+    		RedisClient.addUserLog(userLog);
     	}
   	}
+  	CurrentUser.cleanup();
   }
 
 }
