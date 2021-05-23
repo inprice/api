@@ -30,17 +30,9 @@ public interface Dao {
   @UseRowMapper(UserMapper.class)
 	List<User> search(@BindBean("dto") BaseSearchDTO dto);
 	
-	@SqlQuery(
-		"select * from user "+
-		"  and privileged = false " +
-		"where id=:id"
-	)
+	@SqlQuery("select * from user where id=:id and privileged = false")
   @UseRowMapper(UserMapper.class)
 	User findById(@Bind("id") Long id);
-
-	@SqlQuery("select * from user_used where email=:email order by created_at desc")
-  @UseRowMapper(UserUsedMapper.class)
-  List<UserUsed> fetchUsedListByEmail(@Bind("email") String email);
 
   @SqlQuery(
 		"select s.*, a.name as account_name from user_session s " +
@@ -51,7 +43,12 @@ public interface Dao {
   @UseRowMapper(DBSessionMapper.class)
   List<ForDatabase> fetchSessionListById(@Bind("userId") Long userId);
   
-  @SqlQuery("select * from member where user_id=:userId order by role, created_at")
+  @SqlQuery(
+		"select m.*, a.name as account_name, a.status as account_status from member m " +
+		"inner join account a on a.id = m.account_id "+
+		"where user_id=:userId " +
+		"order by role, created_at"
+	)
   @UseRowMapper(MemberMapper.class)
   List<Member> fetchMembershipListById(@Bind("userId") Long userId);
 
@@ -61,4 +58,28 @@ public interface Dao {
 	@SqlUpdate("update user set banned=false, ban_reason=null, banned_at=null where id=:id")
 	boolean revokeBan(@Bind("id") Long id);
 
+	@SqlQuery("select * from user_used where email=:email order by created_at desc")
+  @UseRowMapper(UserUsedMapper.class)
+  List<UserUsed> fetchUsedServiceListByEmail(@Bind("email") String email);
+
+	@SqlQuery("select * from user_used where id=:id")
+  @UseRowMapper(UserUsedMapper.class)
+  UserUsed findUsedServiceById(@Bind("id") Long id);
+	
+	@SqlUpdate("delete from user_used where id=:id")
+	boolean deleteUsedService(@Bind("id") Long id);
+
+	@SqlUpdate("update user_used set whitelisted = not whitelisted where id=:id")
+	boolean toggleUnlimitedUsedService(@Bind("id") Long id);
+
+	@SqlQuery(
+		"select s.user_id from user_session s " +
+		"inner join user u on u.id = s.user_id " +
+		"where s._hash=:hash"
+	)
+  Long findUserEmailBySessionHash(@Bind("hash") String hash);
+
+	@SqlUpdate("delete from user_session where _hash=:hash")
+  boolean deleteSession(@Bind("hash") String hash);
+	
 }

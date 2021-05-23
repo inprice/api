@@ -1,6 +1,7 @@
 package io.inprice.api.app.superuser.account;
 
 import io.inprice.api.app.superuser.account.dto.CreateCouponDTO;
+import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.framework.AbstractController;
@@ -19,13 +20,19 @@ public class Controller extends AbstractController {
   public void addRoutes(Javalin app) {
 
     // search
-    app.post(Consts.Paths.Super.Account._BASE, (ctx) -> {
+    app.post(Consts.Paths.Super.Account.SEARCH, (ctx) -> {
   		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
   		ctx.json(Commons.createResponse(ctx, service.search(dto)));
     }, AccessRoles.SUPER_ONLY());
 
+    // search for access logs
+    app.post(Consts.Paths.Super.Account.AL_SEARCH, (ctx) -> {
+  		ALSearchDTO dto = ctx.bodyAsClass(ALSearchDTO.class);
+  		ctx.json(Commons.createResponse(ctx, service.searchForAccessLog(dto)));
+    }, AccessRoles.SUPER_ONLY());
+
     // fetch details
-    app.get(Consts.Paths.Super.User._BASE + "/:id", (ctx) -> {
+    app.get(Consts.Paths.Super.Account.DETAILS + "/:id", (ctx) -> {
     	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
   		ctx.json(Commons.createResponse(ctx, service.fetchDetails(id)));
     }, AccessRoles.SUPER_ONLY());

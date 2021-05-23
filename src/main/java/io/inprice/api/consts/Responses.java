@@ -146,6 +146,8 @@ public class Responses {
     public static final Response HISTORY = new Response(BASE, "History not found!");
     public static final Response TRANSACTION = new Response(BASE, "Transaction not found!");
 
+    public static final Response USED_SERVICE = new Response(BASE, "Used service not found!");
+    
     public static final Response DATA = new Response(BASE, "Nothing found!");
   }
 

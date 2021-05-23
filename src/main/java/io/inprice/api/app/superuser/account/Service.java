@@ -1,14 +1,18 @@
 package io.inprice.api.app.superuser.account;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.coupon.CouponService;
 import io.inprice.api.app.superuser.account.dto.CreateCouponDTO;
+import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
@@ -20,14 +24,19 @@ import io.inprice.api.session.info.ForResponse;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.mappers.analytics.AccessLogMapper;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.AccountHistory;
 import io.inprice.common.models.AccountTrans;
 import io.inprice.common.models.User;
+import io.inprice.common.models.analytics.AccessLog;
+import io.inprice.common.utils.DateUtils;
 import io.javalin.http.Context;
 
 class Service {
+
+  private static final Logger log = LoggerFactory.getLogger("SU:Account");
 
   private static final CouponService couponService = Beans.getSingleton(CouponService.class);
   
@@ -51,10 +60,28 @@ class Service {
     		data.put("account", account);
     		data.put("transList", transList);
     		data.put("historyList", historyList);
+
     		return new Response(data);
     	}
     }
   	return Responses.NotFound.ACCOUNT;
+	}
+
+	public Response searchForAccessLog(ALSearchDTO dto) {
+    try (Handle handle = Database.getHandle()) {
+    	String searchQuery = buildQueryForAccessLogSearch(dto);
+    	if (searchQuery == null) return Responses.BAD_REQUEST;
+
+    	List<AccessLog> 
+      	searchResult = 
+      		handle.createQuery(searchQuery)
+      			.map(new AccessLogMapper())
+    			.list();
+      return new Response(Collections.singletonMap("rows", searchResult));
+    } catch (Exception e) {
+      log.error("Failed in search for access logs.", e);
+      return Responses.ServerProblem.EXCEPTION;
+    }
 	}
 
   Response bind(Context ctx, Long id) {
@@ -151,6 +178,55 @@ class Service {
   		}
 		}
 		return new Response(problem);
+  }
+
+  private String buildQueryForAccessLogSearch(ALSearchDTO dto) {
+  	if (dto.getAccountId() == null) return null;
+
+  	dto = DTOHelper.normalizeSearch(dto);
+
+    StringBuilder crit = new StringBuilder("select * from analytics_access_log ");
+
+    crit.append("where account_id = ");
+    crit.append(dto.getAccountId());
+
+    if (dto.getUserId() != null) {
+    	crit.append(" and user_id = ");
+    	crit.append(dto.getUserId());
+    }
+
+    if (dto.getMethod() != null) {
+    	crit.append(" and method = '");
+    	crit.append(dto.getMethod());
+    	crit.append("' ");
+    }
+    
+    if (dto.getStartDate() != null) {
+    	crit.append(" and created_at >= ");
+    	crit.append(DateUtils.formatDateForDB(dto.getStartDate()));
+    }
+
+    if (dto.getEndDate() != null) {
+    	crit.append(" and created_at <= ");
+    	crit.append(DateUtils.formatDateForDB(dto.getEndDate()));
+    }
+    
+    if (StringUtils.isNotBlank(dto.getTerm())) {
+    	crit.append(" and path like '%");
+      crit.append(dto.getTerm());
+      crit.append("%'");
+    }
+
+  	crit.append(" order by ");
+    crit.append(dto.getOrderBy().getFieldName());
+    crit.append(dto.getOrderDir().getDir());
+    
+    crit.append(" limit ");
+    crit.append(dto.getRowCount());
+    crit.append(", ");
+    crit.append(dto.getRowLimit());
+    
+    return crit.toString();
   }
   
 }

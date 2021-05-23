@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.auth.UserSessionDao;
-import io.inprice.api.app.superuser.user.dto.AccessLogSearchDTO;
+import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
@@ -32,7 +32,7 @@ import io.inprice.common.utils.DateUtils;
 
 class Service {
 
-  private static final Logger log = LoggerFactory.getLogger("SuperUser:User");
+  private static final Logger log = LoggerFactory.getLogger("SU:User");
 
 	Response search(BaseSearchDTO dto) {
   	try (Handle handle = Database.getHandle()) {
@@ -41,40 +41,7 @@ class Service {
     }
 	}
 
-	Response fetchDetails(Long id) {
-  	try (Handle handle = Database.getHandle()) {
-    	Dao userDao = handle.attach(Dao.class);
-    	User user = userDao.findById(id);
-
-    	if (user != null) {
-    		Dao superDao = handle.attach(Dao.class);
-    		List<UserUsed> usedList = superDao.fetchUsedListByEmail(user.getEmail());
-    		List<ForDatabase> sessionList = superDao.fetchSessionListById(user.getId());
-        List<Member> membershipList = superDao.fetchMembershipListById(user.getId());
-
-        AccessLogSearchDTO dto = new AccessLogSearchDTO();
-        dto.setUserId(id); //is a mandatory!
-
-        List<AccessLog> 
-        	accessLogList = 
-        		handle.createQuery(buildQueryForAccessLogSearch(dto))
-        			.map(new AccessLogMapper())
-      			.list();
-
-    		Map<String, Object> data = new HashMap<>(5);
-    		data.put("user", user);
-    		data.put("membershipList", membershipList);
-    		data.put("usedList", usedList);
-    		data.put("sessionList", sessionList);
-    		data.put("accessLogList", accessLogList);
-
-    		return new Response(data);
-    	}
-    }
-  	return Responses.NotFound.ACCOUNT;
-	}
-	
-	public Response searchForAccessLog(AccessLogSearchDTO dto) {
+	public Response searchForAccessLog(ALSearchDTO dto) {
     try (Handle handle = Database.getHandle()) {
     	String searchQuery = buildQueryForAccessLogSearch(dto);
     	if (searchQuery == null) return Responses.BAD_REQUEST;
@@ -183,7 +150,115 @@ class Service {
   	return Responses.Invalid.USER;
   }
 
-  private String buildQueryForAccessLogSearch(AccessLogSearchDTO dto) {
+  Response fetchDetails(Long userId) {
+  	try (Handle handle = Database.getHandle()) {
+  		Dao userDao = handle.attach(Dao.class);
+  		User user = userDao.findById(userId);
+  		
+  		if (user != null) {
+  			Dao superDao = handle.attach(Dao.class);
+  			List<Member> membershipList = superDao.fetchMembershipListById(userId);
+  			List<ForDatabase> sessionList = superDao.fetchSessionListById(userId);
+  			List<UserUsed> usedServiceList = superDao.fetchUsedServiceListByEmail(user.getEmail());
+  			
+  			Map<String, Object> data = new HashMap<>(4);
+  			data.put("user", user);
+  			data.put("membershipList", membershipList);
+  			data.put("sessionList", sessionList);
+  			data.put("usedServiceList", usedServiceList);
+
+  			return new Response(data);
+  		}
+  	}
+  	return Responses.NotFound.USER;
+  }
+  
+  Response fetchMembershipList(Long userId) {
+  	try (Handle handle = Database.getHandle()) {
+  		Dao superDao = handle.attach(Dao.class);
+  		List<Member> list = superDao.fetchMembershipListById(userId);
+  		return new Response(list);
+  	}
+  }
+
+  Response fetchSessionList(Long userId) {
+  	try (Handle handle = Database.getHandle()) {
+			Dao superDao = handle.attach(Dao.class);
+			List<ForDatabase> list = superDao.fetchSessionListById(userId);
+			return new Response(list);
+  	}
+  }
+
+  Response fetchUsedServiceList(Long userId) {
+  	try (Handle handle = Database.getHandle()) {
+  		Dao userDao = handle.attach(Dao.class);
+  		User user = userDao.findById(userId);
+  		
+  		if (user != null) {
+  			Dao superDao = handle.attach(Dao.class);
+  			List<UserUsed> list = superDao.fetchUsedServiceListByEmail(user.getEmail());
+  			return new Response(list);
+  		}
+  	}
+  	return Responses.NotFound.USER;
+  }
+
+  Response deleteUsedService(Long id) {
+  	try (Handle handle = Database.getHandle()) {
+  		Dao superDao = handle.attach(Dao.class);
+  		UserUsed used = superDao.findUsedServiceById(id);
+
+  		if (used != null) {
+    		boolean isOK = superDao.deleteUsedService(id);
+    		if (isOK) {
+    			List<UserUsed> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
+    			return new Response(newList);
+    		} else {
+    			return Responses.DataProblem.DB_PROBLEM;
+    		}
+  		}
+  	}
+  	return Responses.NotFound.USED_SERVICE;
+  }
+
+	Response toggleUnlimitedUsedService(Long id) {
+  	try (Handle handle = Database.getHandle()) {
+  		Dao superDao = handle.attach(Dao.class);
+  		UserUsed used = superDao.findUsedServiceById(id);
+
+  		if (used != null) {
+    		boolean isOK = superDao.toggleUnlimitedUsedService(id);
+    		if (isOK) {
+    			List<UserUsed> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
+    			return new Response(newList);
+    		} else {
+    			return Responses.DataProblem.DB_PROBLEM;
+    		}
+  		}
+  	}
+  	return Responses.NotFound.USED_SERVICE;
+	}
+
+  Response terminateSession(String hash) {
+  	try (Handle handle = Database.getHandle()) {
+  		Dao superDao = handle.attach(Dao.class);
+  		Long userId = superDao.findUserEmailBySessionHash(hash);
+
+  		if (userId != null) {
+    		boolean isOK = superDao.deleteSession(hash);
+    		if (isOK) {
+    			RedisClient.removeSesion(hash);
+    			List<ForDatabase> newList = superDao.fetchSessionListById(userId);
+    			return new Response(newList);
+    		} else {
+    			return Responses.DataProblem.DB_PROBLEM;
+    		}
+  		}
+  	}
+  	return Responses.NotFound.USER;
+  }
+
+  private String buildQueryForAccessLogSearch(ALSearchDTO dto) {
   	if (dto.getUserId() == null) return null;
 
   	dto = DTOHelper.normalizeSearch(dto);
@@ -198,7 +273,7 @@ class Service {
     	crit.append(dto.getAccountId());
     }
 
-    if (StringUtils.isNotBlank(dto.getMethod())) {
+    if (dto.getMethod() != null) {
     	crit.append(" and method = '");
     	crit.append(dto.getMethod());
     	crit.append("' ");
@@ -220,6 +295,10 @@ class Service {
       crit.append("%'");
     }
 
+  	crit.append(" order by ");
+    crit.append(dto.getOrderBy().getFieldName());
+    crit.append(dto.getOrderDir().getDir());
+    
     crit.append(" limit ");
     crit.append(dto.getRowCount());
     crit.append(", ");
