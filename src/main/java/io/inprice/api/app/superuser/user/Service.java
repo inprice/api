@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.auth.UserSessionDao;
+import io.inprice.api.app.superuser.dto.ALSearchBy;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Responses;
@@ -23,6 +24,7 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.analytics.AccessLogMapper;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
@@ -188,7 +190,7 @@ class Service {
 			return new Response(list);
   	}
   }
-
+  
   Response fetchUsedServiceList(Long userId) {
   	try (Handle handle = Database.getHandle()) {
   		Dao userDao = handle.attach(Dao.class);
@@ -201,6 +203,14 @@ class Service {
   		}
   	}
   	return Responses.NotFound.USER;
+  }
+
+  Response fetchAccountList(Long userId) {
+  	try (Handle handle = Database.getHandle()) {
+			Dao superDao = handle.attach(Dao.class);
+			List<Pair<Long, String>> list = superDao.fetchAccountListByUserId(userId);
+			return new Response(list);
+  	}
   }
 
   Response deleteUsedService(Long id) {
@@ -290,15 +300,23 @@ class Service {
     }
     
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	crit.append(" and path like '%");
-      crit.append(dto.getTerm());
-      crit.append("%'");
+    	if (ALSearchBy.STATUS.equals(dto.getSearchBy())) {
+      	crit.append(" and status in (");
+        crit.append(dto.getTerm());
+      	crit.append(")");
+    	} else {
+    		crit.append(" and ");
+    		crit.append(dto.getSearchBy().getFieldName());
+      	crit.append(" like '%");
+        crit.append(dto.getTerm());
+        crit.append("%'");
+    	}
     }
 
   	crit.append(" order by ");
     crit.append(dto.getOrderBy().getFieldName());
     crit.append(dto.getOrderDir().getDir());
-    
+
     crit.append(" limit ");
     crit.append(dto.getRowCount());
     crit.append(", ");

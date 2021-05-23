@@ -66,13 +66,19 @@ public class Controller extends AbstractController {
     	Long userId = ctx.pathParam("userId", Long.class).check(it -> it > 0).getValue();
     	ctx.json(Commons.createResponse(ctx, service.fetchSessionList(userId)));
     }, AccessRoles.SUPER_ONLY());
-
+    
     // fetch used services list
     app.get(Consts.Paths.Super.User.USED_SERVICE + "s/:userId", (ctx) -> {
     	Long userId = ctx.pathParam("userId", Long.class).check(it -> it > 0).getValue();
     	ctx.json(Commons.createResponse(ctx, service.fetchUsedServiceList(userId)));
     }, AccessRoles.SUPER_ONLY());
-    
+
+    // fetch user's account list
+    app.get(Consts.Paths.Super.User.USER_ACCOUNTS + "/:userId", (ctx) -> {
+    	Long userId = ctx.pathParam("userId", Long.class).check(it -> it > 0).getValue();
+    	ctx.json(Commons.createResponse(ctx, service.fetchAccountList(userId)));
+    }, AccessRoles.SUPER_ONLY());
+
     /*-------------------------------------------------------------------------------------*/
 
     // terminate session

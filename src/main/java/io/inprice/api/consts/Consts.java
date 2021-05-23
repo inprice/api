@@ -131,6 +131,7 @@ public class Consts {
         public static final String AL_SEARCH = _BASE + "s/search-al";
         public static final String BAN = _BASE + "/ban";
         public static final String REVOKE_BAN = BAN + "-revoke";
+        public static final String USER_ACCOUNTS = _BASE + "/accounts";
 
         public static final String USED_SERVICE = _BASE + "/used-service";
         public static final String USED_SERVICE_TOGGLE = USED_SERVICE + "/toggle";

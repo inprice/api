@@ -3,9 +3,9 @@ package io.inprice.api.app.superuser.dto;
 public enum ALOrderBy {
 
 	DATE("created_at"),
-	IP("ip"),
 	PATH("path"),
 	STATUS("status"),
+	IP("ip"),
 	ELAPSED("elapsed"),
 	METHOD("method"),
 	SLOW("is_slow");

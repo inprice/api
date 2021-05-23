@@ -15,6 +15,8 @@ import lombok.Setter;
 @Setter
 public class ALSearchDTO extends BaseSearchDTO {
 
+	private ALSearchBy searchBy = ALSearchBy.PATH;
+
 	private Date startDate;
 	private Date endDate;
 	private ALMethod method;
