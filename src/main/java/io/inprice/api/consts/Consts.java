@@ -128,7 +128,7 @@ public class Consts {
       public static class User {
       	public static final String _BASE = BASE + "/user";
       	public static final String SEARCH = _BASE + "s/search";
-        public static final String AL_SEARCH = _BASE + "s/search-al";
+        public static final String AL_SEARCH = _BASE + "/search-logs";
         public static final String BAN = _BASE + "/ban";
         public static final String REVOKE_BAN = BAN + "-revoke";
         public static final String USER_ACCOUNTS = _BASE + "/accounts";

@@ -136,6 +136,7 @@ public class Application {
       		userLog.setAccountName(CurrentUser.getAccountName());
     		}
     		userLog.setIp(ctx.ip());
+    		userLog.setAgent(ctx.userAgent());
     		userLog.setMethod(ctx.method());
     		userLog.setElapsed(elapsed);
     		userLog.setIsSlow(isSlow);

@@ -77,7 +77,7 @@ class Service {
       		handle.createQuery(searchQuery)
       			.map(new AccessLogMapper())
     			.list();
-      return new Response(Collections.singletonMap("rows", searchResult));
+      return new Response(searchResult);
     } catch (Exception e) {
       log.error("Failed in search for access logs.", e);
       return Responses.ServerProblem.EXCEPTION;
@@ -185,7 +185,7 @@ class Service {
 
   	dto = DTOHelper.normalizeSearch(dto);
 
-    StringBuilder crit = new StringBuilder("select * from analytics_access_log ");
+    StringBuilder crit = new StringBuilder("select * from access_log ");
 
     crit.append("where account_id = ");
     crit.append(dto.getAccountId());
