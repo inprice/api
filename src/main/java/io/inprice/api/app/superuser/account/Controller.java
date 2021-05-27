@@ -4,7 +4,6 @@ import io.inprice.api.app.superuser.account.dto.CreateCouponDTO;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.BaseSearchDTO;
-import io.inprice.api.dto.IdTextDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -30,20 +29,6 @@ public class Controller extends AbstractController {
     app.post(Consts.Paths.Super.Account.AL_SEARCH, (ctx) -> {
   		ALSearchDTO dto = ctx.bodyAsClass(ALSearchDTO.class);
   		ctx.json(Commons.createResponse(ctx, service.searchForAccessLog(dto)));
-    }, AccessRoles.SUPER_ONLY());
-    
-    /*-------------------------------------------------------------------------------------*/
-
-    // ban
-    app.post(Consts.Paths.Super.Account.BAN, (ctx) -> {
-  		IdTextDTO dto = ctx.bodyAsClass(IdTextDTO.class);
-  		ctx.json(Commons.createResponse(ctx, service.ban(dto)));
-    }, AccessRoles.SUPER_ONLY());
-
-    // revoke ban
-    app.put(Consts.Paths.Super.Account.REVOKE_BAN + "/:id", (ctx) -> {
-      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.revokeBan(id)));
     }, AccessRoles.SUPER_ONLY());
 
     /*-------------------------------------------------------------------------------------*/

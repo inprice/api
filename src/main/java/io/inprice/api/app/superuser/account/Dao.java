@@ -5,7 +5,6 @@ import java.util.List;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
 import io.inprice.api.dto.BaseSearchDTO;
@@ -69,11 +68,5 @@ public interface Dao {
 	)
   @UseRowMapper(IdNamePairMapper.class)
   List<Pair<Long, String>> fetchUserListByAccountId(@Bind("accountId") Long accountId);
-
-	@SqlUpdate("update account set pre_status=status, status='BANNED' last_status_update=now() where id=:id and status!='BANNED'")
-	boolean ban(@Bind("id") Long id);
-	
-	@SqlUpdate("update account set status=pre_status, pre_status='BANNED' last_status_update=now() where id=:id and status='BANNED'")
-	boolean revokeBan(@Bind("id") Long id);
 
 }
