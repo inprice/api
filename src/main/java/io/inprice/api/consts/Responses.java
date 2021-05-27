@@ -97,15 +97,18 @@ public class Responses {
     public static final Response HAS_THE_SAME_PLAN = new Response(BASE + 10, "You have already this plan at the moment!");
 
     public static final Response REQUESTED_EMAIL = new Response(BASE + 14, "This email is already requested, please wait some time to try again!");
+    
+    public static final Response BANNED_USER = new Response(BASE + 25, "User is already banned!");
+    public static final Response NOT_BANNED_USER = new Response(BASE + 26, "User is not banned!");
 
-    public static final Response BANNED_USER = new Response(BASE + 25, "This user is already banned!");
-    public static final Response NOT_BANNED_USER = new Response(BASE + 26, "This user is not banned!");
+    public static final Response BANNED_ACCOUNT = new Response(BASE + 30, "Account is already banned!");
+    public static final Response NOT_BANNED_ACCOUNT = new Response(BASE + 31, "Account is not banned!");
     
     public static class Defined {
-      public static final Response ACCOUNT = new Response(BASE + 20, "Seems that you have already registered this account!");
-      public static final Response MEMBERSHIP = new Response(BASE + 21, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");
-      public static final Response REGISTERED_USER = new Response(BASE + 22, "This user has already registered! Signing up is an option for newcomers! You can use Create Account in the menu after login.");
-      public static final Response GROUP = new Response(BASE + 25, "You already have a group having the same name!");
+      public static final Response ACCOUNT = new Response(BASE + 70, "Seems that you have already registered this account!");
+      public static final Response MEMBERSHIP = new Response(BASE + 71, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");
+      public static final Response REGISTERED_USER = new Response(BASE + 72, "This user has already registered! Signing up is an option for newcomers! You can use Create Account in the menu after login.");
+      public static final Response GROUP = new Response(BASE + 75, "You already have a group having the same name!");
     }
   }
 

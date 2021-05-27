@@ -1,6 +1,5 @@
 package io.inprice.api.app.superuser.account;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,12 +9,16 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.coupon.CouponService;
 import io.inprice.api.app.superuser.account.dto.CreateCouponDTO;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
+import io.inprice.api.dto.IdTextDTO;
+import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.CookieHelper;
 import io.inprice.api.helpers.SessionHelper;
 import io.inprice.api.info.Response;
@@ -24,11 +27,14 @@ import io.inprice.api.session.info.ForResponse;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.analytics.AccessLogMapper;
+import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.AccountHistory;
 import io.inprice.common.models.AccountTrans;
+import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
 import io.inprice.common.models.analytics.AccessLog;
 import io.inprice.common.utils.DateUtils;
@@ -43,34 +49,16 @@ class Service {
   Response search(BaseSearchDTO dto) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
-  		return new Response(superDao.search(DTOHelper.normalizeSearch(dto)));
+  		return new Response(superDao.search(DTOHelper.normalizeSearch(dto, true, false)));
   	}
   }
-
-	Response fetchDetails(Long id) {
-  	try (Handle handle = Database.getHandle()) {
-    	Dao superDao = handle.attach(Dao.class);
-    	Account account = superDao.findById(id);
-
-    	if (account != null) {
-    		List<AccountTrans> transList = superDao.fetchTransactions(id);
-    		List<AccountHistory> historyList = superDao.fetchHistory(id);
-
-    		Map<String, Object> data = new HashMap<>(3);
-    		data.put("account", account);
-    		data.put("transList", transList);
-    		data.put("historyList", historyList);
-
-    		return new Response(data);
-    	}
-    }
-  	return Responses.NotFound.ACCOUNT;
-	}
 
 	public Response searchForAccessLog(ALSearchDTO dto) {
     try (Handle handle = Database.getHandle()) {
     	String searchQuery = buildQueryForAccessLogSearch(dto);
     	if (searchQuery == null) return Responses.BAD_REQUEST;
+    	
+    	System.out.println(searchQuery);
 
     	List<AccessLog> 
       	searchResult = 
@@ -83,6 +71,154 @@ class Service {
       return Responses.ServerProblem.EXCEPTION;
     }
 	}
+
+  Response ban(IdTextDTO dto) {
+  	String problem = null;
+  	
+  	if (dto.getId() == CurrentUser.getAccountId()) {
+  		problem = "Invalid account!";
+  	}
+  	if (problem == null 
+  			&& (StringUtils.isBlank(dto.getText()) 
+  					|| dto.getText().length() < 5 || dto.getText().length() > 128)) {
+  		problem = "Reason must be between 5-128 chars!";
+  	}
+  	
+  	if (problem == null) {
+  		try (Handle handle = Database.getHandle()) {
+  			AccountDao accountDao = handle.attach(AccountDao.class);
+  			Account account = accountDao.findById(dto.getId());
+
+  			if (account != null) {
+  				if (! AccountStatus.BANNED.equals(account.getStatus())) {
+
+  					handle.begin();
+
+  					//account is banned
+  					Dao superDao = handle.attach(Dao.class);
+  					boolean isOK = superDao.ban(dto.getId());
+
+  					if (isOK) {
+  						//and its admin too
+  						io.inprice.api.app.superuser.user.Dao superUserDao  = handle.attach(io.inprice.api.app.superuser.user.Dao.class);
+  						isOK = superUserDao.ban(account.getAdminId(), dto.getText());
+
+  						//his sessions are terminated as well!
+  						if (isOK) {
+                UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
+    	          List<String> hashList = userSessionDao.findHashesByAccountId(account.getAdminId());
+  
+    	          if (hashList.size() > 0) {
+    	          	userSessionDao.deleteByHashList(hashList);
+    	          	for (String hash : hashList) RedisClient.removeSesion(hash);
+    	          }
+  
+    	          handle.commit();
+    						return Responses.OK;
+    					}
+
+  						handle.rollback();
+  						return Responses.DataProblem.DB_PROBLEM;
+  					}
+  				} else {
+  					return Responses.Already.BANNED_ACCOUNT;
+  				}
+  			}
+  		}
+  	}
+  	return new Response(problem);
+  }
+
+  Response revokeBan(Long id) {
+  	if (id != CurrentUser.getUserId()) {
+      try (Handle handle = Database.getHandle()) {
+  			AccountDao accountDao = handle.attach(AccountDao.class);
+  			Account account = accountDao.findById(id);
+
+      	if (account != null) {
+      		if (AccountStatus.BANNED.equals(account.getStatus())) {
+
+      			handle.begin();
+      			
+      			//revoking account's ban
+      			Dao superDao = handle.attach(Dao.class);
+      			boolean isOK = superDao.revokeBan(id);
+      			
+      			if (isOK) {
+        			//and from his admin too
+  						io.inprice.api.app.superuser.user.Dao superUserDao  = handle.attach(io.inprice.api.app.superuser.user.Dao.class);
+  						isOK = superUserDao.revokeBan(account.getAdminId());
+
+        			if (isOK) {
+    	          handle.commit();
+    						return Responses.OK;
+    					}
+      			}
+
+						handle.rollback();
+						return Responses.DataProblem.DB_PROBLEM;
+      		} else {
+      			return Responses.Already.NOT_BANNED_USER;
+      		}
+      	}
+      }
+  	}
+  	return Responses.Invalid.USER;
+  }
+
+	Response fetchDetails(Long id) {
+  	try (Handle handle = Database.getHandle()) {
+    	Dao superDao = handle.attach(Dao.class);
+    	Account account = superDao.findById(id);
+
+    	if (account != null) {
+    		List<Member> memberList = superDao.fetchMemberList(id);
+    		List<AccountHistory> historyList = superDao.fetchHistory(id);
+    		List<AccountTrans> transList = superDao.fetchTransactionList(id);
+
+    		Map<String, Object> data = new HashMap<>(4);
+    		data.put("account", account);
+    		data.put("memberList", memberList);
+    		data.put("historyList", historyList);
+    		data.put("transList", transList);
+
+    		return new Response(data);
+    	}
+    }
+  	return Responses.NotFound.ACCOUNT;
+	}
+
+  Response fetchMemberList(Long accountId) {
+  	try (Handle handle = Database.getHandle()) {
+  		Dao superDao = handle.attach(Dao.class);
+  		List<Member> list = superDao.fetchMemberList(accountId);
+  		return new Response(list);
+  	}
+  }
+
+  Response fetchHistory(Long accountId) {
+  	try (Handle handle = Database.getHandle()) {
+			Dao superDao = handle.attach(Dao.class);
+			List<AccountHistory> list = superDao.fetchHistory(accountId);
+			return new Response(list);
+  	}
+  }
+
+  Response fetchTransactionList(Long accountId) {
+  	try (Handle handle = Database.getHandle()) {
+			Dao superDao = handle.attach(Dao.class);
+			List<AccountTrans> list = superDao.fetchTransactionList(accountId);
+			return new Response(list);
+  	}
+  }
+
+  Response fetchUserList(Long accountId) {
+  	try (Handle handle = Database.getHandle()) {
+			Dao superDao = handle.attach(Dao.class);
+			List<Pair<Long, String>> list = superDao.fetchUserListByAccountId(accountId);
+			return new Response(list);
+  	}
+  }
 
   Response bind(Context ctx, Long id) {
     try (Handle handle = Database.getHandle()) {
@@ -183,7 +319,7 @@ class Service {
   private String buildQueryForAccessLogSearch(ALSearchDTO dto) {
   	if (dto.getAccountId() == null) return null;
 
-  	dto = DTOHelper.normalizeSearch(dto);
+  	dto = DTOHelper.normalizeSearch(dto, false);
 
     StringBuilder crit = new StringBuilder("select * from access_log ");
 
@@ -212,7 +348,9 @@ class Service {
     }
     
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	crit.append(" and path like '%");
+  		crit.append(" and ");
+  		crit.append(dto.getSearchBy().getFieldName());
+    	crit.append(" like '%");
       crit.append(dto.getTerm());
       crit.append("%'");
     }

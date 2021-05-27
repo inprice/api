@@ -72,6 +72,12 @@ public interface Dao {
 	@SqlUpdate("update user set banned=false, ban_reason=null, banned_at=null where id=:id")
 	boolean revokeBan(@Bind("id") Long id);
 
+  @SqlUpdate("update account set pre_status=status, status='BANNED', last_status_update=now() where admin_id=:userId")
+  int banAllBoundAccountsOfUser(@Bind("userId") Long userId);
+
+  @SqlUpdate("update account set status=pre_status, pre_status='BANNED', last_status_update=now() where admin_id=:userId")
+  int revokeBanAllBoundAccountsOfUser(@Bind("userId") Long userId);
+
 	@SqlQuery("select * from user_used where id=:id")
   @UseRowMapper(UserUsedMapper.class)
   UserUsed findUsedServiceById(@Bind("id") Long id);

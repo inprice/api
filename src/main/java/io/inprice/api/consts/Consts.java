@@ -118,9 +118,17 @@ public class Consts {
       public static class Account {
       	public static final String _BASE = BASE + "/account";
       	public static final String SEARCH = _BASE + "s/search";
-        public static final String AL_SEARCH = _BASE + "s/search-al";
+        public static final String AL_SEARCH = _BASE + "/search-logs";
+        public static final String BAN = _BASE + "/ban";
+        public static final String REVOKE_BAN = BAN + "-revoke";
+        public static final String ACCOUNT_USERS = _BASE + "/users";
+      	
         public static final String DETAILS = _BASE + "/details";
-        public static final String BIND = _BASE + "/bind";
+        public static final String MEMBER_LIST = DETAILS + "/members";
+        public static final String HISTORY = DETAILS + "/history";
+      	public static final String TRANSACTION_LIST = DETAILS + "/transactions";
+
+      	public static final String BIND = _BASE + "/bind";
         public static final String UNBIND = _BASE + "/unbind";
         public static final String COUPON = _BASE + "/coupon";
       }

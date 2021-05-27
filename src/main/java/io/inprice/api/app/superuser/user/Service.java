@@ -1,6 +1,5 @@
 package io.inprice.api.app.superuser.user;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +9,6 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.superuser.dto.ALSearchBy;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
@@ -39,7 +37,7 @@ class Service {
 	Response search(BaseSearchDTO dto) {
   	try (Handle handle = Database.getHandle()) {
     	Dao superDao = handle.attach(Dao.class);
-    	return new Response(superDao.search(DTOHelper.normalizeSearch(dto)));
+    	return new Response(superDao.search(DTOHelper.normalizeSearch(dto, true, false)));
     }
 	}
 
@@ -87,23 +85,23 @@ class Service {
   					boolean isOK = superDao.ban(dto.getId(), dto.getText());
 
   					if (isOK) {
-  						
-  						//so do his accounts
-  						AccountDao accountDao = handle.attach(AccountDao.class);
-  						accountDao.banAllBoundAccountsOfUser(dto.getId());
+  						//and his accounts too
+  						int affected = superDao.banAllBoundAccountsOfUser(dto.getId());
 
   						//his sessions are terminated as well!
-              UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
-  	          List<String> hashList = userSessionDao.findHashesByUserId(dto.getId());
+  						if (affected > 0) {
+                UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
+    	          List<String> hashList = userSessionDao.findHashesByUserId(dto.getId());
+  
+    	          if (hashList.size() > 0) {
+    	          	userSessionDao.deleteByHashList(hashList);
+    	          	for (String hash : hashList) RedisClient.removeSesion(hash);
+    	          }
+  
+    	          handle.commit();
+    						return Responses.OK;
+  						}
 
-  	          if (hashList.size() > 0) {
-  	          	userSessionDao.deleteByHashList(hashList);
-  	          	for (String hash : hashList) RedisClient.removeSesion(hash);
-  	          }
-
-  	          handle.commit();
-  						return Responses.OK;
-  					} else {
   						handle.rollback();
   						return Responses.DataProblem.DB_PROBLEM;
   					}
@@ -127,22 +125,22 @@ class Service {
 
       			handle.begin();
       			
-      			//revoking user ban
+      			//revoking user's ban
       			Dao superDao = handle.attach(Dao.class);
       			boolean isOK = superDao.revokeBan(id);
-
+      			
       			if (isOK) {
+        			//and from his accounts too
+        			int affected = superDao.revokeBanAllBoundAccountsOfUser(id);
 
-  						//and from his accounts
-  						AccountDao accountDao = handle.attach(AccountDao.class);
-  						accountDao.revokeBanAllBoundAccountsOfUser(id);
-      				
-  	          handle.commit();
-  						return Responses.OK;
-  					} else {
-  						handle.rollback();
-  						return Responses.DataProblem.DB_PROBLEM;
+        			if (affected > 0) {
+    	          handle.commit();
+    						return Responses.OK;
+    					}
       			}
+
+						handle.rollback();
+						return Responses.DataProblem.DB_PROBLEM;
       		} else {
       			return Responses.Already.NOT_BANNED_USER;
       		}
@@ -174,7 +172,7 @@ class Service {
   	}
   	return Responses.NotFound.USER;
   }
-  
+
   Response fetchMembershipList(Long userId) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
@@ -271,7 +269,7 @@ class Service {
   private String buildQueryForAccessLogSearch(ALSearchDTO dto) {
   	if (dto.getUserId() == null) return null;
 
-  	dto = DTOHelper.normalizeSearch(dto);
+  	dto = DTOHelper.normalizeSearch(dto, false);
 
     StringBuilder crit = new StringBuilder("select * from access_log ");
 

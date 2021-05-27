@@ -62,7 +62,7 @@ class GroupService {
   Response search(BaseSearchDTO dto) {
     try (Handle handle = Database.getHandle()) {
       GroupDao groupDao = handle.attach(GroupDao.class);
-    	return new Response(groupDao.search(DTOHelper.normalizeSearch(dto)));
+    	return new Response(groupDao.search(DTOHelper.normalizeSearch(dto, true)));
     }
   }
 

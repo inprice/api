@@ -4,6 +4,7 @@ import io.inprice.api.app.superuser.account.dto.CreateCouponDTO;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.BaseSearchDTO;
+import io.inprice.api.dto.IdTextDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -30,12 +31,54 @@ public class Controller extends AbstractController {
   		ALSearchDTO dto = ctx.bodyAsClass(ALSearchDTO.class);
   		ctx.json(Commons.createResponse(ctx, service.searchForAccessLog(dto)));
     }, AccessRoles.SUPER_ONLY());
+    
+    /*-------------------------------------------------------------------------------------*/
 
-    // fetch details
-    app.get(Consts.Paths.Super.Account.DETAILS + "/:id", (ctx) -> {
-    	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-  		ctx.json(Commons.createResponse(ctx, service.fetchDetails(id)));
+    // ban
+    app.post(Consts.Paths.Super.Account.BAN, (ctx) -> {
+  		IdTextDTO dto = ctx.bodyAsClass(IdTextDTO.class);
+  		ctx.json(Commons.createResponse(ctx, service.ban(dto)));
     }, AccessRoles.SUPER_ONLY());
+
+    // revoke ban
+    app.put(Consts.Paths.Super.Account.REVOKE_BAN + "/:id", (ctx) -> {
+      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+      ctx.json(Commons.createResponse(ctx, service.revokeBan(id)));
+    }, AccessRoles.SUPER_ONLY());
+
+    /*-------------------------------------------------------------------------------------*/
+    
+    // fetch account details
+    app.get(Consts.Paths.Super.Account.DETAILS + "/:accountId", (ctx) -> {
+    	Long accountId = ctx.pathParam("accountId", Long.class).check(it -> it > 0).getValue();
+    	ctx.json(Commons.createResponse(ctx, service.fetchDetails(accountId)));
+    }, AccessRoles.SUPER_ONLY());
+
+    // fetch account member list
+    app.get(Consts.Paths.Super.Account.MEMBER_LIST + "/:accountId", (ctx) -> {
+    	Long accountId = ctx.pathParam("accountId", Long.class).check(it -> it > 0).getValue();
+    	ctx.json(Commons.createResponse(ctx, service.fetchMemberList(accountId)));
+    }, AccessRoles.SUPER_ONLY());
+
+    // fetch account history
+    app.get(Consts.Paths.Super.Account.HISTORY + "/:accountId", (ctx) -> {
+    	Long accountId = ctx.pathParam("accountId", Long.class).check(it -> it > 0).getValue();
+    	ctx.json(Commons.createResponse(ctx, service.fetchHistory(accountId)));
+    }, AccessRoles.SUPER_ONLY());
+    
+    // fetch transaction list
+    app.get(Consts.Paths.Super.Account.TRANSACTION_LIST + "/:accountId", (ctx) -> {
+    	Long accountId = ctx.pathParam("accountId", Long.class).check(it -> it > 0).getValue();
+    	ctx.json(Commons.createResponse(ctx, service.fetchTransactionList(accountId)));
+    }, AccessRoles.SUPER_ONLY());
+
+    // fetch account's users list
+    app.get(Consts.Paths.Super.Account.ACCOUNT_USERS + "/:accountId", (ctx) -> {
+    	Long accountId = ctx.pathParam("accountId", Long.class).check(it -> it > 0).getValue();
+    	ctx.json(Commons.createResponse(ctx, service.fetchUserList(accountId)));
+    }, AccessRoles.SUPER_ONLY());
+
+    /*-------------------------------------------------------------------------------------*/
 
     // bind
     app.put(Consts.Paths.Super.Account.BIND + "/:id", (ctx) -> {

@@ -22,7 +22,6 @@ public class ALSearchDTO extends BaseSearchDTO {
 	private ALMethod method;
 
 	private Long userId;
-	private Long accountId;
 
   private ALOrderBy orderBy = ALOrderBy.DATE;
   private ALOrderDir orderDir = ALOrderDir.DESC;

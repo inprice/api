@@ -1,7 +1,5 @@
 package io.inprice.api.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import io.inprice.api.consts.Consts;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,7 +13,6 @@ public class BaseSearchDTO {
   private Integer rowLimit = Consts.LOWER_ROW_LIMIT_FOR_LISTS;
   private Boolean loadMore = Boolean.FALSE;
 
-  @JsonIgnore
   private Long accountId;
 
 }
