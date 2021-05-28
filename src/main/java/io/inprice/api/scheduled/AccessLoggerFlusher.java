@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.consts.Global;
 import io.inprice.api.external.RedisClient;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.models.analytics.AccessLog;
+import io.inprice.common.models.AccessLog;
 
 /**
  * Persists access logs to db

@@ -18,7 +18,7 @@ import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.BaseRedisClient;
 import io.inprice.common.meta.AppEnv;
-import io.inprice.common.models.analytics.AccessLog;
+import io.inprice.common.models.AccessLog;
 
 public class RedisClient {
 

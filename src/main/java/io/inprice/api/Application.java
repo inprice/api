@@ -18,7 +18,7 @@ import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.JsonConverter;
 import io.inprice.common.meta.AppEnv;
-import io.inprice.common.models.analytics.AccessLog;
+import io.inprice.common.models.AccessLog;
 import io.javalin.Javalin;
 import io.javalin.core.util.Header;
 import io.javalin.core.util.RouteOverviewPlugin;

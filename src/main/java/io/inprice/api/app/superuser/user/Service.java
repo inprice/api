@@ -23,11 +23,11 @@ import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.Pair;
-import io.inprice.common.mappers.analytics.AccessLogMapper;
+import io.inprice.common.mappers.AccessLogMapper;
+import io.inprice.common.models.AccessLog;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
 import io.inprice.common.models.UserUsed;
-import io.inprice.common.models.analytics.AccessLog;
 import io.inprice.common.utils.DateUtils;
 
 class Service {

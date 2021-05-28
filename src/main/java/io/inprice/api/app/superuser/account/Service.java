@@ -28,15 +28,15 @@ import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.Pair;
-import io.inprice.common.mappers.analytics.AccessLogMapper;
+import io.inprice.common.mappers.AccessLogMapper;
 import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.SubsEvent;
+import io.inprice.common.models.AccessLog;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.AccountHistory;
 import io.inprice.common.models.AccountTrans;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
-import io.inprice.common.models.analytics.AccessLog;
 import io.inprice.common.utils.DateUtils;
 import io.javalin.http.Context;
 
