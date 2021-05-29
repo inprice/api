@@ -8,7 +8,7 @@ public enum ALOrderBy {
 	IP("ip"),
 	ELAPSED("elapsed"),
 	METHOD("method"),
-	SLOW("is_slow");
+	SLOW("slow");
 
   private String fieldName;
   

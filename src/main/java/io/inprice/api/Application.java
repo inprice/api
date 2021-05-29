@@ -139,7 +139,7 @@ public class Application {
     		userLog.setAgent(ctx.userAgent());
     		userLog.setMethod(ctx.method());
     		userLog.setElapsed(elapsed);
-    		userLog.setIsSlow(isSlow);
+    		userLog.setSlow(isSlow);
     		userLog.setPath(ctx.path());
 
     		if (StringUtils.isNotBlank(ctx.req.getQueryString())) {

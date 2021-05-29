@@ -3,9 +3,11 @@ package io.inprice.api.dto;
 import io.inprice.api.consts.Consts;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 public class BaseSearchDTO {
 
   private String term;

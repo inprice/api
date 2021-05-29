@@ -57,7 +57,7 @@ class LinkService {
       crit.append(dto.getTerm());
       crit.append("%'");
     }
-    
+
     if (dto.getLevels() != null && dto.getLevels().size() > 0) {
     	crit.append(
   			String.format(" and l.level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))

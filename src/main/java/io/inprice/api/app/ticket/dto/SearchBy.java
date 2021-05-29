@@ -2,9 +2,7 @@ package io.inprice.api.app.ticket.dto;
 
 public enum SearchBy {
 
-	TYPE("type"),
-	SUBJECT("subject"),
-	QUERY("query"),
+	ISSUE("issue"),
 	REPLY("reply");
 
   private String fieldName;
