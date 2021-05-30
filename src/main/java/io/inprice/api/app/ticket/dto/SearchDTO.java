@@ -14,12 +14,11 @@ import lombok.Setter;
 @Setter
 public class SearchDTO extends BaseSearchDTO {
 
-	private SearchBy searchBy = SearchBy.ISSUE;
 	private Set<TicketStatus> statuses;
   private Set<TicketPriority> priorities;
   private Set<TicketType> types;
   private Set<TicketSubject> subjects;
-  private OrderBy orderBy = OrderBy.CREATED_AT;
+  private OrderBy orderBy = OrderBy.PRIORITY;
   private OrderDir orderDir = OrderDir.DESC;
 
 }

@@ -20,7 +20,7 @@ import io.inprice.common.mappers.TicketMapper;
 import io.inprice.common.meta.TicketStatus;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.models.Ticket;
-import io.inprice.common.models.TicketReply;
+import io.inprice.common.models.TicketComment;
 
 /**
  * 
@@ -36,8 +36,8 @@ public class TicketService {
 			TicketDao ticketDao = handle.attach(TicketDao.class);
 			Ticket ticket = ticketDao.findById(id);
 			if (ticket != null) {
-				List<TicketReply> replyList = ticketDao.fetchReplyListByTicketId(id);
-				ticket.setReplyList(replyList);
+				List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(id);
+				ticket.setCommentList(commentList);
 				return new Response(ticket);
 			}
 		}
@@ -56,25 +56,27 @@ public class TicketService {
 					if (dto.getTicketId() == null) { // is a ticket
 
 						handle.begin();
-						ticketDao.insertHistory(dto);
 						
-						boolean isOK = ticketDao.insert(dto);
-						if (isOK) {
+						long id = ticketDao.insert(dto);
+						if (id > 0) {
+							dto.setId(id);
+							dto.setStatus(TicketStatus.OPENED);
+							ticketDao.insertHistory(dto);
 							handle.commit();
 							res = Responses.OK;
 						} else {
 							handle.rollback();
 							res = Responses.DataProblem.DB_PROBLEM;
 						}
-					} else { //is a reply
+					} else { //is a comment
 						Ticket parent = ticketDao.findById(dto.getTicketId());
 						if (parent != null) {
 							if (! TicketStatus.CLOSED.equals(parent.getStatus())) {
 
 								handle.begin();
-								ticketDao.makeAllPriorRepliesNotEditable(dto.getTicketId());
-								
-								boolean isOK = ticketDao.insertReply(dto);
+								ticketDao.makeAllCommentsNotEditable(dto.getTicketId());
+
+								boolean isOK = ticketDao.insertComment(dto);
 								if (isOK) {
 									res = Responses.OK;
 								} else {
@@ -128,15 +130,15 @@ public class TicketService {
 								res = Responses.NotAllowed.UPDATE;
 							}
 						}
-					} else { //is a reply
+					} else { //is a comment
 						Ticket parent = ticketDao.findById(dto.getId());
 						if (parent != null) {
 							if (! TicketStatus.CLOSED.equals(parent.getStatus())) {
-								TicketReply reply = ticketDao.findReplyById(dto.getId());
-								if (reply != null) {
-									if (reply.getEditable()) {
-				  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || reply.getUserId().equals(CurrentUser.getUserId())) {
-				  						boolean isOK = ticketDao.updateReply(dto);
+								TicketComment comment = ticketDao.findCommentById(dto.getId());
+								if (comment != null) {
+									if (comment.getEditable()) {
+				  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
+				  						boolean isOK = ticketDao.updateComment(dto);
   										if (isOK) {
   											res = Responses.OK;
   										} else {
@@ -175,10 +177,17 @@ public class TicketService {
 					if (ticket != null) {
 						if (TicketStatus.OPENED.equals(ticket.getStatus())) {
 							if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
+								
+								handle.begin();
+								ticketDao.deleteHistoryByTicketId(id);
+								ticketDao.deleteCommentByTicketId(id);
+								
 								boolean isOK = ticketDao.delete(id);
 								if (isOK) {
+									handle.commit();
 									res = Responses.OK;
 								} else {
+									handle.rollback();
 									res = Responses.DataProblem.DB_PROBLEM;
 								}
 							} else {
@@ -188,19 +197,19 @@ public class TicketService {
 							res = Responses.NotAllowed.UPDATE;
 						}
 					}
-				} else { //is a reply
-					TicketReply reply = ticketDao.findReplyById(id);
+				} else { //is a comment
+					TicketComment comment = ticketDao.findCommentById(id);
 
-					if (reply != null) {
+					if (comment != null) {
 						Ticket ticket = ticketDao.findById(id);
 
 						if (TicketStatus.OPENED.equals(ticket.getStatus())) {
-							if (CurrentUser.getRole().equals(UserRole.ADMIN) || reply.getUserId().equals(CurrentUser.getUserId())) {
+							if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
 								
 								handle.begin();
-								ticketDao.makeOnePreviousReplyEditable(reply.getTicketId(), id);
+								ticketDao.makeOnePreviousCommentEditable(comment.getTicketId(), id);
 
-								boolean isOK = ticketDao.deleteReply(id);
+								boolean isOK = ticketDao.deleteCommentById(id);
 								if (isOK) {
 									handle.commit();
 									res = Responses.OK;
@@ -234,9 +243,7 @@ public class TicketService {
     crit.append(CurrentUser.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	crit.append(" and ");
-    	crit.append(dto.getSearchBy().getFieldName());
-      crit.append(" like '%");
+    	crit.append(" and issue like '%");
       crit.append(dto.getTerm());
       crit.append("%'");
     }
@@ -285,7 +292,8 @@ public class TicketService {
     try (Handle handle = Database.getHandle()) {
       List<Ticket> searchResult =
         handle.createQuery(
-          "select * from ticket " + 
+          "select *, email from ticket t " +
+      		"inner join user u on u.id= t.user_id " +
           crit +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
           limit
@@ -293,6 +301,13 @@ public class TicketService {
       .map(new TicketMapper())
       .list();
 
+      System.out.println(
+          "select *, email from ticket t " +
+      		"inner join user u on u.id= t.user_id " +
+          crit +
+          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
+          limit
+  		);
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
       log.error("Failed in full search for tickets.", e);
@@ -303,9 +318,9 @@ public class TicketService {
 	private String validate(TicketDTO dto) {
 		String problem = null;
 		
-		if (StringUtils.isBlank(dto.getText())) {
+		if (StringUtils.isBlank(dto.getIssue())) {
 			problem = "Issue cannot be empty!";
-		} else if (dto.getText().length() < 12 || dto.getText().length() > 512) {
+		} else if (dto.getIssue().length() < 12 || dto.getIssue().length() > 512) {
 			problem = "Issue must be between 12-512 chars!";
 		}
 

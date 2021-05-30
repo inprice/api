@@ -277,7 +277,7 @@ class AccountService {
             batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
             batch.add("delete from alarm " + where);
             batch.add("delete from ticket_history " + where);
-            batch.add("delete from ticket_reply " + where);
+            batch.add("delete from ticket_comment " + where);
             batch.add("delete from ticket " + where);
             batch.add("delete from announcement_log " + where);
             batch.add("delete from announcement " + where);
