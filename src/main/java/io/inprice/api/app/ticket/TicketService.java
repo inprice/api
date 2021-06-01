@@ -78,12 +78,15 @@ public class TicketService {
 
 								boolean isOK = ticketDao.insertComment(dto);
 								if (isOK) {
+									ticketDao.increaseCommentCount(dto.getTicketId());
+									handle.commit();
 									res = Responses.OK;
 								} else {
+									handle.rollback();
 									res = Responses.DataProblem.DB_PROBLEM;
 								}
 							} else {
-								res = new Response("Ticket has been Closed!");
+								res = new Response("Ticket has been closed!");
 							}
 						}
 					}
@@ -179,8 +182,8 @@ public class TicketService {
 							if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
 								
 								handle.begin();
-								ticketDao.deleteHistoryByTicketId(id);
-								ticketDao.deleteCommentByTicketId(id);
+								ticketDao.deleteHistories(id);
+								ticketDao.deleteComments(id);
 								
 								boolean isOK = ticketDao.delete(id);
 								if (isOK) {
@@ -201,7 +204,7 @@ public class TicketService {
 					TicketComment comment = ticketDao.findCommentById(id);
 
 					if (comment != null) {
-						Ticket ticket = ticketDao.findById(id);
+						Ticket ticket = ticketDao.findById(comment.getId());
 
 						if (TicketStatus.OPENED.equals(ticket.getStatus())) {
 							if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
@@ -211,6 +214,7 @@ public class TicketService {
 
 								boolean isOK = ticketDao.deleteCommentById(id);
 								if (isOK) {
+									ticketDao.decreaseCommentCount(comment.getTicketId());
 									handle.commit();
 									res = Responses.OK;
 								} else {
