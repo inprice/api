@@ -50,7 +50,7 @@ public interface TicketDao {
   
   @SqlUpdate(
 		"update ticket " +
-		"set comment_count=comment_count+1, seen_by_super=false " +
+		"set comment_count=comment_count+1, seen_by_user=true, seen_by_super=false " +
 		"where id=:id " +
 		"  and status!='CLOSED'"
 	)
@@ -58,7 +58,7 @@ public interface TicketDao {
 
   @SqlUpdate(
 		"update ticket " +
-		"set comment_count=comment_count-1 " +
+		"set comment_count=comment_count-1, seen_by_user=true " +
 		"where id=:id " +
 		"  and status!='CLOSED'"
 	)
@@ -108,7 +108,8 @@ public interface TicketDao {
 		"update ticket_comment " +
 		"set editable=true " +
 		"where ticket_id=:ticketId " +
-		"  and id in (select id from ticket_comment where id!=:commentId and ticket_id=:ticketId order by id desc limit 1)"
+		"  and id in " +
+		"(select * from (select id from ticket_comment where id!=:commentId and ticket_id=:ticketId order by id desc limit 1) as t)"
 	)
 	boolean makeOnePreviousCommentEditable(@Bind("ticketId") Long ticketId, @Bind("commentId") Long commentId);
 

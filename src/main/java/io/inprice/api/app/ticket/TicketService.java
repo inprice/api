@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.ticket.dto.SearchDTO;
+import io.inprice.api.app.ticket.dto.Seen;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.TicketDTO;
@@ -36,9 +37,7 @@ public class TicketService {
 			TicketDao ticketDao = handle.attach(TicketDao.class);
 			Ticket ticket = ticketDao.findById(id);
 			if (ticket != null) {
-				List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(id);
-				ticket.setCommentList(commentList);
-				return new Response(ticket);
+				return generateFullResponse(ticketDao, ticket);
 			}
 		}
 		return Responses.NotFound.TICKET;
@@ -80,7 +79,7 @@ public class TicketService {
 								if (isOK) {
 									ticketDao.increaseCommentCount(dto.getTicketId());
 									handle.commit();
-									res = Responses.OK;
+									res = generateFullResponse(ticketDao, parent);
 								} else {
 									handle.rollback();
 									res = Responses.DataProblem.DB_PROBLEM;
@@ -134,7 +133,7 @@ public class TicketService {
 							}
 						}
 					} else { //is a comment
-						Ticket parent = ticketDao.findById(dto.getId());
+						Ticket parent = ticketDao.findById(dto.getTicketId());
 						if (parent != null) {
 							if (! TicketStatus.CLOSED.equals(parent.getStatus())) {
 								TicketComment comment = ticketDao.findCommentById(dto.getId());
@@ -143,7 +142,7 @@ public class TicketService {
 				  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
 				  						boolean isOK = ticketDao.updateComment(dto);
   										if (isOK) {
-  											res = Responses.OK;
+  											res = generateFullResponse(ticketDao, parent);
   										} else {
   											res = Responses.DataProblem.DB_PROBLEM;
   										}
@@ -204,7 +203,7 @@ public class TicketService {
 					TicketComment comment = ticketDao.findCommentById(id);
 
 					if (comment != null) {
-						Ticket ticket = ticketDao.findById(comment.getId());
+						Ticket ticket = ticketDao.findById(comment.getTicketId());
 
 						if (TicketStatus.OPENED.equals(ticket.getStatus())) {
 							if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
@@ -216,7 +215,7 @@ public class TicketService {
 								if (isOK) {
 									ticketDao.decreaseCommentCount(comment.getTicketId());
 									handle.commit();
-									res = Responses.OK;
+									res = generateFullResponse(ticketDao, ticket);
 								} else {
 									handle.rollback();
 									res = Responses.DataProblem.DB_PROBLEM;
@@ -274,6 +273,15 @@ public class TicketService {
     	crit.append(
 		    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
 			);
+    }
+
+    if (dto.getSeen() != null && !Seen.ALL.equals(dto.getSeen()) ) {
+    	crit.append(" and seen_by_user = ");
+    	if (Seen.SEEN.equals(dto.getSeen())) {
+    		crit.append(" true ");
+    	} else {
+    		crit.append(" false ");
+    	}
     }
 
     //limiting
@@ -354,6 +362,12 @@ public class TicketService {
 		}
 
 		return problem;
+	}
+	
+	private Response generateFullResponse(TicketDao dao, Ticket ticket) {
+		List<TicketComment> commentList = dao.fetchCommentListByTicketId(ticket.getId());
+		ticket.setCommentList(commentList);
+		return new Response(ticket);
 	}
 
 }

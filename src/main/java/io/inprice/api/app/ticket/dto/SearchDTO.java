@@ -18,6 +18,7 @@ public class SearchDTO extends BaseSearchDTO {
   private Set<TicketPriority> priorities;
   private Set<TicketType> types;
   private Set<TicketSubject> subjects;
+  private Seen seen = Seen.ALL;
   private OrderBy orderBy = OrderBy.PRIORITY;
   private OrderDir orderDir = OrderDir.DESC;
 
