@@ -23,4 +23,6 @@ public class ForDatabase implements Serializable {
   private String userAgent;
   private Date accessedAt = new Date();
 
+  //transient
+  private String accountName;
 }

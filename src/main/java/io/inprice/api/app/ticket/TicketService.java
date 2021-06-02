@@ -8,20 +8,20 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.ticket.dto.ReplyStatus;
 import io.inprice.api.app.ticket.dto.SearchDTO;
+import io.inprice.api.app.ticket.dto.Seen;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.TicketCSatDTO;
 import io.inprice.api.dto.TicketDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.TicketMapper;
-import io.inprice.common.meta.TicketCSatLevel;
+import io.inprice.common.meta.TicketStatus;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.models.Ticket;
+import io.inprice.common.models.TicketComment;
 
 /**
  * 
@@ -31,66 +31,207 @@ import io.inprice.common.models.Ticket;
 public class TicketService {
 
   private static final Logger log = LoggerFactory.getLogger(TicketService.class);
-	
+
 	Response findById(Long id) {
 		try (Handle handle = Database.getHandle()) {
 			TicketDao ticketDao = handle.attach(TicketDao.class);
-
-			Ticket ticket = ticketDao.findById(id, CurrentUser.getAccountId());
+			Ticket ticket = ticketDao.findById(id);
 			if (ticket != null) {
-				return new Response(ticket);
+				return generateFullResponse(ticketDao, ticket);
 			}
-			return Responses.NotFound.TICKET;
 		}
+		return Responses.NotFound.TICKET;
 	}
-	
+
 	Response insert(TicketDTO dto) {
-		if (dto != null) {
-			String problem = validate(dto);
-			if (problem == null) {
-				try (Handle handle = Database.getHandle()) {
-					TicketDao ticketDao = handle.attach(TicketDao.class);
-					boolean isOK = ticketDao.insert(dto);
-					if (isOK)
-						return Responses.OK;
-				}
-			} else {
-				return new Response(problem);
-			}
-		}
-		return Responses.Invalid.TICKET;
-	}
+		Response res = Responses.Invalid.TICKET;
 
-	Response update(TicketDTO dto) {
 		if (dto != null) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
 					TicketDao ticketDao = handle.attach(TicketDao.class);
 
-					Ticket ticket = ticketDao.findById(dto.getId(), CurrentUser.getAccountId());
-					if (ticket != null) {
-					  if (ticket.getRepliedAt() == null) {
-	  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
-	  						boolean isOK = ticketDao.update(dto);
-	  						if (isOK)
-	  							return Responses.OK;
-	  					} else {
-	  						return Responses.PermissionProblem.WRONG_USER;
-	  					}
+					if (dto.getTicketId() == null) { // is a ticket
+
+						handle.begin();
+						
+						long id = ticketDao.insert(dto);
+						if (id > 0) {
+							dto.setId(id);
+							dto.setStatus(TicketStatus.OPENED);
+							ticketDao.insertHistory(dto);
+							handle.commit();
+							res = Responses.OK;
 						} else {
-							return Responses.NotAllowed.UPDATE;
+							handle.rollback();
+							res = Responses.DataProblem.DB_PROBLEM;
 						}
+					} else { //is a comment
+						Ticket parent = ticketDao.findById(dto.getTicketId());
+						if (parent != null) {
+							if (! TicketStatus.CLOSED.equals(parent.getStatus())) {
 
-					} else {
-						return Responses.NotFound.TICKET;
+								handle.begin();
+								ticketDao.makeAllCommentsNotEditable(dto.getTicketId());
+
+								boolean isOK = ticketDao.insertComment(dto);
+								if (isOK) {
+									ticketDao.increaseCommentCount(dto.getTicketId());
+									handle.commit();
+									res = generateFullResponse(ticketDao, parent);
+								} else {
+									handle.rollback();
+									res = Responses.DataProblem.DB_PROBLEM;
+								}
+							} else {
+								res = new Response("Ticket has been closed!");
+							}
+						}
 					}
 				}
 			} else {
-				return new Response(problem);
+				res = new Response(problem);
 			}
 		}
-		return Responses.Invalid.TICKET;
+		return res;
+	}
+
+	Response update(TicketDTO dto) {
+		Response res = Responses.Invalid.TICKET;
+
+		if (dto != null) {
+			String problem = validate(dto);
+			if (problem == null) {
+				try (Handle handle = Database.getHandle()) {
+					TicketDao ticketDao = handle.attach(TicketDao.class);
+
+					if (dto.getTicketId() == null) { // is a ticket
+						Ticket ticket = ticketDao.findById(dto.getId());
+						if (ticket != null) {
+							if (TicketStatus.OPENED.equals(ticket.getStatus())) {
+		  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
+
+		  						handle.begin();
+		  						if (! ticket.getPriority().equals(dto.getPriority()) || ! ticket.getType().equals(dto.getType()) || ! ticket.getSubject().equals(dto.getSubject())) {
+		  							ticketDao.insertHistory(dto);
+		  						}
+
+		  						boolean isOK = ticketDao.update(dto);
+  								if (isOK) {
+  									handle.commit();
+  									res = Responses.OK;
+  								} else {
+  									handle.rollback();
+  									res = Responses.DataProblem.DB_PROBLEM;
+  								}
+		  					} else {
+		  						res = Responses.PermissionProblem.WRONG_USER;
+		  					}
+							} else {
+								res = Responses.NotAllowed.UPDATE;
+							}
+						}
+					} else { //is a comment
+						Ticket parent = ticketDao.findById(dto.getTicketId());
+						if (parent != null) {
+							if (! TicketStatus.CLOSED.equals(parent.getStatus())) {
+								TicketComment comment = ticketDao.findCommentById(dto.getId());
+								if (comment != null) {
+									if (comment.getEditable()) {
+				  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
+				  						boolean isOK = ticketDao.updateComment(dto);
+  										if (isOK) {
+  											res = generateFullResponse(ticketDao, parent);
+  										} else {
+  											res = Responses.DataProblem.DB_PROBLEM;
+  										}
+				  					} else {
+				  						res = Responses.PermissionProblem.WRONG_USER;
+				  					}
+									} else {
+										res = Responses.NotAllowed.UPDATE;
+									}
+								}
+							} else {
+								res = Responses.NotAllowed.UPDATE;
+							}
+						}
+					}
+				}
+			} else {
+				res = new Response(problem);
+			}
+		}
+		return res;
+	}
+	
+	Response delete(boolean isTicket, Long id) {
+		Response res = Responses.NotFound.TICKET;
+
+		if (id != null && id > 0) {
+			try (Handle handle = Database.getHandle()) {
+				TicketDao ticketDao = handle.attach(TicketDao.class);
+
+				if (isTicket) { //is a ticket
+					Ticket ticket = ticketDao.findById(id);
+
+					if (ticket != null) {
+						if (TicketStatus.OPENED.equals(ticket.getStatus())) {
+							if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
+								
+								handle.begin();
+								ticketDao.deleteHistories(id);
+								ticketDao.deleteComments(id);
+								
+								boolean isOK = ticketDao.delete(id);
+								if (isOK) {
+									handle.commit();
+									res = Responses.OK;
+								} else {
+									handle.rollback();
+									res = Responses.DataProblem.DB_PROBLEM;
+								}
+							} else {
+								res = Responses.PermissionProblem.WRONG_USER;
+							}
+						} else {
+							res = Responses.NotAllowed.UPDATE;
+						}
+					}
+				} else { //is a comment
+					TicketComment comment = ticketDao.findCommentById(id);
+
+					if (comment != null) {
+						Ticket ticket = ticketDao.findById(comment.getTicketId());
+
+						if (TicketStatus.OPENED.equals(ticket.getStatus())) {
+							if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
+								
+								handle.begin();
+								ticketDao.makeOnePreviousCommentEditable(comment.getTicketId(), id);
+
+								boolean isOK = ticketDao.deleteCommentById(id);
+								if (isOK) {
+									ticketDao.decreaseCommentCount(comment.getTicketId());
+									handle.commit();
+									res = generateFullResponse(ticketDao, ticket);
+								} else {
+									handle.rollback();
+									res = Responses.DataProblem.DB_PROBLEM;
+								}
+							} else {
+								res = Responses.PermissionProblem.WRONG_USER;
+							}
+						} else {
+							res = Responses.NotAllowed.UPDATE;
+						}
+					}
+				}
+			}
+		}
+
+		return res;
 	}
 
   public Response search(SearchDTO dto) {
@@ -99,25 +240,48 @@ public class TicketService {
     //---------------------------------------------------
     //building the criteria up
     //---------------------------------------------------
-    StringBuilder criteria = new StringBuilder();
+    StringBuilder crit = new StringBuilder();
 
-    criteria.append("where account_id = ");
-    criteria.append(CurrentUser.getAccountId());
+    crit.append("where account_id = ");
+    crit.append(CurrentUser.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	criteria.append(" and ");
-    	criteria.append(dto.getSearchBy().getFieldName());
-      criteria.append(" like '%");
-      criteria.append(dto.getTerm());
-      criteria.append("%'");
+    	crit.append(" and issue like '%");
+      crit.append(dto.getTerm());
+      crit.append("%'");
     }
-    
-    if (dto.getReplyStatus() != null && !dto.getReplyStatus().equals(ReplyStatus.ALL)) {
-    	criteria.append(" and replied_at is ");
-    	if (dto.getReplyStatus().equals(ReplyStatus.REPLIED)) {
-    		criteria.append(" not ");
+
+    if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
+    	crit.append(
+		    String.format(" and status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
+			);
+    }
+
+    if (dto.getPriorities() != null && dto.getPriorities().size() > 0) {
+    	crit.append(
+		    String.format(" and priority in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPriorities()))
+			);
+    }
+
+    if (dto.getTypes() != null && dto.getTypes().size() > 0) {
+    	crit.append(
+		    String.format(" and type in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getTypes()))
+			);
+    }
+
+    if (dto.getSubjects() != null && dto.getSubjects().size() > 0) {
+    	crit.append(
+		    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
+			);
+    }
+
+    if (dto.getSeen() != null && !Seen.ALL.equals(dto.getSeen()) ) {
+    	crit.append(" and seen_by_user = ");
+    	if (Seen.SEEN.equals(dto.getSeen())) {
+    		crit.append(" true ");
+    	} else {
+    		crit.append(" false ");
     	}
-    	criteria.append(" null ");
     }
 
     //limiting
@@ -140,14 +304,22 @@ public class TicketService {
     try (Handle handle = Database.getHandle()) {
       List<Ticket> searchResult =
         handle.createQuery(
-          "select * from ticket " + 
-          criteria +
+          "select *, email from ticket t " +
+      		"inner join user u on u.id= t.user_id " +
+          crit +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
           limit
         )
       .map(new TicketMapper())
       .list();
 
+      System.out.println(
+          "select *, email from ticket t " +
+      		"inner join user u on u.id= t.user_id " +
+          crit +
+          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
+          limit
+  		);
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
       log.error("Failed in full search for tickets.", e);
@@ -155,80 +327,33 @@ public class TicketService {
     }
   }
 	
-	Response delete(Long id) {
-		if (id != null && id > 0) {
-			try (Handle handle = Database.getHandle()) {
-				TicketDao ticketDao = handle.attach(TicketDao.class);
-
-				Ticket ticket = ticketDao.findById(id, CurrentUser.getAccountId());
-				if (ticket != null) {
-				  if (ticket.getRepliedAt() == null) {
-  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
-  						boolean isOK = ticketDao.delete(id, CurrentUser.getAccountId());
-  						if (isOK)
-  							return Responses.OK;
-  					} else {
-  						return Responses.PermissionProblem.WRONG_USER;
-  					}
-					} else {
-						return Responses.NotAllowed.UPDATE;
-					}
-				} else {
-					return Responses.NotFound.TICKET;
-				}
-			}
-		}
-		return Responses.Invalid.TICKET;
-	}
-
-	Response setSatisfaction(TicketCSatDTO dto) {
-		if (dto != null) {
-			String problem = validate(dto);
-			if (problem == null) {
-    		try (Handle handle = Database.getHandle()) {
-    			TicketDao ticketDao = handle.attach(TicketDao.class);
-    
-    			Ticket ticket = ticketDao.findById(dto.getId(), CurrentUser.getAccountId());
-    			if (ticket != null) {
-    			  if (ticket.getRepliedAt() != null) {
-    					if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
-    						boolean isOK = ticketDao.setCSatLevel(dto.getId(), dto.getLevel(), dto.getAssessment());
-    						if (isOK)
-    							return Responses.OK;
-    					} else {
-    						return Responses.PermissionProblem.WRONG_USER;
-    					}
-    				} else {
-    					return Responses.NotAllowed.UPDATE;
-    				}
-    			} else {
-    				return Responses.NotFound.TICKET;
-    			}
-    		}
-			} else {
-				return new Response(problem);
-			}
-		}
-		return Responses.Invalid.TICKET;
-	}
-	
 	private String validate(TicketDTO dto) {
 		String problem = null;
 		
+		if (StringUtils.isBlank(dto.getIssue())) {
+			problem = "Issue cannot be empty!";
+		} else if (dto.getIssue().length() < 12 || dto.getIssue().length() > 512) {
+			problem = "Issue must be between 12-512 chars!";
+		}
+
 		if (problem == null) {
-  		if (StringUtils.isBlank(dto.getQuery())) {
-  			problem = "Text cannot be empty!";
-  		} else if (dto.getQuery().length() < 12 || dto.getQuery().length() > 512) {
-  			problem = "Text must be between 12-512 chars!";
+  		if (dto.getTicketId() == null) {
+
+    		if (problem == null && dto.getPriority() == null) {
+    			problem = "Priority type cannot be empty!";
+    		}
+
+    		if (problem == null && dto.getType() == null) {
+    			problem = "Ticket type cannot be empty!";
+    		}
+    
+    		if (problem == null && dto.getSubject() == null) {
+    			problem = "Subject cannot be empty!";
+    		}
+
+  		} else if (dto.getTicketId() == null) {
+  			problem = "Ticket not found!";
   		}
-		}
-
-		if (problem == null && dto.getType() == null) {
-			problem = "Ticket type cannot be empty!";
-		}
-
-		if (problem == null && dto.getSubject() == null) {
-			problem = "Subject cannot be empty!";
 		}
 
 		if (problem == null) {
@@ -239,28 +364,10 @@ public class TicketService {
 		return problem;
 	}
 	
-	private String validate(TicketCSatDTO dto) {
-		String problem = null;
-		
-		if (dto.getId() == null || dto.getId() <= 0) {
-			problem = "Ticket id is wrong!";
-		}
-		
-		if (problem == null && dto.getLevel() == null) {
-			problem = "Level cannot be empty!";
-		}
-		
-		if (problem == null && dto.getLevel().ordinal() > TicketCSatLevel.GOOD.ordinal() && StringUtils.isBlank(dto.getAssessment())) {
-			problem = dto.getLevel() + " level requires your assessment.";
-		}
-
-		if (problem == null && StringUtils.isNotBlank(dto.getAssessment())) {
-  		if (dto.getAssessment().length() < 12 || dto.getAssessment().length() > 255) {
-  			problem = "If given, assessment must be between 12-255 chars!";
-  		}
-		}
-
-		return problem;
+	private Response generateFullResponse(TicketDao dao, Ticket ticket) {
+		List<TicketComment> commentList = dao.fetchCommentListByTicketId(ticket.getId());
+		ticket.setCommentList(commentList);
+		return new Response(ticket);
 	}
 
 }

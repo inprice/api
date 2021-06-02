@@ -22,6 +22,7 @@ import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.Timezones;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 
 public class UserService {
@@ -46,7 +47,9 @@ public class UserService {
   }
 
   public Response updatePassword(PasswordDTO dto) {
-    String problem = PasswordValidator.verify(dto, true, true);
+		dto.setId(CurrentUser.getUserId());
+
+		String problem = PasswordValidator.verify(dto, true, true);
     if (problem == null) {
 
       try (Handle handle = Database.getHandle()) {
@@ -129,6 +132,8 @@ public class UserService {
   }
 
   public Response getOpenedSessions(List<ForCookie> cookieSesList) {
+  	if (CurrentUser.getRole().equals(UserRole.SUPER)) return Responses.OK;
+
     List<String> excludedHashes = new ArrayList<>(cookieSesList.size());
     for (ForCookie ses: cookieSesList) {
       excludedHashes.add(ses.getHash());

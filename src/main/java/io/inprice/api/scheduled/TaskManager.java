@@ -19,12 +19,13 @@ public class TaskManager {
   public static void start() {
     log.info("TaskManager is starting...");
 
-    int corePoolSize = 3;
+    int corePoolSize = 4;
     scheduler = Executors.newScheduledThreadPool(corePoolSize);
 
-    loadTask(new FreeAccountStopper(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_STOPPING_FREE_ACCOUNTS()));
-    loadTask(new SubscribedAccountStopper(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_STOPPING_SUBSCRIBED_ACCOUNTS()));
-    loadTask(new ReminderForFreeAccounts(), 1, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_REMINDER_FOR_FREE_ACCOUNTS()));
+    loadTask(new FreeAccountStopper(), 0, DateUtils.parseTimePeriod(Props.INTERVAL_STOPPING_FREE_ACCOUNTS));
+    loadTask(new SubscribedAccountStopper(), 0, DateUtils.parseTimePeriod(Props.INTERVAL_STOPPING_SUBSCRIBED_ACCOUNTS));
+    loadTask(new ReminderForFreeAccounts(), 1, DateUtils.parseTimePeriod(Props.INTERVAL_REMINDER_FOR_FREE_ACCOUNTS));
+    loadTask(new AccessLoggerFlusher(), 1, DateUtils.parseTimePeriod(Props.INTERVAL_FLUSHING_ACCESS_LOG_QUEUE));
     //TODO: after subscription done
     //loadTask(new PendingCheckoutsCloser(), 0, DateUtils.parseTimePeriod(Props.TIME_PERIOD_OF_EXPIRING_PENDING_CHECKOUTS()));
 

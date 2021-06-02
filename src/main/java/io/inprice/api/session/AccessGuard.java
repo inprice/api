@@ -21,6 +21,7 @@ import io.inprice.api.meta.ShadowRoles;
 import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.models.User;
 import io.inprice.common.utils.NumberUtils;
 import io.javalin.core.security.AccessManager;
 import io.javalin.core.security.Role;
@@ -38,40 +39,61 @@ public class AccessGuard implements AccessManager {
       return;
     }
 
-    Integer sessionNo = NumberUtils.toInteger(ctx.header(Consts.SESSION_NO));
-    if (sessionNo != null && sessionNo > -1) {
-      boolean isDone = false;
+    // we are checking first if the user is super user or not!
+    String normalToken= ctx.cookieMap().get(Consts.SESSION);
+    String superToken = ctx.cookieMap().get(Consts.SUPER_SESSION);
 
-      String tokenString = ctx.cookieMap().get(Consts.SESSION);
-      if (StringUtils.isNotBlank(tokenString)) {
+    if (StringUtils.isBlank(normalToken) && StringUtils.isNotBlank(superToken)) { // super user?
+  		User user = SessionHelper.fromTokenForSuper(superToken);
 
-        List<ForCookie> sessionTokens = SessionHelper.fromToken(tokenString);
-        if (sessionTokens != null && sessionTokens.size() > sessionNo) {
+  		if (user != null && user.isPrivileged()) {
+  			if (permittedRoles.contains(ShadowRoles.SUPER)) {
+  				CurrentUser.set(user);
+          handler.handle(ctx);
+  			} else {
+    			ctx.json(Commons.createResponse(ctx, Responses.PermissionProblem.WRONG_USER));
+  			}
+  		} else {
+  			CookieHelper.removeSuperCookie(ctx);
+  			ctx.removeCookie(Consts.SUPER_SESSION);
+  			ctx.json(Commons.createResponse(ctx, Responses._403));
+  		}
 
-          ForCookie token = sessionTokens.get(sessionNo);
-          ShadowRoles role = ShadowRoles.valueOf(token.getRole());
-          if (permittedRoles.contains(role)) {
-
-            ForRedis redisSes = findByHash(token.getHash());
-            if (redisSes != null) {
-              isDone = true;
-              CurrentUser.set(redisSes, sessionNo);
-              handler.handle(ctx);
+    } else { //normal user?
+      Integer sessionNo = NumberUtils.toInteger(ctx.header(Consts.SESSION_NO));
+      if (sessionNo != null && sessionNo > -1) {
+        boolean isDone = false;
+  
+        if (StringUtils.isNotBlank(normalToken)) {
+  
+          List<ForCookie> sessionTokens = SessionHelper.fromTokenForUser(normalToken);
+          if (sessionTokens != null && sessionTokens.size() > sessionNo) {
+  
+            ForCookie token = sessionTokens.get(sessionNo);
+            ShadowRoles role = ShadowRoles.valueOf(token.getRole());
+            if (permittedRoles.contains(role)) {
+  
+              ForRedis redisSes = findByHash(token.getHash());
+              if (redisSes != null) {
+                isDone = true;
+                CurrentUser.set(redisSes, sessionNo);
+                handler.handle(ctx);
+              } else {
+                CookieHelper.removeUserCookie(ctx);
+              }
             } else {
-              CookieHelper.removeAuthCookie(ctx);
+              isDone = true;
+              ctx.json(Commons.createResponse(ctx, Responses._403));
             }
-          } else {
-            isDone = true;
-            ctx.json(Commons.createResponse(ctx, Responses._403));
           }
         }
+        if (!isDone) {
+          ctx.removeCookie(Consts.SESSION);
+          ctx.json(Commons.createResponse(ctx, Responses._401));
+        }
+      } else {
+        ctx.status(HttpStatus.BAD_REQUEST_400).result("Invalid session!");
       }
-      if (!isDone) {
-        ctx.removeCookie(Consts.SESSION);
-        ctx.json(Commons.createResponse(ctx, Responses._401));
-      }
-    } else {
-      ctx.status(HttpStatus.BAD_REQUEST_400).result("Invalid session!");
     }
   }
 

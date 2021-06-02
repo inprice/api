@@ -21,7 +21,7 @@ public interface MemberDao {
     ", a.name as account_name, a.status as account_status, a.subs_started_at, " +
     "a.subs_renewal_at, a.last_status_update, a.plan_id, a.currency_format, a.user_count, a.link_count, a.alarm_count ";
 
-  final String PLAN_FIELDS = ", p.name as plan_name, p.link_limit, p.alarm_limit ";
+  final String PLAN_FIELDS = ", p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit ";
   
   @SqlQuery("select * from member where id=:id")
   @UseRowMapper(MemberMapper.class)
@@ -35,7 +35,8 @@ public interface MemberDao {
     "select m.*" + ACCOUNT_FIELDS + PLAN_FIELDS + " from member as m " +
     "inner join account as a on a.id = m.account_id " + 
     "left join plan as p on p.id = a.plan_id " + 
-    "where m.email != :email " + 
+    "where a.status != 'BANNED' " +
+    "  and m.email != :email " + 
     "  and m.account_id = :accountId " + 
     "order by m.email"
   )
@@ -46,7 +47,8 @@ public interface MemberDao {
     "select m.*" + ACCOUNT_FIELDS + PLAN_FIELDS + " from member as m " +
     "inner join account as a on a.id = m.account_id " + 
     "left join plan as p on p.id = a.plan_id " + 
-    "where m.email=:email " + 
+    "where a.status != 'BANNED' " +
+    "  and m.email=:email " +
     "  and m.status=:status " + 
     "order by m.role, m.created_at"
   )
@@ -58,11 +60,12 @@ public interface MemberDao {
   Member findByEmailAndStatus(@Bind("email") String email, @Bind("status") String status, @Bind("accountId") Long accountId);
 
   @SqlQuery(
-    "select mem.id, c.name, mem.role, mem.status, mem.created_at from member as mem " + 
-    "left join account as c on c.id = mem.account_id " + 
-    "where email=:email " + 
-    "  and mem.status=:status " + 
-    "order by mem.id desc"
+    "select m.id, a.name, m.role, m.status, m.created_at from member as m " + 
+    "left join account as a on a.id = m.account_id " + 
+    "where a.status != 'BANNED' " +
+    "  and m.email=:email " + 
+    "  and m.status=:status " + 
+    "order by m.id desc"
   )
   @UseRowMapper(ActiveMemberMapper.class)
   List<ActiveMember> findMemberListByEmailAndStatus(@Bind("email") String email, @Bind("status") String status);
@@ -75,12 +78,13 @@ public interface MemberDao {
   List<Long> findUserIdListHavingJustThisAccount(@Bind("accountId") Long accountId);
 
   @SqlQuery(
-    "select mem.id, c.name, mem.role, mem.status, mem.updated_at from member as mem " + 
-    "left join account as c on c.id = mem.account_id " + 
-    "where email=:email " + 
-    "  and account_id!=:accountId  " + 
-    "  and mem.status in (<statusList>) " + 
-    "order by mem.status, mem.updated_at desc"
+    "select m.id, a.name, m.role, m.status, m.updated_at from member as m " + 
+    "left join account as a on a.id = m.account_id " + 
+    "where a.status != 'BANNED' " +
+    "  and m.email=:email " + 
+    "  and m.account_id != :accountId  " + 
+    "  and m.status in (<statusList>) " + 
+    "order by m.status, m.updated_at desc"
   )
   @UseRowMapper(ActiveMemberMapper.class)
   List<ActiveMember> findMembershipsByEmail(@Bind("email") String email, @Bind("accountId") Long accountId, @BindList("statusList") List<String> statusList);

@@ -57,7 +57,7 @@ public class PasswordHelper {
       if (skf == null) {
         skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
       }
-      SecretKey key = skf.generateSecret(new PBEKeySpec(password.toCharArray(), salt, Props.APP_SALT_ROUNDS()*1000, 256));
+      SecretKey key = skf.generateSecret(new PBEKeySpec(password.toCharArray(), salt, Props.APP_SALT_ROUNDS * 1000, 256));
       return Base64.getEncoder().encodeToString(key.getEncoded());
     } catch (Exception e) {
       System.err.println("Failed to generate hash!");

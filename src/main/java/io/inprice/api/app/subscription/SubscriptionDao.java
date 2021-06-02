@@ -39,17 +39,17 @@ public interface SubscriptionDao {
   @SqlUpdate(
     "update account " +
     "set title=:dto.title, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country, " +
-    "plan_id=:dto.planId, status=:status, subs_renewal_at=:dto.renewalDate, subs_started_at=now(), last_status_update=now() " +
+    "plan_id=:dto.planId, pre_status=status, status=:status, subs_renewal_at=:dto.renewalDate, subs_started_at=now(), last_status_update=now() " +
     "where id=:id"
   )
   boolean startSubscription(@BindBean("dto") CustomerDTO dto, @Bind("status") String status, @Bind("linkLimit") Integer linkLimit, @Bind("id") Long id);
 
-  @SqlUpdate("update account set status=:status, subs_renewal_at=:renewalAt where id=:id")
+  @SqlUpdate("update account set pre_status=status, status=:status, subs_renewal_at=:renewalAt where id=:id")
   boolean renewSubscription(@Bind("id") Long id, @Bind("status") String status, @Bind("subsRenewalAt") Timestamp subsRenewalAt);
 
   @SqlUpdate(
     "update account " + 
-    "set plan_id=:planId, status=:status, subs_renewal_at=DATE_ADD(now(), interval <interval> day), last_status_update=now() " +
+    "set plan_id=:planId, pre_status=status, status=:status, subs_renewal_at=DATE_ADD(now(), interval <interval> day), last_status_update=now() " +
     "where id=:accountId"
   )
   boolean startFreeUseOrApplyCoupon(@Bind("accountId") Long accountId, @Bind("status") String status, 
@@ -57,7 +57,7 @@ public interface SubscriptionDao {
 
   @SqlUpdate(
     "update account " +
-    "set subs_renewal_at=null, status=:status, last_status_update=now() "+
+    "set subs_renewal_at=null, pre_status=status, status=:status, last_status_update=now() "+
     "where id=:id"
   )
   boolean terminate(@Bind("id") Long id, @Bind("status") String status);

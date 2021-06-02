@@ -26,13 +26,8 @@ public class AccountController extends AbstractController {
   public void addRoutes(Javalin app) {
 
     app.post(Consts.Paths.Auth.REQUEST_REGISTRATION, (ctx) -> {
-    	try {
-        RegisterDTO dto = ctx.bodyAsClass(RegisterDTO.class);
-        ctx.json(Commons.createResponse(ctx, service.requestRegistration(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+      RegisterDTO dto = ctx.bodyAsClass(RegisterDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.requestRegistration(dto)));
     });
 
     app.post(Consts.Paths.Auth.COMPLETE_REGISTRATION, (ctx) -> {
@@ -54,24 +49,14 @@ public class AccountController extends AbstractController {
 
     // create
     app.post(Consts.Paths.Account.BASE, (ctx) -> {
-    	try {
-        CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
-        ctx.json(Commons.createResponse(ctx, service.create(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
-    }, AccessRoles.ANYONE());
+      CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.create(dto)));
+    }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
     // update
     app.put(Consts.Paths.Account.BASE, (ctx) -> {
-    	try {
-        CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
-        ctx.json(Commons.createResponse(ctx, service.update(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+      CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.update(dto)));
     }, AccessRoles.ADMIN());
 
     app.put(Consts.Paths.Account.DELETE, (ctx) -> {

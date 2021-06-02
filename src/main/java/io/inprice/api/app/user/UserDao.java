@@ -6,10 +6,8 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
-import io.inprice.common.mappers.UserBannedMapper;
 import io.inprice.common.mappers.UserMapper;
 import io.inprice.common.models.User;
-import io.inprice.common.models.UserBanned;
 
 /**
  * Be careful what you return from select queries since passwordSalt and passwordHash are dangerous fields!
@@ -42,9 +40,5 @@ public interface UserDao {
 
   @SqlUpdate("update user set password=:saltedHash where id=:id")
   boolean updatePassword(@Bind("id") Long id, @Bind("saltedHash") String saltedHash);
-
-  @SqlQuery("select * from user_banned where email=:email and voided=false")
-  @UseRowMapper(UserBannedMapper.class)
-  UserBanned findBannedUserByEmail(@Bind("email") String email);
 
 }

@@ -58,7 +58,7 @@ class AccountService {
 
   Response requestRegistration(RegisterDTO dto) {
     Response res = Responses.OK;
-    if (SysProps.APP_ENV().equals(AppEnv.PROD)) {
+    if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
       res = RedisClient.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
     }
     if (!res.isOK()) return res;
@@ -79,17 +79,21 @@ class AccountService {
           dataMap.put("user", dto.getEmail().split("@")[0]);
           dataMap.put("account", dto.getAccountName());
           dataMap.put("token", token.substring(0,3)+"-"+token.substring(3));
+          
+          if (!SysProps.APP_ENV.equals(AppEnv.PROD)) {
+          	return new Response(dataMap);
+          } else {
+            String message = renderer.render(EmailTemplate.REGISTRATION_REQUEST, dataMap);
+            emailSender.send(
+              Props.APP_EMAIL_SENDER, 
+              "About " + dto.getAccountName() + " registration on inprice.io",
+              dto.getEmail(), 
+              message
+            );
+            RedisClient.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
+            return Responses.OK;
+          }
 
-          String message = renderer.render(EmailTemplate.REGISTRATION_REQUEST, dataMap);
-          emailSender.send(
-            Props.APP_EMAIL_SENDER(), 
-            "About " + dto.getAccountName() + " registration on inprice.io",
-            dto.getEmail(), 
-            message
-          );
-          RedisClient.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
-
-          return Responses.OK;
         } else {
           return Responses.Already.Defined.REGISTERED_USER;
         }
@@ -151,13 +155,16 @@ class AccountService {
           dataMap.put("email", dto.getEmail());
           dataMap.put("account", dto.getAccountName());
 
+          //TODO: kullanici icin bir notifikasyon yayinlanacak!
+          /*
           String message = renderer.render(EmailTemplate.REGISTRATION_COMPLETE, dataMap);
           emailSender.send(
-            Props.APP_EMAIL_SENDER(), 
+            Props.APP_EMAIL_SENDER, 
             "Welcome to inprice: " + dto.getAccountName(),
             dto.getEmail(), 
             message
           );
+          */
 
           response = new Response(user);
           Tokens.remove(TokenType.REGISTRATION_REQUEST, token);
@@ -269,9 +276,13 @@ class AccountService {
             batch.add("delete from link_group " + where);
             batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
             batch.add("delete from alarm " + where);
+            batch.add("delete from ticket_history " + where);
+            batch.add("delete from ticket_comment " + where);
             batch.add("delete from ticket " + where);
-            batch.add("delete from notice " + where);
+            batch.add("delete from announcement_log " + where);
+            batch.add("delete from announcement " + where);
             batch.add("delete from user_notice " + where);
+            batch.add("delete from access_log " + where);
             		
             // in order to keep consistency, 
             // users having no account other than this must be deleted too!!!

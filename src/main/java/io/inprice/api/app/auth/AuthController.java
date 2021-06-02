@@ -23,33 +23,18 @@ public class AuthController extends AbstractController {
   public void addRoutes(Javalin app) {
 
     app.post(Consts.Paths.Auth.LOGIN, (ctx) -> {
-    	try {
-        LoginDTO dto = ctx.bodyAsClass(LoginDTO.class);
-        ctx.json(Commons.createResponse(ctx, service.login(ctx, dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+      LoginDTO dto = ctx.bodyAsClass(LoginDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.login(ctx, dto)));
     });
 
     app.post(Consts.Paths.Auth.FORGOT_PASSWORD, (ctx) -> {
-    	try {
-        EmailDTO dto = ctx.bodyAsClass(EmailDTO.class);
-        ctx.json(Commons.createResponse(ctx, service.forgotPassword(dto.getEmail())));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+      EmailDTO dto = ctx.bodyAsClass(EmailDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.forgotPassword(dto.getEmail())));
     });
 
     app.post(Consts.Paths.Auth.RESET_PASSWORD, (ctx) -> {
-    	try {
-        PasswordDTO dto = ctx.bodyAsClass(PasswordDTO.class);
-        ctx.json(Commons.createResponse(ctx, service.resetPassword(ctx, dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+      PasswordDTO dto = ctx.bodyAsClass(PasswordDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.resetPassword(ctx, dto)));
     });
 
     app.post(Consts.Paths.Auth.LOGOUT, (ctx) -> {

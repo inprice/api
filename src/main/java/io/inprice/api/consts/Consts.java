@@ -2,7 +2,8 @@ package io.inprice.api.consts;
 
 public class Consts {
 
-  public static final String SESSION = "INPRICE_AT";
+	public static final String SESSION = "INPRICE_AT";
+  public static final String SUPER_SESSION = "INPRICE_SAT";
   public static final String SESSION_NO = "X-Session";
 
   public static final String IP = "ip";
@@ -10,7 +11,7 @@ public class Consts {
   public static final String CURRENCY_CODE = "currencyCode";
   public static final String CURRENCY_FORMAT = "currencyFormat";
 
-  public static final int LOWER_ROW_LIMIT_FOR_LISTS = 5;
+  public static final int LOWER_ROW_LIMIT_FOR_LISTS = 25;
   public static final int UPPER_ROW_LIMIT_FOR_LISTS = 100;
 
   public static class Paths {
@@ -96,19 +97,60 @@ public class Consts {
     public static class Ticket {
       public static final String BASE = "/ticket";
       public static final String SEARCH = BASE + "s/search";
-      public static final String SET_CSAT = BASE + "/csat";
     }
 
     public static class Dashboard {
       public static final String BASE = "/dashboard";
       public static final String REFRESH = BASE + "/refresh";
     }
-
+    
     public static class System {
-      public static final String BASE = "/app";
-      public static final String PLANS = BASE + "/plans";
-      public static final String REFRESH_SESSION = BASE + "/refresh-session";
-      public static final String STATISTICS = BASE + "/statistics";
+    	public static final String BASE = "/app";
+    	public static final String PLANS = BASE + "/plans";
+    	public static final String REFRESH_SESSION = BASE + "/refresh-session";
+    	public static final String STATISTICS = BASE + "/statistics";
+    }
+
+    public static class Super {
+      public static final String BASE = "/sys";
+
+      public static class Account {
+      	public static final String _BASE = BASE + "/account";
+      	public static final String SEARCH = _BASE + "s/search";
+        public static final String AL_SEARCH = _BASE + "/search-logs";
+        public static final String BAN = _BASE + "/ban";
+        public static final String REVOKE_BAN = BAN + "-revoke";
+        public static final String ACCOUNT_USERS = _BASE + "/users";
+      	
+        public static final String DETAILS = _BASE + "/details";
+        public static final String MEMBER_LIST = DETAILS + "/members";
+        public static final String HISTORY = DETAILS + "/history";
+      	public static final String TRANSACTION_LIST = DETAILS + "/transactions";
+
+      	public static final String BIND = _BASE + "/bind";
+        public static final String UNBIND = _BASE + "/unbind";
+        public static final String COUPON = _BASE + "/coupon";
+      }
+
+      public static class User {
+      	public static final String _BASE = BASE + "/user";
+      	public static final String SEARCH = _BASE + "s/search";
+        public static final String AL_SEARCH = _BASE + "/search-logs";
+        public static final String BAN = _BASE + "/ban";
+        public static final String REVOKE_BAN = BAN + "-revoke";
+        public static final String USER_ACCOUNTS = _BASE + "/accounts";
+
+        public static final String USED_SERVICE = _BASE + "/used-service";
+        public static final String USED_SERVICE_TOGGLE = USED_SERVICE + "/toggle";
+        
+        public static final String SESSION = _BASE + "/session";
+        public static final String TERMINATE_SESSION = SESSION + "/terminate";
+
+        public static final String DETAILS = _BASE + "/details";
+        public static final String MEMBERSHIP_LIST = DETAILS + "/memberships";
+        public static final String SESSION_LIST = DETAILS + "/sessions";
+      }
+
     }
 
   }

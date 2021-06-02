@@ -1,6 +1,7 @@
 package io.inprice.api.app.group;
 
 import io.inprice.api.consts.Consts;
+import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.dto.GroupDTO;
 import io.inprice.api.dto.LinkBulkInsertDTO;
 import io.inprice.api.framework.AbstractController;
@@ -36,31 +37,21 @@ public class GroupController extends AbstractController {
     }, AccessRoles.ANYONE());
 
     // search
-    app.get(Consts.Paths.Group.SEARCH, (ctx) -> {
-    	String term = ctx.queryParam("term", String.class).getValue();
-    	ctx.json(Commons.createResponse(ctx, service.search(term)));
+    app.post(Consts.Paths.Group.SEARCH, (ctx) -> {
+  		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
+  		ctx.json(Commons.createResponse(ctx, service.search(dto)));
     }, AccessRoles.ANYONE());
     
     // insert
     app.post(Consts.Paths.Group.BASE, (ctx) -> {
-    	try {
-    		GroupDTO dto = ctx.bodyAsClass(GroupDTO.class);
-      	ctx.json(Commons.createResponse(ctx, service.insert(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+  		GroupDTO dto = ctx.bodyAsClass(GroupDTO.class);
+    	ctx.json(Commons.createResponse(ctx, service.insert(dto)));
     }, AccessRoles.EDITOR());
 
     // update
     app.put(Consts.Paths.Group.BASE, (ctx) -> {
-    	try {
-    		GroupDTO dto = ctx.bodyAsClass(GroupDTO.class);
-        ctx.json(Commons.createResponse(ctx, service.update(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+  		GroupDTO dto = ctx.bodyAsClass(GroupDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.update(dto)));
     }, AccessRoles.EDITOR());
 
     // delete
@@ -71,13 +62,8 @@ public class GroupController extends AbstractController {
 
     // import links
     app.post(Consts.Paths.Group.IMPORT_LINKS, (ctx) -> {
-    	try {
-    		LinkBulkInsertDTO dto = ctx.bodyAsClass(LinkBulkInsertDTO.class);
-        ctx.json(Commons.createResponse(ctx, service.bulkInsert(dto)));
-    	} catch (Exception e) {
-    		ctx.status(400);
-    		logForInvalidData(ctx, e);
-    	}
+  		LinkBulkInsertDTO dto = ctx.bodyAsClass(LinkBulkInsertDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.bulkInsert(dto)));
     }, AccessRoles.EDITOR());
 
   }

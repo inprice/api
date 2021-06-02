@@ -23,6 +23,9 @@ public class DBSessionMapper implements RowMapper<ForDatabase> {
     if (Helper.hasColumn(rs, "browser")) m.setBrowser(rs.getString("browser"));
     if (Helper.hasColumn(rs, "user_agent")) m.setUserAgent(rs.getString("user_agent"));
     if (Helper.hasColumn(rs, "accessed_at")) m.setAccessedAt(rs.getTimestamp("accessed_at"));
+    
+    //transient
+    if (Helper.hasColumn(rs, "account_name")) m.setAccountName(rs.getString("account_name"));
 
     return m;
   }

@@ -2,10 +2,11 @@ package io.inprice.api.app.ticket.dto;
 
 public enum OrderBy {
 
+	STATUS("status"),
+	PRIORITY("priority"),
 	TYPE("type"),
 	SUBJECT("subject"),
-	CREATED_AT("created_at"),
-	REPLIED_AT("replied_at");
+	CREATED_AT("t.created_at");
 
   private String fieldName;
   

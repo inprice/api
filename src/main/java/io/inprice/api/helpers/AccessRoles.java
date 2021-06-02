@@ -8,26 +8,35 @@ import io.javalin.core.security.Role;
 
 public class AccessRoles {
 
+	//SUPER role must not have editing ability!
 	private static Set<Role> SUPER_ROLES = new HashSet<>(1);
 	private static Set<Role> ADMIN_ROLES = new HashSet<>(2);
 	private static Set<Role> EDITOR_ROLES = new HashSet<>(3);
 	private static Set<Role> ANYONE_ROLES = new HashSet<>(4);
+	private static Set<Role> ANYONE_EXCEPT_SUPER_ROLES = new HashSet<>(3);
+	private static Set<Role> ADMIN_OR_SUPER_ROLES = new HashSet<>(2);
 	
 	static {
 		SUPER_ROLES.add(ShadowRoles.SUPER);
 
-		ADMIN_ROLES.addAll(SUPER_ROLES);
 		ADMIN_ROLES.add(ShadowRoles.ADMIN);
 
 		EDITOR_ROLES.addAll(ADMIN_ROLES);
 		EDITOR_ROLES.add(ShadowRoles.EDITOR);
 
+		ANYONE_ROLES.add(ShadowRoles.SUPER);
 		ANYONE_ROLES.addAll(EDITOR_ROLES);
 		ANYONE_ROLES.add(ShadowRoles.VIEWER);
+
+		ANYONE_EXCEPT_SUPER_ROLES.addAll(ANYONE_ROLES);
+		ANYONE_EXCEPT_SUPER_ROLES.remove(ShadowRoles.SUPER);
+
+		ADMIN_OR_SUPER_ROLES.add(ShadowRoles.SUPER);
+		ADMIN_OR_SUPER_ROLES.add(ShadowRoles.ADMIN);
 	}
 	
 	public static Set<Role> SUPER_ONLY() {
-		return ADMIN_ROLES;
+		return SUPER_ROLES;
 	}
 
 	public static Set<Role> ADMIN() {
@@ -37,9 +46,17 @@ public class AccessRoles {
 	public static Set<Role> EDITOR() {
 		return EDITOR_ROLES;
 	}
-
+	
 	public static Set<Role> ANYONE() {
 		return ANYONE_ROLES;
+	}
+
+	public static Set<Role> ANYONE_EXCEPT_SUPER() {
+		return ANYONE_EXCEPT_SUPER_ROLES;
+	}
+	
+	public static Set<Role> ADMIN_OR_SUPER() {
+		return ADMIN_OR_SUPER_ROLES;
 	}
 
 }

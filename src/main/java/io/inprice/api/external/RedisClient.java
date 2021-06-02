@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.redisson.api.RMapCache;
+import org.redisson.api.RQueue;
 import org.redisson.api.RSetCache;
 import org.redisson.api.RTopic;
 
@@ -17,6 +18,7 @@ import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.BaseRedisClient;
 import io.inprice.common.meta.AppEnv;
+import io.inprice.common.models.AccessLog;
 
 public class RedisClient {
 
@@ -27,22 +29,22 @@ public class RedisClient {
   private static RMapCache<String, ForRedis> sessionsMap;
 
   public static RMapCache<String, Serializable> tokensMap;
-  public static RMapCache<Long, Map<String, Object>> dashboardsMap;
+  public static RQueue<AccessLog> userLogQueue;
 
   static {
     baseClient = new BaseRedisClient();
     baseClient.open(() -> {
-      linkStatusChangeTopic = baseClient.getClient().getTopic(SysProps.REDIS_STATUS_CHANGE_TOPIC());
+      linkStatusChangeTopic = baseClient.getClient().getTopic(SysProps.REDIS_STATUS_CHANGE_TOPIC);
 
       requestingEmailsSet = baseClient.getClient().getSetCache("api:requesting:emails");
       sessionsMap = baseClient.getClient().getMapCache("api:token:sessions");
       tokensMap = baseClient.getClient().getMapCache("api:tokens");
-      dashboardsMap = baseClient.getClient().getMapCache("api:dashboards");
+      userLogQueue = baseClient.getClient().getQueue("api:buffer:userlog");
     });
   }
 
   public static Response isEmailRequested(RateLimiterType type, String email) {
-    if (!SysProps.APP_ENV().equals(AppEnv.PROD)) return Responses.OK;
+    if (!SysProps.APP_ENV.equals(AppEnv.PROD)) return Responses.OK;
 
     boolean exists = requestingEmailsSet.contains(type.name() + email);
     if (exists) {
@@ -71,9 +73,8 @@ public class RedisClient {
     sessionsMap.putAll(map);
   }
 
-  public static boolean removeSesion(String hash) {
-    ForRedis ses = sessionsMap.remove(hash);
-    return ses != null;
+  public static void removeSesion(String hash) {
+    sessionsMap.removeAsync(hash);
   }
 
   public static boolean refreshSesion(String hash) {
@@ -86,6 +87,11 @@ public class RedisClient {
     return false;
   }
 
+  public static void addUserLog(AccessLog userLog) {
+  	userLog.setCreatedAt(new Date());
+  	userLogQueue.add(userLog);
+  }
+  
   public static void shutdown() {
     linkStatusChangeTopic.removeAllListeners();
     baseClient.shutdown();

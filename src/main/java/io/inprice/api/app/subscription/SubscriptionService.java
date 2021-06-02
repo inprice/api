@@ -98,7 +98,7 @@ class SubscriptionService {
                   mailMap.put("account", StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName());
                   String message = templateRenderer.render(EmailTemplate.FREE_ACCOUNT_CANCELLED, mailMap);
                   emailSender.send(
-                    Props.APP_EMAIL_SENDER(), 
+                    Props.APP_EMAIL_SENDER, 
                     "Notification about your cancelled plan in inprice.", CurrentUser.getEmail(), 
                     message
                   );
@@ -154,7 +154,7 @@ class SubscriptionService {
                   CurrentUser.getAccountId(),
                   AccountStatus.FREE.name(),
                   basicPlan.getId(),
-                  Props.APP_DAYS_FOR_FREE_USE()
+                  Props.APP_DAYS_FOR_FREE_USE
                 );
 
               if (isOK) {
