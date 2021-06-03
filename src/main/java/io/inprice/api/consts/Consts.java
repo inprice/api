@@ -97,6 +97,7 @@ public class Consts {
     public static class Ticket {
       public static final String BASE = "/ticket";
       public static final String SEARCH = BASE + "s/search";
+      public static final String TOGGLE_SEEN_VALUE = BASE + "/seen";
     }
 
     public static class Dashboard {

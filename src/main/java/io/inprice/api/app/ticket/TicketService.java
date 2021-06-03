@@ -31,13 +31,28 @@ import io.inprice.common.models.TicketComment;
 public class TicketService {
 
   private static final Logger log = LoggerFactory.getLogger(TicketService.class);
+  
+  Response findById(Long id) {
+  	try (Handle handle = Database.getHandle()) {
+  		TicketDao ticketDao = handle.attach(TicketDao.class);
+  		Ticket ticket = ticketDao.findById(id);
+  		if (ticket != null) {
+  			if (Boolean.FALSE.equals(ticket.getSeenByUser())) {
+  				ticketDao.toggleSeenByUser(id, true);
+  			}
+  			return generateFullResponse(ticketDao, ticket);
+  		}
+  	}
+  	return Responses.NotFound.TICKET;
+  }
 
-	Response findById(Long id) {
+	Response toggleSeenValue(Long id) {
 		try (Handle handle = Database.getHandle()) {
 			TicketDao ticketDao = handle.attach(TicketDao.class);
 			Ticket ticket = ticketDao.findById(id);
 			if (ticket != null) {
-				return generateFullResponse(ticketDao, ticket);
+				ticketDao.toggleSeenByUser(id, !ticket.getSeenByUser());
+				return Responses.OK;
 			}
 		}
 		return Responses.NotFound.TICKET;

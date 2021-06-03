@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -18,8 +19,9 @@ import io.inprice.common.models.TicketComment;
 public interface TicketDao {
 
   @SqlQuery(
-		"select *, email from ticket t " +
+		"select *, u.name as username, a.name as account from ticket t " +
 		"inner join user u on u.id= t.user_id " +
+		"inner join account a on a.id= t.account_id " +
 		"where t.id=:id"
 	)
   @UseRowMapper(TicketMapper.class)
@@ -40,6 +42,9 @@ public interface TicketDao {
 		"  and account_id=:dto.accountId"
 	)
 	boolean update(@BindBean("dto") TicketDTO dto);
+
+	@SqlUpdate("update ticket set seen_by_user=<seen> where id=:id ")
+	boolean toggleSeenByUser(@Bind("id") Long id, @Define("seen") boolean seen);
 
   @SqlUpdate(
 		"delete from ticket " +
@@ -87,7 +92,7 @@ public interface TicketDao {
   TicketComment findCommentById(@Bind("id") Long id);
 
   @SqlQuery(
-		"select *, u.email from ticket_comment c " +
+		"select *, u.name as username from ticket_comment c " +
 		"inner join user u on u.id= c.user_id " +
 		"where ticket_id=:ticketId"
 	)

@@ -42,6 +42,12 @@ public class TicketController extends AbstractController {
   		ctx.json(Commons.createResponse(ctx, service.update(dto)));
     }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
+    // toggle seen by user
+    app.put(Consts.Paths.Ticket.TOGGLE_SEEN_VALUE + "/:id", (ctx) -> {
+  		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+  		ctx.json(Commons.createResponse(ctx, service.toggleSeenValue(id)));
+    }, AccessRoles.ANYONE_EXCEPT_SUPER());
+
   	// delete ticket
     app.delete(Consts.Paths.Ticket.BASE + "/:id", (ctx) -> {
   		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
