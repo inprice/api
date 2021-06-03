@@ -25,7 +25,7 @@ import io.inprice.common.models.TicketComment;
 
 /**
  * 
- * @since 2021-09-05
+ * @since 2021-05-09
  * @author mdpinar
 */
 public class TicketService {
@@ -51,8 +51,12 @@ public class TicketService {
 			TicketDao ticketDao = handle.attach(TicketDao.class);
 			Ticket ticket = ticketDao.findById(id);
 			if (ticket != null) {
-				ticketDao.toggleSeenByUser(id, !ticket.getSeenByUser());
-				return Responses.OK;
+				if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
+  				ticketDao.toggleSeenByUser(id, !ticket.getSeenByUser());
+  				return Responses.OK;
+				} else {
+					return Responses.PermissionProblem.WRONG_USER;
+				}
 			}
 		}
 		return Responses.NotFound.TICKET;
@@ -66,44 +70,15 @@ public class TicketService {
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
 					TicketDao ticketDao = handle.attach(TicketDao.class);
+					handle.begin();
+					
+					long id = ticketDao.insert(dto);
+					dto.setId(id);
+					dto.setStatus(TicketStatus.OPENED);
+					ticketDao.insertHistory(dto);
+					res = Responses.OK;
 
-					if (dto.getTicketId() == null) { // is a ticket
-
-						handle.begin();
-						
-						long id = ticketDao.insert(dto);
-						if (id > 0) {
-							dto.setId(id);
-							dto.setStatus(TicketStatus.OPENED);
-							ticketDao.insertHistory(dto);
-							handle.commit();
-							res = Responses.OK;
-						} else {
-							handle.rollback();
-							res = Responses.DataProblem.DB_PROBLEM;
-						}
-					} else { //is a comment
-						Ticket parent = ticketDao.findById(dto.getTicketId());
-						if (parent != null) {
-							if (! TicketStatus.CLOSED.equals(parent.getStatus())) {
-
-								handle.begin();
-								ticketDao.makeAllCommentsNotEditable(dto.getTicketId());
-
-								boolean isOK = ticketDao.insertComment(dto);
-								if (isOK) {
-									ticketDao.increaseCommentCount(dto.getTicketId());
-									handle.commit();
-									res = generateFullResponse(ticketDao, parent);
-								} else {
-									handle.rollback();
-									res = Responses.DataProblem.DB_PROBLEM;
-								}
-							} else {
-								res = new Response("Ticket has been closed!");
-							}
-						}
-					}
+					handle.commit();
 				}
 			} else {
 				res = new Response(problem);
@@ -113,7 +88,7 @@ public class TicketService {
 	}
 
 	Response update(TicketDTO dto) {
-		Response res = Responses.Invalid.TICKET;
+		Response res = Responses.NotFound.TICKET;
 
 		if (dto != null) {
 			String problem = validate(dto);
@@ -121,56 +96,29 @@ public class TicketService {
 				try (Handle handle = Database.getHandle()) {
 					TicketDao ticketDao = handle.attach(TicketDao.class);
 
-					if (dto.getTicketId() == null) { // is a ticket
-						Ticket ticket = ticketDao.findById(dto.getId());
-						if (ticket != null) {
-							if (TicketStatus.OPENED.equals(ticket.getStatus())) {
-		  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
+					Ticket ticket = ticketDao.findById(dto.getId());
+					if (ticket != null) {
+						if (TicketStatus.OPENED.equals(ticket.getStatus())) {
+	  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
 
-		  						handle.begin();
-		  						if (! ticket.getPriority().equals(dto.getPriority()) || ! ticket.getType().equals(dto.getType()) || ! ticket.getSubject().equals(dto.getSubject())) {
-		  							ticketDao.insertHistory(dto);
-		  						}
+	  						handle.begin();
+	  						if (! ticket.getPriority().equals(dto.getPriority()) || ! ticket.getType().equals(dto.getType()) || ! ticket.getSubject().equals(dto.getSubject())) {
+	  							ticketDao.insertHistory(dto);
+	  						}
 
-		  						boolean isOK = ticketDao.update(dto);
-  								if (isOK) {
-  									handle.commit();
-  									res = Responses.OK;
-  								} else {
-  									handle.rollback();
-  									res = Responses.DataProblem.DB_PROBLEM;
-  								}
-		  					} else {
-		  						res = Responses.PermissionProblem.WRONG_USER;
-		  					}
-							} else {
-								res = Responses.NotAllowed.UPDATE;
-							}
-						}
-					} else { //is a comment
-						Ticket parent = ticketDao.findById(dto.getTicketId());
-						if (parent != null) {
-							if (! TicketStatus.CLOSED.equals(parent.getStatus())) {
-								TicketComment comment = ticketDao.findCommentById(dto.getId());
-								if (comment != null) {
-									if (comment.getEditable()) {
-				  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
-				  						boolean isOK = ticketDao.updateComment(dto);
-  										if (isOK) {
-  											res = generateFullResponse(ticketDao, parent);
-  										} else {
-  											res = Responses.DataProblem.DB_PROBLEM;
-  										}
-				  					} else {
-				  						res = Responses.PermissionProblem.WRONG_USER;
-				  					}
-									} else {
-										res = Responses.NotAllowed.UPDATE;
-									}
+	  						boolean isOK = ticketDao.update(dto);
+								if (isOK) {
+									handle.commit();
+									res = Responses.OK;
+								} else {
+									handle.rollback();
+									res = Responses.DataProblem.DB_PROBLEM;
 								}
-							} else {
-								res = Responses.NotAllowed.UPDATE;
-							}
+	  					} else {
+	  						res = Responses.PermissionProblem.WRONG_USER;
+	  					}
+						} else {
+							res = Responses.NotAllowed.UPDATE;
 						}
 					}
 				}
@@ -181,66 +129,35 @@ public class TicketService {
 		return res;
 	}
 	
-	Response delete(boolean isTicket, Long id) {
+	Response delete(Long id) {
 		Response res = Responses.NotFound.TICKET;
 
 		if (id != null && id > 0) {
 			try (Handle handle = Database.getHandle()) {
 				TicketDao ticketDao = handle.attach(TicketDao.class);
+				Ticket ticket = ticketDao.findById(id);
 
-				if (isTicket) { //is a ticket
-					Ticket ticket = ticketDao.findById(id);
-
-					if (ticket != null) {
-						if (TicketStatus.OPENED.equals(ticket.getStatus())) {
-							if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
-								
-								handle.begin();
-								ticketDao.deleteHistories(id);
-								ticketDao.deleteComments(id);
-								
-								boolean isOK = ticketDao.delete(id);
-								if (isOK) {
-									handle.commit();
-									res = Responses.OK;
-								} else {
-									handle.rollback();
-									res = Responses.DataProblem.DB_PROBLEM;
-								}
+				if (ticket != null) {
+					if (TicketStatus.OPENED.equals(ticket.getStatus())) {
+						if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
+							
+							handle.begin();
+							ticketDao.deleteHistories(id);
+							ticketDao.deleteComments(id);
+							
+							boolean isOK = ticketDao.delete(id);
+							if (isOK) {
+								handle.commit();
+								res = Responses.OK;
 							} else {
-								res = Responses.PermissionProblem.WRONG_USER;
+								handle.rollback();
+								res = Responses.DataProblem.DB_PROBLEM;
 							}
 						} else {
-							res = Responses.NotAllowed.UPDATE;
+							res = Responses.PermissionProblem.WRONG_USER;
 						}
-					}
-				} else { //is a comment
-					TicketComment comment = ticketDao.findCommentById(id);
-
-					if (comment != null) {
-						Ticket ticket = ticketDao.findById(comment.getTicketId());
-
-						if (TicketStatus.OPENED.equals(ticket.getStatus())) {
-							if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
-								
-								handle.begin();
-								ticketDao.makeOnePreviousCommentEditable(comment.getTicketId(), id);
-
-								boolean isOK = ticketDao.deleteCommentById(id);
-								if (isOK) {
-									ticketDao.decreaseCommentCount(comment.getTicketId());
-									handle.commit();
-									res = generateFullResponse(ticketDao, ticket);
-								} else {
-									handle.rollback();
-									res = Responses.DataProblem.DB_PROBLEM;
-								}
-							} else {
-								res = Responses.PermissionProblem.WRONG_USER;
-							}
-						} else {
-							res = Responses.NotAllowed.UPDATE;
-						}
+					} else {
+						res = Responses.NotAllowed.UPDATE;
 					}
 				}
 			}
@@ -258,6 +175,9 @@ public class TicketService {
     StringBuilder crit = new StringBuilder();
 
     crit.append("where account_id = ");
+    
+    //TODO: super user ise ve firma seciliyse onun id si, degilse tum firmalar. ve her halukarda sql query si icinde account name secilmeli!
+    //TODO: normal user ise her halukarda user firmasi setlenecek!
     crit.append(CurrentUser.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
@@ -328,13 +248,6 @@ public class TicketService {
       .map(new TicketMapper())
       .list();
 
-      System.out.println(
-          "select *, email from ticket t " +
-      		"inner join user u on u.id= t.user_id " +
-          crit +
-          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
-          limit
-  		);
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
       log.error("Failed in full search for tickets.", e);
@@ -351,24 +264,16 @@ public class TicketService {
 			problem = "Issue must be between 12-512 chars!";
 		}
 
-		if (problem == null) {
-  		if (dto.getTicketId() == null) {
+		if (problem == null && dto.getPriority() == null) {
+			problem = "Priority type cannot be empty!";
+		}
 
-    		if (problem == null && dto.getPriority() == null) {
-    			problem = "Priority type cannot be empty!";
-    		}
+		if (problem == null && dto.getType() == null) {
+			problem = "Ticket type cannot be empty!";
+		}
 
-    		if (problem == null && dto.getType() == null) {
-    			problem = "Ticket type cannot be empty!";
-    		}
-    
-    		if (problem == null && dto.getSubject() == null) {
-    			problem = "Subject cannot be empty!";
-    		}
-
-  		} else if (dto.getTicketId() == null) {
-  			problem = "Ticket not found!";
-  		}
+		if (problem == null && dto.getSubject() == null) {
+			problem = "Subject cannot be empty!";
 		}
 
 		if (problem == null) {

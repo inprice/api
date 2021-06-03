@@ -18,18 +18,6 @@ public class TicketController extends AbstractController {
   @Override
   public void addRoutes(Javalin app) {
 
-  	// find
-    app.get(Consts.Paths.Ticket.BASE + "/:id", (ctx) -> {
-  		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.findById(id)));
-    }, AccessRoles.ANYONE());
-
-    // search
-    app.post(Consts.Paths.Ticket.SEARCH, (ctx) -> {
-  		SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
-  		ctx.json(Commons.createResponse(ctx, service.search(dto)));
-    }, AccessRoles.ANYONE());
-
     // insert
     app.post(Consts.Paths.Ticket.BASE, (ctx) -> {
   		TicketDTO dto = ctx.bodyAsClass(TicketDTO.class);
@@ -42,22 +30,28 @@ public class TicketController extends AbstractController {
   		ctx.json(Commons.createResponse(ctx, service.update(dto)));
     }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
-    // toggle seen by user
+  	// delete
+    app.delete(Consts.Paths.Ticket.BASE + "/:id", (ctx) -> {
+  		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+      ctx.json(Commons.createResponse(ctx, service.delete(id)));
+    }, AccessRoles.ANYONE_EXCEPT_SUPER());
+
+  	// find
+    app.get(Consts.Paths.Ticket.BASE + "/:id", (ctx) -> {
+  		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+      ctx.json(Commons.createResponse(ctx, service.findById(id)));
+    }, AccessRoles.ANYONE());
+
+    // search
+    app.post(Consts.Paths.Ticket.SEARCH, (ctx) -> {
+  		SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
+  		ctx.json(Commons.createResponse(ctx, service.search(dto)));
+    }, AccessRoles.ANYONE());
+
+    // toggle seen (by user) value
     app.put(Consts.Paths.Ticket.TOGGLE_SEEN_VALUE + "/:id", (ctx) -> {
   		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
   		ctx.json(Commons.createResponse(ctx, service.toggleSeenValue(id)));
-    }, AccessRoles.ANYONE_EXCEPT_SUPER());
-
-  	// delete ticket
-    app.delete(Consts.Paths.Ticket.BASE + "/:id", (ctx) -> {
-  		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.delete(true, id)));
-    }, AccessRoles.ANYONE_EXCEPT_SUPER());
-
-  	// delete comment
-    app.delete(Consts.Paths.Ticket.BASE + "/comment/:id", (ctx) -> {
-  		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.delete(false, id)));
     }, AccessRoles.ANYONE_EXCEPT_SUPER());
     
   }

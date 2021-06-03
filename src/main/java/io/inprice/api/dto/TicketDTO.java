@@ -19,8 +19,6 @@ public class TicketDTO {
 	private TicketType type;
   private TicketSubject subject;
   private String issue;
-
-  private Long ticketId;
   private Long userId;
   private Long accountId;
 

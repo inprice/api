@@ -10,6 +10,7 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
+import io.inprice.api.dto.TicketCommentDTO;
 import io.inprice.api.dto.TicketDTO;
 import io.inprice.common.mappers.TicketCommentMapper;
 import io.inprice.common.mappers.TicketMapper;
@@ -71,18 +72,18 @@ public interface TicketDao {
 
 	@SqlUpdate(
 		"insert into ticket_comment (ticket_id, content, added_by_user, user_id, account_id) " +
-		"values (:dto.ticketId, :dto.issue, true, :dto.userId, :dto.accountId)"
+		"values (:dto.ticketId, :dto.content, true, :dto.userId, :dto.accountId)"
 	)
-	boolean insertComment(@BindBean("dto") TicketDTO dto);
+	boolean insertComment(@BindBean("dto") TicketCommentDTO dto);
 
 	@SqlUpdate(
 		"update ticket_comment " +
-		"set content=:dto.issue " +
+		"set content=:dto.content " +
 		"where id=:dto.id " +
 		"  and editable=true " +
 		"  and account_id=:dto.accountId"
 	)
-	boolean updateComment(@BindBean("dto") TicketDTO dto);
+	boolean updateComment(@BindBean("dto") TicketCommentDTO dto);
 
   @SqlUpdate("delete from ticket_comment where id=:id and editable=true and added_by_user=true")
   boolean deleteCommentById(@Bind("id") Long id);
