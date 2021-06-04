@@ -196,7 +196,7 @@ class GroupService {
           batch.add("delete from link_history " + where);
           batch.add("delete from link_spec " + where);
           batch.add("delete from link " + where);
-          batch.add("delete from link_group " + where.replace("group_", "")); //this determines the success!
+          batch.add("delete from link_group " + where.replace("group_", "")); //this query determines the success!
           batch.add(
         		String.format(
       				"update account set link_count=link_count-%d where id=%d", 
@@ -205,8 +205,6 @@ class GroupService {
       		);
           int[] result = batch.execute();
           
-          System.out.println("---- group.getLinkCount -----" + group.getLinkCount());
-
           if (result[5] > 0) {
             Map<String, Object> data = new HashMap<>(1);
             data.put("count", group.getLinkCount());

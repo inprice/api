@@ -190,7 +190,7 @@ class MemberService {
 
         Member mem = memberDao.findById(dto.getId());
         if (mem != null) {
-          if (! mem.getAccountId().equals(CurrentUser.getAccountId()) && ! mem.getRole().equals(dto.getRole())) {
+          if (mem.getAccountId().equals(CurrentUser.getAccountId()) && ! mem.getRole().equals(dto.getRole())) {
             if (! mem.getStatus().equals(UserStatus.DELETED)) {
 
             	handle.begin();
@@ -228,7 +228,7 @@ class MemberService {
 
       Member mem = memberDao.findById(id);
       if (mem != null) {
-        if (! mem.getAccountId().equals(CurrentUser.getAccountId()) && ! mem.getStatus().equals(UserStatus.PAUSED)) {
+        if (mem.getAccountId().equals(CurrentUser.getAccountId()) && ! mem.getStatus().equals(UserStatus.PAUSED)) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {
 
           	handle.begin();
@@ -264,7 +264,7 @@ class MemberService {
 
       Member mem = memberDao.findById(id);
       if (mem != null) {
-        if (! mem.getAccountId().equals(CurrentUser.getAccountId()) && mem.getStatus().equals(UserStatus.PAUSED)) {
+        if (mem.getAccountId().equals(CurrentUser.getAccountId()) && mem.getStatus().equals(UserStatus.PAUSED)) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {
 
           	handle.begin();
@@ -346,7 +346,7 @@ class MemberService {
       problem = "Invalid invitation data!";
     }
 
-    if (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN)) {
+    if (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN) || dto.getRole().equals(UserRole.SUPER)) {
       problem = String.format("Role must be either %s or %s!", UserRole.EDITOR.name(), UserRole.VIEWER.name());
     }
 

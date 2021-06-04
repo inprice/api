@@ -244,7 +244,7 @@ class LinkService {
       try (Handle handle = Database.getHandle()) {
         LinkDao linkDao = handle.attach(LinkDao.class);
 
-        Link link = linkDao.findById(id);
+        Link link = linkDao.findById(id, CurrentUser.getAccountId());
         if (link != null) {
           List<LinkSpec> specList = linkDao.findSpecListByLinkId(link.getId());
           List<LinkPrice> priceList = linkDao.findPriceListByLinkId(link.getId());

@@ -25,9 +25,9 @@ import io.inprice.common.repository.PlatformDao;
 
 public interface LinkDao {
 	
-  @SqlQuery("select * from link where id=:id")
+  @SqlQuery("select * from link where id=:id and account_id=:accountId")
   @UseRowMapper(LinkMapper.class)
-  Link findById(@Bind("id") Long id);
+  Link findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
   @SqlQuery("select * from link where url_hash=:urlHash and (status=:status or pre_status=:status) limit 1")
   @UseRowMapper(LinkMapper.class)

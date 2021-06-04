@@ -1,4 +1,4 @@
-package io.inprice.api.app.ticket;
+package io.inprice.api.app.superuser.ticket;
 
 import java.util.List;
 
@@ -11,7 +11,6 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.TicketStatus;
-import io.inprice.common.meta.UserRole;
 import io.inprice.common.models.Ticket;
 import io.inprice.common.models.TicketComment;
 
@@ -31,7 +30,7 @@ public class CommentService {
 				try (Handle handle = Database.getHandle()) {
 					TicketDao ticketDao = handle.attach(TicketDao.class);
 
-					Ticket ticket = ticketDao.findById(dto.getTicketId(), dto.getAccountId());
+					Ticket ticket = ticketDao.findById(dto.getTicketId());
 					if (ticket != null) {
 						if (! TicketStatus.CLOSED.equals(ticket.getStatus())) {
 							handle.begin();
@@ -49,7 +48,7 @@ public class CommentService {
 								res = Responses.DataProblem.DB_PROBLEM;
 							}
 						} else {
-							res = new Response("You are not allowed to add comment to a closed ticket!");
+							res = new Response("This is a closed ticket!");
 						}
 					}
 				}
@@ -69,25 +68,20 @@ public class CommentService {
 				try (Handle handle = Database.getHandle()) {
 					TicketDao ticketDao = handle.attach(TicketDao.class);
 
-					Ticket ticket = ticketDao.findById(dto.getTicketId(), dto.getAccountId());
+					Ticket ticket = ticketDao.findById(dto.getTicketId());
 					if (ticket != null) {
 						if (! TicketStatus.CLOSED.equals(ticket.getStatus())) {
 							TicketComment comment = ticketDao.findCommentById(dto.getId());
 							if (comment != null) {
 								if (comment.getEditable()) {
-			  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
-
-										dto.setAccountId(ticket.getAccountId());
-			  						boolean isOK = ticketDao.updateComment(dto);
-										if (isOK) {
-											List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
-											res = new Response(commentList);
-										} else {
-											res = Responses.DataProblem.DB_PROBLEM;
-										}
-			  					} else {
-			  						res = Responses.PermissionProblem.WRONG_USER;
-			  					}
+									dto.setAccountId(ticket.getAccountId());
+		  						boolean isOK = ticketDao.updateComment(dto);
+									if (isOK) {
+										List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
+										res = new Response(commentList);
+									} else {
+										res = Responses.DataProblem.DB_PROBLEM;
+									}
 								} else {
 									res = Responses.NotAllowed.UPDATE;
 								}
@@ -115,28 +109,24 @@ public class CommentService {
 
 				if (comment != null) {
 					if (comment.getEditable()) {
-  					Ticket ticket = ticketDao.findById(comment.getTicketId(), comment.getAccountId());
+  					Ticket ticket = ticketDao.findById(comment.getTicketId());
   
   					if (! TicketStatus.CLOSED.equals(ticket.getStatus())) {
-  						if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
-  							
-  							handle.begin();
-  							ticketDao.makeOnePreviousCommentEditable(comment.getTicketId(), id);
-  
-  							boolean isOK = ticketDao.deleteCommentById(id);
-  							if (isOK) {
-  								ticketDao.decreaseCommentCount(comment.getTicketId());
-  								handle.commit();
-									List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(comment.getTicketId());
-									res = new Response(commentList);
-  							} else {
-  								handle.rollback();
-  								res = Responses.DataProblem.DB_PROBLEM;
-  							}
-  						} else {
-  							res = Responses.PermissionProblem.WRONG_USER;
-  						}
-						} else {
+							handle.begin();
+							ticketDao.makeOnePreviousCommentEditable(comment.getTicketId(), id);
+
+							boolean isOK = ticketDao.deleteCommentById(id);
+							if (isOK) {
+								ticketDao.decreaseCommentCount(comment.getTicketId());
+								handle.commit();
+								List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(comment.getTicketId());
+								res = new Response(commentList);
+							} else {
+								handle.rollback();
+								res = Responses.DataProblem.DB_PROBLEM;
+							}
+
+  					} else {
 							res = new Response("You are not allowed to delete comment from a closed ticket!");
 						}
 					} else {
@@ -163,7 +153,6 @@ public class CommentService {
 		}
 
 		if (problem == null) {
-			dto.setAccountId(CurrentUser.getAccountId());
 			dto.setUserId(CurrentUser.getUserId());
 		}
 
