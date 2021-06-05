@@ -90,7 +90,7 @@ public class TicketService {
 	Response update(TicketDTO dto) {
 		Response res = Responses.NotFound.TICKET;
 
-		if (dto != null) {
+		if (dto != null && dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {

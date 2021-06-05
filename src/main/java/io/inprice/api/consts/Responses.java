@@ -18,6 +18,7 @@ public class Responses {
     public static final Response PLAN = new Response(BASE + 3, "Invalid plan!");
     public static final Response TICKET = new Response(BASE + 4, "Invalid ticket!");
     public static final Response INVITATION = new Response(BASE + 5, "Invalid invitation!");
+    public static final Response ANNOUNCE = new Response(BASE + 6, "Invalid announce!");
 
     public static final Response USER = new Response(BASE + 10, "Invalid user!");
     public static final Response EMAIL = new Response(BASE + 11, "Invalid email!");

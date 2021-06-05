@@ -75,7 +75,7 @@ public class CommentService {
 	Response update(TicketCommentDTO dto) {
 		Response res = Responses.Invalid.TICKET;
 
-		if (dto != null) {
+		if (dto != null && dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {

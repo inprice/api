@@ -152,13 +152,17 @@ public class Consts {
         public static final String MEMBERSHIP_LIST = DETAILS + "/memberships";
         public static final String SESSION_LIST = DETAILS + "/sessions";
       }
-
+      
       public static class Ticket {
-        public static final String _BASE = BASE + "/ticket";
-        public static final String SEARCH = _BASE + "s/search";
-        public static final String CHANGE_STATUS = _BASE + "/status";
-        public static final String TOGGLE_SEEN_VALUE = _BASE + "/seen";
-        public static final String COMMENT = _BASE + "/comment";
+      	public static final String _BASE = BASE + "/ticket";
+      	public static final String SEARCH = _BASE + "s/search";
+      	public static final String CHANGE_STATUS = _BASE + "/status";
+      	public static final String TOGGLE_SEEN_VALUE = _BASE + "/seen";
+      	public static final String COMMENT = _BASE + "/comment";
+      }
+
+      public static class Announce {
+        public static final String _BASE = BASE + "/announce";
       }
 
     }
