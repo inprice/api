@@ -175,7 +175,7 @@ class Service {
     UserDao userDao = handle.attach(UserDao.class);
     User user = userDao.findById(CurrentUser.getUserId());
     if (user != null) {
-      user.setAccountId(accountId);
+      user.setAccid(accountId);
     	ctx.cookie(CookieHelper.createSuperCookie(SessionHelper.toTokenForSuper(user)));
     	return true;
     }

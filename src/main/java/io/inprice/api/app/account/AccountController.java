@@ -38,6 +38,7 @@ public class AccountController extends AbstractController {
       ctx.json(Commons.createResponse(ctx, res));
     });
 
+    // find
     app.get(Consts.Paths.Account.BASE, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getCurrentAccount()));
     }, AccessRoles.ANYONE());
@@ -59,6 +60,7 @@ public class AccountController extends AbstractController {
       ctx.json(Commons.createResponse(ctx, service.update(dto)));
     }, AccessRoles.ADMIN());
 
+    //delete
     app.put(Consts.Paths.Account.DELETE, (ctx) -> {
       StringDTO dto = ctx.bodyAsClass(StringDTO.class);
       ctx.json(Commons.createResponse(ctx, service.deleteAccount(dto.getValue())));

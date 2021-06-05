@@ -35,7 +35,7 @@ public class TicketService {
   Response findById(Long id) {
   	try (Handle handle = Database.getHandle()) {
   		TicketDao ticketDao = handle.attach(TicketDao.class);
-  		Ticket ticket = ticketDao.findById(id);
+  		Ticket ticket = ticketDao.findById(id, CurrentUser.getAccountId());
   		if (ticket != null) {
   			if (Boolean.FALSE.equals(ticket.getSeenByUser())) {
   				ticketDao.toggleSeenByUser(id, true);
@@ -49,7 +49,7 @@ public class TicketService {
 	Response toggleSeenValue(Long id) {
 		try (Handle handle = Database.getHandle()) {
 			TicketDao ticketDao = handle.attach(TicketDao.class);
-			Ticket ticket = ticketDao.findById(id);
+			Ticket ticket = ticketDao.findById(id, CurrentUser.getAccountId());
 			if (ticket != null) {
 				if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
   				ticketDao.toggleSeenByUser(id, !ticket.getSeenByUser());
@@ -96,7 +96,7 @@ public class TicketService {
 				try (Handle handle = Database.getHandle()) {
 					TicketDao ticketDao = handle.attach(TicketDao.class);
 
-					Ticket ticket = ticketDao.findById(dto.getId());
+					Ticket ticket = ticketDao.findById(dto.getId(), dto.getAccountId());
 					if (ticket != null) {
 						if (TicketStatus.OPENED.equals(ticket.getStatus())) {
 	  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
@@ -135,7 +135,7 @@ public class TicketService {
 		if (id != null && id > 0) {
 			try (Handle handle = Database.getHandle()) {
 				TicketDao ticketDao = handle.attach(TicketDao.class);
-				Ticket ticket = ticketDao.findById(id);
+				Ticket ticket = ticketDao.findById(id, CurrentUser.getAccountId());
 
 				if (ticket != null) {
 					if (TicketStatus.OPENED.equals(ticket.getStatus())) {
@@ -175,9 +175,6 @@ public class TicketService {
     StringBuilder crit = new StringBuilder();
 
     crit.append("where account_id = ");
-    
-    //TODO: super user ise ve firma seciliyse onun id si, degilse tum firmalar. ve her halukarda sql query si icinde account name secilmeli!
-    //TODO: normal user ise her halukarda user firmasi setlenecek!
     crit.append(CurrentUser.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
@@ -239,7 +236,7 @@ public class TicketService {
     try (Handle handle = Database.getHandle()) {
       List<Ticket> searchResult =
         handle.createQuery(
-          "select *, email from ticket t " +
+          "select *, u.name as username from ticket t " +
       		"inner join user u on u.id= t.user_id " +
           crit +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
@@ -277,8 +274,8 @@ public class TicketService {
 		}
 
 		if (problem == null) {
-			dto.setUserId(CurrentUser.getUserId());
 			dto.setAccountId(CurrentUser.getAccountId());
+			dto.setUserId(CurrentUser.getUserId());
 		}
 
 		return problem;

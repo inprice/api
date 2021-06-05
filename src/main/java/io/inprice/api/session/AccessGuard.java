@@ -43,7 +43,8 @@ public class AccessGuard implements AccessManager {
     String normalToken= ctx.cookieMap().get(Consts.SESSION);
     String superToken = ctx.cookieMap().get(Consts.SUPER_SESSION);
 
-    if (StringUtils.isBlank(normalToken) && StringUtils.isNotBlank(superToken)) { // super user?
+    //super user?
+    if (StringUtils.isBlank(normalToken) && StringUtils.isNotBlank(superToken)) {
   		User user = SessionHelper.fromTokenForSuper(superToken);
 
   		if (user != null && user.isPrivileged()) {
@@ -59,7 +60,8 @@ public class AccessGuard implements AccessManager {
   			ctx.json(Commons.createResponse(ctx, Responses._403));
   		}
 
-    } else { //normal user?
+  	//normal user?
+    } else {
       Integer sessionNo = NumberUtils.toInteger(ctx.header(Consts.SESSION_NO));
       if (sessionNo != null && sessionNo > -1) {
         boolean isDone = false;

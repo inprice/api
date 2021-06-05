@@ -18,18 +18,6 @@ public class LinkController extends AbstractController {
 
   @Override
   public void addRoutes(Javalin app) {
-    
-    // delete
-    app.delete(Consts.Paths.Link.BASE, (ctx) -> {
-    	LinkDeleteDTO ldDto = ctx.bodyAsClass(LinkDeleteDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.delete(ldDto)));
-    }, AccessRoles.EDITOR());
-
-    // move links to under another group
-    app.post(Consts.Paths.Link.MOVE, (ctx) -> {
-    	LinkMoveDTO lmDto = ctx.bodyAsClass(LinkMoveDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.moveTo(lmDto)));
-    }, AccessRoles.EDITOR());
 
     // search
     app.post(Consts.Paths.Link.SEARCH, (ctx) -> {
@@ -42,6 +30,18 @@ public class LinkController extends AbstractController {
     	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
     	ctx.json(Commons.createResponse(ctx, service.getDetails(id)));
     }, AccessRoles.ANYONE());
+    
+    // delete
+    app.delete(Consts.Paths.Link.BASE, (ctx) -> {
+    	LinkDeleteDTO ldDto = ctx.bodyAsClass(LinkDeleteDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.delete(ldDto)));
+    }, AccessRoles.EDITOR());
+
+    // move links to under another group
+    app.post(Consts.Paths.Link.MOVE, (ctx) -> {
+    	LinkMoveDTO lmDto = ctx.bodyAsClass(LinkMoveDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.moveTo(lmDto)));
+    }, AccessRoles.EDITOR());
 
     // change status to PAUSED | RESUMED
     /*
