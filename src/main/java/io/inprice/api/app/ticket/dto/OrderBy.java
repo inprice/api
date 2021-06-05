@@ -2,7 +2,7 @@ package io.inprice.api.app.ticket.dto;
 
 public enum OrderBy {
 
-	STATUS("status"),
+	STATUS("t.status"),
 	PRIORITY("priority"),
 	TYPE("type"),
 	SUBJECT("subject"),

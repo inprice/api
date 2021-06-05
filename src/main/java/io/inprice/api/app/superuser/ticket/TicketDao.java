@@ -4,16 +4,19 @@ import java.util.List;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
-import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
 import io.inprice.api.dto.TicketCommentDTO;
+import io.inprice.api.dto.TicketDTO;
 import io.inprice.common.mappers.TicketCommentMapper;
+import io.inprice.common.mappers.TicketHistoryMapper;
 import io.inprice.common.mappers.TicketMapper;
+import io.inprice.common.meta.TicketStatus;
 import io.inprice.common.models.Ticket;
 import io.inprice.common.models.TicketComment;
+import io.inprice.common.models.TicketHistory;
 
 public interface TicketDao {
 
@@ -26,8 +29,11 @@ public interface TicketDao {
   @UseRowMapper(TicketMapper.class)
   Ticket findById(@Bind("id") Long id);
 
-	@SqlUpdate("update ticket set seen_by_super=<seen> where id=:id ")
-	boolean toggleSeenBySuper(@Bind("id") Long id, @Define("seen") boolean seen);
+  @SqlUpdate("update ticket set status=:newStatus where id=:id ")
+  boolean changeStatus(@Bind("id") Long id, @Bind("newStatus") TicketStatus newStatus);
+
+	@SqlUpdate("update ticket set seen_by_super=:seen where id=:id ")
+	boolean toggleSeenBySuper(@Bind("id") Long id, @Bind("seen") boolean seen);
   
   @SqlUpdate(
 		"update ticket " +
@@ -99,5 +105,20 @@ public interface TicketDao {
 		"(select * from (select id from ticket_comment where id!=:commentId and ticket_id=:ticketId order by id desc limit 1) as t)"
 	)
 	boolean makeOnePreviousCommentEditable(@Bind("ticketId") Long ticketId, @Bind("commentId") Long commentId);
+
+	@SqlUpdate(
+		"insert into ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) " +
+		"values (:dto.id, :dto.status, :dto.priority, :dto.type, :dto.subject, :dto.userId, :dto.accountId)"
+	)
+	boolean insertHistory(@BindBean("dto") TicketDTO dto);
+
+  @SqlQuery(
+		"select *, u.name as username from ticket_history h " +
+		"inner join user u on u.id= h.user_id " +
+		"where ticket_id=:ticketId " +
+		"order by h.created_at desc"
+	)
+  @UseRowMapper(TicketHistoryMapper.class)
+  List<TicketHistory> fetchHistoryListByTicketId(@Bind("ticketId") Long ticketId);
 
 }

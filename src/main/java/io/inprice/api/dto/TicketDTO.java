@@ -1,16 +1,20 @@
 package io.inprice.api.dto;
 
+import io.inprice.api.session.CurrentUser;
 import io.inprice.common.meta.TicketPriority;
 import io.inprice.common.meta.TicketStatus;
 import io.inprice.common.meta.TicketSubject;
 import io.inprice.common.meta.TicketType;
+import io.inprice.common.models.Ticket;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
 public class TicketDTO {
 
 	private Long id;
@@ -22,4 +26,15 @@ public class TicketDTO {
   private Long userId;
   private Long accountId;
 
+  public TicketDTO(Ticket ticket) {
+  	this.id = ticket.getId();
+  	this.status = ticket.getStatus();
+  	this.priority = ticket.getPriority();
+  	this.type = ticket.getType();
+  	this.subject = ticket.getSubject();
+  	this.issue = ticket.getIssue();
+  	this.accountId = ticket.getAccountId();
+  	this.userId = CurrentUser.getUserId();
+  }
+  
 }

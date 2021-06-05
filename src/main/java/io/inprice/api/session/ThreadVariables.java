@@ -35,7 +35,7 @@ class ThreadVariables {
 	}
 
   public Long getAccountId() {
-		return superUser.getAccountId();
+		return superUser.getAccid();
 	}
 
 }

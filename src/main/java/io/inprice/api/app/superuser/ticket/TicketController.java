@@ -1,5 +1,6 @@
 package io.inprice.api.app.superuser.ticket;
 
+import io.inprice.api.app.superuser.ticket.dto.ChangeStatusDTO;
 import io.inprice.api.app.ticket.dto.SearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.framework.AbstractController;
@@ -27,6 +28,12 @@ public class TicketController extends AbstractController {
     app.post(Consts.Paths.Super.Ticket.SEARCH, (ctx) -> {
   		SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
   		ctx.json(Commons.createResponse(ctx, service.search(dto)));
+    }, AccessRoles.SUPER_ONLY());
+    
+    // change status
+    app.put(Consts.Paths.Super.Ticket.CHANGE_STATUS, (ctx) -> {
+    	ChangeStatusDTO dto = ctx.bodyAsClass(ChangeStatusDTO.class);
+    	ctx.json(Commons.createResponse(ctx, service.changeStatus(dto)));
     }, AccessRoles.SUPER_ONLY());
 
     // toggle seen (by user) value

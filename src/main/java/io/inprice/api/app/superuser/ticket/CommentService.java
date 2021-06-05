@@ -7,6 +7,7 @@ import org.jdbi.v3.core.Handle;
 
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.TicketCommentDTO;
+import io.inprice.api.dto.TicketDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
@@ -40,10 +41,22 @@ public class CommentService {
 							boolean isOK = ticketDao.insertComment(dto);
 							if (isOK) {
   							ticketDao.increaseCommentCount(dto.getTicketId());
-  							handle.commit();
-  							List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
-  							res = new Response(commentList);
-							} else {
+
+  							if (dto.getTicketNewStatus() != null && !ticket.getStatus().equals(dto.getTicketNewStatus()) && !TicketStatus.OPENED.equals(dto.getTicketNewStatus())) {
+  								ticket.setStatus(dto.getTicketNewStatus());
+  								isOK = ticketDao.changeStatus(ticket.getId(), ticket.getStatus());
+  								if (isOK) {
+  									isOK = ticketDao.insertHistory(new TicketDTO(ticket));
+  								}
+  							}
+  							if (isOK) {
+    							handle.commit();
+    							List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
+    							res = new Response(commentList);
+  							}
+							}
+
+							if (! isOK){
 								handle.rollback();
 								res = Responses.DataProblem.DB_PROBLEM;
 							}
@@ -144,8 +157,8 @@ public class CommentService {
 		
 		if (StringUtils.isBlank(dto.getContent())) {
 			problem = "Content cannot be empty!";
-		} else if (dto.getContent().length() < 12 || dto.getContent().length() > 512) {
-			problem = "Content must be between 12-512 chars!";
+		} else if (dto.getContent().length() < 12 || dto.getContent().length() > 1024) {
+			problem = "Content must be between 12-1024 chars!";
 		}
 
 		if (problem == null && dto.getTicketId() == null) {

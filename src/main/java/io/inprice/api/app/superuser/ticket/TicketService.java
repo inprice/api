@@ -8,18 +8,21 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.superuser.ticket.dto.ChangeStatusDTO;
 import io.inprice.api.app.ticket.dto.SearchDTO;
 import io.inprice.api.app.ticket.dto.Seen;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.TicketDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.TicketMapper;
-import io.inprice.common.meta.UserRole;
+import io.inprice.common.meta.TicketStatus;
 import io.inprice.common.models.Ticket;
 import io.inprice.common.models.TicketComment;
+import io.inprice.common.models.TicketHistory;
 
 /**
  * 
@@ -43,17 +46,55 @@ public class TicketService {
   	}
   	return Responses.NotFound.TICKET;
   }
+  
+  Response changeStatus(ChangeStatusDTO dto) {
+  	Response res = Responses.NotFound.TICKET;
+
+  	if (dto.getId() != null && dto.getId().longValue() > 0 && dto.getStatus() != null) {
+    	if (! TicketStatus.OPENED.equals(dto.getStatus())) {
+
+    		try (Handle handle = Database.getHandle()) {
+      		TicketDao ticketDao = handle.attach(TicketDao.class);
+      		Ticket ticket = ticketDao.findById(dto.getId());
+
+      		if (ticket != null) {
+      			handle.begin();
+
+						ticket.setStatus(dto.getStatus());
+						boolean isOK = ticketDao.changeStatus(ticket.getId(), ticket.getStatus());
+						if (isOK) {
+							isOK = ticketDao.insertHistory(new TicketDTO(ticket));
+						}
+
+    				if (isOK) {
+							handle.commit();
+    					res = Responses.OK;
+    				} else {
+    					handle.rollback();
+    					res = Responses.DataProblem.DB_PROBLEM;
+    				}
+      		}
+      	}
+    	} else {
+    		res = new Response("Changing a ticket's status to OPENED is not allowed!");
+    	}
+  	} else {
+  		res = Responses.BAD_REQUEST;
+  	}
+
+  	return res;
+  }
 
 	Response toggleSeenValue(Long id) {
 		try (Handle handle = Database.getHandle()) {
 			TicketDao ticketDao = handle.attach(TicketDao.class);
 			Ticket ticket = ticketDao.findById(id);
 			if (ticket != null) {
-				if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
-  				ticketDao.toggleSeenBySuper(id, !ticket.getSeenBySuper());
-  				return Responses.OK;
+				boolean isOK = ticketDao.toggleSeenBySuper(id, !ticket.getSeenBySuper());
+				if (isOK) {
+					return Responses.OK;
 				} else {
-					return Responses.PermissionProblem.WRONG_USER;
+					return Responses.DataProblem.DB_PROBLEM;
 				}
 			}
 		}
@@ -68,11 +109,14 @@ public class TicketService {
     //---------------------------------------------------
     StringBuilder crit = new StringBuilder();
 
+    String accountOrdering = "";
+    
     if (CurrentUser.hasSession()) {
       crit.append("where account_id = ");
       crit.append(CurrentUser.getAccountId());
     } else {
       crit.append("where 1=1 ");
+      accountOrdering = "a.name, ";
     }
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
@@ -85,7 +129,7 @@ public class TicketService {
 
     if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
     	crit.append(
-		    String.format(" and status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
+		    String.format(" and t.status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
     }
 
@@ -140,7 +184,7 @@ public class TicketService {
       		"inner join user u on u.id=t.user_id " +
       		"inner join account a on a.id=t.account_id " +
           crit +
-          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
+          " order by " + accountOrdering + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
           limit
         )
       .map(new TicketMapper())
@@ -154,7 +198,9 @@ public class TicketService {
   }
 	
 	private Response generateFullResponse(TicketDao dao, Ticket ticket) {
+		List<TicketHistory> historyList = dao.fetchHistoryListByTicketId(ticket.getId());
 		List<TicketComment> commentList = dao.fetchCommentListByTicketId(ticket.getId());
+		ticket.setHistoryList(historyList);
 		ticket.setCommentList(commentList);
 		return new Response(ticket);
 	}
