@@ -1,4 +1,4 @@
-package io.inprice.api.app.superuser.announce;
+package io.inprice.api.app.announce;
 
 import java.util.Collections;
 import java.util.List;
@@ -8,15 +8,16 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.announce.dto.AnnounceDTO;
 import io.inprice.api.app.announce.dto.OrderBy;
 import io.inprice.api.app.announce.dto.SearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
+import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.TicketMapper;
+import io.inprice.common.models.Announce;
 import io.inprice.common.models.Ticket;
 import io.inprice.common.utils.DateUtils;
 
@@ -29,70 +30,20 @@ public class AnnounceService {
 
   private static final Logger log = LoggerFactory.getLogger(AnnounceService.class);
 
-	Response insert(AnnounceDTO dto) {
-		Response res = Responses.Invalid.ANNOUNCE;
-
-		if (dto != null) {
-			String problem = validate(dto);
-			if (problem == null) {
-				try (Handle handle = Database.getHandle()) {
-					AnnounceDao announceDao = handle.attach(AnnounceDao.class);
-
-					boolean isOK = announceDao.insert(dto);
-					if (isOK) {
-						res = Responses.OK;
-					} else {
-						res = Responses.DataProblem.DB_PROBLEM;
-					}
-				}
-			} else {
-				res = new Response(problem);
-			}
+	Response fetchNewAnnounces() {
+		try (Handle handle = Database.getHandle()) {
+			AnnounceDao announceDao = handle.attach(AnnounceDao.class);
+			List<Announce> list = announceDao.fetchNotLoggedAnnounces(CurrentUser.getUserId(), CurrentUser.getAccountId());
+			return new Response(list);
 		}
-		return res;
 	}
-
-	Response update(AnnounceDTO dto) {
-		Response res = Responses.Invalid.ANNOUNCE;
-
-		if (dto != null && dto.getId() != null && dto.getId() > 0) {
-			String problem = validate(dto);
-			if (problem == null) {
-				try (Handle handle = Database.getHandle()) {
-					AnnounceDao announceDao = handle.attach(AnnounceDao.class);
-
-					boolean isOK = announceDao.update(dto);
-					if (isOK) {
-						res = Responses.OK;
-					} else {
-						res = Responses.DataProblem.DB_PROBLEM;
-					}
-				}
-			} else {
-				res = new Response(problem);
-			}
+	
+	Response addLogsForCurrentUser() {
+		try (Handle handle = Database.getHandle()) {
+			AnnounceDao announceDao = handle.attach(AnnounceDao.class);
+			announceDao.addLogsForWaitingAnnounces(CurrentUser.getUserId(), CurrentUser.getAccountId());
+			return Responses.OK;
 		}
-		return res;
-	}
-
-	Response delete(Long id) {
-		Response res = Responses.Invalid.ANNOUNCE;
-		
-		if (id != null && id > 0) {
-			try (Handle handle = Database.getHandle()) {
-				AnnounceDao announceDao = handle.attach(AnnounceDao.class);
-				
-				boolean isOK = announceDao.delete(id);
-				if (isOK) {
-					res = Responses.OK;
-				} else {
-					handle.rollback();
-					res = Responses.DataProblem.DB_PROBLEM;
-				}
-			}
-		}
-		
-		return res;
 	}
 
   public Response search(SearchDTO dto) {
@@ -102,7 +53,14 @@ public class AnnounceService {
     //building the criteria up
     //---------------------------------------------------
     StringBuilder crit = new StringBuilder();
-    crit.append("where 1=1 ");
+    crit.append("where type='SYSTEM' or ");
+    crit.append("(type = 'USER' and user_id=");
+    crit.append(CurrentUser.getUserId());
+    crit.append(") or ");
+    crit.append("(type = 'ACCOUNT' and account_id=");
+    crit.append(CurrentUser.getAccountId());
+    crit.append(") ");
+    
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
     	crit.append(" and ");
@@ -174,33 +132,5 @@ public class AnnounceService {
       return Responses.ServerProblem.EXCEPTION;
     }
   }
-	
-	private String validate(AnnounceDTO dto) {
-		String problem = null;
-		
-		if (StringUtils.isBlank(dto.getTitle())) {
-			problem = "Title cannot be empty!";
-		} else if (dto.getTitle().length() < 3 || dto.getTitle().length() > 50) {
-			problem = "Title must be between 3-50 chars!";
-		}
-
-		if (problem == null) {
-  		if (StringUtils.isBlank(dto.getBody())) {
-  			problem = "Body cannot be empty!";
-  		} else if (dto.getBody().length() < 12) {
-  			problem = "Body cannot be shorter than 12 chars!";
-  		}
-		}
-
-		if (problem == null && dto.getType() == null) {
-			problem = "Type cannot be empty!";
-		}
-
-		if (problem == null && dto.getLevel() == null) {
-			problem = "Level cannot be empty!";
-		}
-
-		return problem;
-	}
 
 }

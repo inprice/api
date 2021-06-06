@@ -178,9 +178,9 @@ public class TicketService {
     crit.append(CurrentUser.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	crit.append(" and issue like '%");
+    	crit.append(" and body like '%");
       crit.append(dto.getTerm());
-      crit.append("%'");
+      crit.append("%' ");
     }
 
     if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
@@ -255,10 +255,10 @@ public class TicketService {
 	private String validate(TicketDTO dto) {
 		String problem = null;
 		
-		if (StringUtils.isBlank(dto.getIssue())) {
+		if (StringUtils.isBlank(dto.getBody())) {
 			problem = "Issue cannot be empty!";
-		} else if (dto.getIssue().length() < 12 || dto.getIssue().length() > 512) {
-			problem = "Issue must be between 12-512 chars!";
+		} else if (dto.getBody().length() < 12 || dto.getBody().length() > 1024) {
+			problem = "Issue must be between 12-1024 chars!";
 		}
 
 		if (problem == null && dto.getPriority() == null) {

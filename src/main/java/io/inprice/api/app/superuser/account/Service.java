@@ -253,7 +253,7 @@ class Service {
   		crit.append(dto.getSearchBy().getFieldName());
     	crit.append(" like '%");
       crit.append(dto.getTerm());
-      crit.append("%'");
+      crit.append("%' ");
     }
 
   	crit.append(" order by ");

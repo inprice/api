@@ -1,4 +1,4 @@
-package io.inprice.api.app.link.dto;
+package io.inprice.api.meta;
 
 public enum OrderDir {
 

@@ -101,6 +101,13 @@ public class Consts {
       public static final String COMMENT = BASE + "/comment";
     }
 
+    public static class Announce {
+      public static final String BASE = "/announce";
+    	public static final String SEARCH = BASE + "s/search";
+    	public static final String NEW_ANNOUNCES = BASE + "s/new";
+    	public static final String LOG = BASE + "/log";
+    }
+
     public static class Dashboard {
       public static final String BASE = "/dashboard";
       public static final String REFRESH = BASE + "/refresh";
@@ -163,6 +170,7 @@ public class Consts {
 
       public static class Announce {
         public static final String _BASE = BASE + "/announce";
+      	public static final String SEARCH = _BASE + "s/search";
       }
 
     }

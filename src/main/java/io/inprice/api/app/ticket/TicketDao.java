@@ -29,15 +29,15 @@ public interface TicketDao {
   Ticket findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
 	@SqlUpdate(
-		"insert into ticket (priority, type, subject, issue, user_id, account_id) " +
-		"values (:dto.priority, :dto.type, :dto.subject, :dto.issue, :dto.userId, :dto.accountId)"
+		"insert into ticket (priority, type, subject, body, user_id, account_id) " +
+		"values (:dto.priority, :dto.type, :dto.subject, :dto.body, :dto.userId, :dto.accountId)"
 	)
 	@GetGeneratedKeys
 	long insert(@BindBean("dto") TicketDTO dto);
 
 	@SqlUpdate(
 		"update ticket " +
-		"set priority=:dto.priority, type=:dto.type, subject=:dto.subject, issue=:dto.issue " +
+		"set priority=:dto.priority, type=:dto.type, subject=:dto.subject, body=:dto.body " +
 		"where id=:dto.id " +
 		"  and status='OPENED' " +
 		"  and account_id=:dto.accountId"
@@ -71,14 +71,14 @@ public interface TicketDao {
 	boolean decreaseCommentCount(@Bind("id") Long ticketId);
 
 	@SqlUpdate(
-		"insert into ticket_comment (ticket_id, content, added_by_user, user_id, account_id) " +
-		"values (:dto.ticketId, :dto.content, true, :dto.userId, :dto.accountId)"
+		"insert into ticket_comment (ticket_id, body, added_by_user, user_id, account_id) " +
+		"values (:dto.ticketId, :dto.body, true, :dto.userId, :dto.accountId)"
 	)
 	boolean insertComment(@BindBean("dto") TicketCommentDTO dto);
 
 	@SqlUpdate(
 		"update ticket_comment " +
-		"set content=:dto.content " +
+		"set body=:dto.body " +
 		"where id=:dto.id " +
 		"  and editable=true " +
 		"  and added_by_user=true " +

@@ -155,10 +155,10 @@ public class CommentService {
 	private String validate(TicketCommentDTO dto) {
 		String problem = null;
 		
-		if (StringUtils.isBlank(dto.getContent())) {
-			problem = "Content cannot be empty!";
-		} else if (dto.getContent().length() < 12 || dto.getContent().length() > 1024) {
-			problem = "Content must be between 12-1024 chars!";
+		if (StringUtils.isBlank(dto.getBody())) {
+			problem = "Body cannot be empty!";
+		} else if (dto.getBody().length() < 12) {
+			problem = "Body cannot be shorter than 12 chars!";
 		}
 
 		if (problem == null && dto.getTicketId() == null) {

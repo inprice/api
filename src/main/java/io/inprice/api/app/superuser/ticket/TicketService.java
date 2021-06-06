@@ -100,7 +100,7 @@ public class TicketService {
 		}
 		return Responses.NotFound.TICKET;
 	}
-	
+
   public Response search(SearchDTO dto) {
   	if (dto.getTerm() != null) dto.setTerm(SqlHelper.clear(dto.getTerm()));
 
@@ -124,7 +124,7 @@ public class TicketService {
     	crit.append(dto.getSearchBy().getFieldName());
     	crit.append(" like '%");
       crit.append(dto.getTerm());
-      crit.append("%'");
+      crit.append("%' ");
     }
 
     if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {

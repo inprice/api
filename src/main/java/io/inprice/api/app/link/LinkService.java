@@ -55,7 +55,7 @@ class LinkService {
     	crit.append(dto.getSearchBy().getFieldName());
       crit.append(" like '%");
       crit.append(dto.getTerm());
-      crit.append("%'");
+      crit.append("%' ");
     }
 
     if (dto.getLevels() != null && dto.getLevels().size() > 0) {

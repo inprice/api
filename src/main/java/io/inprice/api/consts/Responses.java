@@ -137,6 +137,7 @@ public class Responses {
     public static final Response PLAN = new Response(BASE, "Plan not found!");
     public static final Response TICKET = new Response(BASE, "Ticket not found!");
     public static final Response COUPON = new Response(BASE, "Coupon not found!");
+    public static final Response ANNOUNCE = new Response(BASE, "Announce not found!");
 
     public static final Response USER = new Response(BASE, "User not found!");
     public static final Response EMAIL = new Response(BASE, "Email not found!");

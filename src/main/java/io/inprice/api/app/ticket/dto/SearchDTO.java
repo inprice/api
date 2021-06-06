@@ -3,6 +3,7 @@ package io.inprice.api.app.ticket.dto;
 import java.util.Set;
 
 import io.inprice.api.dto.BaseSearchDTO;
+import io.inprice.api.meta.OrderDir;
 import io.inprice.common.meta.TicketPriority;
 import io.inprice.common.meta.TicketStatus;
 import io.inprice.common.meta.TicketSubject;
@@ -14,7 +15,7 @@ import lombok.Setter;
 @Setter
 public class SearchDTO extends BaseSearchDTO {
 
-	private SearchBy searchBy = SearchBy.ISSUE; //can be specified by only super users!
+	private SearchBy searchBy = SearchBy.BODY; //can be specified by only super users!
 	private Set<TicketStatus> statuses;
   private Set<TicketPriority> priorities;
   private Set<TicketType> types;

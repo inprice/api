@@ -1,4 +1,4 @@
-package io.inprice.api.app.superuser.announce.dto;
+package io.inprice.api.app.announce.dto;
 
 import java.util.Date;
 
@@ -15,7 +15,9 @@ public class AnnounceDTO {
   private AnnounceType type;
   private AnnounceLevel level;
   private String title;
-  private String content;
-  private Date lastedAt;
+  private String body;
+  private String link;
+  private Date startingAt;
+  private Date endingAt;
 	
 }
