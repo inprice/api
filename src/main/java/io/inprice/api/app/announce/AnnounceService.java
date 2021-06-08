@@ -16,9 +16,8 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
-import io.inprice.common.mappers.TicketMapper;
+import io.inprice.common.mappers.AnnounceMapper;
 import io.inprice.common.models.Announce;
-import io.inprice.common.models.Ticket;
 import io.inprice.common.utils.DateUtils;
 
 /**
@@ -116,14 +115,14 @@ public class AnnounceService {
     //fetching the data
     //---------------------------------------------------
     try (Handle handle = Database.getHandle()) {
-      List<Ticket> searchResult =
+      List<Announce> searchResult =
         handle.createQuery(
           "select * from announce " +
           crit +
           orderBy +
           limit
         )
-      .map(new TicketMapper())
+      .map(new AnnounceMapper())
       .list();
 
       return new Response(Collections.singletonMap("rows", searchResult));

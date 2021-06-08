@@ -3,6 +3,8 @@ package io.inprice.api.app.announce.dto;
 import java.util.Date;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.meta.OrderDir;
 import io.inprice.common.meta.AnnounceLevel;
@@ -17,8 +19,13 @@ public class SearchDTO extends BaseSearchDTO {
 	private SearchBy searchBy = SearchBy.TITLE;
   private Set<AnnounceType> types;
   private Set<AnnounceLevel> levels;
+
+  @JsonFormat(pattern="yyyy-MM-dd")
   private Date startingAt;
+
+  @JsonFormat(pattern="yyyy-MM-dd")
   private Date endingAt;
+  
   private OrderBy orderBy = OrderBy.CREATED_AT;
   private OrderDir orderDir = OrderDir.DESC;
 
