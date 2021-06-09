@@ -23,7 +23,7 @@ public interface AnnounceDao {
 
   @SqlQuery(
 		"select * from announce a " + 
-		"where (a.type='SYSTEM " +
+		"where (a.type='SYSTEM' " +
   				"or (a.type='USER' and a.user_id=:userId) " +
   				"or (a.type='ACCOUNT' and a.account_id=:accountId)" +
 				") " +
