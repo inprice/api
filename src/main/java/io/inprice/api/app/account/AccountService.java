@@ -17,6 +17,7 @@ import io.inprice.api.app.account.dto.RegisterDTO;
 import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.group.GroupDao;
 import io.inprice.api.app.member.MemberDao;
+import io.inprice.api.app.superuser.announce.AnnounceService;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.validator.EmailValidator;
@@ -55,6 +56,7 @@ class AccountService {
 
   private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
   private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
+  private final AnnounceService announceService = Beans.getSingleton(AnnounceService.class);
 
   Response requestRegistration(RegisterDTO dto) {
     Response res = Responses.OK;
@@ -154,26 +156,15 @@ class AccountService {
           Map<String, Object> dataMap = new HashMap<>(2);
           dataMap.put("email", dto.getEmail());
           dataMap.put("account", dto.getAccountName());
-
-          //TODO: kullanici icin bir notifikasyon yayinlanacak!
-          /*
-          String message = renderer.render(EmailTemplate.REGISTRATION_COMPLETE, dataMap);
-          emailSender.send(
-            Props.APP_EMAIL_SENDER, 
-            "Welcome to inprice: " + dto.getAccountName(),
-            dto.getEmail(), 
-            message
-          );
-          */
-
           response = new Response(user);
-          Tokens.remove(TokenType.REGISTRATION_REQUEST, token);
-        }
 
-        if (response.isOK())
-        	handle.commit();
-        else
+          announceService.createWelcomeMsg(handle, user.getId());
+          
+          handle.commit();
+          Tokens.remove(TokenType.REGISTRATION_REQUEST, token);
+        } else {
         	handle.rollback();
+        }
       }
     }
 
@@ -279,9 +270,8 @@ class AccountService {
             batch.add("delete from ticket_history " + where);
             batch.add("delete from ticket_comment " + where);
             batch.add("delete from ticket " + where);
-            batch.add("delete from announcement_log " + where);
-            batch.add("delete from announcement " + where);
-            batch.add("delete from user_notice " + where);
+            batch.add("delete from announce_log " + where);
+            batch.add("delete from announce " + where);
             batch.add("delete from access_log " + where);
             		
             // in order to keep consistency, 

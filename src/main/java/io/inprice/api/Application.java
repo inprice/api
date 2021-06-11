@@ -150,13 +150,19 @@ public class Application {
     			userLog.setStatus(e.getStatus());
     			userLog.setResBody(e.getMessage());
     		} else {
+    			String body = (StringUtils.isNotBlank(ctx.resultString()) ? ctx.resultString().trim() : null);
+
     			userLog.setStatus(ctx.res.getStatus());
-    			if (ctx.resultString() != null) {
-      			Response res = JsonConverter.fromJson(ctx.resultString(), Response.class);
-      			userLog.setStatus(res.getStatus());
-      			if (res.getStatus() != 200) {
-      				userLog.setResBody(res.getReason());
-      			}
+    			userLog.setResBody(body);
+    			
+    			if (body != null) {
+    				if (body.charAt(0) == '{' || body.charAt(0) == '[') { //meaning that it is a json string!
+        			Response res = JsonConverter.fromJson(body, Response.class);
+        			userLog.setStatus(res.getStatus());
+        			if (res.getStatus() != 200) {
+        				userLog.setResBody(res.getReason());
+        			}
+    				}
     			}
     		}
 

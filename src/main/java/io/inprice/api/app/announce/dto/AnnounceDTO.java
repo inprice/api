@@ -25,5 +25,8 @@ public class AnnounceDTO {
 
   @JsonFormat(pattern="yyyy-MM-dd")
   private Date endingAt;
-	
+  
+  private Long userId;
+  private Long accountId;
+
 }

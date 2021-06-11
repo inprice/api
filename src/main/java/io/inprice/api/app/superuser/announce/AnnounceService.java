@@ -1,9 +1,12 @@
 package io.inprice.api.app.superuser.announce;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +20,9 @@ import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.AnnounceMapper;
+import io.inprice.common.meta.AnnounceLevel;
 import io.inprice.common.meta.AnnounceType;
 import io.inprice.common.models.Announce;
-import io.inprice.common.utils.DateUtils;
 
 /**
  * 
@@ -115,12 +118,12 @@ public class AnnounceService {
     
     if (dto.getStartingAt() != null) {
     	crit.append(" and starting_at>=");
-    	crit.append(DateUtils.formatDateForDB(dto.getStartingAt()));
+    	crit.append(io.inprice.common.utils.DateUtils.formatDateForDB(dto.getStartingAt()));
     }
 
     if (dto.getEndingAt() != null) {
     	crit.append(" and ending_at<=");
-    	crit.append(DateUtils.formatDateForDB(dto.getEndingAt()));
+    	crit.append(io.inprice.common.utils.DateUtils.formatDateForDB(dto.getEndingAt()));
     }
 
     if (dto.getTypes() != null && dto.getTypes().size() > 0) {
@@ -200,6 +203,25 @@ public class AnnounceService {
 		dto.setType(AnnounceType.SYSTEM);
 
 		return problem;
+	}
+	
+	public void createWelcomeMsg(Handle handle, Long userId) {
+    try {
+      Date today = new Date();
+      AnnounceDao announceDao = handle.attach(AnnounceDao.class);
+      AnnounceDTO dto = new AnnounceDTO();
+      dto.setUserId(userId);
+      dto.setLevel(AnnounceLevel.INFO);
+      dto.setType(AnnounceType.USER);
+      dto.setStartingAt(today);
+      dto.setEndingAt(DateUtils.addDays(today, 3));
+      dto.setTitle("Welcome on board!");
+      String body = IOUtils.toString(this.getClass().getResourceAsStream("/announces/welcome.html"), "UTF-8");
+      dto.setBody(body);
+      announceDao.insert(dto);
+    } catch (Exception e) {
+      log.error("Failed to read welcome announcement template!", e);
+    }
 	}
 
 }
