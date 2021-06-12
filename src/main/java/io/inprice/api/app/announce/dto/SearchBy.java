@@ -1,9 +1,9 @@
-package io.inprice.api.app.ticket.dto;
+package io.inprice.api.app.announce.dto;
 
 public enum SearchBy {
 
-	BODY("body"),
-	ACCOUNT("a.name");
+	TITLE("title"),
+	BODY("body");
 
   private String fieldName;
   

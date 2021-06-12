@@ -22,7 +22,7 @@ public class TicketDTO {
 	private TicketPriority priority;
 	private TicketType type;
   private TicketSubject subject;
-  private String issue;
+  private String body;
   private Long userId;
   private Long accountId;
 
@@ -32,7 +32,7 @@ public class TicketDTO {
   	this.priority = ticket.getPriority();
   	this.type = ticket.getType();
   	this.subject = ticket.getSubject();
-  	this.issue = ticket.getIssue();
+  	this.body = ticket.getBody();
   	this.accountId = ticket.getAccountId();
   	this.userId = CurrentUser.getUserId();
   }

@@ -11,7 +11,7 @@ import lombok.ToString;
 public class TicketCommentDTO {
 
 	private Long id;
-  private String content;
+  private String body;
   private Long ticketId;
 
   private Long userId; //not coming from client side, instead set programmatically!

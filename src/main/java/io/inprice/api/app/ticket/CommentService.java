@@ -63,7 +63,7 @@ public class CommentService {
 	Response update(TicketCommentDTO dto) {
 		Response res = Responses.Invalid.TICKET;
 
-		if (dto != null) {
+		if (dto != null && dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
@@ -152,10 +152,10 @@ public class CommentService {
 	private String validate(TicketCommentDTO dto) {
 		String problem = null;
 		
-		if (StringUtils.isBlank(dto.getContent())) {
-			problem = "Content cannot be empty!";
-		} else if (dto.getContent().length() < 12 || dto.getContent().length() > 512) {
-			problem = "Content must be between 12-512 chars!";
+		if (StringUtils.isBlank(dto.getBody())) {
+			problem = "Body cannot be empty!";
+		} else if (dto.getBody().length() < 12 || dto.getBody().length() > 1024) {
+			problem = "Body must be between 12-1024 chars!";
 		}
 
 		if (problem == null && dto.getTicketId() == null) {

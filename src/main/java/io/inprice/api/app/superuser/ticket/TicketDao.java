@@ -52,14 +52,14 @@ public interface TicketDao {
 	boolean decreaseCommentCount(@Bind("id") Long ticketId);
 
 	@SqlUpdate(
-		"insert into ticket_comment (ticket_id, content, added_by_user, user_id, account_id) " +
-		"values (:dto.ticketId, :dto.content, false, :dto.userId, :dto.accountId)"
+		"insert into ticket_comment (ticket_id, body, added_by_user, user_id, account_id) " +
+		"values (:dto.ticketId, :dto.body, false, :dto.userId, :dto.accountId)"
 	)
 	boolean insertComment(@BindBean("dto") TicketCommentDTO dto);
 
 	@SqlUpdate(
 		"update ticket_comment " +
-		"set content=:dto.content " +
+		"set body=:dto.body " +
 		"where id=:dto.id " +
 		"  and editable=true " +
 		"  and added_by_user=false " +

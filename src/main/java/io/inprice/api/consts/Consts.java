@@ -101,6 +101,13 @@ public class Consts {
       public static final String COMMENT = BASE + "/comment";
     }
 
+    public static class Announce {
+      public static final String BASE = "/announce";
+    	public static final String SEARCH = BASE + "s/search";
+    	public static final String NEW_ANNOUNCES = BASE + "s/new";
+    	public static final String LOG = BASE + "/log";
+    }
+
     public static class Dashboard {
       public static final String BASE = "/dashboard";
       public static final String REFRESH = BASE + "/refresh";
@@ -152,13 +159,18 @@ public class Consts {
         public static final String MEMBERSHIP_LIST = DETAILS + "/memberships";
         public static final String SESSION_LIST = DETAILS + "/sessions";
       }
-
+      
       public static class Ticket {
-        public static final String _BASE = BASE + "/ticket";
-        public static final String SEARCH = _BASE + "s/search";
-        public static final String CHANGE_STATUS = _BASE + "/status";
-        public static final String TOGGLE_SEEN_VALUE = _BASE + "/seen";
-        public static final String COMMENT = _BASE + "/comment";
+      	public static final String _BASE = BASE + "/ticket";
+      	public static final String SEARCH = _BASE + "s/search";
+      	public static final String CHANGE_STATUS = _BASE + "/status";
+      	public static final String TOGGLE_SEEN_VALUE = _BASE + "/seen";
+      	public static final String COMMENT = _BASE + "/comment";
+      }
+
+      public static class Announce {
+        public static final String _BASE = BASE + "/announce";
+      	public static final String SEARCH = _BASE + "s/search";
       }
 
     }

@@ -3,6 +3,7 @@ package io.inprice.api.app.link.dto;
 import java.util.Set;
 
 import io.inprice.api.dto.BaseSearchDTO;
+import io.inprice.api.meta.OrderDir;
 import io.inprice.common.meta.Level;
 import io.inprice.common.meta.LinkStatusGroup;
 import lombok.Getter;
