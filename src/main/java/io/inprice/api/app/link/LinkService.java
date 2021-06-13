@@ -23,15 +23,14 @@ import io.inprice.api.dto.LinkMoveDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
-import io.inprice.common.converters.GroupRefreshResultConverter;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.info.GroupRefreshResult;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkGroup;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
+import io.inprice.common.repository.AlarmDao;
 import io.inprice.common.repository.CommonDao;
 import io.inprice.common.repository.PlatformDao;
 
@@ -76,9 +75,10 @@ class LinkService {
     try (Handle handle = Database.getHandle()) {
       List<Link> searchResult =
         handle.createQuery(
-          "select l.*, g.name as group_name, " + PlatformDao.FIELDS + " from link as l " + 
+          "select l.*" + PlatformDao.FIELDS + AlarmDao.FIELDS + ", g.name as group_name from link as l " + 
       		"inner join link_group as g on g.id = l.group_id " + 
       		"left join platform as p on p.id = l.platform_id " + 
+          "left join alarm as al on al.id = l.alarm_id " + 
           crit +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
           " limit " + dto.getRowCount() + ", " + dto.getRowLimit()
@@ -125,14 +125,12 @@ class LinkService {
         if (result[4] > 0) {
         	CommonDao commonDao = handle.attach(CommonDao.class);
         	if (dto.getFromGroupId() != null) { //single group
-        		GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(dto.getFromGroupId()));
-        		System.out.println(" -- GRR for Deleted LINK(s) : " + dto.getFromGroupId() + " -- " + grr);
+        		commonDao.refreshGroup(dto.getFromGroupId());
         	} else {
             Set<Long> groupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
           	if (groupIdSet != null && groupIdSet.size() > 0) {
           		for (Long groupId: groupIdSet) {
-          			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(groupId));
-          			System.out.println(" -- GRR for Deleted LINK(s) : " + groupId + " -- " + grr);
+          			commonDao.refreshGroup(groupId);
         			}
             }
         	}
@@ -207,8 +205,7 @@ class LinkService {
           			
             		foundGroupIdSet.add(dto.getToGroupId());
             		for (Long groupId: foundGroupIdSet) {
-            			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(groupId));
-            			System.out.println(" -- GRR for Moved LINK(s) : " + groupId + " -- " + grr);
+            			commonDao.refreshGroup(groupId);
             		}
 
             		if (dto.getFromGroupId() != null) { //meaning that it is called from group definition (not from links search page)
@@ -306,8 +303,7 @@ class LinkService {
               long historyId = linkDao.insertHistory(link);
               if (historyId > 0) {
           			CommonDao commonDao = handle.attach(CommonDao.class);
-          			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(link.getGroupId()));
-          			System.out.println(" -- GRR for Toggled LINK(s) : " + link.getGroupId() + " -- " + grr);
+          			commonDao.refreshGroup(link.getGroupId());
           			response = Responses.OK;
               }
             }

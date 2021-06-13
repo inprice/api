@@ -21,6 +21,7 @@ import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
+import io.inprice.common.repository.AlarmDao;
 import io.inprice.common.repository.PlatformDao;
 
 public interface LinkDao {
@@ -38,9 +39,10 @@ public interface LinkDao {
   Link findByGroupIdAndUrlHash(@Bind("groupId") Long groupId, @Bind("urlHash") String urlHash);
 
   @SqlQuery(
-    "select l.*, " + PlatformDao.FIELDS + ", g.price as group_price from link as l " + 
+    "select l.*, " + PlatformDao.FIELDS + AlarmDao.FIELDS + ", g.price as group_price from link as l " + 
 		"inner join link_group as g on g.id = l.group_id " + 
-    "left join platform as p on p.id = l.platform_id " + 
+		"left join platform as p on p.id = l.platform_id " + 
+    "left join alarm as al on al.id = l.alarm_id " + 
     "where l.group_id=:groupId " +
     "  and l.account_id=:accountId " +
     "order by l.status_group, l.level, l.price"

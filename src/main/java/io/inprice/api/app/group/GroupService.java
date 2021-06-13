@@ -140,6 +140,7 @@ class GroupService {
             if (isUpdated) {
               // if base price is changed then all the prices and other 
               // indicators (on both group itself and its links) must be re-calculated accordingly
+            	// Please note: no need to check any alarm since it is a user update!
               if (found.getPrice().doubleValue() != dto.getPrice().doubleValue()) {
           			CommonDao commonDao = handle.attach(CommonDao.class);
           			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(dto.getId()));
@@ -150,7 +151,6 @@ class GroupService {
           			found.setMinPrice(grr.getMinPrice());
           			found.setAvgPrice(grr.getAvgPrice());
           			found.setMaxPrice(grr.getMaxPrice());
-          			System.out.println(" -- GRR for GROUP -- " + grr);
               }
               //for returning data!
               found.setName(dto.getName());
