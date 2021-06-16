@@ -108,6 +108,11 @@ public class Consts {
     	public static final String LOG = BASE + "/log";
     }
 
+    public static class Alarm {
+      public static final String BASE = "/alarm";
+    	public static final String SEARCH = BASE + "s/search";
+    }
+
     public static class Dashboard {
       public static final String BASE = "/dashboard";
       public static final String REFRESH = BASE + "/refresh";

@@ -19,6 +19,7 @@ public class Responses {
     public static final Response TICKET = new Response(BASE + 4, "Invalid ticket!");
     public static final Response INVITATION = new Response(BASE + 5, "Invalid invitation!");
     public static final Response ANNOUNCE = new Response(BASE + 6, "Invalid announce!");
+    public static final Response ALARM = new Response(BASE + 7, "Alarm announce!");
 
     public static final Response USER = new Response(BASE + 10, "Invalid user!");
     public static final Response EMAIL = new Response(BASE + 11, "Invalid email!");
@@ -138,6 +139,7 @@ public class Responses {
     public static final Response TICKET = new Response(BASE, "Ticket not found!");
     public static final Response COUPON = new Response(BASE, "Coupon not found!");
     public static final Response ANNOUNCE = new Response(BASE, "Announce not found!");
+    public static final Response ALARM = new Response(BASE, "Alarm not found!");
 
     public static final Response USER = new Response(BASE, "User not found!");
     public static final Response EMAIL = new Response(BASE, "Email not found!");
