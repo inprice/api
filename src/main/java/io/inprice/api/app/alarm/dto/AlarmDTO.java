@@ -12,8 +12,9 @@ import lombok.Setter;
 public class AlarmDTO {
 
   private Long id;
+  private String forWhich;
   private AlarmSubject subject;
-  private AlarmSubjectWhen when;
+  private AlarmSubjectWhen subjectWhen;
 
 	private String certainStatus;
 	private BigDecimal priceLowerLimit;

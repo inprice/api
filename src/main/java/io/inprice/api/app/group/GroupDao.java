@@ -15,6 +15,7 @@ import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.common.mappers.IdNamePairMapper;
 import io.inprice.common.mappers.LinkGroupMapper;
 import io.inprice.common.models.LinkGroup;
+import io.inprice.common.repository.AlarmDao;
 
 public interface GroupDao {
 
@@ -31,10 +32,11 @@ public interface GroupDao {
   List<IdNamePairMapper> getIdNameList(@Bind("excludedId") Long excludedId, @Bind("accountId") Long accountId);
 
   @SqlQuery(
-		"select * from link_group " +
-		"where name like :dto.term " +
-		"  and account_id = :dto.accountId " +
-		"order by name " +
+		"select g.*" + AlarmDao.FIELDS + " from link_group as g " +
+		"left join alarm as al on al.id = g.alarm_id " +
+		"where g.name like :dto.term " +
+		"  and g.account_id = :dto.accountId " +
+		"order by g.name " +
 		"limit :dto.rowCount, :dto.rowLimit "
 	)
   @UseRowMapper(LinkGroupMapper.class)

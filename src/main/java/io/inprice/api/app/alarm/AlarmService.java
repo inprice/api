@@ -10,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.alarm.dto.AlarmDTO;
-import io.inprice.api.app.alarm.dto.SearchDTO;
 import io.inprice.api.app.alarm.dto.ForWhich;
+import io.inprice.api.app.alarm.dto.SearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
@@ -40,8 +40,22 @@ public class AlarmService {
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
 					AlarmDao alarmDao = handle.attach(AlarmDao.class);
-					alarmDao.insert(dto);
-					res = Responses.OK;
+					handle.begin();
+					long id = alarmDao.insert(dto);
+					boolean isOK = false;
+					if (dto.getGroupId() != null) {
+						isOK = alarmDao.setAlarmForGroup(dto.getGroupId(), id, CurrentUser.getAccountId());
+					} else {
+						isOK = alarmDao.setAlarmForLink(dto.getLinkId(), id, CurrentUser.getAccountId());
+					}
+					if (isOK) {
+  					handle.commit();
+  					dto.setId(id);
+  					res = new Response(dto);
+					} else {
+						handle.rollback();
+						res = Responses.DataProblem.DB_PROBLEM;
+					}
 				}
 			} else {
 				res = new Response(problem);
@@ -60,7 +74,7 @@ public class AlarmService {
 					AlarmDao alarmDao = handle.attach(AlarmDao.class);
 					boolean isOK = alarmDao.update(dto);
 					if (isOK) {
-						res = Responses.OK;
+						res = new Response(dto);
 					}
 				}
 			} else {
@@ -76,10 +90,30 @@ public class AlarmService {
 		if (id != null && id > 0) {
 			try (Handle handle = Database.getHandle()) {
 				AlarmDao alarmDao = handle.attach(AlarmDao.class);
-				boolean isOK = alarmDao.delete(id, CurrentUser.getAccountId());
-				if (isOK) {
-					handle.commit();
-					res = Responses.OK;
+				
+				Alarm alarm = alarmDao.findById(id, CurrentUser.getAccountId());
+				if (alarm != null) {
+
+  				boolean isOK = false;
+  				if (alarm.getGroupId() != null) {
+  					isOK = alarmDao.removeAlarmFromGroup(alarm.getGroupId(), CurrentUser.getAccountId());
+  				} else {
+  					isOK = alarmDao.removeAlarmFromLink(alarm.getLinkId(), CurrentUser.getAccountId());
+  				}
+  				
+  				if (isOK) {
+    				handle.begin();
+    				isOK = alarmDao.delete(id, CurrentUser.getAccountId());
+    				if (isOK) {
+    					handle.commit();
+    					res = Responses.OK;
+    				} else {
+    					handle.rollback();
+    					res = Responses.DataProblem.DB_PROBLEM;
+    				}
+  				} else {
+  					res = new Response("Parent record problem!");
+  				}
 				}
 			}
 		}
@@ -177,17 +211,25 @@ public class AlarmService {
 	
 	private String validate(AlarmDTO dto) {
 		String problem = null;
+
+		if (StringUtils.isBlank(dto.getForWhich()) || (!dto.getForWhich().equals("group") && !dto.getForWhich().equals("link"))) {
+			problem = "For which topic you want to set an alarm!";
+		}
 		
-		if (dto.getSubject() == null) {
+		if (problem == null && dto.getSubject() == null) {
 			problem = "Subject cannot be empty!";
 		}
 
-		if (problem == null && dto.getWhen() == null) {
+		if (problem == null && dto.getGroupId() == null && dto.getLinkId() == null) {
+			problem = "Topic id cannot be empty!";
+		}
+		
+		if (problem == null && dto.getSubjectWhen() == null) {
 			problem = "You are expected to specify of when the subject should be considered!";
 		}
 		
 		if (problem == null && dto.getSubject() == null) {
-			if (AlarmSubject.STATUS.equals(dto.getSubject()) && !AlarmSubjectWhen.CHANGED.equals(dto.getWhen())) {
+			if (AlarmSubject.STATUS.equals(dto.getSubject()) && !AlarmSubjectWhen.CHANGED.equals(dto.getSubjectWhen())) {
 				if (StringUtils.isBlank(dto.getCertainStatus())) {
 					problem = "You are expected to specify certain status!";
 				}
@@ -197,7 +239,7 @@ public class AlarmService {
 		}
 
 		if (problem == null && dto.getSubject() == null) {
-			if (!AlarmSubject.STATUS.equals(dto.getSubject()) && AlarmSubjectWhen.OUT_OF_LIMITS.equals(dto.getWhen())) {
+			if (!AlarmSubject.STATUS.equals(dto.getSubject()) && AlarmSubjectWhen.OUT_OF_LIMITS.equals(dto.getSubjectWhen())) {
 				boolean hasNoLowerLimit = (dto.getPriceLowerLimit() == null || dto.getPriceLowerLimit().compareTo(BigDecimal.ZERO) < 1);
 				boolean hasNoUpperLimit = (dto.getPriceUpperLimit() == null || dto.getPriceUpperLimit().compareTo(BigDecimal.ZERO) < 1);
 				if (hasNoLowerLimit && hasNoUpperLimit) {
