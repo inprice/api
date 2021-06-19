@@ -23,6 +23,15 @@ public interface GroupDao {
 	@UseRowMapper(LinkGroupMapper.class)
 	LinkGroup findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
+	@SqlQuery(
+		"select g.*" + AlarmDao.FIELDS + " from link_group g " +
+		"left join alarm as al on al.id=g.alarm_id " +
+		"where g.id=:id " +
+		"  and g.account_id=:accountId"
+	)
+	@UseRowMapper(LinkGroupMapper.class)
+	LinkGroup findByIdWithAlarm(@Bind("id") Long id, @Bind("accountId") Long accountId);
+
   @SqlQuery("select * from link_group where name=:name and account_id=:accountId")
   @UseRowMapper(LinkGroupMapper.class)
   LinkGroup findByName(@Bind("name") String name, @Bind("accountId") Long accountId);

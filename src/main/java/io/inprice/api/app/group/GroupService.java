@@ -44,7 +44,7 @@ class GroupService {
     try (Handle handle = Database.getHandle()) {
       GroupDao groupDao = handle.attach(GroupDao.class);
 
-      LinkGroup group = groupDao.findById(id, CurrentUser.getAccountId());
+      LinkGroup group = groupDao.findByIdWithAlarm(id, CurrentUser.getAccountId());
       if (group != null) {
         return new Response(group);
       }
@@ -71,7 +71,7 @@ class GroupService {
     	GroupDao groupDao = handle.attach(GroupDao.class);
       LinkDao linkDao = handle.attach(LinkDao.class);
 
-      LinkGroup group = groupDao.findById(id, CurrentUser.getAccountId());
+      LinkGroup group = groupDao.findByIdWithAlarm(id, CurrentUser.getAccountId());
       if (group != null) {
       	Map<String, Object> dataMap = new HashMap<>(2);
         dataMap.put("group", group);
