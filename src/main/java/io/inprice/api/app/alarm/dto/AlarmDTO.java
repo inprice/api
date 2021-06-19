@@ -2,8 +2,11 @@ package io.inprice.api.app.alarm.dto;
 
 import java.math.BigDecimal;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.inprice.common.meta.AlarmSubject;
 import io.inprice.common.meta.AlarmSubjectWhen;
+import io.inprice.common.meta.AlarmTopic;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,7 +15,7 @@ import lombok.Setter;
 public class AlarmDTO {
 
   private Long id;
-  private String forWhich;
+  private AlarmTopic topic;
   private AlarmSubject subject;
   private AlarmSubjectWhen subjectWhen;
 
@@ -23,6 +26,7 @@ public class AlarmDTO {
   private Long linkId;
   private Long groupId;
 
+  @JsonIgnore
   private Long accountId;
 	
 }

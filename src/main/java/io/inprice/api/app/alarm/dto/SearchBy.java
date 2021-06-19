@@ -1,20 +1,17 @@
 package io.inprice.api.app.alarm.dto;
 
-public enum OrderBy {
+public enum SearchBy {
 
-	TOPIC("topic"),
-	NAME("name"),
-	WHEN("subject_when"),
-	NOTIFIED_AT("notified_at");
+	NAME("name");
 
   private String fieldName;
   
-	private OrderBy(String fieldName) {
+	private SearchBy(String fieldName) {
 		this.fieldName =  fieldName;
 	}
 	
 	public String getFieldName() {
 		return fieldName;
 	}
-	
+
 }

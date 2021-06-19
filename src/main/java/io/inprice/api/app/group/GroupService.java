@@ -180,7 +180,7 @@ class GroupService {
 
   Response delete(Long id) {
   	Response response = Responses.Invalid.GROUP;
-  	
+
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
       	GroupDao groupDao = handle.attach(GroupDao.class);
@@ -191,6 +191,7 @@ class GroupService {
       			
     			final String where = String.format("where group_id=%d and account_id=%d", id, CurrentUser.getAccountId());
           Batch batch = handle.createBatch();
+          batch.add("SET FOREIGN_KEY_CHECKS=0");
           batch.add("delete from alarm " + where);
           batch.add("delete from link_price " + where);
           batch.add("delete from link_history " + where);
@@ -203,9 +204,10 @@ class GroupService {
       				group.getLinkCount(), CurrentUser.getAccountId()
     				)
       		);
+          batch.add("SET FOREIGN_KEY_CHECKS=1");
           int[] result = batch.execute();
-          
-          if (result[5] > 0) {
+
+          if (result[6] > 0) {
             Map<String, Object> data = new HashMap<>(1);
             data.put("count", group.getLinkCount());
             response = new Response(data);

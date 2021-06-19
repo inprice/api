@@ -39,7 +39,7 @@ public interface LinkDao {
   Link findByGroupIdAndUrlHash(@Bind("groupId") Long groupId, @Bind("urlHash") String urlHash);
 
   @SqlQuery(
-    "select l.*, " + PlatformDao.FIELDS + AlarmDao.FIELDS + ", g.price as group_price from link as l " + 
+    "select l.*" + PlatformDao.FIELDS + AlarmDao.FIELDS + ", g.price as group_price from link as l " + 
 		"inner join link_group as g on g.id = l.group_id " + 
 		"left join platform as p on p.id = l.platform_id " + 
     "left join alarm as al on al.id = l.alarm_id " + 

@@ -6,6 +6,7 @@ import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.meta.OrderDir;
 import io.inprice.common.meta.AlarmSubject;
 import io.inprice.common.meta.AlarmSubjectWhen;
+import io.inprice.common.meta.AlarmTopic;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,11 +14,12 @@ import lombok.Setter;
 @Setter
 public class SearchDTO extends BaseSearchDTO {
 
-	private ForWhich forWhich = ForWhich.ALL;
+	private SearchBy searchBy = SearchBy.NAME;
+	private AlarmTopic topic;
   private Set<AlarmSubject> subjects;
   private Set<AlarmSubjectWhen> whens;
 
-  private OrderBy orderBy = OrderBy.TRIGGERED_AT;
+  private OrderBy orderBy = OrderBy.NOTIFIED_AT;
   private OrderDir orderDir = OrderDir.DESC;
 
 }

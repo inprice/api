@@ -1,5 +1,7 @@
 package io.inprice.api.app.alarm;
 
+import java.math.BigDecimal;
+
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -8,6 +10,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
 import io.inprice.api.app.alarm.dto.AlarmDTO;
+import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.AlarmMapper;
 import io.inprice.common.models.Alarm;
 
@@ -18,19 +21,20 @@ public interface AlarmDao {
 	Alarm findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
 	@SqlUpdate(
-		"insert into alarm (group_id, link_id, subject, subject_when, certain_status, price_lower_limit, price_upper_limit, account_id) " +
-		"values (:dto.groupId, :dto.linkId, :dto.subject, :dto.subjectWhen, :dto.certainStatus, :dto.priceLowerLimit, :dto.priceUpperLimit, :dto.accountId)"
+		"insert into alarm (topic, group_id, link_id, subject, subject_when, certain_status, price_lower_limit, price_upper_limit, last_status, last_price, account_id) " +
+		"values (:dto.topic, :dto.groupId, :dto.linkId, :dto.subject, :dto.subjectWhen, :dto.certainStatus, :dto.priceLowerLimit, :dto.priceUpperLimit, :pair.left, :pair.right, :dto.accountId)"
 	)
 	@GetGeneratedKeys
-	long insert(@BindBean("dto") AlarmDTO dto);
+	long insert(@BindBean("dto") AlarmDTO dto, @BindBean("pair") Pair<String, BigDecimal> pair);
 
 	@SqlUpdate(
 		"update alarm " +
-		"set subject=:dto.subject, subject_when=:dto.subjectWhen, certain_status=:dto.certainStatus, price_lower_limit=:dto.priceLowerLimit, price_upper_limit=:dto.priceUpperLimit " +
+		"set subject=:dto.subject, subject_when=:dto.subjectWhen, certain_status=:dto.certainStatus, price_lower_limit=:dto.priceLowerLimit, price_upper_limit=:dto.priceUpperLimit, " +
+		"    last_status=:pair.left, last_price=:pair.right, tobe_notified=false " +
 		"where id=:dto.id " +
 		"  and account_id=:dto.accountId"
 	)
-	boolean update(@BindBean("dto") AlarmDTO dto);
+	boolean update(@BindBean("dto") AlarmDTO dto, @BindBean("pair") Pair<String, BigDecimal> pair);
 	
   @SqlUpdate(
 		"delete from alarm " +
