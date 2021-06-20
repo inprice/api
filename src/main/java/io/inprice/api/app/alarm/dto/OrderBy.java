@@ -2,8 +2,9 @@ package io.inprice.api.app.alarm.dto;
 
 public enum OrderBy {
 
+	NAME("_name"),
 	TOPIC("topic"),
-	NAME("name"),
+	SUBJECT("subject"),
 	WHEN("subject_when"),
 	NOTIFIED_AT("notified_at");
 

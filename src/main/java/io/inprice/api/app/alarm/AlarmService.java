@@ -184,27 +184,17 @@ public class AlarmService {
 		// ---------------------------------------------------
 
 		String select = 
-				"select a.*, g.name as group_name, l.name as link_name, l.url as link_url from alarm a "
-		    + "left join link_group g on g.id = a.group_id " + generateNameLikeClause(dto, "g")
-		    + "left join link l on l.id = a.link_id " + generateNameLikeClause(dto, "l");
-		
-		if (dto.getTopic() != null) {
-			if (AlarmTopic.LINK.equals(dto.getTopic())) {
-				select = 
-						"select a.*, '' as group_name, l.name as link_name, l.url as link_url from alarm a "
-				    + "inner join link l on l.id = a.link_id " + generateNameLikeClause(dto, "l");
-			} else if (AlarmTopic.GROUP.equals(dto.getTopic())) {
-				select = 
-						"select a.*, g.name as group_name, '' as link_name, '' as link_url from alarm a "
-				    + "inner join link_group g on g.id = a.group_id " + generateNameLikeClause(dto, "g");
-			}
-		}
+				"select a.*, g.name as _name from alarm a " +
+		    "inner join link_group g on g.id = a.group_id " + generateNameLikeClause(dto, "g") +
+				"union " +
+				"select a.*, IFNULL(l.name, l.url) as _name from alarm a " +
+		    "inner join link l on l.id = a.link_id " + generateNameLikeClause(dto, "l");
 
 		String orderBy = " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir();
-		if (OrderBy.NAME.equals(dto.getOrderBy()) && AlarmTopic.LINK.equals(dto.getTopic())) {
-			orderBy = " order by l.name, l.url" + dto.getOrderDir().getDir();
+		if (! OrderBy.NAME.equals(dto.getOrderBy())) {
+			orderBy += ", _name";
 		}
-		
+
 		try (Handle handle = Database.getHandle()) {
 			List<Alarm> searchResult = 
 				handle
@@ -227,16 +217,18 @@ public class AlarmService {
 		StringBuilder sb = new StringBuilder();
 		if (StringUtils.isNotBlank(dto.getTerm())) {
 			sb.append(" and ");
+			if ("l".equals(prefix)) {
+				sb.append("(");
+			}
 			sb.append(prefix);
 			sb.append(".name like '%");
 			sb.append(dto.getTerm());
 			sb.append("%' ");
 			if ("l".equals(prefix)) {
-				sb.append(" and ");
-				sb.append(prefix);
-				sb.append(".url like '%");
+				sb.append("or (l.name is null ");
+				sb.append(" and l.url like '%");
 				sb.append(dto.getTerm());
-				sb.append("%' ");
+				sb.append("%')) ");
 			}
 		}
 		return sb.toString();
