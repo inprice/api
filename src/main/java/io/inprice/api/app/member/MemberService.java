@@ -16,9 +16,6 @@ import io.inprice.api.app.member.dto.InvitationUpdateDTO;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.email.EmailSender;
-import io.inprice.api.email.EmailTemplate;
-import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.Response;
@@ -26,8 +23,9 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
-import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.info.EmailData;
+import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Account;
@@ -37,9 +35,6 @@ import io.inprice.common.models.User;
 class MemberService {
 
   private static final Logger log = LoggerFactory.getLogger(MemberService.class);
-
-  private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
-  private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
 
   Response getList() {
     Response res = Responses.NotFound.MEMBERSHIP;
@@ -293,31 +288,34 @@ class MemberService {
   }
 
   private Response sendMail(UserDao userDao, InvitationSendDTO dto) {
-    Map<String, Object> dataMap = new HashMap<>(5);
-    dataMap.put("account", CurrentUser.getAccountName());
-    dataMap.put("admin", CurrentUser.getUserName());
+    Map<String, Object> mailMap = new HashMap<>(5);
+    mailMap.put("account", CurrentUser.getAccountName());
+    mailMap.put("admin", CurrentUser.getUserName());
 
-    String message = null;
     EmailTemplate template = null;
 
     String userName = userDao.findUserNameByEmail(dto.getEmail());
     if (userName != null) {
-      dataMap.put("user", userName);
+      mailMap.put("user", userName);
       template = EmailTemplate.INVITATION_FOR_EXISTING_USERS;
     } else {
-      dataMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')));
-      dataMap.put("token", Tokens.add(TokenType.INVITATION, dto));
-      dataMap.put("url", Props.APP_WEB_URL + "/accept-invitation");
+      mailMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')));
+      mailMap.put("token", Tokens.add(TokenType.INVITATION, dto));
+      mailMap.put("url", Props.APP_WEB_URL + "/accept-invitation");
       template = EmailTemplate.INVITATION_FOR_NEW_USERS;
     }
 
-    message = renderer.render(template, dataMap);
-
-    emailSender.send(Props.APP_EMAIL_SENDER,
-        "About your invitation for " + CurrentUser.getAccountName() + " at inprice.io", dto.getEmail(), message);
+  	RedisClient.sendEmail(
+			EmailData.builder()
+  			.template(template)
+  			.from(Props.APP_EMAIL_SENDER)
+  			.to(dto.getEmail())
+  			.subject("About your invitation for " + CurrentUser.getAccountName() + " at inprice.io")
+  			.data(mailMap)
+  		.build()	
+		);
 
     log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
-    log.info(message);
     return Responses.OK;
   }
 

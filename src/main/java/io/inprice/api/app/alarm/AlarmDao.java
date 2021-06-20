@@ -30,7 +30,7 @@ public interface AlarmDao {
 	@SqlUpdate(
 		"update alarm " +
 		"set subject=:dto.subject, subject_when=:dto.subjectWhen, certain_status=:dto.certainStatus, price_lower_limit=:dto.priceLowerLimit, price_upper_limit=:dto.priceUpperLimit, " +
-		"    last_status=:pair.left, last_price=:pair.right, tobe_notified=false " +
+		"    last_status=:pair.left, last_price=:pair.right, tobe_notified=false, updated_at=now() " +
 		"where id=:dto.id " +
 		"  and account_id=:dto.accountId"
 	)

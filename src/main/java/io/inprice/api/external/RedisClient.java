@@ -17,29 +17,34 @@ import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.BaseRedisClient;
+import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AppEnv;
 import io.inprice.common.models.AccessLog;
 
 public class RedisClient {
 
   private static BaseRedisClient baseClient;
+
+  private static RTopic sendingEmailsTopic;
   private static RTopic linkStatusChangeTopic;
 
+  public static RQueue<AccessLog> accessLogQueue;
+  
   private static RSetCache<String> requestingEmailsSet;
   private static RMapCache<String, ForRedis> sessionsMap;
 
   public static RMapCache<String, Serializable> tokensMap;
-  public static RQueue<AccessLog> userLogQueue;
 
   static {
     baseClient = new BaseRedisClient();
     baseClient.open(() -> {
+    	sendingEmailsTopic = baseClient.getClient().getTopic(SysProps.REDIS_SENDING_EMAILS_TOPIC);
       linkStatusChangeTopic = baseClient.getClient().getTopic(SysProps.REDIS_STATUS_CHANGE_TOPIC);
 
       requestingEmailsSet = baseClient.getClient().getSetCache("api:requesting:emails");
       sessionsMap = baseClient.getClient().getMapCache("api:token:sessions");
       tokensMap = baseClient.getClient().getMapCache("api:tokens");
-      userLogQueue = baseClient.getClient().getQueue("api:buffer:userlog");
+      accessLogQueue = baseClient.getClient().getQueue(SysProps.REDIS_ACCESS_LOG_QUEUE);
     });
   }
 
@@ -87,12 +92,17 @@ public class RedisClient {
     return false;
   }
 
-  public static void addUserLog(AccessLog userLog) {
-  	userLog.setCreatedAt(new Date());
-  	userLogQueue.add(userLog);
+  public static void addUserLog(AccessLog accessLog) {
+  	accessLog.setCreatedAt(new Date());
+  	accessLogQueue.add(accessLog);
+  }
+
+  public static void sendEmail(EmailData emailData) {
+    sendingEmailsTopic.publish(emailData);
   }
   
   public static void shutdown() {
+  	sendingEmailsTopic.removeAllListeners();
     linkStatusChangeTopic.removeAllListeners();
     baseClient.shutdown();
   }
