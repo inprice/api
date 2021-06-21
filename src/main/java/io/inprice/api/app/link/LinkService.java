@@ -9,12 +9,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.group.GroupAlarmService;
 import io.inprice.api.app.group.GroupDao;
 import io.inprice.api.app.link.dto.SearchDTO;
 import io.inprice.api.consts.Responses;
@@ -31,7 +33,6 @@ import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
 import io.inprice.common.repository.AlarmDao;
-import io.inprice.common.repository.CommonDao;
 import io.inprice.common.repository.PlatformDao;
 
 class LinkService {
@@ -106,8 +107,6 @@ class LinkService {
       try (Handle handle = Database.getHandle()) {
       	handle.begin();
 
-        LinkDao linkDao = handle.attach(LinkDao.class);
-
         Batch batch = handle.createBatch();
         batch.add("delete from alarm " + where);
         batch.add("delete from link_price " + where);
@@ -121,22 +120,18 @@ class LinkService {
 					)
 				);
 				int[] result = batch.execute();
-        
+
         if (result[4] > 0) {
-        	CommonDao commonDao = handle.attach(CommonDao.class);
-        	if (dto.getFromGroupId() != null) { //single group
-        		commonDao.refreshGroup(dto.getFromGroupId());
-        	} else {
-            Set<Long> groupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
-          	if (groupIdSet != null && groupIdSet.size() > 0) {
-          		for (Long groupId: groupIdSet) {
-          			commonDao.refreshGroup(groupId);
-        			}
-            }
+        	LinkDao linkDao = handle.attach(LinkDao.class);
+
+        	//refreshes groups' totals and alarm if needed!
+        	Set<Long> groupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
+        	if (CollectionUtils.isNotEmpty(groupIdSet)) {
+        		GroupAlarmService.updateAlarm(groupIdSet, handle);
         	}
-        	
+
           if (dto.getFromGroupId() != null) { //meaning that it is called from group definition (not from links search page)
-          	LinkGroup group = handle.attach(GroupDao.class).findById(dto.getFromGroupId(), CurrentUser.getAccountId());
+          	LinkGroup group = handle.attach(GroupDao.class).findByIdWithAlarm(dto.getFromGroupId(), CurrentUser.getAccountId());
           	Map<String, Object> data = new HashMap<>(1);
             data.put("group", group);
             response = new Response(data);
@@ -182,8 +177,8 @@ class LinkService {
       		if (!response.equals(Responses.Already.Defined.GROUP)) {
         		LinkDao linkDao = handle.attach(LinkDao.class);
             
-          	Set<Long> foundGroupIdSet = linkDao.findGroupIdList(dto.getLinkIdSet(), CurrentUser.getAccountId());
-          	if (foundGroupIdSet != null && foundGroupIdSet.size() > 0) {
+          	Set<Long> foundGroupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
+          	if (CollectionUtils.isNotEmpty(foundGroupIdSet)) {
         			String joinedIds = dto.getLinkIdSet().stream().map(String::valueOf).collect(Collectors.joining(","));
         			final String 
         				updatePart = 
@@ -201,12 +196,13 @@ class LinkService {
     					int[] result = batch.execute();
 
     					if (result[4] > 0) {
-          			CommonDao commonDao = handle.attach(CommonDao.class);
-          			
             		foundGroupIdSet.add(dto.getToGroupId());
-            		for (Long groupId: foundGroupIdSet) {
-            			commonDao.refreshGroup(groupId);
-            		}
+
+            		//refreshes groups' totals and alarm if needed!
+              	Set<Long> groupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
+              	if (CollectionUtils.isNotEmpty(groupIdSet)) {
+              		GroupAlarmService.updateAlarm(groupIdSet, handle);
+              	}
 
             		if (dto.getFromGroupId() != null) { //meaning that it is called from group definition (not from links search page)
                   GroupDao groupDao = handle.attach(GroupDao.class);

@@ -20,8 +20,8 @@ public class AlarmDTO {
   private AlarmSubjectWhen subjectWhen;
 
 	private String certainStatus;
-	private BigDecimal priceLowerLimit;
-	private BigDecimal priceUpperLimit;
+	private BigDecimal amountLowerLimit;
+	private BigDecimal amountUpperLimit;
 
   private Long linkId;
   private Long groupId;

@@ -95,9 +95,6 @@ public interface LinkDao {
 
   @SqlUpdate("update link set pre_status=status, status=:status, status_group=:statusGroup, updated_at=now() where id=:id")
   boolean toggleStatus(@Bind("id") Long id, @Bind("status") LinkStatus status, @Bind("statusGroup") LinkStatusGroup statusGroup);
-  
-  @SqlQuery("select group_id from link where id in (<linkIdSet>) and account_id=:accountId order by status_group")
-  Set<Long> findGroupIdList(@BindList("linkIdSet") Set<Long> linkIdSet, @Bind("accountId") Long accountId);
 
   @SqlQuery("select group_id from link where id in (<linkIdSet>)")
   Set<Long> findGroupIdSet(@BindList("linkIdSet") Set<Long> linkIdSet);

@@ -25,7 +25,6 @@ import io.inprice.api.dto.LinkBulkInsertDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
-import io.inprice.common.converters.GroupRefreshResultConverter;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.GroupRefreshResult;
@@ -33,7 +32,6 @@ import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkGroup;
-import io.inprice.common.repository.CommonDao;
 import io.inprice.common.utils.URLUtils;
 
 class GroupService {
@@ -137,13 +135,14 @@ class GroupService {
                 dto.getPrice(),
                 dto.getAccountId()
               );
+
             if (isUpdated) {
               // if base price is changed then all the prices and other 
               // indicators (on both group itself and its links) must be re-calculated accordingly
-            	// Please note: no need to check any alarm since it is a user update!
-              if (found.getPrice().doubleValue() != dto.getPrice().doubleValue()) {
-          			CommonDao commonDao = handle.attach(CommonDao.class);
-          			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(dto.getId()));
+              if (found.getPrice().compareTo(dto.getPrice()) != 0) {
+          			
+              	//refreshes group's totals and alarm if needed!
+            		GroupRefreshResult grr = GroupAlarmService.updateAlarm(dto.getId(), handle);
 
                 //for returning data!
           			found.setLevel(grr.getLevel());

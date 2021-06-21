@@ -45,7 +45,7 @@ public class AlarmService {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
-					Pair<String, BigDecimal> pair = findStatusAndPrice(dto, handle);
+					Pair<String, BigDecimal> pair = findStatusAndAmount(dto, handle);
 
 					if (pair != null) {
 						AlarmDao alarmDao = handle.attach(AlarmDao.class);
@@ -83,7 +83,7 @@ public class AlarmService {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
-					Pair<String, BigDecimal> pair = findStatusAndPrice(dto, handle);
+					Pair<String, BigDecimal> pair = findStatusAndAmount(dto, handle);
 
 					if (pair != null) {
 						AlarmDao alarmDao = handle.attach(AlarmDao.class);
@@ -266,22 +266,22 @@ public class AlarmService {
 		if (problem == null && dto.getSubject() == null) {
 			if (!AlarmSubject.STATUS.equals(dto.getSubject())
 			    && AlarmSubjectWhen.OUT_OF_LIMITS.equals(dto.getSubjectWhen())) {
-				boolean hasNoLowerLimit = (dto.getPriceLowerLimit() == null
-				    || dto.getPriceLowerLimit().compareTo(BigDecimal.ZERO) < 1);
-				boolean hasNoUpperLimit = (dto.getPriceUpperLimit() == null
-				    || dto.getPriceUpperLimit().compareTo(BigDecimal.ZERO) < 1);
+				boolean hasNoLowerLimit = (dto.getAmountLowerLimit() == null
+				    || dto.getAmountLowerLimit().compareTo(BigDecimal.ZERO) < 1);
+				boolean hasNoUpperLimit = (dto.getAmountUpperLimit() == null
+				    || dto.getAmountUpperLimit().compareTo(BigDecimal.ZERO) < 1);
 				if (hasNoLowerLimit && hasNoUpperLimit) {
 					problem = "You are expected to specify either lower or upper limit for "
 					    + AlarmSubject.STATUS.name().toLowerCase();
 				} else {
 					if (hasNoLowerLimit)
-						dto.setPriceLowerLimit(BigDecimal.ZERO);
+						dto.setAmountLowerLimit(BigDecimal.ZERO);
 					if (hasNoUpperLimit)
-						dto.setPriceUpperLimit(BigDecimal.ZERO);
+						dto.setAmountUpperLimit(BigDecimal.ZERO);
 				}
 			} else {
-				dto.setPriceLowerLimit(BigDecimal.ZERO);
-				dto.setPriceUpperLimit(BigDecimal.ZERO);
+				dto.setAmountLowerLimit(BigDecimal.ZERO);
+				dto.setAmountUpperLimit(BigDecimal.ZERO);
 			}
 		}
 
@@ -292,7 +292,7 @@ public class AlarmService {
 		return problem;
 	}
 
-	private Pair<String, BigDecimal> findStatusAndPrice(AlarmDTO dto, Handle handle) {
+	private Pair<String, BigDecimal> findStatusAndAmount(AlarmDTO dto, Handle handle) {
 		Pair<String, BigDecimal> pair = null;
 		
 		switch (dto.getTopic()) {
