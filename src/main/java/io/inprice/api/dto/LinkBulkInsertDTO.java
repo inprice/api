@@ -11,6 +11,5 @@ public class LinkBulkInsertDTO {
 
   private Long groupId;
   private String linksText;
-  private Boolean fromSearchPage = Boolean.FALSE;
   
 }

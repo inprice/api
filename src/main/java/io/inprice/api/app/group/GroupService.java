@@ -284,9 +284,7 @@ class GroupService {
         	data.put("group", group);
         	data.put("count", urlList.size());
         	data.put("linkCount", accountLinkCount);
-          if (!dto.getFromSearchPage()) {
-          	data.put("links", linkDao.findListByGroupId(dto.getGroupId(), CurrentUser.getAccountId()));
-          }
+        	data.put("links", linkDao.findListByGroupId(dto.getGroupId(), CurrentUser.getAccountId()));
           response = new Response(data);
         }
 
