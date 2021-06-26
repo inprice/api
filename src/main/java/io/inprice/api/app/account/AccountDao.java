@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
-import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -16,6 +15,7 @@ import io.inprice.api.app.account.mapper.AccountInfoMapper;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.common.mappers.AccountMapper;
 import io.inprice.common.mappers.UserUsedMapper;
+import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.PermType;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.UserUsed;
@@ -62,23 +62,12 @@ public interface AccountDao {
   
   @SqlUpdate("update account set link_count=link_count+<count> where id=:id")
   boolean increaseLinkCount(@Bind("id") Long id, @Define("count") Integer count);
-
+  
   @SqlUpdate("update account set alarm_count=alarm_count+1 where id=:id")
   boolean increaseAlarmCount(@Bind("id") Long id);
 
-  // finds only those accounts who have two days remaining
-  @SqlQuery(
-    "select * from account "+
-    "where status in (<statusList>) "+
-    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) > 1 "+
-    "  and TIMESTAMPDIFF(DAY, subs_renewal_at, now()) < 4"
-  )
-  @UseRowMapper(AccountMapper.class)
-  List<Account> findAboutToExpiredFreeAccountList(@BindList("statusList") List<String> statusList);
-
-  @SqlQuery("select * from account where status in (<statusList>) and subs_renewal_at <= now()")
-  @UseRowMapper(AccountMapper.class)
-  List<Account> findExpiredFreeAccountList(@BindList("statusList") List<String> statusList);
+  @SqlUpdate("update account set alarm_count=alarm_count-1 where id=:id")
+  boolean decreaseAlarmCount(@Bind("id") Long id);
 
   @SqlQuery(
     "select c.id, c.name, u.email from account as c " +
@@ -90,7 +79,7 @@ public interface AccountDao {
   List<AccountInfo> findExpiredSubscriberAccountList();
 
   @SqlUpdate("insert into account_history (account_id, status) values (:accountId, :status)")
-  boolean insertStatusHistory(@Bind("accountId") Long accountId, @Bind("status") String status);
+  boolean insertStatusHistory(@Bind("accountId") Long accountId, @Bind("status") AccountStatus status);
 
   @SqlUpdate(
     "insert into account_history (account_id, status, plan_id) " +

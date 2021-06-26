@@ -21,6 +21,7 @@ import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
+import io.inprice.common.repository.AlarmDao;
 import io.inprice.common.repository.PlatformDao;
 
 public interface LinkDao {
@@ -29,18 +30,15 @@ public interface LinkDao {
   @UseRowMapper(LinkMapper.class)
   Link findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
-  @SqlQuery("select * from link where url_hash=:urlHash and (status=:status or pre_status=:status) limit 1")
-  @UseRowMapper(LinkMapper.class)
-  Link findSampleByUrlHashAndStatus(@Bind("urlHash") String urlHash, @Bind("status") LinkStatus status);
-
   @SqlQuery("select * from link where group_id=:groupId and url_hash=:urlHash limit 1")
   @UseRowMapper(LinkMapper.class)
   Link findByGroupIdAndUrlHash(@Bind("groupId") Long groupId, @Bind("urlHash") String urlHash);
 
   @SqlQuery(
-    "select l.*, " + PlatformDao.FIELDS + ", g.price as group_price from link as l " + 
+    "select l.*" + PlatformDao.FIELDS + AlarmDao.FIELDS + ", g.price as group_price from link as l " + 
 		"inner join link_group as g on g.id = l.group_id " + 
-    "left join platform as p on p.id = l.platform_id " + 
+		"left join platform as p on p.id = l.platform_id " + 
+    "left join alarm as al on al.id = l.alarm_id " + 
     "where l.group_id=:groupId " +
     "  and l.account_id=:accountId " +
     "order by l.status_group, l.level, l.price"
@@ -93,9 +91,6 @@ public interface LinkDao {
 
   @SqlUpdate("update link set pre_status=status, status=:status, status_group=:statusGroup, updated_at=now() where id=:id")
   boolean toggleStatus(@Bind("id") Long id, @Bind("status") LinkStatus status, @Bind("statusGroup") LinkStatusGroup statusGroup);
-  
-  @SqlQuery("select group_id from link where id in (<linkIdSet>) and account_id=:accountId order by status_group")
-  Set<Long> findGroupIdList(@BindList("linkIdSet") Set<Long> linkIdSet, @Bind("accountId") Long accountId);
 
   @SqlQuery("select group_id from link where id in (<linkIdSet>)")
   Set<Long> findGroupIdSet(@BindList("linkIdSet") Set<Long> linkIdSet);

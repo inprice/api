@@ -24,9 +24,6 @@ import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.email.EmailSender;
-import io.inprice.api.email.EmailTemplate;
-import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
@@ -42,8 +39,10 @@ import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
+import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.AppEnv;
+import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Account;
@@ -54,8 +53,6 @@ class AccountService {
 
   private static final Logger log = LoggerFactory.getLogger(AccountService.class);
 
-  private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
-  private final TemplateRenderer renderer = Beans.getSingleton(TemplateRenderer.class);
   private final AnnounceService announceService = Beans.getSingleton(AnnounceService.class);
 
   Response requestRegistration(RegisterDTO dto) {
@@ -77,21 +74,23 @@ class AccountService {
         if (isNotARegisteredUser) {
           String token = Tokens.add(TokenType.REGISTRATION_REQUEST, dto);
 
-          Map<String, Object> dataMap = new HashMap<>(3);
-          dataMap.put("user", dto.getEmail().split("@")[0]);
-          dataMap.put("account", dto.getAccountName());
-          dataMap.put("token", token.substring(0,3)+"-"+token.substring(3));
+          Map<String, Object> mailMap = new HashMap<>(3);
+          mailMap.put("user", dto.getEmail().split("@")[0]);
+          mailMap.put("account", dto.getAccountName());
+          mailMap.put("token", token.substring(0,3)+"-"+token.substring(3));
           
           if (!SysProps.APP_ENV.equals(AppEnv.PROD)) {
-          	return new Response(dataMap);
+          	return new Response(mailMap);
           } else {
-            String message = renderer.render(EmailTemplate.REGISTRATION_REQUEST, dataMap);
-            emailSender.send(
-              Props.APP_EMAIL_SENDER, 
-              "About " + dto.getAccountName() + " registration on inprice.io",
-              dto.getEmail(), 
-              message
-            );
+          	RedisClient.sendEmail(
+        			EmailData.builder()
+          			.template(EmailTemplate.REGISTRATION_REQUEST)
+          			.from(Props.APP_EMAIL_SENDER)
+          			.to(dto.getEmail())
+          			.subject("About " + dto.getAccountName() + " registration on inprice.io")
+          			.data(mailMap)
+          		.build()	
+    				);
             RedisClient.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
             return Responses.OK;
           }
@@ -273,7 +272,7 @@ class AccountService {
             batch.add("delete from announce_log " + where);
             batch.add("delete from announce " + where);
             batch.add("delete from access_log " + where);
-            		
+
             // in order to keep consistency, 
             // users having no account other than this must be deleted too!!!
             MemberDao memberDao = handle.attach(MemberDao.class);
@@ -359,7 +358,7 @@ class AccountService {
         );
 
       if (accountId != null) {
-        accountDao.insertStatusHistory(accountId, AccountStatus.CREATED.name());
+        accountDao.insertStatusHistory(accountId, AccountStatus.CREATED);
         long memberId = 
           memberDao.insert(
             userId,

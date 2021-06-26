@@ -236,7 +236,7 @@ public class TicketService {
     try (Handle handle = Database.getHandle()) {
       List<Ticket> searchResult =
         handle.createQuery(
-          "select *, u.name as username from ticket t " +
+          "select t.*, u.name as username from ticket t " +
       		"inner join user u on u.id= t.user_id " +
           crit +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +

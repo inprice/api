@@ -22,9 +22,6 @@ import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.email.EmailSender;
-import io.inprice.api.email.EmailTemplate;
-import io.inprice.api.email.TemplateRenderer;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
@@ -40,9 +37,10 @@ import io.inprice.api.session.info.ForResponse;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
 import io.inprice.common.config.SysProps;
-import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AppEnv;
+import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
@@ -51,9 +49,6 @@ import io.javalin.http.Context;
 public class AuthService {
 
   private static final Logger log = LoggerFactory.getLogger(AuthService.class);
-
-  private final EmailSender emailSender = Beans.getSingleton(EmailSender.class);
-  private final TemplateRenderer templateRenderer = Beans.getSingleton(TemplateRenderer.class);
 
   Response login(Context ctx, LoginDTO dto) {
     if (dto != null) {
@@ -127,13 +122,20 @@ public class AuthService {
         	if (! user.isBanned()) {
         		if (! user.isPrivileged()) {
               try {
-                Map<String, Object> dataMap = new HashMap<>(3);
-                dataMap.put("user", user.getName());
-                dataMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
-                dataMap.put("url", Props.APP_WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
-  
-                final String message = templateRenderer.render(EmailTemplate.FORGOT_PASSWORD, dataMap);
-                emailSender.send(Props.APP_EMAIL_SENDER, "Reset your password for inprice.io", user.getEmail(), message);
+                Map<String, Object> mailMap = new HashMap<>(3);
+                mailMap.put("user", user.getName());
+                mailMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
+                mailMap.put("url", Props.APP_WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
+                
+              	RedisClient.sendEmail(
+            			EmailData.builder()
+              			.template(EmailTemplate.FORGOT_PASSWORD)
+              			.from(Props.APP_EMAIL_SENDER)
+              			.to(user.getEmail())
+              			.subject("Reset your password for inprice.io")
+              			.data(mailMap)
+              		.build()	
+        				);
   
                 return Responses.OK;
               } catch (Exception e) {

@@ -180,9 +180,9 @@ public class TicketService {
     try (Handle handle = Database.getHandle()) {
       List<Ticket> searchResult =
         handle.createQuery(
-          "select *, u.name as username, a.name as account from ticket t " +
-      		"inner join user u on u.id=t.user_id " +
-      		"inner join account a on a.id=t.account_id " +
+          "select t.*, u.name as username, a.name as account from ticket t " +
+      		"inner join user u on u.id = t.user_id " +
+      		"inner join account a on a.id = t.account_id " +
           crit +
           " order by " + accountOrdering + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
           limit

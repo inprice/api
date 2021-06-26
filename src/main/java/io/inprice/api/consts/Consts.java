@@ -67,7 +67,7 @@ public class Consts {
       public static final String SEARCH = BASE + "s/search";
       public static final String ID_NAME_PAIRS = BASE + "/pairs";
       public static final String LINKS = BASE + "/links";
-      public static final String IMPORT_LINKS = LINKS + "/import";
+      public static final String ADD_LINKS = LINKS + "/import";
     }
 
     public static class Link {
@@ -106,6 +106,11 @@ public class Consts {
     	public static final String SEARCH = BASE + "s/search";
     	public static final String NEW_ANNOUNCES = BASE + "s/new";
     	public static final String LOG = BASE + "/log";
+    }
+
+    public static class Alarm {
+      public static final String BASE = "/alarm";
+    	public static final String SEARCH = BASE + "s/search";
     }
 
     public static class Dashboard {

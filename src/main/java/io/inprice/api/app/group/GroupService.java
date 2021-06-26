@@ -17,15 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.group.dto.AddLinksDTO;
 import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.dto.GroupDTO;
-import io.inprice.api.dto.LinkBulkInsertDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
-import io.inprice.common.converters.GroupRefreshResultConverter;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.GroupRefreshResult;
@@ -33,7 +32,6 @@ import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkGroup;
-import io.inprice.common.repository.CommonDao;
 import io.inprice.common.utils.URLUtils;
 
 class GroupService {
@@ -44,7 +42,7 @@ class GroupService {
     try (Handle handle = Database.getHandle()) {
       GroupDao groupDao = handle.attach(GroupDao.class);
 
-      LinkGroup group = groupDao.findById(id, CurrentUser.getAccountId());
+      LinkGroup group = groupDao.findByIdWithAlarm(id, CurrentUser.getAccountId());
       if (group != null) {
         return new Response(group);
       }
@@ -71,7 +69,7 @@ class GroupService {
     	GroupDao groupDao = handle.attach(GroupDao.class);
       LinkDao linkDao = handle.attach(LinkDao.class);
 
-      LinkGroup group = groupDao.findById(id, CurrentUser.getAccountId());
+      LinkGroup group = groupDao.findByIdWithAlarm(id, CurrentUser.getAccountId());
       if (group != null) {
       	Map<String, Object> dataMap = new HashMap<>(2);
         dataMap.put("group", group);
@@ -137,12 +135,14 @@ class GroupService {
                 dto.getPrice(),
                 dto.getAccountId()
               );
+
             if (isUpdated) {
               // if base price is changed then all the prices and other 
               // indicators (on both group itself and its links) must be re-calculated accordingly
-              if (found.getPrice().doubleValue() != dto.getPrice().doubleValue()) {
-          			CommonDao commonDao = handle.attach(CommonDao.class);
-          			GroupRefreshResult grr = GroupRefreshResultConverter.convert(commonDao.refreshGroup(dto.getId()));
+              if (found.getPrice().compareTo(dto.getPrice()) != 0) {
+          			
+              	//refreshes group's totals and alarm if needed!
+            		GroupRefreshResult grr = GroupAlarmService.updateAlarm(dto.getId(), handle);
 
                 //for returning data!
           			found.setLevel(grr.getLevel());
@@ -150,7 +150,6 @@ class GroupService {
           			found.setMinPrice(grr.getMinPrice());
           			found.setAvgPrice(grr.getAvgPrice());
           			found.setMaxPrice(grr.getMaxPrice());
-          			System.out.println(" -- GRR for GROUP -- " + grr);
               }
               //for returning data!
               found.setName(dto.getName());
@@ -180,7 +179,7 @@ class GroupService {
 
   Response delete(Long id) {
   	Response response = Responses.Invalid.GROUP;
-  	
+
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
       	GroupDao groupDao = handle.attach(GroupDao.class);
@@ -191,6 +190,7 @@ class GroupService {
       			
     			final String where = String.format("where group_id=%d and account_id=%d", id, CurrentUser.getAccountId());
           Batch batch = handle.createBatch();
+          batch.add("SET FOREIGN_KEY_CHECKS=0");
           batch.add("delete from alarm " + where);
           batch.add("delete from link_price " + where);
           batch.add("delete from link_history " + where);
@@ -203,9 +203,10 @@ class GroupService {
       				group.getLinkCount(), CurrentUser.getAccountId()
     				)
       		);
+          batch.add("SET FOREIGN_KEY_CHECKS=1");
           int[] result = batch.execute();
-          
-          if (result[5] > 0) {
+
+          if (result[6] > 0) {
             Map<String, Object> data = new HashMap<>(1);
             data.put("count", group.getLinkCount());
             response = new Response(data);
@@ -220,7 +221,7 @@ class GroupService {
     return response;
   }
 
-  Response bulkInsert(LinkBulkInsertDTO dto) {
+  Response addLinks(AddLinksDTO dto) {
     Response response = validate(dto);
 
     if (response.isOK()) {
@@ -267,14 +268,14 @@ class GroupService {
             	}
             }
           } else {
-            response = Responses.NotAllowed.HAVE_NO_PLAN;
+            response = Responses.NotAllowed.NO_LINK_LIMIT;
           }
         } else {
-          response = Responses.NotAllowed.NO_LINK_LIMIT;
+          response = Responses.NotAllowed.HAVE_NO_PLAN;
         }
 
         if (response.isOK()) {
-        	LinkGroup group = groupDao.findById(dto.getGroupId(), CurrentUser.getAccountId());
+        	LinkGroup group = groupDao.findByIdWithAlarm(dto.getGroupId(), CurrentUser.getAccountId());
 
         	accountDao.increaseLinkCount(CurrentUser.getAccountId(), urlList.size());
         	int accountLinkCount = account.getLinkCount() + urlList.size();
@@ -283,9 +284,7 @@ class GroupService {
         	data.put("group", group);
         	data.put("count", urlList.size());
         	data.put("linkCount", accountLinkCount);
-          if (!dto.getFromSearchPage()) {
-          	data.put("links", linkDao.findListByGroupId(dto.getGroupId(), CurrentUser.getAccountId()));
-          }
+        	data.put("links", linkDao.findListByGroupId(dto.getGroupId(), CurrentUser.getAccountId()));
           response = new Response(data);
         }
 
@@ -325,7 +324,7 @@ class GroupService {
     return problem;
   }
   
-  private Response validate(LinkBulkInsertDTO dto) {
+  private Response validate(AddLinksDTO dto) {
     Response res = null;
 
   	if (dto == null) res = Responses.Invalid.DATA;
