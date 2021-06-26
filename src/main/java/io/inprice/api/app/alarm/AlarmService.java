@@ -9,6 +9,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.alarm.dto.AlarmDTO;
 import io.inprice.api.app.alarm.dto.OrderBy;
 import io.inprice.api.app.alarm.dto.SearchDTO;
@@ -25,6 +26,7 @@ import io.inprice.common.mappers.AlarmMapper;
 import io.inprice.common.meta.AlarmSubject;
 import io.inprice.common.meta.AlarmSubjectWhen;
 import io.inprice.common.meta.AlarmTopic;
+import io.inprice.common.models.Account;
 import io.inprice.common.models.Alarm;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkGroup;
@@ -43,32 +45,51 @@ public class AlarmService {
 
 		if (dto != null) {
 			String problem = validate(dto);
+
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
-					Pair<String, BigDecimal> pair = findStatusAndAmount(dto, handle);
+					
+	        AccountDao accountDao = handle.attach(AccountDao.class);
+	        Account account = accountDao.findById(CurrentUser.getAccountId());
 
-					if (pair != null) {
-						AlarmDao alarmDao = handle.attach(AlarmDao.class);
-						handle.begin();
-						long id = alarmDao.insert(dto, pair);
+	        if (account.getPlan() != null) {
+	          int allowedAlarmCount = (account.getPlan().getAlarmLimit() - account.getAlarmCount());
+					
+	          if (allowedAlarmCount > 0) {
+    					Pair<String, BigDecimal> pair = findCurrentStatusAndAmount(dto, handle);
+    
+    					if (pair != null) {
+    						AlarmDao alarmDao = handle.attach(AlarmDao.class);
+    						handle.begin();
+    						long id = alarmDao.insert(dto, pair);
+    
+    						boolean isOK = false;
+    						if (AlarmTopic.LINK.equals(dto.getTopic())) {
+    							isOK = alarmDao.setAlarmForLink(dto.getLinkId(), id, CurrentUser.getAccountId());
+    						} else {
+    							isOK = alarmDao.setAlarmForGroup(dto.getGroupId(), id, CurrentUser.getAccountId());
+    						}
+    
+    						if (isOK) {
+    		        	accountDao.increaseAlarmCount(CurrentUser.getAccountId());
 
-						boolean isOK = false;
-						if (AlarmTopic.LINK.equals(dto.getTopic())) {
-							isOK = alarmDao.setAlarmForLink(dto.getLinkId(), id, CurrentUser.getAccountId());
-						} else {
-							isOK = alarmDao.setAlarmForGroup(dto.getGroupId(), id, CurrentUser.getAccountId());
-						}
-
-						if (isOK) {
-							handle.commit();
-							dto.setId(id);
-							res = new Response(dto);
-						} else {
-							handle.rollback();
-							res = Responses.DataProblem.DB_PROBLEM;
-						}
-					}
-				}
+    		        	handle.commit();
+    							dto.setId(id);
+    							res = new Response(dto);
+    						} else {
+    							handle.rollback();
+    							res = Responses.DataProblem.DB_PROBLEM;
+    						}
+  	          } else {
+  	            res = (AlarmTopic.LINK.equals(dto.getTopic()) ? Responses.NotFound.LINK : Responses.NotFound.GROUP);
+    					}
+	          } else {
+		          res = Responses.NotAllowed.NO_ALARM_LIMIT;
+	          }
+	        } else {
+            res = Responses.NotAllowed.HAVE_NO_PLAN;
+	        }
+        }
 			} else {
 				res = new Response(problem);
 			}
@@ -83,7 +104,7 @@ public class AlarmService {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
-					Pair<String, BigDecimal> pair = findStatusAndAmount(dto, handle);
+					Pair<String, BigDecimal> pair = findCurrentStatusAndAmount(dto, handle);
 
 					if (pair != null) {
 						AlarmDao alarmDao = handle.attach(AlarmDao.class);
@@ -123,6 +144,8 @@ public class AlarmService {
 					if (isOK) {
 						isOK = alarmDao.delete(id, CurrentUser.getAccountId());
 						if (isOK) {
+							handle.attach(AccountDao.class).decreaseAlarmCount(CurrentUser.getAccountId());
+
 							handle.execute("SET FOREIGN_KEY_CHECKS=1");
 							handle.commit();
 							res = Responses.OK;
@@ -292,7 +315,7 @@ public class AlarmService {
 		return problem;
 	}
 
-	private Pair<String, BigDecimal> findStatusAndAmount(AlarmDTO dto, Handle handle) {
+	private Pair<String, BigDecimal> findCurrentStatusAndAmount(AlarmDTO dto, Handle handle) {
 		Pair<String, BigDecimal> pair = null;
 		
 		switch (dto.getTopic()) {

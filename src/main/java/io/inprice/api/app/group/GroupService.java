@@ -17,11 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.group.dto.AddLinksDTO;
 import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.dto.GroupDTO;
-import io.inprice.api.dto.LinkBulkInsertDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
@@ -221,7 +221,7 @@ class GroupService {
     return response;
   }
 
-  Response bulkInsert(LinkBulkInsertDTO dto) {
+  Response addLinks(AddLinksDTO dto) {
     Response response = validate(dto);
 
     if (response.isOK()) {
@@ -268,14 +268,14 @@ class GroupService {
             	}
             }
           } else {
-            response = Responses.NotAllowed.HAVE_NO_PLAN;
+            response = Responses.NotAllowed.NO_LINK_LIMIT;
           }
         } else {
-          response = Responses.NotAllowed.NO_LINK_LIMIT;
+          response = Responses.NotAllowed.HAVE_NO_PLAN;
         }
 
         if (response.isOK()) {
-        	LinkGroup group = groupDao.findById(dto.getGroupId(), CurrentUser.getAccountId());
+        	LinkGroup group = groupDao.findByIdWithAlarm(dto.getGroupId(), CurrentUser.getAccountId());
 
         	accountDao.increaseLinkCount(CurrentUser.getAccountId(), urlList.size());
         	int accountLinkCount = account.getLinkCount() + urlList.size();
@@ -324,7 +324,7 @@ class GroupService {
     return problem;
   }
   
-  private Response validate(LinkBulkInsertDTO dto) {
+  private Response validate(AddLinksDTO dto) {
     Response res = null;
 
   	if (dto == null) res = Responses.Invalid.DATA;

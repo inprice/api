@@ -120,6 +120,7 @@ public class Responses {
     public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload max 100 URLs at once!");
     public static final Response HAVE_NO_PLAN = new Response(BASE + 3, "You haven't picked a plan yet!");
     public static final Response UPDATE = new Response(BASE + 4, "This record is not suitable for update!");
+    public static final Response NO_ALARM_LIMIT = new Response(BASE + 10, "You have reached max alarm number of your plan!");
   }
 
   public static class NotSuitable {

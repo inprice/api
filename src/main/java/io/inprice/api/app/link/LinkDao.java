@@ -30,10 +30,6 @@ public interface LinkDao {
   @UseRowMapper(LinkMapper.class)
   Link findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
-  @SqlQuery("select * from link where url_hash=:urlHash and (status=:status or pre_status=:status) limit 1")
-  @UseRowMapper(LinkMapper.class)
-  Link findSampleByUrlHashAndStatus(@Bind("urlHash") String urlHash, @Bind("status") LinkStatus status);
-
   @SqlQuery("select * from link where group_id=:groupId and url_hash=:urlHash limit 1")
   @UseRowMapper(LinkMapper.class)
   Link findByGroupIdAndUrlHash(@Bind("groupId") Long groupId, @Bind("urlHash") String urlHash);

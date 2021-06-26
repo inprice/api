@@ -62,9 +62,12 @@ public interface AccountDao {
   
   @SqlUpdate("update account set link_count=link_count+<count> where id=:id")
   boolean increaseLinkCount(@Bind("id") Long id, @Define("count") Integer count);
-
+  
   @SqlUpdate("update account set alarm_count=alarm_count+1 where id=:id")
   boolean increaseAlarmCount(@Bind("id") Long id);
+
+  @SqlUpdate("update account set alarm_count=alarm_count-1 where id=:id")
+  boolean decreaseAlarmCount(@Bind("id") Long id);
 
   @SqlQuery(
     "select c.id, c.name, u.email from account as c " +

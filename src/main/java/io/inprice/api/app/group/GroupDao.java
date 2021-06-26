@@ -58,7 +58,7 @@ public interface GroupDao {
   @SqlUpdate("update link_group set name=:name, price=:price where id=:id and account_id=:accountId")
   boolean update(@Bind("id") Long id, @Bind("name") String name, @Bind("price") BigDecimal price, @Bind("accountId") Long accountId);
 
-  //called after bulkInsert
+  //called after adding links
   @SqlUpdate("update link_group set waitings=waitings + <count> where id=:id")
   boolean increaseWaitingsCount(@Bind("id") Long id, @Define("count") Integer count);
 

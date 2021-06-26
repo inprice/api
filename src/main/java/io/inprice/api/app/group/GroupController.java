@@ -1,9 +1,9 @@
 package io.inprice.api.app.group;
 
+import io.inprice.api.app.group.dto.AddLinksDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.dto.GroupDTO;
-import io.inprice.api.dto.LinkBulkInsertDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -60,10 +60,10 @@ public class GroupController extends AbstractController {
       ctx.json(Commons.createResponse(ctx, service.delete(id)));
     }, AccessRoles.EDITOR());
 
-    // import links
-    app.post(Consts.Paths.Group.IMPORT_LINKS, (ctx) -> {
-  		LinkBulkInsertDTO dto = ctx.bodyAsClass(LinkBulkInsertDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.bulkInsert(dto)));
+    // add links
+    app.post(Consts.Paths.Group.ADD_LINKS, (ctx) -> {
+  		AddLinksDTO dto = ctx.bodyAsClass(AddLinksDTO.class);
+      ctx.json(Commons.createResponse(ctx, service.addLinks(dto)));
     }, AccessRoles.EDITOR());
 
   }
