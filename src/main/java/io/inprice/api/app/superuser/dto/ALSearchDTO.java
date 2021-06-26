@@ -19,10 +19,10 @@ public class ALSearchDTO extends BaseSearchDTO {
 
 	private ALSearchBy searchBy = ALSearchBy.PATH;
 
-  @JsonFormat(pattern="yyyy-MM-dd")
+  @JsonFormat(pattern="yyyy-MM-dd", timezone=JsonFormat.DEFAULT_TIMEZONE)
 	private Date startDate;
 
-  @JsonFormat(pattern="yyyy-MM-dd")
+  @JsonFormat(pattern="yyyy-MM-dd", timezone=JsonFormat.DEFAULT_TIMEZONE)
   private Date endDate;
 
   private ALMethod method;

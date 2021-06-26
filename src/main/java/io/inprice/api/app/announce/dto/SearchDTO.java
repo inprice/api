@@ -20,10 +20,10 @@ public class SearchDTO extends BaseSearchDTO {
   private Set<AnnounceType> types;
   private Set<AnnounceLevel> levels;
 
-  @JsonFormat(pattern="yyyy-MM-dd")
+  @JsonFormat(pattern="yyyy-MM-dd", timezone=JsonFormat.DEFAULT_TIMEZONE)
   private Date startingAt;
 
-  @JsonFormat(pattern="yyyy-MM-dd")
+  @JsonFormat(pattern="yyyy-MM-dd", timezone=JsonFormat.DEFAULT_TIMEZONE)
   private Date endingAt;
   
   private OrderBy orderBy = OrderBy.CREATED_AT;
