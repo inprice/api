@@ -14,10 +14,10 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.superuser.link.dto.BulkChangetDTO;
 import io.inprice.api.app.superuser.link.dto.SearchBy;
 import io.inprice.api.app.superuser.link.dto.SearchDTO;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.IdSetDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.utils.DTOHelper;
@@ -36,7 +36,16 @@ class LinkService {
 
   private static final Logger log = LoggerFactory.getLogger(LinkService.class);
 
-  public Response search(SearchDTO dto) {
+  private final Set<LinkStatus> STATUSES_FOR_CHANGE;
+  
+  public LinkService() {
+  	STATUSES_FOR_CHANGE = new HashSet<>(3);
+  	STATUSES_FOR_CHANGE.add(LinkStatus.RESOLVED);
+  	STATUSES_FOR_CHANGE.add(LinkStatus.PAUSED);
+  	STATUSES_FOR_CHANGE.add(LinkStatus.NOT_SUITABLE);
+	}
+
+  Response search(SearchDTO dto) {
   	dto = DTOHelper.normalizeSearch(dto, false);
 
     //---------------------------------------------------
@@ -131,90 +140,82 @@ class LinkService {
     return res;
   }
 
-  Response resolved(IdSetDTO dto) {
+  Response changeStatus(BulkChangetDTO dto) {
     Response response = Responses.NotFound.LINK;
 
-    if (CollectionUtils.isNotEmpty(dto.getSet())) {
-      try (Handle handle = Database.getHandle()) {
-
-        LinkDao linkDao = handle.attach(LinkDao.class);
-        List<Pair<Long, String>> idAndStatusList = linkDao.findIdAndStatusesByIdSet(dto.getSet());
-
-        Set<Long> selectedSet = new HashSet<>();
-        
-        for (Pair<Long, String> pair: idAndStatusList) {
-        	if (LinkStatus.TOBE_IMPLEMENTED.name().equals(pair.getRight())) {
-        		selectedSet.add(pair.getLeft());
-        	}
-        }
-
-        if (selectedSet.size() > 0) {
-        	handle.begin();
-        	int affected = 0;
-        	
-        	if (CollectionUtils.isNotEmpty(selectedSet)) {
-        		affected = linkDao.setStatus(selectedSet, LinkStatus.RESOLVED, LinkStatus.RESOLVED.getGroup());
-        	}
-
-          if (affected == selectedSet.size()) {
-          	linkDao.insertHistory(selectedSet);
-          	handle.commit();
-          	response = Responses.OK;
-          } else {
-          	handle.rollback();
-          	response = Responses.DataProblem.DB_PROBLEM;
+  	if (dto.getStatus() != null && STATUSES_FOR_CHANGE.contains(dto.getStatus())) {
+      if (CollectionUtils.isNotEmpty(dto.getIdSet())) {
+        try (Handle handle = Database.getHandle()) {
+  
+          LinkDao linkDao = handle.attach(LinkDao.class);
+          List<Pair<Long, String>> idAndStatusList = linkDao.findIdAndStatusesByIdSet(dto.getIdSet());
+  
+          Set<Long> selectedSet = new HashSet<>();
+          
+          for (Pair<Long, String> pair: idAndStatusList) {
+          	if (! LinkStatus.RESOLVED.equals(dto.getStatus()) || LinkStatus.TOBE_IMPLEMENTED.name().equals(pair.getRight())) {
+        			selectedSet.add(pair.getLeft());
+          	}
           }
-        } else {
-        	response = new Response("No suitable link to be RESOLVED found!");
+  
+          if (selectedSet.size() > 0) {
+          	handle.begin();
+          	int affected = 0;
+          	
+          	if (CollectionUtils.isNotEmpty(selectedSet)) {
+          		affected = linkDao.setStatus(selectedSet, dto.getStatus(), dto.getStatus().getGroup());
+          	}
+  
+            if (affected == selectedSet.size()) {
+            	linkDao.insertHistory(selectedSet);
+            	handle.commit();
+            	response = Responses.OK;
+            } else {
+            	handle.rollback();
+            	response = Responses.DataProblem.DB_PROBLEM;
+            }
+          } else {
+          	response = new Response("No suitable link found!");
+          }
         }
       }
+    } else {
+    	response = new Response("New status is not proper!");
     }
 
     return response;
   }
 
-  Response toggleStatus(IdSetDTO dto) {
+  Response undo(BulkChangetDTO dto) {
     Response response = Responses.NotFound.LINK;
 
-    if (CollectionUtils.isNotEmpty(dto.getSet())) {
+    if (CollectionUtils.isNotEmpty(dto.getIdSet())) {
       try (Handle handle = Database.getHandle()) {
-
-        LinkDao linkDao = handle.attach(LinkDao.class);
-        List<Link> linkList = linkDao.findListByIdSet(dto.getSet());
-
-        List<Link> pausedList = new ArrayList<>();
-        Set<Long> allIdSet = new HashSet<>();
-        Set<Long> othersSet = new HashSet<>();
-        
-        for (Link link: linkList) {
-        	allIdSet.add(link.getId());
-        	if (LinkStatus.PAUSED.equals(link.getStatus())) {
-        		pausedList.add(link);
-        	} else {
-        		othersSet.add(link.getId());
-        	}
-        }
 
       	handle.begin();
       	int affected = 0;
-      	
-      	if (CollectionUtils.isNotEmpty(pausedList)) {
-      		for (Link link: pausedList) {
-      			affected += linkDao.setStatus(link.getId(), link.getPreStatus(), link.getPreStatus().getGroup());
-      		}
-      	}
 
-        if (CollectionUtils.isNotEmpty(othersSet)) {
-        	affected += linkDao.setStatus(othersSet, LinkStatus.PAUSED, LinkStatus.PAUSED.getGroup());
+        LinkDao linkDao = handle.attach(LinkDao.class);
+        for (Long id: dto.getIdSet()) {
+        	List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(id);
+
+          if (historyList != null) {
+          	LinkHistory lastHistory = historyList.get(0);
+          	if (historyList.size() > 1 && STATUSES_FOR_CHANGE.contains(lastHistory.getStatus())) {
+
+            	LinkHistory preHistory = historyList.get(1);
+            	affected += linkDao.setStatus(id, preHistory.getStatus(), preHistory.getStatus().getGroup());
+            	linkDao.deleteHistory(lastHistory.getId());
+            }
+          }
         }
 
-        if (affected == allIdSet.size()) {
-        	linkDao.insertHistory(allIdSet);
+        if (affected > 0) {
         	handle.commit();
         	response = Responses.OK;
         } else {
         	handle.rollback();
-        	response = Responses.DataProblem.DB_PROBLEM;
+        	response = new Response("Link(s) status isn't suitable for undo!");
         }
       }
     }

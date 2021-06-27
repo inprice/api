@@ -168,9 +168,9 @@ public class Consts {
       public static class Link {
         public static final String _BASE = BASE + "/link";
         public static final String SEARCH = _BASE + "s/search";
-        public static final String RESOLVED = _BASE + "/resolved";
-        public static final String TOGGLE = _BASE + "/toggle";
         public static final String DETAILS = _BASE + "/details";
+        public static final String CHANGE_STATUS = _BASE + "/change-status";
+        public static final String UNDO = _BASE + "/undo";
       }
       
       public static class Ticket {

@@ -43,14 +43,6 @@ public class LinkController extends AbstractController {
       ctx.json(Commons.createResponse(ctx, service.moveTo(lmDto)));
     }, AccessRoles.EDITOR());
 
-    // change status to PAUSED | RESUMED
-    /*
-    app.put(Consts.Paths.Link.TOGGLE + "/:id", (ctx) -> {
-      Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.toggleStatus(id)));
-    }, AccessRoles.EDITOR());
-    */
-
   }
 
 }

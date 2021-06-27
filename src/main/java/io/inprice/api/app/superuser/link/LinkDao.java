@@ -48,6 +48,9 @@ public interface LinkDao {
 	)
   int insertHistory(@BindList("idSet") Set<Long> idSet);
 
+  @SqlUpdate("delete from link_history where id=:historyId")
+  boolean deleteHistory(@Bind("historyId") Long historyId);
+
   @SqlQuery("select * from link_history where link_id=:linkId order by id desc")
   @UseRowMapper(LinkHistoryMapper.class)
   List<LinkHistory> findHistoryListByLinkId(@Bind("linkId") Long linkId);
