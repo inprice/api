@@ -73,7 +73,6 @@ public class Consts {
     public static class Link {
       public static final String BASE = "/link";
       public static final String SEARCH = BASE + "s/search";
-      public static final String TOGGLE = BASE + "/toggle";
       public static final String DETAILS = BASE + "/details";
       public static final String MOVE = BASE + "/move";
     }
@@ -132,6 +131,7 @@ public class Consts {
       	public static final String _BASE = BASE + "/account";
       	public static final String SEARCH = _BASE + "s/search";
         public static final String AL_SEARCH = _BASE + "/search-logs";
+        public static final String ID_NAME_PAIRS = _BASE + "/id-name-pairs";
         public static final String BAN = _BASE + "/ban";
         public static final String REVOKE_BAN = BAN + "-revoke";
         public static final String ACCOUNT_USERS = _BASE + "/users";
@@ -163,6 +163,14 @@ public class Consts {
         public static final String DETAILS = _BASE + "/details";
         public static final String MEMBERSHIP_LIST = DETAILS + "/memberships";
         public static final String SESSION_LIST = DETAILS + "/sessions";
+      }
+
+      public static class Link {
+        public static final String _BASE = BASE + "/link";
+        public static final String SEARCH = _BASE + "s/search";
+        public static final String RESOLVED = _BASE + "/resolved";
+        public static final String TOGGLE = _BASE + "/toggle";
+        public static final String DETAILS = _BASE + "/details";
       }
       
       public static class Ticket {

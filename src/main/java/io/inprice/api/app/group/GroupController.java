@@ -24,7 +24,7 @@ public class GroupController extends AbstractController {
   		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
   		ctx.json(Commons.createResponse(ctx, service.findById(id)));
   	}, AccessRoles.ANYONE());
-  	
+
     app.get(Consts.Paths.Group.ID_NAME_PAIRS + "/:id", (ctx) -> {
   		Long excludedId = ctx.pathParam("id", Long.class).getValue();
       ctx.json(Commons.createResponse(ctx, service.getIdNameList(excludedId)));

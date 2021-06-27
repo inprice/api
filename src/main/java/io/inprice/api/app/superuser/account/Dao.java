@@ -69,4 +69,8 @@ public interface Dao {
   @UseRowMapper(IdNamePairMapper.class)
   List<Pair<Long, String>> fetchUserListByAccountId(@Bind("accountId") Long accountId);
 
+  @SqlQuery("select id, name from account where name like :term order by name limit 15")
+  @UseRowMapper(IdNamePairMapper.class)
+  List<IdNamePairMapper> searchIdNameListByTerm(@Bind("term") String term);
+
 }

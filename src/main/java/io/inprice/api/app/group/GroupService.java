@@ -49,7 +49,7 @@ class GroupService {
       return Responses.NotFound.GROUP;
     }
   }
-  
+
   Response getIdNameList(Long exclude) {
   	try (Handle handle = Database.getHandle()) {
   		GroupDao groupDao = handle.attach(GroupDao.class);

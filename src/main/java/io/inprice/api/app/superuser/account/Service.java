@@ -23,6 +23,7 @@ import io.inprice.api.session.info.ForResponse;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.AccessLogMapper;
 import io.inprice.common.meta.SubsEvent;
@@ -266,6 +267,13 @@ class Service {
     crit.append(dto.getRowLimit());
     
     return crit.toString();
+  }
+
+  Response searchIdNameList(String term) {
+  	try (Handle handle = Database.getHandle()) {
+  		Dao superDao = handle.attach(Dao.class);
+  		return new Response(superDao.searchIdNameListByTerm("%" + SqlHelper.clear(term) + "%"));
+  	}
   }
   
 }

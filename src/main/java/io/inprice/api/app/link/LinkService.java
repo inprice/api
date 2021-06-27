@@ -19,10 +19,12 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.group.GroupAlarmService;
 import io.inprice.api.app.group.GroupDao;
 import io.inprice.api.app.link.dto.SearchDTO;
+import io.inprice.api.app.superuser.link.dto.SearchBy;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
 import io.inprice.api.info.Response;
+import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
@@ -50,9 +52,21 @@ class LinkService {
     crit.append("where l.account_id = ");
     crit.append(dto.getAccountId());
 
+    if (dto.getAlarmStatus() != null && !AlarmStatus.ALL.equals(dto.getAlarmStatus())) {
+  		crit.append(" and l.alarm_id is ");
+    	if (AlarmStatus.ALARMED.equals(dto.getAlarmStatus())) {
+    		crit.append(" not ");
+    	}
+    	crit.append(" null");
+    }
+    
     if (StringUtils.isNotBlank(dto.getTerm())) {
     	crit.append(" and ");
-    	crit.append(dto.getSearchBy().getFieldName());
+    	if (SearchBy.NAME.equals(dto.getSearchBy())) {
+    		crit.append("IFNULL(l.name, l.url)");
+    	} else {
+    		crit.append(dto.getSearchBy().getFieldName());
+    	}
       crit.append(" like '%");
       crit.append(dto.getTerm());
       crit.append("%' ");
@@ -261,61 +275,5 @@ class LinkService {
 
     return res;
   }
-
-  /*
-  Response toggleStatus(Long id) {
-    Response response = Responses.NotFound.LINK;
-
-    if (id != null && id > 0) {
-      try (Handle handle = Database.getHandle()) {
-      	handle.begin();
-
-        LinkDao linkDao = handle.attach(LinkDao.class);
-        Link link = linkDao.findById(id);
-
-        if (link != null) {
-
-          //check if he tries too much
-          List<LinkHistory> lastThreeList = linkDao.findLastThreeHistoryRowsByLinkId(id);
-          if (lastThreeList.size() == 3) {
-            LinkHistory row0 = lastThreeList.get(0);
-            LinkHistory row2 = lastThreeList.get(2);
-            if (row0.getStatus().equals(row2.getStatus())) {
-              Date now = new Date();
-              long diff0 = DateUtils.findDayDiff(row0.getCreatedAt(), now);
-              long diff2 = DateUtils.findDayDiff(row2.getCreatedAt(), now);
-              if (diff0 == 0 && diff2 == 0) {
-                response = Responses.DataProblem.TOO_MANY_TOGGLING;
-              }
-            }
-          }
-
-          if (! response.equals(Responses.DataProblem.TOO_MANY_TOGGLING)) {
-            LinkStatus newStatus = (LinkStatus.PAUSED.equals(link.getStatus()) ? link.getPreStatus() : LinkStatus.PAUSED);
-            boolean isOK = linkDao.toggleStatus(id, newStatus, newStatus.getGroup());
-            if (isOK) {
-              link.setPreStatus(link.getStatus());
-              link.setStatus(newStatus);
-              long historyId = linkDao.insertHistory(link);
-              if (historyId > 0) {
-          			CommonDao commonDao = handle.attach(CommonDao.class);
-          			commonDao.refreshGroup(link.getGroupId());
-          			response = Responses.OK;
-              }
-            }
-          }
-
-        }
-
-        if (response.isOK())
-        	handle.commit();
-        else
-        	handle.rollback();
-      }
-    }
-
-    return response;
-  }
-*/
 
 }

@@ -15,8 +15,6 @@ import io.inprice.common.mappers.LinkHistoryMapper;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.mappers.LinkPriceMapper;
 import io.inprice.common.mappers.LinkSpecMapper;
-import io.inprice.common.meta.LinkStatus;
-import io.inprice.common.meta.LinkStatusGroup;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
@@ -62,10 +60,6 @@ public interface LinkDao {
   @UseRowMapper(LinkHistoryMapper.class)
   List<LinkHistory> findHistoryListByLinkId(@Bind("linkId") Long linkId);
 
-  @SqlQuery("select * from link_history where link_id=:linkId order by id desc limit 3")
-  @UseRowMapper(LinkHistoryMapper.class)
-  List<LinkHistory> findLastThreeHistoryRowsByLinkId(@Bind("linkId") Long linkId);
-
   @SqlQuery("select * from link_price where link_id=:linkId order by id desc")
   @UseRowMapper(LinkPriceMapper.class)
   List<LinkPrice> findPriceListByLinkId(@Bind("linkId") Long linkId);
@@ -88,9 +82,6 @@ public interface LinkDao {
   )
   @GetGeneratedKeys
   long insertHistory(@BindBean("link") Link link);
-
-  @SqlUpdate("update link set pre_status=status, status=:status, status_group=:statusGroup, updated_at=now() where id=:id")
-  boolean toggleStatus(@Bind("id") Long id, @Bind("status") LinkStatus status, @Bind("statusGroup") LinkStatusGroup statusGroup);
 
   @SqlQuery("select group_id from link where id in (<linkIdSet>)")
   Set<Long> findGroupIdSet(@BindList("linkIdSet") Set<Long> linkIdSet);

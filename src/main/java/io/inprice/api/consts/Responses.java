@@ -68,10 +68,7 @@ public class Responses {
     public static final Response ALREADY_EXISTS = new Response(BASE + 11, "Already exists!");
     public static final Response INTEGRITY_PROBLEM = new Response(BASE + 12, "Integrity problem!");
     public static final Response DUPLICATE = new Response(BASE + 13, "Duplicate error!");
-
     public static final Response SUBSCRIPTION_PROBLEM = new Response(BASE + 15, "Subscription service is not reachable right now! We are, sorry for this situation and, investigating.");
-    public static final Response TOO_MANY_TOGGLING = new Response(BASE + 17, "You are not allowed to Pause/Resume a link more than twice in the same day!");
-
     public static final Response FORM_VALIDATION = new Response(BASE + 20, "Validation error!");
   }
 
