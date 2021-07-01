@@ -64,5 +64,9 @@ public class PasswordHelper {
     }
     return null;
   }
+  
+  public static void main(String[] args) {
+		System.out.println(isValid("1234", "tgeCgsZWyabjtsslplwMrGJRHyTyI4zS4DlAWHnjrMQi2Nn9KwXBS9RROaPWK3BhIkEFtQcLK5TO3q8iihlhbg"));
+	}
 
 }

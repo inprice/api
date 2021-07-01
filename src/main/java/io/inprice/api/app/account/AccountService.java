@@ -54,11 +54,12 @@ class AccountService {
   private static final Logger log = LoggerFactory.getLogger(AccountService.class);
 
   private final AnnounceService announceService = Beans.getSingleton(AnnounceService.class);
+  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
 
   Response requestRegistration(RegisterDTO dto) {
     Response res = Responses.OK;
     if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
-      res = RedisClient.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
+      res = redis.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
     }
     if (!res.isOK()) return res;
 
@@ -82,7 +83,7 @@ class AccountService {
           if (!SysProps.APP_ENV.equals(AppEnv.PROD)) {
           	return new Response(mailMap);
           } else {
-          	RedisClient.sendEmail(
+          	redis.sendEmail(
         			EmailData.builder()
           			.template(EmailTemplate.REGISTRATION_REQUEST)
           			.from(Props.APP_EMAIL_SENDER)
@@ -91,7 +92,7 @@ class AccountService {
           			.data(mailMap)
           		.build()	
     				);
-            RedisClient.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
+          	redis.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
             return Responses.OK;
           }
 
@@ -295,7 +296,7 @@ class AccountService {
             List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
             if (hashList != null && ! hashList.isEmpty()) {
               for (String hash : hashList) {
-                RedisClient.removeSesion(hash);
+              	redis.removeSesion(hash);
               }
             }
 

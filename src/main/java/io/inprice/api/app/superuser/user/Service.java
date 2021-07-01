@@ -21,6 +21,7 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.DTOHelper;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.AccessLogMapper;
@@ -34,6 +35,8 @@ class Service {
 
   private static final Logger log = LoggerFactory.getLogger("SU:User");
 
+  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
+  
 	Response search(BaseSearchDTO dto) {
   	try (Handle handle = Database.getHandle()) {
     	Dao superDao = handle.attach(Dao.class);
@@ -95,7 +98,7 @@ class Service {
   
     	          if (hashList.size() > 0) {
     	          	userSessionDao.deleteByHashList(hashList);
-    	          	for (String hash : hashList) RedisClient.removeSesion(hash);
+    	          	for (String hash : hashList) redis.removeSesion(hash);
     	          }
   
     	          handle.commit();
@@ -255,7 +258,7 @@ class Service {
   		if (userId != null) {
     		boolean isOK = superDao.deleteSession(hash);
     		if (isOK) {
-    			RedisClient.removeSesion(hash);
+    			redis.removeSesion(hash);
     			List<ForDatabase> newList = superDao.fetchSessionListById(userId);
     			return new Response(newList);
     		} else {

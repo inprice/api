@@ -17,6 +17,7 @@ import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AccountStatus;
@@ -33,7 +34,8 @@ class SubscriptionService {
   //private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
 
   //private final StripeService stripeService = Beans.getSingleton(StripeService.class);
-
+  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
+	
   Response createCheckout(int planId) {
     //return stripeService.createCheckout(planId);
   	return Responses.BAD_REQUEST;
@@ -93,7 +95,7 @@ class SubscriptionService {
                   mailMap.put("user", CurrentUser.getEmail());
                   mailMap.put("account", StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName());
                   
-                	RedisClient.sendEmail(
+                  redis.sendEmail(
               			EmailData.builder()
                 			.template(EmailTemplate.FREE_ACCOUNT_CANCELLED)
                 			.from(Props.APP_EMAIL_SENDER)

@@ -21,12 +21,15 @@ import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.Timezones;
 import io.inprice.common.helpers.SqlHelper;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 
 public class UserService {
 
+  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
+	
   public Response update(UserDTO dto) {
     String problem = validateUserDTOForUpdate(dto);
     if (problem == null) {
@@ -157,7 +160,7 @@ public class UserService {
       List<ForDatabase> sessions = userSessionDao.findListByUserId(CurrentUser.getUserId());
       if (sessions != null && sessions.size() > 0) {
         for (ForDatabase ses : sessions) {
-          RedisClient.removeSesion(ses.getHash());
+        	redis.removeSesion(ses.getHash());
         }
         if (userSessionDao.deleteByUserId(CurrentUser.getUserId())) {
           return Responses.OK;

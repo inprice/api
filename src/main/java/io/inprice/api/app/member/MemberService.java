@@ -23,6 +23,7 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.EmailTemplate;
@@ -35,6 +36,8 @@ import io.inprice.common.models.User;
 class MemberService {
 
   private static final Logger log = LoggerFactory.getLogger(MemberService.class);
+
+  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
 
   Response getList() {
     Response res = Responses.NotFound.MEMBERSHIP;
@@ -305,7 +308,7 @@ class MemberService {
       template = EmailTemplate.INVITATION_FOR_NEW_USERS;
     }
 
-  	RedisClient.sendEmail(
+    redis.sendEmail(
 			EmailData.builder()
   			.template(template)
   			.from(Props.APP_EMAIL_SENDER)
@@ -366,7 +369,7 @@ class MemberService {
       
       if (hashList.size() > 0) {
       	userSessionDao.deleteByHashList(hashList);
-      	for (String hash : hashList) RedisClient.removeSesion(hash);
+      	for (String hash : hashList) redis.removeSesion(hash);
       }
     }
   }

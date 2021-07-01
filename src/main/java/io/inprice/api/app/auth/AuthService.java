@@ -36,10 +36,9 @@ import io.inprice.api.session.info.ForRedis;
 import io.inprice.api.session.info.ForResponse;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
-import io.inprice.common.config.SysProps;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
-import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Member;
@@ -50,6 +49,8 @@ public class AuthService {
 
   private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
+  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
+  
   Response login(Context ctx, LoginDTO dto) {
     if (dto != null) {
       String problem = verifyLogin(dto);
@@ -105,10 +106,7 @@ public class AuthService {
   }
 
   Response forgotPassword(String email) {
-    Response res = Responses.OK;
-    if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
-      res = RedisClient.isEmailRequested(RateLimiterType.FORGOT_PASSWORD, email);
-    }
+    Response res = redis.isEmailRequested(RateLimiterType.FORGOT_PASSWORD, email);
     if (!res.isOK()) return res;
 
     String problem = EmailValidator.verify(email);
@@ -116,7 +114,7 @@ public class AuthService {
 
       try (Handle handle = Database.getHandle()) {
         UserDao userDao = handle.attach(UserDao.class);
-  
+
         User user = userDao.findByEmail(email);
         if (user != null) {
         	if (! user.isBanned()) {
@@ -127,7 +125,7 @@ public class AuthService {
                 mailMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
                 mailMap.put("url", Props.APP_WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
                 
-              	RedisClient.sendEmail(
+                redis.sendEmail(
             			EmailData.builder()
               			.template(EmailTemplate.FORGOT_PASSWORD)
               			.from(Props.APP_EMAIL_SENDER)
@@ -148,6 +146,8 @@ public class AuthService {
           } else {
             return Responses.BANNED_USER;
           }
+        } else {
+        	return new Response("Your request has reached us. You will receive an email to reset your password.");
         }
       }
     }
@@ -181,7 +181,7 @@ public class AuthService {
                     List<ForDatabase> sessions = userSessionDao.findListByUserId(user.getId());
                     if (sessions != null && sessions.size() > 0) {
                       for (ForDatabase ses : sessions) {
-                        RedisClient.removeSesion(ses.getHash());
+                        redis.removeSesion(ses.getHash());
                       }
                       userSessionDao.deleteByUserId(user.getId());
                     }
@@ -210,6 +210,7 @@ public class AuthService {
   Response logout(Context ctx) {
     if (ctx.cookieMap().containsKey(Consts.SUPER_SESSION)) {
       CookieHelper.removeSuperCookie(ctx);
+      return Responses.OK;
     }
 
   	if (ctx.cookieMap().containsKey(Consts.SESSION)) {
@@ -223,7 +224,7 @@ public class AuthService {
 
           List<String> hashList = new ArrayList<>(sessions.size());
           for (ForCookie ses : sessions) {
-            RedisClient.removeSesion(ses.getHash());
+            redis.removeSesion(ses.getHash());
             hashList.add(ses.getHash());
           }
 
@@ -267,7 +268,7 @@ public class AuthService {
           sessions = new ArrayList<>();
         } else {
           for (ForCookie cookieSes : sessions) {
-            ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
+            ForRedis redisSes = redis.getSession(cookieSes.getHash());
             if (redisSes != null) {
               responseSesList.add(new ForResponse(cookieSes, redisSes));
             }
@@ -300,7 +301,7 @@ public class AuthService {
         }
 
         if (dbSesList.size() > 0) {
-          if (RedisClient.addSesions(redisSesList)) {
+          if (redis.addSesions(redisSesList)) {
 
             userSessionDao.insertBulk(dbSesList);
             ctx.cookie(CookieHelper.createUserCookie(SessionHelper.toTokenForUser(sessions)));
@@ -439,7 +440,7 @@ public class AuthService {
 
             for (int i = 0; i < sessions.size(); i++) {
               ForCookie cookieSes = sessions.get(i);
-              ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
+              ForRedis redisSes = redis.getSession(cookieSes.getHash());
               if (redisSes != null) {
                 responseSesList.add(new ForResponse(cookieSes, redisSes));
               }

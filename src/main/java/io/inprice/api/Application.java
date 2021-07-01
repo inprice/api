@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.consts.Global;
+import io.inprice.api.consts.Responses;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.framework.ConfigScanner;
@@ -13,6 +14,7 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.AccessGuard;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.SysProps;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.JsonConverter;
 import io.inprice.common.meta.AppEnv;
@@ -20,6 +22,7 @@ import io.inprice.common.models.AccessLog;
 import io.javalin.Javalin;
 import io.javalin.core.util.Header;
 import io.javalin.core.util.RouteOverviewPlugin;
+import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.openapi.annotations.ContentType;
@@ -29,17 +32,20 @@ public class Application {
   private static final Logger log = LoggerFactory.getLogger(Application.class);
 
   private static Javalin app;
-
+  private static RedisClient redis;
+  
   public static void main(String[] args) {
     new Thread(() -> {
       log.info("APPLICATION IS STARTING...");
 
       createServer();
       ConfigScanner.scanControllers(app);
-
+      
       log.info("APPLICATION STARTED.");
       Global.isApplicationRunning = true;
 
+      redis = Beans.getSingleton(RedisClient.class);
+      
     }, "app-starter").start();
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -51,7 +57,7 @@ public class Application {
       app.stop();
 
       log.info(" - Redis connection is closing...");
-      RedisClient.shutdown();
+      redis.shutdown();
 
       log.info(" - DB connection is closing...");
       Database.shutdown();
@@ -97,6 +103,8 @@ public class Application {
     	logAccess(ctx, e);
       ctx.json(new Response(e.getStatus(), e.getMessage()));
     });
+
+    app.exception(BadRequestResponse.class, (e, ctx) -> ctx.json(Responses.REQUEST_BODY_INVALID));
   }
 
   private static void logAccess(Context ctx, HandlerInterruptException e) {
@@ -161,7 +169,7 @@ public class Application {
       		userLog.setReqBody(reqBody.replaceAll("(?:ssword).*\"", "ssword\":\"***\""));
       	}
 
-    		RedisClient.addUserLog(userLog);
+    		redis.addUserLog(userLog);
     	}
   	}
   	CurrentUser.cleanup();

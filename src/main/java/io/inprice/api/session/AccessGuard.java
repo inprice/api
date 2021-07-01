@@ -20,6 +20,7 @@ import io.inprice.api.helpers.SessionHelper;
 import io.inprice.api.meta.ShadowRoles;
 import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForRedis;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.models.User;
 import io.inprice.common.utils.NumberUtils;
@@ -32,6 +33,8 @@ public class AccessGuard implements AccessManager {
 
   private static final Logger log = LoggerFactory.getLogger(AccessGuard.class);
 
+  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
+  
   @Override
   public void manage(Handler handler, Context ctx, Set<Role> permittedRoles) throws Exception {
     if ("OPTIONS".equals(ctx.method()) || permittedRoles.size() == 0) {
@@ -100,13 +103,13 @@ public class AccessGuard implements AccessManager {
   }
 
   ForRedis findByHash(String hash) {
-    ForRedis ses = RedisClient.getSession(hash);
+    ForRedis ses = redis.getSession(hash);
 
     if (ses != null) {
       long diffInMillies = Math.abs(System.currentTimeMillis() - ses.getAccessedAt().getTime());
       long diff = TimeUnit.DAYS.convert(diffInMillies, TimeUnit.MILLISECONDS);
 
-      if (diff > 7 && RedisClient.refreshSesion(ses.getHash())) {
+      if (diff > 7 && redis.refreshSesion(ses.getHash())) {
         try (Handle handle = Database.getHandle()) {
           UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
           if (! userSessionDao.refreshAccessedAt(hash)) {
