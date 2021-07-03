@@ -1,21 +1,23 @@
 package io.inprice.api.app.auth;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import io.inprice.api.app.utils.TestAccount;
+import io.inprice.api.app.utils.TestRole;
 import io.inprice.api.app.utils.TestUtils;
+import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * TODO: new tests for successful and failed cases of accepting new invitation must be added after MemberService tests implemented!
- * 
  * No need to check passwords again here since it is already done in Login and ForgotPassword test classes
  *  
  * @author mdpinar
@@ -75,6 +77,54 @@ public class AcceptInvitationTest {
 		
 		assertEquals(400, json.getInt("status"));
     assertEquals("Password cannot be empty!", json.getString("reason"));
+	}
+
+	/**
+	 * The steps are  
+	 * 		1- Admin of S invites a non-existing user!
+	 * 		2- Accepting his/her invitation
+	 */
+	@Test
+	public void Everything_must_be_OK_WITH_new_user_invitation() {
+		/* -------------------------------- 
+		   Inviting a non-existing user
+		 -------------------------------- */
+		Cookies cookies = TestUtils.login(TestAccount.S, TestRole.ADMIN);
+		String email = "non-existing@user.com";
+
+		HttpResponse<JsonNode> res = Unirest.post("/member")
+			.header("X-Session", "0")
+			.cookie(cookies)
+			.body(createInvitationBody(email, TestRole.EDITOR))
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+		JSONObject data = json.getJSONObject("data");
+		
+		assertEquals(200, json.getInt("status"));
+		assertNotNull(data.getString("token"));
+
+		/* -------------------------------- 
+	   Accepting him/her
+  	 -------------------------------- */
+		res = Unirest.post(SERVICE_ENDPOINT)
+			.body(createBody(data.getString("token"), "1234", "1234"))
+			.asJson();
+		//new users can have session cookies. we need to log new user out here for protecting other test cases!
+		TestUtils.logout(res.getCookies());
+
+		json = res.getBody().getObject();
+
+		assertEquals(200, json.getInt("status"));
+		assertNotNull(data);
+	}
+
+	private JSONObject createInvitationBody(String email, TestRole role) {
+		JSONObject body = new JSONObject();
+		if (email != null) body.put("email", email);
+		if (role != null) body.put("role", role.name());
+		return body;
 	}
 
 	private JSONObject createBody(String token, String password, String repeatPassword) {

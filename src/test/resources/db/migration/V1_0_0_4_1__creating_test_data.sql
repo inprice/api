@@ -74,6 +74,7 @@ set @email = 'admin@acme-z.com';
 insert into user (email, password, name, timezone) values (@email, @salted_pass, SUBSTRING_INDEX(@email, '@', 1), @timezone);
 set @user_id = last_insert_id();
 
+-- with Basic plan
 insert into account (name, admin_id, plan_id) values ('Acme Z Inc.', @user_id, 10);
 set @account_id = last_insert_id();
 
@@ -103,7 +104,8 @@ set @email = 'admin@acme-s.com';
 insert into user (email, password, name, timezone) values (@email, @salted_pass, SUBSTRING_INDEX(@email, '@', 1), @timezone);
 set @user_id = last_insert_id();
 
-insert into account (name, admin_id, user_count, plan_id) values ('Acme S Inc.', @user_id, 1, 20);
+-- with Pro plan
+insert into account (name, admin_id, user_count, plan_id) values ('Acme S Inc.', @user_id, 1, 25);
 set @account_id = last_insert_id();
 
 insert into test.member (email, user_id, account_id, role, pre_status, status) values (@email, @user_id, @account_id, 'ADMIN', 'PENDING', 'JOINED');

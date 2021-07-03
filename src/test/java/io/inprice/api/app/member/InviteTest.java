@@ -1,7 +1,9 @@
 package io.inprice.api.app.member;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -139,7 +141,7 @@ public class InviteTest {
 	}
 
 	@Test
-	public void Forbidden_WITH_viewer_user() {
+	public void Forbidden_FOR_viewer_user() {
 		Cookies cookies = TestUtils.login(TestRole.VIEWER);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
@@ -156,7 +158,7 @@ public class InviteTest {
 	}
 
 	@Test
-	public void Forbidden_WITH_editor_user() {
+	public void Forbidden_FOR_editor_user() {
 		Cookies cookies = TestUtils.login(TestRole.EDITOR);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
@@ -284,23 +286,52 @@ public class InviteTest {
 	}
 
 	/**
-	 * Admin of S invites the Viewer of Z as Viewer!
+	 * Admin of S invites a non-existing user!
 	 */
 	@Test
-	public void Everything_must_be_OK_WITH_correct_parameters() {
+	public void Everything_must_be_OK_WITH_a_non_existing_user() {
 		Cookies cookies = TestUtils.login(TestAccount.S, TestRole.ADMIN);
+		String email = "non-existing@user.com";
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.header("X-Session", "0")
 			.cookie(cookies)
-			.body(createBody(Fixtures.NORMAL_USER(TestRole.VIEWER, TestAccount.Z).getString("email"), TestRole.VIEWER))
+			.body(createBody(email, TestRole.EDITOR))
 			.asJson();
 		TestUtils.logout(cookies);
 
 		JSONObject json = res.getBody().getObject();
+		JSONObject data = json.getJSONObject("data");
 		
 		assertEquals(200, json.getInt("status"));
-    assertEquals("OK", json.getString("reason"));
+		assertNotNull(data);
+		assertNotNull(data.get("url"));
+		assertNotNull(data.getString("token"));
+		assertTrue(email.startsWith(data.getString("user")));
+	}
+
+	/**
+	 * Admin of S invites the Viewer of Z as Viewer!
+	 */
+	@Test
+	public void Everything_must_be_OK_WITH_an_existing_user() {
+		Cookies cookies = TestUtils.login(TestAccount.S, TestRole.ADMIN);
+		String email = Fixtures.NORMAL_USER(TestRole.VIEWER, TestAccount.Z).getString("email");
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.header("X-Session", "0")
+			.cookie(cookies)
+			.body(createBody(email, TestRole.VIEWER))
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+		JSONObject data = json.getJSONObject("data");
+		
+		assertEquals(200, json.getInt("status"));
+		assertNotNull(data);
+		assertFalse(data.has("url"));
+		assertTrue(email.startsWith(data.getString("user")));
 	}
 
 	private JSONObject createBody(String email, TestRole role) {

@@ -23,9 +23,11 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
+import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
+import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
@@ -79,7 +81,8 @@ class MemberService {
             if (mem == null) {
             	
             	handle.begin();
-            	
+
+            	//TODO: an announce to user must be fired from here!
               boolean isAdded = memberDao.insertInvitation(dto.getEmail(), dto.getRole().name(), CurrentUser.getAccountId());
               if (isAdded) {
                 boolean isOK = accountDao.increaseUserCount(CurrentUser.getAccountId());
@@ -321,7 +324,12 @@ class MemberService {
 		);
 
     log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
-    return Responses.OK;
+
+    if (AppEnv.TEST.equals(SysProps.APP_ENV)) {
+    	return new Response(mailMap);
+    } else {
+    	return Responses.OK;
+    }
   }
 
   private String validate(InvitationSendDTO dto) {

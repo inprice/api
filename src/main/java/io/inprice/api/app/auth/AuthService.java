@@ -313,10 +313,10 @@ public class AuthService {
 
         if (dbSesList.size() > 0) {
           if (redis.addSesions(redisSesList)) {
-
+          	
             userSessionDao.insertBulk(dbSesList);
             ctx.cookie(CookieHelper.createUserCookie(SessionHelper.toTokenForUser(sessions)));
-
+            
             // the response
             Map<String, Object> map = new HashMap<>(2);
             map.put("sessionNo", sessionNo);
@@ -364,7 +364,7 @@ public class AuthService {
                   newUser.setEmail(dto.getEmail());
                   newUser.setName(dto.getName());
                   newUser.setTimezone(dto.getTimezone());
-                  res = new Response(user);
+                  res = new Response(newUser);
                 }
               } else {
                 res = Responses.Already.Defined.MEMBERSHIP;

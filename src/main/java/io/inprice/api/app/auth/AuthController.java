@@ -48,10 +48,9 @@ public class AuthController extends AbstractController {
       Response res = service.acceptNewUser(dto, timezone);
       if (res.isOK()) {
         User user = res.getData();
-        ctx.json(Commons.createResponse(ctx, service.createSession(ctx, user)));
-      } else {
-        ctx.json(Commons.createResponse(ctx, res));
+        res = service.createSession(ctx, user);
       }
+      ctx.json(Commons.createResponse(ctx, res));
     });
 
   }
