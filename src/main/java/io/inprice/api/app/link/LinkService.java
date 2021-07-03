@@ -111,7 +111,7 @@ class LinkService {
   Response delete(LinkDeleteDTO dto) {
   	Response response = Responses.NotFound.LINK;
 
-    if (dto != null && dto.getLinkIdSet() != null && dto.getLinkIdSet().size() > 0) {
+    if (dto.getLinkIdSet() != null && dto.getLinkIdSet().size() > 0) {
     	int count = dto.getLinkIdSet().size();
     	
     	String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
@@ -172,7 +172,7 @@ class LinkService {
   Response moveTo(LinkMoveDTO dto) {
   	Response response = Responses.Invalid.DATA;
 
-  	if (dto != null && (dto.getToGroupId() != null && dto.getToGroupId() > 0) || StringUtils.isNotBlank(dto.getToGroupName())) {
+  	if ((dto.getToGroupId() != null && dto.getToGroupId() > 0) || StringUtils.isNotBlank(dto.getToGroupName())) {
       if (dto.getLinkIdSet() != null && dto.getLinkIdSet().size() > 0) {
 
       	try (Handle handle = Database.getHandle()) {

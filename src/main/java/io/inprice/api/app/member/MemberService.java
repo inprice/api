@@ -66,10 +66,12 @@ class MemberService {
 
         		AccountDao accountDao = handle.attach(AccountDao.class);
         		Account account = accountDao.findById(CurrentUser.getAccountId());
-        		if (account != null 
-        				&& (account.getPlan() == null 
-        				 || account.getPlan().getUserLimit().compareTo(account.getUserCount()) <= 0)) {
-        			return Responses.PermissionProblem.USER_LIMIT_PROBLEM;
+        		if (account != null) {
+        			if (account.getPlan() == null) {
+        				return Responses.PermissionProblem.DONT_HAVE_A_PLAN;
+        			} else if (account.getPlan().getUserLimit().compareTo(account.getUserCount()) <= 0) {
+        				return Responses.PermissionProblem.USER_LIMIT_PROBLEM;
+        			}
         		}
 
         		MemberDao memberDao = handle.attach(MemberDao.class);
@@ -91,7 +93,7 @@ class MemberService {
                 }
               }
             } else {
-              return new Response("This user is already added to this account!");
+              return new Response("This user has already been added to this account!");
             }
           } else {
           	return Responses.PermissionProblem.WRONG_USER;
@@ -323,18 +325,14 @@ class MemberService {
   }
 
   private String validate(InvitationSendDTO dto) {
-    String problem = null;
-
-    if (dto == null || (dto.getEmail() == null && !dto.getEmail().equalsIgnoreCase(CurrentUser.getEmail()))) {
-      problem = Responses.Invalid.INVITATION.getReason();
+    String problem = EmailValidator.verify(dto.getEmail());
+    
+    if (problem == null && dto.getEmail().equalsIgnoreCase(CurrentUser.getEmail())) {
+    	problem = "You cannot invite yourself!";
     }
 
-    if (problem == null && dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN)) {
+    if (problem == null && (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN) || dto.getRole().equals(UserRole.SUPER))) {
       problem = String.format("Role must be either %s or %s!", UserRole.EDITOR.name(), UserRole.VIEWER.name());
-    }
-
-    if (problem == null) {
-      problem = EmailValidator.verify(dto.getEmail());
     }
 
     return problem;
@@ -343,7 +341,7 @@ class MemberService {
   private String validate(InvitationUpdateDTO dto) {
     String problem = null;
 
-    if (dto == null || dto.getId() == null || dto.getId() < 1) {
+    if (dto.getId() == null || dto.getId() < 1) {
       problem = "Invalid invitation data!";
     }
 

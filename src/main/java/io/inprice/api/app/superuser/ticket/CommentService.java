@@ -25,57 +25,56 @@ public class CommentService {
 	Response insert(TicketCommentDTO dto) {
 		Response res = Responses.Invalid.TICKET;
 
-		if (dto != null) {
-			String problem = validate(dto);
-			if (problem == null) {
-				try (Handle handle = Database.getHandle()) {
-					TicketDao ticketDao = handle.attach(TicketDao.class);
+		String problem = validate(dto);
+		if (problem == null) {
+			try (Handle handle = Database.getHandle()) {
+				TicketDao ticketDao = handle.attach(TicketDao.class);
 
-					Ticket ticket = ticketDao.findById(dto.getTicketId());
-					if (ticket != null) {
-						if (! TicketStatus.CLOSED.equals(ticket.getStatus())) {
-							handle.begin();
-							ticketDao.makeAllCommentsNotEditable(dto.getTicketId());
+				Ticket ticket = ticketDao.findById(dto.getTicketId());
+				if (ticket != null) {
+					if (! TicketStatus.CLOSED.equals(ticket.getStatus())) {
+						handle.begin();
+						ticketDao.makeAllCommentsNotEditable(dto.getTicketId());
 
-							dto.setAccountId(ticket.getAccountId());
-							boolean isOK = ticketDao.insertComment(dto);
+						dto.setAccountId(ticket.getAccountId());
+						boolean isOK = ticketDao.insertComment(dto);
+						if (isOK) {
+							ticketDao.increaseCommentCount(dto.getTicketId());
+
+							if (dto.getTicketNewStatus() != null && !ticket.getStatus().equals(dto.getTicketNewStatus()) && !TicketStatus.OPENED.equals(dto.getTicketNewStatus())) {
+								ticket.setStatus(dto.getTicketNewStatus());
+								isOK = ticketDao.changeStatus(ticket.getId(), ticket.getStatus());
+								if (isOK) {
+									isOK = ticketDao.insertHistory(new TicketDTO(ticket));
+								}
+							}
 							if (isOK) {
-  							ticketDao.increaseCommentCount(dto.getTicketId());
-
-  							if (dto.getTicketNewStatus() != null && !ticket.getStatus().equals(dto.getTicketNewStatus()) && !TicketStatus.OPENED.equals(dto.getTicketNewStatus())) {
-  								ticket.setStatus(dto.getTicketNewStatus());
-  								isOK = ticketDao.changeStatus(ticket.getId(), ticket.getStatus());
-  								if (isOK) {
-  									isOK = ticketDao.insertHistory(new TicketDTO(ticket));
-  								}
-  							}
-  							if (isOK) {
-    							handle.commit();
-    							List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
-    							res = new Response(commentList);
-  							}
+  							handle.commit();
+  							List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
+  							res = new Response(commentList);
 							}
-
-							if (! isOK){
-								handle.rollback();
-								res = Responses.DataProblem.DB_PROBLEM;
-							}
-						} else {
-							res = new Response("This is a closed ticket!");
 						}
+
+						if (! isOK){
+							handle.rollback();
+							res = Responses.DataProblem.DB_PROBLEM;
+						}
+					} else {
+						res = new Response("This is a closed ticket!");
 					}
 				}
-			} else {
-				res = new Response(problem);
 			}
+		} else {
+			res = new Response(problem);
 		}
+
 		return res;
 	}
 
 	Response update(TicketCommentDTO dto) {
 		Response res = Responses.Invalid.TICKET;
 
-		if (dto != null && dto.getId() != null && dto.getId() > 0) {
+		if (dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {

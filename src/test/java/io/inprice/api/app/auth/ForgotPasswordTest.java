@@ -20,12 +20,12 @@ import kong.unirest.json.JSONObject;
 /**
  * 
  * @author mdpinar
- * @since 2021-06-28
+ * @since 2021-07-01
  */
 @RunWith(JUnit4.class)
-public class LoginTest {
+public class ForgotPasswordTest {
 
-	private static final String SERVICE_ENDPOINT = "/login";
+	private static final String SERVICE_ENDPOINT = "/forgot-password";
 
 	@BeforeClass
 	public static void setup() {
@@ -45,7 +45,7 @@ public class LoginTest {
 	@Test
 	public void Email_address_cannot_be_empty_WITH_empty_email() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createUser(null, "1234"))
+			.body(createBody(null))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -55,21 +55,9 @@ public class LoginTest {
 	}
 
 	@Test
-	public void Password_cannot_be_empty_WITH_empty_password() {
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createUser("admin@inprice.io", null))
-			.asJson();
-
-		JSONObject json = res.getBody().getObject();
-		
-		assertEquals(400, json.getInt("status"));
-    assertEquals("Password cannot be empty!", json.getString("reason"));
-	}
-
-	@Test
 	public void Invalid_email_address_WITH_wrong_email() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createUser("admininprice.io", "1234"))
+			.body(createBody("admininprice.io"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -79,9 +67,21 @@ public class LoginTest {
 	}
 
 	@Test
+	public void You_will_be_receiving_an_email_after_verification_of_your_email_WITH_nonexistent_email() {
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.body(createBody("someone@inprice.io"))
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("You will be receiving an email after verification of your email.", json.getString("reason"));
+	}
+
+	@Test
 	public void Email_address_must_be_between_8_and_128_chars_WITH_shorter_email() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createUser("a@xy.io", "1234"))
+			.body(createBody("a@xy.io"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -93,49 +93,13 @@ public class LoginTest {
 	@Test
 	public void Email_address_must_be_between_8_and_128_chars_WITH_longer_email() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createUser(RandomStringUtils.randomAlphabetic(118)+"@inprice.io", "1234"))
+			.body(createBody(RandomStringUtils.randomAlphabetic(118)+"@inprice.io"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(400, json.getInt("status"));
     assertEquals("Email address must be between 8 and 128 chars!", json.getString("reason"));
-	}
-
-	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_shorter_password() {
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createUser("admin@inprice.io", "123"))
-			.asJson();
-
-		JSONObject json = res.getBody().getObject();
-
-		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 and 16 chars!", json.getString("reason"));
-	}
-
-	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_longer_password() {
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createUser("admin@inprice.io", RandomStringUtils.randomAlphabetic(17)))
-			.asJson();
-
-		JSONObject json = res.getBody().getObject();
-		
-		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 and 16 chars!", json.getString("reason"));
-	}
-
-	@Test
-	public void Invalid_email_or_password_WITH_wrong_password() {
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createUser("admin@inprice.io", "1235"))
-			.asJson();
-
-		JSONObject json = res.getBody().getObject();
-
-		assertEquals(113, json.getInt("status"));
-    assertEquals("Invalid email or password!", json.getString("reason"));
 	}
 
 	@Test
@@ -151,34 +115,55 @@ public class LoginTest {
 	}
 
 	@Test
-	public void Everything_must_be_OK_WITH_correct_credentials() {
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(Fixtures.NORMAL_USER(TestRole.ADMIN))
-			.asJson();
-
-		JSONObject json = res.getBody().getObject();
-		
-		assertEquals(200, json.getInt("status"));
-    assertNotNull(json.get("data"));
-	}
-
-	@Test
-	public void Everything_must_be_OK_WITH_correct_credentials_OF_superuser() {
+	public void User_is_not_suitable_for_this_operation_FOR_super_user() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(Fixtures.SUPER_USER)
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
 		
+		assertEquals(912, json.getInt("status"));
+		assertEquals("User is not suitable for this operation!", json.getString("reason"));
+	}
+
+	@Test
+	public void Everything_must_be_OK_WITH_correct_credentials() {
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.body(Fixtures.NORMAL_USER(TestRole.ADMIN))
+			.asJson();
+		
+		JSONObject json = res.getBody().getObject();
+		
 		assertEquals(200, json.getInt("status"));
-    assertNotNull(json.get("data"));
+		assertNotNull(json.getJSONObject("data"));
+	}
+
+	@Test
+	public void This_email_is_already_requested_please_wait_some_time_to_try_again_WITH_correct_credentials() {
+		//first request
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.body(Fixtures.NORMAL_USER(TestRole.VIEWER))
+			.asJson();
+		
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(200, json.getInt("status"));
+		
+		//second request
+		res = Unirest.post(SERVICE_ENDPOINT)
+			.body(Fixtures.NORMAL_USER(TestRole.VIEWER))
+			.asJson();
+			
+		json = res.getBody().getObject();
+		
+		assertEquals(814, json.getInt("status"));
+		assertEquals("This email is already requested, please wait some time to try again!", json.getString("reason"));
 	}
 	
-	private JSONObject createUser(String email, String password) {
-		JSONObject user = new JSONObject();
-		if (email != null) user.put("email", email);
-		if (password != null) user.put("password", password);
-		return user;
+	private JSONObject createBody(String email) {
+		JSONObject body = new JSONObject();
+		if (email != null) body.put("email", email);
+		return body;
 	}
 
 }

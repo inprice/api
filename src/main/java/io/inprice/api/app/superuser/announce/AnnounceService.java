@@ -36,30 +36,29 @@ public class AnnounceService {
 	Response insert(AnnounceDTO dto) {
 		Response res = Responses.Invalid.ANNOUNCE;
 
-		if (dto != null) {
-			String problem = validate(dto);
-			if (problem == null) {
-				try (Handle handle = Database.getHandle()) {
-					AnnounceDao announceDao = handle.attach(AnnounceDao.class);
+		String problem = validate(dto);
+		if (problem == null) {
+			try (Handle handle = Database.getHandle()) {
+				AnnounceDao announceDao = handle.attach(AnnounceDao.class);
 
-					boolean isOK = announceDao.insert(dto);
-					if (isOK) {
-						res = Responses.OK;
-					} else {
-						res = Responses.DataProblem.DB_PROBLEM;
-					}
+				boolean isOK = announceDao.insert(dto);
+				if (isOK) {
+					res = Responses.OK;
+				} else {
+					res = Responses.DataProblem.DB_PROBLEM;
 				}
-			} else {
-				res = new Response(problem);
 			}
+		} else {
+			res = new Response(problem);
 		}
+
 		return res;
 	}
 
 	Response update(AnnounceDTO dto) {
 		Response res = Responses.Invalid.ANNOUNCE;
 
-		if (dto != null && dto.getId() != null && dto.getId() > 0) {
+		if (dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {

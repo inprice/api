@@ -43,64 +43,63 @@ public class AlarmService {
 	Response insert(AlarmDTO dto) {
 		Response res = Responses.Invalid.ALARM;
 
-		if (dto != null) {
-			String problem = validate(dto);
+		String problem = validate(dto);
 
-			if (problem == null) {
-				try (Handle handle = Database.getHandle()) {
-					
-	        AccountDao accountDao = handle.attach(AccountDao.class);
-	        Account account = accountDao.findById(CurrentUser.getAccountId());
+		if (problem == null) {
+			try (Handle handle = Database.getHandle()) {
+				
+        AccountDao accountDao = handle.attach(AccountDao.class);
+        Account account = accountDao.findById(CurrentUser.getAccountId());
 
-	        if (account.getPlan() != null) {
-	          int allowedAlarmCount = (account.getPlan().getAlarmLimit() - account.getAlarmCount());
-					
-	          if (allowedAlarmCount > 0) {
-    					Pair<String, BigDecimal> pair = findCurrentStatusAndAmount(dto, handle);
-    
-    					if (pair != null) {
-    						AlarmDao alarmDao = handle.attach(AlarmDao.class);
-    						handle.begin();
-    						long id = alarmDao.insert(dto, pair);
-    
-    						boolean isOK = false;
-    						if (AlarmTopic.LINK.equals(dto.getTopic())) {
-    							isOK = alarmDao.setAlarmForLink(dto.getLinkId(), id, CurrentUser.getAccountId());
-    						} else {
-    							isOK = alarmDao.setAlarmForGroup(dto.getGroupId(), id, CurrentUser.getAccountId());
-    						}
-    
-    						if (isOK) {
-    		        	accountDao.increaseAlarmCount(CurrentUser.getAccountId());
+        if (account.getPlan() != null) {
+          int allowedAlarmCount = (account.getPlan().getAlarmLimit() - account.getAlarmCount());
+				
+          if (allowedAlarmCount > 0) {
+  					Pair<String, BigDecimal> pair = findCurrentStatusAndAmount(dto, handle);
+  
+  					if (pair != null) {
+  						AlarmDao alarmDao = handle.attach(AlarmDao.class);
+  						handle.begin();
+  						long id = alarmDao.insert(dto, pair);
+  
+  						boolean isOK = false;
+  						if (AlarmTopic.LINK.equals(dto.getTopic())) {
+  							isOK = alarmDao.setAlarmForLink(dto.getLinkId(), id, CurrentUser.getAccountId());
+  						} else {
+  							isOK = alarmDao.setAlarmForGroup(dto.getGroupId(), id, CurrentUser.getAccountId());
+  						}
+  
+  						if (isOK) {
+  		        	accountDao.increaseAlarmCount(CurrentUser.getAccountId());
 
-    		        	handle.commit();
-    							dto.setId(id);
-    							res = new Response(dto);
-    						} else {
-    							handle.rollback();
-    							res = Responses.DataProblem.DB_PROBLEM;
-    						}
-  	          } else {
-  	            res = (AlarmTopic.LINK.equals(dto.getTopic()) ? Responses.NotFound.LINK : Responses.NotFound.GROUP);
-    					}
+  		        	handle.commit();
+  							dto.setId(id);
+  							res = new Response(dto);
+  						} else {
+  							handle.rollback();
+  							res = Responses.DataProblem.DB_PROBLEM;
+  						}
 	          } else {
-		          res = Responses.NotAllowed.NO_ALARM_LIMIT;
-	          }
-	        } else {
-            res = Responses.NotAllowed.HAVE_NO_PLAN;
-	        }
+	            res = (AlarmTopic.LINK.equals(dto.getTopic()) ? Responses.NotFound.LINK : Responses.NotFound.GROUP);
+  					}
+          } else {
+	          res = Responses.NotAllowed.NO_ALARM_LIMIT;
+          }
+        } else {
+          res = Responses.NotAllowed.HAVE_NO_PLAN;
         }
-			} else {
-				res = new Response(problem);
-			}
+      }
+		} else {
+			res = new Response(problem);
 		}
+
 		return res;
 	}
 
 	Response update(AlarmDTO dto) {
 		Response res = Responses.NotFound.ALARM;
 
-		if (dto != null && dto.getId() != null && dto.getId() > 0) {
+		if (dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {

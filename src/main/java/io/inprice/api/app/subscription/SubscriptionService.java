@@ -273,16 +273,10 @@ class SubscriptionService {
   private String validateInvoiceInfo(CustomerDTO dto) {
     String problem = null;
 
-    if (dto == null) {
-      problem = "Invalid customer data!";
-    }
-
-    if (problem == null) {
-      if (StringUtils.isBlank(dto.getTitle())) {
-        problem = "Title cannot be empty!";
-      } else if (dto.getTitle().length() < 3 || dto.getTitle().length() > 255) {
-        problem = "Title must be between 3 - 255 chars";
-      }
+    if (StringUtils.isBlank(dto.getTitle())) {
+      problem = "Title cannot be empty!";
+    } else if (dto.getTitle().length() < 3 || dto.getTitle().length() > 255) {
+      problem = "Title must be between 3 - 255 chars";
     }
 
     if (problem == null) {

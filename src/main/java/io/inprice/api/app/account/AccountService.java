@@ -384,16 +384,10 @@ class AccountService {
   private Response validateAccountDTO(CreateDTO dto) {
     String problem = null;
 
-    if (dto == null) {
-      problem = "Invalid account info!";
-    }
-
-    if (problem == null) {
-      if (StringUtils.isBlank(dto.getName())) {
-        problem = "Account name cannot be empty!";
-      } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
-        problem = "Account name must be between 3 - 70 chars";
-      }
+    if (StringUtils.isBlank(dto.getName())) {
+      problem = "Account name cannot be empty!";
+    } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
+      problem = "Account name must be between 3 - 70 chars";
     }
 
     if (problem == null) {
@@ -432,15 +426,7 @@ class AccountService {
   }
 
   private Response validateAccountDTO(RegisterDTO dto) {
-    String problem = null;
-
-    if (dto == null) {
-      problem = "Invalid account info!";
-    }
-
-    if (problem == null) {
-      problem = EmailValidator.verify(dto.getEmail());
-    }
+    String problem = EmailValidator.verify(dto.getEmail());
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getAccountName())) {

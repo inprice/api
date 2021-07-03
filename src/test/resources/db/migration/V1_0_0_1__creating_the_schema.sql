@@ -2,7 +2,7 @@
 
 create table user (
   id                        bigint unsigned auto_increment not null,
-  email                     varchar(100) not null,
+  email                     varchar(128) not null,
   password                  varchar(88) not null,
   name                      varchar(70) not null,
   timezone                  varchar(30),
@@ -111,7 +111,7 @@ alter table account_trans add foreign key (account_id) references account (id);
 
 create table member (
   id                        bigint unsigned auto_increment not null,
-  email                     varchar(100) not null,
+  email                     varchar(128) not null,
   user_id                   bigint unsigned,
   account_id                bigint unsigned not null,
   role                      enum('VIEWER', 'EDITOR', 'ADMIN', 'SUPER') not null default 'EDITOR',
@@ -287,7 +287,7 @@ alter table coupon add foreign key (plan_id) references plan (id);
 
 create table user_used (
   id                        bigint unsigned auto_increment not null,
-  email                     varchar(100) not null,
+  email                     varchar(128) not null,
   whitelisted               boolean default false,
   perm_type                 enum('FREE_USE') not null default 'FREE_USE',
   created_year              smallint not null default (year(curdate())),
@@ -405,7 +405,7 @@ alter table announce_log add foreign key (announce_id) references announce (id);
 create table access_log (
   id                        bigint unsigned auto_increment not null,
   user_id                   bigint unsigned,
-  user_email                varchar(100),
+  user_email                varchar(128),
   user_role                 varchar(8),
   account_id                bigint unsigned,
   account_name              varchar(70),

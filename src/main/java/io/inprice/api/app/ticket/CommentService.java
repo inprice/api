@@ -25,45 +25,44 @@ public class CommentService {
 	Response insert(TicketCommentDTO dto) {
 		Response res = Responses.Invalid.TICKET;
 
-		if (dto != null) {
-			String problem = validate(dto);
-			if (problem == null) {
-				try (Handle handle = Database.getHandle()) {
-					TicketDao ticketDao = handle.attach(TicketDao.class);
+		String problem = validate(dto);
+		if (problem == null) {
+			try (Handle handle = Database.getHandle()) {
+				TicketDao ticketDao = handle.attach(TicketDao.class);
 
-					Ticket ticket = ticketDao.findById(dto.getTicketId(), dto.getAccountId());
-					if (ticket != null) {
-						if (! TicketStatus.CLOSED.equals(ticket.getStatus())) {
-							handle.begin();
-							ticketDao.makeAllCommentsNotEditable(dto.getTicketId());
+				Ticket ticket = ticketDao.findById(dto.getTicketId(), dto.getAccountId());
+				if (ticket != null) {
+					if (! TicketStatus.CLOSED.equals(ticket.getStatus())) {
+						handle.begin();
+						ticketDao.makeAllCommentsNotEditable(dto.getTicketId());
 
-							dto.setAccountId(ticket.getAccountId());
-							boolean isOK = ticketDao.insertComment(dto);
-							if (isOK) {
-  							ticketDao.increaseCommentCount(dto.getTicketId());
-  							handle.commit();
-  							List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
-  							res = new Response(commentList);
-							} else {
-								handle.rollback();
-								res = Responses.DataProblem.DB_PROBLEM;
-							}
+						dto.setAccountId(ticket.getAccountId());
+						boolean isOK = ticketDao.insertComment(dto);
+						if (isOK) {
+							ticketDao.increaseCommentCount(dto.getTicketId());
+							handle.commit();
+							List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
+							res = new Response(commentList);
 						} else {
-							res = new Response("You are not allowed to add comment to a closed ticket!");
+							handle.rollback();
+							res = Responses.DataProblem.DB_PROBLEM;
 						}
+					} else {
+						res = new Response("You are not allowed to add comment to a closed ticket!");
 					}
 				}
-			} else {
-				res = new Response(problem);
 			}
+		} else {
+			res = new Response(problem);
 		}
+
 		return res;
 	}
 
 	Response update(TicketCommentDTO dto) {
 		Response res = Responses.Invalid.TICKET;
 
-		if (dto != null && dto.getId() != null && dto.getId() > 0) {
+		if (dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {

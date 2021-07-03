@@ -65,32 +65,31 @@ public class TicketService {
 	Response insert(TicketDTO dto) {
 		Response res = Responses.Invalid.TICKET;
 
-		if (dto != null) {
-			String problem = validate(dto);
-			if (problem == null) {
-				try (Handle handle = Database.getHandle()) {
-					TicketDao ticketDao = handle.attach(TicketDao.class);
-					handle.begin();
-					
-					long id = ticketDao.insert(dto);
-					dto.setId(id);
-					dto.setStatus(TicketStatus.OPENED);
-					ticketDao.insertHistory(dto);
-					res = Responses.OK;
+		String problem = validate(dto);
+		if (problem == null) {
+			try (Handle handle = Database.getHandle()) {
+				TicketDao ticketDao = handle.attach(TicketDao.class);
+				handle.begin();
+				
+				long id = ticketDao.insert(dto);
+				dto.setId(id);
+				dto.setStatus(TicketStatus.OPENED);
+				ticketDao.insertHistory(dto);
+				res = Responses.OK;
 
-					handle.commit();
-				}
-			} else {
-				res = new Response(problem);
+				handle.commit();
 			}
+		} else {
+			res = new Response(problem);
 		}
+
 		return res;
 	}
 
 	Response update(TicketDTO dto) {
 		Response res = Responses.NotFound.TICKET;
 
-		if (dto != null && dto.getId() != null && dto.getId() > 0) {
+		if (dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {

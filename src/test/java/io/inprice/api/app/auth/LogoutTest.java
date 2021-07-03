@@ -7,8 +7,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import io.inprice.api.app.utils.Fixtures;
-import io.inprice.api.app.utils.TestHelper;
+import io.inprice.api.app.utils.TestRole;
+import io.inprice.api.app.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -27,7 +27,7 @@ public class LogoutTest {
 
 	@BeforeClass
 	public static void setup() {
-		TestHelper.initTestServers();
+		TestUtils.setup();
 	}
 	
 	@Test
@@ -36,64 +36,50 @@ public class LogoutTest {
 		
 		JSONObject json = res.getBody().getObject();
 		
-		assertEquals(json.getInt("status"), 801);
-		assertEquals(json.getString("reason"), "Seems that you are already logged out!");
+		assertEquals(801, json.getInt("status"));
+		assertEquals("Seems that you are already logged out!", json.getString("reason"));
 	}
 	
 	@Test
 	public void Seems_that_you_are_already_logged_out_FOR_multiple_logout() {
-		//in order to get a valid cookied, user logins first
-		Cookies cookies = Unirest.post("/login")
-			.body(Fixtures.EDITOR_USER)
-			.asEmpty()
-			.getCookies();
+		//in order to get a valid cookied, user logins and logsout first
+		Cookies cookies = TestUtils.login(TestRole.EDITOR);
+		TestUtils.logout(cookies);
 		
-		//first logout
+		//second logout
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).cookie(cookies).asJson();
 		JSONObject json = res.getBody().getObject();
 		
-		assertEquals(json.getInt("status"), 200);
-		
-		//second logout
-		res = Unirest.post(SERVICE_ENDPOINT).cookie(cookies).asJson();
-		json = res.getBody().getObject();
-		
-		assertEquals(json.getInt("status"), 801);
-		assertEquals(json.getString("reason"), "Seems that you are already logged out!");
+		assertEquals(801, json.getInt("status"));
+		assertEquals("Seems that you are already logged out!", json.getString("reason"));
 	}
 	
 	@Test
 	public void Everything_must_be_ok_WITH_superuser_cookie() {
 		//in order to get a valid cookied, super user logins first
-		Cookies cookies = Unirest.post("/login")
-			.body(Fixtures.SUPER_USER)
-			.asEmpty()
-			.getCookies();
+		Cookies cookies = TestUtils.login(TestRole.SUPER);
 		
 		//handled cookie is used here
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).cookie(cookies).asJson();
 		
 		JSONObject json = res.getBody().getObject();
 		
-		assertEquals(json.getInt("status"), 200);
-		assertEquals(json.getString("reason"), "OK");
+		assertEquals(200, json.getInt("status"));
+		assertEquals("OK", json.getString("reason"));
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_normal_user_cookie() {
 		//in order to get a valid cookied, user logins first
-		Cookies cookies = Unirest.post("/login")
-			.body(Fixtures.EDITOR_USER)
-			.asEmpty()
-			.getCookies();
+		Cookies cookies = TestUtils.login(TestRole.VIEWER);
 		
 		//handled cookie is used here
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).cookie(cookies).asJson();
 
 		JSONObject json = res.getBody().getObject();
 		
-		assertEquals(json.getInt("status"), 200);
-    assertEquals(json.getString("reason"), "OK");
+		assertEquals(200, json.getInt("status"));
+    assertEquals("OK", json.getString("reason"));
 	}
 
 }

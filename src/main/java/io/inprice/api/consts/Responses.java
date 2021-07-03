@@ -8,8 +8,8 @@ public class Responses {
 
   public static final Response OK = new Response(HttpStatus.OK_200, "OK");
   public static final Response BAD_REQUEST = new Response(HttpStatus.BAD_REQUEST_400, "Bad request!");
-  public static final Response _401 = new Response(HttpStatus.UNAUTHORIZED_401, "Your session seems to be expired, please sign in again.");
-  public static final Response _403 = new Response(HttpStatus.FORBIDDEN_403, "Your role is not suitable to do this operation.");
+  public static final Response _401 = new Response(HttpStatus.UNAUTHORIZED_401, "No active session, please sign in!");
+  public static final Response _403 = new Response(HttpStatus.FORBIDDEN_403, "Forbidden!");
   public static final Response BANNED_USER = new Response(HttpStatus.FORBIDDEN_403, "Banned user!");
   public static final Response REQUEST_BODY_INVALID = new Response(HttpStatus.BAD_REQUEST_400, "Request body is invalid!");
 
@@ -52,7 +52,7 @@ public class Responses {
     private static final int BASE = 500;
     public static final Response UNAUTHORIZED = new Response(BASE + 1, "Unauthrozied!");
     public static final Response ADMIN_ONLY = new Response(BASE + 2, "This operation can only be done by an admin!");
-    public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to buy a new plan!");
+    public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to subscribe to a plan!");
     public static final Response NO_ACCOUNT = new Response(BASE + 5, "You have no active account! Please either create a new one or participate in an existing!");
     public static final Response USER_LIMIT_PROBLEM = new Response(BASE + 6, "Your user count is reached your plans limit!");
     public static final Response LINK_LIMIT_PROBLEM = new Response(BASE + 7, "Your link count is reached your plans limit! You need to pass a broader plan to proceed");
@@ -97,6 +97,7 @@ public class Responses {
     public static final Response HAS_THE_SAME_PLAN = new Response(BASE + 10, "You have already this plan at the moment!");
 
     public static final Response REQUESTED_EMAIL = new Response(BASE + 14, "This email is already requested, please wait some time to try again!");
+    public static final Response RESET_PASSWORD = new Response(BASE + 15, "Your password is already reset!");
     
     public static final Response BANNED_USER = new Response(BASE + 25, "User is already banned!");
     public static final Response NOT_BANNED_USER = new Response(BASE + 26, "User is not banned!");
@@ -117,8 +118,9 @@ public class Responses {
     public static final Response NO_LINK_LIMIT = new Response(BASE + 1, "You have reached max link number of your plan!");
     public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload max 100 URLs at once!");
     public static final Response HAVE_NO_PLAN = new Response(BASE + 3, "You haven't picked a plan yet!");
-    public static final Response UPDATE = new Response(BASE + 4, "This record is not suitable for update!");
+    public static final Response UPDATE = new Response(BASE + 4, "You are not allowed to update this data!");
     public static final Response NO_ALARM_LIMIT = new Response(BASE + 10, "You have reached max alarm number of your plan!");
+    public static final Response SUPER_USER = new Response(BASE + 12, "User is not suitable for this operation!");
   }
 
   public static class NotSuitable {

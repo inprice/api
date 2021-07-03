@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.http.HttpStatus;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +96,7 @@ public class AccessGuard implements AccessManager {
           ctx.json(Commons.createResponse(ctx, Responses._401));
         }
       } else {
-        ctx.status(HttpStatus.BAD_REQUEST_400).result("Invalid session!");
+      	ctx.json(Commons.createResponse(ctx, Responses._403));
       }
     }
   }

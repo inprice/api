@@ -81,40 +81,37 @@ class GroupService {
   }
 
   Response insert(GroupDTO dto) {
-    if (dto != null) {
-      String problem = validate(dto);
-      if (problem == null) {
-        try (Handle handle = Database.getHandle()) {
-          GroupDao groupDao = handle.attach(GroupDao.class);
+    String problem = validate(dto);
+    if (problem == null) {
+      try (Handle handle = Database.getHandle()) {
+        GroupDao groupDao = handle.attach(GroupDao.class);
 
-          LinkGroup found = groupDao.findByName(dto.getName(), CurrentUser.getAccountId());
-          if (found == null) {
-          	Long id = 
-              groupDao.insert(
-                dto.getName(),
-                dto.getPrice(),
-                dto.getAccountId()
-              );
-          	if (id != null && id > 0) {
-          		found = groupDao.findById(id, CurrentUser.getAccountId());
-              Map<String, LinkGroup> data = new HashMap<>(1);
-              data.put("group", found);
-              return new Response(data);
-            }
-          } else {
-          	return Responses.Already.Defined.GROUP;
+        LinkGroup found = groupDao.findByName(dto.getName(), CurrentUser.getAccountId());
+        if (found == null) {
+        	Long id = 
+            groupDao.insert(
+              dto.getName(),
+              dto.getPrice(),
+              dto.getAccountId()
+            );
+        	if (id != null && id > 0) {
+        		found = groupDao.findById(id, CurrentUser.getAccountId());
+            Map<String, LinkGroup> data = new HashMap<>(1);
+            data.put("group", found);
+            return new Response(data);
           }
+        } else {
+        	return Responses.Already.Defined.GROUP;
         }
-        return Responses.DataProblem.DB_PROBLEM;
-      } else {
-        return new Response(problem);
       }
+      return Responses.DataProblem.DB_PROBLEM;
+    } else {
+      return new Response(problem);
     }
-    return Responses.Invalid.GROUP;
   }
 
   Response update(GroupDTO dto) {
-    if (dto != null && dto.getId() != null && dto.getId() > 0) {
+    if (dto.getId() != null && dto.getId() > 0) {
 
       String problem = validate(dto);
       if (problem == null) {
@@ -327,8 +324,7 @@ class GroupService {
   private Response validate(AddLinksDTO dto) {
     Response res = null;
 
-  	if (dto == null) res = Responses.Invalid.DATA;
-  	if (res == null && (dto.getGroupId() == null || dto.getGroupId() <= 0)) res = Responses.Invalid.GROUP;
+  	if (dto.getGroupId() == null || dto.getGroupId() <= 0) res = Responses.Invalid.GROUP;
     if (res == null && StringUtils.isBlank(dto.getLinksText())) res = Responses.NotSuitable.EMPTY_URL_LIST;
 
     Set<String> urlList = null;

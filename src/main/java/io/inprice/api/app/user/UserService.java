@@ -173,16 +173,10 @@ public class UserService {
   private String validateUserDTOForUpdate(UserDTO dto) {
     String problem = null;
 
-    if (dto == null) {
-      problem = "Invalid user info!";
-    }
-
-    if (problem == null) {
-      if (StringUtils.isBlank(dto.getName())) {
-        problem = "User name cannot be empty!";
-      } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
-        problem = "User name must be between 3 - 70 chars";
-      }
+    if (StringUtils.isBlank(dto.getName())) {
+      problem = "User name cannot be empty!";
+    } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
+      problem = "User name must be between 3 - 70 chars";
     }
 
     if (problem == null) {

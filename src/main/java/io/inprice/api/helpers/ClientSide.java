@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.external.Props;
 import io.inprice.api.utils.CurrencyFormats;
+import io.inprice.common.config.SysProps;
+import io.inprice.common.meta.AppEnv;
 
 /**
  * Client side operations
@@ -56,35 +58,37 @@ public class ClientSide {
     Map<String, String> result = new HashMap<>(2);
     result.put(Consts.IP, "127.0.0.1");
     result.put(Consts.TIMEZONE, "Europe/Dublin");
-    result.put(Consts.CURRENCY_CODE, "EUR");
-    result.put(Consts.CURRENCY_FORMAT, "#.###,00 €;-#.###,00 €");
-
-    String ip = getIp(req);
-    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-
-      if (ip.equals("127.0.0.1")) {
-        ip = HttpHelper.GET(httpClient, "http://checkip.amazonaws.com");
-      }
-
-      if (ip != null && !ip.equals("127.0.0.1")) {
-        result.put(Consts.IP, ip);
-        String res = 
-          HttpHelper.GET(
-            httpClient, String.format("https://api.ipgeolocation.io/ipgeo?apiKey=%s&ip=%s",
-              Props.API_KEYS_GELOCATION, URLEncoder.encode(ip, "UTF-8")
-            )
-          );
-        if (res != null) {
-          JSONObject root = new JSONObject(res);
-          JSONObject currency = root.getJSONObject("currency");
-          JSONObject timezone = root.getJSONObject("time_zone");
-          result.put(Consts.CURRENCY_CODE, currency.getString("code"));
-          result.put(Consts.CURRENCY_FORMAT, CurrencyFormats.get(currency.getString("code")));
-          result.put(Consts.TIMEZONE, timezone.getString("name"));
+    result.put(Consts.CURRENCY_CODE, "USD");
+    result.put(Consts.CURRENCY_FORMAT, "$#,###.00;$-#,###.00");
+    
+    if (! SysProps.APP_ENV.equals(AppEnv.TEST)) {
+      String ip = getIp(req);
+      try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+  
+        if (ip.equals("127.0.0.1")) {
+          ip = HttpHelper.GET(httpClient, "http://checkip.amazonaws.com");
         }
+  
+        if (ip != null && !ip.equals("127.0.0.1")) {
+          result.put(Consts.IP, ip);
+          String res = 
+            HttpHelper.GET(
+              httpClient, String.format("https://api.ipgeolocation.io/ipgeo?apiKey=%s&ip=%s",
+                Props.API_KEYS_GELOCATION, URLEncoder.encode(ip, "UTF-8")
+              )
+            );
+          if (res != null) {
+            JSONObject root = new JSONObject(res);
+            JSONObject currency = root.getJSONObject("currency");
+            JSONObject timezone = root.getJSONObject("time_zone");
+            result.put(Consts.CURRENCY_CODE, currency.getString("code"));
+            result.put(Consts.CURRENCY_FORMAT, CurrencyFormats.get(currency.getString("code")));
+            result.put(Consts.TIMEZONE, timezone.getString("name"));
+          }
+        }
+      } catch (IOException e) {
+        log.error("Failed to get geo info", e);
       }
-    } catch (IOException e) {
-      log.error("Failed to get geo info", e);
     }
     return result;
   }
