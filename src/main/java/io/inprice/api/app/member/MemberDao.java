@@ -12,6 +12,7 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import io.inprice.api.app.member.mapper.ActiveMember;
 import io.inprice.api.app.member.mapper.ActiveMemberMapper;
 import io.inprice.common.mappers.MemberMapper;
+import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Member;
 
@@ -23,9 +24,9 @@ public interface MemberDao {
 
   final String PLAN_FIELDS = ", p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit ";
   
-  @SqlQuery("select * from member where id=:id")
+  @SqlQuery("select * from member where id=:id and account_id=:accountId")
   @UseRowMapper(MemberMapper.class)
-  Member findById(@Bind("id") Long id);
+  Member findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
   @SqlQuery("select * from member where email=:email and account_id=:accountId")
   @UseRowMapper(MemberMapper.class)
@@ -53,11 +54,11 @@ public interface MemberDao {
     "order by m.role, m.created_at"
   )
   @UseRowMapper(MemberMapper.class)
-  List<Member> findListByEmailAndStatus(@Bind("email") String email, @Bind("status") String status);
+  List<Member> findListByEmailAndStatus(@Bind("email") String email, @Bind("status") UserStatus status);
 
   @SqlQuery("select * from member where email=:email and status=:status and account_id=:accountId")
   @UseRowMapper(MemberMapper.class)
-  Member findByEmailAndStatus(@Bind("email") String email, @Bind("status") String status, @Bind("accountId") Long accountId);
+  Member findByEmailAndStatus(@Bind("email") String email, @Bind("status") UserStatus status, @Bind("accountId") Long accountId);
 
   @SqlQuery(
     "select m.id, a.name, m.role, m.status, m.created_at from member as m " + 
@@ -68,7 +69,7 @@ public interface MemberDao {
     "order by m.id desc"
   )
   @UseRowMapper(ActiveMemberMapper.class)
-  List<ActiveMember> findMemberListByEmailAndStatus(@Bind("email") String email, @Bind("status") String status);
+  List<ActiveMember> findMemberListByEmailAndStatus(@Bind("email") String email, @Bind("status") UserStatus status);
 
   @SqlQuery(
     "select user_id from member as prim " + 
@@ -95,19 +96,19 @@ public interface MemberDao {
   )
   @GetGeneratedKeys
   long insert(@Bind("userId") Long userId, @Bind("email") String email, 
-    @Bind("accountId") Long accountId, @Bind("role") String role, @Bind("status") String status);
+    @Bind("accountId") Long accountId, @Bind("role") UserRole role, @Bind("status") UserStatus status);
 
   @SqlUpdate("insert into member (email, role, account_id) values (:email, :role, :accountId)")
-  boolean insertInvitation(@Bind("email") String email, @Bind("role") String role, @Bind("accountId") Long accountId);
+  boolean insertInvitation(@Bind("email") String email, @Bind("role") UserRole role, @Bind("accountId") Long accountId);
 
   @SqlUpdate("update member set retry=retry+1 where id=:id and retry<3 and status=:status and account_id=:accountId")
-  boolean increaseSendingCount(@Bind("id") Long id, @Bind("status") String status, @Bind("accountId") Long accountId);
+  boolean increaseSendingCount(@Bind("id") Long id, @Bind("status") UserStatus status, @Bind("accountId") Long accountId);
 
   @SqlUpdate("update member set status=:status, updated_at=now() where id=:id and status!=:status and account_id=:accountId")
-  boolean setStatusDeleted(@Bind("id") Long id, @Bind("status") String status, @Bind("accountId") Long accountId);
+  boolean setStatusDeleted(@Bind("id") Long id, @Bind("status") UserStatus status, @Bind("accountId") Long accountId);
 
   @SqlUpdate("update member set role=:role where id=:id and account_id=:accountId")
-  boolean changeRole(@Bind("id") Long id, @Bind("role") String role, @Bind("accountId") Long accountId);
+  boolean changeRole(@Bind("id") Long id, @Bind("role") UserRole role, @Bind("accountId") Long accountId);
 
   @SqlUpdate("update member set status=:toStatus, user_id=:userId, updated_at=now() where id=:id and status=:fromStatus")
   boolean changeStatus(@Bind("id") Long id, @Bind("fromStatus") String fromStatus, @Bind("toStatus") String toStatus, @Bind("userId") Long userId);

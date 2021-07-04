@@ -365,8 +365,8 @@ class AccountService {
             userId,
             userEmail,
             accountId,
-            UserRole.ADMIN.name(),
-            UserStatus.JOINED.name()
+            UserRole.ADMIN,
+            UserStatus.JOINED
           );
 
         if (memberId > 0) {

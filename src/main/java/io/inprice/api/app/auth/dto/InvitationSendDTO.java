@@ -9,8 +9,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Getter
-@Setter
 @ToString
+@Setter
 public class InvitationSendDTO implements Serializable {
 
    private static final long serialVersionUID = 2545602928755294073L;

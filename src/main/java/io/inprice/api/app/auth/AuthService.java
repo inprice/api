@@ -261,7 +261,7 @@ public class AuthService {
       UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      List<Member> memberList = memberDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED.name());
+      List<Member> memberList = memberDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED);
       if (memberList != null && memberList.size() > 0) {
 
         List<ForRedis> redisSesList = new ArrayList<>();
@@ -346,7 +346,7 @@ public class AuthService {
           if (user == null || !user.isBanned()) {
 
           	MemberDao memberDao = handle.attach(MemberDao.class);
-          	Member member = memberDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getAccountId());
+          	Member member = memberDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING, sendDto.getAccountId());
             if (member != null) {
 
               if (user == null) { //user creation

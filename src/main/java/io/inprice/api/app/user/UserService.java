@@ -75,7 +75,7 @@ public class UserService {
   public Response getInvitations() {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
-      return new Response(memberDao.findMemberListByEmailAndStatus(CurrentUser.getEmail(), UserStatus.PENDING.name()));
+      return new Response(memberDao.findMemberListByEmailAndStatus(CurrentUser.getEmail(), UserStatus.PENDING));
     }
   }
 

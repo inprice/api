@@ -83,7 +83,7 @@ class MemberService {
             	handle.begin();
 
             	//TODO: an announce to user must be fired from here!
-              boolean isAdded = memberDao.insertInvitation(dto.getEmail(), dto.getRole().name(), CurrentUser.getAccountId());
+              boolean isAdded = memberDao.insertInvitation(dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
               if (isAdded) {
                 boolean isOK = accountDao.increaseUserCount(CurrentUser.getAccountId());
                 if (isOK) {
@@ -110,19 +110,19 @@ class MemberService {
   }
 
   Response resend(long memId) {
-    Response res = Responses.DataProblem.NOT_SUITABLE;
+    Response res = Responses.NotFound.MEMBERSHIP;
 
     try (Handle handle = Database.getHandle()) {
       UserDao userDao = handle.attach(UserDao.class);
       MemberDao memberDao = handle.attach(MemberDao.class);
       
-      Member mem = memberDao.findById(memId);
+      Member mem = memberDao.findById(memId, CurrentUser.getAccountId());
       if (mem != null) {
-        User user = userDao.findById(mem.getUserId());
-      
-        if (user == null || user.isBanned() == false) {
-        	if (user == null || user.isPrivileged() == false) {
-            boolean isOK = memberDao.increaseSendingCount(memId, UserStatus.PENDING.name(), CurrentUser.getAccountId());
+      	if (UserStatus.PENDING.equals(mem.getStatus())) {
+          User user = userDao.findById(mem.getUserId());
+  
+          if (user == null || (user.isBanned() == false && user.isPrivileged() == false)) {
+            boolean isOK = memberDao.increaseSendingCount(memId, UserStatus.PENDING, CurrentUser.getAccountId());
             if (isOK) {
               InvitationSendDTO dto = new InvitationSendDTO();
               dto.setEmail(mem.getEmail());
@@ -130,16 +130,14 @@ class MemberService {
               dto.setAccountId(CurrentUser.getAccountId());
               res = sendMail(userDao, dto);
             } else {
-            	res = Responses.DataProblem.DB_PROBLEM;
+            	res = new Response("You can re-send invitation for the same user up to three times!");
             }
           } else {
-          	res = Responses.PermissionProblem.WRONG_USER;
+          	res = Responses.BANNED_USER;
           }
         } else {
-        	res = Responses.BANNED_USER;
+        	res = new Response("You cannot re-send an invitation since this user is not in PENDING status!");
         }
-      } else {
-      	res = Responses.NotFound.MEMBERSHIP;
       }
   	}
 
@@ -152,14 +150,14 @@ class MemberService {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      Member mem = memberDao.findById(memId);
+      Member mem = memberDao.findById(memId, CurrentUser.getAccountId());
       if (mem != null) {
         if (! mem.getAccountId().equals(CurrentUser.getAccountId())) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {
           	
           	handle.begin();
           	
-            boolean isOK = memberDao.setStatusDeleted(memId, UserStatus.DELETED.name(), CurrentUser.getAccountId());
+            boolean isOK = memberDao.setStatusDeleted(memId, UserStatus.DELETED, CurrentUser.getAccountId());
             if (isOK) {
             	terminateUserSession(handle, memId, CurrentUser.getAccountId());
 
@@ -191,14 +189,14 @@ class MemberService {
     	try (Handle handle = Database.getHandle()) {
         MemberDao memberDao = handle.attach(MemberDao.class);
 
-        Member mem = memberDao.findById(dto.getId());
+        Member mem = memberDao.findById(dto.getId(), CurrentUser.getAccountId());
         if (mem != null) {
           if (mem.getAccountId().equals(CurrentUser.getAccountId()) && ! mem.getRole().equals(dto.getRole())) {
             if (! mem.getStatus().equals(UserStatus.DELETED)) {
 
             	handle.begin();
               
-              boolean isOK = memberDao.changeRole(dto.getId(), dto.getRole().name(), CurrentUser.getAccountId());
+              boolean isOK = memberDao.changeRole(dto.getId(), dto.getRole(), CurrentUser.getAccountId());
               if (isOK) {
               	terminateUserSession(handle, dto.getId(), CurrentUser.getAccountId());
               	handle.commit();
@@ -229,7 +227,7 @@ class MemberService {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      Member mem = memberDao.findById(id);
+      Member mem = memberDao.findById(id, CurrentUser.getAccountId());
       if (mem != null) {
         if (mem.getAccountId().equals(CurrentUser.getAccountId()) && ! mem.getStatus().equals(UserStatus.PAUSED)) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {
@@ -265,7 +263,7 @@ class MemberService {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      Member mem = memberDao.findById(id);
+      Member mem = memberDao.findById(id, CurrentUser.getAccountId());
       if (mem != null) {
         if (mem.getAccountId().equals(CurrentUser.getAccountId()) && mem.getStatus().equals(UserStatus.PAUSED)) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {
@@ -340,7 +338,7 @@ class MemberService {
     }
 
     if (problem == null && (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN) || dto.getRole().equals(UserRole.SUPER))) {
-      problem = String.format("Role must be either %s or %s!", UserRole.EDITOR.name(), UserRole.VIEWER.name());
+      problem = String.format("Role must be either %s or %s!", UserRole.EDITOR, UserRole.VIEWER);
     }
 
     return problem;
@@ -354,7 +352,7 @@ class MemberService {
     }
 
     if (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN) || dto.getRole().equals(UserRole.SUPER)) {
-      problem = String.format("Role must be either %s or %s!", UserRole.EDITOR.name(), UserRole.VIEWER.name());
+      problem = String.format("Role must be either %s or %s!", UserRole.EDITOR, UserRole.VIEWER);
     }
 
     return problem;
