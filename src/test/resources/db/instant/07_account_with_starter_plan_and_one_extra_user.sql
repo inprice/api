@@ -6,18 +6,19 @@
 set @planId = 15; -- Starter plan
 set @admin_email = 'admin@account-c.com';
 set @editor_email = 'editor@account-c.com';
-set @salted_pass = 'tgeCgsZWyabjtsslplwMrGJRHyTyI4zS4DlAWHnjrMQi2Nn9KwXBS9RROaPWK3BhIkEFtQcLK5TO3q8iihlhbg';
+
+-- -----------------------
 
 -- admin
-insert into test.user (email, password, name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), 'Europe/Istanbul');
+insert into test.user (email, password, name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
 set @admin_id = last_insert_id();
 
 -- editor
-insert into test.user (email, password, name, timezone) values (@editor_email, @salted_pass, SUBSTRING_INDEX(@editor_email, '@', 1), 'Europe/Istanbul');
+insert into test.user (email, password, name, timezone) values (@editor_email, @salted_pass, SUBSTRING_INDEX(@editor_email, '@', 1), @timezone);
 set @editor_id = last_insert_id();
 
 -- account
-insert into test.account (name, plan_id, user_count, status, subs_started_at, subs_renewal_at, admin_id) values ('With Starter Plan and One Extra User', @planId, 1, 'SUBSCRIBED', now(), '2050-01-01 23:59:59', @admin_id);
+insert into test.account (name, plan_id, user_count, status, subs_started_at, subs_renewal_at, admin_id) values ('With Starter Plan and One Extra User', @planId, 1, 'SUBSCRIBED', now(), @one_year_later, @admin_id);
 set @account_id = last_insert_id();
 
 -- account history

@@ -114,7 +114,7 @@ create table member (
   email                     varchar(128) not null,
   user_id                   bigint unsigned,
   account_id                bigint unsigned not null,
-  role                      enum('VIEWER', 'EDITOR', 'ADMIN', 'SUPER') not null default 'EDITOR',
+  role                      enum('SUPER', 'ADMIN', 'EDITOR', 'VIEWER') not null default 'EDITOR',
   pre_status                enum('PENDING', 'JOINED', 'PAUSED', 'LEFT', 'DELETED') not null default 'PENDING',
   status                    enum('PENDING', 'JOINED', 'PAUSED', 'LEFT', 'DELETED') not null default 'PENDING',
   retry                     smallint default 1,

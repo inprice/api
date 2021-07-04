@@ -18,8 +18,6 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * TODO: bir kullanici icin farkli 2 oturum acma ve logout testleri yapilacak!
- * 
  * @author mdpinar
  * @since 2021-06-28
  */
@@ -156,11 +154,29 @@ public class LoginTest {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(TestAccount.Basic_plan_but_no_extra_user.ADMIN())
 			.asJson();
+		TestUtils.logout(res.getCookies());
 
 		JSONObject json = res.getBody().getObject();
+		JSONObject data = json.getJSONObject("data");
 		
 		assertEquals(200, json.getInt("status"));
-    assertNotNull(json.get("data"));
+		assertNotNull(data);
+    assertEquals(1, data.getJSONArray("sessions").length());
+	}
+
+	@Test
+	public void Everything_must_be_OK_and_must_have_multiple_sessions_WITH_correct_credentials() {
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.body(Fixtures.USER_HAVING_TWO_MEMBERSHIPS)
+			.asJson();
+		TestUtils.logout(res.getCookies());
+
+		JSONObject json = res.getBody().getObject();
+		JSONObject data = json.getJSONObject("data");
+		
+		assertEquals(200, json.getInt("status"));
+		assertNotNull(data);
+    assertEquals(2, data.getJSONArray("sessions").length());
 	}
 
 	@Test
@@ -168,13 +184,16 @@ public class LoginTest {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(Fixtures.SUPER_USER)
 			.asJson();
+		TestUtils.logout(res.getCookies());
 
 		JSONObject json = res.getBody().getObject();
+		JSONObject data = json.getJSONObject("data");
 		
 		assertEquals(200, json.getInt("status"));
-    assertNotNull(json.get("data"));
+		assertNotNull(data);
+    assertEquals(1, data.getJSONArray("sessions").length());
 	}
-	
+
 	private JSONObject createUser(String email, String password) {
 		JSONObject user = new JSONObject();
 		if (email != null) user.put("email", email);

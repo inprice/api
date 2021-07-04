@@ -15,6 +15,7 @@ import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
+import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
@@ -87,9 +88,11 @@ public class ListTest {
 		TestUtils.logout(cookies);
 
 		JSONObject json = res.getBody().getObject();
+		JSONArray data = json.getJSONArray("data");
 		
 		assertEquals(200, json.getInt("status"));
-		assertNotNull(json.getJSONArray("data"));
+		assertNotNull(data);
+		assertEquals(2, data.length());
 	}
 
 	@Test

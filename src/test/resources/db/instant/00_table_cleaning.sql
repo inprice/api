@@ -28,3 +28,8 @@ truncate table test.user_session;
 truncate table test.user_used;
 
 set foreign_key_checks=1;
+
+-- global variables
+set @timezone = 'Europe/Istanbul';
+set @salted_pass = 'tgeCgsZWyabjtsslplwMrGJRHyTyI4zS4DlAWHnjrMQi2Nn9KwXBS9RROaPWK3BhIkEFtQcLK5TO3q8iihlhbg'; -- 1234
+set @one_year_later = DATE_ADD(now(), INTERVAL 1 YEAR);

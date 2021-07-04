@@ -142,7 +142,7 @@ public class InviteTest {
 		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.VIEWER);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.header("X-Session", "1") //in his 0th session, he is an ADMIN!
 			.cookie(cookies)
 			.body(createBody(TestAccount.Basic_plan_but_no_extra_user.getEmail(TestRole.ADMIN), TestRole.VIEWER))
 			.asJson();
@@ -176,7 +176,7 @@ public class InviteTest {
 		Cookies cookies = TestUtils.login(TestAccount.Without_a_plan_and_extra_user, TestRole.ADMIN);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.header("X-Session", "0") 
 			.cookie(cookies)
 			.body(createBody(TestAccount.Starter_plan_and_one_extra_user.getEmail(TestRole.EDITOR), TestRole.EDITOR))
 			.asJson();

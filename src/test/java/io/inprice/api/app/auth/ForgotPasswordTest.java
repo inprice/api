@@ -129,7 +129,7 @@ public class ForgotPasswordTest {
 	@Test
 	public void Everything_must_be_OK_WITH_correct_credentials() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(TestAccount.Standard_plan_and_one_extra_user.EDITOR())
+			.body(TestAccount.Starter_plan_and_one_extra_user.EDITOR())
 			.asJson();
 		
 		JSONObject json = res.getBody().getObject();

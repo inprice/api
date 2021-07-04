@@ -50,7 +50,7 @@ public enum TestAccount {
 		ImmutableMap.of(
 			TestRole.ADMIN, new JSONObject().put("email", "admin@account-f.com"),
 			TestRole.EDITOR, new JSONObject().put("email", "editor@account-f.com"),
-			TestRole.VIEWER, new JSONObject().put("email", "viewer@account-f.com")
+			TestRole.VIEWER, new JSONObject().put("email", "editor@account-e.com") // attention pls!
 		)
 	),
 
