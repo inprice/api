@@ -89,7 +89,7 @@ public class AcceptInvitationTest {
 		/* -------------------------------- 
 		   Inviting a non-existing user
 		 -------------------------------- */
-		Cookies cookies = TestUtils.login(TestAccount.S, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user, TestRole.ADMIN);
 		String email = "non-existing@user.com";
 
 		HttpResponse<JsonNode> res = Unirest.post("/member")

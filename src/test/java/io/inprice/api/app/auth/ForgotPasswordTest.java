@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.app.utils.Fixtures;
-import io.inprice.api.app.utils.TestRole;
+import io.inprice.api.app.utils.TestAccount;
 import io.inprice.api.app.utils.TestUtils;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -129,7 +129,7 @@ public class ForgotPasswordTest {
 	@Test
 	public void Everything_must_be_OK_WITH_correct_credentials() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(Fixtures.NORMAL_USER(TestRole.ADMIN))
+			.body(TestAccount.Standard_plan_and_one_extra_user.EDITOR())
 			.asJson();
 		
 		JSONObject json = res.getBody().getObject();
@@ -142,7 +142,7 @@ public class ForgotPasswordTest {
 	public void This_email_is_already_requested_please_wait_some_time_to_try_again_WITH_correct_credentials() {
 		//first request
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(Fixtures.NORMAL_USER(TestRole.VIEWER))
+			.body(TestAccount.Standard_plan_and_two_extra_users.VIEWER())
 			.asJson();
 		
 		JSONObject json = res.getBody().getObject();
@@ -151,7 +151,7 @@ public class ForgotPasswordTest {
 		
 		//second request
 		res = Unirest.post(SERVICE_ENDPOINT)
-			.body(Fixtures.NORMAL_USER(TestRole.VIEWER))
+			.body(TestAccount.Standard_plan_and_two_extra_users.VIEWER())
 			.asJson();
 			
 		json = res.getBody().getObject();

@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
+import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.io.IOUtils;
 
 import io.inprice.api.Application;
 import io.inprice.api.consts.Global;
@@ -25,6 +28,8 @@ import redis.embedded.RedisServer;
 public class TestUtils {
 	
 	private static final int SERVER_PORT = 4567;
+	
+	private static StringBuilder sqlScripts = new StringBuilder();
 	
 	public static void setup() {
 		if (isPortAvailable(SERVER_PORT)) {
@@ -47,17 +52,24 @@ public class TestUtils {
   			} catch (InterruptedException e) {
   			}
   		}
+  		
+  		//in order to build a zeroize script, read and include all sql scripts under resource:db/instant folder
+  		sqlScripts.setLength(0);
+  		try {
+				List<String> files = IOUtils.readLines(TestUtils.class.getClassLoader().getResourceAsStream("db/instant/"), "UTF-8");
+				for (String file: files) {
+					sqlScripts.append(IOUtils.toString(TestUtils.class.getClassLoader().getResourceAsStream("db/instant/"+file), "UTF-8"));
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
 		} else {
 			//redis must be cleaned up before starting any test
 			BaseRedisClient redisClient = new BaseRedisClient();
 			redisClient.open(() -> redisClient.getClient().getKeys().flushall());
 		}
-		Database.cleanTestTables();
-	}
-	
-	public static Cookies login(TestRole role) {
-		return login(TestAccount.X, role);
+		Database.cleanDBForTests(sqlScripts.toString());
 	}
 
 	/**
@@ -67,7 +79,7 @@ public class TestUtils {
 	 * @param role any role is ok
 	 * @return authorized cookies
 	 */
-	public static Cookies login(TestAccount forAccount, TestRole role) {
+	public static Cookies login(TestAccount testAccount, TestRole role) {
 		JSONObject user = null;
 		switch (role) {
   		case SUPER: {
@@ -79,7 +91,7 @@ public class TestUtils {
   			break;
   		}
   		default: {
-  			user = Fixtures.NORMAL_USER(role, forAccount);
+  			user = testAccount.findUser(role);
   			break;
   		}
 		}

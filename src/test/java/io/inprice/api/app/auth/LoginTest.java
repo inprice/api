@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.app.utils.Fixtures;
-import io.inprice.api.app.utils.TestRole;
+import io.inprice.api.app.utils.TestAccount;
 import io.inprice.api.app.utils.TestUtils;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -18,6 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
+ * TODO: bir kullanici icin farkli 2 oturum acma ve logout testleri yapilacak!
  * 
  * @author mdpinar
  * @since 2021-06-28
@@ -153,7 +154,7 @@ public class LoginTest {
 	@Test
 	public void Everything_must_be_OK_WITH_correct_credentials() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(Fixtures.NORMAL_USER(TestRole.ADMIN))
+			.body(TestAccount.Basic_plan_but_no_extra_user.ADMIN())
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();

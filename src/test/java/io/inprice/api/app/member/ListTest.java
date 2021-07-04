@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import io.inprice.api.app.utils.TestAccount;
 import io.inprice.api.app.utils.TestRole;
 import io.inprice.api.app.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -45,7 +46,7 @@ public class ListTest {
 
 	@Test
 	public void Forbidden_WITH_viewer_user() {
-		Cookies cookies = TestUtils.login(TestRole.VIEWER);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.VIEWER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.header("X-Session", "0")
@@ -61,7 +62,7 @@ public class ListTest {
 
 	@Test
 	public void Forbidden_WITH_editor_user() {
-		Cookies cookies = TestUtils.login(TestRole.EDITOR);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.EDITOR);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.header("X-Session", "0")
@@ -77,7 +78,7 @@ public class ListTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
-		Cookies cookies = TestUtils.login(TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.ADMIN);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.header("X-Session", "0")
@@ -93,7 +94,7 @@ public class ListTest {
 
 	@Test
 	public void Member_not_found_WITH_super_user() {
-		Cookies cookies = TestUtils.login(TestRole.SUPER);
+		Cookies cookies = TestUtils.login(null, TestRole.SUPER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.header("X-Session", "0")
