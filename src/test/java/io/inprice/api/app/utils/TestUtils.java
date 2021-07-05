@@ -1,5 +1,7 @@
 package io.inprice.api.app.utils;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.DatagramSocket;
@@ -29,8 +31,21 @@ public class TestUtils {
 	
 	private static final int SERVER_PORT = 4567;
 	
-	private static StringBuilder sqlScripts = new StringBuilder();
+	private static final StringBuilder sqlScripts;
 	
+	static {
+		sqlScripts = new StringBuilder();
+		try {
+			String baseDir = "db/instant/";
+			List<String> files = IOUtils.readLines(TestUtils.class.getClassLoader().getResourceAsStream(baseDir), "UTF-8");
+			for (String file: files) {
+				sqlScripts.append(IOUtils.toString(TestUtils.class.getClassLoader().getResourceAsStream(baseDir+file), "UTF-8"));
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public static void setup() {
 		if (isPortAvailable(SERVER_PORT)) {
   		setSystemEnvVariable("APP_ENV", "TEST");
@@ -53,19 +68,7 @@ public class TestUtils {
   			}
   		}
   		
-  		//in order to build a zeroize script, read and include all sql scripts under resource:db/instant folder
-  		sqlScripts.setLength(0);
-  		try {
-				List<String> files = IOUtils.readLines(TestUtils.class.getClassLoader().getResourceAsStream("db/instant/"), "UTF-8");
-				for (String file: files) {
-					sqlScripts.append(IOUtils.toString(TestUtils.class.getClassLoader().getResourceAsStream("db/instant/"+file), "UTF-8"));
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-		} else {
-			//redis must be cleaned up before starting any test
+		} else { //redis must be cleaned up before starting any test
 			BaseRedisClient redisClient = new BaseRedisClient();
 			redisClient.open(() -> redisClient.getClient().getKeys().flushall());
 		}
@@ -79,26 +82,9 @@ public class TestUtils {
 	 * @param role any role is ok
 	 * @return authorized cookies
 	 */
-	public static Cookies login(TestAccount testAccount, TestRole role) {
-		JSONObject user = null;
-		switch (role) {
-  		case SUPER: {
-  			user = Fixtures.SUPER_USER;
-  			break;
-  		}
-  		case BANNED: {
-  			user = Fixtures.BANNED_USER;
-  			break;
-  		}
-  		default: {
-  			user = testAccount.findUser(role);
-  			break;
-  		}
-		}
-		HttpResponse<?> res = 
-			Unirest.post("/login")
-  			.body(user)
-  			.asEmpty();
+	public static Cookies login(JSONObject loginUser) {
+		assertNotNull(loginUser);
+		HttpResponse<?> res = Unirest.post("/login").body(loginUser).asEmpty();
 		return res.getCookies();
 	}
 

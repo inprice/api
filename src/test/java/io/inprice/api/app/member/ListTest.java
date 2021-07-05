@@ -8,8 +8,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import io.inprice.api.app.utils.Fixtures;
 import io.inprice.api.app.utils.TestAccount;
-import io.inprice.api.app.utils.TestRole;
 import io.inprice.api.app.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -36,7 +36,7 @@ public class ListTest {
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -47,10 +47,10 @@ public class ListTest {
 
 	@Test
 	public void Forbidden_WITH_viewer_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.VIEWER);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);
@@ -63,10 +63,10 @@ public class ListTest {
 
 	@Test
 	public void Forbidden_WITH_editor_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.EDITOR);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);
@@ -79,10 +79,10 @@ public class ListTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);
@@ -97,10 +97,10 @@ public class ListTest {
 
 	@Test
 	public void Member_not_found_WITH_super_user() {
-		Cookies cookies = TestUtils.login(null, TestRole.SUPER);
+		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);

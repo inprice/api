@@ -38,10 +38,10 @@ public class InviteTest {
 
 	@Test
 	public void Request_body_is_invalid_WITH_no_body() {
-		Cookies cookies = TestUtils.login(TestAccount.Basic_plan_but_no_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Basic_plan_but_no_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);
@@ -54,10 +54,10 @@ public class InviteTest {
 
 	@Test
 	public void Email_address_cannot_be_empty_WITH_empty_email() {
-		Cookies cookies = TestUtils.login(TestAccount.Basic_plan_but_no_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Basic_plan_but_no_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(null, TestRole.EDITOR))
 			.asJson();
@@ -71,10 +71,10 @@ public class InviteTest {
 
 	@Test
 	public void You_cannot_invite_yourself_WITH_same_email() {
-		Cookies cookies = TestUtils.login(TestAccount.Basic_plan_but_no_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Basic_plan_but_no_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(TestAccount.Basic_plan_but_no_extra_user.getEmail(TestRole.ADMIN), null))
 			.asJson();
@@ -88,10 +88,10 @@ public class InviteTest {
 
 	@Test
 	public void Role_must_be_either_EDITOR_or_VIEWER_WITH_empty_role() {
-		Cookies cookies = TestUtils.login(TestAccount.Basic_plan_but_no_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Basic_plan_but_no_extra_user.ADMIN());
 		
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(TestAccount.Starter_plan_and_one_extra_user.getEmail(TestRole.EDITOR), null))
 			.asJson();
@@ -105,10 +105,10 @@ public class InviteTest {
 
 	@Test
 	public void Role_must_be_either_EDITOR_or_VIEWER_WITH_ADMIN_role() {
-		Cookies cookies = TestUtils.login(TestAccount.Basic_plan_but_no_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Basic_plan_but_no_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(TestAccount.Starter_plan_and_one_extra_user.getEmail(TestRole.EDITOR), TestRole.ADMIN))
 			.asJson();
@@ -122,10 +122,10 @@ public class InviteTest {
 
 	@Test
 	public void Role_must_be_either_EDITOR_or_VIEWER_WITH_SUPER_role() {
-		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(TestAccount.Starter_plan_and_one_extra_user.getEmail(TestRole.EDITOR), TestRole.SUPER))
 			.asJson();
@@ -139,10 +139,10 @@ public class InviteTest {
 
 	@Test
 	public void Forbidden_FOR_viewer_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.VIEWER);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "1") //in his 0th session, he is an ADMIN!
+			.headers(Fixtures.SESSION_O_HEADERS) //in his 0th session, he is an ADMIN!
 			.cookie(cookies)
 			.body(createBody(TestAccount.Basic_plan_but_no_extra_user.getEmail(TestRole.ADMIN), TestRole.VIEWER))
 			.asJson();
@@ -156,10 +156,10 @@ public class InviteTest {
 
 	@Test
 	public void Forbidden_FOR_editor_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.EDITOR);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(TestAccount.Starter_plan_and_one_extra_user.getEmail(TestRole.EDITOR), TestRole.EDITOR))
 			.asJson();
@@ -173,10 +173,10 @@ public class InviteTest {
 
 	@Test
 	public void You_need_to_subscribe_to_a_plan_WITH_no_plan() {
-		Cookies cookies = TestUtils.login(TestAccount.Without_a_plan_and_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Without_a_plan_and_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0") 
+			.headers(Fixtures.SESSION_O_HEADERS) 
 			.cookie(cookies)
 			.body(createBody(TestAccount.Starter_plan_and_one_extra_user.getEmail(TestRole.EDITOR), TestRole.EDITOR))
 			.asJson();
@@ -190,10 +190,10 @@ public class InviteTest {
 	
 	@Test
 	public void Your_user_count_is_reached_your_plans_limit_WITH_a_plan_less_user_limit() {
-		Cookies cookies = TestUtils.login(TestAccount.Starter_plan_and_one_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Starter_plan_and_one_extra_user.ADMIN());
 		
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(TestAccount.Starter_plan_and_one_extra_user.getEmail(TestRole.EDITOR), TestRole.EDITOR))
 			.asJson();
@@ -207,10 +207,10 @@ public class InviteTest {
 
 	@Test
 	public void This_user_has_already_been_added_to_this_account_FOR_already_added_email() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_one_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_one_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(TestAccount.Standard_plan_and_one_extra_user.getEmail(TestRole.EDITOR), TestRole.VIEWER))
 			.asJson();
@@ -227,10 +227,10 @@ public class InviteTest {
 	 */
 	@Test
 	public void Banned_user_WITH_banned_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Starter_plan_and_one_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Starter_plan_and_one_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(Fixtures.BANNED_USER.getString("email"), TestRole.VIEWER))
 			.asJson();
@@ -247,10 +247,10 @@ public class InviteTest {
 	 */
 	@Test
 	public void You_are_not_allowed_to_do_this_operation_AS_super_user() {
-		Cookies cookies = TestUtils.login(null, TestRole.SUPER);
+		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(TestAccount.Starter_plan_and_one_extra_user.getEmail(TestRole.EDITOR), null))
 			.asJson();
@@ -267,10 +267,10 @@ public class InviteTest {
 	 */
 	@Test
 	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Starter_plan_and_one_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Starter_plan_and_one_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(Fixtures.SUPER_USER.getString("email"), TestRole.VIEWER))
 			.asJson();
@@ -287,13 +287,12 @@ public class InviteTest {
 	 */
 	@Test
 	public void Everything_must_be_OK_WITH_a_non_existing_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user, TestRole.ADMIN);
-		String email = "non-existing@user.com";
+		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createBody(email, TestRole.EDITOR))
+			.body(createBody(Fixtures.NON_EXISTING_EMAIL_1, TestRole.EDITOR))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -304,7 +303,7 @@ public class InviteTest {
 		assertNotNull(data);
 		assertNotNull(data.get("url"));
 		assertNotNull(data.getString("token"));
-		assertTrue(email.startsWith(data.getString("user")));
+		assertTrue(Fixtures.NON_EXISTING_EMAIL_1.startsWith(data.getString("user")));
 	}
 
 	/**
@@ -312,11 +311,11 @@ public class InviteTest {
 	 */
 	@Test
 	public void Everything_must_be_OK_WITH_an_existing_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user.ADMIN());
 		String email = TestAccount.Starter_plan_and_one_extra_user.getEmail(TestRole.EDITOR);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createBody(email, TestRole.VIEWER))
 			.asJson();

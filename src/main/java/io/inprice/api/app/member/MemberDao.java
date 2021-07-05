@@ -24,9 +24,9 @@ public interface MemberDao {
 
   final String PLAN_FIELDS = ", p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit ";
   
-  @SqlQuery("select * from member where id=:id and account_id=:accountId")
+  @SqlQuery("select * from member where id=:id and account_id=:accountId and role in ('VIEWER', 'EDITOR')")
   @UseRowMapper(MemberMapper.class)
-  Member findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
+  Member findNormalMemberById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
   @SqlQuery("select * from member where email=:email and account_id=:accountId")
   @UseRowMapper(MemberMapper.class)
@@ -37,12 +37,12 @@ public interface MemberDao {
     "inner join account as a on a.id = m.account_id " + 
     "left join plan as p on p.id = a.plan_id " + 
     "where a.status != 'BANNED' " +
-    "  and m.email != :email " + 
     "  and m.account_id = :accountId " + 
+    "  and role in ('VIEWER', 'EDITOR') " + 
     "order by m.email"
   )
   @UseRowMapper(MemberMapper.class)
-  List<Member> findListByNotEmail(@Bind("email") String email, @Bind("accountId") Long accountId);
+  List<Member> findNormalMemberList(@Bind("accountId") Long accountId);
 
   @SqlQuery(
     "select m.*" + ACCOUNT_FIELDS + PLAN_FIELDS + " from member as m " +

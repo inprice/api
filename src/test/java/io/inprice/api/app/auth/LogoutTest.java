@@ -7,8 +7,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import io.inprice.api.app.utils.Fixtures;
 import io.inprice.api.app.utils.TestAccount;
-import io.inprice.api.app.utils.TestRole;
 import io.inprice.api.app.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -44,7 +44,7 @@ public class LogoutTest {
 	@Test
 	public void Seems_that_you_are_already_logged_out_FOR_multiple_logout() {
 		//in order to get a valid cookied, user logins and logsout first
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_one_extra_user, TestRole.EDITOR);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_one_extra_user.EDITOR());
 		TestUtils.logout(cookies);
 		
 		//second logout
@@ -58,7 +58,7 @@ public class LogoutTest {
 	@Test
 	public void Everything_must_be_ok_WITH_superuser_cookie() {
 		//in order to get a valid cookied, super user logins first
-		Cookies cookies = TestUtils.login(null, TestRole.SUPER);
+		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
 		//handled cookie is used here
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).cookie(cookies).asJson();
@@ -72,7 +72,7 @@ public class LogoutTest {
 	@Test
 	public void Everything_must_be_ok_WITH_normal_user_cookie() {
 		//in order to get a valid cookied, user logins first
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.VIEWER);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.VIEWER());
 		
 		//handled cookie is used here
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).cookie(cookies).asJson();

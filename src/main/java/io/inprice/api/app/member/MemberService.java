@@ -47,7 +47,7 @@ class MemberService {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      List<Member> list = memberDao.findListByNotEmail(CurrentUser.getEmail(), CurrentUser.getAccountId());
+      List<Member> list = memberDao.findNormalMemberList(CurrentUser.getAccountId());
       if (list != null && list.size() > 0) {
         res = new Response(list);
       }
@@ -116,27 +116,33 @@ class MemberService {
       UserDao userDao = handle.attach(UserDao.class);
       MemberDao memberDao = handle.attach(MemberDao.class);
       
-      Member mem = memberDao.findById(memId, CurrentUser.getAccountId());
+      Member mem = memberDao.findNormalMemberById(memId, CurrentUser.getAccountId());
       if (mem != null) {
-      	if (UserStatus.PENDING.equals(mem.getStatus())) {
-          User user = userDao.findById(mem.getUserId());
-  
-          if (user == null || (user.isBanned() == false && user.isPrivileged() == false)) {
-            boolean isOK = memberDao.increaseSendingCount(memId, UserStatus.PENDING, CurrentUser.getAccountId());
-            if (isOK) {
-              InvitationSendDTO dto = new InvitationSendDTO();
-              dto.setEmail(mem.getEmail());
-              dto.setRole(mem.getRole());
-              dto.setAccountId(CurrentUser.getAccountId());
-              res = sendMail(userDao, dto);
+      	if (mem.getUserId() == null || mem.getUserId().equals(CurrentUser.getUserId()) == false) {
+
+      		if (UserStatus.PENDING.equals(mem.getStatus())) {
+            User user = userDao.findById(mem.getUserId());
+    
+            if (user == null || (user.isBanned() == false && user.isPrivileged() == false)) {
+              boolean isOK = memberDao.increaseSendingCount(memId, UserStatus.PENDING, CurrentUser.getAccountId());
+              if (isOK) {
+                InvitationSendDTO dto = new InvitationSendDTO();
+                dto.setEmail(mem.getEmail());
+                dto.setRole(mem.getRole());
+                dto.setAccountId(CurrentUser.getAccountId());
+                res = sendMail(userDao, dto);
+              } else {
+              	res = new Response("You can re-send invitation for the same user up to three times!");
+              }
             } else {
-            	res = new Response("You can re-send invitation for the same user up to three times!");
+            	res = Responses.BANNED_USER;
             }
           } else {
-          	res = Responses.BANNED_USER;
+          	res = new Response("You cannot re-send an invitation since this user is not in PENDING status!");
           }
-        } else {
-        	res = new Response("You cannot re-send an invitation since this user is not in PENDING status!");
+
+      	} else {
+        	res = new Response("You cannot re-send invitation to yourself!");
         }
       }
   	}
@@ -150,31 +156,28 @@ class MemberService {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      Member mem = memberDao.findById(memId, CurrentUser.getAccountId());
+      Member mem = memberDao.findNormalMemberById(memId, CurrentUser.getAccountId());
       if (mem != null) {
-        if (! mem.getAccountId().equals(CurrentUser.getAccountId())) {
-          if (! mem.getStatus().equals(UserStatus.DELETED)) {
-          	
+
+      	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
+        	res = Responses.Already.DELETED_MEMBER;
+  
+        	if (! mem.getStatus().equals(UserStatus.DELETED)) {
           	handle.begin();
           	
             boolean isOK = memberDao.setStatusDeleted(memId, UserStatus.DELETED, CurrentUser.getAccountId());
             if (isOK) {
-            	terminateUserSession(handle, memId, CurrentUser.getAccountId());
-
+            	terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+  
             	handle.commit();
               res = Responses.OK;
             } else {
             	handle.rollback();
-              res = Responses.DataProblem.DB_PROBLEM;
             }
-          } else {
-            res = Responses.Already.DELETED_MEMBER;
           }
-        } else {
-          res = Responses.DataProblem.NOT_SUITABLE;
-        }
-      } else {
-        res = Responses.NotFound.MEMBERSHIP;
+      	} else {
+      		res = new Response("You cannot delete yourself!");
+      	}
       }
     }
     return res;
@@ -189,7 +192,7 @@ class MemberService {
     	try (Handle handle = Database.getHandle()) {
         MemberDao memberDao = handle.attach(MemberDao.class);
 
-        Member mem = memberDao.findById(dto.getId(), CurrentUser.getAccountId());
+        Member mem = memberDao.findNormalMemberById(dto.getId(), CurrentUser.getAccountId());
         if (mem != null) {
           if (mem.getAccountId().equals(CurrentUser.getAccountId()) && ! mem.getRole().equals(dto.getRole())) {
             if (! mem.getStatus().equals(UserStatus.DELETED)) {
@@ -227,7 +230,7 @@ class MemberService {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      Member mem = memberDao.findById(id, CurrentUser.getAccountId());
+      Member mem = memberDao.findNormalMemberById(id, CurrentUser.getAccountId());
       if (mem != null) {
         if (mem.getAccountId().equals(CurrentUser.getAccountId()) && ! mem.getStatus().equals(UserStatus.PAUSED)) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {
@@ -263,7 +266,7 @@ class MemberService {
     try (Handle handle = Database.getHandle()) {
       MemberDao memberDao = handle.attach(MemberDao.class);
 
-      Member mem = memberDao.findById(id, CurrentUser.getAccountId());
+      Member mem = memberDao.findNormalMemberById(id, CurrentUser.getAccountId());
       if (mem != null) {
         if (mem.getAccountId().equals(CurrentUser.getAccountId()) && mem.getStatus().equals(UserStatus.PAUSED)) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {

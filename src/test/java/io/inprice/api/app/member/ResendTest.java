@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import io.inprice.api.app.utils.Fixtures;
 import io.inprice.api.app.utils.TestAccount;
 import io.inprice.api.app.utils.TestRole;
 import io.inprice.api.app.utils.TestUtils;
@@ -19,6 +20,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
+ * Unable to test the case of "You cannot re-send invitation to yourself" since we cannot get the member id of an ADMIN
  * 
  * @author mdpinar
  * @since 2021-07-04
@@ -36,7 +38,7 @@ public class ResendTest {
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.routeParam("id", "1")
 			.asJson();
 
@@ -48,10 +50,10 @@ public class ResendTest {
 
 	@Test
 	public void Forbidden_WITH_viewer_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.VIEWER);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -65,10 +67,10 @@ public class ResendTest {
 
 	@Test
 	public void Forbidden_WITH_editor_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.EDITOR);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -82,10 +84,10 @@ public class ResendTest {
 
 	@Test
 	public void Member_not_found_WITH_wrong_id() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -99,12 +101,12 @@ public class ResendTest {
 
 	@Test
 	public void You_cannot_re_send_an_invitation_since_this_user_is_not_in_PENDING_status_FOR_joined_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
 		
 		Long memberId = findMemberIdByIndex(cookies, 0);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
@@ -124,17 +126,15 @@ public class ResendTest {
 	 */
 	@Test
 	public void You_can_re_send_invitation_for_the_same_user_up_to_three_times_FOR_the_same_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_one_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_one_extra_user.ADMIN());
 		
-		String email = "another-non-existing@user.com";
-
 		//invites a non-existing user
 		HttpResponse<JsonNode> res = Unirest.post("/member")
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
-  				.put("email", email)
   				.put("role", TestRole.EDITOR)
+  				.put("email", Fixtures.NON_EXISTING_EMAIL_2)
   			)
 			.asJson();
 		
@@ -142,12 +142,12 @@ public class ResendTest {
 		assertEquals(200, json.getInt("status"));
 		
 		//get member list to find member id
-		Long memberId = findMemberIdByEmail(cookies, email);
+		Long memberId = findMemberIdByEmail(cookies, Fixtures.NON_EXISTING_EMAIL_2);
 
 		//re-sends the invitation for extra three times
 		for (int i = 0; i < 3; i++) {
   		res = Unirest.post(SERVICE_ENDPOINT)
-  			.header("X-Session", "0")
+  			.headers(Fixtures.SESSION_O_HEADERS)
   			.cookie(cookies)
   			.routeParam("id", memberId.toString())
   			.asJson();
@@ -168,17 +168,15 @@ public class ResendTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user, TestRole.ADMIN);
+		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user.ADMIN());
 		
-		String email = "non-existing@user.com";
-
 		//invites a non-existing user
 		HttpResponse<JsonNode> res = Unirest.post("/member")
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
-  				.put("email", email)
   				.put("role", TestRole.EDITOR)
+  				.put("email", Fixtures.NON_EXISTING_EMAIL_1)
   			)
 			.asJson();
 		
@@ -186,11 +184,11 @@ public class ResendTest {
 		assertEquals(200, json.getInt("status"));
 		
 		//get member list to find member id
-		Long memberId = findMemberIdByEmail(cookies, email);
+		Long memberId = findMemberIdByEmail(cookies, Fixtures.NON_EXISTING_EMAIL_1);
 
 		//re-sends the invitation
 		res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
@@ -203,10 +201,10 @@ public class ResendTest {
 
 	@Test
 	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
-		Cookies cookies = TestUtils.login(null, TestRole.SUPER);
+		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -220,7 +218,7 @@ public class ResendTest {
 
 	private Long findMemberIdByIndex(Cookies cookies, int index) {
 		HttpResponse<JsonNode> res = Unirest.get("/member")
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.asJson();
 
@@ -232,7 +230,7 @@ public class ResendTest {
 
 	private Long findMemberIdByEmail(Cookies cookies, String email) {
 		HttpResponse<JsonNode> res = Unirest.get("/member")
-			.header("X-Session", "0")
+			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.asJson();
 
