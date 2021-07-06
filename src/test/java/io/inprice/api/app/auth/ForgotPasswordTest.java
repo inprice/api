@@ -104,7 +104,7 @@ public class ForgotPasswordTest {
 	}
 
 	@Test
-	public void Banned_user_FOR_banned_user() {
+	public void Banned_user() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(Fixtures.BANNED_USER)
 			.asJson();

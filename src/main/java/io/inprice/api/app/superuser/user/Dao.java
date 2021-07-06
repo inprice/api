@@ -15,10 +15,11 @@ import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.IdNamePairMapper;
 import io.inprice.common.mappers.MembershipMapper;
 import io.inprice.common.mappers.UserMapper;
-import io.inprice.common.mappers.UserUsedMapper;
+import io.inprice.common.mappers.UserMarkMapper;
+import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
-import io.inprice.common.models.UserUsed;
+import io.inprice.common.models.UserMark;
 
 public interface Dao {
 
@@ -54,9 +55,9 @@ public interface Dao {
   @UseRowMapper(MembershipMapper.class)
   List<Membership> fetchMembershipListById(@Bind("userId") Long userId);
 
-	@SqlQuery("select * from user_used where email=:email order by created_at desc")
-  @UseRowMapper(UserUsedMapper.class)
-  List<UserUsed> fetchUsedServiceListByEmail(@Bind("email") String email);
+	@SqlQuery("select * from user_mark where email=:email order by created_at desc")
+  @UseRowMapper(UserMarkMapper.class)
+  List<UserMark> fetchUsedServiceListByEmail(@Bind("email") String email);
 
 	@SqlQuery(
 		"select id, name from account " +
@@ -78,14 +79,14 @@ public interface Dao {
   @SqlUpdate("update account set status=pre_status, pre_status='BANNED', last_status_update=now() where admin_id=:userId")
   int revokeBanAllBoundAccountsOfUser(@Bind("userId") Long userId);
 
-	@SqlQuery("select * from user_used where id=:id")
-  @UseRowMapper(UserUsedMapper.class)
-  UserUsed findUsedServiceById(@Bind("id") Long id);
+	@SqlQuery("select * from user_mark where id=:id")
+  @UseRowMapper(UserMarkMapper.class)
+  UserMark findUsedServiceById(@Bind("id") Long id);
 	
-	@SqlUpdate("delete from user_used where id=:id")
+	@SqlUpdate("delete from user_mark where id=:id")
 	boolean deleteUsedService(@Bind("id") Long id);
 
-	@SqlUpdate("update user_used set whitelisted = not whitelisted where id=:id")
+	@SqlUpdate("update user_mark set whitelisted = not whitelisted where id=:id")
 	boolean toggleUnlimitedUsedService(@Bind("id") Long id);
 
 	@SqlQuery(
@@ -98,4 +99,10 @@ public interface Dao {
 	@SqlUpdate("delete from user_session where _hash=:hash")
   boolean deleteSession(@Bind("hash") String hash);
 	
+	@SqlUpdate("delete user_mark where email=:email and type=:type)")
+	void removeUserMark(@Bind("email") String email, @Bind("type") UserMarkType type);
+
+	@SqlUpdate("insert into user_mark (email, type, description) values (:email, :type)")
+  void addUserMark(@Bind("email") String email, @Bind("type") UserMarkType type, @Bind("description") String description);
+
 }

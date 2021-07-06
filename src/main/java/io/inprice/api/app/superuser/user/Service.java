@@ -25,10 +25,11 @@ import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.AccessLogMapper;
+import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.models.AccessLog;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
-import io.inprice.common.models.UserUsed;
+import io.inprice.common.models.UserMark;
 import io.inprice.common.utils.DateUtils;
 
 class Service {
@@ -65,11 +66,12 @@ class Service {
   	String problem = null;
   	
   	if (dto.getId() == CurrentUser.getUserId()) {
-  		problem = "Invalid user!";
+  		problem = "You cannot ban yourself!";
   	}
+
   	if (problem == null 
-  			&& (StringUtils.isBlank(dto.getText()) 
-  					|| dto.getText().length() < 5 || dto.getText().length() > 128)) {
+			&& (StringUtils.isBlank(dto.getText()) 
+				|| dto.getText().length() < 5 || dto.getText().length() > 128)) {
   		problem = "Reason must be between 5-128 chars!";
   	}
   	
@@ -88,25 +90,23 @@ class Service {
   					boolean isOK = superDao.ban(dto.getId(), dto.getText());
 
   					if (isOK) {
+  						//he must be added in to user_mark table to prevent later registration or forgot pass. requests!
+  						superDao.addUserMark(user.getEmail(), UserMarkType.BANNED, dto.getText());
+
   						//and his accounts too
-  						int affected = superDao.banAllBoundAccountsOfUser(dto.getId());
+  						superDao.banAllBoundAccountsOfUser(dto.getId());
 
   						//his sessions are terminated as well!
-  						if (affected > 0) {
-                UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
-    	          List<String> hashList = userSessionDao.findHashesByUserId(dto.getId());
-  
-    	          if (hashList.size() > 0) {
-    	          	userSessionDao.deleteByHashList(hashList);
-    	          	for (String hash : hashList) redis.removeSesion(hash);
-    	          }
-  
-    	          handle.commit();
-    						return Responses.OK;
-  						}
+              UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
+  	          List<String> hashList = userSessionDao.findHashesByUserId(dto.getId());
 
-  						handle.rollback();
-  						return Responses.DataProblem.DB_PROBLEM;
+  	          if (hashList.size() > 0) {
+  	          	userSessionDao.deleteByHashList(hashList);
+  	          	for (String hash : hashList) redis.removeSesion(hash);
+  	          }
+
+  	          handle.commit();
+  						return Responses.OK;
   					}
   				} else {
   					return Responses.Already.BANNED_USER;
@@ -133,7 +133,10 @@ class Service {
       			boolean isOK = superDao.revokeBan(id);
       			
       			if (isOK) {
-        			//and from his accounts too
+  						//his ban record in user_mark table must be revoked too!
+  						superDao.removeUserMark(user.getEmail(), UserMarkType.BANNED);
+
+      				//and from his accounts too
         			int affected = superDao.revokeBanAllBoundAccountsOfUser(id);
 
         			if (affected > 0) {
@@ -162,7 +165,7 @@ class Service {
   			Dao superDao = handle.attach(Dao.class);
   			List<Membership> membershipList = superDao.fetchMembershipListById(userId);
   			List<ForDatabase> sessionList = superDao.fetchSessionListById(userId);
-  			List<UserUsed> usedServiceList = superDao.fetchUsedServiceListByEmail(user.getEmail());
+  			List<UserMark> usedServiceList = superDao.fetchUsedServiceListByEmail(user.getEmail());
   			
   			Map<String, Object> data = new HashMap<>(4);
   			data.put("user", user);
@@ -199,7 +202,7 @@ class Service {
   		
   		if (user != null) {
   			Dao superDao = handle.attach(Dao.class);
-  			List<UserUsed> list = superDao.fetchUsedServiceListByEmail(user.getEmail());
+  			List<UserMark> list = superDao.fetchUsedServiceListByEmail(user.getEmail());
   			return new Response(list);
   		}
   	}
@@ -217,12 +220,12 @@ class Service {
   Response deleteUsedService(Long id) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
-  		UserUsed used = superDao.findUsedServiceById(id);
+  		UserMark used = superDao.findUsedServiceById(id);
 
   		if (used != null) {
     		boolean isOK = superDao.deleteUsedService(id);
     		if (isOK) {
-    			List<UserUsed> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
+    			List<UserMark> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
     			return new Response(newList);
     		} else {
     			return Responses.DataProblem.DB_PROBLEM;
@@ -235,12 +238,12 @@ class Service {
 	Response toggleUnlimitedUsedService(Long id) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
-  		UserUsed used = superDao.findUsedServiceById(id);
+  		UserMark used = superDao.findUsedServiceById(id);
 
   		if (used != null) {
     		boolean isOK = superDao.toggleUnlimitedUsedService(id);
     		if (isOK) {
-    			List<UserUsed> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
+    			List<UserMark> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
     			return new Response(newList);
     		} else {
     			return Responses.DataProblem.DB_PROBLEM;

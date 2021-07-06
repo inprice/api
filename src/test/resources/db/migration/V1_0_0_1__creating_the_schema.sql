@@ -285,16 +285,17 @@ create table coupon (
 ) engine=innodb;
 alter table coupon add foreign key (plan_id) references plan (id);
 
-create table user_used (
+create table user_mark (
   id                        bigint unsigned auto_increment not null,
   email                     varchar(128) not null,
+  type                      enum('FREE_USE', 'BANNED') not null default 'FREE_USE',
+  description               varchar(255),
   whitelisted               boolean default false,
-  perm_type                 enum('FREE_USE') not null default 'FREE_USE',
   created_year              smallint not null default (year(curdate())),
   created_month             char(7) not null default (date_format(curdate(), '%Y-%m')),
   created_at                datetime not null default current_timestamp,
   primary key (id),
-  unique key (email, perm_type)
+  unique key (email, type)
 ) engine=innodb;
 
 create table user_session (

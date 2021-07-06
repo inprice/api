@@ -25,7 +25,7 @@ truncate table test.ticket_comment;
 truncate table test.ticket_history;
 truncate table test.user;
 truncate table test.user_session;
-truncate table test.user_used;
+truncate table test.user_mark;
 
 set foreign_key_checks=1;
 

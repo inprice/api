@@ -22,12 +22,12 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.EmailTemplate;
-import io.inprice.common.meta.PermType;
+import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.AccountTrans;
 import io.inprice.common.models.Plan;
-import io.inprice.common.models.UserUsed;
+import io.inprice.common.models.UserMark;
 
 class SubscriptionService {
 
@@ -138,8 +138,8 @@ class SubscriptionService {
     	handle.begin();
 
       AccountDao accountDao = handle.attach(AccountDao.class);
-      UserUsed hasUsed = accountDao.hasUserUsedByEmail(CurrentUser.getEmail(), PermType.FREE_USE);
-      if (hasUsed == null || hasUsed.getWhitelisted().equals(Boolean.TRUE)) {
+      UserMark um_FREE_USE = accountDao.getUserMarkByEmail(CurrentUser.getEmail(), UserMarkType.FREE_USE);
+      if (um_FREE_USE == null || um_FREE_USE.getWhitelisted().equals(Boolean.TRUE)) {
 
         Account account = accountDao.findById(CurrentUser.getAccountId());
         if (account != null) {
@@ -174,7 +174,7 @@ class SubscriptionService {
                       AccountStatus.FREE.name(),
                       basicPlan.getId()
                     );
-                  if (hasUsed == null) accountDao.insertUserUsed(CurrentUser.getEmail(), PermType.FREE_USE);
+                  if (um_FREE_USE == null) accountDao.addUserMark(CurrentUser.getEmail(), UserMarkType.FREE_USE);
                 }
               }
 

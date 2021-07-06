@@ -14,11 +14,11 @@ import io.inprice.api.app.account.mapper.AccountInfo;
 import io.inprice.api.app.account.mapper.AccountInfoMapper;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.common.mappers.AccountMapper;
-import io.inprice.common.mappers.UserUsedMapper;
+import io.inprice.common.mappers.UserMarkMapper;
 import io.inprice.common.meta.AccountStatus;
-import io.inprice.common.meta.PermType;
+import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.models.Account;
-import io.inprice.common.models.UserUsed;
+import io.inprice.common.models.UserMark;
 
 public interface AccountDao {
 
@@ -86,12 +86,12 @@ public interface AccountDao {
     "values (:accountId, :status, :planId)"
   )
   boolean insertStatusHistory(@Bind("accountId") Long accountId, @Bind("status") String status, @Bind("planId") Integer planId);
-  
-  @SqlQuery("select * from user_used where email=:email and perm_type=:permType")
-  @UseRowMapper(UserUsedMapper.class)
-  UserUsed hasUserUsedByEmail(@Bind("email") String email, @Bind("permType") PermType permType);
 
-  @SqlUpdate("insert into user_used (email, perm_type) values (:email, :permType)")
-  void insertUserUsed(@Bind("email") String email, @Bind("permType") PermType permType);
+  @SqlQuery("select * from user_mark where email=:email and type=:type")
+  @UseRowMapper(UserMarkMapper.class)
+  UserMark getUserMarkByEmail(@Bind("email") String email, @Bind("type") UserMarkType type);
+
+  @SqlUpdate("insert into user_mark (email, type) values (:email, :type)")
+  void addUserMark(@Bind("email") String email, @Bind("type") UserMarkType type);
 
 }

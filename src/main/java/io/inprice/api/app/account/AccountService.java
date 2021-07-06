@@ -43,10 +43,12 @@ import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
+import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.User;
+import io.inprice.common.models.UserMark;
 import io.javalin.http.Context;
 
 class AccountService {
@@ -57,47 +59,51 @@ class AccountService {
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
 
   Response requestRegistration(RegisterDTO dto) {
-    Response res = Responses.OK;
-    if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
-      res = redis.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
-    }
+    Response res = redis.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
     if (!res.isOK()) return res;
 
     res = validateRegisterDTO(dto);
     if (res.isOK()) {
 
       try (Handle handle = Database.getHandle()) {
-        UserDao userDao = handle.attach(UserDao.class);
-
-        User user = userDao.findByEmail(dto.getEmail());
-        boolean isNotARegisteredUser = (user == null);
-
-        if (isNotARegisteredUser) {
-          String token = Tokens.add(TokenType.REGISTRATION_REQUEST, dto);
-
-          Map<String, Object> mailMap = new HashMap<>(3);
-          mailMap.put("user", dto.getEmail().split("@")[0]);
-          mailMap.put("account", dto.getAccountName());
-          mailMap.put("token", token.substring(0,3)+"-"+token.substring(3));
+    		AccountDao accountDao = handle.attach(AccountDao.class);
+        UserMark um_BANNED = accountDao.getUserMarkByEmail(dto.getEmail(), UserMarkType.BANNED);
+        
+        if (um_BANNED == null) {
+      		UserDao userDao = handle.attach(UserDao.class);
           
-          if (!SysProps.APP_ENV.equals(AppEnv.PROD)) {
-          	return new Response(mailMap);
+          User user = userDao.findByEmail(dto.getEmail());
+          boolean isNotARegisteredUser = (user == null);
+  
+          if (isNotARegisteredUser) {
+            String token = Tokens.add(TokenType.REGISTRATION_REQUEST, dto);
+  
+            Map<String, Object> mailMap = new HashMap<>(3);
+            mailMap.put("user", dto.getEmail().split("@")[0]);
+            mailMap.put("account", dto.getAccountName());
+            mailMap.put("token", token.substring(0,3)+"-"+token.substring(3));
+            
+            if (!SysProps.APP_ENV.equals(AppEnv.PROD)) {
+            	return new Response(mailMap);
+            } else {
+            	redis.sendEmail(
+          			EmailData.builder()
+            			.template(EmailTemplate.REGISTRATION_REQUEST)
+            			.from(Props.APP_EMAIL_SENDER)
+            			.to(dto.getEmail())
+            			.subject("About " + dto.getAccountName() + " registration on inprice.io")
+            			.data(mailMap)
+            		.build()	
+      				);
+            	redis.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
+              return Responses.OK;
+            }
           } else {
-          	redis.sendEmail(
-        			EmailData.builder()
-          			.template(EmailTemplate.REGISTRATION_REQUEST)
-          			.from(Props.APP_EMAIL_SENDER)
-          			.to(dto.getEmail())
-          			.subject("About " + dto.getAccountName() + " registration on inprice.io")
-          			.data(mailMap)
-          		.build()	
-    				);
-          	redis.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
-            return Responses.OK;
+            return Responses.Already.Defined.REGISTERED_USER;
           }
 
         } else {
-          return Responses.Already.Defined.REGISTERED_USER;
+        	return Responses.BANNED_USER;
         }
 
       } catch (Exception e) {
@@ -432,7 +438,7 @@ class AccountService {
       if (StringUtils.isBlank(dto.getAccountName())) {
         problem = "Account name cannot be empty!";
       } else if (dto.getAccountName().length() < 3 || dto.getAccountName().length() > 70) {
-        problem = "Account name must be between 3 - 70 chars";
+        problem = "Account name must be between 3 - 70 chars!";
       }
     }
 
