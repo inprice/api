@@ -1,4 +1,4 @@
-package io.inprice.api.app.member;
+package io.inprice.api.app.membership;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -21,7 +21,10 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * No need to check email limitations again here since it is already done in Login test class
+ * Tests the functionality of /membership -POST- in MembershipService 
+ * 
+ * Out of scope:
+ * 	- No need to check email limitations again here since it is already done in Login test class
  * 
  * @author mdpinar
  * @since 2021-07-03

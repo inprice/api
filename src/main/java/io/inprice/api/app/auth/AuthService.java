@@ -43,7 +43,7 @@ import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserStatus;
-import io.inprice.common.models.Member;
+import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
 import io.javalin.http.Context;
 
@@ -261,7 +261,7 @@ public class AuthService {
       UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      List<Member> memberList = membershipDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED);
+      List<Membership> memberList = membershipDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED);
       if (memberList != null && memberList.size() > 0) {
 
         List<ForRedis> redisSesList = new ArrayList<>();
@@ -290,7 +290,7 @@ public class AuthService {
         String ipAddress = ClientSide.getIp(ctx.req);
         UserAgent ua = new UserAgent(ctx.userAgent());
 
-        for (Member mem : memberList) {
+        for (Membership mem : memberList) {
           ForCookie cookieSes = new ForCookie(user.getEmail(), mem.getRole().name());
           sessions.add(cookieSes);
 
@@ -346,8 +346,8 @@ public class AuthService {
           if (user == null || !user.isBanned()) {
 
           	MembershipDao membershipDao = handle.attach(MembershipDao.class);
-          	Member member = membershipDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING, sendDto.getAccountId());
-            if (member != null) {
+          	Membership membership = membershipDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING, sendDto.getAccountId());
+            if (membership != null) {
 
               if (user == null) { //user creation
                 UserDTO dto = new UserDTO();

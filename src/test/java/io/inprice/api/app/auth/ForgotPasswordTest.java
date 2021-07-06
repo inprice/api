@@ -18,6 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
+ * Tests the functionality of /forgot-password in AuthService 
  * 
  * @author mdpinar
  * @since 2021-07-01
@@ -127,18 +128,6 @@ public class ForgotPasswordTest {
 	}
 
 	@Test
-	public void Everything_must_be_OK_WITH_correct_credentials() {
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(TestAccount.Starter_plan_and_one_extra_user.EDITOR())
-			.asJson();
-		
-		JSONObject json = res.getBody().getObject();
-		
-		assertEquals(200, json.getInt("status"));
-		assertNotNull(json.getJSONObject("data"));
-	}
-
-	@Test
 	public void This_email_is_already_requested_please_wait_some_time_to_try_again_WITH_correct_credentials() {
 		//first request
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
@@ -158,6 +147,18 @@ public class ForgotPasswordTest {
 		
 		assertEquals(814, json.getInt("status"));
 		assertEquals("This email is already requested, please wait some time to try again!", json.getString("reason"));
+	}
+
+	@Test
+	public void Everything_must_be_OK_WITH_correct_credentials() {
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.body(TestAccount.Starter_plan_and_one_extra_user.EDITOR())
+			.asJson();
+		
+		JSONObject json = res.getBody().getObject();
+		
+		assertEquals(200, json.getInt("status"));
+		assertNotNull(json.getJSONObject("data"));
 	}
 	
 	private JSONObject createBody(String email) {

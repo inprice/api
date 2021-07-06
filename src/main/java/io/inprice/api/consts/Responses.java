@@ -87,6 +87,7 @@ public class Responses {
     private static final int BASE = 800;
     public static final Response LOGGED_OUT = new Response(BASE + 1, "Seems that you are already logged out!");
     public static final Response DELETED_MEMBER = new Response(BASE + 2, "This member is already deleted!");
+    public static final Response PAUSED_MEMBER = new Response(BASE + 3, "This member is already paused!");
 
     public static final Response USED_COUPON = new Response(BASE + 4, "This coupon seems already used!");
     public static final Response FREE_USE_USED = new Response(BASE + 5, "You have already used your free use previously!");

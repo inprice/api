@@ -1,4 +1,4 @@
-package io.inprice.api.app.member;
+package io.inprice.api.app.membership;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -19,6 +19,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
+ * Tests the functionality of /membership -GET- in MembershipService 
  * 
  * @author mdpinar
  * @since 2021-07-01

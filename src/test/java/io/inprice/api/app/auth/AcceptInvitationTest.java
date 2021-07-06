@@ -19,10 +19,14 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * No need to check passwords again here since it is already done in Login and ForgotPassword test classes
+ * Tests the functionality of /accept-invitation in AuthService 
+ * 
+ * Out of scope:
+ * 	- No need to check passwords again here since it is already done in Login and ForgotPassword test classes
  *  
  * @author mdpinar
  * @since 2021-07-01
+ * 
  */
 @RunWith(JUnit4.class)
 public class AcceptInvitationTest {

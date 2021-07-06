@@ -31,7 +31,7 @@ import io.inprice.common.models.AccessLog;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.AccountHistory;
 import io.inprice.common.models.AccountTrans;
-import io.inprice.common.models.Member;
+import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
 import io.inprice.common.utils.DateUtils;
 import io.javalin.http.Context;
@@ -74,7 +74,7 @@ class Service {
     	Account account = superDao.findById(id);
 
     	if (account != null) {
-    		List<Member> memberList = superDao.fetchMemberList(id);
+    		List<Membership> memberList = superDao.fetchMemberList(id);
     		List<AccountHistory> historyList = superDao.fetchHistory(id);
     		List<AccountTrans> transList = superDao.fetchTransactionList(id);
 
@@ -93,7 +93,7 @@ class Service {
   Response fetchMemberList(Long accountId) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
-  		List<Member> list = superDao.fetchMemberList(accountId);
+  		List<Membership> list = superDao.fetchMemberList(accountId);
   		return new Response(list);
   	}
   }

@@ -13,10 +13,10 @@ import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.IdNamePairMapper;
-import io.inprice.common.mappers.MemberMapper;
+import io.inprice.common.mappers.MembershipMapper;
 import io.inprice.common.mappers.UserMapper;
 import io.inprice.common.mappers.UserUsedMapper;
-import io.inprice.common.models.Member;
+import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
 import io.inprice.common.models.UserUsed;
 
@@ -46,13 +46,13 @@ public interface Dao {
   List<ForDatabase> fetchSessionListById(@Bind("userId") Long userId);
 
   @SqlQuery(
-		"select m.*, a.name as account_name, a.status as account_status from member m " +
+		"select m.*, a.name as account_name, a.status as account_status from membership m " +
 		"inner join account a on a.id = m.account_id "+
 		"where user_id=:userId " +
 		"order by role, created_at"
 	)
-  @UseRowMapper(MemberMapper.class)
-  List<Member> fetchMembershipListById(@Bind("userId") Long userId);
+  @UseRowMapper(MembershipMapper.class)
+  List<Membership> fetchMembershipListById(@Bind("userId") Long userId);
 
 	@SqlQuery("select * from user_used where email=:email order by created_at desc")
   @UseRowMapper(UserUsedMapper.class)
@@ -60,7 +60,7 @@ public interface Dao {
 
 	@SqlQuery(
 		"select id, name from account " +
-		"where id in (select account_id from member where user_id=:userId) " +
+		"where id in (select account_id from membership where user_id=:userId) " +
 		"order by name"
 	)
   @UseRowMapper(IdNamePairMapper.class)

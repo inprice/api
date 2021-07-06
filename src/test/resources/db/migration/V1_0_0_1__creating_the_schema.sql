@@ -109,7 +109,7 @@ create table account_trans (
 ) engine=innodb;
 alter table account_trans add foreign key (account_id) references account (id);
 
-create table member (
+create table membership (
   id                        bigint unsigned auto_increment not null,
   email                     varchar(128) not null,
   user_id                   bigint unsigned,
@@ -125,8 +125,8 @@ create table member (
   primary key (id),
   key (email)
 ) engine=innodb;
-alter table member add foreign key (user_id) references user (id);
-alter table member add foreign key (account_id) references account (id);
+alter table membership add foreign key (user_id) references user (id);
+alter table membership add foreign key (account_id) references account (id);
 
 create table platform (
   id                        bigint unsigned auto_increment not null,

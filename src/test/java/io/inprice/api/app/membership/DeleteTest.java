@@ -1,4 +1,4 @@
-package io.inprice.api.app.member;
+package io.inprice.api.app.membership;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -19,7 +19,10 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Unable to test the case of "You cannot delete yourself" since we cannot get the member id of an ADMIN
+ * Tests the functionality of /membership -DELETE- in MembershipService 
+ * 
+ * Out of scope:
+ * 	- Unable to test the case of "You cannot delete yourself" since we cannot get the member id of an ADMIN
  * 
  * @author mdpinar
  * @since 2021-07-05
@@ -99,14 +102,14 @@ public class DeleteTest {
 	}
 
 	/**
-	 * Satisfy two test scenarios;
+	 * Satisfies two test scenarios;
 	 *    a) Everything must be ok with and ADMIN user
 	 *    b) This member is already deleted for an already deleted user
 	 *
 	 * Consists of three steps;
 	 *    a) logins as ADMIN
-	 *    b) get member list to find member id
-	 *    b) deletes the first member for two times
+	 *    b) gets member list to find member id
+	 *    b) deletes the first member twice
 	 */
 	@Test
 	public void This_member_is_already_deleted_FOR_already_deleted_user() {
@@ -125,7 +128,7 @@ public class DeleteTest {
 
 		//better wait some time before second call!
 		try {
-			Thread.sleep(500);
+			Thread.sleep(250);
 		} catch (InterruptedException ignored) {}
 
 		res = Unirest.delete(SERVICE_ENDPOINT)

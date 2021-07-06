@@ -17,6 +17,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
+ * Tests the functionality of /resest-password in AuthService 
  * 
  * @author mdpinar
  * @since 2021-07-01

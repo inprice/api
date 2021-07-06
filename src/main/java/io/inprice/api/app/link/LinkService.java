@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.group.GroupAlarmService;
 import io.inprice.api.app.group.GroupDao;
 import io.inprice.api.app.link.dto.SearchDTO;
-import io.inprice.api.app.superuser.link.dto.SearchBy;
+import io.inprice.api.app.link.dto.SearchBy;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;

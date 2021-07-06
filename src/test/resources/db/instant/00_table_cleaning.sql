@@ -19,7 +19,7 @@ truncate table test.link_group;
 truncate table test.link_history;
 truncate table test.link_price;
 truncate table test.link_spec;
-truncate table test.member;
+truncate table test.membership;
 truncate table test.ticket;
 truncate table test.ticket_comment;
 truncate table test.ticket_history;

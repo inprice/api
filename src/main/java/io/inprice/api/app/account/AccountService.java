@@ -283,7 +283,7 @@ class AccountService {
               batch.add("delete from user where id in (" + userIdList + ")");
             }
             
-            batch.add("delete from member " + where);
+            batch.add("delete from membership " + where);
             batch.add("delete from user_session " + where);
             batch.add("delete from checkout " + where);
             batch.add("delete from account_history " + where);

@@ -32,7 +32,7 @@ import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Account;
-import io.inprice.common.models.Member;
+import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
 
 class MembershipService {
@@ -47,7 +47,7 @@ class MembershipService {
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      List<Member> list = membershipDao.findNormalMemberList(CurrentUser.getAccountId());
+      List<Membership> list = membershipDao.findNormalMemberList(CurrentUser.getAccountId());
       if (list != null && list.size() > 0) {
         res = new Response(list);
       }
@@ -77,7 +77,7 @@ class MembershipService {
         		}
 
         		MembershipDao membershipDao = handle.attach(MembershipDao.class);
-            Member mem = membershipDao.findByEmail(dto.getEmail(), CurrentUser.getAccountId());
+            Membership mem = membershipDao.findByEmail(dto.getEmail(), CurrentUser.getAccountId());
             if (mem == null) {
             	
             	handle.begin();
@@ -116,7 +116,7 @@ class MembershipService {
       UserDao userDao = handle.attach(UserDao.class);
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
       
-      Member mem = membershipDao.findNormalMemberById(memId, CurrentUser.getAccountId());
+      Membership mem = membershipDao.findNormalMemberById(memId, CurrentUser.getAccountId());
       if (mem != null) {
       	if (mem.getUserId() == null || mem.getUserId().equals(CurrentUser.getUserId()) == false) {
 
@@ -156,7 +156,7 @@ class MembershipService {
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      Member mem = membershipDao.findNormalMemberById(memId, CurrentUser.getAccountId());
+      Membership mem = membershipDao.findNormalMemberById(memId, CurrentUser.getAccountId());
       if (mem != null) {
 
       	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
@@ -193,7 +193,7 @@ class MembershipService {
 
     	try (Handle handle = Database.getHandle()) {
         MembershipDao membershipDao = handle.attach(MembershipDao.class);
-        Member mem = membershipDao.findNormalMemberById(dto.getMemberId(), CurrentUser.getAccountId());
+        Membership mem = membershipDao.findNormalMemberById(dto.getMemberId(), CurrentUser.getAccountId());
 
     		if (mem != null) {
         	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
@@ -240,33 +240,36 @@ class MembershipService {
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      Member mem = membershipDao.findNormalMemberById(id, CurrentUser.getAccountId());
+      Membership mem = membershipDao.findNormalMemberById(id, CurrentUser.getAccountId());
       if (mem != null) {
-        if (mem.getAccountId().equals(CurrentUser.getAccountId()) && ! mem.getStatus().equals(UserStatus.PAUSED)) {
-          if (! mem.getStatus().equals(UserStatus.DELETED)) {
+      	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
 
-          	handle.begin();
-
-            boolean isOK = membershipDao.pause(id, CurrentUser.getAccountId());
-            if (isOK) {
-            	if (mem.getUserId() != null) {
-            		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
-            	}
-
-            	handle.commit();
-              res = Responses.OK;
+        	if (! mem.getStatus().equals(UserStatus.DELETED)) {
+        		if (! mem.getStatus().equals(UserStatus.PAUSED)) {
+  
+            	handle.begin();
+  
+              boolean isOK = membershipDao.pause(id, CurrentUser.getAccountId());
+              if (isOK) {
+              	if (mem.getUserId() != null) {
+              		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+              	}
+  
+              	handle.commit();
+                res = Responses.OK;
+              } else {
+              	handle.rollback();
+                res = Responses.DataProblem.DB_PROBLEM;
+              }
             } else {
-            	handle.rollback();
-              res = Responses.DataProblem.DB_PROBLEM;
+              res = Responses.Already.PAUSED_MEMBER;
             }
           } else {
             res = Responses.Already.DELETED_MEMBER;
           }
         } else {
-          res = Responses.DataProblem.NOT_SUITABLE;
+      		res = new Response("You cannot pause yourself!");
         }
-      } else {
-        res = Responses.NotFound.MEMBERSHIP;
       }
     }
 	
@@ -279,30 +282,35 @@ class MembershipService {
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      Member mem = membershipDao.findNormalMemberById(id, CurrentUser.getAccountId());
+      Membership mem = membershipDao.findNormalMemberById(id, CurrentUser.getAccountId());
       if (mem != null) {
-        if (mem.getAccountId().equals(CurrentUser.getAccountId()) && mem.getStatus().equals(UserStatus.PAUSED)) {
-          if (! mem.getStatus().equals(UserStatus.DELETED)) {
+      	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
 
-          	handle.begin();
-
-            boolean isOK = membershipDao.resume(id, CurrentUser.getAccountId());
-            if (isOK) {
-            	if (mem.getUserId() != null) {
-            		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
-            	}
-
-            	handle.commit();
-              res = Responses.OK;
+        	if (! mem.getStatus().equals(UserStatus.DELETED)) {
+          	if (mem.getStatus().equals(UserStatus.PAUSED)) {
+  
+            	handle.begin();
+  
+              boolean isOK = membershipDao.resume(id, CurrentUser.getAccountId());
+              if (isOK) {
+              	if (mem.getUserId() != null) {
+              		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+              	}
+  
+              	handle.commit();
+                res = Responses.OK;
+              } else {
+              	handle.rollback();
+                res = Responses.DataProblem.DB_PROBLEM;
+              }
             } else {
-            	handle.rollback();
-              res = Responses.DataProblem.DB_PROBLEM;
+            	res = new Response("This member is not paused!");
             }
           } else {
             res = Responses.Already.DELETED_MEMBER;
           }
         } else {
-          res = Responses.DataProblem.NOT_SUITABLE;
+      		res = new Response("You cannot resume yourself!");
         }
       } else {
         res = Responses.NotFound.MEMBERSHIP;

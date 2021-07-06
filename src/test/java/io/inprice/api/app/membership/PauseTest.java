@@ -1,4 +1,4 @@
-package io.inprice.api.app.member;
+package io.inprice.api.app.membership;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -10,7 +10,6 @@ import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
 import io.inprice.api.utils.TestAccount;
-import io.inprice.api.utils.TestRole;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -20,15 +19,18 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Unable to test the case of "You cannot re-send invitation to yourself" since we cannot get the member id of an ADMIN
+ * Tests the functionality of /membership/pause in MembershipService 
+ * 
+ * Out of scope:
+ * 	- Unable to test the case of "You cannot pause yourself" since we cannot get the member id of an ADMIN
  * 
  * @author mdpinar
- * @since 2021-07-04
+ * @since 2021-07-06
  */
 @RunWith(JUnit4.class)
-public class ResendTest {
+public class PauseTest {
 
-	private static final String SERVICE_ENDPOINT = "/membership/{id}";
+	private static final String SERVICE_ENDPOINT = "/membership/pause/{id}";
 
 	@BeforeClass
 	public static void setup() {
@@ -37,7 +39,7 @@ public class ResendTest {
 
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.routeParam("id", "1")
 			.asJson();
@@ -52,7 +54,7 @@ public class ResendTest {
 	public void Forbidden_WITH_viewer_user() {
 		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.VIEWER());
 
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
@@ -69,7 +71,7 @@ public class ResendTest {
 	public void Forbidden_WITH_editor_user() {
 		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.EDITOR());
 
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
@@ -86,7 +88,7 @@ public class ResendTest {
 	public void Member_not_found_WITH_wrong_id() {
 		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
 
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
@@ -99,111 +101,97 @@ public class ResendTest {
 		assertNotNull("Member not found!", json.get("reason"));
 	}
 
+	/**
+	 * Consists of three steps;
+	 *    a) find the second member and delete him
+	 *    b) delete him
+	 *    c) try to pause him
+	 */
 	@Test
-	public void You_cannot_re_send_an_invitation_since_this_user_is_not_in_PENDING_status_FOR_joined_user() {
+	public void This_member_is_already_deleted_FOR_a_deleted_member() {
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
+
+		//finding the second member
+		Long memberId = findMemberIdByIndex(cookies, 1); //attention pls!
+
+		//deleting him
+		HttpResponse<JsonNode> res = Unirest.delete("/membership/{id}")
+			.headers(Fixtures.SESSION_O_HEADERS)
+			.cookie(cookies)
+			.routeParam("id", memberId.toString())
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		assertEquals(200, json.getInt("status"));
+
+		//better wait some time before second call!
+		try {
+			Thread.sleep(250);
+		} catch (InterruptedException ignored) {}
+		
+		//try to pause
+		res = Unirest.put(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_O_HEADERS)
+			.cookie(cookies)
+			.routeParam("id", memberId.toString())
+			.asJson();
+		TestUtils.logout(cookies);
+
+		json = res.getBody().getObject();
+
+		assertEquals(802, json.getInt("status"));
+    assertEquals("This member is already deleted!", json.getString("reason"));
+	}
+
+	/**
+	 * Satisfies two test scenarios;
+	 *    a) Everything must be ok with and ADMIN user
+	 *    b) This member is already paused for an already paused user
+	 *
+	 * Consists of three steps;
+	 *    a) logins as ADMIN
+	 *    b) gets member list to find member id
+	 *    b) pauses the first member twice
+	 */
+	@Test
+	public void This_member_is_already_paused_FOR_already_paused_member() {
 		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
 		
 		Long memberId = findMemberIdByIndex(cookies, 0);
 
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
-		TestUtils.logout(cookies);
 
-		JSONObject json = res.getBody().getObject();
-		
-		assertEquals(400, json.getInt("status"));
-		assertEquals("You cannot re-send an invitation since this user is not in PENDING status!", json.getString("reason"));
-	}
-
-	/**
-	 * Consists of three steps;
-	 *    a) invites a non-existing user
-	 *    b) get member list to find member id
-	 *    b) re-sends the invitation for extra three times
-	 */
-	@Test
-	public void You_can_re_send_invitation_for_the_same_user_up_to_three_times_FOR_the_same_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_one_extra_user.ADMIN());
-		
-		//invites a non-existing user
-		HttpResponse<JsonNode> res = Unirest.post("/membership")
-			.headers(Fixtures.SESSION_O_HEADERS)
-			.cookie(cookies)
-			.body(new JSONObject()
-  				.put("role", TestRole.EDITOR)
-  				.put("email", Fixtures.NON_EXISTING_EMAIL_2)
-  			)
-			.asJson();
-		
 		JSONObject json = res.getBody().getObject();
 		assertEquals(200, json.getInt("status"));
-		
-		//get member list to find member id
-		Long memberId = findMemberIdByEmail(cookies, Fixtures.NON_EXISTING_EMAIL_2);
 
-		//re-sends the invitation for extra three times
-		for (int i = 0; i < 3; i++) {
-  		res = Unirest.post(SERVICE_ENDPOINT)
-  			.headers(Fixtures.SESSION_O_HEADERS)
-  			.cookie(cookies)
-  			.routeParam("id", memberId.toString())
-  			.asJson();
-		}
+		//better wait some time before second call!
+		try {
+			Thread.sleep(250);
+		} catch (InterruptedException ignored) {}
+
+		res = Unirest.put(SERVICE_ENDPOINT)
+				.headers(Fixtures.SESSION_O_HEADERS)
+				.cookie(cookies)
+				.routeParam("id", memberId.toString())
+				.asJson();
+
 		TestUtils.logout(cookies);
 
 		json = res.getBody().getObject();
-
-		assertEquals(400, json.getInt("status"));
-		assertEquals("You can re-send invitation for the same user up to three times!", json.getString("reason"));
-	}
-
-	/**
-	 * Consists of three steps;
-	 *    a) invites a non-existing user
-	 *    b) get member list to find member id
-	 *    c) re-sends the invitation
-	 */
-	@Test
-	public void Everything_must_be_ok_WITH_admin_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user.ADMIN());
 		
-		//invites a non-existing user
-		HttpResponse<JsonNode> res = Unirest.post("/membership")
-			.headers(Fixtures.SESSION_O_HEADERS)
-			.cookie(cookies)
-			.body(new JSONObject()
-  				.put("role", TestRole.EDITOR)
-  				.put("email", Fixtures.NON_EXISTING_EMAIL_1)
-  			)
-			.asJson();
-		
-		JSONObject json = res.getBody().getObject();
-		assertEquals(200, json.getInt("status"));
-		
-		//get member list to find member id
-		Long memberId = findMemberIdByEmail(cookies, Fixtures.NON_EXISTING_EMAIL_1);
-
-		//re-sends the invitation
-		res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
-			.cookie(cookies)
-			.routeParam("id", memberId.toString())
-			.asJson();
-		TestUtils.logout(cookies);
-
-		json = res.getBody().getObject();
-
-		assertEquals(200, json.getInt("status"));
+		assertEquals(803, json.getInt("status"));
+		assertEquals("This member is already paused!", json.getString("reason"));
 	}
 
 	@Test
 	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
@@ -226,23 +214,6 @@ public class ResendTest {
 		JSONArray data = json.getJSONArray("data");
 		
 		return data.getJSONObject(index).getLong("id");
-	}
-
-	private Long findMemberIdByEmail(Cookies cookies, String email) {
-		HttpResponse<JsonNode> res = Unirest.get("/membership")
-			.headers(Fixtures.SESSION_O_HEADERS)
-			.cookie(cookies)
-			.asJson();
-
-		JSONObject json = res.getBody().getObject();
-		JSONArray data = json.getJSONArray("data");
-		
-		for (int i = 0; i < data.length(); i++) {
-			JSONObject jobj = data.getJSONObject(i);
-			if (email.equals(jobj.getString("email"))) return jobj.getLong("id");
-		}
-		
-		return null;
 	}
 
 }

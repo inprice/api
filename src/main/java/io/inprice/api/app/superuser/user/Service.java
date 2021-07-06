@@ -26,7 +26,7 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.AccessLogMapper;
 import io.inprice.common.models.AccessLog;
-import io.inprice.common.models.Member;
+import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
 import io.inprice.common.models.UserUsed;
 import io.inprice.common.utils.DateUtils;
@@ -160,7 +160,7 @@ class Service {
   		
   		if (user != null) {
   			Dao superDao = handle.attach(Dao.class);
-  			List<Member> membershipList = superDao.fetchMembershipListById(userId);
+  			List<Membership> membershipList = superDao.fetchMembershipListById(userId);
   			List<ForDatabase> sessionList = superDao.fetchSessionListById(userId);
   			List<UserUsed> usedServiceList = superDao.fetchUsedServiceListByEmail(user.getEmail());
   			
@@ -179,7 +179,7 @@ class Service {
   Response fetchMembershipList(Long userId) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
-  		List<Member> list = superDao.fetchMembershipListById(userId);
+  		List<Membership> list = superDao.fetchMembershipListById(userId);
   		return new Response(list);
   	}
   }
