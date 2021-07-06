@@ -16,7 +16,7 @@ import io.inprice.api.app.account.dto.CreateDTO;
 import io.inprice.api.app.account.dto.RegisterDTO;
 import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.group.GroupDao;
-import io.inprice.api.app.member.MemberDao;
+import io.inprice.api.app.membership.MembershipDao;
 import io.inprice.api.app.superuser.announce.AnnounceService;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
@@ -276,8 +276,8 @@ class AccountService {
 
             // in order to keep consistency, 
             // users having no account other than this must be deleted too!!!
-            MemberDao memberDao = handle.attach(MemberDao.class);
-            List<Long> unboundMembers = memberDao.findUserIdListHavingJustThisAccount(CurrentUser.getAccountId());
+            MembershipDao membershipDao = handle.attach(MembershipDao.class);
+            List<Long> unboundMembers = membershipDao.findUserIdListHavingJustThisAccount(CurrentUser.getAccountId());
             if (unboundMembers != null && ! unboundMembers.isEmpty()) {
               String userIdList = StringUtils.join(unboundMembers, ",");
               batch.add("delete from user where id in (" + userIdList + ")");
@@ -345,7 +345,7 @@ class AccountService {
 
   private Response createAccount(Handle handle, Long userId, String userEmail, String accountName, String currencyCode, String currencyFormat) {
     AccountDao accountDao = handle.attach(AccountDao.class);
-    MemberDao memberDao = handle.attach(MemberDao.class);
+    MembershipDao membershipDao = handle.attach(MembershipDao.class);
     GroupDao groupDao = handle.attach(GroupDao.class);
 
     Account account = accountDao.findByNameAndAdminId(accountName, userId);
@@ -361,7 +361,7 @@ class AccountService {
       if (accountId != null) {
         accountDao.insertStatusHistory(accountId, AccountStatus.CREATED);
         long memberId = 
-          memberDao.insert(
+          membershipDao.insert(
             userId,
             userEmail,
             accountId,

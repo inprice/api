@@ -1,4 +1,4 @@
-package io.inprice.api.app.utils;
+package io.inprice.api.utils;
 
 import java.util.Map;
 

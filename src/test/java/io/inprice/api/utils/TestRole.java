@@ -1,4 +1,4 @@
-package io.inprice.api.app.utils;
+package io.inprice.api.utils;
 
 public enum TestRole {
 

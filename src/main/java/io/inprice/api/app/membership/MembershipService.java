@@ -1,4 +1,4 @@
-package io.inprice.api.app.member;
+package io.inprice.api.app.membership;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
-import io.inprice.api.app.member.dto.InvitationUpdateDTO;
+import io.inprice.api.app.membership.dto.InvitationUpdateDTO;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.consts.Responses;
@@ -35,9 +35,9 @@ import io.inprice.common.models.Account;
 import io.inprice.common.models.Member;
 import io.inprice.common.models.User;
 
-class MemberService {
+class MembershipService {
 
-  private static final Logger log = LoggerFactory.getLogger(MemberService.class);
+  private static final Logger log = LoggerFactory.getLogger(MembershipService.class);
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
 
@@ -45,9 +45,9 @@ class MemberService {
     Response res = Responses.NotFound.MEMBERSHIP;
 
     try (Handle handle = Database.getHandle()) {
-      MemberDao memberDao = handle.attach(MemberDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      List<Member> list = memberDao.findNormalMemberList(CurrentUser.getAccountId());
+      List<Member> list = membershipDao.findNormalMemberList(CurrentUser.getAccountId());
       if (list != null && list.size() > 0) {
         res = new Response(list);
       }
@@ -76,14 +76,14 @@ class MemberService {
         			}
         		}
 
-        		MemberDao memberDao = handle.attach(MemberDao.class);
-            Member mem = memberDao.findByEmail(dto.getEmail(), CurrentUser.getAccountId());
+        		MembershipDao membershipDao = handle.attach(MembershipDao.class);
+            Member mem = membershipDao.findByEmail(dto.getEmail(), CurrentUser.getAccountId());
             if (mem == null) {
             	
             	handle.begin();
 
-            	//TODO: an announce to user must be fired from here!
-              boolean isAdded = memberDao.insertInvitation(dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
+            	//TODO: an announce must be fired here!
+              boolean isAdded = membershipDao.insertInvitation(dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
               if (isAdded) {
                 boolean isOK = accountDao.increaseUserCount(CurrentUser.getAccountId());
                 if (isOK) {
@@ -114,9 +114,9 @@ class MemberService {
 
     try (Handle handle = Database.getHandle()) {
       UserDao userDao = handle.attach(UserDao.class);
-      MemberDao memberDao = handle.attach(MemberDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
       
-      Member mem = memberDao.findNormalMemberById(memId, CurrentUser.getAccountId());
+      Member mem = membershipDao.findNormalMemberById(memId, CurrentUser.getAccountId());
       if (mem != null) {
       	if (mem.getUserId() == null || mem.getUserId().equals(CurrentUser.getUserId()) == false) {
 
@@ -124,7 +124,7 @@ class MemberService {
             User user = userDao.findById(mem.getUserId());
     
             if (user == null || (user.isBanned() == false && user.isPrivileged() == false)) {
-              boolean isOK = memberDao.increaseSendingCount(memId, UserStatus.PENDING, CurrentUser.getAccountId());
+              boolean isOK = membershipDao.increaseSendingCount(memId, UserStatus.PENDING, CurrentUser.getAccountId());
               if (isOK) {
                 InvitationSendDTO dto = new InvitationSendDTO();
                 dto.setEmail(mem.getEmail());
@@ -154,9 +154,9 @@ class MemberService {
     Response res = Responses.NotFound.MEMBERSHIP;
 
     try (Handle handle = Database.getHandle()) {
-      MemberDao memberDao = handle.attach(MemberDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      Member mem = memberDao.findNormalMemberById(memId, CurrentUser.getAccountId());
+      Member mem = membershipDao.findNormalMemberById(memId, CurrentUser.getAccountId());
       if (mem != null) {
 
       	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
@@ -165,9 +165,11 @@ class MemberService {
         	if (! mem.getStatus().equals(UserStatus.DELETED)) {
           	handle.begin();
           	
-            boolean isOK = memberDao.setStatusDeleted(memId, UserStatus.DELETED, CurrentUser.getAccountId());
+            boolean isOK = membershipDao.setStatusDeleted(memId, UserStatus.DELETED, CurrentUser.getAccountId());
             if (isOK) {
-            	terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+            	if (mem.getUserId() != null) {
+            		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+            	}
   
             	handle.commit();
               res = Responses.OK;
@@ -190,30 +192,38 @@ class MemberService {
       Response res = Responses.NotFound.MEMBERSHIP;
 
     	try (Handle handle = Database.getHandle()) {
-        MemberDao memberDao = handle.attach(MemberDao.class);
+        MembershipDao membershipDao = handle.attach(MembershipDao.class);
+        Member mem = membershipDao.findNormalMemberById(dto.getMemberId(), CurrentUser.getAccountId());
 
-        Member mem = memberDao.findNormalMemberById(dto.getId(), CurrentUser.getAccountId());
-        if (mem != null) {
-          if (mem.getAccountId().equals(CurrentUser.getAccountId()) && ! mem.getRole().equals(dto.getRole())) {
-            if (! mem.getStatus().equals(UserStatus.DELETED)) {
+    		if (mem != null) {
+        	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
+          
+        		if (! mem.getStatus().equals(UserStatus.DELETED)) {
+        			if (! mem.getRole().equals(dto.getRole())) {
+  
+              	handle.begin();
 
-            	handle.begin();
-              
-              boolean isOK = memberDao.changeRole(dto.getId(), dto.getRole(), CurrentUser.getAccountId());
-              if (isOK) {
-              	terminateUserSession(handle, dto.getId(), CurrentUser.getAccountId());
-              	handle.commit();
-                res = Responses.OK;
+                boolean isOK = membershipDao.changeRole(dto.getMemberId(), dto.getRole(), CurrentUser.getAccountId());
+                if (isOK) {
+                	if (mem.getUserId() != null) {
+                		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+                	}
+
+                	handle.commit();
+                  res = Responses.OK;
+                } else {
+                	handle.rollback();
+                  res = Responses.DataProblem.DB_PROBLEM;
+                }
               } else {
-              	handle.rollback();
-                res = Responses.DataProblem.DB_PROBLEM;
+                res = Responses.DataProblem.NOT_SUITABLE;
               }
             } else {
               res = Responses.Already.DELETED_MEMBER;
             }
-          } else {
-            res = Responses.DataProblem.NOT_SUITABLE;
-          }
+        	} else {
+        		res = new Response("You cannot change your own role!");
+        	}
         } else {
           res = Responses.NotFound.MEMBERSHIP;
         }
@@ -228,18 +238,21 @@ class MemberService {
     Response res = Responses.NotFound.MEMBERSHIP;
 
     try (Handle handle = Database.getHandle()) {
-      MemberDao memberDao = handle.attach(MemberDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      Member mem = memberDao.findNormalMemberById(id, CurrentUser.getAccountId());
+      Member mem = membershipDao.findNormalMemberById(id, CurrentUser.getAccountId());
       if (mem != null) {
         if (mem.getAccountId().equals(CurrentUser.getAccountId()) && ! mem.getStatus().equals(UserStatus.PAUSED)) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {
 
           	handle.begin();
 
-            boolean isOK = memberDao.pause(id, CurrentUser.getAccountId());
+            boolean isOK = membershipDao.pause(id, CurrentUser.getAccountId());
             if (isOK) {
-            	terminateUserSession(handle, id, CurrentUser.getAccountId());
+            	if (mem.getUserId() != null) {
+            		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+            	}
+
             	handle.commit();
               res = Responses.OK;
             } else {
@@ -264,18 +277,21 @@ class MemberService {
     Response res = Responses.NotFound.MEMBERSHIP;
 
     try (Handle handle = Database.getHandle()) {
-      MemberDao memberDao = handle.attach(MemberDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      Member mem = memberDao.findNormalMemberById(id, CurrentUser.getAccountId());
+      Member mem = membershipDao.findNormalMemberById(id, CurrentUser.getAccountId());
       if (mem != null) {
         if (mem.getAccountId().equals(CurrentUser.getAccountId()) && mem.getStatus().equals(UserStatus.PAUSED)) {
           if (! mem.getStatus().equals(UserStatus.DELETED)) {
 
           	handle.begin();
 
-            boolean isOK = memberDao.resume(id, CurrentUser.getAccountId());
+            boolean isOK = membershipDao.resume(id, CurrentUser.getAccountId());
             if (isOK) {
-            	terminateUserSession(handle, id, CurrentUser.getAccountId());
+            	if (mem.getUserId() != null) {
+            		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+            	}
+
             	handle.commit();
               res = Responses.OK;
             } else {
@@ -350,8 +366,8 @@ class MemberService {
   private String validate(InvitationUpdateDTO dto) {
     String problem = null;
 
-    if (dto.getId() == null || dto.getId() < 1) {
-      problem = "Invalid invitation data!";
+    if (dto.getMemberId() == null || dto.getMemberId() < 1) {
+      problem = "Invalid member id!";
     }
 
     if (dto.getRole() == null || dto.getRole().equals(UserRole.ADMIN) || dto.getRole().equals(UserRole.SUPER)) {

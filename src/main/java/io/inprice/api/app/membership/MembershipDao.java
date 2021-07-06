@@ -1,4 +1,4 @@
-package io.inprice.api.app.member;
+package io.inprice.api.app.membership;
 
 import java.util.List;
 
@@ -9,14 +9,14 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
-import io.inprice.api.app.member.mapper.ActiveMember;
-import io.inprice.api.app.member.mapper.ActiveMemberMapper;
+import io.inprice.api.app.membership.mapper.ActiveMember;
+import io.inprice.api.app.membership.mapper.ActiveMemberMapper;
 import io.inprice.common.mappers.MemberMapper;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Member;
 
-public interface MemberDao {
+public interface MembershipDao {
 
   final String ACCOUNT_FIELDS = 
     ", a.name as account_name, a.status as account_status, a.subs_started_at, " +

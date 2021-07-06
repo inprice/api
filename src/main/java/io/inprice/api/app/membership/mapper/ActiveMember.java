@@ -1,4 +1,4 @@
-package io.inprice.api.app.member.mapper;
+package io.inprice.api.app.membership.mapper;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
 import io.inprice.api.app.auth.UserSessionDao;
-import io.inprice.api.app.member.MemberDao;
+import io.inprice.api.app.membership.MembershipDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.dto.UserDTO;
 import io.inprice.api.app.user.validator.PasswordValidator;
@@ -74,8 +74,8 @@ public class UserService {
 
   public Response getInvitations() {
     try (Handle handle = Database.getHandle()) {
-      MemberDao memberDao = handle.attach(MemberDao.class);
-      return new Response(memberDao.findMemberListByEmailAndStatus(CurrentUser.getEmail(), UserStatus.PENDING));
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
+      return new Response(membershipDao.findMemberListByEmailAndStatus(CurrentUser.getEmail(), UserStatus.PENDING));
     }
   }
 
@@ -95,9 +95,9 @@ public class UserService {
 
   private Response processInvitation(Long id, UserStatus fromStatus, UserStatus toStatus) {
     try (Handle handle = Database.getHandle()) {
-      MemberDao memberDao = handle.attach(MemberDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      boolean isOK = memberDao.changeStatus(id, fromStatus.name(), toStatus.name(), CurrentUser.getUserId());
+      boolean isOK = membershipDao.changeStatus(id, fromStatus.name(), toStatus.name(), CurrentUser.getUserId());
       if (isOK) {
         return Responses.OK;
       } else {
@@ -108,7 +108,7 @@ public class UserService {
 
   public Response getMemberships() {
     try (Handle handle = Database.getHandle()) {
-      MemberDao memberDao = handle.attach(MemberDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
       List<String> statuses = new ArrayList<>(3);
       statuses.add(UserStatus.JOINED.name());
@@ -116,7 +116,7 @@ public class UserService {
       statuses.add(UserStatus.PAUSED.name());
 
       return new Response(
-        memberDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getAccountId(), statuses)
+        membershipDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getAccountId(), statuses)
       );
     }
   }
@@ -124,8 +124,8 @@ public class UserService {
   public Response leaveMember(LongDTO dto) {
     if (dto.getValue() != null && dto.getValue() > 0) {
       try (Handle handle = Database.getHandle()) {
-        MemberDao memberDao = handle.attach(MemberDao.class);
-        boolean isOK = memberDao.changeStatus(dto.getValue(), UserStatus.LEFT.name());
+        MembershipDao membershipDao = handle.attach(MembershipDao.class);
+        boolean isOK = membershipDao.changeStatus(dto.getValue(), UserStatus.LEFT.name());
         if (isOK) {
           return Responses.OK;
         }

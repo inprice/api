@@ -1,4 +1,4 @@
-package io.inprice.api.app.utils;
+package io.inprice.api.utils;
 
 /**
  * The accounts and users placed below must be exactly the same as defined in sql files under resources:db/instant folder

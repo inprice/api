@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import eu.bitwalker.useragentutils.UserAgent;
 import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
-import io.inprice.api.app.member.MemberDao;
+import io.inprice.api.app.membership.MembershipDao;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.LoginDTO;
 import io.inprice.api.app.user.dto.PasswordDTO;
@@ -259,9 +259,9 @@ public class AuthService {
 
     try (Handle handle = Database.getHandle()) {
       UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
-      MemberDao memberDao = handle.attach(MemberDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      List<Member> memberList = memberDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED);
+      List<Member> memberList = membershipDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED);
       if (memberList != null && memberList.size() > 0) {
 
         List<ForRedis> redisSesList = new ArrayList<>();
@@ -345,8 +345,8 @@ public class AuthService {
           User user = userDao.findByEmail(sendDto.getEmail());
           if (user == null || !user.isBanned()) {
 
-          	MemberDao memberDao = handle.attach(MemberDao.class);
-          	Member member = memberDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING, sendDto.getAccountId());
+          	MembershipDao membershipDao = handle.attach(MembershipDao.class);
+          	Member member = membershipDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING, sendDto.getAccountId());
             if (member != null) {
 
               if (user == null) { //user creation
@@ -373,7 +373,7 @@ public class AuthService {
               if (res.isOK()) {
                 User newUser = res.getData();
                 boolean isActivated = 
-                  memberDao.activate(
+                  membershipDao.activate(
                     newUser.getId(),
                     UserStatus.PENDING,
                     UserStatus.JOINED,

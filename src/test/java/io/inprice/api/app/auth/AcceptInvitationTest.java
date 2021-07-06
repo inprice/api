@@ -8,10 +8,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import io.inprice.api.app.utils.Fixtures;
-import io.inprice.api.app.utils.TestAccount;
-import io.inprice.api.app.utils.TestRole;
-import io.inprice.api.app.utils.TestUtils;
+import io.inprice.api.utils.Fixtures;
+import io.inprice.api.utils.TestAccount;
+import io.inprice.api.utils.TestRole;
+import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -92,7 +92,7 @@ public class AcceptInvitationTest {
 		 -------------------------------- */
 		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user.ADMIN());
 
-		HttpResponse<JsonNode> res = Unirest.post("/member")
+		HttpResponse<JsonNode> res = Unirest.post("/membership")
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(createInvitationBody(Fixtures.NON_EXISTING_EMAIL_1, TestRole.EDITOR))

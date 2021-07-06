@@ -1,4 +1,4 @@
-package io.inprice.api.app.member.dto;
+package io.inprice.api.app.membership.dto;
 
 import java.io.Serializable;
 
@@ -14,7 +14,7 @@ public class InvitationUpdateDTO implements Serializable {
 
    private static final long serialVersionUID = -7922528699777216078L;
 
-   private Long id;
+   private Long memberId;
    private UserRole role;
 
 }

@@ -7,9 +7,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import io.inprice.api.app.utils.Fixtures;
-import io.inprice.api.app.utils.TestAccount;
-import io.inprice.api.app.utils.TestUtils;
+import io.inprice.api.utils.Fixtures;
+import io.inprice.api.utils.TestAccount;
+import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;

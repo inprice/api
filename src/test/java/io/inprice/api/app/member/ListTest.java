@@ -8,9 +8,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import io.inprice.api.app.utils.Fixtures;
-import io.inprice.api.app.utils.TestAccount;
-import io.inprice.api.app.utils.TestUtils;
+import io.inprice.api.utils.Fixtures;
+import io.inprice.api.utils.TestAccount;
+import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -26,7 +26,7 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class ListTest {
 
-	private static final String SERVICE_ENDPOINT = "/member";
+	private static final String SERVICE_ENDPOINT = "/membership";
 
 	@BeforeClass
 	public static void setup() {

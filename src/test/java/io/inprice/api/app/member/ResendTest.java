@@ -8,10 +8,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import io.inprice.api.app.utils.Fixtures;
-import io.inprice.api.app.utils.TestAccount;
-import io.inprice.api.app.utils.TestRole;
-import io.inprice.api.app.utils.TestUtils;
+import io.inprice.api.utils.Fixtures;
+import io.inprice.api.utils.TestAccount;
+import io.inprice.api.utils.TestRole;
+import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -28,7 +28,7 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class ResendTest {
 
-	private static final String SERVICE_ENDPOINT = "/member/{id}";
+	private static final String SERVICE_ENDPOINT = "/membership/{id}";
 
 	@BeforeClass
 	public static void setup() {
@@ -129,7 +129,7 @@ public class ResendTest {
 		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_one_extra_user.ADMIN());
 		
 		//invites a non-existing user
-		HttpResponse<JsonNode> res = Unirest.post("/member")
+		HttpResponse<JsonNode> res = Unirest.post("/membership")
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
@@ -164,14 +164,14 @@ public class ResendTest {
 	 * Consists of three steps;
 	 *    a) invites a non-existing user
 	 *    b) get member list to find member id
-	 *    b) re-sends the invitation
+	 *    c) re-sends the invitation
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
 		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user.ADMIN());
 		
 		//invites a non-existing user
-		HttpResponse<JsonNode> res = Unirest.post("/member")
+		HttpResponse<JsonNode> res = Unirest.post("/membership")
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
@@ -217,7 +217,7 @@ public class ResendTest {
 	}
 
 	private Long findMemberIdByIndex(Cookies cookies, int index) {
-		HttpResponse<JsonNode> res = Unirest.get("/member")
+		HttpResponse<JsonNode> res = Unirest.get("/membership")
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.asJson();
@@ -229,7 +229,7 @@ public class ResendTest {
 	}
 
 	private Long findMemberIdByEmail(Cookies cookies, String email) {
-		HttpResponse<JsonNode> res = Unirest.get("/member")
+		HttpResponse<JsonNode> res = Unirest.get("/membership")
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.asJson();

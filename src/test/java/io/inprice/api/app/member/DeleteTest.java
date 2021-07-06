@@ -8,9 +8,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import io.inprice.api.app.utils.Fixtures;
-import io.inprice.api.app.utils.TestAccount;
-import io.inprice.api.app.utils.TestUtils;
+import io.inprice.api.utils.Fixtures;
+import io.inprice.api.utils.TestAccount;
+import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -27,7 +27,7 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class DeleteTest {
 
-	private static final String SERVICE_ENDPOINT = "/member/delete/{id}";
+	private static final String SERVICE_ENDPOINT = "/membership/{id}";
 
 	@BeforeClass
 	public static void setup() {
@@ -122,8 +122,8 @@ public class DeleteTest {
 
 		JSONObject json = res.getBody().getObject();
 		assertEquals(200, json.getInt("status"));
-		
-		//better to wait some time before second call!
+
+		//better wait some time before second call!
 		try {
 			Thread.sleep(500);
 		} catch (InterruptedException ignored) {}
@@ -160,7 +160,7 @@ public class DeleteTest {
 	}
 
 	private Long findMemberIdByIndex(Cookies cookies, int index) {
-		HttpResponse<JsonNode> res = Unirest.get("/member")
+		HttpResponse<JsonNode> res = Unirest.get("/membership")
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
 			.asJson();
