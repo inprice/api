@@ -38,7 +38,6 @@ public class Consts {
     public static class Account {
       public static final String BASE = "/account";
       public static final String GEO_INFO = BASE + "/geo";
-      public static final String DELETE = BASE + "/delete";
     }
 
     public static class User {

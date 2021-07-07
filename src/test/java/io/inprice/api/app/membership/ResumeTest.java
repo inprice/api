@@ -21,9 +21,6 @@ import kong.unirest.json.JSONObject;
 /**
  * Tests the functionality of /membership/resume in MembershipService 
  * 
- * Out of scope:
- * 	- Unable to test the case of "You cannot resume yourself" since we cannot get the member id of an ADMIN
- * 
  * @author mdpinar
  * @since 2021-07-06
  */

@@ -55,7 +55,7 @@ public class ClientSide {
   }
 
   public static Map<String, String> getGeoInfo(HttpServletRequest req) {
-    Map<String, String> result = new HashMap<>(2);
+    Map<String, String> result = new HashMap<>(4);
     result.put(Consts.IP, "127.0.0.1");
     result.put(Consts.TIMEZONE, "Europe/Dublin");
     result.put(Consts.CURRENCY_CODE, "USD");

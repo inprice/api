@@ -20,10 +20,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of /membership/change-role in MembershipService 
- * 
- * Out of scope:
- * 	- Unable to test the case of "You cannot change your own role" since we cannot get the member id of an ADMIN
+ * Tests the functionality of in MembershipService.changeRole(InvitationUpdateDTO) 
  * 
  * @author mdpinar
  * @since 2021-07-06
@@ -83,23 +80,6 @@ public class ChangeRoleTest {
 		
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.get("reason"));
-	}
-
-	@Test
-	public void Member_not_found_WITH_wrong_id() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
-
-		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
-			.cookie(cookies)
-			.body(createBody(1l, TestRole.VIEWER))
-			.asJson();
-		TestUtils.logout(cookies);
-
-		JSONObject json = res.getBody().getObject();
-		
-		assertEquals(404, json.getInt("status"));
-		assertNotNull("Member not found!", json.get("reason"));
 	}
 
 	/**
@@ -265,6 +245,89 @@ public class ChangeRoleTest {
 
 		assertEquals(511, json.getInt("status"));
 		assertNotNull("You are not allowed to do this operation!", json.get("reason"));
+	}
+
+	@Test
+	public void Member_not_found_WITH_wrong_id() {
+		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
+
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_O_HEADERS)
+			.cookie(cookies)
+			.body(createBody(1l, TestRole.VIEWER))
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+		
+		assertEquals(404, json.getInt("status"));
+		assertNotNull("Member not found!", json.get("reason"));
+	}
+
+	/**
+	 * Consists of five steps;
+	 *    a) super user logs in
+	 *    b) searches user by email
+	 *    c) finds user member_id by user id
+	 *    d) admin logs in
+	 *    e) tries to change his own role
+	 */
+	@Test
+	public void Member_not_found_WHEN_an_admin_tries_to_change_his_own_role() {
+		//super user logs in
+		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
+
+		//the user and his email
+		JSONObject user = TestAccount.Standard_plan_and_one_extra_user.ADMIN();
+		String email = user.getString("email");
+
+		//searches user by email
+		HttpResponse<JsonNode> res = Unirest.post("/sys/users/search")
+			.cookie(cookies)
+			.body(new JSONObject()
+					.put("term", email)
+				)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		JSONArray data = json.getJSONArray("data");
+
+		assertEquals(200, json.getInt("status"));
+		assertNotNull(data);
+		assertEquals(1, data.length());
+		
+		Long userId = data.getJSONObject(0).getLong("id");
+
+		//find user member id by user id
+		res = Unirest.get("/sys/user/details/memberships/{userId}")
+			.cookie(cookies)
+			.routeParam("userId", userId.toString())
+			.asJson();
+		TestUtils.logout(cookies);
+
+		json = res.getBody().getObject();
+		data = json.getJSONArray("data");
+
+		assertEquals(200, json.getInt("status"));
+		assertNotNull(data);
+		assertEquals(1, data.length());
+		
+		Long memberId = data.getJSONObject(0).getLong("id");
+		
+		cookies = TestUtils.login(user);
+		
+		//tries to change his role
+		res = Unirest.put(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_O_HEADERS)
+			.cookie(cookies)
+			.body(createBody(memberId, TestRole.EDITOR))
+			.asJson();
+		TestUtils.logout(cookies);
+
+		json = res.getBody().getObject();
+
+		assertEquals(404, json.getInt("status"));
+		assertEquals("Member not found!", json.getString("reason"));
 	}
 
 	/**

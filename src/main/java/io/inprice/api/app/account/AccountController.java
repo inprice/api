@@ -61,7 +61,7 @@ public class AccountController extends AbstractController {
     }, AccessRoles.ADMIN());
 
     //delete
-    app.put(Consts.Paths.Account.DELETE, (ctx) -> {
+    app.delete(Consts.Paths.Account.BASE, (ctx) -> {
       StringDTO dto = ctx.bodyAsClass(StringDTO.class);
       ctx.json(Commons.createResponse(ctx, service.deleteAccount(dto.getValue())));
     }, AccessRoles.ADMIN());

@@ -244,87 +244,88 @@ class AccountService {
   }
 
   Response deleteAccount(String password) {
-    Response response = Responses.DataProblem.DB_PROBLEM;
+  	Response res = Responses.Invalid.PASSWORD;
 
-    try (Handle handle = Database.getHandle()) {
-    	handle.begin();
+  	if (StringUtils.isNotBlank(password) && password.length() > 3 && password.length() < 17) {
 
-      UserDao userDao = handle.attach(UserDao.class);
-      AccountDao accountDao = handle.attach(AccountDao.class);
-      UserSessionDao sessionDao = handle.attach(UserSessionDao.class);
-
-      User user = userDao.findById(CurrentUser.getUserId());
-
-      if (PasswordHelper.isValid(password, user.getPassword())) {
-        Account account = accountDao.findByAdminId(CurrentUser.getUserId());
-
-        if (account != null) {
-          if (! AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
-            log.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
-
-            String where = "where account_id=" + CurrentUser.getAccountId();
-
-            Batch batch = handle.createBatch();
-            batch.add("SET FOREIGN_KEY_CHECKS=0");
-            batch.add("delete from link_price " + where);
-            batch.add("delete from link_history " + where);
-            batch.add("delete from link_spec " + where);
-            batch.add("delete from link " + where);
-            batch.add("delete from link_group " + where);
-            batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
-            batch.add("delete from alarm " + where);
-            batch.add("delete from ticket_history " + where);
-            batch.add("delete from ticket_comment " + where);
-            batch.add("delete from ticket " + where);
-            batch.add("delete from announce_log " + where);
-            batch.add("delete from announce " + where);
-            batch.add("delete from access_log " + where);
-
-            // in order to keep consistency, 
-            // users having no account other than this must be deleted too!!!
-            MembershipDao membershipDao = handle.attach(MembershipDao.class);
-            List<Long> unboundMembers = membershipDao.findUserIdListHavingJustThisAccount(CurrentUser.getAccountId());
-            if (unboundMembers != null && ! unboundMembers.isEmpty()) {
-              String userIdList = StringUtils.join(unboundMembers, ",");
-              batch.add("delete from user where id in (" + userIdList + ")");
-            }
-            
-            batch.add("delete from membership " + where);
-            batch.add("delete from user_session " + where);
-            batch.add("delete from checkout " + where);
-            batch.add("delete from account_history " + where);
-            batch.add("delete from account_trans " + where);
-            batch.add("delete from account where id=" + CurrentUser.getAccountId());
-
-            batch.add("SET FOREIGN_KEY_CHECKS=1");
-            batch.execute();
-
-            List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
-            if (hashList != null && ! hashList.isEmpty()) {
-              for (String hash : hashList) {
-              	redis.removeSesion(hash);
+      try (Handle handle = Database.getHandle()) {
+      	handle.begin();
+  
+        UserDao userDao = handle.attach(UserDao.class);
+        AccountDao accountDao = handle.attach(AccountDao.class);
+        UserSessionDao sessionDao = handle.attach(UserSessionDao.class);
+  
+        User user = userDao.findById(CurrentUser.getUserId());
+  
+        if (PasswordHelper.isValid(password, user.getPassword())) {
+          Account account = accountDao.findByAdminId(CurrentUser.getUserId());
+  
+          if (account != null) {
+            if (! AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
+              log.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
+  
+              String where = "where account_id=" + CurrentUser.getAccountId();
+  
+              Batch batch = handle.createBatch();
+              batch.add("SET FOREIGN_KEY_CHECKS=0");
+              batch.add("delete from link_price " + where);
+              batch.add("delete from link_history " + where);
+              batch.add("delete from link_spec " + where);
+              batch.add("delete from link " + where);
+              batch.add("delete from link_group " + where);
+              batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
+              batch.add("delete from alarm " + where);
+              batch.add("delete from ticket_history " + where);
+              batch.add("delete from ticket_comment " + where);
+              batch.add("delete from ticket " + where);
+              batch.add("delete from announce_log " + where);
+              batch.add("delete from announce " + where);
+              batch.add("delete from access_log " + where);
+  
+              // in order to keep consistency, 
+              // users having no account other than this must be deleted too!!!
+              MembershipDao membershipDao = handle.attach(MembershipDao.class);
+              List<Long> unboundMembers = membershipDao.findUserIdListHavingJustThisAccount(CurrentUser.getAccountId());
+              if (unboundMembers != null && ! unboundMembers.isEmpty()) {
+                String userIdList = StringUtils.join(unboundMembers, ",");
+                batch.add("delete from user where id in (" + userIdList + ")");
               }
+              
+              batch.add("delete from membership " + where);
+              batch.add("delete from user_session " + where);
+              batch.add("delete from checkout " + where);
+              batch.add("delete from account_history " + where);
+              batch.add("delete from account_trans " + where);
+              batch.add("delete from account where id=" + CurrentUser.getAccountId());
+  
+              batch.add("SET FOREIGN_KEY_CHECKS=1");
+              batch.execute();
+  
+              List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
+              if (hashList != null && ! hashList.isEmpty()) {
+                for (String hash : hashList) {
+                	redis.removeSesion(hash);
+                }
+              }
+  
+              log.info("{} is deleted. Id: {}.", account.getName(), account.getId());
+              res = Responses.OK;
+            } else {
+              res = Responses.Already.ACTIVE_SUBSCRIPTION;
             }
-
-            log.info("{} is deleted. Id: {}.", account.getName(), account.getId());
-            response = Responses.OK;
           } else {
-            response = Responses.Already.ACTIVE_SUBSCRIPTION;
+            res = Responses.Invalid.ACCOUNT;
           }
-        } else {
-          response = Responses.Invalid.ACCOUNT;
         }
-      } else {
-        response = Responses.Invalid.PASSWORD;
+  
+        if (res.isOK())
+        	handle.commit();
+        else
+        	handle.rollback();
       }
+  	}
 
-      if (response.isOK())
-      	handle.commit();
-      else
-      	handle.rollback();
-    }
-
-    return response;
+    return res;
   }
 
   private Response validateRegisterDTO(RegisterDTO dto) {
@@ -392,13 +393,15 @@ class AccountService {
 
     if (StringUtils.isBlank(dto.getName())) {
       problem = "Account name cannot be empty!";
-    } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
-      problem = "Account name must be between 3 - 70 chars";
+    } else if (dto.getName().length() < 5 || dto.getName().length() > 70) {
+      problem = "Account name must be between 5 - 70 chars!";
     }
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getCurrencyCode())) {
-        problem = "Currency cannot be empty!";
+        problem = "Currency code cannot be empty!";
+      } else if (dto.getCurrencyCode().length() != 3) {
+        problem = "Currency code must be 3 chars!";
       } else if (CurrencyFormats.get(dto.getCurrencyCode()) == null) {
         problem = "Unknown currency code!";
       }
@@ -409,11 +412,11 @@ class AccountService {
         problem = "Currency format cannot be empty!";
       } else {
         if (dto.getCurrencyFormat().length() < 3 || dto.getCurrencyFormat().length() > 16) {
-          problem = "Currency format must be between 3 - 16 chars";
+          problem = "Currency format must be between 3 - 16 chars!";
         } else {
           int count = StringUtils.countMatches(dto.getCurrencyFormat(), "#");
           if (count != 3) {
-            problem = "Currency format is invalid";
+            problem = "Currency format is invalid! Example: $#,##0.00";
           }
         }
       }
