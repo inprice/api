@@ -19,4 +19,9 @@ public class Fixtures {
 	public static final Map<String, String> SESSION_O_HEADERS = ImmutableMap.of("X-Session", "0");
 	public static final Map<String, String> SESSION_1_HEADERS = ImmutableMap.of("X-Session", "1");
 
+	public static final String COUPON_P10_1 = "EA8XG2S7";
+	public static final String COUPON_P15_1 = "US8PN1X9";
+	public static final String COUPON_P15_2 = "FH5GV9AA";
+	public static final String COUPON_P20_1 = "YF4GZ5SG";
+	public static final String COUPON_P20_2 = "NE9FC64B";	
 }

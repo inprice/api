@@ -122,6 +122,8 @@ public class Responses {
     public static final Response UPDATE = new Response(BASE + 4, "You are not allowed to update this data!");
     public static final Response NO_ALARM_LIMIT = new Response(BASE + 10, "You have reached max alarm number of your plan!");
     public static final Response SUPER_USER = new Response(BASE + 12, "User is not suitable for this operation!");
+
+    public static final Response NO_ACCOUNT = new Response(BASE + 15, "You must bind an account!");
   }
 
   public static class NotSuitable {

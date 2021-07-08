@@ -1,5 +1,6 @@
 package io.inprice.api.app.superuser.account;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,9 +10,12 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.coupon.CouponService;
+import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.coupon.CouponDao;
+import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.app.superuser.account.dto.CreateCouponDTO;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
+import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
@@ -21,7 +25,6 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForResponse;
 import io.inprice.api.utils.DTOHelper;
-import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.Pair;
@@ -32,15 +35,15 @@ import io.inprice.common.models.Account;
 import io.inprice.common.models.AccountHistory;
 import io.inprice.common.models.AccountTrans;
 import io.inprice.common.models.Membership;
+import io.inprice.common.models.Plan;
 import io.inprice.common.models.User;
+import io.inprice.common.utils.CouponManager;
 import io.inprice.common.utils.DateUtils;
 import io.javalin.http.Context;
 
 class Service {
 
   private static final Logger log = LoggerFactory.getLogger("SU:Account");
-
-  private static final CouponService couponService = Beans.getSingleton(CouponService.class);
   
   Response search(BaseSearchDTO dto) {
   	try (Handle handle = Database.getHandle()) {
@@ -205,7 +208,7 @@ class Service {
 		if (problem == null) {
   		try (Handle handle = Database.getHandle()) {
 				return 
-					couponService.createCoupon(
+					createCoupon(
 						handle, 
 						dto.getAccountId(), 
 						SubsEvent.SUPERUSER_OFFER, 
@@ -216,6 +219,54 @@ class Service {
   		}
 		}
 		return new Response(problem);
+  }
+
+  Response createCoupon(Handle handle, long accountId, SubsEvent subsEvent, Integer planId, long days, String description) {
+  	PlanDao planDao = handle.attach(PlanDao.class);
+  	Plan plan = planDao.findById(planId);
+  	if (plan != null) {
+
+    	AccountDao accountDao = handle.attach(AccountDao.class);
+    	Account account = accountDao.findById(accountId);
+  		if (account != null) {
+  				
+	  		if (account.getUserCount() <= plan.getUserLimit() 
+	  				&& account.getLinkCount() <= plan.getLinkLimit() 
+	  				&& account.getAlarmCount() <= plan.getAlarmLimit()) {
+
+	  	    String couponCode = CouponManager.generate();
+	  	    CouponDao couponDao = handle.attach(CouponDao.class);
+	  	    boolean isOK = couponDao.create(
+	  	      couponCode,
+	  	      planId,
+	  	      days,
+	  	      description,
+	  	      accountId
+	  	    );
+
+	  	    if (isOK) {
+	  	      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+	  	      AccountTrans trans = new AccountTrans();
+	  	      trans.setAccountId(accountId);
+	  	      trans.setEvent(subsEvent);
+	  	      trans.setSuccessful(Boolean.TRUE);
+	  	      trans.setReason(description);
+	  	      trans.setDescription("Issued coupon code: " + couponCode);
+	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+	  	      return new Response(Collections.singletonMap("code", couponCode));
+	  	    } else {
+	  	    	return new Response("An error occurred, we will be looking for this!");
+	  	    }
+	  			
+				} else {
+					return new Response("Account current limits are greater than the plan's!");
+				}
+
+  		} else {
+  			return Responses.NotFound.ACCOUNT;
+  		}
+  	}
+    return Responses.NotFound.PLAN;
   }
 
   private String buildQueryForAccessLogSearch(ALSearchDTO dto) {

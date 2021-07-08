@@ -54,7 +54,7 @@ public class CreateAndUpdateTest {
 	public static void setup() {
 		TestUtils.setup();
 	}
-	
+
 	@Test
 	public void Forbidden_WITH_no_session() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).asJson();

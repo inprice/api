@@ -14,39 +14,52 @@ import kong.unirest.json.JSONObject;
 
 public enum TestAccount {
 
-	Without_a_plan_and_extra_user(1l,
+	Without_a_plan_and_extra_user(
+  	"Has one coupon",
 		ImmutableMap.of(
 			TestRole.ADMIN, new JSONObject().put("email", "admin@account-a.com")
 		)
 	),
 
-	Basic_plan_but_no_extra_user(2l,
+	Second_without_a_plan_and_extra_user(
+  	"Has one coupon",
+		ImmutableMap.of(
+			TestRole.ADMIN, new JSONObject().put("email", "admin@account-as.com")
+		)
+	),
+
+	Basic_plan_but_no_extra_user(
+  	"Has no link, alarm or coupon",
 		ImmutableMap.of(
 			TestRole.ADMIN, new JSONObject().put("email", "admin@account-b.com")
 		)
 	),
 
-	Starter_plan_and_one_extra_user(3l,
+	Starter_plan_and_one_extra_user(
+  	"Has no link, alarm or coupon",
 		ImmutableMap.of(
 			TestRole.ADMIN, new JSONObject().put("email", "admin@account-c.com"),
 			TestRole.EDITOR, new JSONObject().put("email", "editor@account-c.com")
 		)
 	),
 
-	Standard_plan_and_no_extra_users(4l,
+	Standard_plan_and_no_extra_users(
+  	"Has no link, alarm or coupon",
 		ImmutableMap.of(
 			TestRole.ADMIN, new JSONObject().put("email", "admin@account-d.com")
 		)
 	),
 
-	Standard_plan_and_one_extra_user(5l,
+	Standard_plan_and_one_extra_user(
+  	"Has no link, alarm or coupon",
 		ImmutableMap.of(
 			TestRole.ADMIN, new JSONObject().put("email", "admin@account-e.com"),
 			TestRole.EDITOR, new JSONObject().put("email", "editor@account-e.com")
 		)
 	),
 
-	Standard_plan_and_two_extra_users(6l,
+	Standard_plan_and_two_extra_users(
+  	"Has no link, alarm or coupon",
 		ImmutableMap.of(
 			TestRole.ADMIN, new JSONObject().put("email", "admin@account-f.com"),
 			TestRole.EDITOR, new JSONObject().put("email", "editor@account-f.com"),
@@ -54,22 +67,22 @@ public enum TestAccount {
 		)
 	),
 
-	Pro_plan_but_no_extra_user(7l,
+	Pro_plan_but_no_extra_user(
+  	"Has no link, alarm or coupon",
 		ImmutableMap.of(
 			TestRole.ADMIN, new JSONObject().put("email", "admin@account-g.com")
 		)
 	);
 
-	private Long id;
+	private String description;
 	private Map<TestRole, JSONObject> roleEmailMap;
 	
-	private TestAccount(Long id, Map<TestRole, JSONObject> roleEmailMap) {
-		this.id = id;
+	private TestAccount(String description, Map<TestRole, JSONObject> roleEmailMap) {
 		this.roleEmailMap = roleEmailMap;
 	}
 	
-	public Long getId() {
-		return id;
+	public String getDescription() {
+		return description;
 	}
 
 	public JSONObject ADMIN() {

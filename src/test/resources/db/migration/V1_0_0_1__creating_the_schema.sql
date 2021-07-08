@@ -271,7 +271,7 @@ create table link_history (
 alter table link_history add foreign key (link_id) references link (id);
 
 create table coupon (
-  code                      char(7) not null,
+  code                      char(8) not null,
   plan_id                   int not null,
   days                      smallint not null,
   description               varchar(128),
