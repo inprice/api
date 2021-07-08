@@ -35,6 +35,12 @@ public class CreateAndUpdateTest {
 
 	private String httpMethod;
 
+	/**
+	 * This method runs this class twice!
+	 * One for Create with POST http method
+	 * And the other is for Update with PUT method
+	 * 
+	 */
   @Parameterized.Parameters
   public static Object[][] getHttpMethodParams() {
   	return new Object[][] { { "POST" }, { "PUT" } };
@@ -148,7 +154,28 @@ public class CreateAndUpdateTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok() {
+	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
+		JSONObject json = callTheService(Fixtures.SUPER_USER);
+
+		assertEquals(511, json.getInt("status"));
+		assertEquals("You are not allowed to do this operation!", json.getString("reason"));
+	}
+
+	/**
+	 * Please note that a viewer can update the account in which he is the admin when he logs in
+	 */
+	@Test
+	public void Everything_must_be_ok_WITH_viewer() {
+		JSONObject json = callTheService(TestAccount.Standard_plan_and_two_extra_users.VIEWER());
+
+		assertEquals(200, json.getInt("status"));
+		if (httpMethod.equals("POST")) { //for only create operation!
+			assertNotNull(json.getJSONObject("data"));
+		}
+	}
+
+	@Test
+	public void Everything_must_be_ok_WITH_admin() {
 		JSONObject json = callTheService("Acme Inc X", "USD", "$#,##0.00");
 
 		assertEquals(200, json.getInt("status"));
@@ -156,7 +183,31 @@ public class CreateAndUpdateTest {
 			assertNotNull(json.getJSONObject("data"));
 		}
 	}
-	
+
+	private JSONObject callTheService(JSONObject user) {
+		//creating the body
+		JSONObject body = new JSONObject();
+		body.put("name", "Acme Inc X");
+		body.put("currencyCode", "USD");
+		body.put("currencyFormat", "$#,##0.00");
+
+		//login with a viewer
+		Cookies cookies = TestUtils.login(user);
+
+		//making service call
+		HttpResponse<JsonNode> res = Unirest.request(httpMethod, SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_O_HEADERS)
+			.cookie(cookies)
+			.body(body)
+			.asJson();
+		
+		//logout
+		TestUtils.logout(cookies);
+
+		//the result to be tested
+		return res.getBody().getObject();
+	}
+
 	private JSONObject callTheService(String name, String currencyCode, String currencyFormat) {
 		//creating the body
 		JSONObject body = new JSONObject();
