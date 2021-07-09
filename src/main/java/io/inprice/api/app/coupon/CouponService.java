@@ -118,7 +118,7 @@ public class CouponService {
             response = Responses.Already.USED_COUPON;
           }
         } else {
-          response = Responses.Invalid.COUPON;
+          response = Responses.NotFound.COUPON;
         }
 
         if (response.isOK())

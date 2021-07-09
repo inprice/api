@@ -1,6 +1,6 @@
 package io.inprice.api.utils;
 
-public enum TestRole {
+public enum TestRoles {
 
 	SUPER, ADMIN, EDITOR, VIEWER, BANNED;
 

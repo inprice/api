@@ -9,8 +9,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccount;
-import io.inprice.api.utils.TestRole;
+import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestRoles;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -39,7 +39,7 @@ public class ChangeRoleTest {
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
-			.body(createBody(1l, TestRole.VIEWER))
+			.body(createBody(1l, TestRoles.VIEWER))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -50,12 +50,12 @@ public class ChangeRoleTest {
 
 	@Test
 	public void Forbidden_WITH_viewer_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createBody(1l, TestRole.VIEWER))
+			.body(createBody(1l, TestRoles.VIEWER))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -67,12 +67,12 @@ public class ChangeRoleTest {
 
 	@Test
 	public void Forbidden_WITH_editor_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.EDITOR());
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createBody(1l, TestRole.VIEWER))
+			.body(createBody(1l, TestRoles.VIEWER))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -89,7 +89,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void Role_must_be_either_EDITOR_or_VIEWER_WITH_empty_role() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		//get member list to find member id
 		Long memberId = findMemberIdByIndex(cookies, 0);
@@ -115,7 +115,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void Role_must_be_either_EDITOR_or_VIEWER_WITH_ADMIN_role() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		//get member list to find member id
 		Long memberId = findMemberIdByIndex(cookies, 0);
@@ -124,7 +124,7 @@ public class ChangeRoleTest {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createBody(memberId, TestRole.ADMIN))
+			.body(createBody(memberId, TestRoles.ADMIN))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -141,7 +141,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void Role_must_be_either_EDITOR_or_VIEWER_WITH_SUPER_role() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		//get member list to find member id
 		Long memberId = findMemberIdByIndex(cookies, 0);
@@ -150,7 +150,7 @@ public class ChangeRoleTest {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createBody(memberId, TestRole.SUPER))
+			.body(createBody(memberId, TestRoles.SUPER))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -167,7 +167,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void Not_suitable_FOR_the_same_role() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		//finding the first member
 		JSONObject member = findMemberByIndex(cookies, 0);
@@ -178,7 +178,7 @@ public class ChangeRoleTest {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createBody(memberId, TestRole.valueOf(role)))
+			.body(createBody(memberId, TestRoles.valueOf(role)))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -196,7 +196,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void This_member_is_already_deleted_FOR_a_deleted_member() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		//finding the second member
 		Long memberId = findMemberIdByIndex(cookies, 1); //attention pls!
@@ -220,7 +220,7 @@ public class ChangeRoleTest {
 		res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createBody(memberId, TestRole.VIEWER))
+			.body(createBody(memberId, TestRoles.VIEWER))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -237,7 +237,7 @@ public class ChangeRoleTest {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createBody(1l, TestRole.VIEWER))
+			.body(createBody(1l, TestRoles.VIEWER))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -249,12 +249,12 @@ public class ChangeRoleTest {
 
 	@Test
 	public void Member_not_found_WITH_wrong_id() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createBody(1l, TestRole.VIEWER))
+			.body(createBody(1l, TestRoles.VIEWER))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -278,7 +278,7 @@ public class ChangeRoleTest {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		//the user and his email
-		JSONObject user = TestAccount.Standard_plan_and_one_extra_user.ADMIN();
+		JSONObject user = TestAccounts.Standard_plan_and_one_extra_user.ADMIN();
 		String email = user.getString("email");
 
 		//searches user by email
@@ -320,7 +320,7 @@ public class ChangeRoleTest {
 		res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createBody(memberId, TestRole.EDITOR))
+			.body(createBody(memberId, TestRoles.EDITOR))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -337,7 +337,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
-		Cookies cookies = TestUtils.login(TestAccount.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		//get member list to find member id
 		Long memberId = findMemberIdByIndex(cookies, 0);
@@ -346,7 +346,7 @@ public class ChangeRoleTest {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createBody(memberId, TestRole.EDITOR))
+			.body(createBody(memberId, TestRoles.EDITOR))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -372,7 +372,7 @@ public class ChangeRoleTest {
 		return data.getJSONObject(index);
 	}
 
-	private JSONObject createBody(Long memberId, TestRole role) {
+	private JSONObject createBody(Long memberId, TestRoles role) {
 		JSONObject body = new JSONObject();
 		if (memberId != null) body.put("memberId", memberId);
 		if (role != null) body.put("role", role.name());

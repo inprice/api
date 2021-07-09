@@ -12,6 +12,7 @@ public class Responses {
   public static final Response _403 = new Response(HttpStatus.FORBIDDEN_403, "Forbidden!");
   public static final Response BANNED_USER = new Response(HttpStatus.FORBIDDEN_403, "Banned user!");
   public static final Response REQUEST_BODY_INVALID = new Response(HttpStatus.BAD_REQUEST_400, "Request body is invalid!");
+  public static final Response PAGE_NOT_FOUND = new Response(HttpStatus.NOT_FOUND_404, "Page not found!");
 
   public static class Invalid {
     private static final int BASE = 100;
@@ -57,7 +58,7 @@ public class Responses {
     public static final Response USER_LIMIT_PROBLEM = new Response(BASE + 6, "Your user count is reached your plans limit!");
     public static final Response LINK_LIMIT_PROBLEM = new Response(BASE + 7, "Your link count is reached your plans limit! You need to pass a broader plan to proceed");
     public static final Response ALARM_LIMIT_PROBLEM = new Response(BASE + 8, "Your alarm count is reached your plans limit! You need to pass a broader plan to proceed");
-    public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 10, "You need a broader plan. The plan you intend to select allows less than your existing link count!");
+    public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 10, "You need to select a broader plan since your actual plan has more permission!");
     public static final Response WRONG_USER = new Response(BASE + 11, "You are not allowed to do this operation!");
   }
 
@@ -89,11 +90,11 @@ public class Responses {
     public static final Response DELETED_MEMBER = new Response(BASE + 2, "This member is already deleted!");
     public static final Response PAUSED_MEMBER = new Response(BASE + 3, "This member is already paused!");
 
-    public static final Response USED_COUPON = new Response(BASE + 4, "This coupon seems already used!");
+    public static final Response USED_COUPON = new Response(BASE + 4, "This coupon is already used!");
     public static final Response FREE_USE_USED = new Response(BASE + 5, "You have already used your free use previously!");
     public static final Response IN_FREE_USE = new Response(BASE + 6, "Your Free Use is already active!");
 
-    public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 7, "You have an active subscription!");
+    public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 7, "You already have an active subscription!");
     public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 8, "This account has no active subscription at the moment!");
     public static final Response HAS_THE_SAME_PLAN = new Response(BASE + 10, "You have already this plan at the moment!");
 

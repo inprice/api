@@ -9,8 +9,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccount;
-import io.inprice.api.utils.TestRole;
+import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestRoles;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -94,12 +94,12 @@ public class AcceptInvitationTest {
 		/* -------------------------------- 
 		   Inviting a non-existing user
 		 -------------------------------- */
-		Cookies cookies = TestUtils.login(TestAccount.Pro_plan_but_no_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_but_no_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post("/membership")
 			.headers(Fixtures.SESSION_O_HEADERS)
 			.cookie(cookies)
-			.body(createInvitationBody(Fixtures.NON_EXISTING_EMAIL_1, TestRole.EDITOR))
+			.body(createInvitationBody(Fixtures.NON_EXISTING_EMAIL_1, TestRoles.EDITOR))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -124,7 +124,7 @@ public class AcceptInvitationTest {
 		assertNotNull(data);
 	}
 
-	private JSONObject createInvitationBody(String email, TestRole role) {
+	private JSONObject createInvitationBody(String email, TestRoles role) {
 		JSONObject body = new JSONObject();
 		if (email != null) body.put("email", email);
 		if (role != null) body.put("role", role.name());

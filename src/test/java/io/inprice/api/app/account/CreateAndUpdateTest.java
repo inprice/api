@@ -12,7 +12,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccount;
+import io.inprice.api.utils.TestAccounts;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -67,7 +67,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Account_name_cannot_be_empty_WITH_empty_name() {
-		JSONObject json = callTheService(null, "USD", "$#,##0.00");
+		JSONObject json = callTheServiceWith(null, "USD", "$#,##0.00");
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Account name cannot be empty!", json.getString("reason"));
@@ -75,7 +75,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Account_name_must_be_between_5_and_70_chars_WITH_shorter_name() {
-		JSONObject json = callTheService("Acme", "USD", "$#,##0.00");
+		JSONObject json = callTheServiceWith("Acme", "USD", "$#,##0.00");
 
 		assertEquals(400, json.getInt("status"));
     assertEquals("Account name must be between 5 - 70 chars!", json.getString("reason"));
@@ -83,7 +83,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Account_name_must_be_between_5_and_70_chars_WITH_longer_name() {
-		JSONObject json = callTheService(RandomStringUtils.randomAlphabetic(71), "USD", "$#,##0.00");
+		JSONObject json = callTheServiceWith(RandomStringUtils.randomAlphabetic(71), "USD", "$#,##0.00");
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Account name must be between 5 - 70 chars!", json.getString("reason"));
@@ -91,7 +91,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Currency_code_cannot_be_empty_WITH_empty_currency_code() {
-		JSONObject json = callTheService("Acme Inc X", null, "$#,##0.00");
+		JSONObject json = callTheServiceWith("Acme Inc X", null, "$#,##0.00");
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Currency code cannot be empty!", json.getString("reason"));
@@ -99,7 +99,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Currency_code_must_be_3_chars_WITH_shorter_code() {
-		JSONObject json = callTheService("Acme Inc X", "US", "$#,##0.00");
+		JSONObject json = callTheServiceWith("Acme Inc X", "US", "$#,##0.00");
 
 		assertEquals(400, json.getInt("status"));
     assertEquals("Currency code must be 3 chars!", json.getString("reason"));
@@ -107,7 +107,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Currency_code_must_be_3_chars_WITH_longer_code() {
-		JSONObject json = callTheService("Acme Inc X", "USDE", "$#,##0.00");
+		JSONObject json = callTheServiceWith("Acme Inc X", "USDE", "$#,##0.00");
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Currency code must be 3 chars!", json.getString("reason"));
@@ -115,7 +115,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Unknown_currency_code_WITH_undefined_currency() {
-		JSONObject json = callTheService("Acme Inc X", "XYZ", "$#,##0.00");
+		JSONObject json = callTheServiceWith("Acme Inc X", "XYZ", "$#,##0.00");
 
 		assertEquals(400, json.getInt("status"));
     assertEquals("Unknown currency code!", json.getString("reason"));
@@ -123,7 +123,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Currency_format_cannot_be_empty_WITH_empty_currency_format() {
-		JSONObject json = callTheService("Acme Inc X", "USD", null);
+		JSONObject json = callTheServiceWith("Acme Inc X", "USD", null);
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Currency format cannot be empty!", json.getString("reason"));
@@ -131,7 +131,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Currency_format_must_be_between_3_and_16_chars_WITH_shorter_format() {
-		JSONObject json = callTheService("Acme Inc X", "USD", "##");
+		JSONObject json = callTheServiceWith("Acme Inc X", "USD", "##");
 
 		assertEquals(400, json.getInt("status"));
     assertEquals("Currency format must be between 3 - 16 chars!", json.getString("reason"));
@@ -139,7 +139,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Currency_format_must_be_between_3_and_16_chars_WITH_longer_format() {
-		JSONObject json = callTheService("Acme Inc X", "USD", StringUtils.repeat('#', 17));
+		JSONObject json = callTheServiceWith("Acme Inc X", "USD", StringUtils.repeat('#', 17));
 
 		assertEquals(400, json.getInt("status"));
     assertEquals("Currency format must be between 3 - 16 chars!", json.getString("reason"));
@@ -147,7 +147,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Currency_format_is_invalid_WITH_wrong_format() {
-		JSONObject json = callTheService("Acme Inc X", "USD", "£##W");
+		JSONObject json = callTheServiceWith("Acme Inc X", "USD", "£##W");
 
 		assertEquals(400, json.getInt("status"));
     assertTrue(json.getString("reason").startsWith("Currency format is invalid!"));
@@ -155,7 +155,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
-		JSONObject json = callTheService(Fixtures.SUPER_USER);
+		JSONObject json = callTheServiceWith(Fixtures.SUPER_USER);
 
 		assertEquals(511, json.getInt("status"));
 		assertEquals("You are not allowed to do this operation!", json.getString("reason"));
@@ -166,7 +166,7 @@ public class CreateAndUpdateTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
-		JSONObject json = callTheService(TestAccount.Standard_plan_and_two_extra_users.VIEWER());
+		JSONObject json = callTheServiceWith(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
 		assertEquals(200, json.getInt("status"));
 		if (httpMethod.equals("POST")) { //for only create operation!
@@ -176,7 +176,7 @@ public class CreateAndUpdateTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		JSONObject json = callTheService("Acme Inc X", "USD", "$#,##0.00");
+		JSONObject json = callTheServiceWith("Acme Inc X", "USD", "$#,##0.00");
 
 		assertEquals(200, json.getInt("status"));
 		if (httpMethod.equals("POST")) { //for only create operation!
@@ -184,7 +184,7 @@ public class CreateAndUpdateTest {
 		}
 	}
 
-	private JSONObject callTheService(JSONObject user) {
+	private JSONObject callTheServiceWith(JSONObject user) {
 		//creating the body
 		JSONObject body = new JSONObject();
 		body.put("name", "Acme Inc X");
@@ -204,11 +204,11 @@ public class CreateAndUpdateTest {
 		//logout
 		TestUtils.logout(cookies);
 
-		//the result to be tested
+		//returning the result to be tested
 		return res.getBody().getObject();
 	}
 
-	private JSONObject callTheService(String name, String currencyCode, String currencyFormat) {
+	private JSONObject callTheServiceWith(String name, String currencyCode, String currencyFormat) {
 		//creating the body
 		JSONObject body = new JSONObject();
 		if (name != null) body.put("name", name);
@@ -216,7 +216,7 @@ public class CreateAndUpdateTest {
 		if (currencyFormat != null) body.put("currencyFormat", currencyFormat);
 
 		//login with an admin
-		Cookies cookies = TestUtils.login(TestAccount.Basic_plan_but_no_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Basic_plan_but_no_extra_user.ADMIN());
 
 		//making service call
 		HttpResponse<JsonNode> res = Unirest.request(httpMethod, SERVICE_ENDPOINT)
@@ -228,7 +228,7 @@ public class CreateAndUpdateTest {
 		//logout
 		TestUtils.logout(cookies);
 
-		//the result to be tested
+		//returning the result to be tested
 		return res.getBody().getObject();
 	}
 
