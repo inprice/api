@@ -67,10 +67,11 @@ public enum TestAccounts {
 		)
 	),
 
-	Pro_plan_but_no_extra_user(
+	Pro_plan_and_extra_one_pending_user(
   	"Has no link, alarm or coupon",
 		ImmutableMap.of(
-			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-g.com")
+			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-g.com"),
+			TestRoles.EDITOR, new JSONObject().put("email", "editor@account-g.com")
 		)
 	),
 

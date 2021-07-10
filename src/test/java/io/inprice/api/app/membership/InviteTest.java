@@ -125,7 +125,7 @@ public class InviteTest {
 
 	@Test
 	public void Role_must_be_either_EDITOR_or_VIEWER_WITH_SUPER_role() {
-		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_but_no_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_and_extra_one_pending_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
@@ -290,7 +290,7 @@ public class InviteTest {
 	 */
 	@Test
 	public void Everything_must_be_OK_WITH_a_non_existing_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_but_no_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_and_extra_one_pending_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
@@ -314,7 +314,7 @@ public class InviteTest {
 	 */
 	@Test
 	public void Everything_must_be_OK_WITH_an_existing_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_but_no_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_and_extra_one_pending_user.ADMIN());
 		String email = TestAccounts.Starter_plan_and_one_extra_user.getEmail(TestRoles.EDITOR);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)

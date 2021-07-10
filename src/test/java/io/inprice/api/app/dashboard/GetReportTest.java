@@ -21,7 +21,7 @@ import kong.unirest.json.JSONObject;
 /**
  * Tests the functionality of DashboardService.getReport(true/false)
  *  
- * This class is equipped with Parameterized runner so that we are able to run the same while getting cold and hot report! 
+ * This class is equipped with Parameterized runner so that we are able to run the same tests while getting cold and hot report! 
  * 
  * @author mdpinar
  * @since 2021-07-10
@@ -40,8 +40,8 @@ public class GetReportTest {
   	return new Object[][] { { "" }, { "/refresh" } };
   }
   
-  public GetReportTest(String SERVICE_ENDPOINT) {
-  	this.SERVICE_ENDPOINT += SERVICE_ENDPOINT;
+  public GetReportTest(String postfix) {
+  	this.SERVICE_ENDPOINT += postfix;
   }
 
 	@BeforeClass

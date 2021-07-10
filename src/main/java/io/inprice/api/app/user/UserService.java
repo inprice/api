@@ -11,10 +11,12 @@ import io.inprice.api.app.membership.MembershipDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.dto.UserDTO;
 import io.inprice.api.app.user.validator.PasswordValidator;
+import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LongDTO;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.PasswordHelper;
+import io.inprice.api.helpers.SessionHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForCookie;
@@ -25,6 +27,7 @@ import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
+import io.javalin.http.Context;
 
 public class UserService {
 
@@ -73,7 +76,9 @@ public class UserService {
   }
 
   public Response getInvitations() {
-    try (Handle handle = Database.getHandle()) {
+  	if (CurrentUser.getRole().equals(UserRole.SUPER)) return Responses.OK;
+
+  	try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
       return new Response(membershipDao.findMemberListByEmailAndStatus(CurrentUser.getEmail(), UserStatus.PENDING));
     }
@@ -107,7 +112,7 @@ public class UserService {
   }
 
   public Response getMemberships() {
-  	if (CurrentUser.getAccountId() == null) return Responses.NotAllowed.NO_ACCOUNT;
+  	if (CurrentUser.getRole().equals(UserRole.SUPER)) return Responses.OK;
 
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
@@ -136,9 +141,12 @@ public class UserService {
     return Responses.NotFound.USER;
   }
 
-  public Response getOpenedSessions(List<ForCookie> cookieSesList) {
+  public Response getOpenedSessions(Context ctx) {
   	if (CurrentUser.getRole().equals(UserRole.SUPER)) return Responses.OK;
 
+		String tokenString = ctx.cookie(Consts.SESSION);
+		List<ForCookie> cookieSesList = SessionHelper.fromTokenForUser(tokenString);
+  	
     List<String> excludedHashes = new ArrayList<>(cookieSesList.size());
     for (ForCookie ses: cookieSesList) {
       excludedHashes.add(ses.getHash());

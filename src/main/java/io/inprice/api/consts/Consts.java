@@ -42,14 +42,14 @@ public class Consts {
 
     public static class User {
       public static final String BASE = "/user";
+      public static final String INVITATIONS = BASE + "/invitations";
+      public static final String MEMBERSHIPS = BASE + "/memberships";
+      public static final String OPENED_SESSIONS = BASE + "/opened-sessions";
       public static final String PASSWORD = BASE + "/change-password";
       public static final String UPDATE = BASE + "/update";
-      public static final String INVITATIONS = BASE + "/invitations";
       public static final String ACCEPT_INVITATION = BASE + "/accept-invitation";
       public static final String REJECT_INVITATION = BASE + "/reject-invitation";
-      public static final String MEMBERSHIPS = BASE + "/memberships";
       public static final String LEAVE_MEMBERSHIP = BASE + "/leave-member";
-      public static final String OPENED_SESSIONS = BASE + "/opened-sessions";
       public static final String CLOSE_ALL_SESSIONS = BASE + "/close-all-sessions";
     }
 

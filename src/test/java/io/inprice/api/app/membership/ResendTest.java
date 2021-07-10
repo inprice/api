@@ -200,7 +200,7 @@ public class ResendTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_but_no_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_and_extra_one_pending_user.ADMIN());
 		
 		//invites a non-existing user
 		HttpResponse<JsonNode> res = Unirest.post("/membership")
