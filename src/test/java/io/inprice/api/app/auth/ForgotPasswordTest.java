@@ -44,7 +44,7 @@ public class ForgotPasswordTest {
 	}
 
 	@Test
-	public void Email_address_cannot_be_empty_WITH_empty_email() {
+	public void Email_address_cannot_be_empty() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(createBody(null))
 			.asJson();

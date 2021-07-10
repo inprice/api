@@ -33,14 +33,9 @@ public class UserController extends AbstractController {
 		
 		/*----------------------------------------------------------------------------*/
 
-		app.put(Consts.Paths.User.PASSWORD, (ctx) -> {
-			PasswordDTO dto = ctx.bodyAsClass(PasswordDTO.class);
-			ctx.json(Commons.createResponse(ctx, service.updatePassword(dto)));
-		}, AccessRoles.ANYONE_EXCEPT_SUPER());
-
-		app.put(Consts.Paths.User.UPDATE, (ctx) -> {
+		app.put(Consts.Paths.User.UPDATE_INFO, (ctx) -> {
 			UserDTO dto = ctx.bodyAsClass(UserDTO.class);
-			ctx.json(Commons.createResponse(ctx, service.update(dto)));
+			ctx.json(Commons.createResponse(ctx, service.updateInfo(dto)));
 		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.put(Consts.Paths.User.ACCEPT_INVITATION, (ctx) -> {
@@ -60,6 +55,11 @@ public class UserController extends AbstractController {
 
 		app.post(Consts.Paths.User.CLOSE_ALL_SESSIONS, (ctx) -> {
 			ctx.json(Commons.createResponse(ctx, service.closeAllSessions()));
+		}, AccessRoles.ANYONE_EXCEPT_SUPER());
+
+		app.put(Consts.Paths.User.CHANGE_PASSWORD, (ctx) -> {
+			PasswordDTO dto = ctx.bodyAsClass(PasswordDTO.class);
+			ctx.json(Commons.createResponse(ctx, service.changePassword(dto)));
 		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 	}

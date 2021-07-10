@@ -33,7 +33,7 @@ public class UserService {
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
 	
-  public Response update(UserDTO dto) {
+  public Response updateInfo(UserDTO dto) {
     String problem = validateUserDTOForUpdate(dto);
     if (problem == null) {
 
@@ -52,7 +52,7 @@ public class UserService {
     }
   }
 
-  public Response updatePassword(PasswordDTO dto) {
+  public Response changePassword(PasswordDTO dto) {
 		dto.setId(CurrentUser.getUserId());
 
 		String problem = PasswordValidator.verify(dto, true, true);
@@ -186,14 +186,14 @@ public class UserService {
     if (StringUtils.isBlank(dto.getName())) {
       problem = "User name cannot be empty!";
     } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
-      problem = "User name must be between 3 - 70 chars";
+      problem = "User name must be between 3 - 70 chars!";
     }
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getTimezone())) {
-        problem = "Time zone cannot be empty!";
+        problem = "Timezone cannot be empty!";
       } else if (!Timezones.exists(dto.getTimezone())) {
-        problem = "Unknown time zone!";
+        problem = "Unknown timezone!";
       }
     }
 
