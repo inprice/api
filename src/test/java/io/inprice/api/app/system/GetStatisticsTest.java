@@ -16,19 +16,18 @@ import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
-import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of SystemService.getPlans() 
+ * Tests the functionality of SystemService.getStatistics() 
  * 
  * @author mdpinar
  * @since 2021-07-10
  */
 @RunWith(JUnit4.class)
-public class GetPlansTest {
+public class GetStatisticsTest {
 
-	private static final String SERVICE_ENDPOINT = "/app/plans";
+	private static final String SERVICE_ENDPOINT = "/app/statistics";
 
 	@BeforeClass
 	public static void setup() {
@@ -47,7 +46,8 @@ public class GetPlansTest {
 
 	@Test
 	public void Everything_must_be_ok() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		final JSONObject user = TestAccounts.Standard_plan_and_two_extra_users.VIEWER();
+		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
@@ -58,16 +58,11 @@ public class GetPlansTest {
 		JSONObject json = res.getBody().getObject();
 		assertEquals(200, json.getInt("status"));
 
-		JSONArray data = json.getJSONArray("data");
+		JSONObject data = json.getJSONObject("data");
 		assertNotNull(data);
-		assertTrue(data.length() > 0);
-
-		JSONObject firstPlan = data.getJSONObject(0);
-		assertNotNull(firstPlan);
-		
-		JSONArray features = firstPlan.getJSONArray("features");
-		assertNotNull(features);
-		assertTrue(features.length() > 0);
+		assertTrue(data.has("userLimit"));
+		assertTrue(data.has("linkLimit"));
+		assertTrue(data.has("alarmLimit"));
 	}
 
 }

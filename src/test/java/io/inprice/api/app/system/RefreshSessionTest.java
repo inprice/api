@@ -2,7 +2,6 @@ package io.inprice.api.app.system;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -16,19 +15,18 @@ import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
-import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of SystemService.getPlans() 
+ * Tests the functionality of SystemService.refreshSession() 
  * 
  * @author mdpinar
  * @since 2021-07-10
  */
 @RunWith(JUnit4.class)
-public class GetPlansTest {
+public class RefreshSessionTest {
 
-	private static final String SERVICE_ENDPOINT = "/app/plans";
+	private static final String SERVICE_ENDPOINT = "/app/refresh-session";
 
 	@BeforeClass
 	public static void setup() {
@@ -46,8 +44,24 @@ public class GetPlansTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok() {
+	public void Forbidden_WITH_not_admin_user() {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+
+		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_O_HEADERS)
+			.cookie(cookies)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+		assertEquals(403, json.getInt("status"));
+		assertEquals("Forbidden!", json.getString("reason"));
+	}
+
+	@Test
+	public void Everything_must_be_ok() {
+		final JSONObject user = TestAccounts.Standard_plan_and_two_extra_users.ADMIN();
+		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
@@ -58,16 +72,12 @@ public class GetPlansTest {
 		JSONObject json = res.getBody().getObject();
 		assertEquals(200, json.getInt("status"));
 
-		JSONArray data = json.getJSONArray("data");
+		JSONObject data = json.getJSONObject("data");
 		assertNotNull(data);
-		assertTrue(data.length() > 0);
 
-		JSONObject firstPlan = data.getJSONObject(0);
-		assertNotNull(firstPlan);
-		
-		JSONArray features = firstPlan.getJSONArray("features");
-		assertNotNull(features);
-		assertTrue(features.length() > 0);
+		JSONObject session = data.getJSONObject("session");
+		assertNotNull(session);
+		assertEquals(user.get("email"), session.getString("email"));
 	}
 
 }

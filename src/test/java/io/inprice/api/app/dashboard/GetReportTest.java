@@ -1,4 +1,4 @@
-package io.inprice.api.app.system;
+package io.inprice.api.app.dashboard;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -7,7 +7,7 @@ import static org.junit.Assert.assertTrue;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
 
 import io.inprice.api.utils.Fixtures;
 import io.inprice.api.utils.TestAccounts;
@@ -16,19 +16,33 @@ import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
-import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of SystemService.getPlans() 
+ * Tests the functionality of DashboardService.getReport(true/false)
+ *  
+ * This class is equipped with Parameterized runner so that we are able to run the same while getting cold and hot report! 
  * 
  * @author mdpinar
  * @since 2021-07-10
  */
-@RunWith(JUnit4.class)
-public class GetPlansTest {
+@RunWith(Parameterized.class)
+public class GetReportTest {
 
-	private static final String SERVICE_ENDPOINT = "/app/plans";
+	private String SERVICE_ENDPOINT = "/dashboard";
+
+	/**
+	 * This method runs this class twice, getReport(true and false)
+	 * 
+	 */
+  @Parameterized.Parameters
+  public static Object[][] getHttpMethodParams() {
+  	return new Object[][] { { "" }, { "/refresh" } };
+  }
+  
+  public GetReportTest(String SERVICE_ENDPOINT) {
+  	this.SERVICE_ENDPOINT += SERVICE_ENDPOINT;
+  }
 
 	@BeforeClass
 	public static void setup() {
@@ -58,16 +72,12 @@ public class GetPlansTest {
 		JSONObject json = res.getBody().getObject();
 		assertEquals(200, json.getInt("status"));
 
-		JSONArray data = json.getJSONArray("data");
+		JSONObject data = json.getJSONObject("data");
 		assertNotNull(data);
-		assertTrue(data.length() > 0);
-
-		JSONObject firstPlan = data.getJSONObject(0);
-		assertNotNull(firstPlan);
-		
-		JSONArray features = firstPlan.getJSONArray("features");
-		assertNotNull(features);
-		assertTrue(features.length() > 0);
+		assertTrue(data.has("date"));
+		assertTrue(data.has("groups"));
+		assertTrue(data.has("links"));
+		assertTrue(data.has("account"));
 	}
 
 }

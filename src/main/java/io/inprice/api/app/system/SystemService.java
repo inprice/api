@@ -69,7 +69,7 @@ public class SystemService {
       	userLimit = account.getPlan().getUserLimit();
       	linkLimit = account.getPlan().getLinkLimit();
       	alarmLimit = account.getPlan().getAlarmLimit();
-      	if (userLimit == null) userLimit = 1;
+      	if (userLimit == null) userLimit = 0;
       	if (linkLimit == null) linkLimit = 0;
       	if (alarmLimit == null) alarmLimit = 0;
       }
