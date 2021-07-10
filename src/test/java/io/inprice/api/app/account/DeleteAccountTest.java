@@ -19,7 +19,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of in AccountService.deleteAccount(admin's password) 
+ * Tests the functionality of AccountService.deleteAccount(admin's password) 
  * 
  * @author mdpinar
  * @since 2021-07-08

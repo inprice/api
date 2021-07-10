@@ -1,6 +1,5 @@
 package io.inprice.api.app.system;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +14,6 @@ import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.info.PlanFeature;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.Plan;
 
@@ -25,46 +23,14 @@ public class SystemService {
 	
   private static List<Plan> planList;
   
-  /**
-   * Please keep in mind that;
-   * plans' features are in placed in a separated tabel called features
-   * and there is a many-to-many table called plan_feature to join them together
-   * We need to set Plan object's feature list by joining those separated tables!
-   * 
-   * @return Plans
-   */
   Response getPlans() {
   	boolean isOK = false;
 
   	if (planList == null) {
       try (Handle handle = Database.getHandle()) {
         PlanDao planDao = handle.attach(PlanDao.class);
-        planList = planDao.findPublicPlans(); //fetch all the public plans 
-        if (planList != null && planList.size() > 0) {
-        	//distribution of features on to plans!
-        	List<PlanFeature> featuresList = planDao.findAllFeaturesOfPublics(); // fetch all the plans' features at once!
-        	if (featuresList != null && featuresList.size() > 0) {
-        		//building the map up to use it later
-        		Map<Integer, List<PlanFeature>> featuresMap = new HashMap<>(planList.size());
-        		for (PlanFeature feature: featuresList) {
-        			List<PlanFeature> features = featuresMap.get(feature.getPlanId());
-        			if (features == null) {
-        				features = new ArrayList<>();
-        				featuresMap.put(feature.getPlanId(), features);
-        			}
-        			features.add(feature);
-        		}
-        		//using the map just built up above!
-        		for (Plan plan: planList) {
-        			plan.setFeatures(featuresMap.get(plan.getId()));
-        		}
-        	}
-        	isOK = true;
-        }
-      } catch (Exception e) {
-        log.error("Failed to find standard plans!", e);
+        planList = planDao.fetchPublicPlans(); 
       }
-    } else {
     	isOK = true;
     }
 

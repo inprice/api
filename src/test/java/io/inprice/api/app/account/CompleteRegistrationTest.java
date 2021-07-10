@@ -16,7 +16,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of /complete-registration in AccountService 
+ * Tests the functionality of AccountService.completeRegistration(String token) 
  * 
  * @author mdpinar
  * @since 2021-07-06

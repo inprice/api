@@ -21,9 +21,9 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of in AccountService.create(CreateDTO) and also update(CreateDTO) 
+ * Tests the functionality of AccountService.create(CreateDTO) and also update(CreateDTO) 
  * 
- * This class is equipped with Parameterized runner so that we are able to run the same cases for both functions; create and update! 
+ * This class is equipped with Parameterized runner so that we are able to run the same tests for both create and update! 
  * 
  * @author mdpinar
  * @since 2021-07-08

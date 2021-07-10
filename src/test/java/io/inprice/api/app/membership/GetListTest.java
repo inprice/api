@@ -19,13 +19,13 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of /membership -GET- in MembershipService 
+ * Tests the functionality of MembershipService.getList()
  * 
  * @author mdpinar
  * @since 2021-07-01
  */
 @RunWith(JUnit4.class)
-public class ListTest {
+public class GetListTest {
 
 	private static final String SERVICE_ENDPOINT = "/membership";
 

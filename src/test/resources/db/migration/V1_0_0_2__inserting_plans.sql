@@ -10,7 +10,7 @@ insert into plan (id, name, user_limit, alarm_limit, link_limit, price) values
   (35, 'Enterprise Plan', 5, 250, 1000, 220.00)
   ;
 
-insert into feature (id, description, allowed, order_no) values
+insert into plan_feature (id, description, allowed, order_no) values
   (10, 'Unlimited groups', true, 5),
   (20, 'Up to 25 links', true, 10),
   (25, 'Up to 5 alarms', true, 12),
@@ -32,7 +32,8 @@ insert into feature (id, description, allowed, order_no) values
   (77, 'Extra 5 users', true, 15)
   ;
 
-insert into plan_feature (plan_id, feature_id) values
+-- many-to-many relationship between plan and plan_feature
+insert into plans_and_features (plan_id, feature_id) values
   (10, 10),
   (10, 20),
   (10, 25),

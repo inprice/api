@@ -19,7 +19,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of in CouponService.getCoupons() 
+ * Tests the functionality of CouponService.getCoupons() 
  * 
  * @author mdpinar
  * @since 2021-07-08

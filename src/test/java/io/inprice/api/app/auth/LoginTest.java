@@ -18,7 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of /login in AuthService 
+ * Tests the functionality of AuthService.login(LoginDTO)
  * 
  * @author mdpinar
  * @since 2021-06-28

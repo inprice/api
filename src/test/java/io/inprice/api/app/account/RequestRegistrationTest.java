@@ -17,7 +17,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of /request-registration in AccountService
+ * Tests the functionality of AccountService.requestRegistration(RegisterDTO)
  * 
  * @author mdpinar
  * @since 2021-07-06

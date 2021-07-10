@@ -18,7 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of in AccountService.getCurrentAccount() 
+ * Tests the functionality of AccountService.getCurrentAccount() 
  * 
  * @author mdpinar
  * @since 2021-07-07

@@ -1,4 +1,4 @@
-package io.inprice.api.app.account;
+package io.inprice.api.app.system;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -15,28 +15,28 @@ import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
+import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AccountService.getGeoInfo() 
+ * Tests the functionality of SystemService.getPlans() 
  * 
  * @author mdpinar
- * @since 2021-07-07
+ * @since 2021-07-01
  */
 @RunWith(JUnit4.class)
-public class GetGeoInfoTest {
+public class GetPlansTest {
 
-	private static final String SERVICE_ENDPOINT = "/account/geo";
+	private static final String SERVICE_ENDPOINT = "/app/plans";
 
 	@BeforeClass
 	public static void setup() {
 		TestUtils.setup();
 	}
-	
+
 	@Test
 	public void Forbidden_WITH_no_session() {
-		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.asJson();
+		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT).asJson();
 		
 		JSONObject json = res.getBody().getObject();
 		
@@ -45,8 +45,8 @@ public class GetGeoInfoTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_WITH_a_session() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+	public void Everything_must_be_ok() {
+		Cookies cookies = TestUtils.login(TestAccounts.Without_a_plan_and_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
@@ -55,7 +55,7 @@ public class GetGeoInfoTest {
 		TestUtils.logout(cookies);
 
 		JSONObject json = res.getBody().getObject();
-		JSONObject data = json.getJSONObject("data");
+		JSONArray data = json.getJSONArray("data");
 		
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);

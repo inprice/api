@@ -30,7 +30,7 @@ create table plan (
   primary key (id)
 ) engine=innodb;
 
-create table feature (
+create table plan_feature (
   id                        int not null,
   description               varchar(50),
   allowed                   boolean default true,
@@ -38,14 +38,15 @@ create table feature (
   primary key (id)
 ) engine=innodb;
 
-create table plan_feature (
+-- many-to-many relationship between plan and plan_feature
+create table plans_and_features (
   id                        int auto_increment not null,
   plan_id                   int not null,
   feature_id                int not null,
   primary key (id)
 ) engine=innodb;
-alter table plan_feature add foreign key (plan_id) references plan (id);
-alter table plan_feature add foreign key (feature_id) references feature (id);
+alter table plans_and_features add foreign key (plan_id) references plan (id);
+alter table plans_and_features add foreign key (feature_id) references plan_feature (id);
 
 create table account (
   id                        bigint unsigned auto_increment not null,

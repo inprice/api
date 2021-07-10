@@ -19,7 +19,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of /accept-invitation in AuthService 
+ * Tests the functionality of AuthService.acceptNewUser(InvitationAcceptDTO, String timezone)
  * 
  * Out of scope:
  * 	- No need to check passwords again here since it is already done in Login and ForgotPassword test classes
@@ -29,7 +29,7 @@ import kong.unirest.json.JSONObject;
  * 
  */
 @RunWith(JUnit4.class)
-public class AcceptInvitationTest {
+public class AcceptNewUserTest {
 
 	private static final String SERVICE_ENDPOINT = "/accept-invitation";
 
