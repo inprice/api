@@ -1,4 +1,4 @@
-package io.inprice.api.app.coupon;
+package io.inprice.api.app.user;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -20,15 +20,15 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of CouponService.getCoupons() 
+ * Tests the functionality of UserService.getMemberships()
  * 
  * @author mdpinar
- * @since 2021-07-08
+ * @since 2021-07-10
  */
 @RunWith(JUnit4.class)
-public class GetCouponsTest {
+public class GetMembershipsTest {
 
-	private static final String SERVICE_ENDPOINT = "/coupon";
+	private static final String SERVICE_ENDPOINT = "/user/memberships";
 
 	@BeforeClass
 	public static void setup() {
@@ -36,33 +36,19 @@ public class GetCouponsTest {
 	}
 
 	@Test
-	public void Forbidden_WITH_no_session() {
-		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT).asJson();
-		
-		JSONObject json = res.getBody().getObject();
-		
-		assertEquals(403, json.getInt("status"));
-		assertEquals("Forbidden!", json.get("reason"));
-	}
-
-	@Test
-	public void Coupon_not_found_FOR_no_coupon_account() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
-
+	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
-			.cookie(cookies)
 			.asJson();
-		TestUtils.logout(cookies);
 
 		JSONObject json = res.getBody().getObject();
 		
-		assertEquals(404, json.getInt("status"));
-		assertEquals("Coupon not found!", json.get("reason"));
+		assertEquals(401, json.getInt("status"));
+		assertNotNull("No active session, please sign in!", json.get("reason"));
 	}
 
 	@Test
-	public void You_must_bind_an_account_FOR_super_user_without_account_binding() {
+	public void You_must_bind_an_account_WITH_super_user_and_no_binding() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
@@ -72,16 +58,16 @@ public class GetCouponsTest {
 		TestUtils.logout(cookies);
 
 		JSONObject json = res.getBody().getObject();
-		
+
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an account!", json.get("reason"));
+		assertNotNull("You must bind an account!", json.get("reason"));
 	}
 
 	/**
 	 * Consists of three steps;
 	 * 	a) super user logs in
 	 * 	b) binds to first account
-	 * 	c) gets coupon list
+	 * 	c) gets membership list
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_super_user_and_bound_account() {
@@ -107,7 +93,7 @@ public class GetCouponsTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Without_a_plan_and_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_O_HEADERS)
@@ -117,7 +103,7 @@ public class GetCouponsTest {
 
 		JSONObject json = res.getBody().getObject();
 		JSONArray data = json.getJSONArray("data");
-		
+
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
 		assertEquals(1, data.length());

@@ -107,16 +107,18 @@ public class UserService {
   }
 
   public Response getMemberships() {
+  	if (CurrentUser.getAccountId() == null) return Responses.NotAllowed.NO_ACCOUNT;
+
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      List<String> statuses = new ArrayList<>(3);
-      statuses.add(UserStatus.JOINED.name());
-      statuses.add(UserStatus.PENDING.name());
-      statuses.add(UserStatus.PAUSED.name());
+      List<String> activeStatuses = new ArrayList<>(3);
+      activeStatuses.add(UserStatus.JOINED.name());
+      activeStatuses.add(UserStatus.PENDING.name());
+      activeStatuses.add(UserStatus.PAUSED.name());
 
       return new Response(
-        membershipDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getAccountId(), statuses)
+        membershipDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getAccountId(), activeStatuses)
       );
     }
   }

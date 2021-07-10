@@ -60,6 +60,50 @@ public class GetReportTest {
 	}
 
 	@Test
+	public void You_must_bind_an_account_WITH_super_user_and_no_binding() {
+		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
+
+		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_O_HEADERS)
+			.cookie(cookies)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(915, json.getInt("status"));
+		assertNotNull("You must bind an account!", json.get("reason"));
+	}
+
+	/**
+	 * Consists of three steps;
+	 * 	a) super user logs in
+	 * 	b) binds to first account
+	 * 	c) gets the report
+	 */
+	@Test
+	public void Everything_must_be_ok_WITH_super_user_and_bound_account() {
+		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
+
+		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/1")
+			.cookie(cookies)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		assertEquals(200, json.getInt("status"));
+		
+		res = Unirest.get(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_O_HEADERS)
+			.cookie(cookies)
+			.asJson();
+		TestUtils.logout(res.getCookies());
+
+		json = res.getBody().getObject();
+		assertEquals(200, json.getInt("status"));
+		assertTrue(json.has("data"));
+	}
+
+	@Test
 	public void Everything_must_be_ok() {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
