@@ -161,7 +161,7 @@ public class AuthService {
   }
 
   Response resetPassword(Context ctx, PasswordDTO dto) {
-    String problem = PasswordValidator.verify(dto, true, false);
+    String problem = PasswordValidator.verify(dto);
     
     if (problem == null) {
     	if (StringUtils.isBlank(dto.getToken())) problem = Responses.Invalid.TOKEN.getReason();
@@ -416,7 +416,7 @@ public class AuthService {
       PasswordDTO pswDTO = new PasswordDTO();
       pswDTO.setPassword(dto.getPassword());
       pswDTO.setRepeatPassword(dto.getRepeatPassword());
-      problem = PasswordValidator.verify(pswDTO, true, false);
+      problem = PasswordValidator.verify(pswDTO);
     }
 
     return problem;
@@ -465,7 +465,7 @@ public class AuthService {
   }
 
   public static String verifyLogin(LoginDTO dto) {
-    String problem = PasswordValidator.verify(dto, false, false);
+    String problem = PasswordValidator.verify(dto, false);
     if (problem == null) {
       problem = EmailValidator.verify(dto.getEmail());
     }

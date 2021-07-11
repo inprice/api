@@ -1,6 +1,5 @@
 package io.inprice.api.app.link;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,9 +17,10 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.group.GroupAlarmService;
 import io.inprice.api.app.group.GroupDao;
-import io.inprice.api.app.link.dto.SearchDTO;
 import io.inprice.api.app.link.dto.SearchBy;
+import io.inprice.api.app.link.dto.SearchDTO;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.GroupDTO;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
 import io.inprice.api.info.Response;
@@ -28,6 +28,7 @@ import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkGroup;
@@ -182,7 +183,14 @@ class LinkService {
       			GroupDao groupDao = handle.attach(GroupDao.class);
       			LinkGroup found = groupDao.findByName(dto.getToGroupName().trim(), CurrentUser.getAccountId());
       			if (found == null) { //creating a new group
-      				dto.setToGroupId(groupDao.insert(dto.getToGroupName().trim(), BigDecimal.ZERO, CurrentUser.getAccountId()));
+      				dto.setToGroupId(
+    						groupDao.insert(
+  								GroupDTO.builder()
+  									.name(SqlHelper.clear(dto.getToGroupName()))
+  									.accountId(CurrentUser.getAccountId())
+  									.build()
+									)
+    						);
       			} else {
         			response = Responses.Already.Defined.GROUP;
       			}

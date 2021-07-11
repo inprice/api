@@ -88,12 +88,7 @@ class GroupService {
 
         LinkGroup found = groupDao.findByName(dto.getName(), CurrentUser.getAccountId());
         if (found == null) {
-        	Long id = 
-            groupDao.insert(
-              dto.getName(),
-              dto.getPrice(),
-              dto.getAccountId()
-            );
+        	Long id = groupDao.insert(dto);
         	if (id != null && id > 0) {
         		found = groupDao.findById(id, CurrentUser.getAccountId());
             Map<String, LinkGroup> data = new HashMap<>(1);
@@ -125,13 +120,7 @@ class GroupService {
           LinkGroup found = groupDao.findById(dto.getId(), CurrentUser.getAccountId());
 
           if (found != null) {
-            boolean isUpdated = 
-              groupDao.update(
-                dto.getId(),
-                dto.getName(),
-                dto.getPrice(),
-                dto.getAccountId()
-              );
+            boolean isUpdated = groupDao.update(dto);
 
             if (isUpdated) {
               // if base price is changed then all the prices and other 
@@ -303,8 +292,14 @@ class GroupService {
 
     if (StringUtils.isBlank(dto.getName())) {
       problem = "Name cannot be empty!";
-    } else if (dto.getName().length() < 3 || dto.getName().length() > 500) {
-      problem = "Name must be between 3 and 128 chars!";
+    } else if (dto.getName().length() < 3 || dto.getName().length() > 50) {
+      problem = "Name must be between 3 and 50 chars!";
+    }
+
+    if (problem == null && StringUtils.isNotBlank(dto.getDescription())) {
+    	if (dto.getDescription().length() < 3 || dto.getDescription().length() > 128) {
+    		problem = "If given, description can be between 3 and 128 chars!";
+    	}
     }
     
     if (problem == null) {
@@ -316,6 +311,8 @@ class GroupService {
     if (problem == null) {
       dto.setAccountId(CurrentUser.getAccountId());
       dto.setName(SqlHelper.clear(dto.getName()));
+      dto.setDescription(SqlHelper.clear(dto.getDescription()));
+      if (dto.getPrice() == null) dto.setPrice(BigDecimal.ZERO);
     }
 
     return problem;

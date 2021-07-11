@@ -27,6 +27,7 @@ import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
+import io.inprice.common.models.User;
 import io.javalin.http.Context;
 
 public class UserService {
@@ -53,26 +54,46 @@ public class UserService {
   }
 
   public Response changePassword(PasswordDTO dto) {
-		dto.setId(CurrentUser.getUserId());
+  	Response res = Responses.NotFound.USER;
 
-		String problem = PasswordValidator.verify(dto, true, true);
-    if (problem == null) {
+  	String problem = PasswordValidator.verify(dto);
 
-      try (Handle handle = Database.getHandle()) {
-        UserDao userDao = handle.attach(UserDao.class);
+  	if (problem == null) {
+  		if (StringUtils.isBlank(dto.getOldPassword())) {
+  			problem = "Old password cannot be empty!";
+  		} else if (dto.getOldPassword().equals(dto.getPassword())) {
+  			problem = "New password cannot be the same as old password!";
+  		}
+    }
 
-        String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
-        boolean isOK = userDao.updatePassword(CurrentUser.getUserId(), saltedHash);
+  	if (problem == null) {
 
-        if (isOK) {
-          return Responses.OK;
-        } else {
-          return Responses.NotFound.USER;
+  		try (Handle handle = Database.getHandle()) {
+      	UserDao userDao = handle.attach(UserDao.class);
+
+        User user = userDao.findById(CurrentUser.getUserId());
+        if (user != null) {
+          if (PasswordHelper.isValid(dto.getOldPassword(), user.getPassword())) {
+
+            String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
+            boolean isOK = userDao.updatePassword(CurrentUser.getUserId(), saltedHash);
+
+            if (isOK) {
+              res = Responses.OK;
+            } else {
+              res = Responses.DataProblem.DB_PROBLEM;
+            }
+
+          } else {	
+          	res = new Response("Old password is incorrect!");
+          }
         }
       }
     } else {
-      return new Response(problem);
+      res = new Response(problem);
     }
+
+		return res;
   }
 
   public Response getInvitations() {

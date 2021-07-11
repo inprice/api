@@ -1,6 +1,5 @@
 package io.inprice.api.app.account;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +23,7 @@ import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.GroupDTO;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
@@ -338,7 +338,7 @@ class AccountService {
         PasswordDTO pswDTO = new PasswordDTO();
         pswDTO.setPassword(dto.getPassword());
         pswDTO.setRepeatPassword(dto.getRepeatPassword());
-        problem = PasswordValidator.verify(pswDTO, true, false);
+        problem = PasswordValidator.verify(pswDTO);
       }
 
       if (problem == null)
@@ -377,7 +377,13 @@ class AccountService {
           );
 
         if (memberId > 0) {
-        	groupDao.insert("DEFAULT GROUP", BigDecimal.ZERO, accountId);
+        	groupDao.insert(
+      			GroupDTO.builder()
+      				.name("DEFAULT")
+      				.description("Automatically generated group")
+      				.accountId(accountId)
+    				.build()
+  				);
           log.info("A new user registered: {} - {} ", userEmail, accountName);
           return new Response(accountId);
         }

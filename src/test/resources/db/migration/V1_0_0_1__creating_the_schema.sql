@@ -166,7 +166,8 @@ alter table alarm add foreign key (account_id) references account (id);
 
 create table link_group (
   id                        bigint unsigned auto_increment not null,
-  name                      varchar(128) not null,
+  name                      varchar(50) not null,
+  description               varchar(128),
   actives                   smallint default 0,
   waitings                  smallint default 0,
   tryings                   smallint default 0,

@@ -33,7 +33,6 @@ public class RequestRegistrationTest {
     	.put("password", "1234")
     	.put("repeatPassword", "1234");
 
-	
 	@BeforeClass
 	public static void setup() {
 		TestUtils.setup();
