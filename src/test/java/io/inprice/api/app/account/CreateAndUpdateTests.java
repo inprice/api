@@ -21,7 +21,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AccountService.create(CreateDTO) and also update(CreateDTO) 
+ * Tests the functionality of create(CreateDTO) and also update(CreateDTO) services placed in AccountService 
  * 
  * This class is equipped with Parameterized runner so that we are able to run the same tests for both create and update! 
  * 
@@ -29,7 +29,7 @@ import kong.unirest.json.JSONObject;
  * @since 2021-07-08
  */
 @RunWith(Parameterized.class)
-public class CreateAndUpdateTest {
+public class CreateAndUpdateTests {
 
 	private static final String SERVICE_ENDPOINT = "/account";
 
@@ -46,7 +46,7 @@ public class CreateAndUpdateTest {
   	return new Object[][] { { "POST" }, { "PUT" } };
   }
   
-  public CreateAndUpdateTest(String httpMethod) {
+  public CreateAndUpdateTests(String httpMethod) {
   	this.httpMethod = httpMethod;
   }
 
@@ -165,12 +165,17 @@ public class CreateAndUpdateTest {
 	 * Please note that a viewer can update the account in which he is the admin when he logs in
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_viewer() {
-		JSONObject json = callTheServiceWith(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+	public void Everything_must_be_ok() {
+		if (httpMethod.equals("POST")) { // create operation in which everyone can create a new account!
+			JSONObject json = callTheServiceWith(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
-		assertEquals(200, json.getInt("status"));
-		if (httpMethod.equals("POST")) { //for only create operation!
-			assertNotNull(json.getJSONObject("data"));
+  		assertEquals(200, json.getInt("status"));
+  		assertNotNull(json.getJSONObject("data"));
+		} else { // update operation in which only admins can update a new account!
+  		JSONObject json = callTheServiceWith(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+  
+  		assertEquals(200, json.getInt("status"));
+  		assertNotNull("OK", json.getString("reason"));
 		}
 	}
 
