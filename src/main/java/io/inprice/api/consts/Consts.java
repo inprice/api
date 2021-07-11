@@ -49,7 +49,7 @@ public class Consts {
       public static final String CHANGE_PASSWORD = BASE + "/change-password";
       public static final String ACCEPT_INVITATION = BASE + "/accept-invitation";
       public static final String REJECT_INVITATION = BASE + "/reject-invitation";
-      public static final String LEAVE_MEMBERSHIP = BASE + "/leave-member";
+      public static final String LEAVE_MEMBERSHIP = BASE + "/leave-membership";
       public static final String CLOSE_ALL_SESSIONS = BASE + "/close-all-sessions";
     }
 

@@ -169,7 +169,7 @@ public class LoginTest {
 	@Test
 	public void Everything_must_be_OK_and_must_have_multiple_sessions_WITH_correct_credentials() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(Fixtures.USER_HAVING_TWO_MEMBERSHIPS)
+			.body(Fixtures.USER_HAVING_THREE_MEMBERSHIPS)
 			.asJson();
 		TestUtils.logout(res.getCookies());
 

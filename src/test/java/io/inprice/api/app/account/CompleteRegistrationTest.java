@@ -73,7 +73,7 @@ public class CompleteRegistrationTest {
 		assertNotNull(data);
 		
 		res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.queryString("token", data.getString("token").replace("-", ""))
 			.asJson();
 		TestUtils.logout(res.getCookies());

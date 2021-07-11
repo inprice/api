@@ -49,7 +49,7 @@ public class GetGeoInfoTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);

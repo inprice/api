@@ -37,7 +37,7 @@ public class PauseTest {
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.routeParam("id", "1")
 			.asJson();
 
@@ -52,7 +52,7 @@ public class PauseTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -69,7 +69,7 @@ public class PauseTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -96,7 +96,7 @@ public class PauseTest {
 
 		//deleting him
 		HttpResponse<JsonNode> res = Unirest.delete("/membership/{id}")
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
@@ -111,7 +111,7 @@ public class PauseTest {
 		
 		//try to pause
 		res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
@@ -140,7 +140,7 @@ public class PauseTest {
 		Long memberId = findMemberIdByIndex(cookies, 0);
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
@@ -154,7 +154,7 @@ public class PauseTest {
 		} catch (InterruptedException ignored) {}
 
 		res = Unirest.put(SERVICE_ENDPOINT)
-				.headers(Fixtures.SESSION_O_HEADERS)
+				.headers(Fixtures.SESSION_0_HEADERS)
 				.cookie(cookies)
 				.routeParam("id", memberId.toString())
 				.asJson();
@@ -172,7 +172,7 @@ public class PauseTest {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -189,7 +189,7 @@ public class PauseTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -255,7 +255,7 @@ public class PauseTest {
 		
 		//pauses himself
 		res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
@@ -264,12 +264,12 @@ public class PauseTest {
 		json = res.getBody().getObject();
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Member not found!", json.getString("reason"));
+		assertEquals("Membership not found!", json.getString("reason"));
 	}
 
 	private Long findMemberIdByIndex(Cookies cookies, int index) {
 		HttpResponse<JsonNode> res = Unirest.get("/membership")
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 

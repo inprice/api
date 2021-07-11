@@ -64,7 +64,7 @@ public class GetReportTest {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);
@@ -93,7 +93,7 @@ public class GetReportTest {
 		assertEquals(200, json.getInt("status"));
 		
 		res = Unirest.get(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(res.getCookies());
@@ -108,7 +108,7 @@ public class GetReportTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);

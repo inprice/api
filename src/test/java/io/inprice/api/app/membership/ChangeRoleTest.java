@@ -38,7 +38,7 @@ public class ChangeRoleTest {
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.body(createBody(1l, TestRoles.VIEWER))
 			.asJson();
 
@@ -53,7 +53,7 @@ public class ChangeRoleTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody(1l, TestRoles.VIEWER))
 			.asJson();
@@ -70,7 +70,7 @@ public class ChangeRoleTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody(1l, TestRoles.VIEWER))
 			.asJson();
@@ -96,7 +96,7 @@ public class ChangeRoleTest {
 
 		//changes member's role
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody(memberId, null))
 			.asJson();
@@ -122,7 +122,7 @@ public class ChangeRoleTest {
 
 		//changes member's role
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody(memberId, TestRoles.ADMIN))
 			.asJson();
@@ -148,7 +148,7 @@ public class ChangeRoleTest {
 
 		//changes member's role
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody(memberId, TestRoles.SUPER))
 			.asJson();
@@ -176,7 +176,7 @@ public class ChangeRoleTest {
 
 		//changes member's role
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody(memberId, TestRoles.valueOf(role)))
 			.asJson();
@@ -203,7 +203,7 @@ public class ChangeRoleTest {
 
 		//deleting him
 		HttpResponse<JsonNode> res = Unirest.delete("/membership/{id}")
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
@@ -218,7 +218,7 @@ public class ChangeRoleTest {
 		
 		//try to change member's role
 		res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody(memberId, TestRoles.VIEWER))
 			.asJson();
@@ -235,7 +235,7 @@ public class ChangeRoleTest {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody(1l, TestRoles.VIEWER))
 			.asJson();
@@ -252,7 +252,7 @@ public class ChangeRoleTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody(1l, TestRoles.VIEWER))
 			.asJson();
@@ -318,7 +318,7 @@ public class ChangeRoleTest {
 		
 		//tries to change his role
 		res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody(memberId, TestRoles.EDITOR))
 			.asJson();
@@ -327,7 +327,7 @@ public class ChangeRoleTest {
 		json = res.getBody().getObject();
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Member not found!", json.getString("reason"));
+		assertEquals("Membership not found!", json.getString("reason"));
 	}
 
 	/**
@@ -344,7 +344,7 @@ public class ChangeRoleTest {
 
 		//changes member's role
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody(memberId, TestRoles.EDITOR))
 			.asJson();
@@ -362,7 +362,7 @@ public class ChangeRoleTest {
 
 	private JSONObject findMemberByIndex(Cookies cookies, int index) {
 		HttpResponse<JsonNode> res = Unirest.get("/membership")
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 

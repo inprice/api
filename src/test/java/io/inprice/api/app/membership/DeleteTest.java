@@ -37,7 +37,7 @@ public class DeleteTest {
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.routeParam("id", "1")
 			.asJson();
 
@@ -52,7 +52,7 @@ public class DeleteTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -69,7 +69,7 @@ public class DeleteTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -98,7 +98,7 @@ public class DeleteTest {
 		Long memberId = findMemberIdByIndex(cookies, 0);
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
@@ -112,7 +112,7 @@ public class DeleteTest {
 		} catch (InterruptedException ignored) {}
 
 		res = Unirest.delete(SERVICE_ENDPOINT)
-				.headers(Fixtures.SESSION_O_HEADERS)
+				.headers(Fixtures.SESSION_0_HEADERS)
 				.cookie(cookies)
 				.routeParam("id", memberId.toString())
 				.asJson();
@@ -130,7 +130,7 @@ public class DeleteTest {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -147,7 +147,7 @@ public class DeleteTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -213,7 +213,7 @@ public class DeleteTest {
 		
 		//tries to delete himself
 		res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
@@ -222,12 +222,12 @@ public class DeleteTest {
 		json = res.getBody().getObject();
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Member not found!", json.getString("reason"));
+		assertEquals("Membership not found!", json.getString("reason"));
 	}
 
 	private Long findMemberIdByIndex(Cookies cookies, int index) {
 		HttpResponse<JsonNode> res = Unirest.get("/membership")
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 

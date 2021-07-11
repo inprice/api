@@ -67,25 +67,34 @@ public enum TestAccounts {
 		)
 	),
 
-	Pro_plan_and_extra_one_pending_user(
+	Pro_plan_with_no_user(
   	"Has no link, alarm or coupon",
 		ImmutableMap.of(
-			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-g.com"),
-			TestRoles.EDITOR, new JSONObject().put("email", "editor@account-g.com")
+			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-g.com")
+		)
+	),
+
+	Premium_plan_and_three_pending_users(
+  	"Has no link, alarm or coupon",
+		ImmutableMap.of(
+			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-h.com"),
+			TestRoles.EDITOR, new JSONObject().put("email", "editor@account-h.com"), // not exists as a user (new invitation)!
+			TestRoles.VIEWER, new JSONObject().put("email", "editor@account-c.com") // attention pls!
+			//TestRoles.VIEWER, new JSONObject().put("email", "editor@account-e.com") // attention pls!
 		)
 	),
 
 	Cancelled_Basic_plan_no_link_no_alarm(
   	"Cancelled and has no link, alarm or coupon",
 		ImmutableMap.of(
-			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-h.com")
+			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-i.com")
 		)
 	),
 
 	Cancelled_Starter_plan_30_links_6_alarms(
   	"Cancelled and 30 links, 6 alarms, No coupon",
 		ImmutableMap.of(
-			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-i.com")
+			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-j.com")
 		)
 	);
 

@@ -50,7 +50,7 @@ public class UserController extends AbstractController {
 
 		app.put(Consts.Paths.User.LEAVE_MEMBERSHIP, (ctx) -> {
 			LongDTO dto = ctx.bodyAsClass(LongDTO.class);
-			ctx.json(Commons.createResponse(ctx, service.leaveMember(dto)));
+			ctx.json(Commons.createResponse(ctx, service.leaveMembership(dto)));
 		}, AccessRoles.ANYONE_EXCEPT_SUPER());
 
 		app.post(Consts.Paths.User.CLOSE_ALL_SESSIONS, (ctx) -> {

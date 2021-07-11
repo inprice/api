@@ -37,7 +37,7 @@ public class UpdateInfoTest {
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.body(createBody("New Name", TIMEZONE))
 			.asJson();
 
@@ -52,7 +52,7 @@ public class UpdateInfoTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);
@@ -108,7 +108,7 @@ public class UpdateInfoTest {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createBody("New name", TIMEZONE))
 			.asJson();
@@ -144,7 +144,7 @@ public class UpdateInfoTest {
 
 		//making service call
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(body)
 			.asJson();

@@ -148,7 +148,7 @@ public class Responses {
 
     public static final Response USER = new Response(BASE, "User not found!");
     public static final Response EMAIL = new Response(BASE, "Email not found!");
-    public static final Response MEMBERSHIP = new Response(BASE, "Member not found!");
+    public static final Response MEMBERSHIP = new Response(BASE, "Membership not found!");
     public static final Response INVITATION = new Response(BASE, "Invitation not found!");
     public static final Response SUBSCRIPTION = new Response(BASE, "Subscription not found!");
 

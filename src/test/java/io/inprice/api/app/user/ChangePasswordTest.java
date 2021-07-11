@@ -36,7 +36,7 @@ public class ChangePasswordTest {
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.body(createBody("1234", "ABCD", "ABCD"))
 			.asJson();
 
@@ -51,7 +51,7 @@ public class ChangePasswordTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);
@@ -124,7 +124,7 @@ public class ChangePasswordTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.body(createBody("1234", "';\"~", "';\"~"))
 			.asJson();
 
@@ -135,7 +135,7 @@ public class ChangePasswordTest {
 
 		//we have to set old password again for the health of other tests
 		res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.body(createBody("';\"~", "1234", "1234"))
 			.asJson();
 		TestUtils.logout(cookies);
@@ -168,7 +168,7 @@ public class ChangePasswordTest {
 
 		//making service call
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(body)
 			.asJson();

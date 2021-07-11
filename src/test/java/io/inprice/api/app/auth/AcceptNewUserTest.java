@@ -94,10 +94,10 @@ public class AcceptNewUserTest {
 		/* -------------------------------- 
 		   Inviting a non-existing user
 		 -------------------------------- */
-		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_and_extra_one_pending_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Premium_plan_and_three_pending_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post("/membership")
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(createInvitationBody(Fixtures.NON_EXISTING_EMAIL_1, TestRoles.EDITOR))
 			.asJson();

@@ -1,6 +1,7 @@
 package io.inprice.api.app.user;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -22,9 +23,9 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.Timezones;
-import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.User;
@@ -107,27 +108,34 @@ public class UserService {
 
   public Response acceptInvitation(LongDTO dto) {
     if (dto.getValue() != null && dto.getValue() > 0) {
-      return processInvitation(dto.getValue(), UserStatus.PENDING, UserStatus.JOINED);
+      return changeStatus(dto.getValue(), Arrays.asList(UserStatus.PENDING), UserStatus.JOINED);
     }
     return Responses.NotFound.USER;
   }
 
   public Response rejectInvitation(LongDTO dto) {
     if (dto.getValue() != null && dto.getValue() > 0) {
-      return processInvitation(dto.getValue(), UserStatus.JOINED, UserStatus.LEFT);
+      return changeStatus(dto.getValue(), Arrays.asList(UserStatus.PENDING, UserStatus.PAUSED), UserStatus.REJECTED);
     }
     return Responses.NotFound.USER;
   }
 
-  private Response processInvitation(Long id, UserStatus fromStatus, UserStatus toStatus) {
+  public Response leaveMembership(LongDTO dto) {
+    if (dto.getValue() != null && dto.getValue() > 0) {
+      return changeStatus(dto.getValue(), Arrays.asList(UserStatus.JOINED, UserStatus.PAUSED), UserStatus.LEFT);
+    }
+    return Responses.NotFound.USER;
+  }
+
+  private Response changeStatus(Long id, List<UserStatus> fromStatuses, UserStatus toStatus) {
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      boolean isOK = membershipDao.changeStatus(id, fromStatus.name(), toStatus.name(), CurrentUser.getUserId());
+      boolean isOK = membershipDao.changeStatus(id, fromStatuses, toStatus, CurrentUser.getUserId());
       if (isOK) {
         return Responses.OK;
       } else {
-        return Responses.NotFound.USER;
+        return Responses.NotFound.MEMBERSHIP;
       }
     }
   }
@@ -147,19 +155,6 @@ public class UserService {
         membershipDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getAccountId(), activeStatuses)
       );
     }
-  }
-
-  public Response leaveMember(LongDTO dto) {
-    if (dto.getValue() != null && dto.getValue() > 0) {
-      try (Handle handle = Database.getHandle()) {
-        MembershipDao membershipDao = handle.attach(MembershipDao.class);
-        boolean isOK = membershipDao.changeStatus(dto.getValue(), UserStatus.LEFT.name());
-        if (isOK) {
-          return Responses.OK;
-        }
-      }
-    }
-    return Responses.NotFound.USER;
   }
 
   public Response getOpenedSessions(Context ctx) {

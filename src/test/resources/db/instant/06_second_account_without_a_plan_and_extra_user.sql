@@ -19,7 +19,7 @@ set @account_id = last_insert_id();
 insert into test.account_history (account_id, status) values (@account_id, 'CREATED');
 
 -- membership
-insert into test.membership (email, user_id, account_id, role, pre_status, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'PENDING', 'JOINED');
+insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');
 
 -- coupon for Basic Plan (id=10)
 insert into test.coupon (code, plan_id, days, description, issuer_id) values ('MU3XF9NP', 10, 30, 'Another coupon for testing', @account_id);

@@ -196,7 +196,7 @@ public class CreateAndUpdateTest {
 
 		//making service call
 		HttpResponse<JsonNode> res = Unirest.request(httpMethod, SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(body)
 			.asJson();
@@ -220,7 +220,7 @@ public class CreateAndUpdateTest {
 
 		//making service call
 		HttpResponse<JsonNode> res = Unirest.request(httpMethod, SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(body)
 			.asJson();

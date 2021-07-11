@@ -37,7 +37,7 @@ public class ApplyCouponTest {
 	@Test
 	public void No_active_session_please_sign_in_WITH_no_session() {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.routeParam("code", "XYZ-1234")
 			.asJson();
 		
@@ -175,7 +175,7 @@ public class ApplyCouponTest {
 
 		//making service call
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("code", couponCode)
 			.asJson();

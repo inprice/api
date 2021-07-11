@@ -4,10 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.Map;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import com.google.common.collect.ImmutableMap;
 
 import io.inprice.api.utils.Fixtures;
 import io.inprice.api.utils.TestAccounts;
@@ -55,7 +59,7 @@ public class AnyonesGetMethodsTest {
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -69,7 +73,7 @@ public class AnyonesGetMethodsTest {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);
@@ -98,7 +102,7 @@ public class AnyonesGetMethodsTest {
 		assertEquals(200, json.getInt("status"));
 		
 		res = Unirest.get(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(res.getCookies());
@@ -113,17 +117,19 @@ public class AnyonesGetMethodsTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);
 
 		JSONObject json = res.getBody().getObject();
 		JSONArray data = json.getJSONArray("data");
+		
+		Map<String, Integer> countsMap = ImmutableMap.of("/memberships", 2, "/invitations", 1, "/opened-sessions", 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
-		assertEquals((this.endpointPostfix.equals("/memberships") ? 1 : 0), data.length());
+		assertEquals(SERVICE_ENDPOINT, countsMap.get(endpointPostfix).intValue(), data.length());
 	}
 
 }

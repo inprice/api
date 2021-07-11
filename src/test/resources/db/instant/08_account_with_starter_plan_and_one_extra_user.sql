@@ -5,7 +5,7 @@
 
 set @planId = 15; -- Starter plan
 set @admin_email = 'admin@account-c.com';
-set @editor_email = 'editor@account-c.com';
+set @editor_email = 'editor@account-c.com'; -- will be a pending user in 12_account_with_pro_plan_and_two_pending_users.sql
 
 -- -----------------------
 
@@ -26,5 +26,5 @@ insert into test.account_history (account_id, status) values (@account_id, 'CREA
 insert into test.account_history (account_id, status) values (@account_id, 'SUBSCRIBED');
 
 -- membership
-insert into test.membership (email, user_id, account_id, role, pre_status, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'PENDING', 'JOINED');
-insert into test.membership (email, user_id, account_id, role, pre_status, status) values (@editor_email, @editor_id, @account_id, 'EDITOR', 'PENDING', 'JOINED');
+insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');
+insert into test.membership (email, user_id, account_id, role, status) values (@editor_email, @editor_id, @account_id, 'EDITOR', 'JOINED');

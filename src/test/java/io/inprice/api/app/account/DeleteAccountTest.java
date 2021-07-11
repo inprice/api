@@ -113,7 +113,7 @@ public class DeleteAccountTest {
 
 		//making service call
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject().put("value", password))
 			.asJson();

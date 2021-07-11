@@ -110,11 +110,15 @@ public interface MembershipDao {
   @SqlUpdate("update membership set role=:role where id=:id and account_id=:accountId")
   boolean changeRole(@Bind("id") Long id, @Bind("role") UserRole role, @Bind("accountId") Long accountId);
 
-  @SqlUpdate("update membership set status=:toStatus, user_id=:userId, updated_at=now() where id=:id and status=:fromStatus")
-  boolean changeStatus(@Bind("id") Long id, @Bind("fromStatus") String fromStatus, @Bind("toStatus") String toStatus, @Bind("userId") Long userId);
-
-  @SqlUpdate("update membership set status=:newStatus, updated_at=now() where id=:id")
-  boolean changeStatus(@Bind("id") Long id, @Bind("newStatus") String newStatus);
+  @SqlUpdate(
+		"update membership " +
+		"set status=:toStatus, updated_at=now() " +
+		"where id=:id " +
+		"  and user_id=:userId " +
+		"  and status in (<fromStatuses>)"
+	)
+  boolean changeStatus(@Bind("id") Long id, @BindList("fromStatuses") List<UserStatus> fromStatuses, 
+  		@Bind("toStatus") UserStatus toStatus, @Bind("userId") Long userId);
 
   @SqlUpdate("update membership set pre_status=status, status='PAUSED', updated_at=now() where id=:id and account_id=:accountId and status!='PAUSED'")
   boolean pause(@Bind("id") Long id, @Bind("accountId") Long accountId);

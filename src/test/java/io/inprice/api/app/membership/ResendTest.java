@@ -41,7 +41,7 @@ public class ResendTest {
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.routeParam("id", "1")
 			.asJson();
 
@@ -56,7 +56,7 @@ public class ResendTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -73,7 +73,7 @@ public class ResendTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -90,7 +90,7 @@ public class ResendTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -109,7 +109,7 @@ public class ResendTest {
 		Long memberId = findMemberIdByIndex(cookies, 0);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
@@ -133,7 +133,7 @@ public class ResendTest {
 		
 		//invites a non-existing user
 		HttpResponse<JsonNode> res = Unirest.post("/membership")
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
   				.put("role", TestRoles.EDITOR)
@@ -150,7 +150,7 @@ public class ResendTest {
 		//re-sends the invitation for extra three times
 		for (int i = 0; i < 3; i++) {
   		res = Unirest.post(SERVICE_ENDPOINT)
-  			.headers(Fixtures.SESSION_O_HEADERS)
+  			.headers(Fixtures.SESSION_0_HEADERS)
   			.cookie(cookies)
   			.routeParam("id", memberId.toString())
   			.asJson();
@@ -168,7 +168,7 @@ public class ResendTest {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();
@@ -182,7 +182,7 @@ public class ResendTest {
 
 	private Long findMemberIdByIndex(Cookies cookies, int index) {
 		HttpResponse<JsonNode> res = Unirest.get("/membership")
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 
@@ -193,47 +193,33 @@ public class ResendTest {
 	}
 
 	/**
-	 * Consists of three steps;
-	 *    a) invites a non-existing user
-	 *    b) get member list to find member id
-	 *    c) re-sends the invitation
+	 * Consists of two steps;
+	 *    a) get member list to find previously added member id
+	 *    b) re-sends the invitation
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_and_extra_one_pending_user.ADMIN());
-		
-		//invites a non-existing user
-		HttpResponse<JsonNode> res = Unirest.post("/membership")
-			.headers(Fixtures.SESSION_O_HEADERS)
-			.cookie(cookies)
-			.body(new JSONObject()
-  				.put("role", TestRoles.EDITOR)
-  				.put("email", Fixtures.NON_EXISTING_EMAIL_1)
-  			)
-			.asJson();
-		
-		JSONObject json = res.getBody().getObject();
-		assertEquals(200, json.getInt("status"));
+		Cookies cookies = TestUtils.login(TestAccounts.Premium_plan_and_three_pending_users.ADMIN());
 		
 		//get member list to find member id
-		Long memberId = findMemberIdByEmail(cookies, Fixtures.NON_EXISTING_EMAIL_1);
+		Long memberId = findMemberIdByEmail(cookies, TestAccounts.Premium_plan_and_three_pending_users.EDITOR().getString("email"));
 
 		//re-sends the invitation
-		res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_O_HEADERS)
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", memberId.toString())
 			.asJson();
 		TestUtils.logout(cookies);
 
-		json = res.getBody().getObject();
+		JSONObject json = res.getBody().getObject();
 
 		assertEquals(200, json.getInt("status"));
 	}
 
 	private Long findMemberIdByEmail(Cookies cookies, String email) {
 		HttpResponse<JsonNode> res = Unirest.get("/membership")
-			.headers(Fixtures.SESSION_O_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
 
