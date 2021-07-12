@@ -101,7 +101,7 @@ class LinkService {
         )
       .map(new LinkMapper())
       .list();
-
+      
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
       log.error("Failed in full search for links.", e);

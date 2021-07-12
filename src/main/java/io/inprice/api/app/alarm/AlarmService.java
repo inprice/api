@@ -278,7 +278,7 @@ public class AlarmService {
 		if (problem == null && dto.getSubject() == null) {
 			if (AlarmSubject.STATUS.equals(dto.getSubject()) && !AlarmSubjectWhen.CHANGED.equals(dto.getSubjectWhen())) {
 				if (StringUtils.isBlank(dto.getCertainStatus())) {
-					problem = "You are expected to specify certain status!";
+					problem = "You are expected to specify a certain status!";
 				}
 			} else {
 				dto.setCertainStatus(null);
@@ -286,15 +286,13 @@ public class AlarmService {
 		}
 
 		if (problem == null && dto.getSubject() == null) {
-			if (!AlarmSubject.STATUS.equals(dto.getSubject())
-			    && AlarmSubjectWhen.OUT_OF_LIMITS.equals(dto.getSubjectWhen())) {
-				boolean hasNoLowerLimit = (dto.getAmountLowerLimit() == null
-				    || dto.getAmountLowerLimit().compareTo(BigDecimal.ZERO) < 1);
-				boolean hasNoUpperLimit = (dto.getAmountUpperLimit() == null
-				    || dto.getAmountUpperLimit().compareTo(BigDecimal.ZERO) < 1);
+			if (!AlarmSubject.STATUS.equals(dto.getSubject()) && AlarmSubjectWhen.OUT_OF_LIMITS.equals(dto.getSubjectWhen())) {
+			
+				boolean hasNoLowerLimit = (dto.getAmountLowerLimit() == null || dto.getAmountLowerLimit().compareTo(BigDecimal.ZERO) < 1);
+				boolean hasNoUpperLimit = (dto.getAmountUpperLimit() == null || dto.getAmountUpperLimit().compareTo(BigDecimal.ZERO) < 1);
+
 				if (hasNoLowerLimit && hasNoUpperLimit) {
-					problem = "You are expected to specify either lower or upper limit for "
-					    + AlarmSubject.STATUS.name().toLowerCase();
+					problem = "You are expected to specify either lower or upper limit for " + AlarmSubject.STATUS.name().toLowerCase();
 				} else {
 					if (hasNoLowerLimit)
 						dto.setAmountLowerLimit(BigDecimal.ZERO);

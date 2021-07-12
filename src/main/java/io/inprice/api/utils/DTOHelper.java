@@ -16,6 +16,7 @@ public class DTOHelper {
 		if (!dto.getLoadMore()) dto.setRowCount(0);
     if (dto.getRowLimit() < Consts.LOWER_ROW_LIMIT_FOR_LISTS) dto.setRowLimit(Consts.LOWER_ROW_LIMIT_FOR_LISTS);
     if (dto.getRowLimit() > Consts.UPPER_ROW_LIMIT_FOR_LISTS) dto.setRowLimit(Consts.UPPER_ROW_LIMIT_FOR_LISTS);
+    if (dto.getTerm() == null) dto.setTerm("");
   	dto.setTerm(SqlHelper.clear(dto.getTerm()) + (percentageAdded ? "%" : ""));
   	return dto;
 	}

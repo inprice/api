@@ -28,3 +28,10 @@ insert into test.account_history (account_id, status) values (@account_id, 'SUBS
 -- membership
 insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');
 insert into test.membership (email, user_id, account_id, role, status) values (@editor_email, @editor_id, @account_id, 'EDITOR', 'JOINED');
+
+-- -----------------------
+-- groups and links
+-- group_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
+-- -----------------------
+call sp_create_group_and_links('X', 2, 1, 1, 0, 'https://amazon.com/', 2, 'Account-C', @account_id);
+call sp_create_group_and_links('Y', 4, 1, 0, 3, 'https://ebay.com/', 12, 'Account-C', @account_id);

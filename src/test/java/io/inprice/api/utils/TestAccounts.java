@@ -1,17 +1,15 @@
 package io.inprice.api.utils;
 
+import java.util.Map;
+import kong.unirest.json.JSONObject;
+import com.google.common.collect.ImmutableMap;
+
 /**
  * The accounts and users placed below must be exactly the same as defined in sql files under resources:db/instant folder
  * 
  * @author mdpinar
  * @since 2021-04-07
  */
-import java.util.Map;
-
-import com.google.common.collect.ImmutableMap;
-
-import kong.unirest.json.JSONObject;
-
 public enum TestAccounts {
 
 	Without_a_plan_and_extra_user(
@@ -29,14 +27,14 @@ public enum TestAccounts {
 	),
 
 	Basic_plan_but_no_extra_user(
-  	"Has no link, alarm or coupon",
+  	"Has 9 active, 7 trying, 5 waiting and 3 problem links. No alarm or coupon",
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-b.com")
 		)
 	),
 
 	Starter_plan_and_one_extra_user(
-  	"Has no link, alarm or coupon",
+		"Has 6 active, 2 trying, 1 waiting and 3 problem links. No alarm or coupon",
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-c.com"),
 			TestRoles.EDITOR, new JSONObject().put("email", "editor@account-c.com")
