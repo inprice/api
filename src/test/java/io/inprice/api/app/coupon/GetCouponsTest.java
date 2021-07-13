@@ -107,7 +107,9 @@ public class GetCouponsTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Without_a_plan_and_extra_user.ADMIN());
+		TestAccounts account = TestAccounts.Second_without_a_plan_and_extra_user;
+
+		Cookies cookies = TestUtils.login(account.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -120,7 +122,7 @@ public class GetCouponsTest {
 		
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
-		assertEquals(1, data.length());
+		assertEquals(account.getCoupons().size(), data.length());
 	}
 
 }

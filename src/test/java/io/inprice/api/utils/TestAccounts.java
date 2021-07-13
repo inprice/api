@@ -1,7 +1,10 @@
 package io.inprice.api.utils;
 
 import java.util.Map;
+import java.util.Set;
+
 import kong.unirest.json.JSONObject;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableMap;
 
 /**
@@ -14,20 +17,23 @@ public enum TestAccounts {
 
 	Without_a_plan_and_extra_user(
   	"Has one coupon",
+  	ImmutableSet.of("RB5QV6CF"),
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-a.com")
 		)
 	),
 
 	Second_without_a_plan_and_extra_user(
-  	"Has one coupon",
+  	"Has two coupons",
+  	ImmutableSet.of("MU3XF9NP", "KJ9QF6G7"),
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-as.com")
 		)
 	),
 
 	Basic_plan_but_no_extra_user(
-  	"Has 9 active, 7 trying, 5 waiting and 3 problem links. No alarm or coupon",
+  	"Has 9 active, 7 trying, 5 waiting and 3 problem links. 2 Group and 3 Link alarms, no coupon",
+  	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-b.com")
 		)
@@ -35,6 +41,7 @@ public enum TestAccounts {
 
 	Starter_plan_and_one_extra_user(
 		"Has 6 active, 2 trying, 1 waiting and 3 problem links. No alarm or coupon",
+  	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-c.com"),
 			TestRoles.EDITOR, new JSONObject().put("email", "editor@account-c.com")
@@ -43,6 +50,7 @@ public enum TestAccounts {
 
 	Standard_plan_and_no_extra_users(
   	"Has no link, alarm or coupon",
+  	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-d.com")
 		)
@@ -50,6 +58,7 @@ public enum TestAccounts {
 
 	Standard_plan_and_one_extra_user(
   	"Has no link, alarm or coupon",
+  	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-e.com"),
 			TestRoles.EDITOR, new JSONObject().put("email", "editor@account-e.com")
@@ -58,6 +67,7 @@ public enum TestAccounts {
 
 	Standard_plan_and_two_extra_users(
   	"Has no link, alarm or coupon",
+  	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-f.com"),
 			TestRoles.EDITOR, new JSONObject().put("email", "editor@account-f.com"),
@@ -67,6 +77,7 @@ public enum TestAccounts {
 
 	Pro_plan_with_no_user(
   	"Has no link, alarm or coupon",
+  	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-g.com")
 		)
@@ -74,6 +85,7 @@ public enum TestAccounts {
 
 	Premium_plan_and_three_pending_users(
   	"Has no link, alarm or coupon",
+  	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-h.com"),
 			TestRoles.EDITOR, new JSONObject().put("email", "editor@account-h.com"), // not exists as a user (new invitation)!
@@ -84,6 +96,7 @@ public enum TestAccounts {
 
 	Cancelled_Basic_plan_no_link_no_alarm(
   	"Cancelled and has no link, alarm or coupon",
+  	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-i.com")
 		)
@@ -91,20 +104,27 @@ public enum TestAccounts {
 
 	Cancelled_Starter_plan_30_links_6_alarms(
   	"Cancelled and 30 links, 6 alarms, No coupon",
+  	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-j.com")
 		)
 	);
 
 	private String description;
+	private Set<String> coupons;
 	private Map<TestRoles, JSONObject> roleEmailMap;
 	
-	private TestAccounts(String description, Map<TestRoles, JSONObject> roleEmailMap) {
+	private TestAccounts(String description, Set<String> coupons, Map<TestRoles, JSONObject> roleEmailMap) {
+		this.coupons = coupons;
 		this.roleEmailMap = roleEmailMap;
 	}
 	
 	public String getDescription() {
 		return description;
+	}
+
+	public Set<String> getCoupons() {
+		return coupons;
 	}
 
 	public JSONObject ADMIN() {

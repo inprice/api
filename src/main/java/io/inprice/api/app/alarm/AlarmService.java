@@ -55,32 +55,44 @@ public class AlarmService {
           int allowedAlarmCount = (account.getPlan().getAlarmLimit() - account.getAlarmCount());
 				
           if (allowedAlarmCount > 0) {
-  					Pair<String, BigDecimal> pair = findCurrentStatusAndAmount(dto, handle);
+          	AlarmDao alarmDao = handle.attach(AlarmDao.class);
+          	
+          	boolean doesExist = 
+          			alarmDao.doesExistByTopicId(
+        					dto.getTopic().name().toLowerCase(), 
+        					(AlarmTopic.LINK.equals(dto.getTopic()) ? dto.getLinkId() : dto.getGroupId()), 
+        					CurrentUser.getAccountId()
+      					);
+          	
+						if (doesExist == false) {
+    					Pair<String, BigDecimal> pair = findCurrentStatusAndAmount(dto, handle);
+    
+    					if (pair != null) {
+    						handle.begin();
+    						long id = alarmDao.insert(dto, pair);
+    
+    						boolean isOK = false;
+    						if (AlarmTopic.LINK.equals(dto.getTopic())) {
+    							isOK = alarmDao.setAlarmForLink(dto.getLinkId(), id, CurrentUser.getAccountId());
+    						} else {
+    							isOK = alarmDao.setAlarmForGroup(dto.getGroupId(), id, CurrentUser.getAccountId());
+    						}
+    
+    						if (isOK) {
+    		        	accountDao.increaseAlarmCount(CurrentUser.getAccountId());
   
-  					if (pair != null) {
-  						AlarmDao alarmDao = handle.attach(AlarmDao.class);
-  						handle.begin();
-  						long id = alarmDao.insert(dto, pair);
-  
-  						boolean isOK = false;
-  						if (AlarmTopic.LINK.equals(dto.getTopic())) {
-  							isOK = alarmDao.setAlarmForLink(dto.getLinkId(), id, CurrentUser.getAccountId());
-  						} else {
-  							isOK = alarmDao.setAlarmForGroup(dto.getGroupId(), id, CurrentUser.getAccountId());
-  						}
-  
-  						if (isOK) {
-  		        	accountDao.increaseAlarmCount(CurrentUser.getAccountId());
-
-  		        	handle.commit();
-  							dto.setId(id);
-  							res = new Response(dto);
-  						} else {
-  							handle.rollback();
-  							res = Responses.DataProblem.DB_PROBLEM;
-  						}
+    		        	handle.commit();
+    							dto.setId(id);
+    							res = new Response(dto);
+    						} else {
+    							handle.rollback();
+    							res = Responses.DataProblem.DB_PROBLEM;
+    						}
+  	          } else {
+  	            res = (AlarmTopic.LINK.equals(dto.getTopic()) ? Responses.NotFound.LINK : Responses.NotFound.GROUP);
+    					}
 	          } else {
-	            res = (AlarmTopic.LINK.equals(dto.getTopic()) ? Responses.NotFound.LINK : Responses.NotFound.GROUP);
+	          	res = Responses.Already.Defined.ALARM;
   					}
           } else {
 	          res = Responses.NotAllowed.NO_ALARM_LIMIT;
@@ -272,10 +284,10 @@ public class AlarmService {
 		}
 
 		if (problem == null && dto.getSubjectWhen() == null) {
-			problem = "You are expected to specify of when the subject should be considered!";
+			problem = "You are expected to specify when the subject should be considered!";
 		}
 
-		if (problem == null && dto.getSubject() == null) {
+		if (problem == null) {
 			if (AlarmSubject.STATUS.equals(dto.getSubject()) && !AlarmSubjectWhen.CHANGED.equals(dto.getSubjectWhen())) {
 				if (StringUtils.isBlank(dto.getCertainStatus())) {
 					problem = "You are expected to specify a certain status!";
@@ -285,19 +297,24 @@ public class AlarmService {
 			}
 		}
 
-		if (problem == null && dto.getSubject() == null) {
+		if (problem == null) {
 			if (!AlarmSubject.STATUS.equals(dto.getSubject()) && AlarmSubjectWhen.OUT_OF_LIMITS.equals(dto.getSubjectWhen())) {
 			
-				boolean hasNoLowerLimit = (dto.getAmountLowerLimit() == null || dto.getAmountLowerLimit().compareTo(BigDecimal.ZERO) < 1);
-				boolean hasNoUpperLimit = (dto.getAmountUpperLimit() == null || dto.getAmountUpperLimit().compareTo(BigDecimal.ZERO) < 1);
+				boolean hasNoLowerLimit = 
+						(dto.getAmountLowerLimit() == null 
+						|| dto.getAmountLowerLimit().compareTo(BigDecimal.ZERO) < 1 
+						|| dto.getAmountLowerLimit().compareTo(new BigDecimal(9_999_999)) > 0);
+
+				boolean hasNoUpperLimit = 
+						(dto.getAmountUpperLimit() == null 
+						|| dto.getAmountUpperLimit().compareTo(BigDecimal.ZERO) < 1 
+						|| dto.getAmountUpperLimit().compareTo(new BigDecimal(9_999_999)) > 0);
 
 				if (hasNoLowerLimit && hasNoUpperLimit) {
-					problem = "You are expected to specify either lower or upper limit for " + AlarmSubject.STATUS.name().toLowerCase();
+					problem = "You are expected to specify either lower or upper limit for " + dto.getSubject().name().toLowerCase() + "!";
 				} else {
-					if (hasNoLowerLimit)
-						dto.setAmountLowerLimit(BigDecimal.ZERO);
-					if (hasNoUpperLimit)
-						dto.setAmountUpperLimit(BigDecimal.ZERO);
+					if (hasNoLowerLimit) dto.setAmountLowerLimit(BigDecimal.ZERO);
+					if (hasNoUpperLimit) dto.setAmountUpperLimit(BigDecimal.ZERO);
 				}
 			} else {
 				dto.setAmountLowerLimit(BigDecimal.ZERO);

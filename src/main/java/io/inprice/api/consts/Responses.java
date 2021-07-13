@@ -106,12 +106,14 @@ public class Responses {
 
     public static final Response BANNED_ACCOUNT = new Response(BASE + 30, "Account is already banned!");
     public static final Response NOT_BANNED_ACCOUNT = new Response(BASE + 31, "Account is not banned!");
-    
+
     public static class Defined {
       public static final Response ACCOUNT = new Response(BASE + 70, "Seems that you have already registered this account!");
       public static final Response MEMBERSHIP = new Response(BASE + 71, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");
       public static final Response REGISTERED_USER = new Response(BASE + 72, "Already registered user! Signing up is an option for only newcomers! Please use 'Create Account' menu after login.");
       public static final Response GROUP = new Response(BASE + 75, "You already have a group having the same name!");
+
+      public static final Response ALARM = new Response(BASE + 80, "An alarm has already been set!");
     }
   }
 

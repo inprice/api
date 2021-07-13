@@ -36,7 +36,7 @@ public class TestUtils {
 	static {
 		sqlScripts = new StringBuilder();
 		try {
-			String baseDir = "db/instant/";
+			String baseDir = "db/fixtures/";
 			List<String> files = IOUtils.readLines(TestUtils.class.getClassLoader().getResourceAsStream(baseDir), "UTF-8");
 			for (String file: files) {
 				sqlScripts.append(IOUtils.toString(TestUtils.class.getClassLoader().getResourceAsStream(baseDir+file), "UTF-8"));

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -19,6 +20,9 @@ public interface AlarmDao {
 	@SqlQuery("select * from alarm where id=:id and account_id=:accountId")
   @UseRowMapper(AlarmMapper.class)
 	Alarm findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
+
+	@SqlQuery("select exists(select 1 from alarm where <topic>_id=:topicId and account_id=:accountId)")
+	boolean doesExistByTopicId(@Define("topic") String topic, @Bind("topicId") Long topicId, @Bind("accountId") Long accountId);
 
 	@SqlUpdate(
 		"insert into alarm (topic, group_id, link_id, subject, subject_when, certain_status, amount_lower_limit, amount_upper_limit, last_status, last_amount, account_id) " +
