@@ -37,6 +37,9 @@ public class Application {
   private static RedisClient redis;
   
   public static void main(String[] args) {
+  	MDC.put("email", "system");
+  	MDC.put("ip", "NA");
+  	
     new Thread(() -> {
       log.info("APPLICATION IS STARTING...");
 
