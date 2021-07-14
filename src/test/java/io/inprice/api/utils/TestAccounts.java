@@ -8,7 +8,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableMap;
 
 /**
- * The accounts and users placed below must be exactly the same as defined in sql files under resources:db/instant folder
+ * The accounts and users placed below must be exactly compliance with the records defined in sql files under resources:db/fixtures folder
  * 
  * @author mdpinar
  * @since 2021-04-07
@@ -40,7 +40,7 @@ public enum TestAccounts {
 	),
 
 	Starter_plan_and_one_extra_user(
-		"Has 6 active, 2 trying, 1 waiting and 3 problem links. No alarm or coupon",
+		"Has 6 active, 2 trying, 1 waiting and 3 problem links. 1 Group and 1 Link alarms, no coupon",
   	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-c.com"),

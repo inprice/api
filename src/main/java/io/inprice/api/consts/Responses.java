@@ -113,7 +113,7 @@ public class Responses {
       public static final Response REGISTERED_USER = new Response(BASE + 72, "Already registered user! Signing up is an option for only newcomers! Please use 'Create Account' menu after login.");
       public static final Response GROUP = new Response(BASE + 75, "You already have a group having the same name!");
 
-      public static final Response ALARM = new Response(BASE + 80, "An alarm has already been set!");
+      public static final Response ALARM = new Response(BASE + 80, "You have already set an alarm for this record!");
     }
   }
 

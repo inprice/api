@@ -110,14 +110,6 @@ public class InsertTest {
 	}
 
 	@Test
-	public void You_have_reached_max_alarm_number_of_your_plan() {
-		JSONObject json = callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), createBody("LINK", 1L, "PRICE", "CHANGED"));
-
-		assertEquals(910, json.getInt("status"));
-		assertEquals("You have reached max alarm number of your plan!", json.getString("reason"));
-	}
-
-	@Test
 	public void You_havent_picked_a_plan_yet() {
 		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody("LINK", 1L, "PRICE", "CHANGED"));
 
@@ -126,7 +118,40 @@ public class InsertTest {
 	}
 	
 	@Test
-	public void Everything_must_be_ok() {
+	public void You_have_already_set_an_alarm_for_this_record() {
+		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+
+		JSONArray alarmedLinkList = TestFinder.searchAlarms(cookies, "GROUP");
+
+		assertNotNull(alarmedLinkList);
+		assertEquals(1, alarmedLinkList.length());
+
+		//get the first link
+		JSONObject alarmedLink = alarmedLinkList.getJSONObject(0);
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(createBody("GROUP", alarmedLink.getLong("groupId"), "STATUS", "CHANGED"))
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(880, json.getInt("status"));
+		assertEquals("You have already set an alarm for this record!", json.getString("reason"));
+	}
+
+	@Test
+	public void You_have_reached_max_alarm_number_of_your_plan() {
+		JSONObject json = callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), createBody("LINK", 1L, "PRICE", "CHANGED"));
+
+		assertEquals(910, json.getInt("status"));
+		assertEquals("You have reached max alarm number of your plan!", json.getString("reason"));
+	}
+
+	@Test
+	public void Everything_must_be_ok_FOR_a_link() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray linkList = TestFinder.searchLinks(cookies, "WAITING");
@@ -150,6 +175,33 @@ public class InsertTest {
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
 		assertEquals(link.getLong("id"), data.getLong("linkId"));
+	}
+
+	@Test
+	public void Everything_must_be_ok_FOR_a_group() {
+		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+
+		JSONArray groupList = TestFinder.searchGroups(cookies, "");
+
+		assertNotNull(groupList);
+		assertEquals(2, groupList.length());
+
+		//get the first group
+		JSONObject group = groupList.getJSONObject(1); //since first group is already alarmed!
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(createBody("GROUP", group.getLong("id"), "STATUS", "CHANGED"))
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+		JSONObject data = json.getJSONObject("data");
+
+		assertEquals(200, json.getInt("status"));
+		assertNotNull(data);
+		assertEquals(group.getLong("id"), data.getLong("groupId"));
 	}
 
 	private JSONObject createBody(String topic, Long id, String subject, String when) {

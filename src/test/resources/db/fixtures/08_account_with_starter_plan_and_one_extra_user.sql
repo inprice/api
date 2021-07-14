@@ -35,3 +35,12 @@ insert into test.membership (email, user_id, account_id, role, status) values (@
 -- -----------------------
 call sp_create_group_and_links('X', 2, 1, 1, 0, 'https://amazon.com/', 2, 'Account-C', @account_id);
 call sp_create_group_and_links('Y', 4, 1, 0, 3, 'https://ebay.com/', 12, 'Account-C', @account_id);
+
+-- -----------------------
+-- 2 alarms
+-- -----------------------
+insert into alarm (topic, group_id, subject, subject_when, amount_lower_limit, amount_upper_limit, account_id) 
+select 'GROUP', id, 'MINIMUM', 'OUT_OF_LIMITS', 15.17, 50.23, @account_id from link_group where account_id = @account_id limit 1;
+
+insert into alarm (topic, link_id, subject, subject_when, certain_status, account_id) 
+select 'LINK', id, 'STATUS', 'EQUAL', 'AVERAGE', @account_id from link where account_id = @account_id limit 1;

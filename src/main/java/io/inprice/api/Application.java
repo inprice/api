@@ -3,6 +3,7 @@ package io.inprice.api;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import io.inprice.api.consts.Global;
 import io.inprice.api.consts.Responses;
@@ -89,6 +90,7 @@ public class Application {
       if (ctx.method() == "OPTIONS") {
         ctx.header(Header.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
       } else {
+      	MDC.put("ip", ctx.ip());
       	ctx.sessionAttribute("started", System.currentTimeMillis());
     		ctx.sessionAttribute("body", ctx.body());
       }
@@ -97,6 +99,7 @@ public class Application {
     app.after(ctx -> {
     	if (ctx.method() != "OPTIONS") {
       	logAccess(ctx, null);
+      	MDC.clear();
     	}
     });
 

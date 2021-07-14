@@ -42,7 +42,7 @@ public class AlarmService {
 
 	Response insert(AlarmDTO dto) {
 		Response res = Responses.Invalid.ALARM;
-
+		
 		String problem = validate(dto);
 
 		if (problem == null) {
@@ -188,15 +188,23 @@ public class AlarmService {
 
 		crit.append("where a.account_id = ");
 		crit.append(CurrentUser.getAccountId());
+		
+		if (dto.getTopic() != null) {
+			crit.append(" and a.topic = '");
+			crit.append(dto.getTopic());
+			crit.append("'");
+		}
 
 		if (dto.getSubjects() != null && dto.getSubjects().size() > 0) {
 			crit.append(
-			    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects())));
+		    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
+	    );
 		}
 
 		if (dto.getWhens() != null && dto.getWhens().size() > 0) {
 			crit.append(
-			    String.format(" and subject_when in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getWhens())));
+		    String.format(" and subject_when in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getWhens()))
+	    );
 		}
 
 		// limiting
@@ -216,13 +224,31 @@ public class AlarmService {
 		// ---------------------------------------------------
 		// fetching the data
 		// ---------------------------------------------------
-
-		String select = 
+		
+		String selectForGroups = 
 				"select a.*, g.name as _name from alarm a " +
-		    "inner join link_group g on g.id = a.group_id " + generateNameLikeClause(dto, "g") +
-				"union " +
+		    "inner join link_group g on g.id = a.group_id " + generateNameLikeClause(dto, "g");
+		
+		String selectForLinks = 
 				"select a.*, IFNULL(l.name, l.url) as _name from alarm a " +
 		    "inner join link l on l.id = a.link_id " + generateNameLikeClause(dto, "l");
+
+		String select = null;
+		
+		switch (dto.getTopic()) {
+  		case GROUP: {
+  			select = selectForGroups;
+  			break;
+  		}
+  		case LINK: {
+  			select = selectForLinks;
+  			break;
+  		}
+  		default: {
+  			select = selectForGroups + " union " + selectForLinks;
+  			break;
+  		}
+		}
 
 		String orderBy = " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir();
 		if (! OrderBy.NAME.equals(dto.getOrderBy())) {
@@ -239,7 +265,7 @@ public class AlarmService {
 		        limit
 	        )
 		    .map(new AlarmMapper()).list();
-
+			
 			return new Response(Collections.singletonMap("rows", searchResult));
 		} catch (Exception e) {
 			log.error("Failed in full search for alarms.", e);

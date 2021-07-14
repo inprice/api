@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.consts.Consts;
@@ -50,7 +51,10 @@ public class AccessGuard implements AccessManager {
   		User user = SessionHelper.fromTokenForSuper(superToken);
 
   		if (user != null && user.isPrivileged()) {
-  			if (permittedRoles.contains(ShadowRoles.SUPER)) {
+        
+      	MDC.put("email", user.getEmail());
+
+      	if (permittedRoles.contains(ShadowRoles.SUPER)) {
   				CurrentUser.set(user);
           handler.handle(ctx);
   			} else {
@@ -75,6 +79,9 @@ public class AccessGuard implements AccessManager {
   
             ForCookie token = sessionTokens.get(sessionNo);
             ShadowRoles role = ShadowRoles.valueOf(token.getRole());
+            
+          	MDC.put("email", token.getEmail());
+            
             if (permittedRoles.contains(role)) {
   
               ForRedis redisSes = findByHash(token.getHash());

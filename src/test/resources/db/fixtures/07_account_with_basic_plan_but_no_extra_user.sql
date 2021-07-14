@@ -33,5 +33,8 @@ call sp_create_group_and_links('2', 4, 3, 2, 1, 'https://ebay.com/', 12, 'Accoun
 -- -----------------------
 -- 5 alarms
 -- -----------------------
-insert into alarm (topic, link_id, subject, subject_when, account_id) select 'GROUP', id, 'STATUS', 'CHANGED', @account_id from link_group where account_id = @account_id limit 2;
-insert into alarm (topic, link_id, subject, subject_when, account_id) select 'LINK', id, 'STATUS', 'CHANGED', @account_id from link where account_id = @account_id limit 3;
+insert into alarm (topic, group_id, subject, subject_when, account_id) 
+select 'GROUP', id, 'STATUS', 'CHANGED', @account_id from link_group where account_id = @account_id limit 2;
+
+insert into alarm (topic, link_id, subject, subject_when, account_id) 
+select 'LINK', id, 'STATUS', 'CHANGED', @account_id from link where account_id = @account_id limit 3;

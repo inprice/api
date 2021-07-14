@@ -14,13 +14,44 @@ import kong.unirest.json.JSONObject;
  * @since 2021-07-12
  */
 public class TestFinder {
-	
+
 	public static JSONArray searchLinks(Cookies cookies, String status) {
 		HttpResponse<JsonNode> res = Unirest.post("/links/search")
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
 					.put("statuses", new String[] { status })
+				)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		JSONObject data = json.getJSONObject("data");
+		JSONArray rows = data.getJSONArray("rows");
+		
+		return rows;
+	}
+
+	public static JSONArray searchGroups(Cookies cookies, String term) {
+		HttpResponse<JsonNode> res = Unirest.post("/groups/search")
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(new JSONObject()
+					.put("term", term)
+				)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		JSONArray data = json.getJSONArray("data");
+		
+		return data;
+	}
+
+	public static JSONArray searchAlarms(Cookies cookies, String topic) {
+		HttpResponse<JsonNode> res = Unirest.post("/alarms/search")
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(new JSONObject()
+					.put("topic", topic)
 				)
 			.asJson();
 
