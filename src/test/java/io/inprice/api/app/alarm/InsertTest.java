@@ -111,15 +111,32 @@ public class InsertTest {
 
 	@Test
 	public void You_havent_picked_a_plan_yet() {
-		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody("LINK", 1L, "PRICE", "CHANGED"));
+		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody("LINK", 1L, "PRICE", "CHANGED"), 0);
 
 		assertEquals(903, json.getInt("status"));
 		assertEquals("You haven't picked a plan yet!", json.getString("reason"));
 	}
 
 	@Test
+	public void Forbidden_WITH_viewer() {
+		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
+		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), createBody("LINK", 1L, "PRICE", "CHANGED"), 1); //attention!
+
+		assertEquals(403, json.getInt("status"));
+		assertNotNull("Forbidden!", json.getString("reason"));
+	}
+
+	@Test
+	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
+		JSONObject json = callTheService(Fixtures.SUPER_USER, createBody("LINK", 1L, "PRICE", "CHANGED"), 0);
+
+		assertEquals(511, json.getInt("status"));
+		assertEquals("You are not allowed to do this operation!", json.getString("reason"));
+	}
+
+	@Test
 	public void You_have_already_set_an_alarm_for_this_record() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_no_extra_users.ADMIN());
 
 		JSONArray alarmedGroupList = TestFinder.searchAlarms(cookies, "GROUP");
 
@@ -144,14 +161,14 @@ public class InsertTest {
 
 	@Test
 	public void You_have_reached_max_alarm_number_of_your_plan() {
-		JSONObject json = callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), createBody("LINK", 1L, "PRICE", "CHANGED"));
+		JSONObject json = callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), createBody("LINK", 1L, "PRICE", "CHANGED"), 0);
 
 		assertEquals(910, json.getInt("status"));
 		assertEquals("You have reached max alarm number of your plan!", json.getString("reason"));
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_a_link() {
+	public void Everything_must_be_ok_FOR_a_link_WITH_admin() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray linkList = TestFinder.searchLinks(cookies, "WAITING");
@@ -178,7 +195,7 @@ public class InsertTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_a_group() {
+	public void Everything_must_be_ok_FOR_a_group_WITH_editor() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray groupList = TestFinder.searchGroups(cookies, "");
@@ -227,14 +244,14 @@ public class InsertTest {
 	}
 
 	public JSONObject callTheService(JSONObject body) {
-		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), body);
+		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
 	}
 	
-	public JSONObject callTheService(JSONObject user, JSONObject body) {
+	public JSONObject callTheService(JSONObject user, JSONObject body, int session) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
+			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS) //for allowing viewers
 			.cookie(cookies)
 			.body(body != null ? body : "")
 			.asJson();

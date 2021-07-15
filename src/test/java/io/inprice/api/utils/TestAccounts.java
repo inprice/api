@@ -49,7 +49,7 @@ public enum TestAccounts {
 	),
 
 	Standard_plan_and_no_extra_users(
-  	"Has no link, alarm or coupon",
+  	"Has no link or coupon. 1 Group 1 Link alarms",
   	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-d.com")
@@ -84,13 +84,13 @@ public enum TestAccounts {
 	),
 
 	Premium_plan_and_three_pending_users(
-  	"Has no link, alarm or coupon",
+  	"Has no link, alarm or coupon. Apart from admin, other 3 users are in PENDING state",
   	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-h.com"),
 			TestRoles.EDITOR, new JSONObject().put("email", "editor@account-h.com"), // not exists as a user (new invitation)!
 			TestRoles.VIEWER, new JSONObject().put("email", "editor@account-c.com") // attention pls!
-			//TestRoles.VIEWER, new JSONObject().put("email", "editor@account-e.com") // attention pls!
+			//TestRoles.VIEWER, new JSONObject().put("email", "editor@account-e.com") // attention pls, this user is actually added in to this account!
 		)
 	),
 

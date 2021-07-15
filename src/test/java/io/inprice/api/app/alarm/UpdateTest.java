@@ -126,7 +126,24 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_a_link() {
+	public void Forbidden_WITH_viewer() {
+		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
+		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), createBody(1L, "LINK", 1L, "PRICE", "CHANGED"), 1); //attention!
+
+		assertEquals(403, json.getInt("status"));
+		assertNotNull("Forbidden!", json.getString("reason"));
+	}
+
+	@Test
+	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
+		JSONObject json = callTheService(Fixtures.SUPER_USER, createBody(1L, "LINK", 1L, "PRICE", "CHANGED"));
+
+		assertEquals(511, json.getInt("status"));
+		assertEquals("You are not allowed to do this operation!", json.getString("reason"));
+	}
+
+	@Test
+	public void Everything_must_be_ok_FOR_a_link_WITH_admin() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray alarmedLinkList = TestFinder.searchAlarms(cookies, "LINK");
@@ -151,8 +168,8 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_a_group() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+	public void Everything_must_be_ok_FOR_a_group_WITH_editor() {
+		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
 
 		JSONArray alarmedGroupList = TestFinder.searchAlarms(cookies, "GROUP");
 
@@ -202,12 +219,16 @@ public class UpdateTest {
 	public JSONObject callTheService(JSONObject body) {
 		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), body);
 	}
-	
+
 	public JSONObject callTheService(JSONObject user, JSONObject body) {
+		return callTheService(user, body, 0);
+	}
+	
+	public JSONObject callTheService(JSONObject user, JSONObject body, int session) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
+			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS) //for allowing viewers
 			.cookie(cookies)
 			.body(body != null ? body : "")
 			.asJson();
