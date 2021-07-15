@@ -14,6 +14,7 @@ public class AccessRoles {
 	private static Set<Role> EDITOR_ROLES = new HashSet<>(3);
 	private static Set<Role> ANYONE_ROLES = new HashSet<>(4);
 	private static Set<Role> ANYONE_EXCEPT_SUPER_ROLES = new HashSet<>(3);
+	private static Set<Role> ANYONE_PLUS_SUPER_WITH_ACCOUNT = new HashSet<>(3);
 	private static Set<Role> ADMIN_OR_SUPER_ROLES = new HashSet<>(2);
 	
 	static {
@@ -30,6 +31,9 @@ public class AccessRoles {
 
 		ANYONE_EXCEPT_SUPER_ROLES.addAll(ANYONE_ROLES);
 		ANYONE_EXCEPT_SUPER_ROLES.remove(ShadowRoles.SUPER);
+
+		ANYONE_PLUS_SUPER_WITH_ACCOUNT.addAll(ANYONE_EXCEPT_SUPER_ROLES);
+		ANYONE_PLUS_SUPER_WITH_ACCOUNT.add(ShadowRoles.SUPER_WITH_ACCOUNT);
 
 		ADMIN_OR_SUPER_ROLES.add(ShadowRoles.SUPER);
 		ADMIN_OR_SUPER_ROLES.add(ShadowRoles.ADMIN);
@@ -53,6 +57,10 @@ public class AccessRoles {
 
 	public static Set<Role> ANYONE_EXCEPT_SUPER() {
 		return ANYONE_EXCEPT_SUPER_ROLES;
+	}
+
+	public static Set<Role> ANYONE_PLUS_SUPER_WITH_ACCOUNT() {
+		return ANYONE_PLUS_SUPER_WITH_ACCOUNT;
 	}
 	
 	public static Set<Role> ADMIN_OR_SUPER() {

@@ -40,13 +40,13 @@ public class TicketController extends AbstractController {
     app.get(Consts.Paths.Ticket.BASE + "/:id", (ctx) -> {
   		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.findById(id)));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     // search
     app.post(Consts.Paths.Ticket.SEARCH, (ctx) -> {
   		SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
   		ctx.json(Commons.createResponse(ctx, service.search(dto)));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     // toggle seen (by user) value
     app.put(Consts.Paths.Ticket.TOGGLE_SEEN_VALUE + "/:id", (ctx) -> {

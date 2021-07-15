@@ -38,6 +38,19 @@ public class UpdateTest {
 	}
 
 	@Test
+	public void No_active_session_please_sign_in_WITH_no_session() {
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.body(createBody(1L, "LINK", 1L, "STATUS", "CHANGED"))
+			.asJson();
+		
+		JSONObject json = res.getBody().getObject();
+		
+		assertEquals(401, json.getInt("status"));
+		assertEquals("No active session, please sign in!", json.get("reason"));
+	}
+
+	@Test
 	public void Request_body_is_invalid_WITH_no_body() {
 		JSONObject json = callTheService(null);
 

@@ -48,39 +48,39 @@ class LinkService {
     //---------------------------------------------------
     //building the criteria up
     //---------------------------------------------------
-    StringBuilder crit = new StringBuilder();
+    StringBuilder where = new StringBuilder();
 
-    crit.append("where l.account_id = ");
-    crit.append(dto.getAccountId());
+    where.append("where l.account_id = ");
+    where.append(dto.getAccountId());
 
     if (dto.getAlarmStatus() != null && !AlarmStatus.ALL.equals(dto.getAlarmStatus())) {
-  		crit.append(" and l.alarm_id is ");
+  		where.append(" and l.alarm_id is ");
     	if (AlarmStatus.ALARMED.equals(dto.getAlarmStatus())) {
-    		crit.append(" not ");
+    		where.append(" not ");
     	}
-    	crit.append(" null");
+    	where.append(" null");
     }
     
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	crit.append(" and ");
+    	where.append(" and ");
     	if (SearchBy.NAME.equals(dto.getSearchBy())) {
-    		crit.append("IFNULL(l.name, l.url)");
+    		where.append("IFNULL(l.name, l.url)");
     	} else {
-    		crit.append(dto.getSearchBy().getFieldName());
+    		where.append(dto.getSearchBy().getFieldName());
     	}
-      crit.append(" like '%");
-      crit.append(dto.getTerm());
-      crit.append("%' ");
+      where.append(" like '%");
+      where.append(dto.getTerm());
+      where.append("%' ");
     }
 
     if (dto.getLevels() != null && dto.getLevels().size() > 0) {
-    	crit.append(
+    	where.append(
   			String.format(" and l.level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
 			);
     }
 
     if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and status_group in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
     }
@@ -95,7 +95,7 @@ class LinkService {
       		"inner join link_group as g on g.id = l.group_id " + 
       		"left join platform as p on p.id = l.platform_id " + 
           "left join alarm as al on al.id = l.alarm_id " + 
-          crit +
+          where +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
           " limit " + dto.getRowCount() + ", " + dto.getRowLimit()
         )

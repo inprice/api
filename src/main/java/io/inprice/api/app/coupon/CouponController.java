@@ -19,7 +19,7 @@ public class CouponController extends AbstractController {
     // returns coupons managed by current account
     app.get(Consts.Paths.Coupon.BASE, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getCoupons()));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     // registers the given coupon to current account
     app.put(Consts.Paths.Coupon.APPLY + "/:code", (ctx) -> {

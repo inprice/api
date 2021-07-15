@@ -45,14 +45,12 @@ public class TestFinder {
 		
 		return data;
 	}
-
+	
 	public static JSONArray searchAlarms(Cookies cookies, String topic) {
 		HttpResponse<JsonNode> res = Unirest.post("/alarms/search")
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(new JSONObject()
-					.put("topic", topic)
-				)
+			.body(new JSONObject().put("topic", topic))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();

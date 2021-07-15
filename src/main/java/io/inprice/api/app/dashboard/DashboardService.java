@@ -28,8 +28,6 @@ class DashboardService {
   private Map<Long, Map<String, Object>> expiringMap = new ExpiringConcurrentHashMap<>(5 * 60 * 1000); //expires in 5 mins
 
   Response getReport(boolean refresh) {
-  	if (CurrentUser.getAccountId() == null) return Responses.NotAllowed.NO_ACCOUNT;
-
     Map<String, Object> report = null;
     if (! refresh) report = expiringMap.get(CurrentUser.getAccountId());
 

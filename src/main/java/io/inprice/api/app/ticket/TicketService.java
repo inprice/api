@@ -171,47 +171,47 @@ public class TicketService {
     //---------------------------------------------------
     //building the criteria up
     //---------------------------------------------------
-    StringBuilder crit = new StringBuilder();
+    StringBuilder where = new StringBuilder();
 
-    crit.append("where account_id = ");
-    crit.append(CurrentUser.getAccountId());
+    where.append("where account_id = ");
+    where.append(CurrentUser.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	crit.append(" and body like '%");
-      crit.append(dto.getTerm());
-      crit.append("%' ");
+    	where.append(" and body like '%");
+      where.append(dto.getTerm());
+      where.append("%' ");
     }
 
     if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
     }
 
     if (dto.getPriorities() != null && dto.getPriorities().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and priority in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPriorities()))
 			);
     }
 
     if (dto.getTypes() != null && dto.getTypes().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and type in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getTypes()))
 			);
     }
 
     if (dto.getSubjects() != null && dto.getSubjects().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
 			);
     }
 
     if (dto.getSeen() != null && !Seen.ALL.equals(dto.getSeen()) ) {
-    	crit.append(" and seen_by_user = ");
+    	where.append(" and seen_by_user = ");
     	if (Seen.SEEN.equals(dto.getSeen())) {
-    		crit.append(" true ");
+    		where.append(" true ");
     	} else {
-    		crit.append(" false ");
+    		where.append(" false ");
     	}
     }
 
@@ -237,7 +237,7 @@ public class TicketService {
         handle.createQuery(
           "select t.*, u.name as username from ticket t " +
       		"inner join user u on u.id= t.user_id " +
-          crit +
+          where +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
           limit
         )

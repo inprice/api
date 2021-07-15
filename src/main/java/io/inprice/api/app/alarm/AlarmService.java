@@ -184,26 +184,26 @@ public class AlarmService {
 		// ---------------------------------------------------
 		// building the criteria up
 		// ---------------------------------------------------
-		StringBuilder crit = new StringBuilder();
+		StringBuilder where = new StringBuilder();
 
-		crit.append("where a.account_id = ");
-		crit.append(CurrentUser.getAccountId());
+		where.append("where a.account_id = ");
+		where.append(CurrentUser.getAccountId());
 		
 		if (dto.getTopic() != null) {
-			crit.append(" and a.topic = '");
-			crit.append(dto.getTopic());
-			crit.append("'");
+			where.append(" and a.topic = '");
+			where.append(dto.getTopic());
+			where.append("'");
 		}
 
 		if (dto.getSubjects() != null && dto.getSubjects().size() > 0) {
-			crit.append(
-		    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
+			where.append(
+		    String.format(" and a.subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
 	    );
 		}
 
 		if (dto.getWhens() != null && dto.getWhens().size() > 0) {
-			crit.append(
-		    String.format(" and subject_when in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getWhens()))
+			where.append(
+		    String.format(" and a.subject_when in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getWhens()))
 	    );
 		}
 
@@ -227,27 +227,22 @@ public class AlarmService {
 		
 		String selectForGroups = 
 				"select a.*, g.name as _name from alarm a " +
-		    "inner join link_group g on g.id = a.group_id " + generateNameLikeClause(dto, "g");
+		    "inner join link_group g on g.id = a.group_id " + generateNameLikeClause(dto, "g") +
+		    where;
 		
 		String selectForLinks = 
 				"select a.*, IFNULL(l.name, l.url) as _name from alarm a " +
-		    "inner join link l on l.id = a.link_id " + generateNameLikeClause(dto, "l");
+		    "inner join link l on l.id = a.link_id " + generateNameLikeClause(dto, "l") +
+		    where;
 
 		String select = null;
 		
-		switch (dto.getTopic()) {
-  		case GROUP: {
-  			select = selectForGroups;
-  			break;
-  		}
-  		case LINK: {
-  			select = selectForLinks;
-  			break;
-  		}
-  		default: {
-  			select = selectForGroups + " union " + selectForLinks;
-  			break;
-  		}
+		if (AlarmTopic.GROUP.equals(dto.getTopic())) {
+			select = selectForGroups;
+		} else if (AlarmTopic.LINK.equals(dto.getTopic())) {
+			select = selectForLinks;
+		} else {
+			select = selectForGroups + " union " + selectForLinks;
 		}
 
 		String orderBy = " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir();
@@ -260,11 +255,15 @@ public class AlarmService {
 				handle
 			    .createQuery(
 		        select + 
-		        crit + 
 		        orderBy + 
 		        limit
 	        )
 		    .map(new AlarmMapper()).list();
+			
+			System.out.println(
+					select + 
+	        orderBy + 
+	        limit);
 			
 			return new Response(Collections.singletonMap("rows", searchResult));
 		} catch (Exception e) {

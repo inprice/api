@@ -21,17 +21,17 @@ public class AnnounceController extends AbstractController {
     app.post(Consts.Paths.Announce.SEARCH, (ctx) -> {
     	SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
     	ctx.json(Commons.createResponse(ctx, service.search(dto)));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
     
     // fetch new announces
     app.get(Consts.Paths.Announce.NEW_ANNOUNCES, (ctx) -> {
     	ctx.json(Commons.createResponse(ctx, service.fetchNewAnnounces()));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
     // add logs for a user
     app.put(Consts.Paths.Announce.BASE, (ctx) -> {
     	ctx.json(Commons.createResponse(ctx, service.addLogsForCurrentUser()));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
   }
 

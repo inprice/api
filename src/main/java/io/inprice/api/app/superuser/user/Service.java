@@ -277,56 +277,56 @@ class Service {
 
   	dto = DTOHelper.normalizeSearch(dto, false);
 
-    StringBuilder crit = new StringBuilder("select * from access_log ");
+    StringBuilder where = new StringBuilder("select * from access_log ");
 
-    crit.append("where user_id = ");
-    crit.append(dto.getUserId());
+    where.append("where user_id = ");
+    where.append(dto.getUserId());
 
     if (dto.getAccountId() != null) {
-    	crit.append(" and account_id = ");
-    	crit.append(dto.getAccountId());
+    	where.append(" and account_id = ");
+    	where.append(dto.getAccountId());
     }
 
     if (dto.getMethod() != null) {
-    	crit.append(" and method = '");
-    	crit.append(dto.getMethod());
-    	crit.append("' ");
+    	where.append(" and method = '");
+    	where.append(dto.getMethod());
+    	where.append("' ");
     }
     
     if (dto.getStartDate() != null) {
-    	crit.append(" and created_at >= ");
-    	crit.append(DateUtils.formatDateForDB(dto.getStartDate()));
+    	where.append(" and created_at >= ");
+    	where.append(DateUtils.formatDateForDB(dto.getStartDate()));
     }
 
     if (dto.getEndDate() != null) {
-    	crit.append(" and created_at <= ");
-    	crit.append(DateUtils.formatDateForDB(dto.getEndDate()));
+    	where.append(" and created_at <= ");
+    	where.append(DateUtils.formatDateForDB(dto.getEndDate()));
     }
     
     if (StringUtils.isNotBlank(dto.getTerm())) {
     	if (ALSearchBy.STATUS.equals(dto.getSearchBy())) {
-      	crit.append(" and status in (");
-        crit.append(dto.getTerm());
-      	crit.append(")");
+      	where.append(" and status in (");
+        where.append(dto.getTerm());
+      	where.append(")");
     	} else {
-    		crit.append(" and ");
-    		crit.append(dto.getSearchBy().getFieldName());
-      	crit.append(" like '%");
-        crit.append(dto.getTerm());
-        crit.append("%' ");
+    		where.append(" and ");
+    		where.append(dto.getSearchBy().getFieldName());
+      	where.append(" like '%");
+        where.append(dto.getTerm());
+        where.append("%' ");
     	}
     }
 
-  	crit.append(" order by ");
-    crit.append(dto.getOrderBy().getFieldName());
-    crit.append(dto.getOrderDir().getDir());
+  	where.append(" order by ");
+    where.append(dto.getOrderBy().getFieldName());
+    where.append(dto.getOrderDir().getDir());
 
-    crit.append(" limit ");
-    crit.append(dto.getRowCount());
-    crit.append(", ");
-    crit.append(dto.getRowLimit());
+    where.append(" limit ");
+    where.append(dto.getRowCount());
+    where.append(", ");
+    where.append(dto.getRowLimit());
     
-    return crit.toString();
+    return where.toString();
   }
   
 }

@@ -40,7 +40,7 @@ public class AlarmController extends AbstractController {
     app.post(Consts.Paths.Alarm.SEARCH, (ctx) -> {
     	SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
     	ctx.json(Commons.createResponse(ctx, service.search(dto)));
-    }, AccessRoles.EDITOR());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
   }
 

@@ -51,42 +51,42 @@ public class AnnounceService {
     //---------------------------------------------------
     //building the criteria up
     //---------------------------------------------------
-    StringBuilder crit = new StringBuilder();
-    crit.append("where type='SYSTEM' or ");
-    crit.append("(type = 'USER' and user_id=");
-    crit.append(CurrentUser.getUserId());
-    crit.append(") or ");
-    crit.append("(type = 'ACCOUNT' and account_id=");
-    crit.append(CurrentUser.getAccountId());
-    crit.append(") ");
+    StringBuilder where = new StringBuilder();
+    where.append("where type='SYSTEM' or ");
+    where.append("(type = 'USER' and user_id=");
+    where.append(CurrentUser.getUserId());
+    where.append(") or ");
+    where.append("(type = 'ACCOUNT' and account_id=");
+    where.append(CurrentUser.getAccountId());
+    where.append(") ");
     
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	crit.append(" and ");
-    	crit.append(dto.getSearchBy().getFieldName());
-    	crit.append(" like '%");
-      crit.append(dto.getTerm());
-      crit.append("%' ");
+    	where.append(" and ");
+    	where.append(dto.getSearchBy().getFieldName());
+    	where.append(" like '%");
+      where.append(dto.getTerm());
+      where.append("%' ");
     }
     
     if (dto.getStartingAt() != null) {
-    	crit.append(" and starting_at>=");
-    	crit.append(DateUtils.formatDateForDB(dto.getStartingAt()));
+    	where.append(" and starting_at>=");
+    	where.append(DateUtils.formatDateForDB(dto.getStartingAt()));
     }
 
     if (dto.getEndingAt() != null) {
-    	crit.append(" and ending_at<=");
-    	crit.append(DateUtils.formatDateForDB(dto.getEndingAt()));
+    	where.append(" and ending_at<=");
+    	where.append(DateUtils.formatDateForDB(dto.getEndingAt()));
     }
 
     if (dto.getTypes() != null && dto.getTypes().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and type in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getTypes()))
 			);
     }
 
     if (dto.getLevels() != null && dto.getLevels().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
 			);
     }
@@ -118,7 +118,7 @@ public class AnnounceService {
       List<Announce> searchResult =
         handle.createQuery(
           "select * from announce " +
-          crit +
+          where +
           orderBy +
           limit
         )

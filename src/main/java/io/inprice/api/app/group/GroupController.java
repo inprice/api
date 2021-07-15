@@ -23,24 +23,24 @@ public class GroupController extends AbstractController {
   	app.get(Consts.Paths.Group.BASE + "/:id", (ctx) -> {
   		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
   		ctx.json(Commons.createResponse(ctx, service.findById(id)));
-  	}, AccessRoles.ANYONE());
+  	}, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     app.get(Consts.Paths.Group.ID_NAME_PAIRS + "/:id", (ctx) -> {
   		Long excludedId = ctx.pathParam("id", Long.class).getValue();
       ctx.json(Commons.createResponse(ctx, service.getIdNameList(excludedId)));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     // find links and more by id
     app.get(Consts.Paths.Group.LINKS + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.findLinksById(id)));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     // search
     app.post(Consts.Paths.Group.SEARCH, (ctx) -> {
   		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
   		ctx.json(Commons.createResponse(ctx, service.search(dto)));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
     
     // insert
     app.post(Consts.Paths.Group.BASE, (ctx) -> {

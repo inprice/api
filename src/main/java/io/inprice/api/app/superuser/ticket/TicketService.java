@@ -107,56 +107,56 @@ public class TicketService {
     //---------------------------------------------------
     //building the criteria up
     //---------------------------------------------------
-    StringBuilder crit = new StringBuilder();
+    StringBuilder where = new StringBuilder();
 
     String accountOrdering = "";
     
     if (CurrentUser.hasSession()) {
-      crit.append("where account_id = ");
-      crit.append(CurrentUser.getAccountId());
+      where.append("where account_id = ");
+      where.append(CurrentUser.getAccountId());
     } else {
-      crit.append("where 1=1 ");
+      where.append("where 1=1 ");
       accountOrdering = "a.name, ";
     }
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	crit.append(" and ");
-    	crit.append(dto.getSearchBy().getFieldName());
-    	crit.append(" like '%");
-      crit.append(dto.getTerm());
-      crit.append("%' ");
+    	where.append(" and ");
+    	where.append(dto.getSearchBy().getFieldName());
+    	where.append(" like '%");
+      where.append(dto.getTerm());
+      where.append("%' ");
     }
 
     if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and t.status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
     }
 
     if (dto.getPriorities() != null && dto.getPriorities().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and priority in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPriorities()))
 			);
     }
 
     if (dto.getTypes() != null && dto.getTypes().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and type in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getTypes()))
 			);
     }
 
     if (dto.getSubjects() != null && dto.getSubjects().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
 			);
     }
 
     if (dto.getSeen() != null && !Seen.ALL.equals(dto.getSeen()) ) {
-    	crit.append(" and seen_by_super = ");
+    	where.append(" and seen_by_super = ");
     	if (Seen.SEEN.equals(dto.getSeen())) {
-    		crit.append(" true ");
+    		where.append(" true ");
     	} else {
-    		crit.append(" false ");
+    		where.append(" false ");
     	}
     }
 
@@ -183,7 +183,7 @@ public class TicketService {
           "select t.*, u.name as username, a.name as account from ticket t " +
       		"inner join user u on u.id = t.user_id " +
       		"inner join account a on a.id = t.account_id " +
-          crit +
+          where +
           " order by " + accountOrdering + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
           limit
         )

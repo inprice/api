@@ -33,21 +33,21 @@ public class SubscriptionController extends AbstractController {
       ctx.json(Commons.createResponse(ctx, service.startFreeUse()));
     }, AccessRoles.ADMIN());
 
-    // returns current account's info
-    app.get(Consts.Paths.Subscription.BASE, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getCurrentAccount()));
-    }, AccessRoles.ANYONE());
-
-    // returns all the transactions happened in payment provider
-    app.get(Consts.Paths.Subscription.GET_INFO, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getInfo()));
-    }, AccessRoles.ANYONE());
-
     // updates account's extra info used in invoices
     app.post(Consts.Paths.Subscription.SAVE_INFO, (ctx) -> {
       CustomerDTO dto = ctx.bodyAsClass(CustomerDTO.class);
       ctx.json(Commons.createResponse(ctx, service.saveInfo(dto)));
     }, AccessRoles.ADMIN());
+
+    // returns current account's info
+    app.get(Consts.Paths.Subscription.BASE, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, service.getCurrentAccount()));
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+
+    // returns all the transactions happened in payment provider
+    app.get(Consts.Paths.Subscription.GET_INFO, (ctx) -> {
+      ctx.json(Commons.createResponse(ctx, service.getInfo()));
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
   }
 

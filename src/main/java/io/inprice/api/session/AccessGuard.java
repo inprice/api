@@ -47,19 +47,24 @@ public class AccessGuard implements AccessManager {
     String superToken = ctx.cookieMap().get(Consts.SUPER_SESSION);
 
     //super user?
-    if (StringUtils.isBlank(normalToken) && StringUtils.isNotBlank(superToken)) {
+    if (StringUtils.isNotBlank(superToken) && StringUtils.isBlank(normalToken)) {
   		User user = SessionHelper.fromTokenForSuper(superToken);
 
   		if (user != null && user.isPrivileged()) {
-        
-      	MDC.put("email", user.getEmail());
+  			
+      	if (permittedRoles.contains(ShadowRoles.SUPER) || (permittedRoles.contains(ShadowRoles.SUPER_WITH_ACCOUNT) && user.getAccid() != null)) {
+      		MDC.put("email", user.getEmail());
 
-      	if (permittedRoles.contains(ShadowRoles.SUPER)) {
-  				CurrentUser.set(user);
+      		CurrentUser.set(user);
           handler.handle(ctx);
   			} else {
-    			ctx.json(Commons.createResponse(ctx, Responses.PermissionProblem.WRONG_USER));
+  				if (permittedRoles.contains(ShadowRoles.SUPER_WITH_ACCOUNT) && user.getAccid() == null) {
+  					ctx.json(Commons.createResponse(ctx, Responses.NotAllowed.NO_ACCOUNT));
+  				} else {
+  					ctx.json(Commons.createResponse(ctx, Responses.PermissionProblem.WRONG_USER));
+  				}
   			}
+
   		} else {
   			CookieHelper.removeSuperCookie(ctx);
   			ctx.removeCookie(Consts.SUPER_SESSION);
@@ -80,9 +85,8 @@ public class AccessGuard implements AccessManager {
             ForCookie token = sessionTokens.get(sessionNo);
             ShadowRoles role = ShadowRoles.valueOf(token.getRole());
             
-          	MDC.put("email", token.getEmail());
-            
             if (permittedRoles.contains(role)) {
+            	MDC.put("email", token.getEmail());
   
               ForRedis redisSes = findByHash(token.getHash());
               if (redisSes != null) {

@@ -18,11 +18,11 @@ public class SystemController extends AbstractController {
 
     app.get(Consts.Paths.System.PLANS, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getPlans()));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     app.get(Consts.Paths.System.STATISTICS, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getStatistics()));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     // this is called when subscription is completed successfully in the client side!
     app.get(Consts.Paths.System.REFRESH_SESSION, (ctx) -> {
