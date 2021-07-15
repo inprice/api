@@ -98,7 +98,7 @@ public class AnnounceService {
 		return res;
 	}
 
-  public Response search(SearchDTO dto) {
+  Response search(SearchDTO dto) {
   	if (dto.getTerm() != null) dto.setTerm(SqlHelper.clear(dto.getTerm()));
 
     //---------------------------------------------------

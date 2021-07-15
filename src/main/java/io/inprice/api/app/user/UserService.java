@@ -35,7 +35,7 @@ public class UserService {
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
 	
-  public Response updateInfo(UserDTO dto) {
+  Response updateInfo(UserDTO dto) {
     String problem = validateUserDTOForUpdate(dto);
     if (problem == null) {
 
@@ -54,7 +54,7 @@ public class UserService {
     }
   }
 
-  public Response changePassword(PasswordDTO dto) {
+  Response changePassword(PasswordDTO dto) {
   	Response res = Responses.NotFound.USER;
 
   	String problem = PasswordValidator.verify(dto);
@@ -97,7 +97,7 @@ public class UserService {
 		return res;
   }
 
-  public Response getInvitations() {
+  Response getInvitations() {
   	if (CurrentUser.getRole().equals(UserRole.SUPER)) return Responses.OK;
 
   	try (Handle handle = Database.getHandle()) {
@@ -106,21 +106,21 @@ public class UserService {
     }
   }
 
-  public Response acceptInvitation(LongDTO dto) {
+  Response acceptInvitation(LongDTO dto) {
     if (dto.getValue() != null && dto.getValue() > 0) {
       return changeStatus(dto.getValue(), Arrays.asList(UserStatus.PENDING), UserStatus.JOINED);
     }
     return Responses.NotFound.USER;
   }
 
-  public Response rejectInvitation(LongDTO dto) {
+  Response rejectInvitation(LongDTO dto) {
     if (dto.getValue() != null && dto.getValue() > 0) {
       return changeStatus(dto.getValue(), Arrays.asList(UserStatus.PENDING, UserStatus.PAUSED), UserStatus.REJECTED);
     }
     return Responses.NotFound.USER;
   }
 
-  public Response leaveMembership(LongDTO dto) {
+  Response leaveMembership(LongDTO dto) {
     if (dto.getValue() != null && dto.getValue() > 0) {
       return changeStatus(dto.getValue(), Arrays.asList(UserStatus.JOINED, UserStatus.PAUSED), UserStatus.LEFT);
     }
@@ -140,7 +140,7 @@ public class UserService {
     }
   }
 
-  public Response getMemberships() {
+  Response getMemberships() {
   	if (CurrentUser.getRole().equals(UserRole.SUPER)) return Responses.OK;
 
     try (Handle handle = Database.getHandle()) {
@@ -157,7 +157,7 @@ public class UserService {
     }
   }
 
-  public Response getOpenedSessions(Context ctx) {
+  Response getOpenedSessions(Context ctx) {
   	if (CurrentUser.getRole().equals(UserRole.SUPER)) return Responses.OK;
 
 		String tokenString = ctx.cookie(Consts.SESSION);
@@ -179,7 +179,7 @@ public class UserService {
     return Responses.NotFound.USER;
   }
 
-  public Response closeAllSessions() {
+  Response closeAllSessions() {
     try (Handle handle = Database.getHandle()) {
       UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
 

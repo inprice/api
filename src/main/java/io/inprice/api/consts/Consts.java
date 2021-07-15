@@ -102,7 +102,6 @@ public class Consts {
       public static final String BASE = "/announce";
     	public static final String SEARCH = BASE + "s/search";
     	public static final String NEW_ANNOUNCES = BASE + "s/new";
-    	public static final String LOG = BASE + "/log";
     }
 
     public static class Alarm {

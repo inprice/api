@@ -1,4 +1,4 @@
-package io.inprice.api.app.alarm;
+package io.inprice.api.app.announce;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -19,7 +19,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AlarmService.search(SearchDTO)
+ * Tests the functionality of AnnounceService.search(SearchDTO)
  * 
  * @author mdpinar
  * @since 2021-07-15
@@ -27,7 +27,7 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class SearchTest {
 
-	private static final String SERVICE_ENDPOINT = "/alarms/search";
+	private static final String SERVICE_ENDPOINT = "/announces/search";
 
 	@BeforeClass
 	public static void setup() {
@@ -59,7 +59,7 @@ public class SearchTest {
 	 * Consists of three steps;
 	 * 	a) super user logs in
 	 * 	b) binds to first account
-	 * 	c) gets alarm list (possibly empty)
+	 * 	c) gets announce list (possibly empty)
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_super_user_WHEN_binding_account() {
@@ -75,7 +75,7 @@ public class SearchTest {
 		res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody("LINK"))
+			.body(new JSONObject())
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -86,8 +86,18 @@ public class SearchTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_WITH_admin() {
-		JSONObject json = callTheService(TestAccounts.Starter_plan_and_one_extra_user.ADMIN(), createBody("LINK"));
+	public void Everything_must_be_ok_FOR_user() {
+		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "USER" }));
+
+		JSONObject data = json.getJSONObject("data");
+		
+		assertEquals(200, json.getInt("status"));
+		assertEquals(1, data.length());
+	}
+
+	@Test
+	public void Everything_must_be_ok_FOR_account() {
+		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "ACCOUNT" }));
 
 		JSONObject data = json.getJSONObject("data");
 		JSONArray rows = data.getJSONArray("rows");
@@ -97,8 +107,8 @@ public class SearchTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_WITH_editor() {
-		JSONObject json = callTheService(TestAccounts.Starter_plan_and_one_extra_user.EDITOR(), createBody("GROUP"));
+	public void Everything_must_be_ok_FOR_system() {
+		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "SYSTEM" }));
 
 		JSONObject data = json.getJSONObject("data");
 		JSONArray rows = data.getJSONArray("rows");
@@ -109,43 +119,27 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_mixin() {
-		JSONObject json = callTheService(TestAccounts.Starter_plan_and_one_extra_user.EDITOR(), createBody(null));
+		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "SYSTEM", "ACCOUNT", "USER" }));
 
 		JSONObject data = json.getJSONObject("data");
 		JSONArray rows = data.getJSONArray("rows");
 		
 		assertEquals(200, json.getInt("status"));
-		assertEquals(2, rows.length());
+		assertEquals(3, rows.length());
 	}
 
-	@Test
-	public void Everything_must_be_ok_WITH_viewer() {
-		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), createBody(null), 1); //attention!
-
-		JSONObject data = json.getJSONObject("data");
-		JSONArray rows = data.getJSONArray("rows");
-		
-		assertEquals(200, json.getInt("status"));
-		assertEquals(0, rows.length());
-	}
-
-	public JSONObject createBody(String topic) {
+	public JSONObject createBody(String[] types) {
 		JSONObject body = new JSONObject();
-		if (topic != null) body.put("topic", topic);
+		if (types != null) body.put("types", types);
 
 		return body;
 	}
 	
 	public JSONObject callTheService(JSONObject user, JSONObject body) {
-		return callTheService(user, body, 0);
-	}
-
-	public JSONObject callTheService(JSONObject user, JSONObject body, int session) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS) //for allowing viewers
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(body != null ? body : "")
 			.asJson();

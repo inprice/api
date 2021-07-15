@@ -16,7 +16,7 @@ import com.google.common.collect.ImmutableMap;
 public enum TestAccounts {
 
 	Without_a_plan_and_extra_user(
-  	"Has one coupon",
+  	"Has one coupon and 1 User, 1 Account and 1 System announces",
   	ImmutableSet.of("RB5QV6CF"),
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-a.com")
@@ -24,7 +24,7 @@ public enum TestAccounts {
 	),
 
 	Second_without_a_plan_and_extra_user(
-  	"Has two coupons",
+  	"Has two coupons and 1 User and 1 System announces",
   	ImmutableSet.of("MU3XF9NP", "KJ9QF6G7"),
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-as.com")

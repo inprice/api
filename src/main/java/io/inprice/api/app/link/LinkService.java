@@ -42,7 +42,7 @@ class LinkService {
 
   private static final Logger log = LoggerFactory.getLogger(LinkService.class);
 
-  public Response search(SearchDTO dto) {
+  Response search(SearchDTO dto) {
   	dto = DTOHelper.normalizeSearch(dto, true);
 
     //---------------------------------------------------

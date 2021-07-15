@@ -115,7 +115,7 @@ public class AcceptNewUserTest {
 		res = Unirest.post(SERVICE_ENDPOINT)
 			.body(createBody(data.getString("token"), "1234", "1234"))
 			.asJson();
-		//new users can have session cookies. we need to log new user out here for protecting other test cases!
+		//new users can have session cookies. we need to log new user out here for the sake of other test cases!
 		TestUtils.logout(res.getCookies());
 
 		json = res.getBody().getObject();

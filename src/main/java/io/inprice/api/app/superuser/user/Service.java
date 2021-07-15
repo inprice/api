@@ -45,7 +45,7 @@ class Service {
     }
 	}
 
-	public Response searchForAccessLog(ALSearchDTO dto) {
+	Response searchForAccessLog(ALSearchDTO dto) {
     try (Handle handle = Database.getHandle()) {
     	String searchQuery = buildQueryForAccessLogSearch(dto);
     	if (searchQuery == null) return Responses.BAD_REQUEST;

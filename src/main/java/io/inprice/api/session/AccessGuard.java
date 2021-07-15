@@ -47,7 +47,7 @@ public class AccessGuard implements AccessManager {
     String superToken = ctx.cookieMap().get(Consts.SUPER_SESSION);
 
     //super user?
-    if (StringUtils.isNotBlank(superToken) && StringUtils.isBlank(normalToken)) {
+    if (StringUtils.isNotBlank(superToken)) {
   		User user = SessionHelper.fromTokenForSuper(superToken);
 
   		if (user != null && user.isPrivileged()) {

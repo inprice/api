@@ -96,7 +96,7 @@ public class GetAndRefreshReportTests {
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
-		TestUtils.logout(res.getCookies());
+		TestUtils.logout(cookies);
 
 		json = res.getBody().getObject();
 		assertEquals(200, json.getInt("status"));

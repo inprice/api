@@ -62,7 +62,9 @@ public class LogoutTest {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
 		//handled cookie is used here
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).cookie(cookies).asJson();
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.cookie(cookies)
+			.asJson();
 		
 		JSONObject json = res.getBody().getObject();
 		

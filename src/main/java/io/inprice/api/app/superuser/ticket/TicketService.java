@@ -101,7 +101,7 @@ public class TicketService {
 		return Responses.NotFound.TICKET;
 	}
 
-  public Response search(SearchDTO dto) {
+  Response search(SearchDTO dto) {
   	if (dto.getTerm() != null) dto.setTerm(SqlHelper.clear(dto.getTerm()));
 
     //---------------------------------------------------

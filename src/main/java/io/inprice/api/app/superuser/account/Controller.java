@@ -35,7 +35,7 @@ public class Controller extends AbstractController {
     app.post(Consts.Paths.Super.Account.ID_NAME_PAIRS, (ctx) -> {
   		String term = ctx.queryParam("term", String.class).getValue();
       ctx.json(Commons.createResponse(ctx, service.searchIdNameList(term)));
-    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+    }, AccessRoles.ANYONE());
     
     /*-------------------------------------------------------------------------------------*/
     

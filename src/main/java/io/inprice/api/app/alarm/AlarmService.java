@@ -177,7 +177,7 @@ public class AlarmService {
 		return res;
 	}
 
-	public Response search(SearchDTO dto) {
+	Response search(SearchDTO dto) {
 		if (dto.getTerm() != null)
 			dto.setTerm(SqlHelper.clear(dto.getTerm()));
 
@@ -259,12 +259,7 @@ public class AlarmService {
 		        limit
 	        )
 		    .map(new AlarmMapper()).list();
-			
-			System.out.println(
-					select + 
-	        orderBy + 
-	        limit);
-			
+
 			return new Response(Collections.singletonMap("rows", searchResult));
 		} catch (Exception e) {
 			log.error("Failed in full search for alarms.", e);

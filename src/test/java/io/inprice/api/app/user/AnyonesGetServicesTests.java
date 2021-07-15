@@ -99,13 +99,13 @@ public class AnyonesGetServicesTests {
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
-		assertEquals(200, json.getInt("status"));
+		assertEquals(SERVICE_ENDPOINT, 200, json.getInt("status"));
 		
 		res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
-		TestUtils.logout(res.getCookies());
+		TestUtils.logout(cookies);
 
 		json = res.getBody().getObject();
 		assertEquals(200, json.getInt("status"));
@@ -117,7 +117,7 @@ public class AnyonesGetServicesTests {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
+			.headers(Fixtures.SESSION_1_HEADERS) //this user has more than one role. he is VIEWER in his second session!
 			.cookie(cookies)
 			.asJson();
 		TestUtils.logout(cookies);
@@ -128,7 +128,7 @@ public class AnyonesGetServicesTests {
 		Map<String, Integer> countsMap = ImmutableMap.of("/memberships", 2, "/invitations", 1, "/opened-sessions", 0);
 
 		assertEquals(200, json.getInt("status"));
-		assertNotNull(data);
+		assertNotNull(SERVICE_ENDPOINT, data);
 		assertEquals(SERVICE_ENDPOINT, countsMap.get(endpointPostfix).intValue(), data.length());
 	}
 

@@ -24,3 +24,7 @@ insert into test.membership (email, user_id, account_id, role, status) values (@
 -- coupon for Basic (id=10) and Standard Plan (id=20)
 insert into test.coupon (code, plan_id, days, description, issuer_id) values ('MU3XF9NP', 10, 30, 'Another coupon for testing', @account_id);
 insert into test.coupon (code, plan_id, days, description, issued_id) values ('KJ9QF6G7', 20, 30, 'Assigned to the second account', @account_id);
+
+-- announces
+insert into test.announce (type, level, title, body, starting_at, ending_at, user_id, account_id) 
+values ('USER', 'WARNING', 'Here is another good news for someone else', 'This is another test announce for the admin user of Account-AS', now(), @one_month_later, @admin_id, @account_id);
