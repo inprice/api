@@ -35,7 +35,7 @@ public class DeleteAccountTest {
 	}
 	
 	@Test
-	public void Forbidden_WITH_no_session() {
+	public void Forbidden_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
 			.asJson();
 		
@@ -117,8 +117,6 @@ public class DeleteAccountTest {
 			.cookie(cookies)
 			.body(new JSONObject().put("value", password))
 			.asJson();
-		
-		//logout
 		TestUtils.logout(cookies);
 
 		//returning the result to be tested

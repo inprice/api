@@ -35,7 +35,7 @@ public class ApplyCouponTest {
 	}
 
 	@Test
-	public void No_active_session_please_sign_in_WITH_no_session() {
+	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.routeParam("code", "XYZ-1234")
@@ -70,7 +70,7 @@ public class ApplyCouponTest {
 	}
 
 	@Test
-	public void Page_not_found_WITH_no_code() {
+	public void Page_not_found_WITHOUT_code() {
 		JSONObject json = callTheServiceWith(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), "");
 
 		assertEquals(404, json.getInt("status"));

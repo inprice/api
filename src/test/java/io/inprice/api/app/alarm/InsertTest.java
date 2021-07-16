@@ -38,7 +38,7 @@ public class InsertTest {
 	}
 
 	@Test
-	public void No_active_session_please_sign_in_WITH_no_session() {
+	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.body(createBody("LINK", 1L, "STATUS", "CHANGED"))
@@ -51,7 +51,7 @@ public class InsertTest {
 	}
 
 	@Test
-	public void Request_body_is_invalid_WITH_no_body() {
+	public void Request_body_is_invalid_WITHOUT_body() {
 		JSONObject json = callTheService(null);
 
 		assertEquals(400, json.getInt("status"));

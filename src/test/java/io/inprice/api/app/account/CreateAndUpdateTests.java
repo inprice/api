@@ -56,7 +56,7 @@ public class CreateAndUpdateTests {
 	}
 
 	@Test
-	public void Forbidden_WITH_no_session() {
+	public void Forbidden_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).asJson();
 		
 		JSONObject json = res.getBody().getObject();
@@ -205,8 +205,6 @@ public class CreateAndUpdateTests {
 			.cookie(cookies)
 			.body(body)
 			.asJson();
-		
-		//logout
 		TestUtils.logout(cookies);
 
 		//returning the result to be tested
@@ -229,8 +227,6 @@ public class CreateAndUpdateTests {
 			.cookie(cookies)
 			.body(body)
 			.asJson();
-		
-		//logout
 		TestUtils.logout(cookies);
 
 		//returning the result to be tested

@@ -45,12 +45,28 @@ public class TestFinder {
 		
 		return data;
 	}
-	
+
 	public static JSONArray searchAlarms(Cookies cookies, String topic) {
 		HttpResponse<JsonNode> res = Unirest.post("/alarms/search")
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject().put("topic", topic))
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		JSONObject data = json.getJSONObject("data");
+		JSONArray rows = data.getJSONArray("rows");
+		
+		return rows;
+	}
+
+	public static JSONArray searchTickets(Cookies cookies, String[] priorities, int session) {
+		HttpResponse<JsonNode> res = Unirest.post("/tickets/search")
+			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS)
+			.cookie(cookies)
+			.body(new JSONObject()
+					.put("priorities", priorities)
+				)
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();

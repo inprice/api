@@ -253,15 +253,9 @@ public class TicketService {
 	
 	private String validate(TicketDTO dto) {
 		String problem = null;
-		
-		if (StringUtils.isBlank(dto.getBody())) {
-			problem = "Issue cannot be empty!";
-		} else if (dto.getBody().length() < 12 || dto.getBody().length() > 1024) {
-			problem = "Issue must be between 12-1024 chars!";
-		}
 
-		if (problem == null && dto.getPriority() == null) {
-			problem = "Priority type cannot be empty!";
+		if (dto.getPriority() == null) {
+			problem = "Priority cannot be empty!";
 		}
 
 		if (problem == null && dto.getType() == null) {
@@ -273,8 +267,16 @@ public class TicketService {
 		}
 
 		if (problem == null) {
-			dto.setAccountId(CurrentUser.getAccountId());
+  		if (StringUtils.isBlank(dto.getBody())) {
+  			problem = "Issue cannot be empty!";
+  		} else if (dto.getBody().length() < 12 || dto.getBody().length() > 1024) {
+  			problem = "Issue must be between 12 - 1024 chars!";
+  		}
+		}
+
+		if (problem == null) {
 			dto.setUserId(CurrentUser.getUserId());
+			dto.setAccountId(CurrentUser.getAccountId());
 		}
 
 		return problem;

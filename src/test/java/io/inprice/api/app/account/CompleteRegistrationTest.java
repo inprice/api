@@ -43,7 +43,7 @@ public class CompleteRegistrationTest {
 	}
 
 	@Test
-	public void Invalid_token_WITH_non_existing_token() {
+	public void Invalid_token_WITHOUT_existing_token() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.queryString("token", "XYZ-123")
 			.asJson();

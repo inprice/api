@@ -76,7 +76,7 @@ public class TicketService {
       		}
       	}
     	} else {
-    		res = new Response("Changing a ticket's status to OPENED is not allowed!");
+    		res = new Response("It is not allowed to change a ticket's status OPENED!");
     	}
   	} else {
   		res = Responses.BAD_REQUEST;

@@ -50,7 +50,7 @@ public class GetAndRefreshReportTests {
 	}
 
 	@Test
-	public void Forbidden_WITH_no_session() {
+	public void Forbidden_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT).asJson();
 		
 		JSONObject json = res.getBody().getObject();

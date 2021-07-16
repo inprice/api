@@ -33,7 +33,7 @@ public class LogoutTest {
 	}
 	
 	@Test
-	public void Seems_that_you_are_already_logged_out_WITH_no_cookie() {
+	public void Seems_that_you_are_already_logged_out_WITHOUT_cookie() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).asJson();
 		
 		JSONObject json = res.getBody().getObject();
@@ -73,7 +73,7 @@ public class LogoutTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_WITH_normal_user_cookie() {
+	public void Everything_must_be_ok_WITHOUTrmal_user_cookie() {
 		//in order to get a valid cookied, user logins first
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 		

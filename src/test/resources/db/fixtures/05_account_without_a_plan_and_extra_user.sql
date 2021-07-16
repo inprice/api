@@ -30,3 +30,10 @@ values ('USER', 'INFO', 'Here is a good news for you', 'This is a test announce 
 
 insert into test.announce (type, level, title, body, starting_at, ending_at, account_id) 
 values ('ACCOUNT', 'INFO', 'A kind reminder for your usage', 'Please consider to pick a broader plan since your link count has reached its limit!', now(), @one_month_later,  @account_id);
+
+-- tickets
+insert into test.ticket (priority, type, subject, body, user_id, account_id) 
+values ('NORMAL', 'FEEDBACK', 'COUPON', 'Are you planning to give free coupons out for a special time periods like Christmas.', @admin_id, @account_id);
+
+insert into test.ticket (priority, type, subject, body, user_id, account_id) 
+values ('CRITICAL', 'PROBLEM', 'ACCOUNT', 'Login form doesnt allowe me to sign in. So I cannot track my links for two hours.', @admin_id, @account_id);

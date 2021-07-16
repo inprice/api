@@ -35,7 +35,7 @@ public class FetchAnnouncesTest {
 	}
 	
 	@Test
-	public void Forbidden_WITH_no_login() {
+	public void Forbidden_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT).asJson();
 		
 		JSONObject json = res.getBody().getObject();
@@ -67,6 +67,7 @@ public class FetchAnnouncesTest {
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.asJson();
+		TestUtils.logout(cookies);
 
 		JSONObject json = res.getBody().getObject();
 		JSONArray data = json.getJSONArray("data");

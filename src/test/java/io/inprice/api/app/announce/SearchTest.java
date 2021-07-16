@@ -35,7 +35,7 @@ public class SearchTest {
 	}
 
 	@Test
-	public void No_active_session_please_sign_in_WITH_no_session() {
+	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.body(new JSONObject())

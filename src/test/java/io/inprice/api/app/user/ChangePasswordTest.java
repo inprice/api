@@ -47,7 +47,7 @@ public class ChangePasswordTest {
 	}
 
 	@Test
-	public void Request_body_is_invalid_WITH_no_body() {
+	public void Request_body_is_invalid_WITHOUT_body() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)

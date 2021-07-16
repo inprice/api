@@ -33,7 +33,7 @@ public class ResetPasswordTest {
 	}
 
 	@Test
-	public void Request_body_is_invalid_WITH_no_body() {
+	public void Request_body_is_invalid_WITHOUT_body() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).asJson();
 
 		JSONObject json = res.getBody().getObject();

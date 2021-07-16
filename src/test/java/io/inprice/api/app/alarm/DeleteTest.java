@@ -36,7 +36,7 @@ public class DeleteTest {
 	}
 
 	@Test
-	public void No_active_session_please_sign_in_WITH_no_session() {
+	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.routeParam("id", "1")

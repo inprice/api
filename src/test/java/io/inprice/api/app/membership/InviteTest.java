@@ -40,7 +40,7 @@ public class InviteTest {
 	}
 
 	@Test
-	public void Request_body_is_invalid_WITH_no_body() {
+	public void Request_body_is_invalid_WITHOUT_body() {
 		Cookies cookies = TestUtils.login(TestAccounts.Basic_plan_but_no_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
@@ -175,7 +175,7 @@ public class InviteTest {
 	}
 
 	@Test
-	public void You_need_to_subscribe_to_a_plan_WITH_no_plan() {
+	public void You_need_to_subscribe_to_a_plan_WITHOUT_plan() {
 		Cookies cookies = TestUtils.login(TestAccounts.Without_a_plan_and_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)

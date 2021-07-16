@@ -34,7 +34,7 @@ public class RefreshSessionTest {
 	}
 
 	@Test
-	public void Forbidden_WITH_no_session() {
+	public void Forbidden_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT).asJson();
 		
 		JSONObject json = res.getBody().getObject();
@@ -44,7 +44,7 @@ public class RefreshSessionTest {
 	}
 
 	@Test
-	public void Forbidden_WITH_not_admin_user() {
+	public void Forbidden_WITHOUTt_admin_user() {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)

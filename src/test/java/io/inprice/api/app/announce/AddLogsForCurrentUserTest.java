@@ -33,7 +33,7 @@ public class AddLogsForCurrentUserTest {
 	}
 	
 	@Test
-	public void Forbidden_WITH_no_login() {
+	public void Forbidden_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT).asJson();
 		
 		JSONObject json = res.getBody().getObject();

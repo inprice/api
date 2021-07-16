@@ -34,7 +34,7 @@ public class ForgotPasswordTest {
 	}
 
 	@Test
-	public void Request_body_is_invalid_WITH_no_body() {
+	public void Request_body_is_invalid_WITHOUT_body() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -68,7 +68,7 @@ public class ForgotPasswordTest {
 	}
 
 	@Test
-	public void You_will_be_receiving_an_email_after_verification_of_your_email_WITH_nonexistent_email() {
+	public void You_will_be_receiving_an_email_after_verification_of_your_email_WITHOUTnexistent_email() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(createBody("someone@inprice.io"))
 			.asJson();

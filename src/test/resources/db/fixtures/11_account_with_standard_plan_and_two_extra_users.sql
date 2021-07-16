@@ -38,3 +38,10 @@ insert into test.account_history (account_id, status) values (@account_id, 'SUBS
 insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');
 insert into test.membership (email, user_id, account_id, role, status) values (@editor_email, @editor_id, @account_id, 'EDITOR', 'JOINED');
 insert into test.membership (email, user_id, account_id, role, status) values (@viewer_email, @viewer_id, @account_id, 'VIEWER', 'JOINED');
+
+-- tickets
+insert into test.ticket (priority, type, subject, body, user_id, account_id) 
+values ('NORMAL', 'SUPPORT', 'OTHER', 'I am unable to find where should I enter my invoice info, pls help!', @viewer_id, @account_id);
+
+insert into test.ticket (priority, type, subject, body, user_id, account_id) 
+values ('HIGH', 'PROBLEM', 'PAYMENT', 'My last payment seems to failed but my bank account confirms the transaction.', @viewer_id, @account_id);
