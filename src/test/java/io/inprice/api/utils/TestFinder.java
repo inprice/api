@@ -15,6 +15,28 @@ import kong.unirest.json.JSONObject;
  */
 public class TestFinder {
 
+	/**
+	 * Searches and returns registered accounts by name
+	 * 
+	 * @param cookies - must be a super user!
+	 * @param name - to be searched (as LIKE)
+	 * @return
+	 */
+	public static JSONArray searchAccounts(Cookies cookies, String name) {
+		HttpResponse<JsonNode> res = Unirest.post("/sys/accounts/search")
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(new JSONObject()
+					.put("term", name)
+				)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		JSONArray data = json.getJSONArray("data");
+		
+		return data;
+	}
+
 	public static JSONArray searchLinks(Cookies cookies, String status) {
 		HttpResponse<JsonNode> res = Unirest.post("/links/search")
 			.headers(Fixtures.SESSION_0_HEADERS)

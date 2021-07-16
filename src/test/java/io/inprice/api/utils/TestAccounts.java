@@ -16,6 +16,7 @@ import com.google.common.collect.ImmutableMap;
 public enum TestAccounts {
 
 	Without_a_plan_and_extra_user(
+		"Without A Plan and Extra User",
   	"Has one coupon and 1 User, 1 Account and 1 System announces. 2 Tickets",
   	ImmutableSet.of("RB5QV6CF"),
 		ImmutableMap.of(
@@ -24,6 +25,7 @@ public enum TestAccounts {
 	),
 
 	Second_without_a_plan_and_extra_user(
+		"Second - Without A Plan and Extra User",
   	"Has two coupons and 1 User and 1 System announces",
   	ImmutableSet.of("MU3XF9NP", "KJ9QF6G7"),
 		ImmutableMap.of(
@@ -32,6 +34,7 @@ public enum TestAccounts {
 	),
 
 	Basic_plan_but_no_extra_user(
+		"With Basic Plan but No Extra User",
   	"Has 9 active, 7 trying, 5 waiting and 3 problem links. 2 Group and 3 Link alarms, no coupon",
   	null,
 		ImmutableMap.of(
@@ -40,6 +43,7 @@ public enum TestAccounts {
 	),
 
 	Starter_plan_and_one_extra_user(
+		"With Starter Plan and One Extra User",
 		"Has 6 active, 2 trying, 1 waiting and 3 problem links. 1 Group and 1 Link alarms. 3 Tickets. No coupon",
   	null,
 		ImmutableMap.of(
@@ -49,6 +53,7 @@ public enum TestAccounts {
 	),
 
 	Standard_plan_and_no_extra_users(
+		"With Standard Plan but No Extra User",
   	"Has no link or coupon. 1 Group 1 Link alarms",
   	null,
 		ImmutableMap.of(
@@ -57,6 +62,7 @@ public enum TestAccounts {
 	),
 
 	Standard_plan_and_one_extra_user(
+		"With Standard Plan with One Extra User",
   	"Has no link, alarm or coupon",
   	null,
 		ImmutableMap.of(
@@ -66,6 +72,7 @@ public enum TestAccounts {
 	),
 
 	Standard_plan_and_two_extra_users(
+		"With Standard Plan and Two Extra Users",
   	"Has no link, alarm or coupon, 2 Tickets opened by Viewer",
   	null,
 		ImmutableMap.of(
@@ -76,6 +83,7 @@ public enum TestAccounts {
 	),
 
 	Pro_plan_with_no_user(
+		"With Pro Plan and No User",
   	"Has no link, alarm or coupon",
   	null,
 		ImmutableMap.of(
@@ -84,6 +92,7 @@ public enum TestAccounts {
 	),
 
 	Premium_plan_and_three_pending_users(
+		"With Premium Plan and Two Pending Users",
   	"Has no link, alarm or coupon. Apart from admin, other 3 users are in PENDING state",
   	null,
 		ImmutableMap.of(
@@ -95,6 +104,7 @@ public enum TestAccounts {
 	),
 
 	Cancelled_Basic_plan_no_link_no_alarm(
+		"Cancelled -Basic Plan- No link, No alarm",
   	"Cancelled and has no link, alarm or coupon",
   	null,
 		ImmutableMap.of(
@@ -103,6 +113,7 @@ public enum TestAccounts {
 	),
 
 	Cancelled_Starter_plan_30_links_6_alarms(
+		"Cancelled -Starter Plan- 30 links, 6 alarms",
   	"Cancelled and 30 links, 6 alarms, No coupon",
   	null,
 		ImmutableMap.of(
@@ -110,15 +121,22 @@ public enum TestAccounts {
 		)
 	);
 
+	private String name; //is used for searching by name in TestFinder.searchAccounts(String name)
 	private String description;
 	private Set<String> coupons;
 	private Map<TestRoles, JSONObject> roleEmailMap;
 	
-	private TestAccounts(String description, Set<String> coupons, Map<TestRoles, JSONObject> roleEmailMap) {
+	private TestAccounts(String name, String description, Set<String> coupons, Map<TestRoles, JSONObject> roleEmailMap) {
+		this.name = name;
+		this.description = description;
 		this.coupons = coupons;
 		this.roleEmailMap = roleEmailMap;
 	}
-	
+
+	public String getName() {
+		return name;
+	}
+
 	public String getDescription() {
 		return description;
 	}
