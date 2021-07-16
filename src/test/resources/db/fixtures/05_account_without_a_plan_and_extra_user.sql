@@ -35,5 +35,13 @@ values ('ACCOUNT', 'INFO', 'A kind reminder for your usage', 'Please consider to
 insert into test.ticket (priority, type, subject, body, user_id, account_id) 
 values ('NORMAL', 'FEEDBACK', 'COUPON', 'Are you planning to give free coupons out for a special time periods like Christmas.', @admin_id, @account_id);
 
+insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
+values (last_insert_id(), 'OPENED', 'NORMAL', 'FEEDBACK', 'COUPON', @admin_id, @account_id);
+
+-- -----------------------
+
 insert into test.ticket (priority, type, subject, body, user_id, account_id) 
 values ('CRITICAL', 'PROBLEM', 'ACCOUNT', 'Login form doesnt allowe me to sign in. So I cannot track my links for two hours.', @admin_id, @account_id);
+
+insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
+values (last_insert_id(),'OPENED', 'CRITICAL', 'PROBLEM', 'ACCOUNT', @admin_id, @account_id);

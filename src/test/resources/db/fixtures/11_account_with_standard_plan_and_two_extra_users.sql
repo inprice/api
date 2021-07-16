@@ -41,7 +41,15 @@ insert into test.membership (email, user_id, account_id, role, status) values (@
 
 -- tickets
 insert into test.ticket (priority, type, subject, body, user_id, account_id) 
-values ('NORMAL', 'SUPPORT', 'OTHER', 'I am unable to find where should I enter my invoice info, pls help!', @viewer_id, @account_id);
+values ('NORMAL', 'SUPPORT', 'OTHER', 'I am unable to find where should I enter my invoice info, pls help!', @editor_id, @account_id);
+
+insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
+values (last_insert_id(), 'OPENED', 'NORMAL', 'SUPPORT', 'OTHER', @editor_id, @account_id);
+
+-- -----------------------
 
 insert into test.ticket (priority, type, subject, body, user_id, account_id) 
 values ('HIGH', 'PROBLEM', 'PAYMENT', 'My last payment seems to failed but my bank account confirms the transaction.', @viewer_id, @account_id);
+
+insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
+values (last_insert_id(), 'OPENED', 'HIGH', 'PROBLEM', 'PAYMENT', @viewer_id, @account_id);

@@ -44,3 +44,31 @@ select 'GROUP', id, 'MINIMUM', 'OUT_OF_LIMITS', 15.17, 50.23, @account_id from l
 
 insert into alarm (topic, link_id, subject, subject_when, certain_status, account_id) 
 select 'LINK', id, 'STATUS', 'EQUAL', 'AVERAGE', @account_id from link where account_id = @account_id limit 1;
+
+-- tickets
+insert into test.ticket (priority, type, subject, body, user_id, account_id) 
+values ('NORMAL', 'SUPPORT', 'GROUP', 'Is there a limit for adding new groups?', @admin_id, @account_id);
+
+insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
+values (last_insert_id(), 'OPENED', 'NORMAL', 'SUPPORT', 'GROUP', @admin_id, @account_id);
+
+-- -----------------------
+
+insert into test.ticket (priority, type, subject, body, user_id, account_id) 
+values ('LOW', 'FEEDBACK', 'PAYMENT', 'You should allow us to use Amex cards.', @editor_id, @account_id);
+
+insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
+values (last_insert_id(), 'OPENED', 'LOW', 'FEEDBACK', 'PAYMENT', @editor_id, @account_id);
+
+-- -----------------------
+
+insert into test.ticket (status, priority, type, subject, body, user_id, account_id) 
+values ('IN_PROGRESS', 'LOW', 'SUPPORT', 'LINK', 'Some links are not allowed to add, why?.', @editor_id, @account_id);
+set @ticket_id = last_insert_id();
+
+insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
+values (@ticket_id, 'OPENED', 'LOW', 'SUPPORT', 'LINK', @editor_id, @account_id);
+
+insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
+values (@ticket_id, 'IN_PROGRESS', 'LOW', 'SUPPORT', 'LINK', @editor_id, @account_id);
+

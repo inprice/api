@@ -40,7 +40,7 @@ public enum TestAccounts {
 	),
 
 	Starter_plan_and_one_extra_user(
-		"Has 6 active, 2 trying, 1 waiting and 3 problem links. 1 Group and 1 Link alarms, no coupon",
+		"Has 6 active, 2 trying, 1 waiting and 3 problem links. 1 Group and 1 Link alarms. 3 Tickets. No coupon",
   	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-c.com"),

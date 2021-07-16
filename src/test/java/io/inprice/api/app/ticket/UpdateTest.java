@@ -165,7 +165,7 @@ public class UpdateTest {
 	public void Everything_must_be_ok_WITH_viewer() {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 
-		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "NORMAL" }, 1); //since he is a viewer!
+		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 1); //since he is a viewer!
 
 		assertNotNull(ticketList);
 		assertEquals(1, ticketList.length());
