@@ -32,16 +32,32 @@ insert into test.announce (type, level, title, body, starting_at, ending_at, acc
 values ('ACCOUNT', 'INFO', 'A kind reminder for your usage', 'Please consider to pick a broader plan since your link count has reached its limit!', now(), @one_month_later,  @account_id);
 
 -- tickets
-insert into test.ticket (priority, type, subject, body, user_id, account_id) 
-values ('NORMAL', 'FEEDBACK', 'COUPON', 'Are you planning to give free coupons out for a special time periods like Christmas.', @admin_id, @account_id);
+-- -----------------------
 
+-- ticket 1
+insert into test.ticket (priority, type, subject, body, comment_count, user_id, account_id) 
+values ('NORMAL', 'FEEDBACK', 'COUPON', 'Are you planning to give free coupons out for a special time periods like Christmas.', 2, @admin_id, @account_id);
+set @ticket_id = last_insert_id();
+
+-- history
 insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
-values (last_insert_id(), 'OPENED', 'NORMAL', 'FEEDBACK', 'COUPON', @admin_id, @account_id);
+values (@ticket_id, 'OPENED', 'NORMAL', 'FEEDBACK', 'COUPON', @admin_id, @account_id);
+
+-- comment 1
+insert into test.ticket_comment (ticket_id, body, editable, user_id, account_id) 
+values (@ticket_id, 'I love this comment so much that you cannot delete it!', false, @admin_id, @account_id);
+
+-- comment 2
+insert into test.ticket_comment (ticket_id, body, user_id, account_id) 
+values (@ticket_id, 'However, this is not my favourite, can be deleted.', @admin_id, @account_id);
 
 -- -----------------------
 
-insert into test.ticket (priority, type, subject, body, user_id, account_id) 
-values ('CRITICAL', 'PROBLEM', 'ACCOUNT', 'Login form doesnt allowe me to sign in. So I cannot track my links for two hours.', @admin_id, @account_id);
+-- ticket 2
+insert into test.ticket (priority, type, subject, body, comment_count, user_id, account_id) 
+values ('CRITICAL', 'PROBLEM', 'ACCOUNT', 'Login form doesnt allowe me to sign in. So I cannot track my links for two hours.', 1, @admin_id, @account_id);
+set @ticket_id = last_insert_id();
 
+-- history
 insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
-values (last_insert_id(),'OPENED', 'CRITICAL', 'PROBLEM', 'ACCOUNT', @admin_id, @account_id);
+values (@ticket_id,'OPENED', 'CRITICAL', 'PROBLEM', 'ACCOUNT', @admin_id, @account_id);

@@ -29,6 +29,12 @@ import io.javalin.http.NotFoundResponse;
 import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.openapi.annotations.ContentType;
 
+/**
+ * The entry point of application
+ * 
+ * @author mdpinar
+ * @since 2019-05-10
+ */
 public class Application {
 
   private static final Logger log = LoggerFactory.getLogger(Application.class);

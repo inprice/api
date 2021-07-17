@@ -14,8 +14,8 @@ public class TicketCommentDTO {
   private String body;
   private Long ticketId;
 
-  private Long userId; //not coming from client side, instead set programmatically!
-  private Long accountId; //not coming from client side, instead set programmatically!
+  private Long userId; //not coming from client side, instead we set it programmatically in server side!
+  private Long accountId; //not coming from client side, instead we set it programmatically in server side!
 
   private TicketStatus ticketNewStatus; //can be set only by super user!
   

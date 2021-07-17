@@ -40,16 +40,60 @@ insert into test.membership (email, user_id, account_id, role, status) values (@
 insert into test.membership (email, user_id, account_id, role, status) values (@viewer_email, @viewer_id, @account_id, 'VIEWER', 'JOINED');
 
 -- tickets
-insert into test.ticket (priority, type, subject, body, user_id, account_id) 
-values ('NORMAL', 'SUPPORT', 'OTHER', 'I am unable to find where should I enter my invoice info, pls help!', @editor_id, @account_id);
+-- -----------------------
 
+-- ticket 1
+insert into test.ticket (priority, type, subject, body, comment_count, user_id, account_id) 
+values ('NORMAL', 'SUPPORT', 'OTHER', 'I am unable to find where should I enter my invoice info, pls help!', 2, @editor_id, @account_id);
+set @ticket_id = last_insert_id();
+
+-- history
 insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
-values (last_insert_id(), 'OPENED', 'NORMAL', 'SUPPORT', 'OTHER', @editor_id, @account_id);
+values (@ticket_id, 'OPENED', 'NORMAL', 'SUPPORT', 'OTHER', @editor_id, @account_id);
+
+-- comment 1
+insert into test.ticket_comment (ticket_id, body, editable, user_id, account_id) 
+values (@ticket_id, 'I have no idea what should I write in this comment.', false, @viewer_id, @account_id);
+
+-- comment 2
+insert into test.ticket_comment (ticket_id, body, user_id, account_id) 
+values (@ticket_id, 'This is the first comment that can be modified', @viewer_id, @account_id);
 
 -- -----------------------
 
-insert into test.ticket (priority, type, subject, body, user_id, account_id) 
-values ('HIGH', 'PROBLEM', 'PAYMENT', 'My last payment seems to failed but my bank account confirms the transaction.', @viewer_id, @account_id);
+-- ticket 2
+insert into test.ticket (priority, type, subject, body, comment_count, user_id, account_id) 
+values ('HIGH', 'PROBLEM', 'PAYMENT', 'My last payment seems to failed but my bank account confirms the transaction.', 2, @viewer_id, @account_id);
+set @ticket_id = last_insert_id();
 
+-- history
 insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
-values (last_insert_id(), 'OPENED', 'HIGH', 'PROBLEM', 'PAYMENT', @viewer_id, @account_id);
+values (@ticket_id, 'OPENED', 'HIGH', 'PROBLEM', 'PAYMENT', @viewer_id, @account_id);
+
+-- comment 1
+insert into test.ticket_comment (ticket_id, body, editable, user_id, account_id) 
+values (@ticket_id, 'This comment is deliberately closed to modifications', false, @viewer_id, @account_id);
+
+-- comment 2
+insert into test.ticket_comment (ticket_id, body, user_id, account_id) 
+values (@ticket_id, 'This comment can be modified', @editor_id, @account_id);
+
+-- -----------------------
+
+-- ticket 3
+insert into test.ticket (status, priority, type, subject, body, user_id, account_id) 
+values ('CLOSED', 'LOW', 'SUPPORT', 'PAYMENT', 'I even do not know what my problem is. Please close this ticket.', @admin_id, @account_id);
+set @ticket_id = last_insert_id();
+
+-- comment
+insert into test.ticket_comment (ticket_id, body, user_id, account_id) 
+values (@ticket_id, 'Even though this comment is editable, it cannot be deleted since its ticket closed', @viewer_id, @account_id);
+
+-- history 1
+insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
+values (@ticket_id, 'OPENED', 'HIGH', 'PROBLEM', 'PAYMENT', @admin_id, @account_id);
+
+-- history 2
+insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
+values (@ticket_id, 'CLOSED', 'LOW', 'SUPPORT', 'PAYMENT', @admin_id, @account_id);
+

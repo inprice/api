@@ -17,7 +17,7 @@ public enum TestAccounts {
 
 	Without_a_plan_and_extra_user(
 		"Without A Plan and Extra User",
-  	"Has one coupon and 1 User, 1 Account and 1 System announces. 2 Tickets",
+  	"Has one coupon and 1 User, 1 Account and 1 System announces. 2 Tickets and 3 Comments (1 is closed)",
   	ImmutableSet.of("RB5QV6CF"),
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-a.com")
@@ -44,7 +44,7 @@ public enum TestAccounts {
 
 	Starter_plan_and_one_extra_user(
 		"With Starter Plan and One Extra User",
-		"Has 6 active, 2 trying, 1 waiting and 3 problem links. 1 Group and 1 Link alarms. 3 Tickets. No coupon",
+		"Has 6 active, 2 trying, 1 waiting and 3 problem links. 1 Group and 1 Link alarms. No coupon",
   	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-c.com"),
@@ -62,7 +62,7 @@ public enum TestAccounts {
 	),
 
 	Standard_plan_and_one_extra_user(
-		"With Standard Plan with One Extra User",
+		"With Standard Plan with One Extra User. 1 Ticket",
   	"Has no link, alarm or coupon",
   	null,
 		ImmutableMap.of(
@@ -73,7 +73,7 @@ public enum TestAccounts {
 
 	Standard_plan_and_two_extra_users(
 		"With Standard Plan and Two Extra Users",
-  	"Has no link, alarm or coupon, 2 Tickets opened by Viewer",
+  	"Has no link, alarm or coupon. 2 Tickets opened by Viewer and 1 is opened by Admin (in CLOSED status)",
   	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-f.com"),

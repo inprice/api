@@ -19,9 +19,10 @@ public class Responses {
     public static final Response ACCOUNT = new Response(BASE + 1, "Invalid account!");
     public static final Response PLAN = new Response(BASE + 3, "Invalid plan!");
     public static final Response TICKET = new Response(BASE + 4, "Invalid ticket!");
-    public static final Response INVITATION = new Response(BASE + 5, "Invalid invitation!");
-    public static final Response ANNOUNCE = new Response(BASE + 6, "Invalid announce!");
-    public static final Response ALARM = new Response(BASE + 7, "Alarm announce!");
+    public static final Response COMMENT = new Response(BASE + 5, "Invalid comment!");
+    public static final Response INVITATION = new Response(BASE + 6, "Invalid invitation!");
+    public static final Response ANNOUNCE = new Response(BASE + 7, "Invalid announce!");
+    public static final Response ALARM = new Response(BASE + 8, "Invalid alarm!");
 
     public static final Response USER = new Response(BASE + 10, "Invalid user!");
     public static final Response EMAIL = new Response(BASE + 11, "Invalid email!");
@@ -126,6 +127,7 @@ public class Responses {
     public static final Response NO_ALARM_LIMIT = new Response(BASE + 10, "You have reached max alarm number of your plan!");
     public static final Response SUPER_USER = new Response(BASE + 12, "User is not suitable for this operation!");
 
+    public static final Response CLOSED_TICKET = new Response(BASE + 14, "You are not allowed to update a closed ticket!");
     public static final Response NO_ACCOUNT = new Response(BASE + 15, "You must bind an account!");
   }
 
@@ -144,6 +146,7 @@ public class Responses {
     public static final Response ACCOUNT = new Response(BASE, "Account not found!");
     public static final Response PLAN = new Response(BASE, "Plan not found!");
     public static final Response TICKET = new Response(BASE, "Ticket not found!");
+    public static final Response COMMENT = new Response(BASE, "Comment not found!");
     public static final Response COUPON = new Response(BASE, "Coupon not found!");
     public static final Response ANNOUNCE = new Response(BASE, "Announce not found!");
     public static final Response ALARM = new Response(BASE, "Alarm not found!");

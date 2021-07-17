@@ -94,7 +94,7 @@ public class SearchTest {
 		assertTrue(json.has("data"));
 
 		JSONObject data = json.getJSONObject("data");
-		assertEquals(2, data.getJSONArray("rows").length());
+		assertEquals(3, data.getJSONArray("rows").length());
 	}
 
 	@Test

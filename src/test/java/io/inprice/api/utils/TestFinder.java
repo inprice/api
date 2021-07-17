@@ -1,5 +1,7 @@
 package io.inprice.api.utils;
 
+import java.util.Map;
+
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -96,6 +98,35 @@ public class TestFinder {
 		JSONArray rows = data.getJSONArray("rows");
 		
 		return rows;
+	}
+
+	public static JSONArray searchComments(Cookies cookies, String ticketPriority, int session) {
+		Map<String, String> headers = (session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS);
+
+		HttpResponse<JsonNode> res = Unirest.post("/tickets/search")
+			.headers(headers)
+			.cookie(cookies)
+			.body(new JSONObject()
+					.put("priorities", new String[] { ticketPriority })
+				)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		JSONObject data = json.getJSONObject("data");
+		JSONArray rows = data.getJSONArray("rows");
+
+		JSONObject ticket = rows.getJSONObject(0);
+		
+		res = Unirest.get("/ticket/{id}")
+			.headers(headers)
+			.cookie(cookies)
+			.routeParam("id", ""+ticket.getLong("id"))
+			.asJson();
+
+		json = res.getBody().getObject();
+		data = json.getJSONObject("data");
+
+		return data.getJSONArray("commentList");
 	}
 
 }

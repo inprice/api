@@ -28,3 +28,19 @@ insert into test.account_history (account_id, status) values (@account_id, 'SUBS
 -- membership
 insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');
 insert into test.membership (email, user_id, account_id, role, status) values (@editor_email, @editor_id, @account_id, 'EDITOR', 'JOINED');
+
+-- tickets
+-- -----------------------
+
+-- ticket
+insert into test.ticket (priority, type, subject, body, comment_count, user_id, account_id) 
+values ('LOW', 'PROBLEM', 'ACCOUNT', 'This ticket is opened by and editor and has one editable comment!', 1, @admin_id, @account_id);
+set @ticket_id = last_insert_id();
+
+-- history
+insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
+values (@ticket_id, 'OPENED', 'NORMAL', 'SUPPORT', 'OTHER', @admin_id, @account_id);
+
+-- comment
+insert into test.ticket_comment (ticket_id, body, user_id, account_id) 
+values (@ticket_id, 'I am adding this comment just because I am boring as hell.', @editor_id, @account_id);

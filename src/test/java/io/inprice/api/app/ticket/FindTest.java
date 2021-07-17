@@ -2,6 +2,7 @@ package io.inprice.api.app.ticket;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,13 +21,13 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of TicketService.delete(Long ticketId)
+ * Tests the functionality of TicketService.find(Long ticketId)
  * 
  * @author mdpinar
- * @since 2021-07-16
+ * @since 2021-07-17
  */
 @RunWith(JUnit4.class)
-public class DeleteTest {
+public class FindTest {
 
 	private static final String SERVICE_ENDPOINT = "/ticket/{id}";
 
@@ -37,7 +38,7 @@ public class DeleteTest {
 
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
-		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.routeParam("id", "1")
 			.asJson();
@@ -65,65 +66,52 @@ public class DeleteTest {
 	}
 
 	@Test
-	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
+	public void You_must_bind_an_account_WITH_super_user_WITHOUT_binding_account() {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, 1L);
 
-		assertEquals(511, json.getInt("status"));
-		assertEquals("You are not allowed to do this operation!", json.getString("reason"));
+		assertEquals(915, json.getInt("status"));
+		assertEquals("You must bind an account!", json.getString("reason"));
 	}
 
+	/**
+	 * Consists of three steps;
+	 * 	a) super user logs in
+	 * 	b) binds to first account
+	 * 	c) gets ticket list (must not be empty)
+	 */
 	@Test
-	public void You_are_not_allowed_to_do_this_operation_WITH_editor_but_not_the_creator() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.EDITOR());
+	public void Everything_must_be_ok_WITH_super_user_WHEN_binding_account() {
+		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
+		
+		JSONArray accountList = TestFinder.searchAccounts(cookies, "Without A Plan and Extra User");
+		JSONObject account = accountList.getJSONObject(0);
 
-		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
+		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/{accountId}")
+			.cookie(cookies)
+			.routeParam("accountId", ""+account.getLong("xid"))
+			.asJson();
 
-		assertNotNull(ticketList);
-		assertEquals(1, ticketList.length());
+		JSONObject json = res.getBody().getObject();
+		assertEquals(200, json.getInt("status"));
 
-		//get the first ticket
+		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "NORMAL" }, 0);
 		JSONObject ticket = ticketList.getJSONObject(0);
-
-		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
+		
+		res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", ""+ticket.getLong("id"))
 			.asJson();
 		TestUtils.logout(cookies);
 
-		JSONObject json = res.getBody().getObject();
+		json = res.getBody().getObject();
 
-		assertEquals(511, json.getInt("status"));
-		assertEquals("You are not allowed to do this operation!", json.getString("reason"));
+		assertEquals(200, json.getInt("status"));
+		assertTrue(json.has("data"));
 	}
 
 	@Test
-	public void You_are_not_allowed_to_update_this_data_FOR_IN_PROGRESS_ticket() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
-
-		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
-
-		assertNotNull(ticketList);
-		assertEquals(1, ticketList.length());
-
-		//get the first ticket
-		JSONObject ticket = ticketList.getJSONObject(0);
-
-		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
-			.cookie(cookies)
-			.routeParam("id", ""+ticket.getLong("id"))
-			.asJson();
-		TestUtils.logout(cookies);
-
-		JSONObject json = res.getBody().getObject();
-
-		assertEquals(904, json.getInt("status"));
-		assertEquals("You are not allowed to update this data!", json.getString("reason"));
-	}
-
-	@Test
-	public void Everything_must_be_ok_FOR_a_link_WHEN_admin_tries_someone_elses_ticket() {
+	public void Everything_must_be_ok_WITH_admin() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
@@ -134,7 +122,7 @@ public class DeleteTest {
 		//get the first ticket
 		JSONObject ticket = ticketList.getJSONObject(0);
 
-		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", ""+ticket.getLong("id"))
@@ -144,7 +132,7 @@ public class DeleteTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(200, json.getInt("status"));
-		assertEquals("OK", json.getString("reason"));
+		assertTrue(json.has("data"));
 	}
 
 	@Test
@@ -159,7 +147,7 @@ public class DeleteTest {
 		//get the first ticket
 		JSONObject ticket = ticketList.getJSONObject(0);
 
-		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_1_HEADERS) //for his viewer session!
 			.cookie(cookies)
 			.routeParam("id", ""+ticket.getLong("id"))
@@ -169,7 +157,7 @@ public class DeleteTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(200, json.getInt("status"));
-		assertEquals("OK", json.getString("reason"));
+		assertTrue(json.has("data"));
 	}
 
 	public JSONObject callTheService(Long id) {
@@ -183,7 +171,7 @@ public class DeleteTest {
 	public JSONObject callTheService(JSONObject user, Long id, int session) {
 		Cookies cookies = TestUtils.login(user);
 
-		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS) //for allowing viewers
 			.cookie(cookies)
 			.routeParam("id", (id != null ? id.toString() : ""))

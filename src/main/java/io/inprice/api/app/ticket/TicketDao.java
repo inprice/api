@@ -94,9 +94,9 @@ public interface TicketDao {
 	)
   boolean deleteCommentById(@Bind("id") Long id);
 
-  @SqlQuery("select * from ticket_comment where id=:id")
+  @SqlQuery("select * from ticket_comment where id=:id and account_id=:accountId")
   @UseRowMapper(TicketCommentMapper.class)
-  TicketComment findCommentById(@Bind("id") Long id);
+  TicketComment findCommentById(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
   @SqlQuery(
 		"select c.*, u.name as username from ticket_comment c " +
