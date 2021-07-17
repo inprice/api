@@ -91,7 +91,7 @@ public class DeleteAccountTest {
 	}
 
 	@Test
-	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
+	public void You_are_not_allowed_to_do_this_operation_WITH_superuser() {
 		JSONObject user = Fixtures.SUPER_USER;
 		JSONObject json = callTheServiceWith(user, user.getString("password"));
 

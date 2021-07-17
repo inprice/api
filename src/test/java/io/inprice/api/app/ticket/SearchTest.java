@@ -49,7 +49,7 @@ public class SearchTest {
 	}
 
 	@Test
-	public void You_must_bind_an_account_WITH_super_user_WITHOUT_binding_account() {
+	public void You_must_bind_an_account_WITH_superuser_WITHOUT_binding_account() {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, createBody(null, null, null));
 
 		assertEquals(915, json.getInt("status"));
@@ -63,7 +63,7 @@ public class SearchTest {
 	 * 	c) gets ticket list (must not be empty)
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_super_user_WHEN_binding_account() {
+	public void Everything_must_be_ok_WITH_superuser_WHEN_binding_account() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		JSONArray accounts = TestFinder.searchAccounts(cookies, TestAccounts.Standard_plan_and_two_extra_users.getName());

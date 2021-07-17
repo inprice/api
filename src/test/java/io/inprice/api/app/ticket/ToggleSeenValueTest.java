@@ -65,7 +65,7 @@ public class ToggleSeenValueTest {
 	}
 
 	@Test
-	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
+	public void You_are_not_allowed_to_do_this_operation_WITH_superuser() {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, 1L);
 
 		assertEquals(511, json.getInt("status"));

@@ -3,6 +3,7 @@
 -- @since 2021-07-08
 -- -----------------------
 
+-- this user has used his only FREE USE right (see below)
 set @admin_email = 'admin@account-as.com';
 
 -- -----------------------
@@ -28,3 +29,6 @@ insert into test.coupon (code, plan_id, days, description, issued_id) values ('K
 -- announces
 insert into test.announce (type, level, title, body, starting_at, ending_at, user_id, account_id) 
 values ('USER', 'WARNING', 'Here is another good news for someone else', 'This is another test announce for the admin user of Account-AS', now(), @one_month_later, @admin_id, @account_id);
+
+-- adding free use right
+insert into test.user_mark (email, type) values (@admin_email, 'FREE_USE');

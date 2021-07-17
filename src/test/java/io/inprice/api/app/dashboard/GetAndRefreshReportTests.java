@@ -60,7 +60,7 @@ public class GetAndRefreshReportTests {
 	}
 
 	@Test
-	public void You_must_bind_an_account_WITH_super_user_and_no_binding() {
+	public void You_must_bind_an_account_WITH_superuser_and_no_binding() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
@@ -82,7 +82,7 @@ public class GetAndRefreshReportTests {
 	 * 	c) gets the report
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_super_user_and_bound_account() {
+	public void Everything_must_be_ok_WITH_superuser_and_bound_account() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/1")

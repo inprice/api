@@ -249,7 +249,7 @@ public class InviteTest {
 	 * A super user invites another user
 	 */
 	@Test
-	public void You_are_not_allowed_to_do_this_operation_AS_super_user() {
+	public void You_are_not_allowed_to_do_this_operation_AS_superuser() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
@@ -269,7 +269,7 @@ public class InviteTest {
 	 * Admin of S invites a super user!
 	 */
 	@Test
-	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
+	public void You_are_not_allowed_to_do_this_operation_WITH_superuser() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)

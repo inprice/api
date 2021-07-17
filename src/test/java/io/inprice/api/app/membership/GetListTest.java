@@ -97,7 +97,7 @@ public class GetListTest {
 	}
 
 	@Test
-	public void Member_not_found_WITH_super_user() {
+	public void Member_not_found_WITH_superuser() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)

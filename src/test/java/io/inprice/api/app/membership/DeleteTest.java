@@ -126,7 +126,7 @@ public class DeleteTest {
 	}
 
 	@Test
-	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
+	public void You_are_not_allowed_to_do_this_operation_WITH_superuser() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)

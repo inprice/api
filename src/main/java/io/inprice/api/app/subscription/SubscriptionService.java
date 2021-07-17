@@ -41,13 +41,6 @@ class SubscriptionService {
   	return Responses.BAD_REQUEST;
   }
 
-  Response getCurrentAccount() {
-    try (Handle handle = Database.getHandle()) {
-      AccountDao accountDao = handle.attach(AccountDao.class);
-      return new Response(accountDao.findById(CurrentUser.getAccountId()));
-    }
-  }
-
   Response cancel() {
     Response response = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
 
@@ -135,7 +128,6 @@ class SubscriptionService {
     Response response = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
 
     try (Handle handle = Database.getHandle()) {
-    	handle.begin();
 
       AccountDao accountDao = handle.attach(AccountDao.class);
       UserMark um_FREE_USE = accountDao.getUserMarkByEmail(CurrentUser.getEmail(), UserMarkType.FREE_USE);
@@ -144,49 +136,50 @@ class SubscriptionService {
         Account account = accountDao.findById(CurrentUser.getAccountId());
         if (account != null) {
 
-          if (!account.getStatus().equals(AccountStatus.FREE)) {
-            if (account.getStatus().isOKForFreeUse()) {
-            	PlanDao planDao = handle.attach(PlanDao.class);
-              SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+          if (account.getStatus().isOKForFreeUse()) {
+          	PlanDao planDao = handle.attach(PlanDao.class);
+            SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
-              Plan basicPlan = planDao.findByName("Basic Plan");
+            Plan basicPlan = planDao.findByName("Basic Plan");
 
-              boolean isOK = 
-                subscriptionDao.startFreeUseOrApplyCoupon(
-                  CurrentUser.getAccountId(),
-                  AccountStatus.FREE.name(),
-                  basicPlan.getId(),
-                  Props.APP_DAYS_FOR_FREE_USE
-                );
+          	handle.begin();
+            
+            boolean isOK = 
+              subscriptionDao.startFreeUseOrApplyCoupon(
+                CurrentUser.getAccountId(),
+                AccountStatus.FREE.name(),
+                basicPlan.getId(),
+                Props.APP_DAYS_FOR_FREE_USE
+              );
 
+            if (isOK) {
+              AccountTrans trans = new AccountTrans();
+              trans.setAccountId(CurrentUser.getAccountId());
+              trans.setEvent(SubsEvent.FREE_USE_STARTED);
+              trans.setSuccessful(Boolean.TRUE);
+              trans.setDescription(("Free subscription has been started."));
+              
+              isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
               if (isOK) {
-                AccountTrans trans = new AccountTrans();
-                trans.setAccountId(CurrentUser.getAccountId());
-                trans.setEvent(SubsEvent.FREE_USE_STARTED);
-                trans.setSuccessful(Boolean.TRUE);
-                trans.setDescription(("Free subscription has been started."));
-                
-                isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-                if (isOK) {
-                  isOK = 
-                    accountDao.insertStatusHistory(
-                      account.getId(),
-                      AccountStatus.FREE.name(),
-                      basicPlan.getId()
-                    );
-                  if (um_FREE_USE == null) accountDao.addUserMark(CurrentUser.getEmail(), UserMarkType.FREE_USE);
-                }
+                isOK = 
+                  accountDao.insertStatusHistory(
+                    account.getId(),
+                    AccountStatus.FREE.name(),
+                    basicPlan.getId()
+                  );
+                if (um_FREE_USE == null) accountDao.addUserMark(CurrentUser.getEmail(), UserMarkType.FREE_USE);
               }
-
-              if (isOK) {
-                response = Commons.refreshSession(accountDao, account.getId());
-              }
-
-            } else {
-              response = Responses.Illegal.NO_FREE_USE_RIGHT;
             }
+
+            if (isOK) {
+              response = Commons.refreshSession(accountDao, account.getId());
+              handle.commit();
+            } else {
+            	handle.rollback();
+            }
+
           } else {
-            response = Responses.Already.IN_FREE_USE;
+            response = Responses.Illegal.NO_FREE_USE_RIGHT;
           }
         } else {
         	response = Responses.NotFound.ACCOUNT;
@@ -194,11 +187,6 @@ class SubscriptionService {
       } else {
         response = Responses.Already.FREE_USE_USED;
       }
-
-      if (response.isOK())
-      	handle.commit();
-      else
-      	handle.rollback();
     }
 
     return response;

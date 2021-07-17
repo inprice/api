@@ -142,7 +142,7 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
+	public void You_are_not_allowed_to_do_this_operation_WITH_superuser() {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, SAMPLE_BODY);
 
 		assertEquals(511, json.getInt("status"));

@@ -39,11 +39,6 @@ public class SubscriptionController extends AbstractController {
       ctx.json(Commons.createResponse(ctx, service.saveInfo(dto)));
     }, AccessRoles.ADMIN());
 
-    // returns current account's info
-    app.get(Consts.Paths.Subscription.BASE, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getCurrentAccount()));
-    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
-
     // returns all the transactions happened in payment provider
     app.get(Consts.Paths.Subscription.GET_INFO, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getInfo()));

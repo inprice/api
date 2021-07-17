@@ -140,7 +140,7 @@ public class InsertTest {
 	}
 
 	@Test
-	public void You_are_not_allowed_to_do_this_operation_WITH_super_user() {
+	public void You_are_not_allowed_to_do_this_operation_WITH_superuser() {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, createBody("LINK", 1L, "PRICE", "CHANGED"), 0);
 
 		assertEquals(511, json.getInt("status"));

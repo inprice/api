@@ -116,7 +116,7 @@ public class ForgotPasswordTest {
 	}
 
 	@Test
-	public void User_is_not_suitable_for_this_operation_FOR_super_user() {
+	public void User_is_not_suitable_for_this_operation_FOR_superuser() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(Fixtures.SUPER_USER)
 			.asJson();

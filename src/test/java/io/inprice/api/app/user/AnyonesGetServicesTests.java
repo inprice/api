@@ -69,7 +69,7 @@ public class AnyonesGetServicesTests {
 	}
 
 	@Test
-	public void You_must_bind_an_account_WITH_super_user_and_no_binding() {
+	public void You_must_bind_an_account_WITH_superuser_and_no_binding() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
@@ -91,7 +91,7 @@ public class AnyonesGetServicesTests {
 	 * 	c) gets membership list
 	 */
 	@Test
-	public void Data_must_be_empty_WITH_super_user_and_bound_account() {
+	public void Data_must_be_empty_WITH_superuser_and_bound_account() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/1")

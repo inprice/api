@@ -62,7 +62,7 @@ public class GetCouponsTest {
 	}
 
 	@Test
-	public void You_must_bind_an_account_FOR_super_user_without_account_binding() {
+	public void You_must_bind_an_account_FOR_superuser_without_account_binding() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
@@ -84,7 +84,7 @@ public class GetCouponsTest {
 	 * 	c) gets coupon list
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_super_user_and_bound_account() {
+	public void Everything_must_be_ok_WITH_superuser_and_bound_account() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/1")
