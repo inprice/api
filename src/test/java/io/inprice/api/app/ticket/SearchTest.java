@@ -63,7 +63,7 @@ public class SearchTest {
 	 * 	c) gets ticket list (must not be empty)
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_superuser_WHEN_binding_account() {
+	public void Everything_must_be_ok_WITH_superuser_AND_bound_account() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		JSONArray accounts = TestFinder.searchAccounts(cookies, TestAccounts.Standard_plan_and_two_extra_users.getName());

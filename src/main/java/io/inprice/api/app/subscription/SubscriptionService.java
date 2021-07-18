@@ -33,95 +33,90 @@ class SubscriptionService {
 
   //private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
 
-  //private final StripeService stripeService = Beans.getSingleton(StripeService.class);
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
 	
   Response createCheckout(int planId) {
-    //return stripeService.createCheckout(planId);
-  	return Responses.BAD_REQUEST;
+  	return Responses.METHOD_NOT_ALLOWED;
   }
 
   Response cancel() {
-    Response response = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
+    Response res = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
 
-    Account account = null;
-
-    //stripeService will create its own handle. 
-    //so, we must not extend/cascade any db connection, thus, a new one is handled here in a separated block
     try (Handle handle = Database.getHandle()) {
       AccountDao accountDao = handle.attach(AccountDao.class);
-      account = accountDao.findById(CurrentUser.getAccountId());
-    }
 
-    if (CurrentUser.getUserId().equals(account.getAdminId())) {
+      Account account = accountDao.findById(CurrentUser.getAccountId());
       if (account.getStatus().isOKForCancel()) {
 
-        if (AccountStatus.SUBSCRIBED.equals(account.getStatus())) { //if a subscriber
-          //response = stripeService.cancel(account);
-        } else { //free or couponed user
+      	handle.begin();
+      	
+        SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+        boolean isOK = subscriptionDao.terminate(account.getId(), AccountStatus.CANCELLED);
+        if (isOK) {
 
-          try (Handle handle = Database.getHandle()) {
-          	handle.begin();
+          AccountTrans trans = new AccountTrans();
+          trans.setAccountId(account.getId());
+          trans.setSuccessful(Boolean.TRUE);
+          trans.setDescription(("Manual cancelation."));
+          
+          switch (account.getStatus()) {
+  					case COUPONED: {
+  						trans.setEvent(SubsEvent.COUPON_USE_CANCELLED);
+  						break;
+  					}
+  					case FREE: {
+  						trans.setEvent(SubsEvent.FREE_USE_CANCELLED);
+  						break;
+  					}
+  					default:
+  						trans.setEvent(SubsEvent.SUBSCRIPTION_CANCELLED);
+  						break;
+					}
 
-            SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
-            boolean isOK = subscriptionDao.terminate(account.getId(), AccountStatus.CANCELLED.name());
+          isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+
+          if (isOK) {
+            isOK = 
+              accountDao.insertStatusHistory(
+                account.getId(),
+                AccountStatus.CANCELLED.name(),
+                account.getPlanId()
+              );
             if (isOK) {
+              Map<String, Object> mailMap = new HashMap<>(2);
+              mailMap.put("user", CurrentUser.getEmail());
+              mailMap.put("account", StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName());
+              
+              redis.sendEmail(
+          			EmailData.builder()
+            			.template(EmailTemplate.FREE_ACCOUNT_CANCELLED)
+            			.from(Props.APP_EMAIL_SENDER)
+            			.to(CurrentUser.getEmail())
+            			.subject("Notification about your cancelled plan in inprice.")
+            			.data(mailMap)
+            		.build()	
+          		);
 
-              AccountTrans trans = new AccountTrans();
-              trans.setAccountId(account.getId());
-              trans.setSuccessful(Boolean.TRUE);
-              trans.setDescription(("Manual cancelation."));
-              trans.setEvent(AccountStatus.COUPONED.equals(account.getStatus()) ? SubsEvent.COUPON_USE_CANCELLED : SubsEvent.FREE_USE_CANCELLED);
-
-              isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-    
-              if (isOK) {
-                AccountDao accountDao = handle.attach(AccountDao.class);
-                isOK = 
-                  accountDao.insertStatusHistory(
-                    account.getId(),
-                    AccountStatus.CANCELLED.name(),
-                    account.getPlanId()
-                  );
-                if (isOK) {
-                  Map<String, Object> mailMap = new HashMap<>(2);
-                  mailMap.put("user", CurrentUser.getEmail());
-                  mailMap.put("account", StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName());
-                  
-                  redis.sendEmail(
-              			EmailData.builder()
-                			.template(EmailTemplate.FREE_ACCOUNT_CANCELLED)
-                			.from(Props.APP_EMAIL_SENDER)
-                			.to(CurrentUser.getEmail())
-                			.subject("Notification about your cancelled plan in inprice.")
-                			.data(mailMap)
-                		.build()	
-              		);
-
-                  response = Responses.OK;
-                }
-              }
+              res = Responses.OK;
             }
-
-            if (response.isOK())
-            	handle.commit();
-            else
-            	handle.rollback();
           }
         }
 
+        if (res.isOK())
+        	handle.commit();
+        else
+        	handle.rollback();
+
       } else {
-        response = Responses.Illegal.NOT_SUITABLE_FOR_CANCELLATION;
+        res = Responses.Illegal.NOT_SUITABLE_FOR_CANCELLATION;
       }
-    } else {
-      response = Responses._403;
     }
 
-    if (response.isOK()) {
-      response = Commons.refreshSession(account.getId());
+    if (res.isOK()) {
+      res = Commons.refreshSession(CurrentUser.getAccountId());
     }
 
-    return response;
+    return res;
   }
 
   Response startFreeUse() {
@@ -201,12 +196,14 @@ class SubscriptionService {
       if (account != null) {
       	Map<String, Object> info = new HashMap<>(7);
       	info.put("title", account.getTitle());
+      	info.put("contactName", account.getContactName());
       	info.put("address1", account.getAddress1());
       	info.put("address2", account.getAddress2());
       	info.put("postcode", account.getPostcode());
       	info.put("city", account.getCity());
       	info.put("state", account.getState());
       	info.put("country", account.getCountry());
+
       	data.put("info", info);
       	
         SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
@@ -270,42 +267,48 @@ class SubscriptionService {
     if (problem == null) {
       if (StringUtils.isBlank(dto.getAddress1())) {
         problem = "Address line 1 cannot be empty!";
-      } else if (dto.getAddress1().length() > 255) {
-        problem = "Address line 1 must be less than 255 chars";
-      }
-    }
-
-    if (problem == null) {
-      if (StringUtils.isNotBlank(dto.getAddress1()) && dto.getAddress1().length() > 255) {
-        problem = "Address line 2 must be less than 256 chars";
-      }
-    }
-
-    if (problem == null) {
-      if (! StringUtils.isNotBlank(dto.getPostcode()) && dto.getPostcode().length() < 3 || dto.getPostcode().length() > 8) {
-        problem = "Postcode must be between 3-8 chars";
+      } else if (dto.getAddress1().length() < 12 || dto.getAddress1().length() > 255) {
+        problem = "Address line 1 must be between 12 - 255 chars!";
       }
     }
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getCity())) {
         problem = "City cannot be empty!";
-      } else if (dto.getCity().length() < 2 || dto.getCity().length() > 8) {
-        problem = "City must be between 2-70 chars";
-      }
-    }
-
-    if (problem == null) {
-      if (StringUtils.isNotBlank(dto.getState()) && dto.getState().length() > 70) {
-        problem = "State must be less than 71 chars";
+      } else if (dto.getCity().length() < 2 || dto.getCity().length() > 50) {
+        problem = "City must be between 2 - 50 chars!";
       }
     }
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getCountry())) {
-        problem = "Country code cannot be empty!";
-      } else if (dto.getCountry().length() != 2) {
-        problem = "Country code must be 2 chars";
+        problem = "Country cannot be empty!";
+      } else if (dto.getCountry().length() < 3 || dto.getCountry().length() > 50) {
+        problem = "Country must be between 3 - 50 chars!";
+      }
+    }
+
+    if (problem == null) {
+    	if (StringUtils.isNotBlank(dto.getContactName()) && dto.getContactName().length() > 50) {
+    		problem = "Contact Name can be up to 50 chars!";
+    	}
+    }
+
+    if (problem == null) {
+      if (StringUtils.isNotBlank(dto.getAddress2()) && dto.getAddress2().length() > 255) {
+        problem = "Address line 2 can be up to 255 chars!";
+      }
+    }
+
+    if (problem == null) {
+      if (StringUtils.isNotBlank(dto.getPostcode()) && dto.getPostcode().length() > 8) {
+        problem = "Postcode can be up to 8 chars!";
+      }
+    }
+
+    if (problem == null) {
+      if (StringUtils.isNotBlank(dto.getState()) && dto.getState().length() > 50) {
+        problem = "State can be up to 50 chars!";
       }
     }
 

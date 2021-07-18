@@ -88,7 +88,7 @@ public class ForgotPasswordTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Email address must be between 8 and 128 chars!", json.getString("reason"));
+    assertEquals("Email address must be between 8 - 128 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -100,7 +100,7 @@ public class ForgotPasswordTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Email address must be between 8 and 128 chars!", json.getString("reason"));
+    assertEquals("Email address must be between 8 - 128 chars!", json.getString("reason"));
 	}
 
 	@Test

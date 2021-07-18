@@ -184,7 +184,7 @@ public class AnnounceService {
 		if (StringUtils.isBlank(dto.getTitle())) {
 			problem = "Title cannot be empty!";
 		} else if (dto.getTitle().length() < 3 || dto.getTitle().length() > 50) {
-			problem = "Title must be between 3-50 chars!";
+			problem = "Title must be between 3 - 50 chars!";
 		}
 
 		if (problem == null) {

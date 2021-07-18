@@ -22,3 +22,10 @@ insert into test.account_history (account_id, status) values (@account_id, 'SUBS
 
 -- memberships
 insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');
+
+-- account transactions
+insert into test.account_trans (account_id, event_id, event, reason)
+values (@account_id, 'MA-002', 'SUBSCRIPTION', 'The first trial for renewal.');
+
+insert into test.account_trans (account_id, event_id, event, successful, description)
+values (@account_id, 'MM-004', 'SUBSCRIPTION', true, 'Subscription has been renewed successfully');

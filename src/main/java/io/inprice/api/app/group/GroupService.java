@@ -293,12 +293,12 @@ class GroupService {
     if (StringUtils.isBlank(dto.getName())) {
       problem = "Name cannot be empty!";
     } else if (dto.getName().length() < 3 || dto.getName().length() > 50) {
-      problem = "Name must be between 3 and 50 chars!";
+      problem = "Name must be between 3 - 50 chars!";
     }
 
     if (problem == null && StringUtils.isNotBlank(dto.getDescription())) {
     	if (dto.getDescription().length() < 3 || dto.getDescription().length() > 128) {
-    		problem = "If given, description can be between 3 and 128 chars!";
+    		problem = "If given, description can be between 3 - 128 chars!";
     	}
     }
     

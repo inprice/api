@@ -52,7 +52,7 @@ public interface AccountDao {
 
   @SqlUpdate(
     "update account set "+
-    "title=:dto.title, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country " +
+    "title=:dto.title, contact_name=:dto.contactName, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country " +
     "where id=:id"
   )
   boolean update(@BindBean("dto") CustomerDTO dto, @Bind("id") Long id);

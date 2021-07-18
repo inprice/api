@@ -34,6 +34,16 @@ set @account_id = last_insert_id();
 insert into test.account_history (account_id, status) values (@account_id, 'CREATED');
 insert into test.account_history (account_id, status) values (@account_id, 'SUBSCRIBED');
 
+-- account transactions
+insert into test.account_trans (account_id, event_id, event, reason)
+values (@account_id, 'AX-123', 'PAYMENT', 'Insufficient credit.');
+
+insert into test.account_trans (account_id, event_id, event, reason)
+values (@account_id, 'AX-124', 'PAYMENT', 'Not authorized.');
+
+insert into test.account_trans (account_id, event_id, event, successful, description, file_url)
+values (@account_id, 'AA-011', 'PAYMENT', true, 'Payment has been made successfully', 'https://invoices.inprice.io/145/AA_011.pdf');
+
 -- membership
 insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');
 insert into test.membership (email, user_id, account_id, role, status) values (@editor_email, @editor_id, @account_id, 'EDITOR', 'JOINED');

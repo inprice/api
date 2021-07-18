@@ -57,7 +57,7 @@ public class LogoutTest {
 	}
 	
 	@Test
-	public void Everything_must_be_ok_WITH_superuser_login() {
+	public void Everything_must_be_ok_WITH_superuser() {
 		//in order to get a valid cookie, super user logins first
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		

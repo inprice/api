@@ -72,7 +72,7 @@ public class UpdateInfoTest {
 	}
 
 	@Test
-	public void User_name_must_be_between_3_70_chars_WITH_shorter_name() {
+	public void User_name_must_be_between_3_and_70_chars_WITH_shorter_name() {
 		JSONObject json = callTheServiceWith("XY", TIMEZONE);
 		
 		assertEquals(400, json.getInt("status"));
@@ -80,7 +80,7 @@ public class UpdateInfoTest {
 	}
 
 	@Test
-	public void User_name_must_be_between_3_70_chars_WITH_longer_name() {
+	public void User_name_must_be_between_3_and_70_chars_WITH_longer_name() {
 		JSONObject json = callTheServiceWith(RandomStringUtils.randomAlphabetic(71), TIMEZONE);
 
 		assertEquals(400, json.getInt("status"));

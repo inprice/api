@@ -76,11 +76,11 @@ public class FindTest {
 	/**
 	 * Consists of three steps;
 	 * 	a) super user logs in
-	 * 	b) binds to first account
+	 * 	b) binds to a specific account
 	 * 	c) gets ticket list (must not be empty)
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_superuser_WHEN_binding_account() {
+	public void Everything_must_be_ok_WITH_superuser_AND_bound_account() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
 		JSONArray accountList = TestFinder.searchAccounts(cookies, "Without A Plan and Extra User");

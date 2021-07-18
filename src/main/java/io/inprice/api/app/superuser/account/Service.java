@@ -195,12 +195,12 @@ class Service {
 		}
 		if (problem == null 
 				&& (dto.getDays() == null || dto.getDays() < 14 || dto.getDays() > 365)) {
-			problem = "Days info is invalid, it must be between 14-365!";
+			problem = "Days info is invalid, it must be between 14 - 365!";
 		}
 		if (problem == null 
 				&& (StringUtils.isNotBlank(dto.getDescription()) 
 						&& (dto.getDescription().length() < 3 || dto.getDescription().length() > 128))) {
-			problem = "If given, description must be between 3-128 chars!";
+			problem = "If given, description must be between 3 - 128 chars!";
 		}
 		
 		if (problem == null) {

@@ -88,7 +88,7 @@ public class LoginTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Email address must be between 8 and 128 chars!", json.getString("reason"));
+    assertEquals("Email address must be between 8 - 128 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -100,7 +100,7 @@ public class LoginTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Email address must be between 8 and 128 chars!", json.getString("reason"));
+    assertEquals("Email address must be between 8 - 128 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -112,7 +112,7 @@ public class LoginTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 and 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -124,7 +124,7 @@ public class LoginTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 and 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test

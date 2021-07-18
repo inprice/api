@@ -62,7 +62,7 @@ public class SearchTest {
 	 * 	c) gets announce list (possibly empty)
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_superuser_WHEN_binding_account() {
+	public void Everything_must_be_ok_WITH_superuser_AND_bound_account() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/1")

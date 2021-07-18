@@ -76,7 +76,7 @@ public class ChangePasswordTest {
 		JSONObject json = callTheServiceWith("1234", "ABC");
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 and 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -84,7 +84,7 @@ public class ChangePasswordTest {
 		JSONObject json = callTheServiceWith("1234", RandomStringUtils.randomAlphabetic(17));
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 and 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test

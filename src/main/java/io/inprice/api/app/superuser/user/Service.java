@@ -72,7 +72,7 @@ class Service {
   	if (problem == null 
 			&& (StringUtils.isBlank(dto.getText()) 
 				|| dto.getText().length() < 5 || dto.getText().length() > 128)) {
-  		problem = "Reason must be between 5-128 chars!";
+  		problem = "Reason must be between 5 - 128 chars!";
   	}
   	
   	if (problem == null) {

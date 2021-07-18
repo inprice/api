@@ -13,6 +13,7 @@ public class Responses {
   public static final Response BANNED_USER = new Response(HttpStatus.FORBIDDEN_403, "Banned user!");
   public static final Response REQUEST_BODY_INVALID = new Response(HttpStatus.BAD_REQUEST_400, "Request body is invalid!");
   public static final Response PAGE_NOT_FOUND = new Response(HttpStatus.NOT_FOUND_404, "Page not found!");
+  public static final Response METHOD_NOT_ALLOWED = new Response(HttpStatus.METHOD_NOT_ALLOWED_405, "Method not allowed!");
 
   public static class Invalid {
     private static final int BASE = 100;
@@ -80,7 +81,7 @@ public class Responses {
     public static final Response TIMED_OUT_FORGOT_PASSWORD = new Response(BASE + 1, "Your session seems to expire, please send us a new 'forgot password request' again!");
     public static final Response COUPON_ISSUED_FOR_ANOTHER_ACCOUNT = new Response(BASE + 2, "This coupon is issued for another account!");
     public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
-    public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan, so you cannot cancel!");
+    public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan to cancel!");
     public static final Response NO_FREE_USE_RIGHT = new Response(BASE + 11, "You have no free use right!");
     public static final Response BANNED_USER = new Response(BASE + 16, "Banned user!");
   }

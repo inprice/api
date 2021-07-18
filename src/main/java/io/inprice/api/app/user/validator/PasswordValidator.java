@@ -16,7 +16,7 @@ public class PasswordValidator {
     if (StringUtils.isBlank(dto.getPassword())) {
       problem = "Password cannot be empty!";
     } else if (dto.getPassword().length() < 4 || dto.getPassword().length() > 16) {
-      problem = "Password length must be between 4 and 16 chars!";
+      problem = "Password length must be between 4 - 16 chars!";
     } else if (repeatPassCheck && !dto.getPassword().equals(dto.getRepeatPassword())) {
       problem = "Passwords are mismatch!";
     }

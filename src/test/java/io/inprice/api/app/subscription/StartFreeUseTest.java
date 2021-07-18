@@ -46,7 +46,7 @@ public class StartFreeUseTest {
 	}
 
 	@Test
-	public void Forbidden_WITH_viewer_login() {
+	public void Forbidden_WITH_viewer() {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 		
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
@@ -62,7 +62,7 @@ public class StartFreeUseTest {
 	}
 
 	@Test
-	public void You_are_not_allowed_to_do_this_operation_WITH_superuser_login() {
+	public void You_are_not_allowed_to_do_this_operation_WITH_superuser() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
@@ -110,7 +110,7 @@ public class StartFreeUseTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_WITH_admin_login() {
+	public void Everything_must_be_ok_WITH_admin() {
 		Cookies cookies = TestUtils.login(TestAccounts.Without_a_plan_and_extra_user.ADMIN());
 		
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)

@@ -14,7 +14,7 @@ public class EmailValidator {
   	
   	final Matcher matcher = pattern.matcher(email);
     if (email.length() < 8 || email.length() > 128) {
-      return "Email address must be between 8 and 128 chars!";
+      return "Email address must be between 8 - 128 chars!";
     } else if (!matcher.matches()) {
       return "Invalid email address!";
     }

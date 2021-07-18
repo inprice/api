@@ -36,7 +36,7 @@ public class CreateAndUpdateTests {
 	private String httpMethod;
 
 	/**
-	 * This method runs this class twice!
+	 * This method causes this class run twice!
 	 * One for Create with POST http method
 	 * And the other is for Update with PUT method
 	 * 

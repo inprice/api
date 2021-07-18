@@ -18,7 +18,11 @@ set @account_id = last_insert_id();
 
 -- account history
 insert into test.account_history (account_id, status) values (@account_id, 'CREATED');
-insert into test.account_history (account_id, status) values (@account_id, 'SUBSCRIBED');
+insert into test.account_history (account_id, status) values (@account_id, 'COUPONED');
+
+-- account transaction
+insert into test.account_trans (account_id, event_id, event, reason)
+values (@account_id, 'SY-12A', 'COUPONED', 'Coupon use: AS34FGD3');
 
 -- membership
 insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');

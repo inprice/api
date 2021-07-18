@@ -132,7 +132,7 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void Issue_must_be_between_12_1024_chars_WITH_shorter_body() {
+	public void Issue_must_be_between_12_and_1024_chars_WITH_shorter_body() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("body", RandomStringUtils.randomAlphabetic(11));
 
@@ -143,7 +143,7 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void Issue_must_be_between_12_1024_chars_WITH_longer_body() {
+	public void Issue_must_be_between_12_and_1024_chars_WITH_longer_body() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("body", RandomStringUtils.randomAlphabetic(1025));
 		
