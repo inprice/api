@@ -21,7 +21,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of TicketService.find(Long ticketId)
+ * Tests the functionality of TicketController.find(Long ticketId)
  * 
  * @author mdpinar
  * @since 2021-07-17

@@ -17,7 +17,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of UserService.closeAllSessions()
+ * Tests the functionality of UserController.closeAllSessions()
  * 
  * @author mdpinar
  * @since 2021-07-11

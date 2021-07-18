@@ -19,7 +19,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of DashboardService.getReport(true/false)
+ * Tests the functionality of DashboardController.getReport(true/false)
  *  
  * This class is equipped with Parameterized runner so that we are able to run the same tests while getting cold and hot report! 
  * 

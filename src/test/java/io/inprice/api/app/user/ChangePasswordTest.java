@@ -18,7 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of UserService.changePassword(PasswordDTO) 
+ * Tests the functionality of UserController.changePassword(PasswordDTO) 
  * 
  * @author mdpinar
  * @since 2021-07-11

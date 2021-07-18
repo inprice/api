@@ -19,7 +19,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of CouponService.applyCoupon(String code) 
+ * Tests the functionality of CouponController.applyCoupon(String code) 
  * 
  * @author mdpinar
  * @since 2021-07-09

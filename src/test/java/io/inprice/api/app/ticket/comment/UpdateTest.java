@@ -22,7 +22,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of CommentService.update(TicketCommentDTO)
+ * Tests the functionality of CommentController.update(TicketCommentDTO)
  * 
  * @author mdpinar
  * @since 2021-07-17

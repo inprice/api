@@ -21,7 +21,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of TicketService.update(TicketDTO)
+ * Tests the functionality of TicketController.update(TicketDTO)
  * 
  * @author mdpinar
  * @since 2021-07-16

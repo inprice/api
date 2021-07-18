@@ -21,7 +21,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of CommentService.delete(Long commentId)
+ * Tests the functionality of CommentController.delete(Long commentId)
  * 
  * @author mdpinar
  * @since 2021-07-17
@@ -59,7 +59,7 @@ public class DeleteTest {
 
 	@Test
 	public void Comment_not_found_WITH_wrong_id() {
-		JSONObject json = callTheService(0L);
+		JSONObject json = callTheService(5L);
 
 		assertEquals(404, json.getInt("status"));
 		assertEquals("Comment not found!", json.getString("reason"));

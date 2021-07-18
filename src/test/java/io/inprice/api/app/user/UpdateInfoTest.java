@@ -18,7 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of UserService.updateInfo(UserDTO) 
+ * Tests the functionality of UserController.updateInfo(UserDTO) 
  * 
  * @author mdpinar
  * @since 2021-07-10

@@ -19,7 +19,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AnnounceService.fetchAnnounces()
+ * Tests the functionality of AnnounceController.fetchAnnounces()
  * 
  * @author mdpinar
  * @since 2021-07-15

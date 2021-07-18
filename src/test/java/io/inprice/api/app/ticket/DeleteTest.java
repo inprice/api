@@ -20,7 +20,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of TicketService.delete(Long ticketId)
+ * Tests the functionality of TicketController.delete(Long ticketId)
  * 
  * @author mdpinar
  * @since 2021-07-16

@@ -40,8 +40,12 @@ public class TestFinder {
 	}
 
 	public static JSONArray searchLinks(Cookies cookies, String status) {
+		return searchLinks(cookies, status, 0);
+	}
+
+	public static JSONArray searchLinks(Cookies cookies, String status, int session) {
 		HttpResponse<JsonNode> res = Unirest.post("/links/search")
-			.headers(Fixtures.SESSION_0_HEADERS)
+			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
 					.put("statuses", new String[] { status })

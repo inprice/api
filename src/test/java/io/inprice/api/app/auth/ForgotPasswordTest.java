@@ -18,7 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AuthService.forgotPassword(String email)
+ * Tests the functionality of AuthController.forgotPassword(String email)
  * 
  * @author mdpinar
  * @since 2021-07-01

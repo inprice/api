@@ -21,7 +21,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of CommentService.insert(TicketCommentDTO)
+ * Tests the functionality of CommentController.insert(TicketCommentDTO)
  * 
  * @author mdpinar
  * @since 2021-07-16

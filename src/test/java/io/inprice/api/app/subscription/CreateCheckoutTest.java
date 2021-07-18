@@ -17,7 +17,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of SubscriptionService.createCheckout(Integer planId)
+ * Tests the functionality of SubscriptionController.createCheckout(Integer planId)
  * 
  * @author mdpinar
  * @since 2021-07-18

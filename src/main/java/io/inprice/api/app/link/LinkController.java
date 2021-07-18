@@ -37,7 +37,7 @@ public class LinkController extends AbstractController {
       ctx.json(Commons.createResponse(ctx, service.delete(ldDto)));
     }, AccessRoles.EDITOR());
 
-    // move links to under another group
+    // move links to another group
     app.post(Consts.Paths.Link.MOVE, (ctx) -> {
     	LinkMoveDTO lmDto = ctx.bodyAsClass(LinkMoveDTO.class);
       ctx.json(Commons.createResponse(ctx, service.moveTo(lmDto)));

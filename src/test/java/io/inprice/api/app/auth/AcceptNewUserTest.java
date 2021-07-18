@@ -19,7 +19,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AuthService.acceptNewUser(InvitationAcceptDTO, String timezone)
+ * Tests the functionality of AuthController.acceptNewUser(InvitationAcceptDTO, String timezone)
  * 
  * Out of scope:
  * 	- No need to check passwords again here since it is already done in Login and ForgotPassword test classes

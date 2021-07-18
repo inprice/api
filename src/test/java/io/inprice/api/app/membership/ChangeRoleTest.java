@@ -20,7 +20,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of MembershipService.changeRole(InvitationUpdateDTO) 
+ * Tests the functionality of MembershipController.changeRole(InvitationUpdateDTO) 
  * 
  * @author mdpinar
  * @since 2021-07-06

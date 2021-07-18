@@ -18,7 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AccountService.getGeoInfo() 
+ * Tests the functionality of AccountController.getGeoInfo() 
  * 
  * @author mdpinar
  * @since 2021-07-07

@@ -18,7 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of SubscriptionService.startFreeUse()
+ * Tests the functionality of SubscriptionController.startFreeUse()
  * 
  * @author mdpinar
  * @since 2021-07-17

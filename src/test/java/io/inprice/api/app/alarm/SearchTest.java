@@ -19,7 +19,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AlarmService.search(SearchDTO)
+ * Tests the functionality of AlarmController.search(SearchDTO)
  * 
  * @author mdpinar
  * @since 2021-07-15

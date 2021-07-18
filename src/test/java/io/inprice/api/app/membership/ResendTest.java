@@ -20,7 +20,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of MembershipService.resend(Long memberId)
+ * Tests the functionality of MembershipController.resend(Long memberId)
  * 
  * Out of scope:
  * 	- Unable to test the case of "You cannot re-send invitation to yourself" since we cannot get the member id of an ADMIN

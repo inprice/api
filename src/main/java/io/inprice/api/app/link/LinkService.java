@@ -112,7 +112,7 @@ class LinkService {
   Response delete(LinkDeleteDTO dto) {
   	Response response = Responses.NotFound.LINK;
 
-    if (dto.getLinkIdSet() != null && dto.getLinkIdSet().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) {
     	int count = dto.getLinkIdSet().size();
     	
     	String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");

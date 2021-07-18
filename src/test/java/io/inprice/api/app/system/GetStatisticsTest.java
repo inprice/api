@@ -19,7 +19,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of SystemService.getStatistics() 
+ * Tests the functionality of SystemController.getStatistics() 
  * 
  * @author mdpinar
  * @since 2021-07-10

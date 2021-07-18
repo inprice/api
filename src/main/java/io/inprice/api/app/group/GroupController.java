@@ -30,7 +30,7 @@ public class GroupController extends AbstractController {
       ctx.json(Commons.createResponse(ctx, service.getIdNameList(excludedId)));
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
-    // find links and more by id
+    // find links and details by id
     app.get(Consts.Paths.Group.LINKS + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.findLinksById(id)));

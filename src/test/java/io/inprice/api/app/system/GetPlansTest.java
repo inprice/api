@@ -20,7 +20,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of SystemService.getPlans() 
+ * Tests the functionality of SystemController.getPlans() 
  * 
  * @author mdpinar
  * @since 2021-07-10

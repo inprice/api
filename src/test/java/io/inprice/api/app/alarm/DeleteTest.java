@@ -20,7 +20,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AlarmService.delete(Long alarmId)
+ * Tests the functionality of AlarmController.delete(Long alarmId)
  * 
  * @author mdpinar
  * @since 2021-07-15

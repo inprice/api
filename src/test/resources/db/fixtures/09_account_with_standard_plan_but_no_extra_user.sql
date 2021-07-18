@@ -13,7 +13,7 @@ insert into test.user (email, password, name, timezone) values (@admin_email, @s
 set @admin_id = last_insert_id();
 
 -- account
-insert into test.account (name, plan_id, status, subs_started_at, subs_renewal_at, admin_id) values ('With Standard Plan but No Extra User', @planId, 'SUBSCRIBED', now(), @one_year_later, @admin_id);
+insert into test.account (name, plan_id, status, subs_started_at, subs_renewal_at, admin_id) values ('With Standard Plan (Couponed) but No Extra User', @planId, 'COUPONED', now(), @one_year_later, @admin_id);
 set @account_id = last_insert_id();
 
 -- account history

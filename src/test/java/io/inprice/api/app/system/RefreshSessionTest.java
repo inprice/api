@@ -18,7 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of SystemService.refreshSession() 
+ * Tests the functionality of SystemController.refreshSession() 
  * 
  * @author mdpinar
  * @since 2021-07-10

@@ -18,7 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of TicketService.insert(TicketDTO)
+ * Tests the functionality of TicketController.insert(TicketDTO)
  * 
  * @author mdpinar
  * @since 2021-07-16

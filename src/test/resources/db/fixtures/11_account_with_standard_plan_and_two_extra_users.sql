@@ -49,6 +49,13 @@ insert into test.membership (email, user_id, account_id, role, status) values (@
 insert into test.membership (email, user_id, account_id, role, status) values (@editor_email, @editor_id, @account_id, 'EDITOR', 'JOINED');
 insert into test.membership (email, user_id, account_id, role, status) values (@viewer_email, @viewer_id, @account_id, 'VIEWER', 'JOINED');
 
+-- -----------------------
+-- 2 groups and 10 links
+-- group_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
+-- -----------------------
+call sp_create_group_and_links('K', 3, 0, 1, 1, 'https://amazon.com/', 2, 'Account-F', @account_id);
+call sp_create_group_and_links('G', 2, 1, 0, 1, 'https://ebay.com/', 12, 'Account-F', @account_id);
+
 -- tickets
 -- -----------------------
 

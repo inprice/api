@@ -22,7 +22,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AlarmService.insert(AlarmDTO)
+ * Tests the functionality of AlarmController.insert(AlarmDTO)
  * 
  * @author mdpinar
  * @since 2021-07-12

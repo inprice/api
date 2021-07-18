@@ -29,6 +29,12 @@ insert into test.account_history (account_id, status) values (@account_id, 'SUBS
 insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');
 insert into test.membership (email, user_id, account_id, role, status) values (@editor_email, @editor_id, @account_id, 'EDITOR', 'JOINED');
 
+-- -----------------------
+-- 1 groups and 10 links
+-- group_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
+-- -----------------------
+call sp_create_group_and_links('R', 5, 2, 1, 2, 'https://amazon.com/', 2, 'Account-E', @account_id);
+
 -- tickets
 -- -----------------------
 

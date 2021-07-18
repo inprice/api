@@ -20,7 +20,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of TicketService.search(SearchDTO)
+ * Tests the functionality of TicketController.search(SearchDTO)
  * 
  * @author mdpinar
  * @since 2021-07-16

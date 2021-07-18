@@ -19,7 +19,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of MembershipService.pause(Long memberId)
+ * Tests the functionality of MembershipController.pause(Long memberId)
  * 
  * @author mdpinar
  * @since 2021-07-06

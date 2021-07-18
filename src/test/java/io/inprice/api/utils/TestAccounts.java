@@ -73,7 +73,7 @@ public enum TestAccounts {
 
 	Standard_plan_and_two_extra_users(
 		"With Standard Plan and Two Extra Users",
-  	"Has no link, alarm or coupon. 2 Tickets opened by Viewer and 1 is opened by Admin (in CLOSED status). Three account transactions",
+  	"Has 5 active, 1 trying, 1 waiting and 3 problem links. 2 Tickets opened by Viewer and 1 is opened by Admin (in CLOSED status). Three account transactions. No alarm or coupon",
   	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-f.com"),

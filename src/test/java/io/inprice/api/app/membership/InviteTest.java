@@ -21,7 +21,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of MembershipService.invite(InvitationSendDTO)
+ * Tests the functionality of MembershipController.invite(InvitationSendDTO)
  * 
  * Out of scope:
  * 	- No need to check email limitations again here since it is already done in Login test class

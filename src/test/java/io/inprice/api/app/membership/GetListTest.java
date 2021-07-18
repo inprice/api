@@ -19,7 +19,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of MembershipService.getList()
+ * Tests the functionality of MembershipController.getList()
  * 
  * @author mdpinar
  * @since 2021-07-01

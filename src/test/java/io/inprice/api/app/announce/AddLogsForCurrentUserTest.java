@@ -17,7 +17,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AnnounceService.addLogsForCurrentUser()
+ * Tests the functionality of AnnounceController.addLogsForCurrentUser()
  * 
  * @author mdpinar
  * @since 2021-07-15

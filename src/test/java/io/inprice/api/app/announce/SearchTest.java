@@ -19,7 +19,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AnnounceService.search(SearchDTO)
+ * Tests the functionality of AnnounceController.search(SearchDTO)
  * 
  * @author mdpinar
  * @since 2021-07-15

@@ -17,7 +17,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of AuthService.logout()
+ * Tests the functionality of AuthController.logout()
  * 
  * @author mdpinar
  * @since 2021-07-01
