@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -111,6 +110,8 @@ class LinkService {
 
   Response delete(LinkDeleteDTO dto) {
   	Response response = Responses.NotFound.LINK;
+  	
+  	if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) dto.getLinkIdSet().remove(null);
 
     if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) {
     	int count = dto.getLinkIdSet().size();
@@ -179,7 +180,10 @@ class LinkService {
   	boolean isNewGroup = (dto.getToGroupId() == null && StringUtils.isNotBlank(dto.getToGroupName()));
 
   	if (isNewGroup || (dto.getToGroupId() != null && dto.getToGroupId() > 0)) {
-      if (dto.getLinkIdSet() != null && dto.getLinkIdSet().size() > 0) {
+
+  		if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) dto.getLinkIdSet().remove(null);
+
+      if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) {
 
       	try (Handle handle = Database.getHandle()) {
         	handle.begin();
@@ -193,7 +197,7 @@ class LinkService {
       				dto.setToGroupId(
     						groupDao.insert(
   								GroupDTO.builder()
-  									.name(SqlHelper.clear(dto.getToGroupName()))
+  									.name(dto.getToGroupName())
   									.accountId(CurrentUser.getAccountId())
   									.build()
 									)
@@ -207,8 +211,11 @@ class LinkService {
         		LinkDao linkDao = handle.attach(LinkDao.class);
             
           	Set<Long> foundGroupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
+
+          	if (CollectionUtils.isNotEmpty(foundGroupIdSet)) foundGroupIdSet.remove(null);
+          	
           	if (CollectionUtils.isNotEmpty(foundGroupIdSet)) {
-        			String joinedIds = dto.getLinkIdSet().stream().map(String::valueOf).collect(Collectors.joining(","));
+        			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
         			final String 
         				updatePart = 
         					String.format(

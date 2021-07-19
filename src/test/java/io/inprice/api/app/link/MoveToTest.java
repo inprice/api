@@ -186,51 +186,88 @@ public class MoveToTest {
 	 *  e) deletes those selected links
 	 */
 	@Test
-	public void Everything_must_be_ok_FOR_editor_and_admin() {
-		//both account have 2 links in PROBLEM status!
-		JSONObject[] users = {
-			TestAccounts.Standard_plan_and_two_extra_users.ADMIN(),
-			TestAccounts.Standard_plan_and_one_extra_user.EDITOR()
-		};
+	public void Everything_must_be_ok_FOR_new_toGroupName() {
+		//a user logs in
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.EDITOR());
+
+		//searches some specific links
+		JSONArray linkList = TestFinder.searchLinks(cookies, "TRYING");
+
+		assertNotNull(linkList);
+
+		//gathers two of them
+		Long[] linkIds = new Long[2];
 		
+		for (int i = 0; i < linkList.length(); i++) {
+			JSONObject link = linkList.getJSONObject(i);
+			linkIds[i] = link.getLong("id");
+		}
+
+		//builds the body up
+		JSONObject body = new JSONObject();
+		body.put("toGroupName", "This is a new group to move.");
+		body.put("linkIdSet", linkIds);
+		
+		//moves those selected links
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(body)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(200, json.getInt("status"));
+		assertEquals("OK", json.getString("reason"));
+	}
+
+	/**
+	 * Consists of five steps;
+	 *	a) editor or admin logs in
+	 *	b) searches some specific links
+	 *  c) gathers two of them
+	 *  d) builds body up
+	 *  e) deletes those selected links
+	 */
+	@Test
+	public void Everything_must_be_ok_FOR_admin() {
 		Long toGroupId = findToGroupId(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), "Group 1 of Account-B");
 
-		for (JSONObject user: users) {
-  		//user logs in
-  		Cookies cookies = TestUtils.login(user);
-  
-  		//searches some specific links
-  		JSONArray linkList = TestFinder.searchLinks(cookies, "PROBLEM");
-  
-  		assertNotNull(linkList);
-  		assertEquals(2, linkList.length());
-  
-  		//gathers two of them
-  		Long[] linkIds = new Long[2];
-  		
-  		for (int i = 0; i < linkList.length(); i++) {
-  			JSONObject link = linkList.getJSONObject(i);
-  			linkIds[i] = link.getLong("id");
-  		}
+		//user logs in
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
-  		//builds the body up
-  		JSONObject body = new JSONObject();
-  		body.put("toGroupId", toGroupId);
-  		body.put("linkIdSet", linkIds);
-  
-  		//moves those selected links
-  		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-  			.headers(Fixtures.SESSION_0_HEADERS)
-  			.cookie(cookies)
-  			.body(body)
-  			.asJson();
-  		TestUtils.logout(cookies);
-  
-  		JSONObject json = res.getBody().getObject();
-  
-  		assertEquals(200, json.getInt("status"));
-  		assertEquals("OK", json.getString("reason"));
+		//searches some specific links
+		JSONArray linkList = TestFinder.searchLinks(cookies, "PROBLEM");
+
+		assertNotNull(linkList);
+		assertEquals(2, linkList.length());
+
+		//gathers two of them
+		Long[] linkIds = new Long[2];
+		
+		for (int i = 0; i < linkList.length(); i++) {
+			JSONObject link = linkList.getJSONObject(i);
+			linkIds[i] = link.getLong("id");
 		}
+
+		//builds the body up
+		JSONObject body = new JSONObject();
+		body.put("toGroupId", toGroupId);
+		body.put("linkIdSet", linkIds);
+
+		//moves those selected links
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(body)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(200, json.getInt("status"));
+		assertEquals("OK", json.getString("reason"));
 	}
 
 	private Long findToGroupId(JSONObject user, String groupName) {

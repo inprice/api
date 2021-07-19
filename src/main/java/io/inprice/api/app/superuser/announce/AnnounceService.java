@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -125,13 +126,13 @@ public class AnnounceService {
     	where.append(io.inprice.common.utils.DateUtils.formatDateForDB(dto.getEndingAt()));
     }
 
-    if (dto.getTypes() != null && dto.getTypes().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getTypes())) {
     	where.append(
 		    String.format(" and type in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getTypes()))
 			);
     }
 
-    if (dto.getLevels() != null && dto.getLevels().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getLevels())) {
     	where.append(
 		    String.format(" and level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
 			);
