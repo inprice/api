@@ -188,15 +188,15 @@ public class DeleteTest {
 		}
 	}
 
-	public JSONObject callTheService(Long groupId, Long[] linkIds) {
+	private JSONObject callTheService(Long groupId, Long[] linkIds) {
 		return callTheService(TestAccounts.Standard_plan_and_no_extra_users.ADMIN(), groupId, linkIds);
 	}
 
-	public JSONObject callTheService(JSONObject user, Long groupId, Long[] linkIds) {
+	private JSONObject callTheService(JSONObject user, Long groupId, Long[] linkIds) {
 		return callTheService(user, groupId, linkIds, 0);
 	}
 	
-	public JSONObject callTheService(JSONObject user, Long groupId, Long[] linkIds, int session) {
+	private JSONObject callTheService(JSONObject user, Long groupId, Long[] linkIds, int session) {
 		Cookies cookies = TestUtils.login(user);
 		
 		JSONObject body = null;

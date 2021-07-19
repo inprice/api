@@ -41,7 +41,7 @@ public class GroupController extends AbstractController {
   		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
   		ctx.json(Commons.createResponse(ctx, service.search(dto)));
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
-    
+
     // insert
     app.post(Consts.Paths.Group.BASE, (ctx) -> {
   		GroupDTO dto = ctx.bodyAsClass(GroupDTO.class);

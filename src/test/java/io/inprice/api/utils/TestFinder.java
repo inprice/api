@@ -69,12 +69,12 @@ public class TestFinder {
 	 * @param term - LIKE by name
 	 * @return
 	 */
-	public static JSONArray searchGroups(Cookies cookies, String term) {
+	public static JSONArray searchGroups(Cookies cookies, String byName) {
 		HttpResponse<JsonNode> res = Unirest.post("/groups/search")
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
-					.put("term", term)
+					.put("term", byName)
 				)
 			.asJson();
 

@@ -140,11 +140,11 @@ public class SearchTest {
 		return body;
 	}
 	
-	public JSONObject callTheService(JSONObject user, JSONObject body) {
+	private JSONObject callTheService(JSONObject user, JSONObject body) {
 		return callTheService(user, body, 0);
 	}
 
-	public JSONObject callTheService(JSONObject user, JSONObject body, int session) {
+	private JSONObject callTheService(JSONObject user, JSONObject body, int session) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)

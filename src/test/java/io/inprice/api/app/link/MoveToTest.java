@@ -281,15 +281,15 @@ public class MoveToTest {
 		return groups.getJSONObject(0).getLong("id");
 	}
 
-	public JSONObject callTheService(Long toGroupId, Long[] linkIds) {
+	private JSONObject callTheService(Long toGroupId, Long[] linkIds) {
 		return callTheService(TestAccounts.Standard_plan_and_no_extra_users.ADMIN(), toGroupId, linkIds);
 	}
 
-	public JSONObject callTheService(JSONObject user, Long toGroupId, Long[] linkIds) {
+	private JSONObject callTheService(JSONObject user, Long toGroupId, Long[] linkIds) {
 		return callTheService(user, toGroupId, linkIds, 0);
 	}
 	
-	public JSONObject callTheService(JSONObject user, Long toGroupId, Long[] linkIds, int session) {
+	private JSONObject callTheService(JSONObject user, Long toGroupId, Long[] linkIds, int session) {
 		Cookies cookies = TestUtils.login(user);
 		
 		JSONObject body = null;

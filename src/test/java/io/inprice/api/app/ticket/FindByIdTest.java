@@ -21,13 +21,13 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of TicketController.find(Long ticketId)
+ * Tests the functionality of TicketController.findById(Long ticketId)
  * 
  * @author mdpinar
  * @since 2021-07-17
  */
 @RunWith(JUnit4.class)
-public class FindTest {
+public class FindByIdTest {
 
 	private static final String SERVICE_ENDPOINT = "/ticket/{id}";
 
@@ -176,15 +176,15 @@ public class FindTest {
 		assertTrue(json.has("data"));
 	}
 
-	public JSONObject callTheService(Long id) {
+	private JSONObject callTheService(Long id) {
 		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), id);
 	}
 
-	public JSONObject callTheService(JSONObject user, Long id) {
+	private JSONObject callTheService(JSONObject user, Long id) {
 		return callTheService(user, id, 0);
 	}
 	
-	public JSONObject callTheService(JSONObject user, Long id, int session) {
+	private JSONObject callTheService(JSONObject user, Long id, int session) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)

@@ -256,11 +256,11 @@ public class InsertTest {
 		return body;
 	}
 
-	public JSONObject callTheService(JSONObject body) {
+	private JSONObject callTheService(JSONObject body) {
 		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
 	}
 	
-	public JSONObject callTheService(JSONObject user, JSONObject body, int session) {
+	private JSONObject callTheService(JSONObject user, JSONObject body, int session) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)

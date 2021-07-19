@@ -115,15 +115,15 @@ public class ToggleSeenValueTest {
 		assertEquals("OK", json.getString("reason"));
 	}
 
-	public JSONObject callTheService(Long id) {
+	private JSONObject callTheService(Long id) {
 		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), id);
 	}
 
-	public JSONObject callTheService(JSONObject user, Long id) {
+	private JSONObject callTheService(JSONObject user, Long id) {
 		return callTheService(user, id, 0);
 	}
 	
-	public JSONObject callTheService(JSONObject user, Long id, int session) {
+	private JSONObject callTheService(JSONObject user, Long id, int session) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)

@@ -152,11 +152,11 @@ public class InsertTest {
 		assertEquals("OK", json.getString("reason"));
 	}
 
-	public JSONObject callTheService(JSONObject body) {
+	private JSONObject callTheService(JSONObject body) {
 		return callTheService(TestAccounts.Pro_plan_with_no_user.ADMIN(), body);
 	}
 	
-	public JSONObject callTheService(JSONObject user, JSONObject body) {
+	private JSONObject callTheService(JSONObject user, JSONObject body) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
