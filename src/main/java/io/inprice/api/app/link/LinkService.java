@@ -166,22 +166,29 @@ class LinkService {
   }
 
   /**
-   * Moves links from one to another.
-   * Two operation is enough; a) setting new group id for all the selected links and b) refreshing group numbers
+   * Moves links from one group to another.
+   * 
+   * Two operations are done accordingly;
+   * 	a) setting new group id for all the selected links 
+   * 	b) refreshing group totals
    * 
    */
   Response moveTo(LinkMoveDTO dto) {
-  	Response response = Responses.Invalid.DATA;
+  	Response res = Responses.OK;
+  	
+  	boolean isNewGroup = (dto.getToGroupId() == null && StringUtils.isNotBlank(dto.getToGroupName()));
 
-  	if ((dto.getToGroupId() != null && dto.getToGroupId() > 0) || StringUtils.isNotBlank(dto.getToGroupName())) {
+  	if (isNewGroup || (dto.getToGroupId() != null && dto.getToGroupId() > 0)) {
       if (dto.getLinkIdSet() != null && dto.getLinkIdSet().size() > 0) {
 
       	try (Handle handle = Database.getHandle()) {
         	handle.begin();
 
-      		if (dto.getToGroupId() == null && StringUtils.isNotBlank(dto.getToGroupName())) {
+      		if (isNewGroup) {
+      			dto.setToGroupName(SqlHelper.clear(dto.getToGroupName()));
+
       			GroupDao groupDao = handle.attach(GroupDao.class);
-      			LinkGroup found = groupDao.findByName(dto.getToGroupName().trim(), CurrentUser.getAccountId());
+      			LinkGroup found = groupDao.findByName(dto.getToGroupName(), CurrentUser.getAccountId());
       			if (found == null) { //creating a new group
       				dto.setToGroupId(
     						groupDao.insert(
@@ -192,11 +199,11 @@ class LinkService {
 									)
     						);
       			} else {
-        			response = Responses.Already.Defined.GROUP;
+        			res = Responses.Already.Defined.GROUP;
       			}
       		}
 
-      		if (!response.equals(Responses.Already.Defined.GROUP)) {
+      		if (res.isOK()) {
         		LinkDao linkDao = handle.attach(LinkDao.class);
             
           	Set<Long> foundGroupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
@@ -208,7 +215,7 @@ class LinkService {
       							"set group_id=%d where link_id in (%s) and group_id!=%d and account_id=%d", 
       							dto.getToGroupId(), joinedIds, dto.getToGroupId(), CurrentUser.getAccountId()
     							);
-        			
+
               Batch batch = handle.createBatch();
               batch.add("update alarm " + updatePart);
               batch.add("update link_price " + updatePart);
@@ -226,30 +233,38 @@ class LinkService {
               		GroupAlarmService.updateAlarm(groupIdSet, handle);
               	}
 
-            		if (dto.getFromGroupId() != null) { //meaning that it is called from group definition (not from links search page)
+            		if (dto.getFromGroupId() != null) { //meaning that it is called from group definition (not from links searching page)
                   GroupDao groupDao = handle.attach(GroupDao.class);
                 	LinkGroup group = groupDao.findById(dto.getFromGroupId(), CurrentUser.getAccountId());
 
                 	Map<String, Object> data = new HashMap<>(2);
                 	data.put("group", group);
                   data.put("links", linkDao.findListByGroupId(dto.getFromGroupId(), CurrentUser.getAccountId()));
-                  response = new Response(data);
+                  res = new Response(data);
             		} else {
-            			response = Responses.OK;
+            			res = Responses.OK;
             		}
+              } else {
+              	res = Responses.NotFound.LINK;
     					}
+            } else {
+            	res = Responses.NotFound.GROUP;
             }
       		}
 
-          if (response.isOK())
+          if (res.isOK())
           	handle.commit();
           else
           	handle.rollback();
       	}
+      } else {
+      	res = Responses.NotFound.LINK;
       }
+    } else {
+    	res = Responses.NotFound.GROUP;
     }
 
-  	return response;
+  	return res;
   }
 
   Response getDetails(Long id) {
