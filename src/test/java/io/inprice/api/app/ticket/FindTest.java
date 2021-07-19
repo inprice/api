@@ -57,9 +57,25 @@ public class FindTest {
     assertEquals("Page not found!", json.getString("reason"));
 	}
 
+	/**
+	 * Consists of four steps;
+	 *	a) to gather other account's tickets, admin is logged in
+	 *	b) finds some specific tickets
+	 *  c) picks one of them
+	 *  d) evil user tries to find the ticket
+	 */
 	@Test
-	public void Ticket_not_found_WITH_wrong_id() {
-		JSONObject json = callTheService(0L);
+	public void Ticket_not_found_WHEN_trying_to_find_someone_elses_ticket() {
+		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+
+		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
+		TestUtils.logout(cookies); //here is important!
+		
+		assertNotNull(ticketList);
+		JSONObject ticket = ticketList.getJSONObject(0);
+
+		//evil user tries to delete the ticket
+		JSONObject json = callTheService(ticket.getLong("id"));
 
 		assertEquals(404, json.getInt("status"));
 		assertEquals("Ticket not found!", json.getString("reason"));

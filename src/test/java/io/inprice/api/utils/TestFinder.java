@@ -1,5 +1,8 @@
 package io.inprice.api.utils;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.util.Map;
 
 import kong.unirest.Cookies;
@@ -131,6 +134,38 @@ public class TestFinder {
 		data = json.getJSONObject("data");
 
 		return data.getJSONArray("commentList");
+	}
+
+	public static JSONArray getMembers(Cookies cookies) {
+		HttpResponse<JsonNode> res = Unirest.get("/membership")
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		JSONArray data = json.getJSONArray("data");
+
+		return data;
+	}
+
+	public static JSONArray searchUsers(String email) {
+		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
+
+		HttpResponse<JsonNode> res = Unirest.post("/sys/users/search")
+			.cookie(cookies)
+			.body(new JSONObject()
+					.put("term", email)
+				)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+		JSONArray data = json.getJSONArray("data");
+
+		assertEquals(200, json.getInt("status"));
+		assertNotNull(data);
+		
+		return data;
 	}
 
 }

@@ -232,7 +232,7 @@ public class PauseTest {
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
 		assertEquals(1, data.length());
-		
+
 		Long userId = data.getJSONObject(0).getLong("id");
 
 		//find user member id by user id

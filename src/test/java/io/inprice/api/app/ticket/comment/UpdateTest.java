@@ -75,15 +75,44 @@ public class UpdateTest {
 		assertEquals("Comment not found!", json.getString("reason"));
 	}
 
+	/**
+	 * Consists of five steps;
+	 *	a) to find other account's comment, admin is logged in
+	 *	b) searches a specific comment
+	 *  c) picks first comment
+	 *  e) evil user logs in
+	 *  f) tries to update other account's comment
+	 */
 	@Test
-	public void Comment_not_found_WITH_wrong_id() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("id", "-71");
+	public void Ticket_not_found_WITH_wrong_id() {
+		//to find other account's comment, admin is logged in
+		Cookies cookies = TestUtils.login(TestAccounts.Without_a_plan_and_extra_user.ADMIN());
 
-		JSONObject json = callTheService(body);
+		//searches a specific comment
+		JSONArray commentList = TestFinder.searchComments(cookies, "CRITICAL", 0);
+		assertNotNull(commentList);
+
+		TestUtils.logout(cookies);
+		
+		//picks first comment
+		JSONObject comment = commentList.getJSONObject(0);
+		comment.put("body", "This is an altered comment by an evil user!");
+
+		//evil user logs in
+		cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+
+		//tries to delete other account's comment
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(comment)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Comment not found!", json.getString("reason"));
+		assertEquals("Ticket not found!", json.getString("reason"));
 	}
 
 	@Test
@@ -95,17 +124,6 @@ public class UpdateTest {
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Ticket id cannot be empty!", json.getString("reason"));
-	}
-
-	@Test
-	public void Ticket_not_found_WITH_wrong_ticket_id() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("ticketId", "-71");
-
-		JSONObject json = callTheService(body);
-
-		assertEquals(404, json.getInt("status"));
-		assertEquals("Ticket not found!", json.getString("reason"));
 	}
 
 	@Test

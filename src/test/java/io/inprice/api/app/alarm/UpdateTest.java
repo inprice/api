@@ -66,9 +66,29 @@ public class UpdateTest {
 		assertEquals("Alarm not found!", json.getString("reason"));
 	}
 
+	/**
+	 * Consists of four steps;
+	 *	a) to gather other account's alarms, admin is logged in
+	 *	b) searches some specific alarms
+	 *  c) picks one of those alarms
+	 *  d) evil user tries to update other account's alarm
+	 */
 	@Test
-	public void Alarm_not_found_WITH_wrong_id() {
-		JSONObject json = callTheService(createBody(0L, "LINK", 1L, "STATUS", "CHANGED"));
+	public void Alarm_not_found_WHEN_trying_to_update_someone_elses_alarm() {
+		//to gather other account's links, admin is logged in
+		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+
+		//searches some specific links
+		JSONArray alarmList = TestFinder.searchAlarms(cookies, "LINK");
+		TestUtils.logout(cookies); //here is important!
+
+		assertNotNull(alarmList);
+
+		//picks one of those alarms
+		JSONObject alarm = alarmList.getJSONObject(0);
+
+		//evil user tries to update the alarm
+		JSONObject json = callTheService(createBody(alarm.getLong("id"), "LINK", 1L, "STATUS", "CHANGED"));
 
 		assertEquals(404, json.getInt("status"));
 		assertEquals("Alarm not found!", json.getString("reason"));

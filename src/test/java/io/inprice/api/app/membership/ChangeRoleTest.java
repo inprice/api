@@ -10,6 +10,7 @@ import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
 import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestRoles;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -260,6 +261,45 @@ public class ChangeRoleTest {
 
 		JSONObject json = res.getBody().getObject();
 		
+		assertEquals(404, json.getInt("status"));
+		assertNotNull("Member not found!", json.get("reason"));
+	}
+
+	/**
+	 * Consists of five steps;
+	 *	a) to get other account's members, admin is logged in
+	 *	b) fetch all members
+	 *  c) picks one of those members
+	 *  d) evil user logs in
+	 *  e) tries to change the role of other account's member
+	 */
+	@Test
+	public void Member_not_found_WHEN_trying_to_update_the_role_of_a_foreigner() {
+		//to gather other account's links, admin is logged in
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+
+		//searches some specific links
+		JSONArray memberList = TestFinder.getMembers(cookies);
+		TestUtils.logout(cookies); //here is important!
+
+		assertNotNull(memberList);
+
+		//picks one of those links
+		JSONObject member = memberList.getJSONObject(0);
+
+		//evil user logs in
+		cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.ADMIN());
+
+		//tries to change the role of other account's member
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(createBody(member.getLong("id"), TestRoles.VIEWER))
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
 		assertEquals(404, json.getInt("status"));
 		assertNotNull("Member not found!", json.get("reason"));
 	}

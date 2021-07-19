@@ -24,13 +24,13 @@ public class LinkController extends AbstractController {
   		SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
   		ctx.json(Commons.createResponse(ctx, service.search(dto)));
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
-    
+
     // get details
     app.get(Consts.Paths.Link.DETAILS + "/:id", (ctx) -> {
     	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
     	ctx.json(Commons.createResponse(ctx, service.getDetails(id)));
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
-    
+
     // delete
     app.delete(Consts.Paths.Link.BASE, (ctx) -> {
     	LinkDeleteDTO ldDto = ctx.bodyAsClass(LinkDeleteDTO.class);

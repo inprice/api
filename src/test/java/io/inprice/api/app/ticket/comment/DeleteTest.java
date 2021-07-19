@@ -57,9 +57,40 @@ public class DeleteTest {
     assertEquals("Request body is invalid!", json.getString("reason"));
 	}
 
+	/**
+	 * Consists of five steps;
+	 *	a) to find other account's comment, admin is logged in
+	 *	b) searches a specific comment
+	 *  c) picks first comment
+	 *  e) evil user logs in
+	 *  f) tries to delete other account's comment
+	 */
 	@Test
 	public void Comment_not_found_WITH_wrong_id() {
-		JSONObject json = callTheService(5L);
+		//to find other account's comment, admin is logged in
+		Cookies cookies = TestUtils.login(TestAccounts.Without_a_plan_and_extra_user.ADMIN());
+
+		//searches a specific comment
+		JSONArray commentList = TestFinder.searchComments(cookies, "CRITICAL", 0);
+		assertNotNull(commentList);
+
+		TestUtils.logout(cookies);
+		
+		//picks first comment
+		JSONObject comment = commentList.getJSONObject(0);
+
+		//evil user logs in
+		cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+
+		//tries to delete other account's comment
+		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.routeParam("id", ""+comment.getLong("id"))
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
 
 		assertEquals(404, json.getInt("status"));
 		assertEquals("Comment not found!", json.getString("reason"));

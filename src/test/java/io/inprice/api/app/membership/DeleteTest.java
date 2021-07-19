@@ -168,7 +168,7 @@ public class DeleteTest {
 	 *    e) tries to delete his membership
 	 */
 	@Test
-	public void Member_not_found_WHEN_an_admin_tries_to_change_his_own_role() {
+	public void Membership_not_found_WHEN_an_admin_tries_to_delete_himself() {
 		//super user logs in
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
@@ -190,7 +190,7 @@ public class DeleteTest {
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
 		assertEquals(1, data.length());
-		
+
 		Long userId = data.getJSONObject(0).getLong("id");
 
 		//find user member id by user id
@@ -206,11 +206,11 @@ public class DeleteTest {
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
 		assertEquals(1, data.length());
-		
+
 		Long memberId = data.getJSONObject(0).getLong("id");
-		
+
 		cookies = TestUtils.login(user);
-		
+
 		//tries to delete himself
 		res = Unirest.delete(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)

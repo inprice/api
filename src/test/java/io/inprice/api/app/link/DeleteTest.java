@@ -80,14 +80,6 @@ public class DeleteTest {
 		assertEquals("Forbidden!", json.getString("reason"));
 	}
 
-	@Test
-	public void Link_not_found_WITH_wrong_link_ids() {
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.ADMIN(), 1L, new Long[] { 1L });
-
-		assertEquals(404, json.getInt("status"));
-		assertEquals("Link not found!", json.getString("reason"));
-	}
-
 	/**
 	 * Consists of six steps;
 	 *	a) to gather other account's links, admin is logged in
@@ -95,7 +87,7 @@ public class DeleteTest {
 	 *  c) picks one of those links
 	 *  d) builds body up
 	 *  e) evil user logs in
-	 *  f) tries to delete other users' links
+	 *  f) tries to delete other account's links
 	 */
 	@Test
 	public void Link_not_found_WHEN_trying_to_delete_someone_elses_links() {
@@ -170,9 +162,9 @@ public class DeleteTest {
   			linkIds[i] = link.getLong("id");
   			fromGroupId = link.getLong("groupId");
   		}
-  
+
   		assertNotNull(fromGroupId);
-  
+
   		//builds the body up
   		JSONObject body = new JSONObject();
   		body.put("fromGroupId", fromGroupId);
@@ -190,6 +182,9 @@ public class DeleteTest {
   
   		assertEquals(200, json.getInt("status"));
   		assertTrue(json.has("data"));
+
+  		JSONObject data = json.getJSONObject("data");
+  		assertTrue(data.has("group"));
 		}
 	}
 

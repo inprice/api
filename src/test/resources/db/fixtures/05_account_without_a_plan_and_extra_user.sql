@@ -61,3 +61,7 @@ set @ticket_id = last_insert_id();
 -- history
 insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) 
 values (@ticket_id,'OPENED', 'CRITICAL', 'PROBLEM', 'ACCOUNT', @admin_id, @account_id);
+
+-- comment
+insert into test.ticket_comment (ticket_id, body, user_id, account_id) 
+values (@ticket_id, 'I am still waiting a response for this problem!', @admin_id, @account_id);

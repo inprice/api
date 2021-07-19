@@ -59,51 +59,56 @@ class MembershipService {
     String problem = validate(dto);
     if (problem == null) {
 
-      try (Handle handle = Database.getHandle()) {
-        UserDao userDao = handle.attach(UserDao.class);
-        User user = userDao.findByEmail(dto.getEmail());
-        
-        if (user == null || user.isBanned() == false) {
-        	if (user == null || user.isPrivileged() == false) {
-
-        		AccountDao accountDao = handle.attach(AccountDao.class);
-        		Account account = accountDao.findById(CurrentUser.getAccountId());
-        		if (account != null) {
-        			if (account.getPlan() == null) {
-        				return Responses.PermissionProblem.DONT_HAVE_A_PLAN;
-        			} else if (account.getPlan().getUserLimit().compareTo(account.getUserCount()) <= 0) {
-        				return Responses.PermissionProblem.USER_LIMIT_PROBLEM;
-        			}
-        		}
-
-        		MembershipDao membershipDao = handle.attach(MembershipDao.class);
-            Membership mem = membershipDao.findByEmail(dto.getEmail(), CurrentUser.getAccountId());
-            if (mem == null) {
-            	
-            	handle.begin();
-
-            	//TODO: an announce must be fired here!
-              boolean isAdded = membershipDao.insertInvitation(dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
-              if (isAdded) {
-                boolean isOK = accountDao.increaseUserCount(CurrentUser.getAccountId());
-                if (isOK) {
-                	handle.commit();
-                  dto.setAccountId(CurrentUser.getAccountId());
-                  return sendMail(userDao, dto);
-                } else {
-                	handle.rollback();
-                	return Responses.DataProblem.DB_PROBLEM;
+    	if (CurrentUser.getEmail().equalsIgnoreCase(dto.getEmail()) == false) {
+    	
+        try (Handle handle = Database.getHandle()) {
+          UserDao userDao = handle.attach(UserDao.class);
+          User user = userDao.findByEmail(dto.getEmail());
+          
+          if (user == null || user.isBanned() == false) {
+          	if (user == null || user.isPrivileged() == false) {
+  
+          		AccountDao accountDao = handle.attach(AccountDao.class);
+          		Account account = accountDao.findById(CurrentUser.getAccountId());
+          		if (account != null) {
+          			if (account.getPlan() == null) {
+          				return Responses.PermissionProblem.DONT_HAVE_A_PLAN;
+          			} else if (account.getPlan().getUserLimit().compareTo(account.getUserCount()) <= 0) {
+          				return Responses.PermissionProblem.USER_LIMIT_PROBLEM;
+          			}
+          		}
+  
+          		MembershipDao membershipDao = handle.attach(MembershipDao.class);
+              Membership mem = membershipDao.findByEmail(dto.getEmail(), CurrentUser.getAccountId());
+              if (mem == null) {
+              	
+              	handle.begin();
+  
+              	//TODO: an announce must be fired here!
+                boolean isAdded = membershipDao.insertInvitation(dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
+                if (isAdded) {
+                  boolean isOK = accountDao.increaseUserCount(CurrentUser.getAccountId());
+                  if (isOK) {
+                  	handle.commit();
+                    dto.setAccountId(CurrentUser.getAccountId());
+                    return sendMail(userDao, dto);
+                  } else {
+                  	handle.rollback();
+                  	return Responses.DataProblem.DB_PROBLEM;
+                  }
                 }
+              } else {
+                return new Response("This user has already been added to this account!");
               }
             } else {
-              return new Response("This user has already been added to this account!");
+            	return Responses.PermissionProblem.WRONG_USER;
             }
           } else {
-          	return Responses.PermissionProblem.WRONG_USER;
+          	return Responses.BANNED_USER;
           }
-        } else {
-        	return Responses.BANNED_USER;
         }
+    	} else {
+    		return Responses.METHOD_NOT_ALLOWED;
       }
     }
     return new Response(problem);
@@ -140,9 +145,8 @@ class MembershipService {
           } else {
           	res = new Response("You cannot re-send an invitation since this user is not in PENDING status!");
           }
-
       	} else {
-        	res = new Response("You cannot re-send invitation to yourself!");
+      		res = Responses.METHOD_NOT_ALLOWED;
         }
       }
   	}
@@ -178,7 +182,7 @@ class MembershipService {
             }
           }
       	} else {
-      		res = new Response("You cannot delete yourself!");
+      		res = Responses.METHOD_NOT_ALLOWED;
       	}
       }
     }
@@ -222,7 +226,7 @@ class MembershipService {
               res = Responses.Already.DELETED_MEMBER;
             }
         	} else {
-        		res = new Response("You cannot change your own role!");
+        		res = Responses.METHOD_NOT_ALLOWED;
         	}
         } else {
           res = Responses.NotFound.MEMBERSHIP;
@@ -268,7 +272,7 @@ class MembershipService {
             res = Responses.Already.DELETED_MEMBER;
           }
         } else {
-      		res = new Response("You cannot pause yourself!");
+      		res = Responses.METHOD_NOT_ALLOWED;
         }
       }
     }
@@ -310,7 +314,7 @@ class MembershipService {
             res = Responses.Already.DELETED_MEMBER;
           }
         } else {
-      		res = new Response("You cannot resume yourself!");
+      		res = Responses.METHOD_NOT_ALLOWED;
         }
       } else {
         res = Responses.NotFound.MEMBERSHIP;
