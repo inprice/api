@@ -106,61 +106,70 @@ class GroupService {
   }
 
   Response update(GroupDTO dto) {
-    if (dto.getId() != null && dto.getId() > 0) {
+  	Response res = Responses.NotFound.GROUP;
+
+  	if (dto.getId() != null && dto.getId() > 0) {
 
       String problem = validate(dto);
       if (problem == null) {
 
-        Response response = Responses.DataProblem.DB_PROBLEM;
-
         try (Handle handle = Database.getHandle()) {
-        	handle.begin();
-
           GroupDao groupDao = handle.attach(GroupDao.class);
-          LinkGroup found = groupDao.findById(dto.getId(), CurrentUser.getAccountId());
 
-          if (found != null) {
-            boolean isUpdated = groupDao.update(dto);
+          //to prevent duplication, checking if any group other than this has the same name!
+          LinkGroup found = groupDao.findByName(dto.getName(), dto.getId(), CurrentUser.getAccountId());
+          if (found == null) {
 
-            if (isUpdated) {
-              // if base price is changed then all the prices and other 
-              // indicators (on both group itself and its links) must be re-calculated accordingly
-              if (found.getPrice().compareTo(dto.getPrice()) != 0) {
-          			
-              	//refreshes group's totals and alarm if needed!
-            		GroupRefreshResult grr = GroupAlarmService.updateAlarm(dto.getId(), handle);
-
+          	//must be found
+          	found = groupDao.findById(dto.getId(), CurrentUser.getAccountId());
+            if (found != null) {
+            	handle.begin();
+            	
+            	boolean isUpdated = groupDao.update(dto);
+  
+              if (isUpdated) {
+                // if base price is changed then all the prices and other 
+                // indicators (on both group itself and its links) must be re-calculated accordingly
+                if (found.getPrice().compareTo(dto.getPrice()) != 0) {
+            			
+                	//refreshes group's totals and alarm if needed!
+              		GroupRefreshResult grr = GroupAlarmService.updateAlarm(dto.getId(), handle);
+  
+                  //for returning data!
+            			found.setLevel(grr.getLevel());
+            			found.setTotal(grr.getTotal());
+            			found.setMinPrice(grr.getMinPrice());
+            			found.setAvgPrice(grr.getAvgPrice());
+            			found.setMaxPrice(grr.getMaxPrice());
+                }
                 //for returning data!
-          			found.setLevel(grr.getLevel());
-          			found.setTotal(grr.getTotal());
-          			found.setMinPrice(grr.getMinPrice());
-          			found.setAvgPrice(grr.getAvgPrice());
-          			found.setMaxPrice(grr.getMaxPrice());
+                found.setName(dto.getName());
+                found.setPrice(dto.getPrice());
+                
+                Map<String, LinkGroup> data = new HashMap<>(1);
+                data.put("group", found);
+                res = new Response(data);
+              } else {
+              	res = Responses.DataProblem.DB_PROBLEM;
               }
-              //for returning data!
-              found.setName(dto.getName());
-              found.setPrice(dto.getPrice());
-              
-              Map<String, LinkGroup> data = new HashMap<>(1);
-              data.put("group", found);
-              response = new Response(data);
+
+              if (res.isOK())
+              	handle.commit();
+              else
+              	handle.rollback();
             }
           } else {
-          	response = Responses.NotFound.GROUP;
+          	res = Responses.Already.Defined.GROUP;
           }
-
-          if (response.isOK())
-          	handle.commit();
-          else
-          	handle.rollback();
         }
-        return response;
+        return res;
 
       } else {
-        return new Response(problem);
+      	res = new Response(problem);
       }
     }
-    return Responses.Invalid.GROUP;
+
+  	return res;
   }
 
   Response delete(Long id) {
