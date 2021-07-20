@@ -164,7 +164,7 @@ class GroupService {
   }
 
   Response delete(Long id) {
-  	Response response = Responses.Invalid.GROUP;
+  	Response res = Responses.Invalid.GROUP;
 
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
@@ -195,16 +195,18 @@ class GroupService {
           if (result[6] > 0) {
             Map<String, Object> data = new HashMap<>(1);
             data.put("count", group.getLinkCount());
-            response = new Response(data);
+            res = new Response(data);
             handle.commit();
           } else {
           	handle.rollback();
       		}
+      	} else {
+      		res = Responses.NotFound.GROUP;
       	}
       }
     }
 
-    return response;
+    return res;
   }
 
   Response addLinks(AddLinksDTO dto) {

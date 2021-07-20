@@ -154,7 +154,7 @@ public class MoveToTest {
 		TestUtils.logout(cookies);
 
 		assertNotNull(linkList);
-		assertEquals(1, linkList.length());
+		assertEquals(2, linkList.length());
 
 		//builds the body up
 		JSONObject body = new JSONObject();
@@ -246,7 +246,7 @@ public class MoveToTest {
 		//gathers two of them
 		Long[] linkIds = new Long[2];
 		
-		for (int i = 0; i < linkList.length(); i++) {
+		for (int i = 0; i < 2; i++) {
 			JSONObject link = linkList.getJSONObject(i);
 			linkIds[i] = link.getLong("id");
 		}

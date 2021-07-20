@@ -94,7 +94,7 @@ public class SearchTest {
 		assertTrue(json.has("data"));
 
 		JSONObject data = json.getJSONObject("data");
-		assertEquals(9, data.getJSONArray("rows").length());
+		assertEquals(12, data.getJSONArray("rows").length());
 	}
 
 	@Test
@@ -128,7 +128,7 @@ public class SearchTest {
 		JSONArray rows = data.getJSONArray("rows");
 		
 		assertEquals(200, json.getInt("status"));
-		assertEquals(5, rows.length());
+		assertEquals(6, rows.length());
 	}
 
 	public JSONObject createBody(String[] statuses, String alarmStatus) {

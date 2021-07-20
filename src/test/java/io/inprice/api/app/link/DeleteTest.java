@@ -157,7 +157,7 @@ public class DeleteTest {
   		Long fromGroupId = null;
   		Long[] linkIds = new Long[2];
   		
-  		for (int i = 0; i < linkList.length(); i++) {
+  		for (int i = 0; i < 2; i++) {
   			JSONObject link = linkList.getJSONObject(i);
   			linkIds[i] = link.getLong("id");
   			fromGroupId = link.getLong("groupId");

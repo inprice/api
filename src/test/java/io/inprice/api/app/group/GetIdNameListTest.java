@@ -108,7 +108,7 @@ public class GetIdNameListTest {
 			assertTrue(json.has("data"));
 
 			JSONArray data = json.getJSONArray("data");
-			assertEquals(2, data.length());
+			assertEquals(3, data.length());
 		}
 	}
 
