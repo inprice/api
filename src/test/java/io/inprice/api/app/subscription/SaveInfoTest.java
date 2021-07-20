@@ -32,6 +32,8 @@ public class SaveInfoTest {
 			new JSONObject()
   			.put("title", "Acme in Detroit Inc.")
   			.put("contactName", "Henry Parker")
+  			.put("taxId", "123")
+	    	.put("taxOffice", "Green Wood")
 	    	.put("address1", "Mulholand Drive")
 	    	.put("address2", "Number 4")
 	    	.put("postcode", "34420")
@@ -184,6 +186,28 @@ public class SaveInfoTest {
 		
 		assertEquals(400, json.getInt("status"));
     assertEquals("Contact Name can be up to 50 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Tax_Id_can_be_up_to_8_chars_WITH_longer_name() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("taxId", RandomStringUtils.randomAlphabetic(17));
+
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Tax Id can be up to 16 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Tax_Office_can_be_up_to_8_chars_WITH_longer_name() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("taxOffice", RandomStringUtils.randomAlphabetic(26));
+
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Tax Office can be up to 25 chars!", json.getString("reason"));
 	}
 
 	@Test

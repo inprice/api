@@ -26,7 +26,9 @@ public class GroupController extends AbstractController {
   	}, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     app.get(Consts.Paths.Group.ID_NAME_PAIRS + "/:id", (ctx) -> {
-  		Long excludedId = ctx.pathParam("id", Long.class).getValue();
+  		//Long excludedId = ctx.pathParam("id", Long.class).getOrNull();
+  		Long excludedId = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+  		//Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(Commons.createResponse(ctx, service.getIdNameList(excludedId)));
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 

@@ -194,9 +194,11 @@ class SubscriptionService {
       AccountDao dao = handle.attach(AccountDao.class);
       Account account = dao.findById(CurrentUser.getAccountId());
       if (account != null) {
-      	Map<String, Object> info = new HashMap<>(7);
+      	Map<String, Object> info = new HashMap<>(10);
       	info.put("title", account.getTitle());
       	info.put("contactName", account.getContactName());
+      	info.put("taxId", account.getTaxId());
+      	info.put("taxOffice", account.getTaxOffice());
       	info.put("address1", account.getAddress1());
       	info.put("address2", account.getAddress2());
       	info.put("postcode", account.getPostcode());
@@ -287,10 +289,22 @@ class SubscriptionService {
         problem = "Country must be between 3 - 50 chars!";
       }
     }
-
+    
     if (problem == null) {
     	if (StringUtils.isNotBlank(dto.getContactName()) && dto.getContactName().length() > 50) {
     		problem = "Contact Name can be up to 50 chars!";
+    	}
+    }
+
+    if (problem == null) {
+    	if (StringUtils.isNotBlank(dto.getTaxId()) && dto.getTaxId().length() > 16) {
+    		problem = "Tax Id can be up to 16 chars!";
+    	}
+    }
+
+    if (problem == null) {
+    	if (StringUtils.isNotBlank(dto.getTaxOffice()) && dto.getTaxOffice().length() > 25) {
+    		problem = "Tax Office can be up to 25 chars!";
     	}
     }
 

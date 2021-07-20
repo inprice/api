@@ -50,10 +50,10 @@ class GroupService {
     }
   }
 
-  Response getIdNameList(Long exclude) {
+  Response getIdNameList(Long excludedGroupId) {
   	try (Handle handle = Database.getHandle()) {
   		GroupDao groupDao = handle.attach(GroupDao.class);
-  		return new Response(groupDao.getIdNameList((exclude != null ? exclude : 0), CurrentUser.getAccountId()));
+  		return new Response(groupDao.getIdNameList((excludedGroupId != null ? excludedGroupId : 0), CurrentUser.getAccountId()));
   	}
   }
 
@@ -296,9 +296,9 @@ class GroupService {
       problem = "Name must be between 3 - 50 chars!";
     }
 
-    if (problem == null && StringUtils.isNotBlank(dto.getDescription())) {
-    	if (dto.getDescription().length() < 3 || dto.getDescription().length() > 128) {
-    		problem = "If given, description can be between 3 - 128 chars!";
+    if (problem == null) {
+    	if (StringUtils.isNotBlank(dto.getDescription()) && dto.getDescription().length() > 128) {
+    		problem = "Description can be up to 128 chars!";
     	}
     }
     

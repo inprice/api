@@ -53,6 +53,8 @@ create table account (
   name                      varchar(70) not null,
   title                     varchar(255),
   contact_name              varchar(50),
+  tax_id                    varchar(16),
+  tax_office                varchar(25),
   address_1                 varchar(255),
   address_2                 varchar(255),
   postcode                  varchar(8),

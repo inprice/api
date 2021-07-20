@@ -39,7 +39,8 @@ public interface SubscriptionDao {
 
   @SqlUpdate(
     "update account " +
-    "set title=:dto.title, contact_name=:dto.contactName, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country, " +
+    "set title=:dto.title, contact_name=:dto.contactName, tax_id=:dto.taxId, tax_office=:dto.taxOffice, address_1=:dto.address1, " +
+    "address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country, " +
     "plan_id=:dto.planId, pre_status=status, status=:status, subs_renewal_at=:dto.renewalDate, subs_started_at=now(), last_status_update=now() " +
     "where id=:id"
   )
