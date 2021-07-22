@@ -13,7 +13,8 @@ insert into test.user (email, password, name, timezone) values (@admin_email, @s
 set @admin_id = last_insert_id();
 
 -- account
-insert into test.account (name, plan_id, status, subs_started_at, subs_renewal_at, admin_id) values ('With Pro Plan and No User', @planId, 'SUBSCRIBED', now(), @one_year_later, @admin_id);
+insert into test.account (name, plan_id, status, subs_started_at, subs_renewal_at, admin_id) 
+values ('With Pro Plan and No User', @planId, 'SUBSCRIBED', now(), @one_year_later, @admin_id);
 set @account_id = last_insert_id();
 
 -- account history
@@ -29,3 +30,10 @@ values (@account_id, 'MA-002', 'SUBSCRIPTION', 'The first trial for renewal.');
 
 insert into test.account_trans (account_id, event_id, event, successful, description)
 values (@account_id, 'MM-004', 'SUBSCRIPTION', true, 'Subscription has been renewed successfully');
+
+-- -----------------------
+-- 2 groups and 4 links
+-- group_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
+-- -----------------------
+call sp_create_group_and_links('A', 1, 0, 0, 1, 'https://amazon.com/', 2, 'Account-G', @account_id);
+call sp_create_group_and_links('B', 1, 0, 0, 1, 'https://ebay.com/', 12, 'Account-G', @account_id);

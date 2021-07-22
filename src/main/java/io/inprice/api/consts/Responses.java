@@ -121,7 +121,7 @@ public class Responses {
   public static class NotAllowed {
     private static final int BASE = 900;
     public static final Response NO_LINK_LIMIT = new Response(BASE + 1, "You have reached max link number of your plan!");
-    public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload max 100 URLs at once!");
+    public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload up to 100 URLs at once!");
     public static final Response HAVE_NO_PLAN = new Response(BASE + 3, "You haven't picked a plan yet!");
     public static final Response UPDATE = new Response(BASE + 4, "You are not allowed to update this data!");
     public static final Response NO_ALARM_LIMIT = new Response(BASE + 10, "You have reached max alarm number of your plan!");
@@ -135,7 +135,7 @@ public class Responses {
     private static final int BASE = 1000;
     public static final Response PLAN_CHANGE = new Response(BASE + 1, "Seems that you don't have a subsciption. Only subscribers can change their plans!");
     public static final Response PAYMENT_FAILURE_ON_PLAN_CHANGE = new Response(BASE + 2, "Your payment failed during plan changing! Please try again or use another card!");
-    public static final Response EMPTY_URL_LIST = new Response(BASE + 3, "URL List is empty!");
+    public static final Response EMPTY_URL_LIST = new Response(BASE + 3, "URL list is empty!");
   }
 
   public static class NotFound {

@@ -27,7 +27,8 @@ set @editor_id = last_insert_id();
 select id into @viewer_id from test.user where email=@viewer_email;
 
 -- account
-insert into test.account (name, plan_id, user_count, status, subs_started_at, subs_renewal_at, admin_id) values ('With Standard Plan and Two Extra Users', @planId, 2, 'SUBSCRIBED', now(), @one_year_later, @admin_id);
+insert into test.account (name, plan_id, status, subs_started_at, subs_renewal_at, user_count, admin_id) 
+values ('With Standard Plan and Two Extra Users', @planId, 'SUBSCRIBED', now(), @one_year_later, 2, @admin_id);
 set @account_id = last_insert_id();
 
 -- account history
@@ -50,7 +51,7 @@ insert into test.membership (email, user_id, account_id, role, status) values (@
 insert into test.membership (email, user_id, account_id, role, status) values (@viewer_email, @viewer_id, @account_id, 'VIEWER', 'JOINED');
 
 -- -----------------------
--- 2 groups and 10 links
+-- 2 groups and 12 links
 -- group_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
 -- -----------------------
 call sp_create_group_and_links('K', 3, 0, 1, 1, 'https://amazon.com/', 2, 'Account-F', @account_id);

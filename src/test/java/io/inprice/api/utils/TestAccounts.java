@@ -84,7 +84,7 @@ public enum TestAccounts {
 
 	Pro_plan_with_no_user(
 		"With Pro Plan and No User. Two account transactions",
-  	"Has no link, alarm or coupon",
+  	"Has 2 active and 2 problem links. No alarm or coupon",
   	null,
 		ImmutableMap.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-g.com")

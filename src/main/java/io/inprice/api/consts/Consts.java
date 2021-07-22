@@ -65,7 +65,7 @@ public class Consts {
       public static final String SEARCH = BASE + "s/search";
       public static final String ID_NAME_PAIRS = BASE + "/pairs";
       public static final String LINKS = BASE + "/links";
-      public static final String ADD_LINKS = LINKS + "/import";
+      public static final String ADD_LINKS = BASE + "/add-links";
     }
 
     public static class Link {

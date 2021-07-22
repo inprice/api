@@ -3,7 +3,6 @@ package io.inprice.api.app.group;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -219,12 +218,10 @@ class GroupService {
   }
 
   Response addLinks(AddLinksDTO dto) {
-    Response response = validate(dto);
+    Response res = validate(dto);
 
-    if (response.isOK()) {
+    if (res.isOK()) {
       try (Handle handle = Database.getHandle()) {
-      	handle.begin();
-
         AccountDao accountDao = handle.attach(AccountDao.class);
         GroupDao groupDao = handle.attach(GroupDao.class);
     		LinkDao linkDao = handle.attach(LinkDao.class);
@@ -234,47 +231,51 @@ class GroupService {
         Account account = accountDao.findById(CurrentUser.getAccountId());
         if (account.getPlan() != null) {
           int allowedLinkCount = (account.getPlan().getLinkLimit() - account.getLinkCount());
-          urlList = response.getData();
-          urlList.remove("");
-  
+          urlList = res.getData();
+
           if (allowedLinkCount > 0) {
           	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
   
-          		for (Iterator<String> it = urlList.iterator(); it.hasNext();) {
+            	handle.begin();
+          		
+            	urlList.forEach(url -> {
   							Link link = new Link();
-  							link.setUrl(it.next());
-  							link.setUrlHash(DigestUtils.md5Hex(link.getUrl()));
+  							link.setUrl(url);
+  							link.setUrlHash(DigestUtils.md5Hex(url));
   							link.setGroupId(dto.getGroupId());
   							link.setAccountId(CurrentUser.getAccountId());
-  
+
   							long id = linkDao.insert(link);
-  
+
   							link.setId(id);
   							link.setStatus(LinkStatus.TOBE_CLASSIFIED);
   							linkDao.insertHistory(link);
-  						}
-          		groupDao.increaseWaitingsCount(dto.getGroupId(), urlList.size());
-  
-          		response = Responses.OK;
+            	});
+
+            	groupDao.increaseWaitingsCount(dto.getGroupId(), urlList.size());
+            	accountDao.increaseLinkCount(CurrentUser.getAccountId(), urlList.size());
+
+            	handle.commit();
+            	
+          		res = Responses.OK;
   
             } else {
             	if (urlList.size() > 100) {
-            		response = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
+            		res = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
             	} else if (urlList.size() > allowedLinkCount) {
-            		response = new Response("You can add max " + allowedLinkCount + " links more!");
+            		res = new Response("You can add up to " + allowedLinkCount + " link(s)!");
             	}
             }
           } else {
-            response = Responses.NotAllowed.NO_LINK_LIMIT;
+            res = Responses.NotAllowed.NO_LINK_LIMIT;
           }
         } else {
-          response = Responses.NotAllowed.HAVE_NO_PLAN;
+          res = Responses.NotAllowed.HAVE_NO_PLAN;
         }
 
-        if (response.isOK()) {
+        if (res.isOK()) {
         	LinkGroup group = groupDao.findByIdWithAlarm(dto.getGroupId(), CurrentUser.getAccountId());
 
-        	accountDao.increaseLinkCount(CurrentUser.getAccountId(), urlList.size());
         	int accountLinkCount = account.getLinkCount() + urlList.size();
 
           Map<String, Object> data = new HashMap<>(4);
@@ -282,20 +283,16 @@ class GroupService {
         	data.put("count", urlList.size());
         	data.put("linkCount", accountLinkCount);
         	data.put("links", linkDao.findListByGroupId(dto.getGroupId(), CurrentUser.getAccountId()));
-          response = new Response(data);
+          res = new Response(data);
         }
 
-        if (response.isOK())
-        	handle.commit();
-        else
-        	handle.rollback();
       } catch (Exception e) {
         log.error("Failed to import URL list!", e);
-        response = Responses.ServerProblem.EXCEPTION;
+        res = Responses.ServerProblem.EXCEPTION;
       }
     }
 
-    return response;
+    return res;
   }
   
   private String validate(GroupDTO dto) {
@@ -332,41 +329,50 @@ class GroupService {
   private Response validate(AddLinksDTO dto) {
     Response res = null;
 
-  	if (dto.getGroupId() == null || dto.getGroupId() <= 0) res = Responses.Invalid.GROUP;
-    if (res == null && StringUtils.isBlank(dto.getLinksText())) res = Responses.NotSuitable.EMPTY_URL_LIST;
+  	if (dto.getGroupId() != null && dto.getGroupId() > 0) {
 
-    Set<String> urlList = null;
-    if (res == null) {
-      String[] tempRows = dto.getLinksText().split("\n");
-      if (tempRows.length < 1) {
+      if (StringUtils.isNotBlank(dto.getLinksText())) {
+
+      	String[] tempRows = dto.getLinksText().split("\n");
+        if (tempRows.length > 0) {
+  
+        	Set<String> urlList = new LinkedHashSet<>();
+          List<String> problemList = new ArrayList<>();
+      
+          for (int i = 0; i < tempRows.length; i++) {
+      			String row = tempRows[i];
+      			if (StringUtils.isBlank(row)) continue;
+
+      			if (URLUtils.isAValidURL(row)) {
+      				urlList.add(row);
+      			} else {
+      				problemList.add(Integer.toString(i+1));
+      			}
+      		}
+
+          if (problemList.size() == 0) {
+          	res = new Response(urlList);
+          } else {
+          	if (problemList.size() > urlList.size()/2) {
+          		res = new Response("Mostly invalid URLs!");
+          	} else {
+          		res = new Response("Invalid URL(s) at " + String.join(", ", problemList));
+          	}
+          }
+
+        } else {
+        	res = Responses.NotSuitable.EMPTY_URL_LIST;
+        }
+        
+      } else {
       	res = Responses.NotSuitable.EMPTY_URL_LIST;
       }
 
-      if (res == null) {
-        urlList = new LinkedHashSet<>();
-        List<String> problemList = new ArrayList<>();
-    
-        for (int i = 0; i < tempRows.length; i++) {
-    			String row = tempRows[i];
-    			if (StringUtils.isBlank(row)) continue;
-    			if (URLUtils.isAValidURL(row)) {
-    				urlList.add(row);
-    			} else {
-    				problemList.add(Integer.toString(i+1));
-    			}
-    		}
-        if (problemList.size() > 0) {
-        	if (problemList.size() >= urlList.size()/2) {
-        		res = new Response("Mostly invalid URLs!");
-        	} else {
-        		res = new Response("Invalid URLs at " + String.join(", ", problemList));
-        	}
-        }
-      }
-    }
+  	} else {
+  		res = Responses.NotFound.GROUP;
+  	}
 
-    if (res != null) return res; 
-  	return new Response(urlList);
+  	return res;
   }
 
 }
