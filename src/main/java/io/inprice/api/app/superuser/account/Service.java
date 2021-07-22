@@ -160,20 +160,22 @@ class Service {
   }
 
   Response unbind(Context ctx) {
-    try (Handle handle = Database.getHandle()) {
-    	boolean isOK = refreshSuperCookie(handle, ctx, null);
-    	if (isOK) {
-      	return new Response ( 
-    			new ForResponse(
-    				null,
-    				CurrentUser.getUserName(),
-    				CurrentUser.getEmail(),
-    				CurrentUser.getUserTimezone()
-    			)
-    		);
-    	}
-    }
-    return Responses.BAD_REQUEST;
+  	if (CurrentUser.getAccountId() != null) {
+      try (Handle handle = Database.getHandle()) {
+      	boolean isOK = refreshSuperCookie(handle, ctx, null);
+      	if (isOK) {
+        	return new Response ( 
+      			new ForResponse(
+      				null,
+      				CurrentUser.getUserName(),
+      				CurrentUser.getEmail(),
+      				CurrentUser.getUserTimezone()
+      			)
+      		);
+      	}
+      }
+  	}
+    return new Response("You haven't bound to an account!");
   }
 
   private boolean refreshSuperCookie(Handle handle, Context ctx, Long accountId) {
@@ -203,7 +205,7 @@ class Service {
 		if (problem == null 
 				&& (StringUtils.isNotBlank(dto.getDescription()) 
 						&& (dto.getDescription().length() < 3 || dto.getDescription().length() > 128))) {
-			problem = "If given, description must be between 3 - 128 chars!";
+			problem = "Description can be between 3 - 128 chars!";
 		}
 		
 		if (problem == null) {
