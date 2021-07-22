@@ -53,20 +53,23 @@ class Service {
   }
 
 	Response searchForAccessLog(ALSearchDTO dto) {
-    try (Handle handle = Database.getHandle()) {
-    	String searchQuery = buildQueryForAccessLogSearch(dto);
-    	if (searchQuery == null) return Responses.BAD_REQUEST;
-
-    	List<AccessLog> 
-      	searchResult = 
-      		handle.createQuery(searchQuery)
-      			.map(new AccessLogMapper())
-    			.list();
-      return new Response(searchResult);
-    } catch (Exception e) {
-      log.error("Failed in search for access logs.", e);
-      return Responses.ServerProblem.EXCEPTION;
-    }
+  	if (dto.getAccountId() != null && dto.getAccountId() > 0) {
+      try (Handle handle = Database.getHandle()) {
+      	String searchQuery = buildQueryForAccessLogSearch(dto);
+      	if (searchQuery == null) return Responses.BAD_REQUEST;
+  
+      	List<AccessLog> 
+        	searchResult = 
+        		handle.createQuery(searchQuery)
+        			.map(new AccessLogMapper())
+      			.list();
+        return new Response(searchResult);
+      } catch (Exception e) {
+        log.error("Failed in search for access logs.", e);
+        return Responses.ServerProblem.EXCEPTION;
+      }
+  	}
+  	return new Response("Account id is missing!");
 	}
 
 	Response fetchDetails(Long id) {
@@ -267,9 +270,14 @@ class Service {
     return Responses.NotFound.PLAN;
   }
 
-  private String buildQueryForAccessLogSearch(ALSearchDTO dto) {
-  	if (dto.getAccountId() == null) return null;
+  Response searchIdNameList(String term) {
+  	try (Handle handle = Database.getHandle()) {
+  		Dao superDao = handle.attach(Dao.class);
+  		return new Response(superDao.searchIdNameListByName("%" + SqlHelper.clear(term) + "%"));
+  	}
+  }
 
+  private String buildQueryForAccessLogSearch(ALSearchDTO dto) {
   	dto = DTOHelper.normalizeSearch(dto, false);
 
     StringBuilder where = new StringBuilder("select * from access_log ");
@@ -316,13 +324,6 @@ class Service {
     where.append(dto.getRowLimit());
     
     return where.toString();
-  }
-
-  Response searchIdNameList(String term) {
-  	try (Handle handle = Database.getHandle()) {
-  		Dao superDao = handle.attach(Dao.class);
-  		return new Response(superDao.searchIdNameListByTerm("%" + SqlHelper.clear(term) + "%"));
-  	}
   }
   
 }

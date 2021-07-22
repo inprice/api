@@ -131,7 +131,7 @@ public class SearchTest {
 		assertEquals(1, rows.length());
 	}
 
-	public JSONObject createBody(String[] statuses, String[] priorities, String[] subjects) {
+	private JSONObject createBody(String[] statuses, String[] priorities, String[] subjects) {
 		JSONObject body = new JSONObject();
 		if (statuses != null) body.put("statuses", statuses);
 		if (priorities != null) body.put("priorities", priorities);

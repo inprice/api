@@ -71,6 +71,6 @@ public interface Dao {
 
   @SqlQuery("select id, name from account where name like :term order by name limit 15")
   @UseRowMapper(IdNamePairMapper.class)
-  List<IdNamePairMapper> searchIdNameListByTerm(@Bind("term") String term);
+  List<IdNamePairMapper> searchIdNameListByName(@Bind("term") String term);
 
 }

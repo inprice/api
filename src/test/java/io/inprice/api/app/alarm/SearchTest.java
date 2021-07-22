@@ -130,7 +130,7 @@ public class SearchTest {
 		assertEquals(0, rows.length());
 	}
 
-	public JSONObject createBody(String topic) {
+	private JSONObject createBody(String topic) {
 		JSONObject body = new JSONObject();
 		if (topic != null) body.put("topic", topic);
 
