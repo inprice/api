@@ -192,8 +192,8 @@ class Service {
   Response createCoupon(CreateCouponDTO dto) {
 		String problem = null;
 		
-		if (dto.getAccountId() == null) {
-			problem = "Invalid account!";
+		if (dto.getAccountId() == null || dto.getAccountId() < 1) {
+			problem = "Account id is missing!";
 		}
 		if (problem == null && dto.getPlanId() == null) {
 			problem = "Invalid plan!";
@@ -203,9 +203,8 @@ class Service {
 			problem = "Days info is invalid, it must be between 14 - 365!";
 		}
 		if (problem == null 
-				&& (StringUtils.isNotBlank(dto.getDescription()) 
-						&& (dto.getDescription().length() < 3 || dto.getDescription().length() > 128))) {
-			problem = "Description can be between 3 - 128 chars!";
+				&& (StringUtils.isNotBlank(dto.getDescription()) && dto.getDescription().length() > 128)) {
+			problem = "Description can be up to 128 chars!";
 		}
 		
 		if (problem == null) {
@@ -214,7 +213,7 @@ class Service {
 					createCoupon(
 						handle, 
 						dto.getAccountId(), 
-						SubsEvent.SUPERUSER_OFFER, 
+						SubsEvent.GIVEN_BY_SUPERUSER, 
 						dto.getPlanId(), 
 						dto.getDays(), 
 						dto.getDescription()
@@ -224,7 +223,9 @@ class Service {
 		return new Response(problem);
   }
 
-  Response createCoupon(Handle handle, long accountId, SubsEvent subsEvent, Integer planId, long days, String description) {
+  private Response createCoupon(Handle handle, long accountId, SubsEvent subsEvent, Integer planId, long days, String description) {
+  	Response res = Responses.NotFound.PLAN;
+
   	PlanDao planDao = handle.attach(PlanDao.class);
   	Plan plan = planDao.findById(planId);
   	if (plan != null) {
@@ -232,44 +233,55 @@ class Service {
     	AccountDao accountDao = handle.attach(AccountDao.class);
     	Account account = accountDao.findById(accountId);
   		if (account != null) {
+  			
+  			if (account.getStatus().isOKForCoupon()) {
   				
-	  		if (account.getUserCount() <= plan.getUserLimit() 
-	  				&& account.getLinkCount() <= plan.getLinkLimit() 
-	  				&& account.getAlarmCount() <= plan.getAlarmLimit()) {
+  				boolean hasLimitProblem = false;
+  				if (account.getPlanId() != null) {
+  					hasLimitProblem = (
+  							account.getUserCount() > plan.getUserLimit() 
+    	  				|| account.getLinkCount() > plan.getLinkLimit() 
+    	  				|| account.getAlarmCount() > plan.getAlarmLimit()
+    	  			);
+  				}
 
-	  	    String couponCode = CouponManager.generate();
-	  	    CouponDao couponDao = handle.attach(CouponDao.class);
-	  	    boolean isOK = couponDao.create(
-	  	      couponCode,
-	  	      planId,
-	  	      days,
-	  	      description,
-	  	      accountId
-	  	    );
-
-	  	    if (isOK) {
-	  	      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
-	  	      AccountTrans trans = new AccountTrans();
-	  	      trans.setAccountId(accountId);
-	  	      trans.setEvent(subsEvent);
-	  	      trans.setSuccessful(Boolean.TRUE);
-	  	      trans.setReason(description);
-	  	      trans.setDescription("Issued coupon code: " + couponCode);
-	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-	  	      return new Response(Collections.singletonMap("code", couponCode));
-	  	    } else {
-	  	    	return new Response("An error occurred, we will be looking for this!");
-	  	    }
-	  			
+  	  		if (hasLimitProblem == false) {
+  	  	    String couponCode = CouponManager.generate();
+  	  	    CouponDao couponDao = handle.attach(CouponDao.class);
+  	  	    boolean isOK = couponDao.create(
+  	  	      couponCode,
+  	  	      planId,
+  	  	      days,
+  	  	      description,
+  	  	      accountId
+  	  	    );
+  
+  	  	    if (isOK) {
+  	  	      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+  	  	      AccountTrans trans = new AccountTrans();
+  	  	      trans.setAccountId(accountId);
+  	  	      trans.setEvent(subsEvent);
+  	  	      trans.setSuccessful(Boolean.TRUE);
+  	  	      trans.setReason(description);
+  	  	      trans.setDescription("Issued coupon code: " + couponCode);
+  	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+  	  	      res = new Response(Collections.singletonMap("code", couponCode));
+  	  	    } else {
+  	  	    	res = Responses.DataProblem.DB_PROBLEM;
+  	  	    }
+  	  		} else {
+  	  			res = new Response("Current limits of this account are greater than the plan's!");
+  	  		}
 				} else {
-					return new Response("Account current limits are greater than the plan's!");
+					res = Responses.Already.ACTIVE_SUBSCRIPTION;
 				}
 
   		} else {
-  			return Responses.NotFound.ACCOUNT;
+  			res = Responses.NotFound.ACCOUNT;
   		}
   	}
-    return Responses.NotFound.PLAN;
+
+  	return res;
   }
 
   Response searchIdNameList(String term) {

@@ -50,7 +50,6 @@ public class UnBindTest {
 
 	/**
 	 * Fulfills the same test for three types of users; viewer, editor and admin.
-	 * 
 	 */
 	@Test
 	public void Forbidden_WITH_normal_users() {

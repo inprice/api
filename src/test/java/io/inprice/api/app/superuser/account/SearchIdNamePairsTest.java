@@ -3,9 +3,8 @@ package io.inprice.api.app.superuser.account;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,7 +13,6 @@ import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
 import io.inprice.api.utils.TestAccounts;
-import io.inprice.api.utils.TestRoles;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -57,13 +55,13 @@ public class SearchIdNamePairsTest {
 	 */
 	@Test
 	public void Forbidden_WITH_normal_users() {
-		Map<TestRoles, JSONObject> roleUserMap = new HashMap<>(3);
-		roleUserMap.put(TestRoles.VIEWER, TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
-		roleUserMap.put(TestRoles.EDITOR, TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
-		roleUserMap.put(TestRoles.ADMIN, TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		List<JSONObject> userList = new ArrayList<>(3);
+		userList.add(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		userList.add(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
+		userList.add(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
 
-		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {
-			JSONObject json = callTheService(roleUser.getValue(), "A", (TestRoles.VIEWER.equals(roleUser.getKey()) ? 1 : 0));
+		for (JSONObject user: userList) {
+			JSONObject json = callTheService(user, "A");
 
 			assertEquals(403, json.getInt("status"));
   		assertEquals("Forbidden!", json.getString("reason"));
@@ -81,14 +79,9 @@ public class SearchIdNamePairsTest {
 	}
 	
 	private JSONObject callTheService(JSONObject user, String byName) {
-		return callTheService(user, byName, 0);
-	}
-
-	private JSONObject callTheService(JSONObject user, String byName, int session) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS) //for allowing viewers
 			.cookie(cookies)
 			.queryString("term", byName)
 			.asJson();
