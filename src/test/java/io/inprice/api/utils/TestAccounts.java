@@ -91,6 +91,17 @@ public enum TestAccounts {
 		)
 	),
 
+	Pro_plan_with_two_extra_users(
+		"With Pro Plan and Two Extra Users.",
+  	"Has no link, alarm or coupon",
+  	null,
+		ImmutableMap.of(
+			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-m.com"),
+			TestRoles.EDITOR, new JSONObject().put("email", "editor@account-m.com"),
+			TestRoles.VIEWER, new JSONObject().put("email", "viewer@account-m.com")
+		)
+	),
+
 	Premium_plan_and_three_pending_users(
 		"With Premium Plan and Two Pending Users",
   	"Has no link, alarm or coupon. Apart from admin, other 3 users are in PENDING state",

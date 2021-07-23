@@ -1,4 +1,4 @@
-package io.inprice.api.app.superuser.account;
+package io.inprice.api.app.superuser.link;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -14,18 +14,27 @@ import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
+import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of superuser's Account -> Controller.fetchDetails(Long accountId)
+ * Tests the functionality of superuser's Link -> Controller.search(SearchDTO)
  * 
  * @author mdpinar
  * @since 2021-07-23
  */
 @RunWith(JUnit4.class)
-public class FetchDetailsTest {
+public class SearchTest {
 
-	private static final String SERVICE_ENDPOINT = "/sys/account/details/{accountId}";
+	private static final String SERVICE_ENDPOINT = "/sys/links/search";
+
+	private static final JSONObject SAMPLE_BODY = 
+			new JSONObject()
+  			.put("searchBy", "NAME")
+  			.put("statuses", new String[] { "AVAILABLE", "NOT_AVAILABLE" })
+  			.put("alarmStatus", "ALL")
+  			.put("orderBy", "PLATFORM")
+	    	;
 
 	@BeforeClass
 	public static void setup() {
@@ -34,9 +43,9 @@ public class FetchDetailsTest {
 
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
-		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
-			.routeParam("accountId", "1")
+			.body(SAMPLE_BODY)
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -51,42 +60,28 @@ public class FetchDetailsTest {
 	@Test
 	public void Forbidden_WITH_normal_users() {
 		for (JSONObject user: Fixtures.NORMAL_USER_LIST) {
-			JSONObject json = callTheService(user, 1L);
+			JSONObject json = callTheService(user, SAMPLE_BODY);
 
 			assertEquals(403, json.getInt("status"));
   		assertEquals("Forbidden!", json.getString("reason"));
 		}
 	}
-	
-	@Test
-	public void Account_not_found_WITH_non_existing_id() {
-		JSONObject json = callTheService(Fixtures.SUPER_USER, 999L);
-		
-		assertEquals(404, json.getInt("status"));
-		assertEquals("Account not found!", json.getString("reason"));
-	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_superuser() {
-		JSONObject json = callTheService(Fixtures.SUPER_USER, 1L);
-
-		assertEquals(200, json.getInt("status"));
+		JSONObject json = callTheService(Fixtures.SUPER_USER, SAMPLE_BODY);
 		assertTrue(json.has("data"));
 
-		JSONObject data = json.getJSONObject("data");
-
-		assertTrue(data.has("account"));
-		assertTrue(data.has("memberList"));
-		assertTrue(data.has("historyList"));
-		assertTrue(data.has("transList"));
+		JSONArray rows = json.getJSONObject("data").getJSONArray("rows");
+		assertEquals(25, rows.length());
 	}
 	
-	private JSONObject callTheService(JSONObject user, Long accountId) {
+	private JSONObject callTheService(JSONObject user, JSONObject body) {
 		Cookies cookies = TestUtils.login(user);
 
-		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.cookie(cookies)
-			.routeParam("accountId", (accountId != null ? ""+accountId : ""))
+			.body(body)
 			.asJson();
 		TestUtils.logout(cookies);
 

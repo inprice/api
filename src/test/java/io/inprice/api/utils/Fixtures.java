@@ -1,7 +1,9 @@
 package io.inprice.api.utils;
 
+import java.util.List;
 import java.util.Map;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import kong.unirest.json.JSONObject;
@@ -19,5 +21,11 @@ public class Fixtures {
 	
 	public static final Map<String, String> SESSION_0_HEADERS = ImmutableMap.of("X-Session", "0");
 	public static final Map<String, String> SESSION_1_HEADERS = ImmutableMap.of("X-Session", "1");
+
+	public static final List<JSONObject> NORMAL_USER_LIST = ImmutableList.of(
+		TestAccounts.Pro_plan_with_two_extra_users.VIEWER(),
+		TestAccounts.Pro_plan_with_two_extra_users.EDITOR(),
+		TestAccounts.Pro_plan_with_two_extra_users.ADMIN()
+	);
 
 }

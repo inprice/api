@@ -4,9 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,7 +11,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -161,12 +157,7 @@ public class CreateCouponTest {
 	 */
 	@Test
 	public void Forbidden_WITH_normal_users() {
-		List<JSONObject> userList = new ArrayList<>(3);
-		userList.add(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
-		userList.add(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
-		userList.add(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
-
-		for (JSONObject user: userList) {
+		for (JSONObject user: Fixtures.NORMAL_USER_LIST) {
 			JSONObject json = callTheService(user, SAMPLE_BODY);
 
 			assertEquals(403, json.getInt("status"));

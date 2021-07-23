@@ -1,4 +1,4 @@
-package io.inprice.api.app.superuser.account;
+package io.inprice.api.app.superuser.link;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -17,7 +17,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of superuser's Account -> Controller.fetchDetails(Long accountId)
+ * Tests the functionality of superuser's Link -> Controller.fetchDetails(Long linkId)
  * 
  * @author mdpinar
  * @since 2021-07-23
@@ -25,7 +25,7 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class FetchDetailsTest {
 
-	private static final String SERVICE_ENDPOINT = "/sys/account/details/{accountId}";
+	private static final String SERVICE_ENDPOINT = "/sys/link/details/{linkId}";
 
 	@BeforeClass
 	public static void setup() {
@@ -36,7 +36,7 @@ public class FetchDetailsTest {
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
-			.routeParam("accountId", "1")
+			.routeParam("linkId", "1")
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -59,11 +59,11 @@ public class FetchDetailsTest {
 	}
 	
 	@Test
-	public void Account_not_found_WITH_non_existing_id() {
+	public void Link_not_found_WITH_non_existing_id() {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, 999L);
-		
+
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Account not found!", json.getString("reason"));
+		assertEquals("Link not found!", json.getString("reason"));
 	}
 
 	@Test
@@ -75,18 +75,17 @@ public class FetchDetailsTest {
 
 		JSONObject data = json.getJSONObject("data");
 
-		assertTrue(data.has("account"));
-		assertTrue(data.has("memberList"));
+		assertTrue(data.has("specList"));
+		assertTrue(data.has("priceList"));
 		assertTrue(data.has("historyList"));
-		assertTrue(data.has("transList"));
 	}
 	
-	private JSONObject callTheService(JSONObject user, Long accountId) {
+	private JSONObject callTheService(JSONObject user, Long linkId) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.cookie(cookies)
-			.routeParam("accountId", (accountId != null ? ""+accountId : ""))
+			.routeParam("linkId", (linkId != null ? ""+linkId : ""))
 			.asJson();
 		TestUtils.logout(cookies);
 

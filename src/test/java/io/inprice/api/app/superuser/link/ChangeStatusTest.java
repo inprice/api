@@ -1,8 +1,7 @@
-package io.inprice.api.app.superuser.announce;
+package io.inprice.api.app.superuser.link;
 
 import static org.junit.Assert.assertEquals;
 
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,27 +16,21 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of superuser's Announce -> Controller.update(AnnounceDTO)
+ * Tests the functionality of superuser's Link -> Controller.changeStatus(BulkChangetDTO)
  * 
  * @author mdpinar
  * @since 2021-07-23
  */
 @RunWith(JUnit4.class)
-public class UpdateTest {
+public class ChangeStatusTest {
 
-	private static final String SERVICE_ENDPOINT = "/sys/announce";
+	private static final String SERVICE_ENDPOINT = "/sys/link/change-status";
 
 	private static final JSONObject SAMPLE_BODY = 
 			new JSONObject()
-  			.put("id", "1")
-  			.put("type", "SYSTEM")
-  			.put("level", "INFO")
-	    	.put("title", "Attention pls!")
-	    	.put("body", "This is a kindly reaminder that our platform will be out of service tomorrow for only two hours.")
-	    	.put("link", "https://inprice.io/general-announcements/info/3")
-	    	.put("startingAt", "2021-07-23 12:00:00")
-	    	.put("endingAt", "2021-07-23 14:00:00")
-	    	;
+  			.put("status", "PAUSED")
+  			.put("idSet", new Long[] { 1L, 2L })
+  			;
 
 	@BeforeClass
 	public static void setup() {
@@ -66,80 +59,59 @@ public class UpdateTest {
 	}
 	
 	@Test
-	public void Announce_id_is_missing() {
+	public void Acceptable_statuses_PAUSED_RESOLVED_and_NOT_SUITABLE_WITHOUT_status() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.remove("id");
+		body.remove("status");
 		
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-		assertEquals("Announce id is missing!", json.getString("reason"));
+		assertEquals("Acceptable statuses: PAUSED, RESOLVED and NOT_SUITABLE!", json.getString("reason"));
 	}
 
 	@Test
-	public void Title_cannot_be_empty() {
+	public void Acceptable_statuses_PAUSED_RESOLVED_and_NOT_SUITABLE_WITH_wrong_status() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.remove("title");
+		body.put("status", "AVAILABLE");
+
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+		assertEquals("Acceptable statuses: PAUSED, RESOLVED and NOT_SUITABLE!", json.getString("reason"));
+	}
+	
+	@Test
+	public void Link_not_found_WITHOUT_idSet() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.remove("idSet");
 		
 		JSONObject json = callTheService(body);
-
-		assertEquals(400, json.getInt("status"));
-		assertEquals("Title cannot be empty!", json.getString("reason"));
+		
+		assertEquals(404, json.getInt("status"));
+		assertEquals("Link not found!", json.getString("reason"));
+	}
+	
+	@Test
+	public void Link_not_found_WITH_wrong_ids() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("idSet", new Long[] { 888L, 999L });
+		
+		JSONObject json = callTheService(body);
+		
+		assertEquals(404, json.getInt("status"));
+		assertEquals("Link not found!", json.getString("reason"));
 	}
 
 	@Test
-	public void Title_must_be_between_3_and_50_chars_WITH_shorter_title() {
+	public void Link_not_found_FOR_the_links_RESOLVED_and_but_not_TOBE_IMPLEMENTED() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("title", "AB");
+		body.put("status", "RESOLVED");
+		body.put("idSet", new Long[] { 1L });
 
 		JSONObject json = callTheService(body);
-		
-		assertEquals(400, json.getInt("status"));
-    assertEquals("Title must be between 3 - 50 chars!", json.getString("reason"));
-	}
 
-	@Test
-	public void Title_must_be_between_3_and_50_chars_WITH_longer_title() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("title", RandomStringUtils.randomAlphabetic(51));
-		
-		JSONObject json = callTheService(body);
-		
-		assertEquals(400, json.getInt("status"));
-    assertEquals("Title must be between 3 - 50 chars!", json.getString("reason"));
-	}
-
-	@Test
-	public void Body_cannot_be_empty() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.remove("body");
-		
-		JSONObject json = callTheService(body);
-
-		assertEquals(400, json.getInt("status"));
-		assertEquals("Body cannot be empty!", json.getString("reason"));
-	}
-
-	@Test
-	public void Body_must_be_at_least_11_chars() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("body", RandomStringUtils.randomAlphabetic(11));
-
-		JSONObject json = callTheService(body);
-		
-		assertEquals(400, json.getInt("status"));
-    assertEquals("Body must be at least 11 chars!", json.getString("reason"));
-	}
-
-	@Test
-	public void Level_cannot_be_empty() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.remove("level");
-		
-		JSONObject json = callTheService(body);
-
-		assertEquals(400, json.getInt("status"));
-		assertEquals("Level cannot be empty!", json.getString("reason"));
+		assertEquals(404, json.getInt("status"));
+		assertEquals("Link not found!", json.getString("reason"));
 	}
 
 	/**
@@ -156,19 +128,11 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void Announce_not_found_WITH_wrong_id() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("id", 999);
-		
-		JSONObject json = callTheService(body);
-
-		assertEquals(404, json.getInt("status"));
-    assertEquals("Announce not found!", json.getString("reason"));
-	}
-
-	@Test
 	public void Everything_must_be_ok_WITH_superuser() {
-		JSONObject json = callTheService(Fixtures.SUPER_USER, SAMPLE_BODY);
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("idSet", new Long[] { 1L });
+
+		JSONObject json = callTheService(body);
 
 		assertEquals(200, json.getInt("status"));
 		assertEquals("OK", json.getString("reason"));
@@ -189,7 +153,6 @@ public class UpdateTest {
 
 	private JSONObject callTheService(Cookies cookies, JSONObject body) {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(body != null ? body : "")
 			.asJson();

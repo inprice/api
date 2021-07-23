@@ -3,16 +3,12 @@ package io.inprice.api.app.superuser.account;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -54,12 +50,7 @@ public class SearchForAccessLogTest {
 	 */
 	@Test
 	public void Forbidden_WITH_normal_users() {
-		List<JSONObject> userList = new ArrayList<>(3);
-		userList.add(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
-		userList.add(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
-		userList.add(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
-
-		for (JSONObject user: userList) {
+		for (JSONObject user: Fixtures.NORMAL_USER_LIST) {
 			JSONObject json = callTheService(user, new JSONObject());
 
 			assertEquals(403, json.getInt("status"));

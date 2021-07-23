@@ -80,7 +80,7 @@ class LinkService {
 
     if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
     	where.append(
-		    String.format(" and status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
+		    String.format(" and l.status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
     }
 
@@ -108,7 +108,7 @@ class LinkService {
     }
   }
 
-  Response getDetails(Long id) {
+  Response fetchDetails(Long id) {
     Response res = Responses.NotFound.LINK;
 
     if (id != null && id > 0) {
@@ -141,10 +141,10 @@ class LinkService {
   }
 
   Response changeStatus(BulkChangetDTO dto) {
-    Response response = Responses.NotFound.LINK;
+    Response res = Responses.NotFound.LINK;
 
-  	if (dto.getStatus() != null && STATUSES_FOR_CHANGE.contains(dto.getStatus())) {
-      if (CollectionUtils.isNotEmpty(dto.getIdSet())) {
+    if (CollectionUtils.isNotEmpty(dto.getIdSet())) {
+    	if (dto.getStatus() != null && STATUSES_FOR_CHANGE.contains(dto.getStatus())) {
         try (Handle handle = Database.getHandle()) {
   
           LinkDao linkDao = handle.attach(LinkDao.class);
@@ -158,36 +158,32 @@ class LinkService {
           	}
           }
   
-          if (selectedSet.size() > 0) {
+          if (CollectionUtils.isNotEmpty(selectedSet)) {
           	handle.begin();
-          	int affected = 0;
-          	
-          	if (CollectionUtils.isNotEmpty(selectedSet)) {
-          		affected = linkDao.setStatus(selectedSet, dto.getStatus(), dto.getStatus().getGroup());
-          	}
+
+          	int affected = linkDao.setStatus(selectedSet, dto.getStatus(), dto.getStatus().getGroup());
   
-            if (affected == selectedSet.size()) {
+          	if (affected == selectedSet.size()) {
             	linkDao.insertHistory(selectedSet);
             	handle.commit();
-            	response = Responses.OK;
+            	res = Responses.OK;
             } else {
             	handle.rollback();
-            	response = Responses.DataProblem.DB_PROBLEM;
+            	res = Responses.DataProblem.DB_PROBLEM;
             }
-          } else {
-          	response = new Response("No suitable link found!");
           }
+
         }
+      } else {
+      	res = new Response("Acceptable statuses: PAUSED, RESOLVED and NOT_SUITABLE!");
       }
-    } else {
-    	response = new Response("New status is not proper!");
     }
 
-    return response;
+    return res;
   }
 
   Response undo(BulkChangetDTO dto) {
-    Response response = Responses.NotFound.LINK;
+    Response res = Responses.NotFound.LINK;
 
     if (CollectionUtils.isNotEmpty(dto.getIdSet())) {
       try (Handle handle = Database.getHandle()) {
@@ -199,10 +195,10 @@ class LinkService {
         for (Long id: dto.getIdSet()) {
         	List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(id);
 
-          if (historyList != null) {
+          if (CollectionUtils.isNotEmpty(historyList)) {
           	LinkHistory lastHistory = historyList.get(0);
-          	if (historyList.size() > 1 && STATUSES_FOR_CHANGE.contains(lastHistory.getStatus())) {
 
+          	if (historyList.size() > 1 && STATUSES_FOR_CHANGE.contains(lastHistory.getStatus())) {
             	LinkHistory preHistory = historyList.get(1);
             	affected += linkDao.setStatus(id, preHistory.getStatus(), preHistory.getStatus().getGroup());
             	linkDao.deleteHistory(lastHistory.getId());
@@ -212,15 +208,15 @@ class LinkService {
 
         if (affected > 0) {
         	handle.commit();
-        	response = Responses.OK;
+        	res = Responses.OK;
         } else {
         	handle.rollback();
-        	response = new Response("Link(s) status isn't suitable for undo!");
+        	res = new Response("No suitable link found for undo!");
         }
       }
     }
 
-    return response;
+    return res;
   }
 
 }

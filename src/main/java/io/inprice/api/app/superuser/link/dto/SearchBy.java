@@ -2,7 +2,7 @@ package io.inprice.api.app.superuser.link.dto;
 
 public enum SearchBy {
 
-	NAME("name"),
+	NAME("l.name"),
 	SELLER("seller"),
 	BRAND("brand"),
 	SKU("sku"),
