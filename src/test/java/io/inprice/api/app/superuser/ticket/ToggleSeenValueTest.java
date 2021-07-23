@@ -1,7 +1,6 @@
-package io.inprice.api.app.superuser.link;
+package io.inprice.api.app.superuser.ticket;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -17,15 +16,15 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of superuser's Link -> Controller.fetchDetails(Long linkId)
+ * Tests the functionality of superuser's Ticket -> Controller.toggleSeenValue(Long ticketId)
  * 
  * @author mdpinar
  * @since 2021-07-23
  */
 @RunWith(JUnit4.class)
-public class FetchDetailsTest {
+public class ToggleSeenValueTest {
 
-	private static final String SERVICE_ENDPOINT = "/sys/link/details/{linkId}";
+	private static final String SERVICE_ENDPOINT = "/sys/ticket/seen/{id}";
 
 	@BeforeClass
 	public static void setup() {
@@ -34,15 +33,23 @@ public class FetchDetailsTest {
 
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
-		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
-			.routeParam("linkId", "1")
+			.routeParam("id", "1")
 			.asJson();
-
+		
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(401, json.getInt("status"));
 		assertEquals("No active session, please sign in!", json.get("reason"));
+	}
+
+	@Test
+	public void Page_not_found_WITH_null_id() {
+		JSONObject json = callTheService(null);
+
+		assertEquals(404, json.getInt("status"));
+		assertEquals("Page not found!", json.getString("reason"));
 	}
 
 	/**
@@ -59,33 +66,37 @@ public class FetchDetailsTest {
 	}
 
 	@Test
-	public void Link_not_found_WITH_non_existing_id() {
+	public void Ticket_not_found_WITH_non_existing_id() {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, 999L);
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Link not found!", json.getString("reason"));
+		assertEquals("Ticket not found!", json.getString("reason"));
 	}
 
+	/**
+	 * Toggles the same ticket twice to check if reverse toggle also works correctly
+	 */
 	@Test
 	public void Everything_must_be_ok_WITH_superuser() {
-		JSONObject json = callTheService(Fixtures.SUPER_USER, 1L);
-
+		//first call. this will set seenBySuper flag as TRUE
+		JSONObject json = callTheService(Fixtures.SUPER_USER, 2L);
 		assertEquals(200, json.getInt("status"));
-		assertTrue(json.has("data"));
 
-		JSONObject data = json.getJSONObject("data");
+		//second call. this will set seenBySuper flag as FALSE
+		json = callTheService(Fixtures.SUPER_USER, 2L);
+		assertEquals(200, json.getInt("status"));
+	}
 
-		assertTrue(data.has("specList"));
-		assertTrue(data.has("priceList"));
-		assertTrue(data.has("historyList"));
+	private JSONObject callTheService(Long id) {
+		return callTheService(Fixtures.SUPER_USER, id);
 	}
 	
-	private JSONObject callTheService(JSONObject user, Long linkId) {
+	private JSONObject callTheService(JSONObject user, Long id) {
 		Cookies cookies = TestUtils.login(user);
 
-		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.cookie(cookies)
-			.routeParam("linkId", (linkId != null ? ""+linkId : ""))
+			.routeParam("id", (id != null ? id.toString() : ""))
 			.asJson();
 		TestUtils.logout(cookies);
 

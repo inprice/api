@@ -39,6 +39,7 @@ public class TicketService {
   		Ticket ticket = ticketDao.findById(id);
   		if (ticket != null) {
   			if (Boolean.FALSE.equals(ticket.getSeenBySuper())) {
+  				ticket.setSeenBySuper(Boolean.TRUE);
   				ticketDao.toggleSeenBySuper(id, true);
   			}
   			return generateFullResponse(ticketDao, ticket);
