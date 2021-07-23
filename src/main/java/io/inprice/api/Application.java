@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+
 import io.inprice.api.consts.Global;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.Props;
@@ -119,6 +121,7 @@ public class Application {
 
     app.exception(NotFoundResponse.class, (e, ctx) -> ctx.json(Responses.PAGE_NOT_FOUND));
     app.exception(BadRequestResponse.class, (e, ctx) -> ctx.json(Responses.REQUEST_BODY_INVALID));
+    app.exception(MismatchedInputException.class, (e, ctx) -> ctx.json(Responses.Already.DELETED_MEMBER));
   }
 
   private static void logAccess(Context ctx, HandlerInterruptException e) {
