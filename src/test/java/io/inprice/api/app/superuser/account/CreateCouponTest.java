@@ -137,7 +137,7 @@ public class CreateCouponTest {
 	@Test
 	public void Plan_not_found_WITH_wrong_planId() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("planId", 588);
+		body.put("planId", 999);
 		
 		JSONObject json = callTheService(body);
 		
@@ -148,7 +148,7 @@ public class CreateCouponTest {
 	@Test
 	public void Account_not_found_WITH_wrong_accountId() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("accountId", 588);
+		body.put("accountId", 999);
 
 		JSONObject json = callTheService(body);
 

@@ -35,19 +35,14 @@ public class AnnounceService {
   private static final Logger log = LoggerFactory.getLogger(AnnounceService.class);
 
 	Response insert(AnnounceDTO dto) {
-		Response res = Responses.Invalid.ANNOUNCE;
+		Response res = Responses.NotFound.ANNOUNCE;
 
 		String problem = validate(dto);
 		if (problem == null) {
 			try (Handle handle = Database.getHandle()) {
 				AnnounceDao announceDao = handle.attach(AnnounceDao.class);
-
 				boolean isOK = announceDao.insert(dto);
-				if (isOK) {
-					res = Responses.OK;
-				} else {
-					res = Responses.DataProblem.DB_PROBLEM;
-				}
+				if (isOK) res = Responses.OK;
 			}
 		} else {
 			res = new Response(problem);
@@ -57,42 +52,34 @@ public class AnnounceService {
 	}
 
 	Response update(AnnounceDTO dto) {
-		Response res = Responses.Invalid.ANNOUNCE;
+		Response res = Responses.NotFound.ANNOUNCE;
 
 		if (dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
 					AnnounceDao announceDao = handle.attach(AnnounceDao.class);
-
 					boolean isOK = announceDao.update(dto);
-					if (isOK) {
-						res = Responses.OK;
-					} else {
-						res = Responses.DataProblem.DB_PROBLEM;
-					}
+					if (isOK) res = Responses.OK;
 				}
 			} else {
 				res = new Response(problem);
 			}
+		} else {
+			res = new Response("Announce id is missing!");
 		}
+		
 		return res;
 	}
 
 	Response delete(Long id) {
-		Response res = Responses.Invalid.ANNOUNCE;
+		Response res = Responses.NotFound.ANNOUNCE;
 		
 		if (id != null && id > 0) {
 			try (Handle handle = Database.getHandle()) {
 				AnnounceDao announceDao = handle.attach(AnnounceDao.class);
-				
 				boolean isOK = announceDao.delete(id);
-				if (isOK) {
-					res = Responses.OK;
-				} else {
-					handle.rollback();
-					res = Responses.DataProblem.DB_PROBLEM;
-				}
+				if (isOK) res = Responses.OK;
 			}
 		}
 		
@@ -192,7 +179,7 @@ public class AnnounceService {
   		if (StringUtils.isBlank(dto.getBody())) {
   			problem = "Body cannot be empty!";
   		} else if (dto.getBody().length() < 12) {
-  			problem = "Body cannot be shorter than 12 chars!";
+  			problem = "Body must be at least 11 chars!";
   		}
 		}
 
@@ -201,6 +188,7 @@ public class AnnounceService {
 		}
 		
 		dto.setType(AnnounceType.SYSTEM);
+
 		if (dto.getUserId() != null) dto.setType(AnnounceType.USER);
 		if (dto.getAccountId() != null) dto.setType(AnnounceType.ACCOUNT);
 
