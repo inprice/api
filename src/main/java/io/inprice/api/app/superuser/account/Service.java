@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -99,10 +98,7 @@ class Service {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
   		List<Membership> list = superDao.fetchMemberList(accountId);
-  		if (CollectionUtils.isNotEmpty(list))
-  			return new Response(list);
-  		else
-  			return Responses.NotFound.ACCOUNT;
+			return new Response(list);
   	}
   }
 
@@ -110,10 +106,7 @@ class Service {
   	try (Handle handle = Database.getHandle()) {
 			Dao superDao = handle.attach(Dao.class);
 			List<AccountHistory> list = superDao.fetchHistory(accountId);
-  		if (CollectionUtils.isNotEmpty(list))
-  			return new Response(list);
-  		else
-  			return Responses.NotFound.ACCOUNT;
+			return new Response(list);
   	}
   }
 
@@ -121,10 +114,7 @@ class Service {
   	try (Handle handle = Database.getHandle()) {
 			Dao superDao = handle.attach(Dao.class);
 			List<AccountTrans> list = superDao.fetchTransactionList(accountId);
-  		if (CollectionUtils.isNotEmpty(list))
-  			return new Response(list);
-  		else
-  			return Responses.NotFound.ACCOUNT;
+			return new Response(list);
   	}
   }
 
@@ -132,10 +122,7 @@ class Service {
   	try (Handle handle = Database.getHandle()) {
 			Dao superDao = handle.attach(Dao.class);
 			List<Pair<Long, String>> list = superDao.fetchUserListByAccountId(accountId);
-  		if (CollectionUtils.isNotEmpty(list))
-  			return new Response(list);
-  		else
-  			return Responses.NotFound.ACCOUNT;
+			return new Response(list);
   	}
   }
 

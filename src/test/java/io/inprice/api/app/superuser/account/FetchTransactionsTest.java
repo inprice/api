@@ -65,8 +65,8 @@ public class FetchTransactionsTest {
 	public void Account_not_found_WITH_non_existing_id() {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, 999L);
 		
-		assertEquals(404, json.getInt("status"));
-		assertEquals("Account not found!", json.getString("reason"));
+		assertEquals(200, json.getInt("status"));
+		assertEquals(0, json.getJSONArray("data").length());
 	}
 
 	@Test

@@ -99,10 +99,10 @@ public interface Dao {
 	@SqlUpdate("delete from user_session where _hash=:hash")
   boolean deleteSession(@Bind("hash") String hash);
 	
-	@SqlUpdate("delete user_mark where email=:email and type=:type)")
+	@SqlUpdate("delete from user_mark where email=:email and type=:type")
 	void removeUserMark(@Bind("email") String email, @Bind("type") UserMarkType type);
 
-	@SqlUpdate("insert into user_mark (email, type, description) values (:email, :type)")
+	@SqlUpdate("insert into user_mark (email, type, description) values (:email, :type, :description)")
   void addUserMark(@Bind("email") String email, @Bind("type") UserMarkType type, @Bind("description") String description);
 
 }

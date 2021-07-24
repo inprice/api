@@ -155,13 +155,13 @@ public class TestFinder {
 		return data;
 	}
 
-	public static JSONArray searchUsers(String email) {
+	public static JSONArray searchUsers(String byEmail) {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.post("/sys/users/search")
 			.cookie(cookies)
 			.body(new JSONObject()
-					.put("term", email)
+					.put("term", byEmail)
 				)
 			.asJson();
 		TestUtils.logout(cookies);

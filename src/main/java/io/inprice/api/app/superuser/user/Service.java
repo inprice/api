@@ -63,18 +63,8 @@ class Service {
 	}
 
   Response ban(IdTextDTO dto) {
-  	String problem = null;
-  	
-  	if (dto.getId() == CurrentUser.getUserId()) {
-  		problem = "You cannot ban yourself!";
-  	}
+  	String problem = validate(dto);
 
-  	if (problem == null 
-			&& (StringUtils.isBlank(dto.getText()) 
-				|| dto.getText().length() < 5 || dto.getText().length() > 128)) {
-  		problem = "Reason must be between 5 - 128 chars!";
-  	}
-  	
   	if (problem == null) {
   		try (Handle handle = Database.getHandle()) {
   			UserDao userDao = handle.attach(UserDao.class);
@@ -83,10 +73,10 @@ class Service {
   			if (user != null) {
   				if (! user.isBanned()) {
   					
+  					Dao superDao = handle.attach(Dao.class);
   					handle.begin();
   					
   					//user is banned
-  					Dao superDao = handle.attach(Dao.class);
   					boolean isOK = superDao.ban(dto.getId(), dto.getText());
 
   					if (isOK) {
@@ -111,13 +101,18 @@ class Service {
   				} else {
   					return Responses.Already.BANNED_USER;
   				}
+  			} else {
+  				return Responses.NotFound.USER;
   			}
   		}
   	}
+
   	return new Response(problem);
   }
 
   Response revokeBan(Long id) {
+  	Response res = Responses.NotFound.USER;
+
   	if (id != CurrentUser.getUserId()) {
       try (Handle handle = Database.getHandle()) {
       	UserDao userDao = handle.attach(UserDao.class);
@@ -126,34 +121,35 @@ class Service {
       	if (user != null) {
       		if (user.isBanned()) {
 
+      			Dao superDao = handle.attach(Dao.class);
       			handle.begin();
       			
       			//revoking user's ban
-      			Dao superDao = handle.attach(Dao.class);
       			boolean isOK = superDao.revokeBan(id);
       			
       			if (isOK) {
-  						//his ban record in user_mark table must be revoked too!
+  						//his ban record in user_mark table must be revoked as well!
   						superDao.removeUserMark(user.getEmail(), UserMarkType.BANNED);
 
       				//and from his accounts too
-        			int affected = superDao.revokeBanAllBoundAccountsOfUser(id);
+        			superDao.revokeBanAllBoundAccountsOfUser(id);
 
-        			if (affected > 0) {
-    	          handle.commit();
-    						return Responses.OK;
-    					}
+  	          handle.commit();
+  	          res = Responses.OK;
+      			} else {
+  						handle.rollback();
+  						res = Responses.DataProblem.DB_PROBLEM;
       			}
-
-						handle.rollback();
-						return Responses.DataProblem.DB_PROBLEM;
       		} else {
-      			return Responses.Already.NOT_BANNED_USER;
+      			res = Responses.Already.NOT_BANNED_USER;
       		}
       	}
       }
+  	} else {
+  		res = new Response("You cannot revoke your ban!");
   	}
-  	return Responses.Invalid.USER;
+
+  	return res;
   }
 
   Response fetchDetails(Long userId) {
@@ -327,6 +323,26 @@ class Service {
     where.append(dto.getRowLimit());
     
     return where.toString();
+  }
+  
+  private String validate(IdTextDTO dto) {
+  	String problem = null;
+
+  	if (dto.getId() == null || dto.getId() < 1) {
+  		problem = "Missing user id!";
+  	}
+  	
+  	if (problem == null && dto.getId() == CurrentUser.getUserId()) {
+  		problem = "You cannot ban yourself!";
+  	}
+
+  	if (problem == null 
+			&& (StringUtils.isBlank(dto.getText()) 
+				|| dto.getText().length() < 5 || dto.getText().length() > 128)) {
+  		problem = "Reason must be between 5 - 128 chars!";
+  	}
+
+  	return problem;
   }
   
 }
