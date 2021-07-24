@@ -8,18 +8,22 @@ public class Responses {
 
   public static final Response OK = new Response(HttpStatus.OK_200, "OK");
   public static final Response BAD_REQUEST = new Response(HttpStatus.BAD_REQUEST_400, "Bad request!");
-  public static final Response _401 = new Response(HttpStatus.UNAUTHORIZED_401, "Your session seems to be expired, please sign in again.");
-  public static final Response _403 = new Response(HttpStatus.FORBIDDEN_403, "Your role is not suitable to do this operation.");
+  public static final Response _401 = new Response(HttpStatus.UNAUTHORIZED_401, "No active session, please sign in!");
+  public static final Response _403 = new Response(HttpStatus.FORBIDDEN_403, "Forbidden!");
   public static final Response BANNED_USER = new Response(HttpStatus.FORBIDDEN_403, "Banned user!");
+  public static final Response REQUEST_BODY_INVALID = new Response(HttpStatus.BAD_REQUEST_400, "Request body is invalid!");
+  public static final Response PAGE_NOT_FOUND = new Response(HttpStatus.NOT_FOUND_404, "Page not found!");
+  public static final Response METHOD_NOT_ALLOWED = new Response(HttpStatus.METHOD_NOT_ALLOWED_405, "Method not allowed!");
 
   public static class Invalid {
     private static final int BASE = 100;
     public static final Response ACCOUNT = new Response(BASE + 1, "Invalid account!");
     public static final Response PLAN = new Response(BASE + 3, "Invalid plan!");
     public static final Response TICKET = new Response(BASE + 4, "Invalid ticket!");
-    public static final Response INVITATION = new Response(BASE + 5, "Invalid invitation!");
-    public static final Response ANNOUNCE = new Response(BASE + 6, "Invalid announce!");
-    public static final Response ALARM = new Response(BASE + 7, "Alarm announce!");
+    public static final Response COMMENT = new Response(BASE + 5, "Invalid comment!");
+    public static final Response INVITATION = new Response(BASE + 6, "Invalid invitation!");
+    public static final Response ANNOUNCE = new Response(BASE + 7, "Invalid announce!");
+    public static final Response ALARM = new Response(BASE + 8, "Invalid alarm!");
 
     public static final Response USER = new Response(BASE + 10, "Invalid user!");
     public static final Response EMAIL = new Response(BASE + 11, "Invalid email!");
@@ -51,12 +55,12 @@ public class Responses {
     private static final int BASE = 500;
     public static final Response UNAUTHORIZED = new Response(BASE + 1, "Unauthrozied!");
     public static final Response ADMIN_ONLY = new Response(BASE + 2, "This operation can only be done by an admin!");
-    public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to buy a new plan!");
+    public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to subscribe to a plan!");
     public static final Response NO_ACCOUNT = new Response(BASE + 5, "You have no active account! Please either create a new one or participate in an existing!");
     public static final Response USER_LIMIT_PROBLEM = new Response(BASE + 6, "Your user count is reached your plans limit!");
     public static final Response LINK_LIMIT_PROBLEM = new Response(BASE + 7, "Your link count is reached your plans limit! You need to pass a broader plan to proceed");
     public static final Response ALARM_LIMIT_PROBLEM = new Response(BASE + 8, "Your alarm count is reached your plans limit! You need to pass a broader plan to proceed");
-    public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 10, "You need a broader plan. The plan you intend to select allows less than your existing link count!");
+    public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 10, "You need to select a broader plan since your actual plan has more permission!");
     public static final Response WRONG_USER = new Response(BASE + 11, "You are not allowed to do this operation!");
   }
 
@@ -77,8 +81,8 @@ public class Responses {
     public static final Response TIMED_OUT_FORGOT_PASSWORD = new Response(BASE + 1, "Your session seems to expire, please send us a new 'forgot password request' again!");
     public static final Response COUPON_ISSUED_FOR_ANOTHER_ACCOUNT = new Response(BASE + 2, "This coupon is issued for another account!");
     public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
-    public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan, so you cannot cancel!");
-    public static final Response NO_FREE_USE_RIGHT = new Response(BASE + 11, "You have no free use!");
+    public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan to cancel!");
+    public static final Response NO_FREE_USE_RIGHT = new Response(BASE + 11, "You have no free use right!");
     public static final Response BANNED_USER = new Response(BASE + 16, "Banned user!");
   }
 
@@ -86,45 +90,53 @@ public class Responses {
     private static final int BASE = 800;
     public static final Response LOGGED_OUT = new Response(BASE + 1, "Seems that you are already logged out!");
     public static final Response DELETED_MEMBER = new Response(BASE + 2, "This member is already deleted!");
+    public static final Response PAUSED_MEMBER = new Response(BASE + 3, "This member is already paused!");
 
-    public static final Response USED_COUPON = new Response(BASE + 4, "This coupon seems already used!");
-    public static final Response FREE_USE_USED = new Response(BASE + 5, "You have already used your free use previously!");
-    public static final Response IN_FREE_USE = new Response(BASE + 6, "Your Free Use is already active!");
+    public static final Response USED_COUPON = new Response(BASE + 4, "This coupon is already used!");
+    public static final Response FREE_USE_USED = new Response(BASE + 5, "You have already used your free use!");
 
-    public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 7, "You have an active subscription!");
+    public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 7, "You already have an active subscription!");
     public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 8, "This account has no active subscription at the moment!");
     public static final Response HAS_THE_SAME_PLAN = new Response(BASE + 10, "You have already this plan at the moment!");
 
     public static final Response REQUESTED_EMAIL = new Response(BASE + 14, "This email is already requested, please wait some time to try again!");
+    public static final Response RESET_PASSWORD = new Response(BASE + 15, "Your password is already reset!");
     
     public static final Response BANNED_USER = new Response(BASE + 25, "User is already banned!");
     public static final Response NOT_BANNED_USER = new Response(BASE + 26, "User is not banned!");
 
     public static final Response BANNED_ACCOUNT = new Response(BASE + 30, "Account is already banned!");
     public static final Response NOT_BANNED_ACCOUNT = new Response(BASE + 31, "Account is not banned!");
-    
+
     public static class Defined {
       public static final Response ACCOUNT = new Response(BASE + 70, "Seems that you have already registered this account!");
       public static final Response MEMBERSHIP = new Response(BASE + 71, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");
-      public static final Response REGISTERED_USER = new Response(BASE + 72, "This user has already registered! Signing up is an option for newcomers! You can use Create Account in the menu after login.");
+      public static final Response REGISTERED_USER = new Response(BASE + 72, "Already registered user! Signing up is an option for only newcomers! Please use 'Create Account' menu after login.");
       public static final Response GROUP = new Response(BASE + 75, "You already have a group having the same name!");
+
+      public static final Response ALARM = new Response(BASE + 80, "You have already set an alarm for this record!");
     }
   }
 
   public static class NotAllowed {
     private static final int BASE = 900;
     public static final Response NO_LINK_LIMIT = new Response(BASE + 1, "You have reached max link number of your plan!");
-    public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload max 100 URLs at once!");
+    public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload up to 100 URLs at once!");
     public static final Response HAVE_NO_PLAN = new Response(BASE + 3, "You haven't picked a plan yet!");
-    public static final Response UPDATE = new Response(BASE + 4, "This record is not suitable for update!");
+    public static final Response UPDATE = new Response(BASE + 4, "You are not allowed to update this data!");
     public static final Response NO_ALARM_LIMIT = new Response(BASE + 10, "You have reached max alarm number of your plan!");
+    public static final Response SUPER_USER = new Response(BASE + 12, "User is not suitable for this operation!");
+
+    public static final Response CLOSED_TICKET = new Response(BASE + 14, "Ticket is closed!");
+    public static final Response NO_ACCOUNT = new Response(BASE + 15, "You must bind an account!");
   }
 
   public static class NotSuitable {
     private static final int BASE = 1000;
     public static final Response PLAN_CHANGE = new Response(BASE + 1, "Seems that you don't have a subsciption. Only subscribers can change their plans!");
     public static final Response PAYMENT_FAILURE_ON_PLAN_CHANGE = new Response(BASE + 2, "Your payment failed during plan changing! Please try again or use another card!");
-    public static final Response EMPTY_URL_LIST = new Response(BASE + 3, "URL List is empty!");
+    public static final Response EMPTY_URL_LIST = new Response(BASE + 3, "URL list is empty!");
+    public static final Response TICKET = new Response(BASE + 5, "Ticket is not suitable!");
   }
 
   public static class NotFound {
@@ -135,13 +147,14 @@ public class Responses {
     public static final Response ACCOUNT = new Response(BASE, "Account not found!");
     public static final Response PLAN = new Response(BASE, "Plan not found!");
     public static final Response TICKET = new Response(BASE, "Ticket not found!");
+    public static final Response COMMENT = new Response(BASE, "Comment not found!");
     public static final Response COUPON = new Response(BASE, "Coupon not found!");
     public static final Response ANNOUNCE = new Response(BASE, "Announce not found!");
     public static final Response ALARM = new Response(BASE, "Alarm not found!");
 
     public static final Response USER = new Response(BASE, "User not found!");
     public static final Response EMAIL = new Response(BASE, "Email not found!");
-    public static final Response MEMBERSHIP = new Response(BASE, "Member not found!");
+    public static final Response MEMBERSHIP = new Response(BASE, "Membership not found!");
     public static final Response INVITATION = new Response(BASE, "Invitation not found!");
     public static final Response SUBSCRIPTION = new Response(BASE, "Subscription not found!");
 

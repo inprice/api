@@ -13,6 +13,7 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.common.mappers.AccountHistoryMapper;
 import io.inprice.common.mappers.AccountTransMapper;
+import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.models.AccountHistory;
 import io.inprice.common.models.AccountTrans;
 
@@ -38,7 +39,8 @@ public interface SubscriptionDao {
 
   @SqlUpdate(
     "update account " +
-    "set title=:dto.title, address_1=:dto.address1, address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country, " +
+    "set title=:dto.title, contact_name=:dto.contactName, tax_id=:dto.taxId, tax_office=:dto.taxOffice, address_1=:dto.address1, " +
+    "address_2=:dto.address2, postcode=:dto.postcode, city=:dto.city, state=:dto.state, country=:dto.country, " +
     "plan_id=:dto.planId, pre_status=status, status=:status, subs_renewal_at=:dto.renewalDate, subs_started_at=now(), last_status_update=now() " +
     "where id=:id"
   )
@@ -60,7 +62,7 @@ public interface SubscriptionDao {
     "set subs_renewal_at=null, pre_status=status, status=:status, last_status_update=now() "+
     "where id=:id"
   )
-  boolean terminate(@Bind("id") Long id, @Bind("status") String status);
+  boolean terminate(@Bind("id") Long id, @Bind("status") AccountStatus status);
 
   @SqlUpdate(
     "update account " + 

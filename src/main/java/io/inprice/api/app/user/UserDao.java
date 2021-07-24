@@ -20,7 +20,7 @@ public interface UserDao {
   User findById(@Bind("id") Long id);
 
   //password related columns are excluded!
-  @SqlQuery("select id, email, name, timezone from user where email=:email")
+  @SqlQuery("select id, email, name, timezone, privileged, banned, banned_at, ban_reason from user where email=:email")
   @UseRowMapper(UserMapper.class)
   User findByEmail(@Bind("email") String email);
 

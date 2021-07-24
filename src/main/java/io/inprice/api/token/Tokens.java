@@ -6,10 +6,12 @@ import java.util.concurrent.TimeUnit;
 
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.CodeGenerator;
+import io.inprice.common.helpers.Beans;
 
 public class Tokens {
 
   private static final Random random = new Random();
+  private static final RedisClient redis = Beans.getSingleton(RedisClient.class);
 
   public static String add(TokenType tokenType, Serializable object) {
     String token = null;
@@ -19,13 +21,13 @@ public class Tokens {
       token = CodeGenerator.hash();
     }
 
-    RedisClient.tokensMap.put(getKey(tokenType, token), object, tokenType.ttl(), TimeUnit.MILLISECONDS);
+    redis.tokensMap.put(getKey(tokenType, token), object, tokenType.ttl(), TimeUnit.MILLISECONDS);
     return token;
   }
 
   @SuppressWarnings("unchecked")
   public static <T extends Serializable> T get(TokenType tokenType, String token) {
-    Serializable seri = RedisClient.tokensMap.get(getKey(tokenType, token));
+    Serializable seri = redis.tokensMap.get(getKey(tokenType, token));
     if (seri != null)
       return (T) seri;
     else
@@ -33,7 +35,7 @@ public class Tokens {
   }
 
   public static boolean remove(TokenType tokenType, String token) {
-    return (RedisClient.tokensMap.remove(getKey(tokenType, token)) != null);
+    return (redis.tokensMap.remove(getKey(tokenType, token)) != null);
   }
 
   private static String getKey(TokenType tokenType, String token) {

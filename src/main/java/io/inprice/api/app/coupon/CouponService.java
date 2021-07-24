@@ -1,6 +1,5 @@
 package io.inprice.api.app.coupon;
 
-import java.util.Collections;
 import java.util.List;
 
 import org.jdbi.v3.core.Handle;
@@ -27,55 +26,9 @@ public class CouponService {
 
   private static final Logger log = LoggerFactory.getLogger(CouponService.class);
 
-  public Response createCoupon(Handle handle, long accountId, SubsEvent subsEvent, Integer planId, long days, String description) {
-  	PlanDao planDao = handle.attach(PlanDao.class);
-  	Plan plan = planDao.findById(planId);
-  	if (plan != null) {
-
-    	AccountDao accountDao = handle.attach(AccountDao.class);
-    	Account account = accountDao.findById(accountId);
-  		if (account != null) {
-  				
-	  		if (account.getUserCount() <= plan.getUserLimit() 
-	  				&& account.getLinkCount() <= plan.getLinkLimit() 
-	  				&& account.getAlarmCount() <= plan.getAlarmLimit()) {
-
-	  	    String couponCode = CouponManager.generate();
-	  	    CouponDao couponDao = handle.attach(CouponDao.class);
-	  	    boolean isOK = couponDao.create(
-	  	      couponCode,
-	  	      planId,
-	  	      days,
-	  	      description,
-	  	      accountId
-	  	    );
-
-	  	    if (isOK) {
-	  	      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
-	  	      AccountTrans trans = new AccountTrans();
-	  	      trans.setAccountId(accountId);
-	  	      trans.setEvent(subsEvent);
-	  	      trans.setSuccessful(Boolean.TRUE);
-	  	      trans.setReason(description);
-	  	      trans.setDescription("Issued coupon code: " + couponCode);
-	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-	  	      return new Response(Collections.singletonMap("code", couponCode));
-	  	    } else {
-	  	    	return new Response("An error occurred, we will be looking for this!");
-	  	    }
-	  			
-				} else {
-					return new Response("Account current limits are greater than the plan's!");
-				}
-
-  		} else {
-  			return Responses.NotFound.ACCOUNT;
-  		}
-  	}
-    return Responses.NotFound.PLAN;
-  }
-
   Response getCoupons() {
+  	if (CurrentUser.getAccountId() == null) return Responses.NotAllowed.NO_ACCOUNT;
+
     try (Handle handle = Database.getHandle()) {
       CouponDao couponDao = handle.attach(CouponDao.class);
 
@@ -165,7 +118,7 @@ public class CouponService {
             response = Responses.Already.USED_COUPON;
           }
         } else {
-          response = Responses.Invalid.COUPON;
+          response = Responses.NotFound.COUPON;
         }
 
         if (response.isOK())

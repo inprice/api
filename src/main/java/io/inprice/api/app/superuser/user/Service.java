@@ -21,19 +21,23 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.DTOHelper;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.AccessLogMapper;
+import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.models.AccessLog;
-import io.inprice.common.models.Member;
+import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
-import io.inprice.common.models.UserUsed;
+import io.inprice.common.models.UserMark;
 import io.inprice.common.utils.DateUtils;
 
 class Service {
 
   private static final Logger log = LoggerFactory.getLogger("SU:User");
 
+  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
+  
 	Response search(BaseSearchDTO dto) {
   	try (Handle handle = Database.getHandle()) {
     	Dao superDao = handle.attach(Dao.class);
@@ -41,7 +45,7 @@ class Service {
     }
 	}
 
-	public Response searchForAccessLog(ALSearchDTO dto) {
+	Response searchForAccessLog(ALSearchDTO dto) {
     try (Handle handle = Database.getHandle()) {
     	String searchQuery = buildQueryForAccessLogSearch(dto);
     	if (searchQuery == null) return Responses.BAD_REQUEST;
@@ -59,17 +63,8 @@ class Service {
 	}
 
   Response ban(IdTextDTO dto) {
-  	String problem = null;
-  	
-  	if (dto.getId() == CurrentUser.getUserId()) {
-  		problem = "Invalid user!";
-  	}
-  	if (problem == null 
-  			&& (StringUtils.isBlank(dto.getText()) 
-  					|| dto.getText().length() < 5 || dto.getText().length() > 128)) {
-  		problem = "Reason must be between 5-128 chars!";
-  	}
-  	
+  	String problem = validate(dto);
+
   	if (problem == null) {
   		try (Handle handle = Database.getHandle()) {
   			UserDao userDao = handle.attach(UserDao.class);
@@ -78,43 +73,46 @@ class Service {
   			if (user != null) {
   				if (! user.isBanned()) {
   					
+  					Dao superDao = handle.attach(Dao.class);
   					handle.begin();
   					
   					//user is banned
-  					Dao superDao = handle.attach(Dao.class);
   					boolean isOK = superDao.ban(dto.getId(), dto.getText());
 
   					if (isOK) {
+  						//he must be added in to user_mark table to prevent later registration or forgot pass. requests!
+  						superDao.addUserMark(user.getEmail(), UserMarkType.BANNED, dto.getText());
+
   						//and his accounts too
-  						int affected = superDao.banAllBoundAccountsOfUser(dto.getId());
+  						superDao.banAllBoundAccountsOfUser(dto.getId());
 
   						//his sessions are terminated as well!
-  						if (affected > 0) {
-                UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
-    	          List<String> hashList = userSessionDao.findHashesByUserId(dto.getId());
-  
-    	          if (hashList.size() > 0) {
-    	          	userSessionDao.deleteByHashList(hashList);
-    	          	for (String hash : hashList) RedisClient.removeSesion(hash);
-    	          }
-  
-    	          handle.commit();
-    						return Responses.OK;
-  						}
+              UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
+  	          List<String> hashList = userSessionDao.findHashesByUserId(dto.getId());
 
-  						handle.rollback();
-  						return Responses.DataProblem.DB_PROBLEM;
+  	          if (hashList.size() > 0) {
+  	          	userSessionDao.deleteByHashList(hashList);
+  	          	for (String hash : hashList) redis.removeSesion(hash);
+  	          }
+
+  	          handle.commit();
+  						return Responses.OK;
   					}
   				} else {
   					return Responses.Already.BANNED_USER;
   				}
+  			} else {
+  				return Responses.NotFound.USER;
   			}
   		}
   	}
+
   	return new Response(problem);
   }
 
   Response revokeBan(Long id) {
+  	Response res = Responses.NotFound.USER;
+
   	if (id != CurrentUser.getUserId()) {
       try (Handle handle = Database.getHandle()) {
       	UserDao userDao = handle.attach(UserDao.class);
@@ -123,31 +121,35 @@ class Service {
       	if (user != null) {
       		if (user.isBanned()) {
 
+      			Dao superDao = handle.attach(Dao.class);
       			handle.begin();
       			
       			//revoking user's ban
-      			Dao superDao = handle.attach(Dao.class);
       			boolean isOK = superDao.revokeBan(id);
       			
       			if (isOK) {
-        			//and from his accounts too
-        			int affected = superDao.revokeBanAllBoundAccountsOfUser(id);
+  						//his ban record in user_mark table must be revoked as well!
+  						superDao.removeUserMark(user.getEmail(), UserMarkType.BANNED);
 
-        			if (affected > 0) {
-    	          handle.commit();
-    						return Responses.OK;
-    					}
+      				//and from his accounts too
+        			superDao.revokeBanAllBoundAccountsOfUser(id);
+
+  	          handle.commit();
+  	          res = Responses.OK;
+      			} else {
+  						handle.rollback();
+  						res = Responses.DataProblem.DB_PROBLEM;
       			}
-
-						handle.rollback();
-						return Responses.DataProblem.DB_PROBLEM;
       		} else {
-      			return Responses.Already.NOT_BANNED_USER;
+      			res = Responses.Already.NOT_BANNED_USER;
       		}
       	}
       }
+  	} else {
+  		res = new Response("You cannot revoke your ban!");
   	}
-  	return Responses.Invalid.USER;
+
+  	return res;
   }
 
   Response fetchDetails(Long userId) {
@@ -157,9 +159,9 @@ class Service {
   		
   		if (user != null) {
   			Dao superDao = handle.attach(Dao.class);
-  			List<Member> membershipList = superDao.fetchMembershipListById(userId);
+  			List<Membership> membershipList = superDao.fetchMembershipListById(userId);
   			List<ForDatabase> sessionList = superDao.fetchSessionListById(userId);
-  			List<UserUsed> usedServiceList = superDao.fetchUsedServiceListByEmail(user.getEmail());
+  			List<UserMark> usedServiceList = superDao.fetchUsedServiceListByEmail(user.getEmail());
   			
   			Map<String, Object> data = new HashMap<>(4);
   			data.put("user", user);
@@ -176,7 +178,7 @@ class Service {
   Response fetchMembershipList(Long userId) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
-  		List<Member> list = superDao.fetchMembershipListById(userId);
+  		List<Membership> list = superDao.fetchMembershipListById(userId);
   		return new Response(list);
   	}
   }
@@ -196,7 +198,7 @@ class Service {
   		
   		if (user != null) {
   			Dao superDao = handle.attach(Dao.class);
-  			List<UserUsed> list = superDao.fetchUsedServiceListByEmail(user.getEmail());
+  			List<UserMark> list = superDao.fetchUsedServiceListByEmail(user.getEmail());
   			return new Response(list);
   		}
   	}
@@ -214,12 +216,12 @@ class Service {
   Response deleteUsedService(Long id) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
-  		UserUsed used = superDao.findUsedServiceById(id);
+  		UserMark used = superDao.findUsedServiceById(id);
 
   		if (used != null) {
     		boolean isOK = superDao.deleteUsedService(id);
     		if (isOK) {
-    			List<UserUsed> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
+    			List<UserMark> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
     			return new Response(newList);
     		} else {
     			return Responses.DataProblem.DB_PROBLEM;
@@ -232,12 +234,12 @@ class Service {
 	Response toggleUnlimitedUsedService(Long id) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
-  		UserUsed used = superDao.findUsedServiceById(id);
+  		UserMark used = superDao.findUsedServiceById(id);
 
   		if (used != null) {
     		boolean isOK = superDao.toggleUnlimitedUsedService(id);
     		if (isOK) {
-    			List<UserUsed> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
+    			List<UserMark> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
     			return new Response(newList);
     		} else {
     			return Responses.DataProblem.DB_PROBLEM;
@@ -255,7 +257,7 @@ class Service {
   		if (userId != null) {
     		boolean isOK = superDao.deleteSession(hash);
     		if (isOK) {
-    			RedisClient.removeSesion(hash);
+    			redis.removeSesion(hash);
     			List<ForDatabase> newList = superDao.fetchSessionListById(userId);
     			return new Response(newList);
     		} else {
@@ -271,56 +273,76 @@ class Service {
 
   	dto = DTOHelper.normalizeSearch(dto, false);
 
-    StringBuilder crit = new StringBuilder("select * from access_log ");
+    StringBuilder where = new StringBuilder("select * from access_log ");
 
-    crit.append("where user_id = ");
-    crit.append(dto.getUserId());
+    where.append("where user_id = ");
+    where.append(dto.getUserId());
 
     if (dto.getAccountId() != null) {
-    	crit.append(" and account_id = ");
-    	crit.append(dto.getAccountId());
+    	where.append(" and account_id = ");
+    	where.append(dto.getAccountId());
     }
 
     if (dto.getMethod() != null) {
-    	crit.append(" and method = '");
-    	crit.append(dto.getMethod());
-    	crit.append("' ");
+    	where.append(" and method = '");
+    	where.append(dto.getMethod());
+    	where.append("' ");
     }
     
     if (dto.getStartDate() != null) {
-    	crit.append(" and created_at >= ");
-    	crit.append(DateUtils.formatDateForDB(dto.getStartDate()));
+    	where.append(" and created_at >= ");
+    	where.append(DateUtils.formatDateForDB(dto.getStartDate()));
     }
 
     if (dto.getEndDate() != null) {
-    	crit.append(" and created_at <= ");
-    	crit.append(DateUtils.formatDateForDB(dto.getEndDate()));
+    	where.append(" and created_at <= ");
+    	where.append(DateUtils.formatDateForDB(dto.getEndDate()));
     }
     
     if (StringUtils.isNotBlank(dto.getTerm())) {
     	if (ALSearchBy.STATUS.equals(dto.getSearchBy())) {
-      	crit.append(" and status in (");
-        crit.append(dto.getTerm());
-      	crit.append(")");
+      	where.append(" and status in (");
+        where.append(dto.getTerm());
+      	where.append(")");
     	} else {
-    		crit.append(" and ");
-    		crit.append(dto.getSearchBy().getFieldName());
-      	crit.append(" like '%");
-        crit.append(dto.getTerm());
-        crit.append("%' ");
+    		where.append(" and ");
+    		where.append(dto.getSearchBy().getFieldName());
+      	where.append(" like '%");
+        where.append(dto.getTerm());
+        where.append("%' ");
     	}
     }
 
-  	crit.append(" order by ");
-    crit.append(dto.getOrderBy().getFieldName());
-    crit.append(dto.getOrderDir().getDir());
+  	where.append(" order by ");
+    where.append(dto.getOrderBy().getFieldName());
+    where.append(dto.getOrderDir().getDir());
 
-    crit.append(" limit ");
-    crit.append(dto.getRowCount());
-    crit.append(", ");
-    crit.append(dto.getRowLimit());
+    where.append(" limit ");
+    where.append(dto.getRowCount());
+    where.append(", ");
+    where.append(dto.getRowLimit());
     
-    return crit.toString();
+    return where.toString();
+  }
+  
+  private String validate(IdTextDTO dto) {
+  	String problem = null;
+
+  	if (dto.getId() == null || dto.getId() < 1) {
+  		problem = "Missing user id!";
+  	}
+  	
+  	if (problem == null && dto.getId() == CurrentUser.getUserId()) {
+  		problem = "You cannot ban yourself!";
+  	}
+
+  	if (problem == null 
+			&& (StringUtils.isBlank(dto.getText()) 
+				|| dto.getText().length() < 5 || dto.getText().length() > 128)) {
+  		problem = "Reason must be between 5 - 128 chars!";
+  	}
+
+  	return problem;
   }
   
 }

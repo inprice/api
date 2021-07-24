@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import eu.bitwalker.useragentutils.UserAgent;
 import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
-import io.inprice.api.app.member.MemberDao;
+import io.inprice.api.app.membership.MembershipDao;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.LoginDTO;
 import io.inprice.api.app.user.dto.PasswordDTO;
@@ -37,12 +37,13 @@ import io.inprice.api.session.info.ForResponse;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
 import io.inprice.common.config.SysProps;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserStatus;
-import io.inprice.common.models.Member;
+import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
 import io.javalin.http.Context;
 
@@ -50,73 +51,71 @@ public class AuthService {
 
   private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
+  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
+  
   Response login(Context ctx, LoginDTO dto) {
-    if (dto != null) {
-      String problem = verifyLogin(dto);
-      if (problem == null) {
-
-        try (Handle handle = Database.getHandle()) {
-          UserDao userDao = handle.attach(UserDao.class);
-
-          User user = userDao.findByEmailWithPassword(dto.getEmail());
-          if (user != null) {
-          	if (!user.isBanned()) {
-
-              if (PasswordHelper.isValid(dto.getPassword(), user.getPassword())) {
-              	user.setPassword(null);
-
-              	if (user.isPrivileged()) { //if a super user!
-              		ctx.cookie(CookieHelper.createSuperCookie(SessionHelper.toTokenForSuper(user)));
-
-                  List<ForResponse> sesList = new ArrayList<>(1);
-                  sesList.add(
-                		new ForResponse(
-              				null,
-              				user.getName(),
-              				user.getEmail(),
-              				user.getPassword()
-          					)
-              		);
-
-                  Map<String, Object> sesInfoMap = new HashMap<>(3);
-                  sesInfoMap.put("sessionNo", 0);
-                  sesInfoMap.put("sessions", sesList);
-                  sesInfoMap.put("isPriviledge", Boolean.TRUE);
-              		return new Response(sesInfoMap);
-              	} else {
-                  Map<String, Object> sesInfo = findSessionInfoByEmail(ctx, user.getEmail());
-                  if (sesInfo != null && sesInfo.size() > 0) {
-                    return new Response(sesInfo);
-                  } else {
-                    return createSession(ctx, user);
-                  }
-              	}
-              }
-            } else {
-              return Responses.BANNED_USER;
-            }
-          }
-        }
-      } else {
-        return new Response(problem);
-      }
-    }
-    return Responses.Invalid.EMAIL_OR_PASSWORD;
-  }
-
-  Response forgotPassword(String email) {
-    Response res = Responses.OK;
-    if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
-      res = RedisClient.isEmailRequested(RateLimiterType.FORGOT_PASSWORD, email);
-    }
-    if (!res.isOK()) return res;
-
-    String problem = EmailValidator.verify(email);
+    String problem = verifyLogin(dto);
     if (problem == null) {
 
       try (Handle handle = Database.getHandle()) {
         UserDao userDao = handle.attach(UserDao.class);
-  
+
+        User user = userDao.findByEmailWithPassword(dto.getEmail());
+        if (user != null) {
+        	if (!user.isBanned()) {
+
+            if (PasswordHelper.isValid(dto.getPassword(), user.getPassword())) {
+            	user.setPassword(null);
+
+            	if (user.isPrivileged()) { //if a super user!
+            		ctx.cookie(CookieHelper.createSuperCookie(SessionHelper.toTokenForSuper(user)));
+
+                List<ForResponse> sesList = new ArrayList<>(1);
+                sesList.add(
+              		new ForResponse(
+            				null,
+            				user.getName(),
+            				user.getEmail(),
+            				user.getPassword()
+        					)
+            		);
+
+                Map<String, Object> sesInfoMap = new HashMap<>(3);
+                sesInfoMap.put("sessionNo", 0);
+                sesInfoMap.put("sessions", sesList);
+                sesInfoMap.put("isPriviledge", Boolean.TRUE);
+            		return new Response(sesInfoMap);
+            	} else {
+                Map<String, Object> sesInfo = findSessionInfoByEmail(ctx, user.getEmail());
+                if (sesInfo != null && sesInfo.size() > 0) {
+                  return new Response(sesInfo);
+                } else {
+                  return createSession(ctx, user);
+                }
+            	}
+            }
+          } else {
+            return Responses.BANNED_USER;
+          }
+        }
+      }
+    } else {
+      return new Response(problem);
+    }
+
+    return Responses.Invalid.EMAIL_OR_PASSWORD;
+  }
+
+  Response forgotPassword(String email) {
+    String problem = EmailValidator.verify(email);
+    if (problem == null) {
+
+      Response res = redis.isEmailRequested(RateLimiterType.FORGOT_PASSWORD, email);
+      if (!res.isOK()) return res;
+
+      try (Handle handle = Database.getHandle()) {
+        UserDao userDao = handle.attach(UserDao.class);
+
         User user = userDao.findByEmail(email);
         if (user != null) {
         	if (! user.isBanned()) {
@@ -127,89 +126,102 @@ public class AuthService {
                 mailMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
                 mailMap.put("url", Props.APP_WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
                 
-              	RedisClient.sendEmail(
-            			EmailData.builder()
-              			.template(EmailTemplate.FORGOT_PASSWORD)
-              			.from(Props.APP_EMAIL_SENDER)
-              			.to(user.getEmail())
-              			.subject("Reset your password for inprice.io")
-              			.data(mailMap)
-              		.build()	
-        				);
+                if (! SysProps.APP_ENV.equals(AppEnv.TEST)) {
+                  redis.sendEmail(
+              			EmailData.builder()
+                			.template(EmailTemplate.FORGOT_PASSWORD)
+                			.from(Props.APP_EMAIL_SENDER)
+                			.to(user.getEmail())
+                			.subject("Reset your password for inprice.io")
+                			.data(mailMap)
+                		.build()	
+          				);
+                  return Responses.OK;
+                } else {
+                	return new Response(mailMap);
+                }
   
-                return Responses.OK;
               } catch (Exception e) {
                 log.error("Failed to render email for forgetting password", e);
                 return Responses.ServerProblem.EXCEPTION;
               }
             } else {
-              return Responses.NotAllowed.UPDATE;
+              return Responses.NotAllowed.SUPER_USER;
             }
           } else {
             return Responses.BANNED_USER;
           }
+        } else {
+        	return new Response("You will be receiving an email after verification of your email.");
         }
       }
+    } else {
+    	return new Response(problem);
     }
-    return Responses.NotFound.EMAIL;
   }
 
   Response resetPassword(Context ctx, PasswordDTO dto) {
-    if (dto != null) {
-      String problem = PasswordValidator.verify(dto, true, false);
-
-      if (problem == null) {
-        try (Handle handle = Database.getHandle()) {
-          UserDao userDao = handle.attach(UserDao.class);
-          UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
-
-          final String email = Tokens.get(TokenType.FORGOT_PASSWORD, dto.getToken());
-          if (email != null) {
-
-            User user = userDao.findByEmail(email);
-            if (user != null) {
-
-            	if (! user.isBanned()) {
-            		if (! user.isPrivileged()) {
-            	
-                  String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
-                  boolean isOK = userDao.updatePassword(user.getId(), saltedHash);
+    String problem = PasswordValidator.verify(dto);
     
-                  //closing session
-                  if (isOK) {
-                    Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
-                    List<ForDatabase> sessions = userSessionDao.findListByUserId(user.getId());
-                    if (sessions != null && sessions.size() > 0) {
-                      for (ForDatabase ses : sessions) {
-                        RedisClient.removeSesion(ses.getHash());
-                      }
-                      userSessionDao.deleteByUserId(user.getId());
+    if (problem == null) {
+    	if (StringUtils.isBlank(dto.getToken())) problem = Responses.Invalid.TOKEN.getReason();
+    }
+
+    if (problem == null) {
+      try (Handle handle = Database.getHandle()) {
+        UserDao userDao = handle.attach(UserDao.class);
+        UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
+
+        final String email = Tokens.get(TokenType.FORGOT_PASSWORD, dto.getToken());
+        if (email != null) {
+
+          User user = userDao.findByEmail(email);
+          if (user != null) {
+
+          	if (! user.isBanned()) {
+          		if (! user.isPrivileged()) {
+          	
+                String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
+                boolean isOK = userDao.updatePassword(user.getId(), saltedHash);
+  
+                //closing session
+                if (isOK) {
+                  Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
+                  List<ForDatabase> sessions = userSessionDao.findListByUserId(user.getId());
+                  if (sessions != null && sessions.size() > 0) {
+                    for (ForDatabase ses : sessions) {
+                      redis.removeSesion(ses.getHash());
                     }
-                    return createSession(ctx, user);
-    
-                  } else {
-                    Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
-                    return Responses.NotFound.EMAIL;
+                    userSessionDao.deleteByUserId(user.getId());
                   }
+                  return createSession(ctx, user);
+  
                 } else {
-                  return Responses.NotAllowed.UPDATE;
+                  Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
+                  return Responses.NotFound.EMAIL;
                 }
               } else {
-                return Responses.BANNED_USER;
+                return Responses.NotAllowed.SUPER_USER;
               }
+            } else {
+              return Responses.BANNED_USER;
             }
+          } else {
+          	return Responses.NotFound.USER;
           }
+        } else {
+        	return Responses.Already.RESET_PASSWORD;
         }
-      } else {
-        return new Response(problem);
       }
+    } else {
+      return new Response(problem);
     }
-    return Responses.Invalid.DATA;
   }
 
   Response logout(Context ctx) {
     if (ctx.cookieMap().containsKey(Consts.SUPER_SESSION)) {
       CookieHelper.removeSuperCookie(ctx);
+      return Responses.OK;
     }
 
   	if (ctx.cookieMap().containsKey(Consts.SESSION)) {
@@ -223,7 +235,7 @@ public class AuthService {
 
           List<String> hashList = new ArrayList<>(sessions.size());
           for (ForCookie ses : sessions) {
-            RedisClient.removeSesion(ses.getHash());
+            redis.removeSesion(ses.getHash());
             hashList.add(ses.getHash());
           }
 
@@ -247,9 +259,9 @@ public class AuthService {
 
     try (Handle handle = Database.getHandle()) {
       UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
-      MemberDao memberDao = handle.attach(MemberDao.class);
+      MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      List<Member> memberList = memberDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED.name());
+      List<Membership> memberList = membershipDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED);
       if (memberList != null && memberList.size() > 0) {
 
         List<ForRedis> redisSesList = new ArrayList<>();
@@ -267,7 +279,7 @@ public class AuthService {
           sessions = new ArrayList<>();
         } else {
           for (ForCookie cookieSes : sessions) {
-            ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
+            ForRedis redisSes = redis.getSession(cookieSes.getHash());
             if (redisSes != null) {
               responseSesList.add(new ForResponse(cookieSes, redisSes));
             }
@@ -278,7 +290,7 @@ public class AuthService {
         String ipAddress = ClientSide.getIp(ctx.req);
         UserAgent ua = new UserAgent(ctx.userAgent());
 
-        for (Member mem : memberList) {
+        for (Membership mem : memberList) {
           ForCookie cookieSes = new ForCookie(user.getEmail(), mem.getRole().name());
           sessions.add(cookieSes);
 
@@ -300,11 +312,11 @@ public class AuthService {
         }
 
         if (dbSesList.size() > 0) {
-          if (RedisClient.addSesions(redisSesList)) {
-
+          if (redis.addSesions(redisSesList)) {
+          	
             userSessionDao.insertBulk(dbSesList);
             ctx.cookie(CookieHelper.createUserCookie(SessionHelper.toTokenForUser(sessions)));
-
+            
             // the response
             Map<String, Object> map = new HashMap<>(2);
             map.put("sessionNo", sessionNo);
@@ -333,9 +345,9 @@ public class AuthService {
           User user = userDao.findByEmail(sendDto.getEmail());
           if (user == null || !user.isBanned()) {
 
-          	MemberDao memberDao = handle.attach(MemberDao.class);
-          	Member member = memberDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING.name(), sendDto.getAccountId());
-            if (member != null) {
+          	MembershipDao membershipDao = handle.attach(MembershipDao.class);
+          	Membership membership = membershipDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING, sendDto.getAccountId());
+            if (membership != null) {
 
               if (user == null) { //user creation
                 UserDTO dto = new UserDTO();
@@ -352,7 +364,7 @@ public class AuthService {
                   newUser.setEmail(dto.getEmail());
                   newUser.setName(dto.getName());
                   newUser.setTimezone(dto.getTimezone());
-                  res = new Response(user);
+                  res = new Response(newUser);
                 }
               } else {
                 res = Responses.Already.Defined.MEMBERSHIP;
@@ -361,7 +373,7 @@ public class AuthService {
               if (res.isOK()) {
                 User newUser = res.getData();
                 boolean isActivated = 
-                  memberDao.activate(
+                  membershipDao.activate(
                     newUser.getId(),
                     UserStatus.PENDING,
                     UserStatus.JOINED,
@@ -396,21 +408,15 @@ public class AuthService {
   private String validateInvitation(InvitationAcceptDTO dto) {
     String problem = null;
 
-    if (dto == null) {
-      problem = "Invalid invitation data!";
-    }
-
-    if (problem == null) {
-      if (StringUtils.isBlank(dto.getToken())) {
-        problem = Responses.Invalid.TOKEN.getReason();
-      }
+    if (StringUtils.isBlank(dto.getToken())) {
+      problem = Responses.Invalid.TOKEN.getReason();
     }
 
     if (problem == null) {
       PasswordDTO pswDTO = new PasswordDTO();
       pswDTO.setPassword(dto.getPassword());
       pswDTO.setRepeatPassword(dto.getRepeatPassword());
-      problem = PasswordValidator.verify(pswDTO, true, false);
+      problem = PasswordValidator.verify(pswDTO);
     }
 
     return problem;
@@ -439,7 +445,7 @@ public class AuthService {
 
             for (int i = 0; i < sessions.size(); i++) {
               ForCookie cookieSes = sessions.get(i);
-              ForRedis redisSes = RedisClient.getSession(cookieSes.getHash());
+              ForRedis redisSes = redis.getSession(cookieSes.getHash());
               if (redisSes != null) {
                 responseSesList.add(new ForResponse(cookieSes, redisSes));
               }
@@ -459,7 +465,7 @@ public class AuthService {
   }
 
   public static String verifyLogin(LoginDTO dto) {
-    String problem = PasswordValidator.verify(dto, false, false);
+    String problem = PasswordValidator.verify(dto, false);
     if (problem == null) {
       problem = EmailValidator.verify(dto.getEmail());
     }

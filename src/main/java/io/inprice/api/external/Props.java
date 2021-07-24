@@ -23,7 +23,7 @@ public class Props {
   	APP_EMAIL_SENDER = System.getenv().getOrDefault("APP_EMAIL_SENDER", "account@inprice.io");
   	APP_WEB_URL = System.getenv().getOrDefault("APP_WEB_URL", "http://localhost:8080");
   	APP_API_URL = System.getenv().getOrDefault("APP_API_URL", "http://localhost:4567");
-  	APP_SALT_ROUNDS = NumberUtils.toInteger(System.getenv().getOrDefault("APP_SALT_ROUNDS", SysProps.APP_ENV.equals(AppEnv.PROD) ? "6" : "1"));
+  	APP_SALT_ROUNDS = NumberUtils.toInteger(System.getenv().getOrDefault("APP_SALT_ROUNDS", "6"));
   	APP_DAYS_FOR_FREE_USE = NumberUtils.toInteger(System.getenv().getOrDefault("APP_DAYS_FOR_FREE_USE", "14"));
 
   	API_KEYS_GELOCATION = System.getenv().get("API_KEYS_GELOCATION");

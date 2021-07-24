@@ -27,16 +27,16 @@ public class LinkController extends AbstractController {
     // get details
     app.get(Consts.Paths.Super.Link.DETAILS + "/:id", (ctx) -> {
     	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(Commons.createResponse(ctx, service.getDetails(id)));
+    	ctx.json(Commons.createResponse(ctx, service.fetchDetails(id)));
     }, AccessRoles.SUPER_ONLY());
 
-    // for PAUSED, RESOLVED and NOT_SUITABLE changings
+    // marks the links as PAUSED, RESOLVED and NOT_SUITABLE
     app.put(Consts.Paths.Super.Link.CHANGE_STATUS, (ctx) -> {
   		BulkChangetDTO dto = ctx.bodyAsClass(BulkChangetDTO.class);
   		ctx.json(Commons.createResponse(ctx, service.changeStatus(dto)));
     }, AccessRoles.SUPER_ONLY());
 
-    // undo the last transaction if it is PAUSED, RESOLVED or NOT_SUITABLE
+    // undo the last transaction if only if it is marked as PAUSED, RESOLVED or NOT_SUITABLE
     app.put(Consts.Paths.Super.Link.UNDO, (ctx) -> {
   		BulkChangetDTO dto = ctx.bodyAsClass(BulkChangetDTO.class);
       ctx.json(Commons.createResponse(ctx, service.undo(dto)));

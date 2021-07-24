@@ -36,7 +36,7 @@ public class TicketController extends AbstractController {
     	ctx.json(Commons.createResponse(ctx, service.changeStatus(dto)));
     }, AccessRoles.SUPER_ONLY());
 
-    // toggle seen (by user) value
+    // toggle seen (by super user) value
     app.put(Consts.Paths.Super.Ticket.TOGGLE_SEEN_VALUE + "/:id", (ctx) -> {
   		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
   		ctx.json(Commons.createResponse(ctx, service.toggleSeenValue(id)));

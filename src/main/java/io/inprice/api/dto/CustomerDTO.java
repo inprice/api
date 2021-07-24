@@ -17,6 +17,10 @@ public class CustomerDTO implements Serializable {
 
   private String email;
   private String title;
+  private String contactName;
+  private String taxId;
+  private String taxOffice;
+
   private String address1;
   private String address2;
   private String postcode;

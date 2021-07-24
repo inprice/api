@@ -38,27 +38,25 @@ public class Consts {
     public static class Account {
       public static final String BASE = "/account";
       public static final String GEO_INFO = BASE + "/geo";
-      public static final String DELETE = BASE + "/delete";
     }
 
     public static class User {
       public static final String BASE = "/user";
-      public static final String PASSWORD = BASE + "/change-password";
-      public static final String UPDATE = BASE + "/update";
       public static final String INVITATIONS = BASE + "/invitations";
+      public static final String MEMBERSHIPS = BASE + "/memberships";
+      public static final String OPENED_SESSIONS = BASE + "/opened-sessions";
+      public static final String UPDATE_INFO = BASE + "/update-info";
+      public static final String CHANGE_PASSWORD = BASE + "/change-password";
       public static final String ACCEPT_INVITATION = BASE + "/accept-invitation";
       public static final String REJECT_INVITATION = BASE + "/reject-invitation";
-      public static final String MEMBERSHIPS = BASE + "/memberships";
-      public static final String LEAVE_MEMBERSHIP = BASE + "/leave-member";
-      public static final String OPENED_SESSIONS = BASE + "/opened-sessions";
+      public static final String LEAVE_MEMBERSHIP = BASE + "/leave-membership";
       public static final String CLOSE_ALL_SESSIONS = BASE + "/close-all-sessions";
     }
 
-    public static class Member {
-      public static final String BASE = "/member";
+    public static class Membership {
+      public static final String BASE = "/membership";
       public static final String PAUSE = BASE + "/pause";
       public static final String RESUME = BASE + "/resume";
-      public static final String DELETE = BASE + "/delete";
       public static final String CHANGE_ROLE = BASE + "/change-role";
     }
 
@@ -67,7 +65,7 @@ public class Consts {
       public static final String SEARCH = BASE + "s/search";
       public static final String ID_NAME_PAIRS = BASE + "/pairs";
       public static final String LINKS = BASE + "/links";
-      public static final String ADD_LINKS = LINKS + "/import";
+      public static final String ADD_LINKS = BASE + "/add-links";
     }
 
     public static class Link {
@@ -104,7 +102,6 @@ public class Consts {
       public static final String BASE = "/announce";
     	public static final String SEARCH = BASE + "s/search";
     	public static final String NEW_ANNOUNCES = BASE + "s/new";
-    	public static final String LOG = BASE + "/log";
     }
 
     public static class Alarm {
@@ -176,7 +173,7 @@ public class Consts {
       public static class Ticket {
       	public static final String _BASE = BASE + "/ticket";
       	public static final String SEARCH = _BASE + "s/search";
-      	public static final String CHANGE_STATUS = _BASE + "/status";
+      	public static final String CHANGE_STATUS = _BASE + "/change-status";
       	public static final String TOGGLE_SEEN_VALUE = _BASE + "/seen";
       	public static final String COMMENT = _BASE + "/comment";
       }

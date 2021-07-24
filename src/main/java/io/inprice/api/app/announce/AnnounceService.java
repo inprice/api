@@ -3,6 +3,7 @@ package io.inprice.api.app.announce;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.AnnounceMapper;
+import io.inprice.common.meta.AnnounceType;
 import io.inprice.common.models.Announce;
 import io.inprice.common.utils.DateUtils;
 
@@ -45,48 +47,62 @@ public class AnnounceService {
 		}
 	}
 
-  public Response search(SearchDTO dto) {
+  Response search(SearchDTO dto) {
   	if (dto.getTerm() != null) dto.setTerm(SqlHelper.clear(dto.getTerm()));
 
     //---------------------------------------------------
     //building the criteria up
     //---------------------------------------------------
-    StringBuilder crit = new StringBuilder();
-    crit.append("where type='SYSTEM' or ");
-    crit.append("(type = 'USER' and user_id=");
-    crit.append(CurrentUser.getUserId());
-    crit.append(") or ");
-    crit.append("(type = 'ACCOUNT' and account_id=");
-    crit.append(CurrentUser.getAccountId());
-    crit.append(") ");
-    
+    StringBuilder where = new StringBuilder("where 1=1 ");
 
+    if (CollectionUtils.isNotEmpty(dto.getTypes())) {
+    	boolean hasSYSTEM = dto.getTypes().contains(AnnounceType.SYSTEM);
+    	boolean hasACCOUNT = dto.getTypes().contains(AnnounceType.ACCOUNT);
+    	boolean hasUSER = dto.getTypes().contains(AnnounceType.USER);
+    	
+    	if (hasSYSTEM) where.append(" and type='SYSTEM' ");
+
+    	if (hasACCOUNT) {
+    		if (hasSYSTEM) 
+    			where.append(" or ");
+    		else
+    			where.append(" and ");
+    		where.append(" (type='ACCOUNT' and account_id=");
+    		where.append(CurrentUser.getAccountId());
+    		where.append(") ");
+    	}
+
+    	if (hasUSER) {
+    		if (hasSYSTEM || hasACCOUNT) 
+    			where.append(" or ");
+    		else
+    			where.append(" and ");
+    		where.append(" (type='USER' and user_id=");
+    		where.append(CurrentUser.getUserId());
+    		where.append(") ");
+    	}
+    }
+    
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	crit.append(" and ");
-    	crit.append(dto.getSearchBy().getFieldName());
-    	crit.append(" like '%");
-      crit.append(dto.getTerm());
-      crit.append("%' ");
+    	where.append(" and ");
+    	where.append(dto.getSearchBy().getFieldName());
+    	where.append(" like '%");
+      where.append(dto.getTerm());
+      where.append("%' ");
     }
     
     if (dto.getStartingAt() != null) {
-    	crit.append(" and starting_at>=");
-    	crit.append(DateUtils.formatDateForDB(dto.getStartingAt()));
+    	where.append(" and starting_at>=");
+    	where.append(DateUtils.formatDateForDB(dto.getStartingAt()));
     }
 
     if (dto.getEndingAt() != null) {
-    	crit.append(" and ending_at<=");
-    	crit.append(DateUtils.formatDateForDB(dto.getEndingAt()));
+    	where.append(" and ending_at<=");
+    	where.append(DateUtils.formatDateForDB(dto.getEndingAt()));
     }
 
-    if (dto.getTypes() != null && dto.getTypes().size() > 0) {
-    	crit.append(
-		    String.format(" and type in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getTypes()))
-			);
-    }
-
-    if (dto.getLevels() != null && dto.getLevels().size() > 0) {
-    	crit.append(
+    if (CollectionUtils.isNotEmpty(dto.getLevels())) {
+    	where.append(
 		    String.format(" and level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
 			);
     }
@@ -118,7 +134,7 @@ public class AnnounceService {
       List<Announce> searchResult =
         handle.createQuery(
           "select * from announce " +
-          crit +
+          where +
           orderBy +
           limit
         )

@@ -25,17 +25,17 @@ public class Controller extends AbstractController {
   		ctx.json(Commons.createResponse(ctx, service.search(dto)));
     }, AccessRoles.SUPER_ONLY());
 
+    // search for id name list
+    app.post(Consts.Paths.Super.Account.ID_NAME_PAIRS, (ctx) -> {
+  		String term = ctx.queryParam("term", String.class).getValue();
+      ctx.json(Commons.createResponse(ctx, service.searchIdNameList(term)));
+    }, AccessRoles.SUPER_ONLY());
+
     // search for access logs
     app.post(Consts.Paths.Super.Account.AL_SEARCH, (ctx) -> {
   		ALSearchDTO dto = ctx.bodyAsClass(ALSearchDTO.class);
   		ctx.json(Commons.createResponse(ctx, service.searchForAccessLog(dto)));
     }, AccessRoles.SUPER_ONLY());
-
-    // search for id name list
-    app.post(Consts.Paths.Super.Account.ID_NAME_PAIRS, (ctx) -> {
-  		String term = ctx.queryParam("term", String.class).getValue();
-      ctx.json(Commons.createResponse(ctx, service.searchIdNameList(term)));
-    }, AccessRoles.ANYONE());
     
     /*-------------------------------------------------------------------------------------*/
     

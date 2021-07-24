@@ -41,7 +41,7 @@ public class AccountController extends AbstractController {
     // find
     app.get(Consts.Paths.Account.BASE, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getCurrentAccount()));
-    }, AccessRoles.ANYONE());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     app.get(Consts.Paths.Account.GEO_INFO, (ctx) -> {
       Map<String, String> map = ClientSide.getGeoInfo(ctx.req);
@@ -61,7 +61,7 @@ public class AccountController extends AbstractController {
     }, AccessRoles.ADMIN());
 
     //delete
-    app.put(Consts.Paths.Account.DELETE, (ctx) -> {
+    app.delete(Consts.Paths.Account.BASE, (ctx) -> {
       StringDTO dto = ctx.bodyAsClass(StringDTO.class);
       ctx.json(Commons.createResponse(ctx, service.deleteAccount(dto.getValue())));
     }, AccessRoles.ADMIN());

@@ -13,11 +13,11 @@ import io.inprice.common.mappers.AccountHistoryMapper;
 import io.inprice.common.mappers.AccountMapper;
 import io.inprice.common.mappers.AccountTransMapper;
 import io.inprice.common.mappers.IdNamePairMapper;
-import io.inprice.common.mappers.MemberMapper;
+import io.inprice.common.mappers.MembershipMapper;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.AccountHistory;
 import io.inprice.common.models.AccountTrans;
-import io.inprice.common.models.Member;
+import io.inprice.common.models.Membership;
 
 public interface Dao {
 
@@ -40,13 +40,13 @@ public interface Dao {
 	Account findById(@Bind("id") Long id);
 
   @SqlQuery(
-		"select m.*, a.name as account_name, a.status as account_status from member m " +
+		"select m.*, a.name as account_name, a.status as account_status from membership m " +
 		"inner join account a on a.id = m.account_id "+
 		"where account_id=:account_id " +
 		"order by role, created_at"
 	)
-  @UseRowMapper(MemberMapper.class)
-  List<Member> fetchMemberList(@Bind("account_id") Long accountId);
+  @UseRowMapper(MembershipMapper.class)
+  List<Membership> fetchMemberList(@Bind("account_id") Long accountId);
 
   @SqlQuery(
 		"select *, p.name as plan_name from account_history h "+
@@ -63,7 +63,7 @@ public interface Dao {
 
 	@SqlQuery(
 		"select id, name from user " +
-		"where id in (select user_id from member where account_id=:accountId) " +
+		"where id in (select user_id from membership where account_id=:accountId) " +
 		"order by name"
 	)
   @UseRowMapper(IdNamePairMapper.class)
@@ -71,6 +71,6 @@ public interface Dao {
 
   @SqlQuery("select id, name from account where name like :term order by name limit 15")
   @UseRowMapper(IdNamePairMapper.class)
-  List<IdNamePairMapper> searchIdNameListByTerm(@Bind("term") String term);
+  List<IdNamePairMapper> searchIdNameListByName(@Bind("term") String term);
 
 }

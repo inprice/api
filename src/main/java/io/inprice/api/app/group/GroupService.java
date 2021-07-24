@@ -3,7 +3,6 @@ package io.inprice.api.app.group;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,10 +49,10 @@ class GroupService {
     }
   }
 
-  Response getIdNameList(Long exclude) {
+  Response getIdNameList(Long excludedGroupId) {
   	try (Handle handle = Database.getHandle()) {
   		GroupDao groupDao = handle.attach(GroupDao.class);
-  		return new Response(groupDao.getIdNameList((exclude != null ? exclude : 0), CurrentUser.getAccountId()));
+  		return new Response(groupDao.getIdNameList((excludedGroupId != null ? excludedGroupId : 0), CurrentUser.getAccountId()));
   	}
   }
 
@@ -81,104 +80,99 @@ class GroupService {
   }
 
   Response insert(GroupDTO dto) {
-    if (dto != null) {
-      String problem = validate(dto);
-      if (problem == null) {
-        try (Handle handle = Database.getHandle()) {
-          GroupDao groupDao = handle.attach(GroupDao.class);
+    String problem = validate(dto);
+    if (problem == null) {
+      try (Handle handle = Database.getHandle()) {
+        GroupDao groupDao = handle.attach(GroupDao.class);
 
-          LinkGroup found = groupDao.findByName(dto.getName(), CurrentUser.getAccountId());
-          if (found == null) {
-          	Long id = 
-              groupDao.insert(
-                dto.getName(),
-                dto.getPrice(),
-                dto.getAccountId()
-              );
-          	if (id != null && id > 0) {
-          		found = groupDao.findById(id, CurrentUser.getAccountId());
-              Map<String, LinkGroup> data = new HashMap<>(1);
-              data.put("group", found);
-              return new Response(data);
-            }
-          } else {
-          	return Responses.Already.Defined.GROUP;
+        LinkGroup found = groupDao.findByName(dto.getName(), CurrentUser.getAccountId());
+        if (found == null) {
+        	Long id = groupDao.insert(dto);
+        	if (id != null && id > 0) {
+        		found = groupDao.findById(id, CurrentUser.getAccountId());
+            Map<String, LinkGroup> data = new HashMap<>(1);
+            data.put("group", found);
+            return new Response(data);
           }
+        } else {
+        	return Responses.Already.Defined.GROUP;
         }
-        return Responses.DataProblem.DB_PROBLEM;
-      } else {
-        return new Response(problem);
       }
+      return Responses.DataProblem.DB_PROBLEM;
+    } else {
+      return new Response(problem);
     }
-    return Responses.Invalid.GROUP;
   }
 
   Response update(GroupDTO dto) {
-    if (dto != null && dto.getId() != null && dto.getId() > 0) {
+  	Response res = Responses.NotFound.GROUP;
+
+  	if (dto.getId() != null && dto.getId() > 0) {
 
       String problem = validate(dto);
       if (problem == null) {
 
-        Response response = Responses.DataProblem.DB_PROBLEM;
-
         try (Handle handle = Database.getHandle()) {
-        	handle.begin();
-
           GroupDao groupDao = handle.attach(GroupDao.class);
-          LinkGroup found = groupDao.findById(dto.getId(), CurrentUser.getAccountId());
 
-          if (found != null) {
-            boolean isUpdated = 
-              groupDao.update(
-                dto.getId(),
-                dto.getName(),
-                dto.getPrice(),
-                dto.getAccountId()
-              );
+          //to prevent duplication, checking if any group other than this has the same name!
+          LinkGroup found = groupDao.findByName(dto.getName(), dto.getId(), CurrentUser.getAccountId());
+          if (found == null) {
 
-            if (isUpdated) {
-              // if base price is changed then all the prices and other 
-              // indicators (on both group itself and its links) must be re-calculated accordingly
-              if (found.getPrice().compareTo(dto.getPrice()) != 0) {
-          			
-              	//refreshes group's totals and alarm if needed!
-            		GroupRefreshResult grr = GroupAlarmService.updateAlarm(dto.getId(), handle);
-
+          	//must be found
+          	found = groupDao.findById(dto.getId(), CurrentUser.getAccountId());
+            if (found != null) {
+            	handle.begin();
+            	
+            	boolean isUpdated = groupDao.update(dto);
+  
+              if (isUpdated) {
+                // if base price is changed then all the prices and other 
+                // indicators (on both group itself and its links) must be re-calculated accordingly
+                if (found.getPrice().compareTo(dto.getPrice()) != 0) {
+            			
+                	//refreshes group's totals and alarm if needed!
+              		GroupRefreshResult grr = GroupAlarmService.updateAlarm(dto.getId(), handle);
+  
+                  //for returning data!
+            			found.setLevel(grr.getLevel());
+            			found.setTotal(grr.getTotal());
+            			found.setMinPrice(grr.getMinPrice());
+            			found.setAvgPrice(grr.getAvgPrice());
+            			found.setMaxPrice(grr.getMaxPrice());
+                }
                 //for returning data!
-          			found.setLevel(grr.getLevel());
-          			found.setTotal(grr.getTotal());
-          			found.setMinPrice(grr.getMinPrice());
-          			found.setAvgPrice(grr.getAvgPrice());
-          			found.setMaxPrice(grr.getMaxPrice());
+                found.setName(dto.getName());
+                found.setPrice(dto.getPrice());
+                
+                Map<String, LinkGroup> data = new HashMap<>(1);
+                data.put("group", found);
+                res = new Response(data);
+              } else {
+              	res = Responses.DataProblem.DB_PROBLEM;
               }
-              //for returning data!
-              found.setName(dto.getName());
-              found.setPrice(dto.getPrice());
-              
-              Map<String, LinkGroup> data = new HashMap<>(1);
-              data.put("group", found);
-              response = new Response(data);
+
+              if (res.isOK())
+              	handle.commit();
+              else
+              	handle.rollback();
             }
           } else {
-          	response = Responses.NotFound.GROUP;
+          	res = Responses.Already.Defined.GROUP;
           }
-
-          if (response.isOK())
-          	handle.commit();
-          else
-          	handle.rollback();
         }
-        return response;
+        return res;
 
       } else {
-        return new Response(problem);
+      	res = new Response(problem);
       }
     }
-    return Responses.Invalid.GROUP;
+
+  	return res;
   }
 
   Response delete(Long id) {
-  	Response response = Responses.Invalid.GROUP;
+  	Response res = Responses.Invalid.GROUP;
 
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
@@ -209,25 +203,25 @@ class GroupService {
           if (result[6] > 0) {
             Map<String, Object> data = new HashMap<>(1);
             data.put("count", group.getLinkCount());
-            response = new Response(data);
+            res = new Response(data);
             handle.commit();
           } else {
           	handle.rollback();
       		}
+      	} else {
+      		res = Responses.NotFound.GROUP;
       	}
       }
     }
 
-    return response;
+    return res;
   }
 
   Response addLinks(AddLinksDTO dto) {
-    Response response = validate(dto);
+    Response res = validate(dto);
 
-    if (response.isOK()) {
+    if (res.isOK()) {
       try (Handle handle = Database.getHandle()) {
-      	handle.begin();
-
         AccountDao accountDao = handle.attach(AccountDao.class);
         GroupDao groupDao = handle.attach(GroupDao.class);
     		LinkDao linkDao = handle.attach(LinkDao.class);
@@ -237,47 +231,51 @@ class GroupService {
         Account account = accountDao.findById(CurrentUser.getAccountId());
         if (account.getPlan() != null) {
           int allowedLinkCount = (account.getPlan().getLinkLimit() - account.getLinkCount());
-          urlList = response.getData();
-          urlList.remove("");
-  
+          urlList = res.getData();
+
           if (allowedLinkCount > 0) {
           	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
   
-          		for (Iterator<String> it = urlList.iterator(); it.hasNext();) {
+            	handle.begin();
+          		
+            	urlList.forEach(url -> {
   							Link link = new Link();
-  							link.setUrl(it.next());
-  							link.setUrlHash(DigestUtils.md5Hex(link.getUrl()));
+  							link.setUrl(url);
+  							link.setUrlHash(DigestUtils.md5Hex(url));
   							link.setGroupId(dto.getGroupId());
   							link.setAccountId(CurrentUser.getAccountId());
-  
+
   							long id = linkDao.insert(link);
-  
+
   							link.setId(id);
   							link.setStatus(LinkStatus.TOBE_CLASSIFIED);
   							linkDao.insertHistory(link);
-  						}
-          		groupDao.increaseWaitingsCount(dto.getGroupId(), urlList.size());
-  
-          		response = Responses.OK;
+            	});
+
+            	groupDao.increaseWaitingsCount(dto.getGroupId(), urlList.size());
+            	accountDao.increaseLinkCount(CurrentUser.getAccountId(), urlList.size());
+
+            	handle.commit();
+            	
+          		res = Responses.OK;
   
             } else {
             	if (urlList.size() > 100) {
-            		response = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
+            		res = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
             	} else if (urlList.size() > allowedLinkCount) {
-            		response = new Response("You can add max " + allowedLinkCount + " links more!");
+            		res = new Response("You can add up to " + allowedLinkCount + " link(s)!");
             	}
             }
           } else {
-            response = Responses.NotAllowed.NO_LINK_LIMIT;
+            res = Responses.NotAllowed.NO_LINK_LIMIT;
           }
         } else {
-          response = Responses.NotAllowed.HAVE_NO_PLAN;
+          res = Responses.NotAllowed.HAVE_NO_PLAN;
         }
 
-        if (response.isOK()) {
+        if (res.isOK()) {
         	LinkGroup group = groupDao.findByIdWithAlarm(dto.getGroupId(), CurrentUser.getAccountId());
 
-        	accountDao.increaseLinkCount(CurrentUser.getAccountId(), urlList.size());
         	int accountLinkCount = account.getLinkCount() + urlList.size();
 
           Map<String, Object> data = new HashMap<>(4);
@@ -285,20 +283,16 @@ class GroupService {
         	data.put("count", urlList.size());
         	data.put("linkCount", accountLinkCount);
         	data.put("links", linkDao.findListByGroupId(dto.getGroupId(), CurrentUser.getAccountId()));
-          response = new Response(data);
+          res = new Response(data);
         }
 
-        if (response.isOK())
-        	handle.commit();
-        else
-        	handle.rollback();
       } catch (Exception e) {
         log.error("Failed to import URL list!", e);
-        response = Responses.ServerProblem.EXCEPTION;
+        res = Responses.ServerProblem.EXCEPTION;
       }
     }
 
-    return response;
+    return res;
   }
   
   private String validate(GroupDTO dto) {
@@ -306,8 +300,14 @@ class GroupService {
 
     if (StringUtils.isBlank(dto.getName())) {
       problem = "Name cannot be empty!";
-    } else if (dto.getName().length() < 3 || dto.getName().length() > 500) {
-      problem = "Name must be between 3 and 128 chars!";
+    } else if (dto.getName().length() < 3 || dto.getName().length() > 50) {
+      problem = "Name must be between 3 - 50 chars!";
+    }
+
+    if (problem == null) {
+    	if (StringUtils.isNotBlank(dto.getDescription()) && dto.getDescription().length() > 128) {
+    		problem = "Description can be up to 128 chars!";
+    	}
     }
     
     if (problem == null) {
@@ -319,6 +319,8 @@ class GroupService {
     if (problem == null) {
       dto.setAccountId(CurrentUser.getAccountId());
       dto.setName(SqlHelper.clear(dto.getName()));
+      dto.setDescription(SqlHelper.clear(dto.getDescription()));
+      if (dto.getPrice() == null) dto.setPrice(BigDecimal.ZERO);
     }
 
     return problem;
@@ -327,42 +329,50 @@ class GroupService {
   private Response validate(AddLinksDTO dto) {
     Response res = null;
 
-  	if (dto == null) res = Responses.Invalid.DATA;
-  	if (res == null && (dto.getGroupId() == null || dto.getGroupId() <= 0)) res = Responses.Invalid.GROUP;
-    if (res == null && StringUtils.isBlank(dto.getLinksText())) res = Responses.NotSuitable.EMPTY_URL_LIST;
+  	if (dto.getGroupId() != null && dto.getGroupId() > 0) {
 
-    Set<String> urlList = null;
-    if (res == null) {
-      String[] tempRows = dto.getLinksText().split("\n");
-      if (tempRows.length < 1) {
+      if (StringUtils.isNotBlank(dto.getLinksText())) {
+
+      	String[] tempRows = dto.getLinksText().split("\n");
+        if (tempRows.length > 0) {
+  
+        	Set<String> urlList = new LinkedHashSet<>();
+          List<String> problemList = new ArrayList<>();
+      
+          for (int i = 0; i < tempRows.length; i++) {
+      			String row = tempRows[i];
+      			if (StringUtils.isBlank(row)) continue;
+
+      			if (URLUtils.isAValidURL(row)) {
+      				urlList.add(row);
+      			} else {
+      				problemList.add(Integer.toString(i+1));
+      			}
+      		}
+
+          if (problemList.size() == 0) {
+          	res = new Response(urlList);
+          } else {
+          	if (problemList.size() > urlList.size()/2) {
+          		res = new Response("Mostly invalid URLs!");
+          	} else {
+          		res = new Response("Invalid URL(s) at " + String.join(", ", problemList));
+          	}
+          }
+
+        } else {
+        	res = Responses.NotSuitable.EMPTY_URL_LIST;
+        }
+        
+      } else {
       	res = Responses.NotSuitable.EMPTY_URL_LIST;
       }
 
-      if (res == null) {
-        urlList = new LinkedHashSet<>();
-        List<String> problemList = new ArrayList<>();
-    
-        for (int i = 0; i < tempRows.length; i++) {
-    			String row = tempRows[i];
-    			if (StringUtils.isBlank(row)) continue;
-    			if (URLUtils.isAValidURL(row)) {
-    				urlList.add(row);
-    			} else {
-    				problemList.add(Integer.toString(i+1));
-    			}
-    		}
-        if (problemList.size() > 0) {
-        	if (problemList.size() >= urlList.size()/2) {
-        		res = new Response("Mostly invalid URLs!");
-        	} else {
-        		res = new Response("Invalid URLs at " + String.join(", ", problemList));
-        	}
-        }
-      }
-    }
+  	} else {
+  		res = Responses.NotFound.GROUP;
+  	}
 
-    if (res != null) return res; 
-  	return new Response(urlList);
+  	return res;
   }
 
 }

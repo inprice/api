@@ -26,6 +26,7 @@ public class TicketDTO {
   private Long userId;
   private Long accountId;
 
+  //clones ticket for inserting history table
   public TicketDTO(Ticket ticket) {
   	this.id = ticket.getId();
   	this.status = ticket.getStatus();
@@ -34,6 +35,7 @@ public class TicketDTO {
   	this.subject = ticket.getSubject();
   	this.body = ticket.getBody();
   	this.accountId = ticket.getAccountId();
+
   	this.userId = CurrentUser.getUserId();
   }
   

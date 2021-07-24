@@ -10,11 +10,11 @@ public class EmailValidator {
   private static final Pattern pattern = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
 
   public static String verify(String email) {
-    final Matcher matcher = pattern.matcher(email);
-    if (StringUtils.isBlank(email)) {
-      return "Email address cannot be empty!";
-    } else if (email.length() < 9 || email.length() > 100) {
-      return "Email address must be between 9 and 100 chars!";
+  	if (StringUtils.isBlank(email)) return "Email address cannot be empty!";
+  	
+  	final Matcher matcher = pattern.matcher(email);
+    if (email.length() < 8 || email.length() > 128) {
+      return "Email address must be between 8 - 128 chars!";
     } else if (!matcher.matches()) {
       return "Invalid email address!";
     }

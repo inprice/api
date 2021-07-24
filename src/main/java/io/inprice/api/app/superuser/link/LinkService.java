@@ -51,36 +51,36 @@ class LinkService {
     //---------------------------------------------------
     //building the criteria up
     //---------------------------------------------------
-    StringBuilder crit = new StringBuilder("where 1=1 ");
+    StringBuilder where = new StringBuilder("where 1=1 ");
     
     if (dto.getAccountId() != null) {
-    	crit.append(" and l.account_id = ");
-    	crit.append(dto.getAccountId());
+    	where.append(" and l.account_id = ");
+    	where.append(dto.getAccountId());
     }
 
     if (dto.getAlarmStatus() != null && !AlarmStatus.ALL.equals(dto.getAlarmStatus())) {
-  		crit.append(" and l.alarm_id is ");
+  		where.append(" and l.alarm_id is ");
     	if (AlarmStatus.ALARMED.equals(dto.getAlarmStatus())) {
-    		crit.append(" not ");
+    		where.append(" not ");
     	}
-    	crit.append(" null");
+    	where.append(" null");
     }
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	crit.append(" and ");
+    	where.append(" and ");
     	if (SearchBy.NAME.equals(dto.getSearchBy())) {
-    		crit.append("IFNULL(l.name, l.url)");
+    		where.append("IFNULL(l.name, l.url)");
     	} else {
-    		crit.append(dto.getSearchBy().getFieldName());
+    		where.append(dto.getSearchBy().getFieldName());
     	}
-      crit.append(" like '%");
-      crit.append(dto.getTerm());
-      crit.append("%' ");
+      where.append(" like '%");
+      where.append(dto.getTerm());
+      where.append("%' ");
     }
 
     if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
-    	crit.append(
-		    String.format(" and status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
+    	where.append(
+		    String.format(" and l.status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
     }
 
@@ -94,7 +94,7 @@ class LinkService {
       		"inner join link_group as g on g.id = l.group_id " + 
       		"left join platform as p on p.id = l.platform_id " + 
           "left join alarm as al on al.id = l.alarm_id " + 
-          crit +
+          where +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
           " limit " + dto.getRowCount() + ", " + dto.getRowLimit()
         )
@@ -108,7 +108,7 @@ class LinkService {
     }
   }
 
-  Response getDetails(Long id) {
+  Response fetchDetails(Long id) {
     Response res = Responses.NotFound.LINK;
 
     if (id != null && id > 0) {
@@ -141,10 +141,10 @@ class LinkService {
   }
 
   Response changeStatus(BulkChangetDTO dto) {
-    Response response = Responses.NotFound.LINK;
+    Response res = Responses.NotFound.LINK;
 
-  	if (dto.getStatus() != null && STATUSES_FOR_CHANGE.contains(dto.getStatus())) {
-      if (CollectionUtils.isNotEmpty(dto.getIdSet())) {
+    if (CollectionUtils.isNotEmpty(dto.getIdSet())) {
+    	if (dto.getStatus() != null && STATUSES_FOR_CHANGE.contains(dto.getStatus())) {
         try (Handle handle = Database.getHandle()) {
   
           LinkDao linkDao = handle.attach(LinkDao.class);
@@ -158,36 +158,32 @@ class LinkService {
           	}
           }
   
-          if (selectedSet.size() > 0) {
+          if (CollectionUtils.isNotEmpty(selectedSet)) {
           	handle.begin();
-          	int affected = 0;
-          	
-          	if (CollectionUtils.isNotEmpty(selectedSet)) {
-          		affected = linkDao.setStatus(selectedSet, dto.getStatus(), dto.getStatus().getGroup());
-          	}
+
+          	int affected = linkDao.setStatus(selectedSet, dto.getStatus(), dto.getStatus().getGroup());
   
-            if (affected == selectedSet.size()) {
+          	if (affected == selectedSet.size()) {
             	linkDao.insertHistory(selectedSet);
             	handle.commit();
-            	response = Responses.OK;
+            	res = Responses.OK;
             } else {
             	handle.rollback();
-            	response = Responses.DataProblem.DB_PROBLEM;
+            	res = Responses.DataProblem.DB_PROBLEM;
             }
-          } else {
-          	response = new Response("No suitable link found!");
           }
+
         }
+      } else {
+      	res = new Response("Acceptable statuses: PAUSED, RESOLVED and NOT_SUITABLE!");
       }
-    } else {
-    	response = new Response("New status is not proper!");
     }
 
-    return response;
+    return res;
   }
 
   Response undo(BulkChangetDTO dto) {
-    Response response = Responses.NotFound.LINK;
+    Response res = Responses.NotFound.LINK;
 
     if (CollectionUtils.isNotEmpty(dto.getIdSet())) {
       try (Handle handle = Database.getHandle()) {
@@ -199,10 +195,10 @@ class LinkService {
         for (Long id: dto.getIdSet()) {
         	List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(id);
 
-          if (historyList != null) {
+          if (CollectionUtils.isNotEmpty(historyList)) {
           	LinkHistory lastHistory = historyList.get(0);
-          	if (historyList.size() > 1 && STATUSES_FOR_CHANGE.contains(lastHistory.getStatus())) {
 
+          	if (historyList.size() > 1 && STATUSES_FOR_CHANGE.contains(lastHistory.getStatus())) {
             	LinkHistory preHistory = historyList.get(1);
             	affected += linkDao.setStatus(id, preHistory.getStatus(), preHistory.getStatus().getGroup());
             	linkDao.deleteHistory(lastHistory.getId());
@@ -212,15 +208,15 @@ class LinkService {
 
         if (affected > 0) {
         	handle.commit();
-        	response = Responses.OK;
+        	res = Responses.OK;
         } else {
         	handle.rollback();
-        	response = new Response("Link(s) status isn't suitable for undo!");
+        	res = new Response("No suitable link found for undo!");
         }
       }
     }
 
-    return response;
+    return res;
   }
 
 }

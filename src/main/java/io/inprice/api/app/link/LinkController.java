@@ -23,21 +23,21 @@ public class LinkController extends AbstractController {
     app.post(Consts.Paths.Link.SEARCH, (ctx) -> {
   		SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
   		ctx.json(Commons.createResponse(ctx, service.search(dto)));
-    }, AccessRoles.ANYONE());
-    
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+
     // get details
     app.get(Consts.Paths.Link.DETAILS + "/:id", (ctx) -> {
     	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
     	ctx.json(Commons.createResponse(ctx, service.getDetails(id)));
-    }, AccessRoles.ANYONE());
-    
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+
     // delete
     app.delete(Consts.Paths.Link.BASE, (ctx) -> {
     	LinkDeleteDTO ldDto = ctx.bodyAsClass(LinkDeleteDTO.class);
       ctx.json(Commons.createResponse(ctx, service.delete(ldDto)));
     }, AccessRoles.EDITOR());
 
-    // move links to under another group
+    // move links to another group
     app.post(Consts.Paths.Link.MOVE, (ctx) -> {
     	LinkMoveDTO lmDto = ctx.bodyAsClass(LinkMoveDTO.class);
       ctx.json(Commons.createResponse(ctx, service.moveTo(lmDto)));

@@ -65,32 +65,31 @@ public class TicketService {
 	Response insert(TicketDTO dto) {
 		Response res = Responses.Invalid.TICKET;
 
-		if (dto != null) {
-			String problem = validate(dto);
-			if (problem == null) {
-				try (Handle handle = Database.getHandle()) {
-					TicketDao ticketDao = handle.attach(TicketDao.class);
-					handle.begin();
-					
-					long id = ticketDao.insert(dto);
-					dto.setId(id);
-					dto.setStatus(TicketStatus.OPENED);
-					ticketDao.insertHistory(dto);
-					res = Responses.OK;
+		String problem = validate(dto);
+		if (problem == null) {
+			try (Handle handle = Database.getHandle()) {
+				TicketDao ticketDao = handle.attach(TicketDao.class);
+				handle.begin();
+				
+				long id = ticketDao.insert(dto);
+				dto.setId(id);
+				dto.setStatus(TicketStatus.OPENED);
+				ticketDao.insertHistory(dto);
+				res = Responses.OK;
 
-					handle.commit();
-				}
-			} else {
-				res = new Response(problem);
+				handle.commit();
 			}
+		} else {
+			res = new Response(problem);
 		}
+
 		return res;
 	}
 
 	Response update(TicketDTO dto) {
 		Response res = Responses.NotFound.TICKET;
 
-		if (dto != null && dto.getId() != null && dto.getId() > 0) {
+		if (dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
@@ -166,53 +165,53 @@ public class TicketService {
 		return res;
 	}
 
-  public Response search(SearchDTO dto) {
+  Response search(SearchDTO dto) {
   	if (dto.getTerm() != null) dto.setTerm(SqlHelper.clear(dto.getTerm()));
 
     //---------------------------------------------------
     //building the criteria up
     //---------------------------------------------------
-    StringBuilder crit = new StringBuilder();
+    StringBuilder where = new StringBuilder();
 
-    crit.append("where account_id = ");
-    crit.append(CurrentUser.getAccountId());
+    where.append("where account_id = ");
+    where.append(CurrentUser.getAccountId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	crit.append(" and body like '%");
-      crit.append(dto.getTerm());
-      crit.append("%' ");
+    	where.append(" and body like '%");
+      where.append(dto.getTerm());
+      where.append("%' ");
     }
 
     if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
     }
 
     if (dto.getPriorities() != null && dto.getPriorities().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and priority in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPriorities()))
 			);
     }
 
     if (dto.getTypes() != null && dto.getTypes().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and type in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getTypes()))
 			);
     }
 
     if (dto.getSubjects() != null && dto.getSubjects().size() > 0) {
-    	crit.append(
+    	where.append(
 		    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
 			);
     }
 
     if (dto.getSeen() != null && !Seen.ALL.equals(dto.getSeen()) ) {
-    	crit.append(" and seen_by_user = ");
+    	where.append(" and seen_by_user = ");
     	if (Seen.SEEN.equals(dto.getSeen())) {
-    		crit.append(" true ");
+    		where.append(" true ");
     	} else {
-    		crit.append(" false ");
+    		where.append(" false ");
     	}
     }
 
@@ -238,7 +237,7 @@ public class TicketService {
         handle.createQuery(
           "select t.*, u.name as username from ticket t " +
       		"inner join user u on u.id= t.user_id " +
-          crit +
+          where +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
           limit
         )
@@ -254,15 +253,9 @@ public class TicketService {
 	
 	private String validate(TicketDTO dto) {
 		String problem = null;
-		
-		if (StringUtils.isBlank(dto.getBody())) {
-			problem = "Issue cannot be empty!";
-		} else if (dto.getBody().length() < 12 || dto.getBody().length() > 1024) {
-			problem = "Issue must be between 12-1024 chars!";
-		}
 
-		if (problem == null && dto.getPriority() == null) {
-			problem = "Priority type cannot be empty!";
+		if (dto.getPriority() == null) {
+			problem = "Priority cannot be empty!";
 		}
 
 		if (problem == null && dto.getType() == null) {
@@ -274,8 +267,16 @@ public class TicketService {
 		}
 
 		if (problem == null) {
-			dto.setAccountId(CurrentUser.getAccountId());
+  		if (StringUtils.isBlank(dto.getBody())) {
+  			problem = "Issue cannot be empty!";
+  		} else if (dto.getBody().length() < 12 || dto.getBody().length() > 1024) {
+  			problem = "Issue must be between 12 - 1024 chars!";
+  		}
+		}
+
+		if (problem == null) {
 			dto.setUserId(CurrentUser.getUserId());
+			dto.setAccountId(CurrentUser.getAccountId());
 		}
 
 		return problem;

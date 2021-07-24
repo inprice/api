@@ -3,8 +3,12 @@ package io.inprice.api;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 
 import io.inprice.api.consts.Global;
+import io.inprice.api.consts.Responses;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.framework.ConfigScanner;
@@ -13,6 +17,7 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.AccessGuard;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.SysProps;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.JsonConverter;
 import io.inprice.common.meta.AppEnv;
@@ -20,26 +25,40 @@ import io.inprice.common.models.AccessLog;
 import io.javalin.Javalin;
 import io.javalin.core.util.Header;
 import io.javalin.core.util.RouteOverviewPlugin;
+import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
+import io.javalin.http.NotFoundResponse;
 import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.openapi.annotations.ContentType;
 
+/**
+ * The entry point of application
+ * 
+ * @author mdpinar
+ * @since 2019-05-10
+ */
 public class Application {
 
   private static final Logger log = LoggerFactory.getLogger(Application.class);
 
   private static Javalin app;
-
+  private static RedisClient redis;
+  
   public static void main(String[] args) {
+  	MDC.put("email", "system");
+  	MDC.put("ip", "NA");
+  	
     new Thread(() -> {
       log.info("APPLICATION IS STARTING...");
 
       createServer();
       ConfigScanner.scanControllers(app);
-
+      
       log.info("APPLICATION STARTED.");
       Global.isApplicationRunning = true;
 
+      redis = Beans.getSingleton(RedisClient.class);
+      
     }, "app-starter").start();
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -51,7 +70,7 @@ public class Application {
       app.stop();
 
       log.info(" - Redis connection is closing...");
-      RedisClient.shutdown();
+      redis.shutdown();
 
       log.info(" - DB connection is closing...");
       Database.shutdown();
@@ -82,6 +101,7 @@ public class Application {
       if (ctx.method() == "OPTIONS") {
         ctx.header(Header.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
       } else {
+      	MDC.put("ip", ctx.ip());
       	ctx.sessionAttribute("started", System.currentTimeMillis());
     		ctx.sessionAttribute("body", ctx.body());
       }
@@ -90,6 +110,7 @@ public class Application {
     app.after(ctx -> {
     	if (ctx.method() != "OPTIONS") {
       	logAccess(ctx, null);
+      	MDC.clear();
     	}
     });
 
@@ -97,6 +118,10 @@ public class Application {
     	logAccess(ctx, e);
       ctx.json(new Response(e.getStatus(), e.getMessage()));
     });
+
+    app.exception(NotFoundResponse.class, (e, ctx) -> ctx.json(Responses.PAGE_NOT_FOUND));
+    app.exception(BadRequestResponse.class, (e, ctx) -> ctx.json(Responses.REQUEST_BODY_INVALID));
+    app.exception(MismatchedInputException.class, (e, ctx) -> ctx.json(Responses.Already.DELETED_MEMBER));
   }
 
   private static void logAccess(Context ctx, HandlerInterruptException e) {
@@ -161,7 +186,7 @@ public class Application {
       		userLog.setReqBody(reqBody.replaceAll("(?:ssword).*\"", "ssword\":\"***\""));
       	}
 
-    		RedisClient.addUserLog(userLog);
+    		redis.addUserLog(userLog);
     	}
   	}
   	CurrentUser.cleanup();

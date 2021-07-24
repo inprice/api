@@ -1,6 +1,5 @@
 package io.inprice.api.app.account;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +15,7 @@ import io.inprice.api.app.account.dto.CreateDTO;
 import io.inprice.api.app.account.dto.RegisterDTO;
 import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.group.GroupDao;
-import io.inprice.api.app.member.MemberDao;
+import io.inprice.api.app.membership.MembershipDao;
 import io.inprice.api.app.superuser.announce.AnnounceService;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
@@ -24,6 +23,7 @@ import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.GroupDTO;
 import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
@@ -43,10 +43,12 @@ import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
+import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.User;
+import io.inprice.common.models.UserMark;
 import io.javalin.http.Context;
 
 class AccountService {
@@ -54,49 +56,54 @@ class AccountService {
   private static final Logger log = LoggerFactory.getLogger(AccountService.class);
 
   private final AnnounceService announceService = Beans.getSingleton(AnnounceService.class);
+  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
 
   Response requestRegistration(RegisterDTO dto) {
-    Response res = Responses.OK;
-    if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
-      res = RedisClient.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
-    }
+    Response res = redis.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
     if (!res.isOK()) return res;
 
     res = validateRegisterDTO(dto);
     if (res.isOK()) {
 
       try (Handle handle = Database.getHandle()) {
-        UserDao userDao = handle.attach(UserDao.class);
-
-        User user = userDao.findByEmail(dto.getEmail());
-        boolean isNotARegisteredUser = (user == null);
-
-        if (isNotARegisteredUser) {
-          String token = Tokens.add(TokenType.REGISTRATION_REQUEST, dto);
-
-          Map<String, Object> mailMap = new HashMap<>(3);
-          mailMap.put("user", dto.getEmail().split("@")[0]);
-          mailMap.put("account", dto.getAccountName());
-          mailMap.put("token", token.substring(0,3)+"-"+token.substring(3));
+    		AccountDao accountDao = handle.attach(AccountDao.class);
+        UserMark um_BANNED = accountDao.getUserMarkByEmail(dto.getEmail(), UserMarkType.BANNED);
+        
+        if (um_BANNED == null) {
+      		UserDao userDao = handle.attach(UserDao.class);
           
-          if (!SysProps.APP_ENV.equals(AppEnv.PROD)) {
-          	return new Response(mailMap);
+          User user = userDao.findByEmail(dto.getEmail());
+          boolean isNotARegisteredUser = (user == null);
+  
+          if (isNotARegisteredUser) {
+            String token = Tokens.add(TokenType.REGISTRATION_REQUEST, dto);
+  
+            Map<String, Object> mailMap = new HashMap<>(3);
+            mailMap.put("user", dto.getEmail().split("@")[0]);
+            mailMap.put("account", dto.getAccountName());
+            mailMap.put("token", token.substring(0,3)+"-"+token.substring(3));
+            
+            if (!SysProps.APP_ENV.equals(AppEnv.PROD)) {
+            	return new Response(mailMap);
+            } else {
+            	redis.sendEmail(
+          			EmailData.builder()
+            			.template(EmailTemplate.REGISTRATION_REQUEST)
+            			.from(Props.APP_EMAIL_SENDER)
+            			.to(dto.getEmail())
+            			.subject("About " + dto.getAccountName() + " registration on inprice.io")
+            			.data(mailMap)
+            		.build()	
+      				);
+            	redis.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
+              return Responses.OK;
+            }
           } else {
-          	RedisClient.sendEmail(
-        			EmailData.builder()
-          			.template(EmailTemplate.REGISTRATION_REQUEST)
-          			.from(Props.APP_EMAIL_SENDER)
-          			.to(dto.getEmail())
-          			.subject("About " + dto.getAccountName() + " registration on inprice.io")
-          			.data(mailMap)
-          		.build()	
-    				);
-            RedisClient.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
-            return Responses.OK;
+            return Responses.Already.Defined.REGISTERED_USER;
           }
 
         } else {
-          return Responses.Already.Defined.REGISTERED_USER;
+        	return Responses.BANNED_USER;
         }
 
       } catch (Exception e) {
@@ -237,87 +244,88 @@ class AccountService {
   }
 
   Response deleteAccount(String password) {
-    Response response = Responses.DataProblem.DB_PROBLEM;
+  	Response res = Responses.Invalid.PASSWORD;
 
-    try (Handle handle = Database.getHandle()) {
-    	handle.begin();
+  	if (StringUtils.isNotBlank(password) && password.length() > 3 && password.length() < 17) {
 
-      UserDao userDao = handle.attach(UserDao.class);
-      AccountDao accountDao = handle.attach(AccountDao.class);
-      UserSessionDao sessionDao = handle.attach(UserSessionDao.class);
-
-      User user = userDao.findById(CurrentUser.getUserId());
-
-      if (PasswordHelper.isValid(password, user.getPassword())) {
-        Account account = accountDao.findByAdminId(CurrentUser.getUserId());
-
-        if (account != null) {
-          if (! AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
-            log.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
-
-            String where = "where account_id=" + CurrentUser.getAccountId();
-
-            Batch batch = handle.createBatch();
-            batch.add("SET FOREIGN_KEY_CHECKS=0");
-            batch.add("delete from link_price " + where);
-            batch.add("delete from link_history " + where);
-            batch.add("delete from link_spec " + where);
-            batch.add("delete from link " + where);
-            batch.add("delete from link_group " + where);
-            batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
-            batch.add("delete from alarm " + where);
-            batch.add("delete from ticket_history " + where);
-            batch.add("delete from ticket_comment " + where);
-            batch.add("delete from ticket " + where);
-            batch.add("delete from announce_log " + where);
-            batch.add("delete from announce " + where);
-            batch.add("delete from access_log " + where);
-
-            // in order to keep consistency, 
-            // users having no account other than this must be deleted too!!!
-            MemberDao memberDao = handle.attach(MemberDao.class);
-            List<Long> unboundMembers = memberDao.findUserIdListHavingJustThisAccount(CurrentUser.getAccountId());
-            if (unboundMembers != null && ! unboundMembers.isEmpty()) {
-              String userIdList = StringUtils.join(unboundMembers, ",");
-              batch.add("delete from user where id in (" + userIdList + ")");
-            }
-            
-            batch.add("delete from member " + where);
-            batch.add("delete from user_session " + where);
-            batch.add("delete from checkout " + where);
-            batch.add("delete from account_history " + where);
-            batch.add("delete from account_trans " + where);
-            batch.add("delete from account where id=" + CurrentUser.getAccountId());
-
-            batch.add("SET FOREIGN_KEY_CHECKS=1");
-            batch.execute();
-
-            List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
-            if (hashList != null && ! hashList.isEmpty()) {
-              for (String hash : hashList) {
-                RedisClient.removeSesion(hash);
+      try (Handle handle = Database.getHandle()) {
+      	handle.begin();
+  
+        UserDao userDao = handle.attach(UserDao.class);
+        AccountDao accountDao = handle.attach(AccountDao.class);
+        UserSessionDao sessionDao = handle.attach(UserSessionDao.class);
+  
+        User user = userDao.findById(CurrentUser.getUserId());
+  
+        if (PasswordHelper.isValid(password, user.getPassword())) {
+          Account account = accountDao.findByAdminId(CurrentUser.getUserId());
+  
+          if (account != null) {
+            if (! AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
+              log.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
+  
+              String where = "where account_id=" + CurrentUser.getAccountId();
+  
+              Batch batch = handle.createBatch();
+              batch.add("SET FOREIGN_KEY_CHECKS=0");
+              batch.add("delete from link_price " + where);
+              batch.add("delete from link_history " + where);
+              batch.add("delete from link_spec " + where);
+              batch.add("delete from link " + where);
+              batch.add("delete from link_group " + where);
+              batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
+              batch.add("delete from alarm " + where);
+              batch.add("delete from ticket_history " + where);
+              batch.add("delete from ticket_comment " + where);
+              batch.add("delete from ticket " + where);
+              batch.add("delete from announce_log " + where);
+              batch.add("delete from announce " + where);
+              batch.add("delete from access_log " + where);
+  
+              // in order to keep consistency, 
+              // users having no account other than this must be deleted too!!!
+              MembershipDao membershipDao = handle.attach(MembershipDao.class);
+              List<Long> unboundMembers = membershipDao.findUserIdListHavingJustThisAccount(CurrentUser.getAccountId());
+              if (unboundMembers != null && ! unboundMembers.isEmpty()) {
+                String userIdList = StringUtils.join(unboundMembers, ",");
+                batch.add("delete from user where id in (" + userIdList + ")");
               }
+              
+              batch.add("delete from membership " + where);
+              batch.add("delete from user_session " + where);
+              batch.add("delete from checkout " + where);
+              batch.add("delete from account_history " + where);
+              batch.add("delete from account_trans " + where);
+              batch.add("delete from account where id=" + CurrentUser.getAccountId());
+  
+              batch.add("SET FOREIGN_KEY_CHECKS=1");
+              batch.execute();
+  
+              List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
+              if (hashList != null && ! hashList.isEmpty()) {
+                for (String hash : hashList) {
+                	redis.removeSesion(hash);
+                }
+              }
+  
+              log.info("{} is deleted. Id: {}.", account.getName(), account.getId());
+              res = Responses.OK;
+            } else {
+              res = Responses.Already.ACTIVE_SUBSCRIPTION;
             }
-
-            log.info("{} is deleted. Id: {}.", account.getName(), account.getId());
-            response = Responses.OK;
           } else {
-            response = Responses.Already.ACTIVE_SUBSCRIPTION;
+            res = Responses.Invalid.ACCOUNT;
           }
-        } else {
-          response = Responses.Invalid.ACCOUNT;
         }
-      } else {
-        response = Responses.Invalid.PASSWORD;
+  
+        if (res.isOK())
+        	handle.commit();
+        else
+        	handle.rollback();
       }
+  	}
 
-      if (response.isOK())
-      	handle.commit();
-      else
-      	handle.rollback();
-    }
-
-    return response;
+    return res;
   }
 
   private Response validateRegisterDTO(RegisterDTO dto) {
@@ -330,7 +338,7 @@ class AccountService {
         PasswordDTO pswDTO = new PasswordDTO();
         pswDTO.setPassword(dto.getPassword());
         pswDTO.setRepeatPassword(dto.getRepeatPassword());
-        problem = PasswordValidator.verify(pswDTO, true, false);
+        problem = PasswordValidator.verify(pswDTO);
       }
 
       if (problem == null)
@@ -344,7 +352,7 @@ class AccountService {
 
   private Response createAccount(Handle handle, Long userId, String userEmail, String accountName, String currencyCode, String currencyFormat) {
     AccountDao accountDao = handle.attach(AccountDao.class);
-    MemberDao memberDao = handle.attach(MemberDao.class);
+    MembershipDao membershipDao = handle.attach(MembershipDao.class);
     GroupDao groupDao = handle.attach(GroupDao.class);
 
     Account account = accountDao.findByNameAndAdminId(accountName, userId);
@@ -360,16 +368,22 @@ class AccountService {
       if (accountId != null) {
         accountDao.insertStatusHistory(accountId, AccountStatus.CREATED);
         long memberId = 
-          memberDao.insert(
+          membershipDao.insert(
             userId,
             userEmail,
             accountId,
-            UserRole.ADMIN.name(),
-            UserStatus.JOINED.name()
+            UserRole.ADMIN,
+            UserStatus.JOINED
           );
 
         if (memberId > 0) {
-        	groupDao.insert("DEFAULT GROUP", BigDecimal.ZERO, accountId);
+        	groupDao.insert(
+      			GroupDTO.builder()
+      				.name("DEFAULT")
+      				.description("Automatically generated group")
+      				.accountId(accountId)
+    				.build()
+  				);
           log.info("A new user registered: {} - {} ", userEmail, accountName);
           return new Response(accountId);
         }
@@ -383,21 +397,17 @@ class AccountService {
   private Response validateAccountDTO(CreateDTO dto) {
     String problem = null;
 
-    if (dto == null) {
-      problem = "Invalid account info!";
-    }
-
-    if (problem == null) {
-      if (StringUtils.isBlank(dto.getName())) {
-        problem = "Account name cannot be empty!";
-      } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
-        problem = "Account name must be between 3 - 70 chars";
-      }
+    if (StringUtils.isBlank(dto.getName())) {
+      problem = "Account name cannot be empty!";
+    } else if (dto.getName().length() < 5 || dto.getName().length() > 70) {
+      problem = "Account name must be between 5 - 70 chars!";
     }
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getCurrencyCode())) {
-        problem = "Currency cannot be empty!";
+        problem = "Currency code cannot be empty!";
+      } else if (dto.getCurrencyCode().length() != 3) {
+        problem = "Currency code must be 3 chars!";
       } else if (CurrencyFormats.get(dto.getCurrencyCode()) == null) {
         problem = "Unknown currency code!";
       }
@@ -408,11 +418,11 @@ class AccountService {
         problem = "Currency format cannot be empty!";
       } else {
         if (dto.getCurrencyFormat().length() < 3 || dto.getCurrencyFormat().length() > 16) {
-          problem = "Currency format must be between 3 - 16 chars";
+          problem = "Currency format must be between 3 - 16 chars!";
         } else {
           int count = StringUtils.countMatches(dto.getCurrencyFormat(), "#");
           if (count != 3) {
-            problem = "Currency format is invalid";
+            problem = "Currency format is invalid! Example: $#,##0.00";
           }
         }
       }
@@ -431,21 +441,13 @@ class AccountService {
   }
 
   private Response validateAccountDTO(RegisterDTO dto) {
-    String problem = null;
-
-    if (dto == null) {
-      problem = "Invalid account info!";
-    }
-
-    if (problem == null) {
-      problem = EmailValidator.verify(dto.getEmail());
-    }
+    String problem = EmailValidator.verify(dto.getEmail());
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getAccountName())) {
         problem = "Account name cannot be empty!";
       } else if (dto.getAccountName().length() < 3 || dto.getAccountName().length() > 70) {
-        problem = "Account name must be between 3 - 70 chars";
+        problem = "Account name must be between 3 - 70 chars!";
       }
     }
 

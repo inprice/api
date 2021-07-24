@@ -42,24 +42,32 @@ public class AlarmService {
 
 	Response insert(AlarmDTO dto) {
 		Response res = Responses.Invalid.ALARM;
+		
+		String problem = validate(dto);
 
-		if (dto != null) {
-			String problem = validate(dto);
+		if (problem == null) {
+			try (Handle handle = Database.getHandle()) {
+				
+        AccountDao accountDao = handle.attach(AccountDao.class);
+        Account account = accountDao.findById(CurrentUser.getAccountId());
 
-			if (problem == null) {
-				try (Handle handle = Database.getHandle()) {
-					
-	        AccountDao accountDao = handle.attach(AccountDao.class);
-	        Account account = accountDao.findById(CurrentUser.getAccountId());
-
-	        if (account.getPlan() != null) {
-	          int allowedAlarmCount = (account.getPlan().getAlarmLimit() - account.getAlarmCount());
-					
-	          if (allowedAlarmCount > 0) {
+        if (account.getPlan() != null) {
+          int allowedAlarmCount = (account.getPlan().getAlarmLimit() - account.getAlarmCount());
+				
+          if (allowedAlarmCount > 0) {
+          	AlarmDao alarmDao = handle.attach(AlarmDao.class);
+          	
+          	boolean doesExist = 
+          			alarmDao.doesExistByTopicId(
+        					dto.getTopic().name().toLowerCase(), 
+        					(AlarmTopic.LINK.equals(dto.getTopic()) ? dto.getLinkId() : dto.getGroupId()), 
+        					CurrentUser.getAccountId()
+      					);
+          	
+						if (doesExist == false) {
     					Pair<String, BigDecimal> pair = findCurrentStatusAndAmount(dto, handle);
     
     					if (pair != null) {
-    						AlarmDao alarmDao = handle.attach(AlarmDao.class);
     						handle.begin();
     						long id = alarmDao.insert(dto, pair);
     
@@ -72,7 +80,7 @@ public class AlarmService {
     
     						if (isOK) {
     		        	accountDao.increaseAlarmCount(CurrentUser.getAccountId());
-
+  
     		        	handle.commit();
     							dto.setId(id);
     							res = new Response(dto);
@@ -84,23 +92,26 @@ public class AlarmService {
   	            res = (AlarmTopic.LINK.equals(dto.getTopic()) ? Responses.NotFound.LINK : Responses.NotFound.GROUP);
     					}
 	          } else {
-		          res = Responses.NotAllowed.NO_ALARM_LIMIT;
-	          }
-	        } else {
-            res = Responses.NotAllowed.HAVE_NO_PLAN;
-	        }
+	          	res = Responses.Already.Defined.ALARM;
+  					}
+          } else {
+	          res = Responses.NotAllowed.NO_ALARM_LIMIT;
+          }
+        } else {
+          res = Responses.NotAllowed.HAVE_NO_PLAN;
         }
-			} else {
-				res = new Response(problem);
-			}
+      }
+		} else {
+			res = new Response(problem);
 		}
+
 		return res;
 	}
 
 	Response update(AlarmDTO dto) {
 		Response res = Responses.NotFound.ALARM;
 
-		if (dto != null && dto.getId() != null && dto.getId() > 0) {
+		if (dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
@@ -166,26 +177,34 @@ public class AlarmService {
 		return res;
 	}
 
-	public Response search(SearchDTO dto) {
+	Response search(SearchDTO dto) {
 		if (dto.getTerm() != null)
 			dto.setTerm(SqlHelper.clear(dto.getTerm()));
 
 		// ---------------------------------------------------
 		// building the criteria up
 		// ---------------------------------------------------
-		StringBuilder crit = new StringBuilder();
+		StringBuilder where = new StringBuilder();
 
-		crit.append("where a.account_id = ");
-		crit.append(CurrentUser.getAccountId());
+		where.append("where a.account_id = ");
+		where.append(CurrentUser.getAccountId());
+		
+		if (dto.getTopic() != null) {
+			where.append(" and a.topic = '");
+			where.append(dto.getTopic());
+			where.append("'");
+		}
 
 		if (dto.getSubjects() != null && dto.getSubjects().size() > 0) {
-			crit.append(
-			    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects())));
+			where.append(
+		    String.format(" and a.subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
+	    );
 		}
 
 		if (dto.getWhens() != null && dto.getWhens().size() > 0) {
-			crit.append(
-			    String.format(" and subject_when in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getWhens())));
+			where.append(
+		    String.format(" and a.subject_when in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getWhens()))
+	    );
 		}
 
 		// limiting
@@ -205,13 +224,26 @@ public class AlarmService {
 		// ---------------------------------------------------
 		// fetching the data
 		// ---------------------------------------------------
-
-		String select = 
+		
+		String selectForGroups = 
 				"select a.*, g.name as _name from alarm a " +
 		    "inner join link_group g on g.id = a.group_id " + generateNameLikeClause(dto, "g") +
-				"union " +
+		    where;
+		
+		String selectForLinks = 
 				"select a.*, IFNULL(l.name, l.url) as _name from alarm a " +
-		    "inner join link l on l.id = a.link_id " + generateNameLikeClause(dto, "l");
+		    "inner join link l on l.id = a.link_id " + generateNameLikeClause(dto, "l") +
+		    where;
+
+		String select = null;
+		
+		if (AlarmTopic.GROUP.equals(dto.getTopic())) {
+			select = selectForGroups;
+		} else if (AlarmTopic.LINK.equals(dto.getTopic())) {
+			select = selectForLinks;
+		} else {
+			select = selectForGroups + " union " + selectForLinks;
+		}
 
 		String orderBy = " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir();
 		if (! OrderBy.NAME.equals(dto.getOrderBy())) {
@@ -223,7 +255,6 @@ public class AlarmService {
 				handle
 			    .createQuery(
 		        select + 
-		        crit + 
 		        orderBy + 
 		        limit
 	        )
@@ -273,34 +304,37 @@ public class AlarmService {
 		}
 
 		if (problem == null && dto.getSubjectWhen() == null) {
-			problem = "You are expected to specify of when the subject should be considered!";
+			problem = "You are expected to specify when the subject should be considered!";
 		}
 
-		if (problem == null && dto.getSubject() == null) {
+		if (problem == null) {
 			if (AlarmSubject.STATUS.equals(dto.getSubject()) && !AlarmSubjectWhen.CHANGED.equals(dto.getSubjectWhen())) {
 				if (StringUtils.isBlank(dto.getCertainStatus())) {
-					problem = "You are expected to specify certain status!";
+					problem = "You are expected to specify a certain status!";
 				}
 			} else {
 				dto.setCertainStatus(null);
 			}
 		}
 
-		if (problem == null && dto.getSubject() == null) {
-			if (!AlarmSubject.STATUS.equals(dto.getSubject())
-			    && AlarmSubjectWhen.OUT_OF_LIMITS.equals(dto.getSubjectWhen())) {
-				boolean hasNoLowerLimit = (dto.getAmountLowerLimit() == null
-				    || dto.getAmountLowerLimit().compareTo(BigDecimal.ZERO) < 1);
-				boolean hasNoUpperLimit = (dto.getAmountUpperLimit() == null
-				    || dto.getAmountUpperLimit().compareTo(BigDecimal.ZERO) < 1);
+		if (problem == null) {
+			if (!AlarmSubject.STATUS.equals(dto.getSubject()) && AlarmSubjectWhen.OUT_OF_LIMITS.equals(dto.getSubjectWhen())) {
+			
+				boolean hasNoLowerLimit = 
+						(dto.getAmountLowerLimit() == null 
+						|| dto.getAmountLowerLimit().compareTo(BigDecimal.ZERO) < 1 
+						|| dto.getAmountLowerLimit().compareTo(new BigDecimal(9_999_999)) > 0);
+
+				boolean hasNoUpperLimit = 
+						(dto.getAmountUpperLimit() == null 
+						|| dto.getAmountUpperLimit().compareTo(BigDecimal.ZERO) < 1 
+						|| dto.getAmountUpperLimit().compareTo(new BigDecimal(9_999_999)) > 0);
+
 				if (hasNoLowerLimit && hasNoUpperLimit) {
-					problem = "You are expected to specify either lower or upper limit for "
-					    + AlarmSubject.STATUS.name().toLowerCase();
+					problem = "You are expected to specify either lower or upper limit for " + dto.getSubject().name().toLowerCase() + "!";
 				} else {
-					if (hasNoLowerLimit)
-						dto.setAmountLowerLimit(BigDecimal.ZERO);
-					if (hasNoUpperLimit)
-						dto.setAmountUpperLimit(BigDecimal.ZERO);
+					if (hasNoLowerLimit) dto.setAmountLowerLimit(BigDecimal.ZERO);
+					if (hasNoUpperLimit) dto.setAmountUpperLimit(BigDecimal.ZERO);
 				}
 			} else {
 				dto.setAmountLowerLimit(BigDecimal.ZERO);

@@ -1,6 +1,5 @@
 package io.inprice.api.app.group;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -12,6 +11,7 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
 import io.inprice.api.dto.BaseSearchDTO;
+import io.inprice.api.dto.GroupDTO;
 import io.inprice.common.mappers.IdNamePairMapper;
 import io.inprice.common.mappers.LinkGroupMapper;
 import io.inprice.common.models.LinkGroup;
@@ -22,6 +22,10 @@ public interface GroupDao {
 	@SqlQuery("select * from link_group where id=:id and account_id=:accountId")
 	@UseRowMapper(LinkGroupMapper.class)
 	LinkGroup findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
+
+	@SqlQuery("select * from link_group where name=:name and id!=:id and account_id=:accountId limit 1")
+	@UseRowMapper(LinkGroupMapper.class)
+	LinkGroup findByName(@Bind("name") String name, @Bind("id") Long otherThanThisId, @Bind("accountId") Long accountId);
 
 	@SqlQuery(
 		"select g.*" + AlarmDao.FIELDS + " from link_group g " +
@@ -51,12 +55,12 @@ public interface GroupDao {
   @UseRowMapper(LinkGroupMapper.class)
 	List<LinkGroup> search(@BindBean("dto") BaseSearchDTO dto);
 
-  @SqlUpdate("insert into link_group (name, price, account_id) values (:name, :price, :accountId)")
+  @SqlUpdate("insert into link_group (name, description, price, account_id) values (:dto.name, :dto.description, :dto.price, :dto.accountId)")
   @GetGeneratedKeys()
-  long insert(@Bind("name") String name, @Bind("price") BigDecimal price, @Bind("accountId") Long accountId);
+  long insert(@BindBean("dto") GroupDTO dto);
 
-  @SqlUpdate("update link_group set name=:name, price=:price where id=:id and account_id=:accountId")
-  boolean update(@Bind("id") Long id, @Bind("name") String name, @Bind("price") BigDecimal price, @Bind("accountId") Long accountId);
+  @SqlUpdate("update link_group set name=:dto.name, description=:dto.description, price=:dto.price where id=:dto.id and account_id=:dto.accountId")
+  boolean update(@BindBean("dto") GroupDTO dto);
 
   //called after adding links
   @SqlUpdate("update link_group set waitings=waitings + <count> where id=:id")
