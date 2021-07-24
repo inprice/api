@@ -127,7 +127,7 @@ public class Responses {
     public static final Response NO_ALARM_LIMIT = new Response(BASE + 10, "You have reached max alarm number of your plan!");
     public static final Response SUPER_USER = new Response(BASE + 12, "User is not suitable for this operation!");
 
-    public static final Response CLOSED_TICKET = new Response(BASE + 14, "You are not allowed to update a closed ticket!");
+    public static final Response CLOSED_TICKET = new Response(BASE + 14, "Ticket is closed!");
     public static final Response NO_ACCOUNT = new Response(BASE + 15, "You must bind an account!");
   }
 
@@ -136,6 +136,7 @@ public class Responses {
     public static final Response PLAN_CHANGE = new Response(BASE + 1, "Seems that you don't have a subsciption. Only subscribers can change their plans!");
     public static final Response PAYMENT_FAILURE_ON_PLAN_CHANGE = new Response(BASE + 2, "Your payment failed during plan changing! Please try again or use another card!");
     public static final Response EMPTY_URL_LIST = new Response(BASE + 3, "URL list is empty!");
+    public static final Response TICKET = new Response(BASE + 5, "Ticket is not suitable!");
   }
 
   public static class NotFound {

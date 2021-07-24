@@ -23,7 +23,7 @@ import io.inprice.common.models.TicketComment;
 public class CommentService {
 
 	Response insert(TicketCommentDTO dto) {
-		Response res = Responses.Invalid.TICKET;
+		Response res = Responses.NotFound.TICKET;
 
 		String problem = validate(dto);
 		if (problem == null) {
@@ -32,7 +32,7 @@ public class CommentService {
 
 				Ticket ticket = ticketDao.findById(dto.getTicketId());
 				if (ticket != null) {
-					if (! TicketStatus.CLOSED.equals(ticket.getStatus())) {
+					if (TicketStatus.CLOSED.equals(ticket.getStatus()) == false) {
 						handle.begin();
 						ticketDao.makeAllCommentsNotEditable(dto.getTicketId());
 
@@ -41,7 +41,7 @@ public class CommentService {
 						if (isOK) {
 							ticketDao.increaseCommentCount(dto.getTicketId());
 
-							if (dto.getTicketNewStatus() != null && !ticket.getStatus().equals(dto.getTicketNewStatus()) && !TicketStatus.OPENED.equals(dto.getTicketNewStatus())) {
+							if (dto.getTicketNewStatus() != null && ticket.getStatus().equals(dto.getTicketNewStatus()) == false) {
 								ticket.setStatus(dto.getTicketNewStatus());
 								isOK = ticketDao.changeStatus(ticket.getId(), ticket.getStatus());
 								if (isOK) {
@@ -55,13 +55,15 @@ public class CommentService {
 							}
 						}
 
-						if (! isOK){
+						if (isOK == false){
 							handle.rollback();
-							res = Responses.DataProblem.DB_PROBLEM;
+							res = Responses.NotSuitable.TICKET;
 						}
 					} else {
-						res = new Response("This is a closed ticket!");
+						res = Responses.NotAllowed.CLOSED_TICKET;
 					}
+				} else {
+					res = Responses.NotFound.TICKET;
 				}
 			}
 		} else {
@@ -72,7 +74,7 @@ public class CommentService {
 	}
 
 	Response update(TicketCommentDTO dto) {
-		Response res = Responses.Invalid.TICKET;
+		Response res = Responses.NotFound.COMMENT;
 
 		if (dto.getId() != null && dto.getId() > 0) {
 			String problem = validate(dto);
@@ -92,26 +94,29 @@ public class CommentService {
 										List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
 										res = new Response(commentList);
 									} else {
-										res = Responses.DataProblem.DB_PROBLEM;
+										res = Responses.NotSuitable.TICKET;
 									}
 								} else {
 									res = Responses.NotAllowed.UPDATE;
 								}
 							}
 						} else {
-							res = new Response("You are not allowed to update comment on a closed ticket!");
+							res = Responses.NotAllowed.CLOSED_TICKET;
 						}
+					} else {
+						res = Responses.NotFound.TICKET;
 					}
 				}
 			} else {
 				res = new Response(problem);
 			}
 		}
+
 		return res;
 	}
 	
 	Response delete(Long id) {
-		Response res = Responses.NotFound.TICKET;
+		Response res = Responses.NotFound.COMMENT;
 
 		if (id != null && id > 0) {
 			try (Handle handle = Database.getHandle()) {
@@ -139,7 +144,7 @@ public class CommentService {
 							}
 
   					} else {
-							res = new Response("You are not allowed to delete comment from a closed ticket!");
+  						res = Responses.NotAllowed.CLOSED_TICKET;
 						}
 					} else {
 						res = Responses.NotAllowed.UPDATE;

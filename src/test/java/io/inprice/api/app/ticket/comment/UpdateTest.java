@@ -75,6 +75,66 @@ public class UpdateTest {
 		assertEquals("Comment not found!", json.getString("reason"));
 	}
 
+	@Test
+	public void You_are_not_allowed_to_update_this_data_WITH_closed_comment() {
+		JSONObject user = TestAccounts.Standard_plan_and_two_extra_users.ADMIN();
+
+		Cookies cookies = TestUtils.login(user);
+
+		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL", 0);
+		TestUtils.logout(cookies);
+
+		assertNotNull(commentList);
+		assertEquals(2, commentList.length());
+
+		//get the first non editable comment
+		JSONObject comment = null;
+		for (int i = 0; i < commentList.length(); i++) {
+			if (commentList.getJSONObject(i).getBoolean("editable") == false) {
+				comment = commentList.getJSONObject(i);
+				break;
+			}
+		}
+
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("id", comment.getLong("id"));
+		body.put("ticketId", comment.getLong("ticketId"));
+		
+		JSONObject json = callTheService(user, comment);
+
+		assertEquals(904, json.getInt("status"));
+		assertEquals("You are not allowed to update this data!", json.getString("reason"));
+	}
+
+	@Test
+	public void Ticket_is_closed() {
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+
+		JSONArray commentList = TestFinder.searchComments(cookies, "LOW", 0);
+
+		assertNotNull(commentList);
+		assertEquals(1, commentList.length());
+
+		// get first comment
+		JSONObject comment = commentList.getJSONObject(0);
+		
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("id", comment.getLong("id"));
+		body.put("ticketId", comment.getLong("ticketId"));
+
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(body)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(914, json.getInt("status"));
+		assertEquals("Ticket is closed!", json.getString("reason"));
+	}
+
 	/**
 	 * Consists of five steps;
 	 *	a) to find other account's comment, admin is logged in

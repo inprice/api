@@ -144,7 +144,7 @@ public class DeleteTest {
 		assertNotNull(commentList);
 		assertEquals(2, commentList.length());
 
-		//get the first editable comment
+		//get the first non editable comment
 		JSONObject comment = null;
 		for (int i = 0; i < commentList.length(); i++) {
 			if (commentList.getJSONObject(i).getBoolean("editable") == false) {
@@ -167,7 +167,7 @@ public class DeleteTest {
 	}
 
 	@Test
-	public void You_are_not_allowed_to_update_a_closed_ticket() {
+	public void Ticket_is_closed() {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "LOW", 0);
@@ -188,7 +188,7 @@ public class DeleteTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(914, json.getInt("status"));
-		assertEquals("You are not allowed to update a closed ticket!", json.getString("reason"));
+		assertEquals("Ticket is closed!", json.getString("reason"));
 	}
 
 	@Test

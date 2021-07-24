@@ -72,7 +72,7 @@ public class InsertTest {
 	@Test
 	public void Ticket_not_found_WITH_invalid_ticket_id() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("ticketId", "-71");
+		body.put("ticketId", 999);
 
 		JSONObject json = callTheService(body);
 
@@ -122,7 +122,7 @@ public class InsertTest {
 	}
 
 	@Test
-	public void You_are_not_allowed_to_update_a_closed_ticket_FOR_a_closed_ticket() {
+	public void Ticket_is_closed() {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 		
 		// there must be only one ticket in
@@ -143,7 +143,7 @@ public class InsertTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(914, json.getInt("status"));
-		assertEquals("You are not allowed to update a closed ticket!", json.getString("reason"));
+		assertEquals("Ticket is closed!", json.getString("reason"));
 	}
 
 	@Test

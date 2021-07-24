@@ -19,7 +19,6 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.TicketMapper;
-import io.inprice.common.meta.TicketStatus;
 import io.inprice.common.models.Ticket;
 import io.inprice.common.models.TicketComment;
 import io.inprice.common.models.TicketHistory;
@@ -51,36 +50,38 @@ public class TicketService {
   Response changeStatus(ChangeStatusDTO dto) {
   	Response res = Responses.NotFound.TICKET;
 
-  	if (dto.getId() != null && dto.getId().longValue() > 0 && dto.getStatus() != null) {
-    	if (! TicketStatus.OPENED.equals(dto.getStatus())) {
+  	if (dto.getId() != null && dto.getId() > 0) {
+  		if (dto.getStatus() != null) {
 
     		try (Handle handle = Database.getHandle()) {
       		TicketDao ticketDao = handle.attach(TicketDao.class);
       		Ticket ticket = ticketDao.findById(dto.getId());
 
       		if (ticket != null) {
-      			handle.begin();
-
-						ticket.setStatus(dto.getStatus());
-						boolean isOK = ticketDao.changeStatus(ticket.getId(), ticket.getStatus());
-						if (isOK) {
-							isOK = ticketDao.insertHistory(new TicketDTO(ticket));
-						}
-
-    				if (isOK) {
-							handle.commit();
-    					res = Responses.OK;
-    				} else {
-    					handle.rollback();
-    					res = Responses.DataProblem.DB_PROBLEM;
-    				}
+      			if (dto.getStatus().equals(ticket.getStatus()) == false) {
+        			handle.begin();
+  
+  						ticket.setStatus(dto.getStatus());
+  						boolean isOK = ticketDao.changeStatus(ticket.getId(), ticket.getStatus());
+  						if (isOK) {
+  							isOK = ticketDao.insertHistory(new TicketDTO(ticket));
+  						}
+  
+      				if (isOK) {
+  							handle.commit();
+      					res = Responses.OK;
+      				} else {
+      					handle.rollback();
+      					res = Responses.DataProblem.DB_PROBLEM;
+      				}
+          	} else {
+          		res = new Response("Ticket is already in " + dto.getStatus() + " status!");
+          	}
       		}
       	}
     	} else {
-    		res = new Response("It is not allowed to change a ticket's status OPENED!");
+    		res = new Response("Invalid status!");
     	}
-  	} else {
-  		res = Responses.BAD_REQUEST;
   	}
 
   	return res;
