@@ -25,8 +25,6 @@ public class SystemService {
   private static volatile List<Plan> planList;
 
   Response getPlans() {
-  	boolean isOK = false;
-
   	//double checked locking
   	if (planList == null) {
   		synchronized (SystemService.class) {
@@ -37,14 +35,9 @@ public class SystemService {
           }
   			}
 			}
-  		isOK = true;
     }
 
-    if (isOK) {
-    	return new Response(planList);
-    } else {
-    	return Responses.NotFound.PLAN;
-    }
+  	return new Response(planList);
   }
 
   Response refreshSession() {
