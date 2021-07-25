@@ -3,7 +3,6 @@
 -- @since 2021-07-04
 -- -----------------------
 
-set @planId = 20; -- Standard plan
 set @admin_email = 'admin@account-f.com';
 set @editor_email = 'editor@account-f.com';
 
@@ -28,7 +27,7 @@ select id into @viewer_id from test.user where email=@viewer_email;
 
 -- account
 insert into test.account (name, plan_id, status, subs_started_at, subs_renewal_at, user_count, admin_id) 
-values ('With Standard Plan and Two Extra Users', @planId, 'SUBSCRIBED', now(), @one_year_later, 2, @admin_id);
+values ('With Standard Plan and Two Extra Users', @standard_plan_id, 'SUBSCRIBED', now(), @one_year_later, 2, @admin_id);
 set @account_id = last_insert_id();
 
 -- account history

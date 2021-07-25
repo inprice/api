@@ -95,7 +95,7 @@ class LinkService {
       		"left join platform as p on p.id = l.platform_id " + 
           "left join alarm as al on al.id = l.alarm_id " + 
           where +
-          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
+          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", l.id " +
           " limit " + dto.getRowCount() + ", " + dto.getRowLimit()
         )
       .map(new LinkMapper())

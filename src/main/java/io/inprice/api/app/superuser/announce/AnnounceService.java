@@ -153,7 +153,7 @@ public class AnnounceService {
         handle.createQuery(
           "select * from announce " +
           where +
-          orderBy +
+          orderBy + ", id " +
           limit
         )
       .map(new AnnounceMapper())

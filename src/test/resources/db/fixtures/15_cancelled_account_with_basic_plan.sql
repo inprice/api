@@ -3,7 +3,6 @@
 -- @since 2021-07-09
 -- -----------------------
 
-set @planId = 10; -- Basic plan
 set @admin_email = 'admin@account-i.com';
 
 -- -----------------------
@@ -13,7 +12,7 @@ insert into test.user (email, password, name, timezone) values (@admin_email, @s
 set @admin_id = last_insert_id();
 
 -- account
-insert into test.account (name, plan_id, status, admin_id) values ('Cancelled -Basic Plan- No link, No alarm', @planId, 'CANCELLED', @admin_id);
+insert into test.account (name, plan_id, status, admin_id) values ('Cancelled -Basic Plan- No link, No alarm', @basic_plan_id, 'CANCELLED', @admin_id);
 set @account_id = last_insert_id();
 
 -- account history

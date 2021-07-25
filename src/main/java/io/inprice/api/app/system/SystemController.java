@@ -18,7 +18,7 @@ public class SystemController extends AbstractController {
 
     app.get(Consts.Paths.System.PLANS, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getPlans()));
-    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+    }, AccessRoles.ANYONE());
 
     app.get(Consts.Paths.System.STATISTICS, (ctx) -> {
       ctx.json(Commons.createResponse(ctx, service.getStatistics()));

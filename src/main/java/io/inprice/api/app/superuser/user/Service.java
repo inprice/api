@@ -316,6 +316,7 @@ class Service {
   	where.append(" order by ");
     where.append(dto.getOrderBy().getFieldName());
     where.append(dto.getOrderDir().getDir());
+    where.append(", id ");
 
     where.append(" limit ");
     where.append(dto.getRowCount());

@@ -255,7 +255,7 @@ public class AlarmService {
 				handle
 			    .createQuery(
 		        select + 
-		        orderBy + 
+		        orderBy + ", id " + 
 		        limit
 	        )
 		    .map(new AlarmMapper()).list();

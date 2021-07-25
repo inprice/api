@@ -18,9 +18,9 @@ create table user (
 ) engine=innodb;
 
 create table plan (
-  id                        int not null,
+  id                        int auto_increment not null,
   type                      enum('PUBLIC', 'PRIVATE') not null default 'PUBLIC',
-  name                      varchar(15) not null,
+  name                      varchar(30) not null,
   description               varchar(50),
   price                     decimal(6,2) default 0,
   user_limit                smallint default 0,
@@ -31,8 +31,8 @@ create table plan (
 ) engine=innodb;
 
 create table plan_feature (
-  id                        int not null,
-  description               varchar(50),
+  id                        int auto_increment not null,
+  description               varchar(50) not null,
   allowed                   boolean default true,
   order_no                  int not null default 0,
   primary key (id)

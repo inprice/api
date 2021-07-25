@@ -34,7 +34,7 @@ public class CreateCouponTest {
 	private static final JSONObject SAMPLE_BODY = 
 			new JSONObject()
   			.put("accountId", 1)
-  			.put("planId", 10)
+  			.put("planId", 1)
 	    	.put("days", 30)
 	    	.put("description", "Here is your free coupon.");
 

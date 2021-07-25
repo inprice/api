@@ -35,3 +35,11 @@ set @salted_pass = 'tgeCgsZWyabjtsslplwMrGJRHyTyI4zS4DlAWHnjrMQi2Nn9KwXBS9RROaPW
 set @timezone = 'Europe/Istanbul';
 set @one_month_later = DATE_ADD(now(), INTERVAL 1 MONTH);
 set @one_year_later = DATE_ADD(now(), INTERVAL 1 YEAR);
+
+-- plan ids
+select id into @basic_plan_id from plan where name = 'Basic Plan';
+select id into @starter_plan_id from plan where name = 'Starter Plan';
+select id into @standard_plan_id from plan where name = 'Standard Plan';
+select id into @pro_plan_id from plan where name = 'Pro Plan';
+select id into @premium_plan_id from plan where name = 'Premium Plan';
+select id into @enterprise_plan_id from plan where name = 'Enterprise Plan';

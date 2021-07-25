@@ -36,7 +36,7 @@ public class CreateCheckoutTest {
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
-			.routeParam("planId", "10")
+			.routeParam("planId", "1")
 			.asJson();
 		
 		JSONObject json = res.getBody().getObject();
@@ -104,7 +104,7 @@ public class CreateCheckoutTest {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS)
 			.cookie(cookies)
-			.routeParam("planId", "10")
+			.routeParam("planId", "1")
 			.asJson();
 		TestUtils.logout(cookies);
 		
