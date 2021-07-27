@@ -79,7 +79,7 @@ public class ClientSide {
             );
           if (res != null) {
             JSONObject root = new JSONObject(res);
-            JSONObject currency = root.getJSONObject("currency");
+            JSONObject currency = root.getJSONObject("currency"); 
             JSONObject timezone = root.getJSONObject("time_zone");
             result.put(Consts.CURRENCY_CODE, currency.getString("code"));
             result.put(Consts.CURRENCY_FORMAT, CurrencyFormats.get(currency.getString("code")));
