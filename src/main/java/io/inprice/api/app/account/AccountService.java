@@ -24,7 +24,6 @@ import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.GroupDTO;
-import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.Commons;
@@ -89,7 +88,6 @@ class AccountService {
             	redis.sendEmail(
           			EmailData.builder()
             			.template(EmailTemplate.REGISTRATION_REQUEST)
-            			.from(Props.APP_EMAIL_SENDER)
             			.to(dto.getEmail())
             			.subject("About " + dto.getAccountName() + " registration on inprice.io")
             			.data(mailMap)

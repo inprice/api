@@ -345,7 +345,6 @@ class MembershipService {
     redis.sendEmail(
 			EmailData.builder()
   			.template(template)
-  			.from(Props.APP_EMAIL_SENDER)
   			.to(dto.getEmail())
   			.subject("About your invitation for " + CurrentUser.getAccountName() + " at inprice.io")
   			.data(mailMap)

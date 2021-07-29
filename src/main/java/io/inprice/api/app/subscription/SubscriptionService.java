@@ -90,7 +90,6 @@ class SubscriptionService {
               redis.sendEmail(
           			EmailData.builder()
             			.template(EmailTemplate.FREE_ACCOUNT_CANCELLED)
-            			.from(Props.APP_EMAIL_SENDER)
             			.to(CurrentUser.getEmail())
             			.subject("Notification about your cancelled plan in inprice.")
             			.data(mailMap)

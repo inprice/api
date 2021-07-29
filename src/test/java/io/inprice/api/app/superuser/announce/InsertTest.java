@@ -76,25 +76,25 @@ public class InsertTest {
 	}
 
 	@Test
-	public void Title_must_be_between_3_and_50_chars_WITH_shorter_title() {
+	public void Title_must_be_between_5_and_50_chars_WITH_shorter_title() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("title", "AB");
+		body.put("title", "AB12");
 
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Title must be between 3 - 50 chars!", json.getString("reason"));
+    assertEquals("Title must be between 5 - 50 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void Title_must_be_between_3_and_50_chars_WITH_longer_title() {
+	public void Title_must_be_between_5_and_50_chars_WITH_longer_title() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("title", RandomStringUtils.randomAlphabetic(51));
 		
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Title must be between 3 - 50 chars!", json.getString("reason"));
+    assertEquals("Title must be between 5 - 50 chars!", json.getString("reason"));
 	}
 
 	@Test
