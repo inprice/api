@@ -238,7 +238,7 @@ public class TicketService {
           "select t.*, u.name as username from ticket t " +
       		"inner join user u on u.id= t.user_id " +
           where +
-          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() +
+          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", t.id " +
           limit
         )
       .map(new TicketMapper())

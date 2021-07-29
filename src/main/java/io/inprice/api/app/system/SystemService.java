@@ -20,25 +20,24 @@ import io.inprice.common.models.Plan;
 public class SystemService {
 
   private static final Logger log = LoggerFactory.getLogger(SystemService.class);
-	
-  private static List<Plan> planList;
-  
+
+  //needs to be volatile to prevent cache incoherence issues.
+  private static volatile List<Plan> planList;
+
   Response getPlans() {
-  	boolean isOK = false;
-
+  	//double checked locking
   	if (planList == null) {
-      try (Handle handle = Database.getHandle()) {
-        PlanDao planDao = handle.attach(PlanDao.class);
-        planList = planDao.fetchPublicPlans(); 
-      }
-    	isOK = true;
+  		synchronized (SystemService.class) {
+  			if (planList == null) {
+          try (Handle handle = Database.getHandle()) {
+            PlanDao planDao = handle.attach(PlanDao.class);
+            planList = planDao.fetchPublicPlans(); 
+          }
+  			}
+			}
     }
 
-    if (isOK) {
-    	return new Response(planList);
-    } else {
-    	return Responses.NotFound.ACCOUNT;
-    }
+  	return new Response(planList);
   }
 
   Response refreshSession() {

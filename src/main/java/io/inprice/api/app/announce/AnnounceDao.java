@@ -16,8 +16,12 @@ public interface AnnounceDao {
   @SqlUpdate(
 		"insert into announce_log (announce_id, user_id, account_id) " + 
 		"select a.id, <userId>, <accountId> from announce a " +
-		"where (now() between a.starting_at and a.ending_at) " +
-		"  and not exists (select l.id from announce_log l where l.announce_id=a.id) "
+		"where (a.type='SYSTEM' " +
+      		"or (a.type='USER' and a.user_id=<userId>) " +
+      		"or (a.type='ACCOUNT' and a.account_id=<accountId>)" +
+      	") " +
+		"  and (now() between a.starting_at and a.ending_at) " +
+		"  and a.id not in (select announce_id from announce_log l where l.user_id=<userId>) "
 	)
   boolean addLogsForWaitingAnnounces(@Define("userId") Long userId, @Define("accountId") Long accountId);
 
@@ -27,8 +31,8 @@ public interface AnnounceDao {
   				"or (a.type='USER' and a.user_id=:userId) " +
   				"or (a.type='ACCOUNT' and a.account_id=:accountId)" +
 				") " +
+		"  and a.id not in (select announce_id from announce_log l where l.user_id=:userId) " +
 		"  and (now() between a.starting_at and a.ending_at) " +
-		"  and not exists (select l.id from announce_log l where l.announce_id=a.id) " +
 		"order by a.type, a.ending_at desc " +
 		"limit 12"
 	)

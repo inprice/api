@@ -3,7 +3,6 @@
 -- @since 2021-07-04
 -- -----------------------
 
-set @planId = 25; -- Pro plan
 set @admin_email = 'admin@account-g.com';
 
 -- -----------------------
@@ -14,7 +13,7 @@ set @admin_id = last_insert_id();
 
 -- account
 insert into test.account (name, plan_id, status, subs_started_at, subs_renewal_at, admin_id) 
-values ('With Pro Plan and No User', @planId, 'SUBSCRIBED', now(), @one_year_later, @admin_id);
+values ('With Pro Plan and No User', @pro_plan_id, 'SUBSCRIBED', now(), @one_year_later, @admin_id);
 set @account_id = last_insert_id();
 
 -- account history

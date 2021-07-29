@@ -3,7 +3,6 @@
 -- @since 2021-07-04
 -- -----------------------
 
-set @planId = 30; -- Premium plan
 set @admin_email = 'admin@account-h.com';
 set @editor_email = 'editor@account-h.com'; -- not exists as a user!
 set @viewer_email = 'editor@account-c.com'; -- exists in 08_account_with_starter_plan_and_one_extra_user
@@ -26,7 +25,8 @@ select id into @viewer_id from test.user where email=@viewer_email;
 select id into @other_viewer_id from test.user where email=@other_viewer_email;
 
 -- account
-insert into test.account (name, plan_id, user_count, status, subs_started_at, subs_renewal_at, admin_id) values ('With Premium Plan and Two Pending Users', @planId, 3, 'SUBSCRIBED', now(), @one_year_later, @admin_id);
+insert into test.account (name, plan_id, user_count, status, subs_started_at, subs_renewal_at, admin_id) 
+values ('With Premium Plan and Two Pending Users', @premium_plan_id, 3, 'SUBSCRIBED', now(), @one_year_later, @admin_id);
 set @account_id = last_insert_id();
 
 -- account history

@@ -25,4 +25,5 @@ public class ForDatabase implements Serializable {
 
   //transient
   private String accountName;
+
 }

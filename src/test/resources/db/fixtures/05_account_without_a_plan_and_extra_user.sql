@@ -21,8 +21,8 @@ insert into test.account_history (account_id, status) values (@account_id, 'CREA
 -- membership
 insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');
 
--- coupon for Basic Plan (id=10)
-insert into test.coupon (code, plan_id, days, description, issuer_id) values ('RB5QV6CF', 10, 30, 'Given for testing', @account_id);
+-- coupon for Basic Plan
+insert into test.coupon (code, plan_id, days, description, issuer_id) values ('RB5QV6CF', @basic_plan_id, 30, 'Given for testing', @account_id);
 
 -- announces
 insert into test.announce (type, level, title, body, starting_at, ending_at, user_id, account_id) 

@@ -213,7 +213,7 @@ class Service {
 					createCoupon(
 						handle, 
 						dto.getAccountId(), 
-						SubsEvent.GIVEN_BY_SUPERUSER, 
+						SubsEvent.GIVEN_COUPON, 
 						dto.getPlanId(), 
 						dto.getDays(), 
 						dto.getDescription()
@@ -224,7 +224,7 @@ class Service {
   }
 
   private Response createCoupon(Handle handle, long accountId, SubsEvent subsEvent, Integer planId, long days, String description) {
-  	Response res = Responses.NotFound.PLAN;
+  	Response res = Responses.NotFound.ACCOUNT;
 
   	PlanDao planDao = handle.attach(PlanDao.class);
   	Plan plan = planDao.findById(planId);
@@ -237,9 +237,9 @@ class Service {
   			if (account.getStatus().isOKForCoupon()) {
   				
   				boolean hasLimitProblem = false;
-  				if (account.getPlanId() != null) {
+  				if (account.getPlanId() != null && account.getPlanId() != plan.getId()) {
   					hasLimitProblem = (
-  							account.getUserCount() > plan.getUserLimit() 
+  							account.getUserCount() > plan.getUserLimit()+1 
     	  				|| account.getLinkCount() > plan.getLinkLimit() 
     	  				|| account.getAlarmCount() > plan.getAlarmLimit()
     	  			);
@@ -260,10 +260,11 @@ class Service {
   	  	      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
   	  	      AccountTrans trans = new AccountTrans();
   	  	      trans.setAccountId(accountId);
+  	  	      trans.setEventId(couponCode);
   	  	      trans.setEvent(subsEvent);
   	  	      trans.setSuccessful(Boolean.TRUE);
   	  	      trans.setReason(description);
-  	  	      trans.setDescription("Issued coupon code: " + couponCode);
+  	  	      trans.setDescription("Issued coupon");
   	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
   	  	      res = new Response(Collections.singletonMap("code", couponCode));
   	  	    } else {
@@ -275,11 +276,10 @@ class Service {
 				} else {
 					res = Responses.Already.ACTIVE_SUBSCRIPTION;
 				}
-
-  		} else {
-  			res = Responses.NotFound.ACCOUNT;
   		}
-  	}
+		} else {
+			res = Responses.NotFound.PLAN;
+		}
 
   	return res;
   }
@@ -331,7 +331,8 @@ class Service {
   	where.append(" order by ");
     where.append(dto.getOrderBy().getFieldName());
     where.append(dto.getOrderDir().getDir());
-    
+    where.append(", id ");
+
     where.append(" limit ");
     where.append(dto.getRowCount());
     where.append(", ");

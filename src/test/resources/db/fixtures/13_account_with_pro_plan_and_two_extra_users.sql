@@ -3,7 +3,6 @@
 -- @since 2021-07-23
 -- -----------------------
 
-set @planId = 25; -- Pro plan
 set @admin_email = 'admin@account-m.com';
 set @editor_email = 'editor@account-m.com';
 set @viewer_email = 'viewer@account-m.com';
@@ -24,7 +23,7 @@ set @viewer_id = last_insert_id();
 
 -- account
 insert into test.account (name, plan_id, status, subs_started_at, subs_renewal_at, user_count, admin_id) 
-values ('With Pro Plan and Two Extra Users', @planId, 'SUBSCRIBED', now(), @one_year_later, 1, @admin_id);
+values ('With Pro Plan and Two Extra Users', @pro_plan_id, 'SUBSCRIBED', now(), @one_year_later, 1, @admin_id);
 set @account_id = last_insert_id();
 
 -- account history

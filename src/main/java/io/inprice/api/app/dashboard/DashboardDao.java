@@ -39,7 +39,7 @@ interface DashboardDao {
     "left join platform as p on p.id = l.platform_id " + 
     "where l.account_id=:accountId " +
     "order by l.status, l.updated_at desc " +
-    "limit 25"
+    "limit 10"
   )
   @UseRowMapper(MRU25LinkMapper.class)
   List<MRU25Link> findMR25Link(@Bind("accountId") Long accountId);

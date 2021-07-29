@@ -3,7 +3,6 @@
 -- @since 2021-07-04
 -- -----------------------
 
-set @planId = 15; -- Starter plan
 set @admin_email = 'admin@account-c.com';
 set @editor_email = 'editor@account-c.com'; -- will be a pending user in 12_account_with_pro_plan_and_two_pending_users.sql
 
@@ -19,7 +18,7 @@ set @editor_id = last_insert_id();
 
 -- account
 insert into test.account (name, plan_id, status, subs_started_at, subs_renewal_at, user_count, alarm_count, admin_id) 
-values ('With Starter Plan and One Extra User', @planId, 'SUBSCRIBED', now(), @one_year_later, 1, 2, @admin_id);
+values ('With Starter Plan and One Extra User', @starter_plan_id, 'SUBSCRIBED', now(), @one_year_later, 1, 2, @admin_id);
 set @account_id = last_insert_id();
 
 -- account history

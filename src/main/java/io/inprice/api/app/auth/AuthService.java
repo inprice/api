@@ -130,7 +130,6 @@ public class AuthService {
                   redis.sendEmail(
               			EmailData.builder()
                 			.template(EmailTemplate.FORGOT_PASSWORD)
-                			.from(Props.APP_EMAIL_SENDER)
                 			.to(user.getEmail())
                 			.subject("Reset your password for inprice.io")
                 			.data(mailMap)
