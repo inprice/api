@@ -129,8 +129,8 @@ class GroupService {
               if (isUpdated) {
                 // if base price is changed then all the prices and other 
                 // indicators (on both group itself and its links) must be re-calculated accordingly
-                if (found.getPrice().compareTo(dto.getPrice()) != 0) {
-            			
+                if (found.getLinkCount() > 0 && found.getPrice().compareTo(dto.getPrice()) != 0) {
+
                 	//refreshes group's totals and alarm if needed!
               		GroupRefreshResult grr = GroupAlarmService.updateAlarm(dto.getId(), handle);
   
