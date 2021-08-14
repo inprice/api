@@ -1,5 +1,6 @@
 package io.inprice.api.app.account;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -377,8 +378,9 @@ class AccountService {
         if (memberId > 0) {
         	groupDao.insert(
       			GroupDTO.builder()
-      				.name("DEFAULT")
-      				.description("Automatically generated group")
+      				.name("Your first group")
+      				.description("You can use this group to bind and monitor your links")
+      				.price(BigDecimal.ZERO)
       				.accountId(accountId)
     				.build()
   				);
