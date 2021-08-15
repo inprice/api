@@ -28,7 +28,7 @@ import io.jsonwebtoken.security.Keys;
 
 public class SessionHelper {
 
-	private static final Logger log = LoggerFactory.getLogger(SessionHelper.class);
+	private static final Logger logger = LoggerFactory.getLogger(SessionHelper.class);
 
 	private static final JwtBuilder builderForUser, builderForSuper;
 	private static final JwtParser parserForUser, parserForSuper;
@@ -89,7 +89,7 @@ public class SessionHelper {
   			String plainText = AES.decrypt(encrypted);
   			return JsonConverter.fromJson(plainText, User.class);
   		} catch (Exception e) {
-  			log.error("Super user token error!", e);
+  			logger.error("Super user token error!", e);
   		}
 		}
 		return null;
@@ -108,7 +108,7 @@ public class SessionHelper {
   			Object raw = claims.get("payload", List.class);
   			return JsonConverter.mapper.convertValue(raw, new TypeReference<List<ForCookie>>() {});
   		} catch (Exception e) {
-  			log.error("User token error!", e);
+  			logger.error("User token error!", e);
   		}
 		}
 		return null;

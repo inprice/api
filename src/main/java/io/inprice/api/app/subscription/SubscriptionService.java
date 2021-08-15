@@ -13,17 +13,16 @@ import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
 import io.inprice.api.external.Props;
-import io.inprice.api.external.RedisClient;
+import io.inprice.api.external.RabbitClient;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.EmailTemplate;
-import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.meta.SubsEvent;
+import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.AccountTrans;
 import io.inprice.common.models.Plan;
@@ -31,10 +30,6 @@ import io.inprice.common.models.UserMark;
 
 class SubscriptionService {
 
-  //private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
-
-  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
-	
   Response createCheckout(int planId) {
   	return Responses.METHOD_NOT_ALLOWED;
   }
@@ -87,7 +82,7 @@ class SubscriptionService {
               mailMap.put("user", CurrentUser.getEmail());
               mailMap.put("account", StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName());
               
-              redis.sendEmail(
+              RabbitClient.sendEmail(
           			EmailData.builder()
             			.template(EmailTemplate.FREE_ACCOUNT_CANCELLED)
             			.to(CurrentUser.getEmail())

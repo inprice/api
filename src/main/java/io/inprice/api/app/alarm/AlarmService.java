@@ -38,7 +38,7 @@ import io.inprice.common.models.LinkGroup;
  */
 public class AlarmService {
 
-	private static final Logger log = LoggerFactory.getLogger(AlarmService.class);
+	private static final Logger logger = LoggerFactory.getLogger(AlarmService.class);
 
 	Response insert(AlarmDTO dto) {
 		Response res = Responses.Invalid.ALARM;
@@ -262,7 +262,7 @@ public class AlarmService {
 
 			return new Response(Collections.singletonMap("rows", searchResult));
 		} catch (Exception e) {
-			log.error("Failed in full search for alarms.", e);
+			logger.error("Failed in full search for alarms.", e);
 			return Responses.ServerProblem.EXCEPTION;
 		}
 	}

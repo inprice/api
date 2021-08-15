@@ -23,7 +23,7 @@ import io.inprice.common.utils.DateUtils;
 
 class DashboardService {
 
-  private static final Logger log = LoggerFactory.getLogger(DashboardService.class);
+  private static final Logger logger = LoggerFactory.getLogger(DashboardService.class);
 
   private Map<Long, Map<String, Object>> expiringMap = new ExpiringConcurrentHashMap<>(5 * 60 * 1000); //expires in 5 mins
 
@@ -47,7 +47,7 @@ class DashboardService {
         return new Response(report);
     
       } catch (Exception e) {
-        log.error("Failed to get dashboard report", e);
+        logger.error("Failed to get dashboard report", e);
       }
     }
 

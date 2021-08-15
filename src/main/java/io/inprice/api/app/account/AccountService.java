@@ -25,6 +25,7 @@ import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.GroupDTO;
+import io.inprice.api.external.RabbitClient;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.Commons;
@@ -53,7 +54,7 @@ import io.javalin.http.Context;
 
 class AccountService {
 
-  private static final Logger log = LoggerFactory.getLogger(AccountService.class);
+  private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
 
   private final AnnounceService announceService = Beans.getSingleton(AnnounceService.class);
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
@@ -86,7 +87,7 @@ class AccountService {
             if (!SysProps.APP_ENV.equals(AppEnv.PROD)) {
             	return new Response(mailMap);
             } else {
-            	redis.sendEmail(
+            	RabbitClient.sendEmail(
           			EmailData.builder()
             			.template(EmailTemplate.REGISTRATION_REQUEST)
             			.to(dto.getEmail())
@@ -106,7 +107,7 @@ class AccountService {
         }
 
       } catch (Exception e) {
-        log.error("Failed to render email for activating account register", e);
+        logger.error("Failed to render email for activating account register", e);
         return Responses.ServerProblem.EXCEPTION;
       }
     }
@@ -261,7 +262,7 @@ class AccountService {
   
           if (account != null) {
             if (! AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
-              log.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
+              logger.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
   
               String where = "where account_id=" + CurrentUser.getAccountId();
   
@@ -307,7 +308,7 @@ class AccountService {
                 }
               }
   
-              log.info("{} is deleted. Id: {}.", account.getName(), account.getId());
+              logger.info("{} is deleted. Id: {}.", account.getName(), account.getId());
               res = Responses.OK;
             } else {
               res = Responses.Already.ACTIVE_SUBSCRIPTION;
@@ -384,7 +385,7 @@ class AccountService {
       				.accountId(accountId)
     				.build()
   				);
-          log.info("A new user registered: {} - {} ", userEmail, accountName);
+          logger.info("A new user registered: {} - {} ", userEmail, accountName);
           return new Response(accountId);
         }
       }

@@ -43,7 +43,7 @@ import io.javalin.http.Context;
 
 class Service {
 
-  private static final Logger log = LoggerFactory.getLogger("SU:Account");
+  private static final Logger logger = LoggerFactory.getLogger("SU:Account");
   
   Response search(BaseSearchDTO dto) {
   	try (Handle handle = Database.getHandle()) {
@@ -65,7 +65,7 @@ class Service {
       			.list();
         return new Response(searchResult);
       } catch (Exception e) {
-        log.error("Failed in search for access logs.", e);
+        logger.error("Failed in search for access logs.", e);
         return Responses.ServerProblem.EXCEPTION;
       }
   	}

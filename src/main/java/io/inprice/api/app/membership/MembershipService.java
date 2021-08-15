@@ -17,6 +17,7 @@ import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.Props;
+import io.inprice.api.external.RabbitClient;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
@@ -37,7 +38,7 @@ import io.inprice.common.models.User;
 
 class MembershipService {
 
-  private static final Logger log = LoggerFactory.getLogger(MembershipService.class);
+  private static final Logger logger = LoggerFactory.getLogger(MembershipService.class);
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
 
@@ -342,7 +343,7 @@ class MembershipService {
       template = EmailTemplate.INVITATION_FOR_NEW_USERS;
     }
 
-    redis.sendEmail(
+    RabbitClient.sendEmail(
 			EmailData.builder()
   			.template(template)
   			.to(dto.getEmail())
@@ -351,7 +352,7 @@ class MembershipService {
   		.build()	
 		);
 
-    log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
+    logger.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
 
     if (AppEnv.TEST.equals(SysProps.APP_ENV)) {
     	return new Response(mailMap);

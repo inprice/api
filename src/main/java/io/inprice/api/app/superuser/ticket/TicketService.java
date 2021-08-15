@@ -30,7 +30,7 @@ import io.inprice.common.models.TicketHistory;
 */
 public class TicketService {
 
-  private static final Logger log = LoggerFactory.getLogger(TicketService.class);
+  private static final Logger logger = LoggerFactory.getLogger(TicketService.class);
   
   Response findById(Long id) {
   	try (Handle handle = Database.getHandle()) {
@@ -194,7 +194,7 @@ public class TicketService {
 
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
-      log.error("Failed in full search for tickets.", e);
+      logger.error("Failed in full search for tickets.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }

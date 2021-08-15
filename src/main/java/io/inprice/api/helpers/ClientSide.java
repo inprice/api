@@ -25,7 +25,7 @@ import io.inprice.common.meta.AppEnv;
  */
 public class ClientSide {
 
-  private static final Logger log = LoggerFactory.getLogger(ClientSide.class);
+  private static final Logger logger = LoggerFactory.getLogger(ClientSide.class);
 
 
   private static final String[] 
@@ -87,7 +87,7 @@ public class ClientSide {
           }
         }
       } catch (IOException e) {
-        log.error("Failed to get geo info", e);
+        logger.error("Failed to get geo info", e);
       }
     }
     return result;

@@ -29,7 +29,7 @@ import io.inprice.common.utils.DateUtils;
 */
 public class AnnounceService {
 
-  private static final Logger log = LoggerFactory.getLogger(AnnounceService.class);
+  private static final Logger logger = LoggerFactory.getLogger(AnnounceService.class);
 
 	Response fetchNewAnnounces() {
 		try (Handle handle = Database.getHandle()) {
@@ -143,7 +143,7 @@ public class AnnounceService {
 
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
-      log.error("Failed in full search for announces.", e);
+      logger.error("Failed in full search for announces.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }

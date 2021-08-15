@@ -32,7 +32,7 @@ import io.inprice.common.models.Announce;
 */
 public class AnnounceService {
 
-  private static final Logger log = LoggerFactory.getLogger(AnnounceService.class);
+  private static final Logger logger = LoggerFactory.getLogger(AnnounceService.class);
 
 	Response insert(AnnounceDTO dto) {
 		Response res = Responses.NotFound.ANNOUNCE;
@@ -161,7 +161,7 @@ public class AnnounceService {
 
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
-      log.error("Failed in full search for announces.", e);
+      logger.error("Failed in full search for announces.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
@@ -210,7 +210,7 @@ public class AnnounceService {
       dto.setBody(body);
       announceDao.insert(dto);
     } catch (Exception e) {
-      log.error("Failed to read welcome announcement template!", e);
+      logger.error("Failed to read welcome announcement template!", e);
     }
 	}
 

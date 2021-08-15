@@ -34,7 +34,7 @@ import io.inprice.common.repository.PlatformDao;
 
 class LinkService {
 
-  private static final Logger log = LoggerFactory.getLogger(LinkService.class);
+  private static final Logger logger = LoggerFactory.getLogger(LinkService.class);
 
   private final Set<LinkStatus> STATUSES_FOR_CHANGE;
   
@@ -103,7 +103,7 @@ class LinkService {
       
       return new Response(Collections.singletonMap("rows", searchResult));
     } catch (Exception e) {
-      log.error("Failed in full search for links.", e);
+      logger.error("Failed in full search for links.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }

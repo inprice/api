@@ -10,7 +10,6 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.bitwalker.useragentutils.UserAgent;
 import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
 import io.inprice.api.app.membership.MembershipDao;
@@ -23,6 +22,7 @@ import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.Props;
+import io.inprice.api.external.RabbitClient;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.CookieHelper;
@@ -49,7 +49,7 @@ import io.javalin.http.Context;
 
 public class AuthService {
 
-  private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+  private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
   
@@ -127,7 +127,7 @@ public class AuthService {
                 mailMap.put("url", Props.APP_WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
                 
                 if (! SysProps.APP_ENV.equals(AppEnv.TEST)) {
-                  redis.sendEmail(
+                	RabbitClient.sendEmail(
               			EmailData.builder()
                 			.template(EmailTemplate.FORGOT_PASSWORD)
                 			.to(user.getEmail())
@@ -141,7 +141,7 @@ public class AuthService {
                 }
   
               } catch (Exception e) {
-                log.error("Failed to render email for forgetting password", e);
+                logger.error("Failed to render email for forgetting password", e);
                 return Responses.ServerProblem.EXCEPTION;
               }
             } else {
@@ -287,7 +287,6 @@ public class AuthService {
         sessionNo = sessions.size();
 
         String ipAddress = ClientSide.getIp(ctx.req);
-        UserAgent ua = new UserAgent(ctx.userAgent());
 
         for (Membership mem : memberList) {
           ForCookie cookieSes = new ForCookie(user.getEmail(), mem.getRole().name());
@@ -304,8 +303,6 @@ public class AuthService {
           dbSes.setUserId(mem.getUserId());
           dbSes.setAccountId(mem.getAccountId());
           dbSes.setIp(ipAddress);
-          dbSes.setOs(ua.getOperatingSystem().getName());
-          dbSes.setBrowser(ua.getBrowser().getName());
           dbSes.setUserAgent(ctx.userAgent());
           dbSesList.add(dbSes);
         }

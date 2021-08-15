@@ -34,7 +34,7 @@ import io.inprice.common.utils.DateUtils;
 
 class Service {
 
-  private static final Logger log = LoggerFactory.getLogger("SU:User");
+  private static final Logger logger = LoggerFactory.getLogger("SU:User");
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
   
@@ -57,7 +57,7 @@ class Service {
     			.list();
       return new Response(searchResult);
     } catch (Exception e) {
-      log.error("Failed in search for access logs.", e);
+      logger.error("Failed in search for access logs.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
 	}

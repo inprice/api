@@ -10,16 +10,16 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.inprice.api.consts.Global;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.Props;
-import io.inprice.api.external.RedisClient;
 import io.inprice.api.framework.ConfigScanner;
 import io.inprice.api.framework.HandlerInterruptException;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.AccessGuard;
+import io.inprice.api.session.AccessLogger;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.config.SysProps;
-import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.JsonConverter;
+import io.inprice.common.helpers.Rabbit;
 import io.inprice.common.meta.AppEnv;
 import io.inprice.common.models.AccessLog;
 import io.javalin.Javalin;
@@ -39,43 +39,40 @@ import io.javalin.plugin.openapi.annotations.ContentType;
  */
 public class Application {
 
-  private static final Logger log = LoggerFactory.getLogger(Application.class);
+  private static final Logger logger = LoggerFactory.getLogger(Application.class);
 
   private static Javalin app;
-  private static RedisClient redis;
   
   public static void main(String[] args) {
   	MDC.put("email", "system");
   	MDC.put("ip", "NA");
   	
     new Thread(() -> {
-      log.info("APPLICATION IS STARTING...");
+      logger.info("APPLICATION IS STARTING...");
 
       createServer();
       ConfigScanner.scanControllers(app);
       
-      log.info("APPLICATION STARTED.");
+      logger.info("APPLICATION STARTED.");
       Global.isApplicationRunning = true;
 
-      redis = Beans.getSingleton(RedisClient.class);
-      
     }, "app-starter").start();
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 
       Global.isApplicationRunning = false;
-      log.info("APPLICATION IS TERMINATING...");
+      logger.info("APPLICATION IS TERMINATING...");
 
-      log.info(" - Web server is shutting down...");
+      logger.info(" - Web server is shutting down...");
       app.stop();
 
-      log.info(" - Redis connection is closing...");
-      redis.shutdown();
+      logger.info(" - Rabbit connection is closing...");
+      Rabbit.stop();
 
-      log.info(" - DB connection is closing...");
+      logger.info(" - DB connection is closing...");
       Database.shutdown();
 
-      log.info("ALL SERVICES IS DONE.");
+      logger.info("ALL SERVICES IS DONE.");
 
     }, "shutdown-hook"));
   }
@@ -86,7 +83,6 @@ public class Application {
       config.enableCorsForAllOrigins();
       config.logIfServerNotStarted = true;
       config.showJavalinBanner = false;
-      config.requestCacheSize = 8192L;
 
       if (SysProps.APP_ENV.equals(AppEnv.DEV)) {
         config.registerPlugin(new RouteOverviewPlugin("/routes"));
@@ -186,7 +182,7 @@ public class Application {
       		userLog.setReqBody(reqBody.replaceAll("(?:ssword).*\"", "ssword\":\"***\""));
       	}
 
-    		redis.addUserLog(userLog);
+    		AccessLogger.add(userLog);
     	}
   	}
   	CurrentUser.cleanup();

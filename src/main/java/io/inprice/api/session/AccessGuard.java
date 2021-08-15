@@ -31,7 +31,7 @@ import io.javalin.http.Handler;
 
 public class AccessGuard implements AccessManager {
 
-  private static final Logger log = LoggerFactory.getLogger(AccessGuard.class);
+  private static final Logger logger = LoggerFactory.getLogger(AccessGuard.class);
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
   
@@ -123,7 +123,7 @@ public class AccessGuard implements AccessManager {
         try (Handle handle = Database.getHandle()) {
           UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
           if (! userSessionDao.refreshAccessedAt(hash)) {
-            log.warn("Failed to refresh accessed date for {}", hash);
+            logger.warn("Failed to refresh accessed date for {}", hash);
           }
         }
       }

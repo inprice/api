@@ -35,7 +35,7 @@ import io.inprice.common.utils.URLUtils;
 
 class GroupService {
 
-  private static final Logger log = LoggerFactory.getLogger(GroupService.class);
+  private static final Logger logger = LoggerFactory.getLogger(GroupService.class);
 	
   Response findById(Long id) {
     try (Handle handle = Database.getHandle()) {
@@ -287,7 +287,7 @@ class GroupService {
         }
 
       } catch (Exception e) {
-        log.error("Failed to import URL list!", e);
+        logger.error("Failed to import URL list!", e);
         res = Responses.ServerProblem.EXCEPTION;
       }
     }

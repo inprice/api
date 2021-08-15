@@ -13,7 +13,6 @@ import org.apache.commons.io.IOUtils;
 
 import io.inprice.api.Application;
 import io.inprice.api.consts.Global;
-import io.inprice.common.helpers.BaseRedisClient;
 import io.inprice.common.helpers.Database;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -69,8 +68,9 @@ public class TestUtils {
   		}
   		
 		} else { //redis must be cleaned up before starting any test
-			BaseRedisClient redisClient = new BaseRedisClient();
-			redisClient.open(() -> redisClient.getClient().getKeys().flushall());
+			//TODO: nasil??
+			//BaseRedisClient redisClient = new BaseRedisClient();
+			//redisClient.open(() -> redisClient.getClient().getKeys().flushall());
 		}
 		Database.cleanDBForTests(sqlScripts.toString());
 	}

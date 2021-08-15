@@ -19,7 +19,7 @@ import io.inprice.common.models.Plan;
 
 public class SystemService {
 
-  private static final Logger log = LoggerFactory.getLogger(SystemService.class);
+  private static final Logger logger = LoggerFactory.getLogger(SystemService.class);
 
   //needs to be volatile to prevent cache incoherence issues.
   private static volatile List<Plan> planList;
@@ -48,7 +48,7 @@ public class SystemService {
       response = Commons.refreshSession(accountDao, CurrentUser.getAccountId());
     } catch (Exception e) {
       response = Responses.DataProblem.DB_PROBLEM;
-      log.error("Failed to refresh session!", e);
+      logger.error("Failed to refresh session!", e);
     }
 
     return response;
@@ -89,7 +89,7 @@ public class SystemService {
       response = new Response(data);
     } catch (Exception e) {
       response = Responses.DataProblem.DB_PROBLEM;
-      log.error("Failed to get statistics!", e);
+      logger.error("Failed to get statistics!", e);
     }
 
     return response;

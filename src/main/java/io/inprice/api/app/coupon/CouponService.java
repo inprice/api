@@ -24,7 +24,7 @@ import io.inprice.common.utils.CouponManager;
 
 public class CouponService {
 
-  private static final Logger log = LoggerFactory.getLogger(CouponService.class);
+  private static final Logger logger = LoggerFactory.getLogger(CouponService.class);
 
   Response getCoupons() {
   	if (CurrentUser.getAccountId() == null) return Responses.NotAllowed.NO_ACCOUNT;
@@ -99,7 +99,7 @@ public class CouponService {
                               
                       if (isOK) {
                         response = Commons.refreshSession(accountDao, account.getId());
-                        log.info("Coupon {}, is issued for {}", coupon.getCode(), account.getName());
+                        logger.info("Coupon {}, is issued for {}", coupon.getCode(), account.getName());
                       }
                     }
                   }

@@ -141,7 +141,7 @@ create table platform (
   currency_code             char(3) not null,
   currency_format           varchar(30) not null,
   status                    varchar(25),
-  queue                     varchar(25) not null default 'DEF_MULTIPLE',
+  queue                     varchar(25) not null default 'default',
   primary key (id),
   key (domain)
 ) engine=innodb;

@@ -9,16 +9,16 @@ public enum RateLimiterType {
    FORGOT_PASSWORD(RateLimiterType.FIVE_MINUTES),
    HANDLE_INVITATION(RateLimiterType.FIVE_MINUTES);
 
-   private static final int FIVE_MINUTES = 5 * 60 * 1000;
+   private static final int FIVE_MINUTES = 5 * 60;
 
-   private long ttl; // as seconds
+   private long TTL; // as seconds
 
    private RateLimiterType(long ttl) {
-      this.ttl = ttl;
+      this.TTL = ttl;
    }
 
-   public long ttl() {
-      return this.ttl;
+   public long getTTL() {
+      return this.TTL;
    }
 
 }
