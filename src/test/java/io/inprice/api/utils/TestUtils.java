@@ -14,10 +14,12 @@ import org.apache.commons.io.IOUtils;
 import io.inprice.api.Application;
 import io.inprice.api.consts.Global;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.Redis;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
+import redis.clients.jedis.Jedis;
 import redis.embedded.RedisServer;
 
 /**
@@ -68,9 +70,9 @@ public class TestUtils {
   		}
   		
 		} else { //redis must be cleaned up before starting any test
-			//TODO: nasil??
-			//BaseRedisClient redisClient = new BaseRedisClient();
-			//redisClient.open(() -> redisClient.getClient().getKeys().flushall());
+	    try (Jedis jedis = Redis.getPool().getResource()) {
+	    	jedis.flushAll();
+	    }
 		}
 		Database.cleanDBForTests(sqlScripts.toString());
 	}

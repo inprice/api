@@ -5,8 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-
 import io.inprice.api.consts.Global;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.Props;
@@ -20,6 +18,7 @@ import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.JsonConverter;
 import io.inprice.common.helpers.Rabbit;
+import io.inprice.common.helpers.Redis;
 import io.inprice.common.meta.AppEnv;
 import io.inprice.common.models.AccessLog;
 import io.javalin.Javalin;
@@ -28,7 +27,7 @@ import io.javalin.core.util.RouteOverviewPlugin;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
-import io.javalin.plugin.json.JavalinJackson;
+import io.javalin.plugin.json.JavalinJson;
 import io.javalin.plugin.openapi.annotations.ContentType;
 
 /**
@@ -48,7 +47,20 @@ public class Application {
   	MDC.put("ip", "NA");
   	
     new Thread(() -> {
+
+    	Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+  			public void uncaughtException(Thread t1, Throwable e1) {
+  				logger.info("Unhandled exception", e1);
+  			}
+  		});    	
+
       logger.info("APPLICATION IS STARTING...");
+
+      Rabbit.start();
+      logger.info(" - Connected to RabbitMQ server.");
+
+      Redis.start();
+      logger.info(" - Connected to Redis server.");
 
       createServer();
       ConfigScanner.scanControllers(app);
@@ -57,7 +69,7 @@ public class Application {
       Global.isApplicationRunning = true;
 
     }, "app-starter").start();
-
+    
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 
       Global.isApplicationRunning = false;
@@ -66,7 +78,10 @@ public class Application {
       logger.info(" - Web server is shutting down...");
       app.stop();
 
-      logger.info(" - Rabbit connection is closing...");
+      logger.info(" - Redis connection is closing...");
+      Redis.stop();
+
+      logger.info(" - RabbitMQ connection is closing...");
       Rabbit.stop();
 
       logger.info(" - DB connection is closing...");
@@ -90,7 +105,8 @@ public class Application {
 
       config.accessManager(new AccessGuard());
 
-      JavalinJackson.configure(JsonConverter.mapper);
+      JavalinJson.setFromJsonMapper(JsonConverter.gson::fromJson);
+      JavalinJson.setToJsonMapper(JsonConverter.gson::toJson);
     }).start(Props.APP_PORT);
 
     app.before(ctx -> {
@@ -117,7 +133,6 @@ public class Application {
 
     app.exception(NotFoundResponse.class, (e, ctx) -> ctx.json(Responses.PAGE_NOT_FOUND));
     app.exception(BadRequestResponse.class, (e, ctx) -> ctx.json(Responses.REQUEST_BODY_INVALID));
-    app.exception(MismatchedInputException.class, (e, ctx) -> ctx.json(Responses.Already.DELETED_MEMBER));
   }
 
   private static void logAccess(Context ctx, HandlerInterruptException e) {

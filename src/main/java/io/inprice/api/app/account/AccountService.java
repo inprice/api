@@ -117,7 +117,7 @@ class AccountService {
   Response completeRegistration(Context ctx, String token) {
     Response response = Responses.Invalid.TOKEN;
 
-    RegisterDTO dto = Tokens.get(TokenType.REGISTRATION_REQUEST, token);
+    RegisterDTO dto = Tokens.get(TokenType.REGISTRATION_REQUEST, token, RegisterDTO.class);
     if (dto != null) {
       Map<String, String> clientInfo = ClientSide.getGeoInfo(ctx.req);
 
@@ -303,9 +303,7 @@ class AccountService {
   
               List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
               if (hashList != null && ! hashList.isEmpty()) {
-                for (String hash : hashList) {
-                	redis.removeSesion(hash);
-                }
+              	redis.removeSesions(hashList);
               }
   
               logger.info("{} is deleted. Id: {}.", account.getName(), account.getId());

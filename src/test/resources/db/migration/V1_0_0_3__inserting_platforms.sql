@@ -117,6 +117,6 @@ insert into platform (name, domain, country, class_name, currency_code, currency
 
 insert into platform (name, domain, country, class_name, currency_code, currency_format, status) values
   ('Fnac FR', 'fnac.com', 'France', 'fr.FnacFR', 'EUR', '#,##0.00 €', 'BLOCKED'),
-  ('MediaMarkt ES', 'mediamarkt.es', 'Spain', 'xx.MediaMarktXX_1', 'EUR', '€ #,##0.00', 'BLOCKED'),
+  ('MediaMarkt ES', 'mediamarkt.es', 'Spain', 'xx.MediaMarktXX_1', 'EUR', '€ #,##0.00', 'BLOCKED')
   ;
   

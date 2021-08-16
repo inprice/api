@@ -185,9 +185,10 @@ public class UserService {
 
       List<ForDatabase> sessions = userSessionDao.findListByUserId(CurrentUser.getUserId());
       if (sessions != null && sessions.size() > 0) {
-        for (ForDatabase ses : sessions) {
-        	redis.removeSesion(ses.getHash());
-        }
+      	List<String> hashList = new ArrayList<>(sessions.size());
+        for (ForDatabase ses : sessions) hashList.add(ses.getHash());
+        redis.removeSesions(hashList);
+
         if (userSessionDao.deleteByUserId(CurrentUser.getUserId())) {
           return Responses.OK;
         }

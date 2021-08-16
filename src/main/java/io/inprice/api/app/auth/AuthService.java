@@ -171,7 +171,7 @@ public class AuthService {
         UserDao userDao = handle.attach(UserDao.class);
         UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
 
-        final String email = Tokens.get(TokenType.FORGOT_PASSWORD, dto.getToken());
+        final String email = Tokens.get(TokenType.FORGOT_PASSWORD, dto.getToken(), String.class);
         if (email != null) {
 
           User user = userDao.findByEmail(email);
@@ -188,9 +188,10 @@ public class AuthService {
                   Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
                   List<ForDatabase> sessions = userSessionDao.findListByUserId(user.getId());
                   if (sessions != null && sessions.size() > 0) {
-                    for (ForDatabase ses : sessions) {
-                      redis.removeSesion(ses.getHash());
-                    }
+                  	List<String> hashList = new ArrayList<>(sessions.size());
+                    for (ForDatabase ses : sessions) hashList.add(ses.getHash());
+                    redis.removeSesions(hashList);
+
                     userSessionDao.deleteByUserId(user.getId());
                   }
                   return createSession(ctx, user);
@@ -233,10 +234,8 @@ public class AuthService {
         if (sessions != null && sessions.size() > 0) {
 
           List<String> hashList = new ArrayList<>(sessions.size());
-          for (ForCookie ses : sessions) {
-            redis.removeSesion(ses.getHash());
-            hashList.add(ses.getHash());
-          }
+          for (ForCookie ses : sessions) hashList.add(ses.getHash());
+          redis.removeSesions(hashList);
 
           boolean isOK = false;
           if (hashList.size() > 0) {
@@ -332,7 +331,7 @@ public class AuthService {
     if (problem == null) {
       Response res = Responses.DataProblem.DB_PROBLEM;
 
-      InvitationSendDTO sendDto = Tokens.get(TokenType.INVITATION, acceptDto.getToken());
+      InvitationSendDTO sendDto = Tokens.get(TokenType.INVITATION, acceptDto.getToken(), InvitationSendDTO.class);
       if (sendDto != null) {
 
         try (Handle handle = Database.getHandle()) {

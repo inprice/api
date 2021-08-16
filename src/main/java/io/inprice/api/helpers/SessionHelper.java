@@ -1,5 +1,6 @@
 package io.inprice	.api.helpers;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -9,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.gson.internal.LinkedTreeMap;
 
 import io.inprice.api.session.info.ForCookie;
 import io.inprice.common.config.Secrets;
@@ -21,9 +22,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.gson.io.GsonDeserializer;
+import io.jsonwebtoken.gson.io.GsonSerializer;
 import io.jsonwebtoken.impl.DefaultClaims;
-import io.jsonwebtoken.jackson.io.JacksonDeserializer;
-import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
 
 public class SessionHelper {
@@ -53,23 +54,23 @@ public class SessionHelper {
 		builderForSuper = Jwts
 			.builder()
 			.signWith(keyForSuper)
-			.serializeToJsonWith(new JacksonSerializer<>(JsonConverter.mapper));
+			.serializeToJsonWith(new GsonSerializer<>(JsonConverter.gson));
 
 		parserForSuper = Jwts
 			.parserBuilder()
 			.setSigningKey(keyForSuper)
-			.deserializeJsonWith(new JacksonDeserializer<>(JsonConverter.mapper))
+			.deserializeJsonWith(new GsonDeserializer<>(JsonConverter.gson))
 			.build();
 
 		builderForUser = Jwts
 			.builder()
 			.signWith(keyForUsers)
-			.serializeToJsonWith(new JacksonSerializer<>(JsonConverter.mapper));
+			.serializeToJsonWith(new GsonSerializer<>(JsonConverter.gson));
 
 		parserForUser = Jwts
 			.parserBuilder()
 			.setSigningKey(keyForUsers)
-	    .deserializeJsonWith(new JacksonDeserializer<>(JsonConverter.mapper))
+			.deserializeJsonWith(new GsonDeserializer<>(JsonConverter.gson))
 	    .build();
 	}
 
@@ -101,12 +102,18 @@ public class SessionHelper {
 		return builderForUser.setClaims(claims).compact();
 	}
 
+	@SuppressWarnings("unchecked")
 	public static List<ForCookie> fromTokenForUser(String token) {
 		if (StringUtils.isNotBlank(token)) {
   		try {
   			Claims claims = parserForUser.parseClaimsJws(token).getBody();
-  			Object raw = claims.get("payload", List.class);
-  			return JsonConverter.mapper.convertValue(raw, new TypeReference<List<ForCookie>>() {});
+  			List<LinkedTreeMap<String, String>> payload = claims.get("payload", List.class);
+
+  			List<ForCookie> sessions = new ArrayList<>(payload.size());
+  			for (LinkedTreeMap<String, String> ltm : payload) {
+  				sessions.add(new ForCookie(ltm.get("e"), ltm.get("r"), ltm.get("h")));
+				}
+  			return sessions;
   		} catch (Exception e) {
   			logger.error("User token error!", e);
   		}

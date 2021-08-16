@@ -1,19 +1,17 @@
 package io.inprice.api.token;
 
-import java.io.Serializable;
 import java.util.Random;
 
 import io.inprice.api.helpers.CodeGenerator;
 import io.inprice.common.helpers.JsonConverter;
 import io.inprice.common.helpers.Redis;
-
 import redis.clients.jedis.Jedis;
 
 public class Tokens {
 	
   private static final Random random = new Random();
 
-  public static String add(TokenType tokenType, Serializable object) {
+  public static String add(TokenType tokenType, Object object) {
     String token = null;
     if (TokenType.REGISTRATION_REQUEST.equals(tokenType)) {
       token = generateNumericToken();
@@ -30,13 +28,12 @@ public class Tokens {
     return token;
   }
 
-  @SuppressWarnings("unchecked")
-  public static <T> T get(TokenType tokenType, String token) {
+  public static <T> T get(TokenType tokenType, String token, Class<T> expectedClass) {
     try (Jedis jedis = Redis.getPool().getResource()) {
     	String key = getKey(tokenType, token);
     	String json = jedis.get(key);
     	if (json != null) {
-    		return (T) JsonConverter.fromJson(json, Serializable.class);
+    		return (T) JsonConverter.fromJson(json, expectedClass);
     	} else {
     		return null;
     	}

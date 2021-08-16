@@ -2,7 +2,7 @@ package io.inprice.api.app.alarm.dto;
 
 import java.math.BigDecimal;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.inprice.common.framework.Exclude;
 
 import io.inprice.common.meta.AlarmSubject;
 import io.inprice.common.meta.AlarmSubjectWhen;
@@ -26,7 +26,7 @@ public class AlarmDTO {
   private Long linkId;
   private Long groupId;
 
-  @JsonIgnore
+  @Exclude
   private Long accountId;
 	
 }

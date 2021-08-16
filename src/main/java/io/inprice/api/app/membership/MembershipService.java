@@ -404,7 +404,7 @@ class MembershipService {
       
       if (hashList.size() > 0) {
       	userSessionDao.deleteByHashList(hashList);
-      	for (String hash : hashList) redis.removeSesion(hash);
+        redis.removeSesions(hashList);
       }
     }
   }

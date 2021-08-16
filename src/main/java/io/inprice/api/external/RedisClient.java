@@ -80,10 +80,19 @@ public class RedisClient {
     }
   }
 
-  //TODO: adding a multiple version of this method would be nice!
   public void removeSesion(String hash) {
     try (Jedis jedis = Redis.getPool().getResource()) {
     	jedis.hdel(SESSIONS_KEY, hash);
+    }
+  }
+
+  public void removeSesions(List<String> hashes) {
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	Transaction trans = jedis.multi();
+    	for (String hash: hashes) {
+    		trans.hdel(SESSIONS_KEY, hash);
+    	}
+    	trans.exec();
     }
   }
 
