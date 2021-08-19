@@ -19,10 +19,9 @@ import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.dto.UserDTO;
 import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.app.user.validator.PasswordValidator;
+import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.external.Props;
-import io.inprice.api.external.RabbitClient;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.CookieHelper;
@@ -30,17 +29,16 @@ import io.inprice.api.helpers.PasswordHelper;
 import io.inprice.api.helpers.SessionHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
+import io.inprice.api.publisher.EmailPublisher;
 import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.api.session.info.ForResponse;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
-import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
-import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Membership;
@@ -124,10 +122,10 @@ public class AuthService {
                 Map<String, Object> mailMap = new HashMap<>(3);
                 mailMap.put("user", user.getName());
                 mailMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
-                mailMap.put("url", Props.APP_WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
+                mailMap.put("url", Props.getConfig().APP.WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
                 
-                if (! SysProps.APP_ENV.equals(AppEnv.TEST)) {
-                	RabbitClient.sendEmail(
+                if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST) == false) {
+                	EmailPublisher.publish(
               			EmailData.builder()
                 			.template(EmailTemplate.FORGOT_PASSWORD)
                 			.to(user.getEmail())

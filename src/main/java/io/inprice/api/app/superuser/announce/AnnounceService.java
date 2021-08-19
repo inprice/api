@@ -1,11 +1,11 @@
 package io.inprice.api.app.superuser.announce;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.jdbi.v3.core.Handle;
@@ -206,9 +206,15 @@ public class AnnounceService {
       dto.setStartingAt(today);
       dto.setEndingAt(DateUtils.addDays(today, 3));
       dto.setTitle("Welcome on board!");
-      String body = IOUtils.toString(this.getClass().getResourceAsStream("/announces/welcome.html"), "UTF-8");
-      dto.setBody(body);
-      announceDao.insert(dto);
+
+  		try {
+  			String body = new String(this.getClass().getResourceAsStream("/announces/welcome.html").readAllBytes());
+        dto.setBody(body);
+        announceDao.insert(dto);
+  		} catch (IOException e) {
+  			logger.error("Failed to load config file", e);
+  		}
+      
     } catch (Exception e) {
       logger.error("Failed to read welcome announcement template!", e);
     }

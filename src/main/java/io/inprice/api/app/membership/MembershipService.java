@@ -15,20 +15,19 @@ import io.inprice.api.app.auth.dto.InvitationSendDTO;
 import io.inprice.api.app.membership.dto.InvitationUpdateDTO;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.validator.EmailValidator;
+import io.inprice.api.config.Props;
+import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.external.Props;
-import io.inprice.api.external.RabbitClient;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.Response;
+import io.inprice.api.publisher.EmailPublisher;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
-import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
-import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
@@ -339,11 +338,11 @@ class MembershipService {
     } else {
       mailMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')));
       mailMap.put("token", Tokens.add(TokenType.INVITATION, dto));
-      mailMap.put("url", Props.APP_WEB_URL + "/accept-invitation");
+      mailMap.put("url", Props.getConfig().APP.WEB_URL + "/accept-invitation");
       template = EmailTemplate.INVITATION_FOR_NEW_USERS;
     }
 
-    RabbitClient.sendEmail(
+    EmailPublisher.publish(
 			EmailData.builder()
   			.template(template)
   			.to(dto.getEmail())
@@ -354,7 +353,7 @@ class MembershipService {
 
     logger.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
 
-    if (AppEnv.TEST.equals(SysProps.APP_ENV)) {
+    if (Props.getConfig().APP.ENV.equals(Consts.Env.PROD)) {
     	return new Response(mailMap);
     } else {
     	return Responses.OK;

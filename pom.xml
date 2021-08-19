@@ -19,14 +19,12 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Versions -->
-    <jdk.version>1.8</jdk.version>
+    <jdk.version>1.11</jdk.version>
     <maven-compiler.version>3.8.0</maven-compiler.version>
     <inprice-common.version>1.0.0</inprice-common.version>
 
     <javalin.version>3.13.10</javalin.version>
     <reflections.version>0.9.12</reflections.version>
-    <commons-collections.version>4.1</commons-collections.version>
-    <commons-io.version>2.11.0</commons-io.version>
     <json.version>20210307</json.version>
     <jjwt.version>0.11.2</jjwt.version>
     <junit.version>4.13.2</junit.version>
@@ -52,17 +50,6 @@
       <groupId>org.reflections</groupId>
       <artifactId>reflections</artifactId>
       <version>${reflections.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-collections4</artifactId>
-      <version>${commons-collections.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>${commons-io.version}</version>
     </dependency>
 
     <dependency>

@@ -211,17 +211,16 @@ class LinkService {
         		LinkDao linkDao = handle.attach(LinkDao.class);
             
           	Set<Long> foundGroupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
-
           	if (CollectionUtils.isNotEmpty(foundGroupIdSet)) foundGroupIdSet.remove(null);
-          	
+
           	if (CollectionUtils.isNotEmpty(foundGroupIdSet)) {
-        			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
-        			final String 
-        				updatePart = 
-        					String.format(
-      							"set group_id=%d where link_id in (%s) and group_id!=%d and account_id=%d", 
-      							dto.getToGroupId(), joinedIds, dto.getToGroupId(), CurrentUser.getAccountId()
-    							);
+		    			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
+		    			final String 
+		    				updatePart = 
+		    					String.format(
+		  							"set group_id=%d where link_id in (%s) and group_id!=%d and account_id=%d", 
+		  							dto.getToGroupId(), joinedIds, dto.getToGroupId(), CurrentUser.getAccountId()
+								);
 
               Batch batch = handle.createBatch();
               batch.add("update alarm " + updatePart);

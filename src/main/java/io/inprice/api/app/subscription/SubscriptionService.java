@@ -10,12 +10,12 @@ import org.jdbi.v3.core.Handle;
 
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.system.PlanDao;
+import io.inprice.api.config.Props;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
-import io.inprice.api.external.Props;
-import io.inprice.api.external.RabbitClient;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
+import io.inprice.api.publisher.EmailPublisher;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
@@ -82,7 +82,7 @@ class SubscriptionService {
               mailMap.put("user", CurrentUser.getEmail());
               mailMap.put("account", StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName());
               
-              RabbitClient.sendEmail(
+              EmailPublisher.publish(
           			EmailData.builder()
             			.template(EmailTemplate.FREE_ACCOUNT_CANCELLED)
             			.to(CurrentUser.getEmail())
@@ -138,7 +138,7 @@ class SubscriptionService {
                 CurrentUser.getAccountId(),
                 AccountStatus.FREE.name(),
                 basicPlan.getId(),
-                Props.APP_DAYS_FOR_FREE_USE
+                Props.getConfig().APP.FREE_USE_DAYS
               );
 
             if (isOK) {

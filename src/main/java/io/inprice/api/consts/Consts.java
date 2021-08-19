@@ -14,6 +14,12 @@ public class Consts {
   public static final int LOWER_ROW_LIMIT_FOR_LISTS = 25;
   public static final int UPPER_ROW_LIMIT_FOR_LISTS = 100;
 
+  public static class Env {
+  	public static final String DEV = "dev";
+  	public static final String TEST = "test";
+  	public static final String PROD = "prod";
+  }
+  
   public static class Paths {
 
     public static class Auth {

@@ -1,0 +1,43 @@
+{
+  "app": {
+		"env": "dev",
+    "webUrl": "http://localhost:8080",
+    "port": 4567,
+    "apiUrl": "http://localhost:4567",
+    "saltRounds": 6,
+    "freeUseDays": 14,
+    "requestExecutionThreshold": 500
+  },
+  "mysql": {
+		"driver": "mysql",
+    "host": "127.0.0.1",
+    "port": 3306,
+    "database": "inprice",
+    "username": "root",
+    "password": "123",
+    "additions": "?useSSL=false",
+    "showQueries": false
+  },
+  "rabbit": {
+    "host": "127.0.0.1",
+    "port": 5672,
+    "username": "guest",
+    "password": "guest"
+  },
+  "redis": {
+    "host": "127.0.0.1",
+    "port": 6379
+  },
+  "keys": {
+  	"geoLocation": "9eac35ec732e43a3a89863fce6cb406a"
+  },
+  "ttls": {
+  	"cookie": 3600
+  },
+  "intervals": {
+    "flushingAccessLogs": "5m"
+  },
+  "queues": {
+  	"sendingEmails": { "name": "sending.emails.queue" }
+  }
+}

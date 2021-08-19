@@ -13,11 +13,11 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.internal.LinkedTreeMap;
 
 import io.inprice.api.session.info.ForCookie;
-import io.inprice.common.config.Secrets;
-import io.inprice.common.config.Secrets.Realm;
 import io.inprice.common.helpers.JsonConverter;
 import io.inprice.common.models.User;
 import io.inprice.common.utils.AES;
+import io.inprice.common.utils.Secrets;
+import io.inprice.common.utils.Secrets.Realm;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParser;

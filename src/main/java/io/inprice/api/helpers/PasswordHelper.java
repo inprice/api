@@ -9,7 +9,7 @@ import javax.crypto.spec.PBEKeySpec;
 
 import org.apache.commons.lang3.StringUtils;
 
-import io.inprice.api.external.Props;
+import io.inprice.api.config.Props;
 
 /**
  * Copied from
@@ -57,7 +57,7 @@ public class PasswordHelper {
       if (skf == null) {
         skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
       }
-      SecretKey key = skf.generateSecret(new PBEKeySpec(password.toCharArray(), salt, Props.APP_SALT_ROUNDS * 1000, 256));
+      SecretKey key = skf.generateSecret(new PBEKeySpec(password.toCharArray(), salt, Props.getConfig().APP.SALT_ROUNDS * 1000, 256));
       return Base64.getEncoder().encodeToString(key.getEncoded());
     } catch (Exception e) {
       System.err.println("Failed to generate hash!");

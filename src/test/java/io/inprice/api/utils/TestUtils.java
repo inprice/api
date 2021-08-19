@@ -12,6 +12,7 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 
 import io.inprice.api.Application;
+import io.inprice.api.config.Props;
 import io.inprice.api.consts.Global;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.Redis;
@@ -74,7 +75,7 @@ public class TestUtils {
 	    	jedis.flushAll();
 	    }
 		}
-		Database.cleanDBForTests(sqlScripts.toString());
+		Database.cleanDBForTests(sqlScripts.toString(), Props.getConfig().APP.ENV);
 	}
 
 	/**

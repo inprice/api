@@ -5,21 +5,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
+import io.inprice.api.config.Props;
+import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Global;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.external.Props;
 import io.inprice.api.framework.ConfigScanner;
 import io.inprice.api.framework.HandlerInterruptException;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.AccessGuard;
 import io.inprice.api.session.AccessLogger;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.JsonConverter;
-import io.inprice.common.helpers.Rabbit;
+import io.inprice.common.helpers.RabbitMQ;
 import io.inprice.common.helpers.Redis;
-import io.inprice.common.meta.AppEnv;
 import io.inprice.common.models.AccessLog;
 import io.javalin.Javalin;
 import io.javalin.core.util.Header;
@@ -52,14 +51,17 @@ public class Application {
   			public void uncaughtException(Thread t1, Throwable e1) {
   				logger.info("Unhandled exception", e1);
   			}
-  		});    	
+  		});
 
       logger.info("APPLICATION IS STARTING...");
 
-      Rabbit.start();
+      Database.start(Props.getConfig().MYSQL_CONF);
+      logger.info(" - Connected to Mysql server.");
+
+      RabbitMQ.start(Props.getConfig().RABBIT_CONF);
       logger.info(" - Connected to RabbitMQ server.");
 
-      Redis.start();
+      Redis.start(Props.getConfig().REDIS_CONF);
       logger.info(" - Connected to Redis server.");
 
       createServer();
@@ -82,10 +84,10 @@ public class Application {
       Redis.stop();
 
       logger.info(" - RabbitMQ connection is closing...");
-      Rabbit.stop();
+      RabbitMQ.stop();
 
-      logger.info(" - DB connection is closing...");
-      Database.shutdown();
+      logger.info(" - Mysql connection is closing...");
+      Database.stop();
 
       logger.info("ALL SERVICES IS DONE.");
 
@@ -99,7 +101,7 @@ public class Application {
       config.logIfServerNotStarted = true;
       config.showJavalinBanner = false;
 
-      if (SysProps.APP_ENV.equals(AppEnv.DEV)) {
+      if (Props.getConfig().APP.ENV.equals(Consts.Env.DEV)) {
         config.registerPlugin(new RouteOverviewPlugin("/routes"));
       }
 
@@ -107,7 +109,7 @@ public class Application {
 
       JavalinJson.setFromJsonMapper(JsonConverter.gson::fromJson);
       JavalinJson.setToJsonMapper(JsonConverter.gson::toJson);
-    }).start(Props.APP_PORT);
+    }).start(Props.getConfig().APP.PORT);
 
     app.before(ctx -> {
       if (ctx.method() == "OPTIONS") {
@@ -144,7 +146,7 @@ public class Application {
     		elapsed = (int)(System.currentTimeMillis()-started);
     	}
     	
-    	boolean isSlow = (elapsed > Props.SERVICE_EXECUTION_THRESHOLD);
+    	boolean isSlow = (elapsed > Props.getConfig().APP.REQUEST_EXECUTION_THRESHOLD);
 
     	boolean
     		beLogged =

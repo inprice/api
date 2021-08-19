@@ -14,11 +14,9 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
-import io.inprice.api.external.Props;
 import io.inprice.api.utils.CurrencyFormats;
-import io.inprice.common.config.SysProps;
-import io.inprice.common.meta.AppEnv;
 
 /**
  * Client side operations
@@ -26,7 +24,6 @@ import io.inprice.common.meta.AppEnv;
 public class ClientSide {
 
   private static final Logger logger = LoggerFactory.getLogger(ClientSide.class);
-
 
   private static final String[] 
       HEADERS_TO_TRY = {
@@ -61,7 +58,7 @@ public class ClientSide {
     result.put(Consts.CURRENCY_CODE, "USD");
     result.put(Consts.CURRENCY_FORMAT, "$#,###.00;$-#,###.00");
     
-    if (! SysProps.APP_ENV.equals(AppEnv.TEST)) {
+    if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST) == false) {
       String ip = getIp(req);
       try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
   
@@ -74,7 +71,7 @@ public class ClientSide {
           String res = 
             HttpHelper.GET(
               httpClient, String.format("https://api.ipgeolocation.io/ipgeo?apiKey=%s&ip=%s",
-                Props.API_KEYS_GELOCATION, URLEncoder.encode(ip, "UTF-8")
+                Props.getConfig().KEYS.GEO_LOCATION, URLEncoder.encode(ip, "UTF-8")
               )
             );
           if (res != null) {

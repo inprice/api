@@ -22,27 +22,26 @@ import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.app.user.validator.PasswordValidator;
+import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.GroupDTO;
-import io.inprice.api.external.RabbitClient;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.helpers.PasswordHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
+import io.inprice.api.publisher.EmailPublisher;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
 import io.inprice.api.utils.CurrencyFormats;
-import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AccountStatus;
-import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.meta.UserRole;
@@ -84,10 +83,10 @@ class AccountService {
             mailMap.put("account", dto.getAccountName());
             mailMap.put("token", token.substring(0,3)+"-"+token.substring(3));
             
-            if (!SysProps.APP_ENV.equals(AppEnv.PROD)) {
+            if (Props.getConfig().APP.ENV.equals(Consts.Env.PROD) == false) {
             	return new Response(mailMap);
             } else {
-            	RabbitClient.sendEmail(
+            	EmailPublisher.publish(
           			EmailData.builder()
             			.template(EmailTemplate.REGISTRATION_REQUEST)
             			.to(dto.getEmail())
