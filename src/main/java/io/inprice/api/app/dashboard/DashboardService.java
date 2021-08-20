@@ -56,19 +56,17 @@ class DashboardService {
   }
 
   private Map<String, Object> getGroups(DashboardDao dashboardDao) {
-    Map<String, Object> result = Map.of(
-  		"levelSeries", findGroupLevelSeries(dashboardDao),
-    	"extremePrices", findNGroupsHavingExtremePrices(dashboardDao)
-  	);
+    Map<String, Object> result = new HashMap<>(2);
+    result.put("levelSeries", findGroupLevelSeries(dashboardDao));
+    result.put("extremePrices", findNGroupsHavingExtremePrices(dashboardDao));
     return result;
   }
 
   private Map<String, Object> getLinks(DashboardDao dashboardDao) {
-    Map<String, Object> result = Map.of(
-    	"statusGroupSeries", findLinkStatusGroupSeries(dashboardDao),
-    	"levelSeries", findLinkLevelSeries(dashboardDao),
-    	"mru25", dashboardDao.findMR25Link(CurrentUser.getAccountId())
-  	);
+  	Map<String, Object> result = new HashMap<>(3);
+  	result.put("statusGroupSeries", findLinkStatusGroupSeries(dashboardDao));
+  	result.put("levelSeries", findLinkLevelSeries(dashboardDao));
+		result.put("mru25", dashboardDao.findMR25Link(CurrentUser.getAccountId()));
     return result;
   }
 

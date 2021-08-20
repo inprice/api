@@ -1,9 +1,9 @@
 package io.inprice.api.app.superuser.announce;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -159,7 +159,7 @@ public class AnnounceService {
       .map(new AnnounceMapper())
       .list();
 
-      return new Response(Collections.singletonMap("rows", searchResult));
+      return new Response(Map.of("rows", searchResult));
     } catch (Exception e) {
       logger.error("Failed in full search for announces.", e);
       return Responses.ServerProblem.EXCEPTION;

@@ -1,8 +1,8 @@
 package io.inprice.api.app.alarm;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -261,7 +261,7 @@ public class AlarmService {
 	        )
 		    .map(new AlarmMapper()).list();
 
-			return new Response(Collections.singletonMap("rows", searchResult));
+			return new Response(Map.of("rows", searchResult));
 		} catch (Exception e) {
 			logger.error("Failed in full search for alarms.", e);
 			return Responses.ServerProblem.EXCEPTION;

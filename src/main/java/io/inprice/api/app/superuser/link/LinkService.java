@@ -1,7 +1,6 @@
 package io.inprice.api.app.superuser.link;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -101,7 +100,7 @@ class LinkService {
       .map(new LinkMapper())
       .list();
       
-      return new Response(Collections.singletonMap("rows", searchResult));
+      return new Response(Map.of("rows", searchResult));
     } catch (Exception e) {
       logger.error("Failed in full search for links.", e);
       return Responses.ServerProblem.EXCEPTION;

@@ -25,6 +25,8 @@ public class PasswordHelper {
    * storing in a database.
    */
   public static String getSaltedHash(String password) {
+  	if (StringUtils.isBlank(password)) return null;
+
     try {
       if (sr == null) {
         sr = SecureRandom.getInstance("SHA1PRNG");
@@ -53,14 +55,16 @@ public class PasswordHelper {
    * using PBKDF2 from Sun
    */
   private static String hash(String password, byte[] salt) {
-    try {
+  	if (StringUtils.isBlank(password)) return null;
+
+  	try {
       if (skf == null) {
         skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
       }
       SecretKey key = skf.generateSecret(new PBEKeySpec(password.toCharArray(), salt, Props.getConfig().APP.SALT_ROUNDS * 1000, 256));
       return Base64.getEncoder().encodeToString(key.getEncoded());
     } catch (Exception e) {
-      System.err.println("Failed to generate hash!");
+      e.printStackTrace();
     }
     return null;
   }

@@ -190,18 +190,17 @@ class SubscriptionService {
       AccountDao dao = handle.attach(AccountDao.class);
       Account account = dao.findById(CurrentUser.getAccountId());
       if (account != null) {
-      	Map<String, Object> info = Map.of(
-      		"title", account.getTitle(),
-      		"contactName", account.getContactName(),
-      		"taxId", account.getTaxId(),
-      		"taxOffice", account.getTaxOffice(),
-      		"address1", account.getAddress1(),
-      		"address2", account.getAddress2(),
-      		"postcode", account.getPostcode(),
-      		"city", account.getCity(),
-      		"state", account.getState(),
-      		"country", account.getCountry()
-  			);
+      	Map<String, Object> info = new HashMap<>(10);
+      	info.put("title", account.getTitle());
+      	info.put("contactName", account.getContactName());
+      	info.put("taxId", account.getTaxId());
+      	info.put("taxOffice", account.getTaxOffice());
+      	info.put("address1", account.getAddress1());
+      	info.put("address2", account.getAddress2());
+      	info.put("postcode", account.getPostcode());
+      	info.put("city", account.getCity());
+      	info.put("state", account.getState());
+      	info.put("country", account.getCountry());
 
       	data.put("info", info);
       	

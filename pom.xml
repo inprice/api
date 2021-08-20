@@ -19,7 +19,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Versions -->
-    <jdk.version>1.11</jdk.version>
+    <jdk.version>11</jdk.version>
     <maven-compiler.version>3.8.0</maven-compiler.version>
     <inprice-common.version>1.0.0</inprice-common.version>
 
@@ -95,8 +95,8 @@
       <scope>test</scope>
       <exclusions>
         <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
+           <groupId>org.slf4j</groupId>
+           <artifactId>slf4j-simple</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -117,8 +117,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven-compiler.version}</version>
         <configuration>
-          <source>${jdk.version}</source>
-          <target>${jdk.version}</target>
+					<release>${jdk.version}</release>
         </configuration>
       </plugin>
 

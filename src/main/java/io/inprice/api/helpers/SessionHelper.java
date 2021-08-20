@@ -12,12 +12,11 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.internal.LinkedTreeMap;
 
+import io.inprice.api.config.Props;
 import io.inprice.api.session.info.ForCookie;
+import io.inprice.api.utils.AES;
 import io.inprice.common.helpers.JsonConverter;
 import io.inprice.common.models.User;
-import io.inprice.common.utils.AES;
-import io.inprice.common.utils.Secrets;
-import io.inprice.common.utils.Secrets.Realm;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParser;
@@ -35,14 +34,14 @@ public class SessionHelper {
 	private static final JwtParser parserForUser, parserForSuper;
 
 	static {
-		final byte[] SUPER_KEY = Secrets.getKey(Realm.SUPER_USER);
-		final byte[] USER_KEY = Secrets.getKey(Realm.USER);
-		
+
+		final byte[] SUPER_KEY = Props.getConfig().KEYS.SUPER_USER.getBytes();
 		if (SUPER_KEY == null) {
 			System.err.println("Super user key is empty!");
 			System.exit(-1);
 		}
 
+		final byte[] USER_KEY = Props.getConfig().KEYS.USER.getBytes();
 		if (USER_KEY == null) {
 			System.err.println("User user key is empty!");
 			System.exit(-1);

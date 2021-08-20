@@ -1,6 +1,5 @@
 package io.inprice.api.app.superuser.account;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -265,7 +264,7 @@ class Service {
   	  	      trans.setReason(description);
   	  	      trans.setDescription("Issued coupon");
   	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-  	  	      res = new Response(Collections.singletonMap("code", couponCode));
+  	  	      res = new Response(Map.of("code", couponCode));
   	  	    } else {
   	  	    	res = Responses.DataProblem.DB_PROBLEM;
   	  	    }

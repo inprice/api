@@ -1,7 +1,7 @@
 package io.inprice.api.app.superuser.ticket;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -193,7 +193,7 @@ public class TicketService {
       .map(new TicketMapper())
       .list();
 
-      return new Response(Collections.singletonMap("rows", searchResult));
+      return new Response(Map.of("rows", searchResult));
     } catch (Exception e) {
       logger.error("Failed in full search for tickets.", e);
       return Responses.ServerProblem.EXCEPTION;

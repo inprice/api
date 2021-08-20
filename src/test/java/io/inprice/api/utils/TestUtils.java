@@ -3,11 +3,9 @@ package io.inprice.api.utils;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
@@ -50,11 +48,6 @@ public class TestUtils {
 
 	public static void setup() {
 		if (isPortAvailable(SERVER_PORT)) {
-  		setSystemEnvVariable("APP_ENV", "TEST");
-  		setSystemEnvVariable("KEY_ENCRYPTION", "f7*$q{>AKbC<B)!s@n7=P");
-  		setSystemEnvVariable("KEY_SUPER_USER", ",~2w&RWmV3bchk']pKbC<B)!:F[*#Ss8");
-  		setSystemEnvVariable("KEY_USER", "-8'fq{>As@n77jcx24.U*$=PS]#Z5wY+");
-  		
   		Unirest.config().defaultBaseUrl("http://localhost:" + SERVER_PORT);
 
   		if (isPortAvailable(6379)) {
@@ -93,44 +86,6 @@ public class TestUtils {
 
 	public static HttpResponse<?> logout(Cookies cookies) {
 		return Unirest.post("/logout").cookie(cookies).asEmpty();
-	}
-
-	/**
-	 * Sets System env variables which are immutable by default
-	 * 
-	 * https://blog.sebastian-daschner.com/entries/changing_env_java
-	 */
-	@SuppressWarnings("unchecked")
-	private static void setSystemEnvVariable(String key, String value) {
-		try {
-  		Class<?> processEnvironment = Class.forName("java.lang.ProcessEnvironment");
-  
-  		Field unmodifiableMapField = getAccessibleField(processEnvironment, "theUnmodifiableEnvironment");
-  		Object unmodifiableMap = unmodifiableMapField.get(null);
-  		injectIntoUnmodifiableMap(key, value, unmodifiableMap);
-  
-  		Field mapField = getAccessibleField(processEnvironment, "theEnvironment");
-  		Map<String, String> map = (Map<String, String>) mapField.get(null);
-  		map.put(key, value);
-		} catch (Exception e) {
-			System.err.println(e);
-		}
-	}
-
-	private static Field getAccessibleField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
-		Field field = clazz.getDeclaredField(fieldName);
-		field.setAccessible(true);
-		return field;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static void injectIntoUnmodifiableMap(String key, String value, Object map)
-	    throws ReflectiveOperationException {
-
-		Class<?> unmodifiableMap = Class.forName("java.util.Collections$UnmodifiableMap");
-		Field field = getAccessibleField(unmodifiableMap, "m");
-		Object obj = field.get(map);
-		((Map<String, String>) obj).put(key, value);
 	}
 
 	/**
