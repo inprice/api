@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ class MembershipService {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
       List<Membership> list = membershipDao.findNormalMemberList(CurrentUser.getAccountId());
-      if (list != null && list.size() > 0) {
+      if (CollectionUtils.isNotEmpty(list)) {
         res = new Response(list);
       }
     }
@@ -392,7 +393,7 @@ class MembershipService {
     UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
     List<ForDatabase> dbSessions = userSessionDao.findListByUserId(userId);
 
-    if (dbSessions != null && dbSessions.size() > 0) {
+    if (CollectionUtils.isNotEmpty(dbSessions)) {
       List<String> hashList = new ArrayList<>(dbSessions.size());
 
       for (ForDatabase ses: dbSessions) {

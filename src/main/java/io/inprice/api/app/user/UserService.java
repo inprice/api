@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
@@ -146,10 +147,11 @@ public class UserService {
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      List<String> activeStatuses = new ArrayList<>(3);
-      activeStatuses.add(UserStatus.JOINED.name());
-      activeStatuses.add(UserStatus.PENDING.name());
-      activeStatuses.add(UserStatus.PAUSED.name());
+      List<String> activeStatuses = List.of(
+	      UserStatus.JOINED.name(),
+	      UserStatus.PENDING.name(),
+	      UserStatus.PAUSED.name()
+  		);
 
       return new Response(
         membershipDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getAccountId(), activeStatuses)
@@ -184,7 +186,7 @@ public class UserService {
       UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
 
       List<ForDatabase> sessions = userSessionDao.findListByUserId(CurrentUser.getUserId());
-      if (sessions != null && sessions.size() > 0) {
+      if (CollectionUtils.isNotEmpty(sessions)) {
       	List<String> hashList = new ArrayList<>(sessions.size());
         for (ForDatabase ses : sessions) hashList.add(ses.getHash());
         redis.removeSesions(hashList);

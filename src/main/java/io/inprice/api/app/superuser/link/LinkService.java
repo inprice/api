@@ -2,7 +2,6 @@ package io.inprice.api.app.superuser.link;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,10 +38,11 @@ class LinkService {
   private final Set<LinkStatus> STATUSES_FOR_CHANGE;
   
   public LinkService() {
-  	STATUSES_FOR_CHANGE = new HashSet<>(3);
-  	STATUSES_FOR_CHANGE.add(LinkStatus.RESOLVED);
-  	STATUSES_FOR_CHANGE.add(LinkStatus.PAUSED);
-  	STATUSES_FOR_CHANGE.add(LinkStatus.NOT_SUITABLE);
+  	STATUSES_FOR_CHANGE = Set.of(
+			LinkStatus.RESOLVED,
+			LinkStatus.PAUSED,
+			LinkStatus.NOT_SUITABLE
+		);
 	}
 
   Response search(SearchDTO dto) {
@@ -78,7 +78,7 @@ class LinkService {
       where.append("%' ");
     }
 
-    if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getStatuses())) {
     	where.append(
 		    String.format(" and l.status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
@@ -128,10 +128,11 @@ class LinkService {
           if (StringUtils.isNotBlank(link.getSku())) specList.add(0, new LinkSpec("Code", link.getSku()));
           if (StringUtils.isNotBlank(link.getBrand())) specList.add(0, new LinkSpec("Brand", link.getBrand()));
           
-          Map<String, Object> data = new HashMap<>(3);
-          data.put("specList", specList);
-          data.put("priceList", priceList);
-          data.put("historyList", historyList);
+          Map<String, Object> data = Map.of(
+          	"specList", specList,
+          	"priceList", priceList,
+          	"historyList", historyList
+        	);
           res = new Response(data);
         }
       }

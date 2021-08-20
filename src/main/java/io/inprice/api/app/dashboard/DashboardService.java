@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.collections4.MapUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,17 +56,19 @@ class DashboardService {
   }
 
   private Map<String, Object> getGroups(DashboardDao dashboardDao) {
-    Map<String, Object> result = new HashMap<>(2);
-    result.put("levelSeries", findGroupLevelSeries(dashboardDao));
-    result.put("extremePrices", findNGroupsHavingExtremePrices(dashboardDao));
+    Map<String, Object> result = Map.of(
+  		"levelSeries", findGroupLevelSeries(dashboardDao),
+    	"extremePrices", findNGroupsHavingExtremePrices(dashboardDao)
+  	);
     return result;
   }
 
   private Map<String, Object> getLinks(DashboardDao dashboardDao) {
-    Map<String, Object> result = new HashMap<>(3);
-    result.put("statusGroupSeries", findLinkStatusGroupSeries(dashboardDao));
-    result.put("levelSeries", findLinkLevelSeries(dashboardDao));
-    result.put("mru25", dashboardDao.findMR25Link(CurrentUser.getAccountId()));
+    Map<String, Object> result = Map.of(
+    	"statusGroupSeries", findLinkStatusGroupSeries(dashboardDao),
+    	"levelSeries", findLinkLevelSeries(dashboardDao),
+    	"mru25", dashboardDao.findMR25Link(CurrentUser.getAccountId())
+  	);
     return result;
   }
 
@@ -73,17 +76,18 @@ class DashboardService {
    * finding link distributions by the LinkStatus
    */
   private int[] findLinkStatusGroupSeries(DashboardDao dashboardDao) {
-    Map<String, Integer> stats = new HashMap<>(4);
-    int i = 0;
-    stats.put(LinkStatusGroup.ACTIVE.name(), i++);
-    stats.put(LinkStatusGroup.TRYING.name(), i++);
-    stats.put(LinkStatusGroup.WAITING.name(), i++);
-    stats.put(LinkStatusGroup.PROBLEM.name(), i++);
+  	int i = 0;
+    Map<String, Integer> stats = Map.of(
+    	LinkStatusGroup.ACTIVE.name(), i++,
+    	LinkStatusGroup.TRYING.name(), i++,
+    	LinkStatusGroup.WAITING.name(), i++,
+    	LinkStatusGroup.PROBLEM.name(), i++
+  	);
 
     int[] result = new int[i];
 
     Map<String, Integer> statusGroupDistMap = dashboardDao.findStatusGroupDists(CurrentUser.getAccountId());
-    if (statusGroupDistMap != null && statusGroupDistMap.size() > 0) {
+    if (MapUtils.isNotEmpty(statusGroupDistMap)) {
       for (Entry<String, Integer> entry: statusGroupDistMap.entrySet()) {
         Integer index = stats.get(entry.getKey());
         result[index] += entry.getValue();
@@ -126,19 +130,20 @@ class DashboardService {
   }
 
   private int[] findSeries(Map<String, Integer> dataMap, DashboardDao dashboardDao) {
-    Map<String, Integer> stats = new HashMap<>(7);
-    int i = 0;
-    stats.put(Level.LOWEST.name(), i++);
-    stats.put(Level.HIGHEST.name(), i++);
-    stats.put(Level.LOWER.name(), i++);
-    stats.put(Level.AVERAGE.name(), i++);
-    stats.put(Level.HIGHER.name(), i++);
-    stats.put(Level.EQUAL.name(), i++);
-    stats.put(Level.NA.name(), i++);
+  	int i = 0;
+    Map<String, Integer> stats = Map.of(
+    	Level.LOWEST.name(), i++,
+    	Level.HIGHEST.name(), i++,
+    	Level.LOWER.name(), i++,
+    	Level.AVERAGE.name(), i++,
+    	Level.HIGHER.name(), i++,
+    	Level.EQUAL.name(), i++,
+    	Level.NA.name(), i++
+  	);
 
     int[] result = new int[i];
 
-    if (dataMap != null && dataMap.size() > 0) {
+    if (MapUtils.isNotEmpty(dataMap)) {
       for (Entry<String, Integer> entry: dataMap.entrySet()) {
         Integer index = stats.get(entry.getKey());
         result[index] += entry.getValue();

@@ -1,6 +1,5 @@
 package io.inprice.api.app.system;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,19 +72,17 @@ public class SystemService {
       	if (alarmLimit == null) alarmLimit = 0;
       }
 
-      Map<String, Integer> data = new HashMap<>(9);
-      data.put("userLimit", userLimit);
-      data.put("userCount", account.getUserCount());
-      data.put("remainingUser", userLimit-account.getUserCount());
-      
-      data.put("linkLimit", linkLimit);
-      data.put("linkCount", account.getLinkCount());
-      data.put("remainingLink", linkLimit-account.getLinkCount());
-
-      data.put("alarmLimit", alarmLimit);
-      data.put("alarmCount", account.getAlarmCount());
-      data.put("remainingAlarm", alarmLimit-account.getAlarmCount());
-
+      Map<String, Integer> data = Map.of(
+	      "userLimit", userLimit,
+	      "userCount", account.getUserCount(),
+	      "remainingUser", userLimit-account.getUserCount(),
+	      "linkLimit", linkLimit,
+	      "linkCount", account.getLinkCount(),
+	      "remainingLink", linkLimit-account.getLinkCount(),
+	      "alarmLimit", alarmLimit,
+	      "alarmCount", account.getAlarmCount(),
+	      "remainingAlarm", alarmLimit-account.getAlarmCount()
+      );
       response = new Response(data);
     } catch (Exception e) {
       response = Responses.DataProblem.DB_PROBLEM;

@@ -3,6 +3,7 @@ package io.inprice.api.app.superuser.ticket;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -129,25 +130,25 @@ public class TicketService {
       where.append("%' ");
     }
 
-    if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getStatuses())) {
     	where.append(
 		    String.format(" and t.status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
     }
 
-    if (dto.getPriorities() != null && dto.getPriorities().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getPriorities())) {
     	where.append(
 		    String.format(" and priority in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPriorities()))
 			);
     }
 
-    if (dto.getTypes() != null && dto.getTypes().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getTypes())) {
     	where.append(
 		    String.format(" and type in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getTypes()))
 			);
     }
 
-    if (dto.getSubjects() != null && dto.getSubjects().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getSubjects())) {
     	where.append(
 		    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
 			);

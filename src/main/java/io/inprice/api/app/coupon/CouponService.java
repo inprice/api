@@ -2,6 +2,7 @@ package io.inprice.api.app.coupon;
 
 import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,7 @@ public class CouponService {
       CouponDao couponDao = handle.attach(CouponDao.class);
 
       List<Coupon> coupons = couponDao.findListByAccountId(CurrentUser.getAccountId());
-      if (coupons != null && coupons.size() > 0) {
+    	if (CollectionUtils.isNotEmpty(coupons)) {
         return new Response(coupons);
       }
       return Responses.NotFound.COUPON;

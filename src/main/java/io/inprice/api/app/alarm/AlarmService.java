@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -195,13 +196,13 @@ public class AlarmService {
 			where.append("'");
 		}
 
-		if (dto.getSubjects() != null && dto.getSubjects().size() > 0) {
+		if (CollectionUtils.isNotEmpty(dto.getSubjects())) {
 			where.append(
 		    String.format(" and a.subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
 	    );
 		}
 
-		if (dto.getWhens() != null && dto.getWhens().size() > 0) {
+		if (CollectionUtils.isNotEmpty(dto.getWhens())) {
 			where.append(
 		    String.format(" and a.subject_when in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getWhens()))
 	    );

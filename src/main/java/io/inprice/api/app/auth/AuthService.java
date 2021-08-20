@@ -1,10 +1,11 @@
 package io.inprice.api.app.auth;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -78,14 +79,15 @@ public class AuthService {
         					)
             		);
 
-                Map<String, Object> sesInfoMap = new HashMap<>(3);
-                sesInfoMap.put("sessionNo", 0);
-                sesInfoMap.put("sessions", sesList);
-                sesInfoMap.put("isPriviledge", Boolean.TRUE);
+                Map<String, Object> sesInfoMap = Map.of(
+                	"sessionNo", 0,
+                	"sessions", sesList,
+                	"isPriviledge", Boolean.TRUE
+              	);
             		return new Response(sesInfoMap);
             	} else {
                 Map<String, Object> sesInfo = findSessionInfoByEmail(ctx, user.getEmail());
-                if (sesInfo != null && sesInfo.size() > 0) {
+                if (MapUtils.isNotEmpty(sesInfo)) {
                   return new Response(sesInfo);
                 } else {
                   return createSession(ctx, user);
@@ -119,10 +121,11 @@ public class AuthService {
         	if (! user.isBanned()) {
         		if (! user.isPrivileged()) {
               try {
-                Map<String, Object> mailMap = new HashMap<>(3);
-                mailMap.put("user", user.getName());
-                mailMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
-                mailMap.put("url", Props.getConfig().APP.WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
+                Map<String, Object> mailMap = Map.of(
+                	"user", user.getName(),
+                	"token", Tokens.add(TokenType.FORGOT_PASSWORD, email),
+                	"url", Props.getConfig().APP.WEB_URL + Consts.Paths.Auth.RESET_PASSWORD
+              	);
                 
                 if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST) == false) {
                 	EmailPublisher.publish(
@@ -185,7 +188,7 @@ public class AuthService {
                 if (isOK) {
                   Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
                   List<ForDatabase> sessions = userSessionDao.findListByUserId(user.getId());
-                  if (sessions != null && sessions.size() > 0) {
+                  if (CollectionUtils.isNotEmpty(sessions)) {
                   	List<String> hashList = new ArrayList<>(sessions.size());
                     for (ForDatabase ses : sessions) hashList.add(ses.getHash());
                     redis.removeSesions(hashList);
@@ -229,7 +232,7 @@ public class AuthService {
       if (StringUtils.isNotBlank(tokenString)) {
 
         List<ForCookie> sessions = SessionHelper.fromTokenForUser(tokenString);
-        if (sessions != null && sessions.size() > 0) {
+        if (CollectionUtils.isNotEmpty(sessions)) {
 
           List<String> hashList = new ArrayList<>(sessions.size());
           for (ForCookie ses : sessions) hashList.add(ses.getHash());
@@ -258,7 +261,7 @@ public class AuthService {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
       List<Membership> memberList = membershipDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED);
-      if (memberList != null && memberList.size() > 0) {
+    	if (CollectionUtils.isNotEmpty(memberList)) {
 
         List<ForRedis> redisSesList = new ArrayList<>();
         List<ForCookie> sessions = null;
@@ -311,9 +314,10 @@ public class AuthService {
             ctx.cookie(CookieHelper.createUserCookie(SessionHelper.toTokenForUser(sessions)));
             
             // the response
-            Map<String, Object> map = new HashMap<>(2);
-            map.put("sessionNo", sessionNo);
-            map.put("sessions", responseSesList);
+            Map<String, Object> map = Map.of(
+            	"sessionNo", sessionNo,
+            	"sessions", responseSesList
+          	);
             return new Response(map);
           }
         }
@@ -422,7 +426,7 @@ public class AuthService {
       if (StringUtils.isNotBlank(tokenString)) {
 
         List<ForCookie> sessions = SessionHelper.fromTokenForUser(tokenString);
-        if (sessions != null && sessions.size() > 0) {
+        if (CollectionUtils.isNotEmpty(sessions)) {
 
           Integer sessionNo = null;
           for (int i = 0; i < sessions.size(); i++) {
@@ -445,9 +449,10 @@ public class AuthService {
             }
 
             if (responseSesList.size() == sessions.size()) {
-              Map<String, Object> map = new HashMap<>(2);
-              map.put("sessionNo", sessionNo);
-              map.put("sessions", responseSesList);
+              Map<String, Object> map = Map.of(
+              	"sessionNo", sessionNo,
+              	"sessions", responseSesList
+            	);
               return map;
             }
           }

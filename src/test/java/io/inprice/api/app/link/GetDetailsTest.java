@@ -3,7 +3,6 @@ package io.inprice.api.app.link;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -113,10 +112,11 @@ public class GetDetailsTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_anyone() {
-		Map<TestRoles, JSONObject> roleUserMap = new HashMap<>(3);
-		roleUserMap.put(TestRoles.VIEWER, TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
-		roleUserMap.put(TestRoles.EDITOR, TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
-		roleUserMap.put(TestRoles.ADMIN, TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		Map<TestRoles, JSONObject> roleUserMap = Map.of(
+			TestRoles.VIEWER, TestAccounts.Standard_plan_and_two_extra_users.VIEWER(),
+			TestRoles.EDITOR, TestAccounts.Starter_plan_and_one_extra_user.EDITOR(),
+			TestRoles.ADMIN, TestAccounts.Starter_plan_and_one_extra_user.ADMIN()
+		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {
 			JSONObject json = callTheService(roleUser.getValue(), (TestRoles.VIEWER.equals(roleUser.getKey()) ? 1 : 0));

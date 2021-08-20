@@ -1,7 +1,6 @@
 package io.inprice.api.app.superuser.account;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -82,12 +81,12 @@ class Service {
     		List<AccountHistory> historyList = superDao.fetchHistory(id);
     		List<AccountTrans> transList = superDao.fetchTransactionList(id);
 
-    		Map<String, Object> data = new HashMap<>(4);
-    		data.put("account", account);
-    		data.put("memberList", memberList);
-    		data.put("historyList", historyList);
-    		data.put("transList", transList);
-
+    		Map<String, Object> data = Map.of(
+    			"account", account,
+    			"memberList", memberList,
+    			"historyList", historyList,
+    			"transList", transList
+  			);
     		return new Response(data);
     	}
     }

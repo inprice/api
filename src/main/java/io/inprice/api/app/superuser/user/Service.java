@@ -1,6 +1,5 @@
 package io.inprice.api.app.superuser.user;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -163,12 +162,12 @@ class Service {
   			List<ForDatabase> sessionList = superDao.fetchSessionListById(userId);
   			List<UserMark> usedServiceList = superDao.fetchUsedServiceListByEmail(user.getEmail());
   			
-  			Map<String, Object> data = new HashMap<>(4);
-  			data.put("user", user);
-  			data.put("membershipList", membershipList);
-  			data.put("sessionList", sessionList);
-  			data.put("usedServiceList", usedServiceList);
-
+  			Map<String, Object> data = Map.of(
+  				"user", user,
+  				"membershipList", membershipList,
+  				"sessionList", sessionList,
+  				"usedServiceList", usedServiceList
+				);
   			return new Response(data);
   		}
   	}

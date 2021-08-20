@@ -2,7 +2,6 @@ package io.inprice.api.app.account;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -78,10 +77,11 @@ class AccountService {
           if (isNotARegisteredUser) {
             String token = Tokens.add(TokenType.REGISTRATION_REQUEST, dto);
   
-            Map<String, Object> mailMap = new HashMap<>(3);
-            mailMap.put("user", dto.getEmail().split("@")[0]);
-            mailMap.put("account", dto.getAccountName());
-            mailMap.put("token", token.substring(0,3)+"-"+token.substring(3));
+            Map<String, Object> mailMap = Map.of(
+            	"user", dto.getEmail().split("@")[0],
+            	"account", dto.getAccountName(),
+            	"token", token.substring(0,3)+"-"+token.substring(3)
+          	);
             
             if (Props.getConfig().APP.ENV.equals(Consts.Env.PROD) == false) {
             	return new Response(mailMap);
@@ -158,9 +158,12 @@ class AccountService {
         }
 
         if (response.isOK()) {
-          Map<String, Object> dataMap = new HashMap<>(2);
-          dataMap.put("email", dto.getEmail());
-          dataMap.put("account", dto.getAccountName());
+        	/*
+          Map<String, Object> dataMap = new Map.of(
+          	"email", dto.getEmail(),
+          	"account", dto.getAccountName()
+        	);
+          */
           response = new Response(user);
 
           announceService.createWelcomeMsg(handle, user.getId());

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
@@ -78,9 +79,10 @@ class SubscriptionService {
                 account.getPlanId()
               );
             if (isOK) {
-              Map<String, Object> mailMap = new HashMap<>(2);
-              mailMap.put("user", CurrentUser.getEmail());
-              mailMap.put("account", StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName());
+              Map<String, Object> mailMap = Map.of(
+              	"user", CurrentUser.getEmail(),
+              	"account", StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName()
+        			);
               
               EmailPublisher.publish(
           			EmailData.builder()
@@ -188,17 +190,18 @@ class SubscriptionService {
       AccountDao dao = handle.attach(AccountDao.class);
       Account account = dao.findById(CurrentUser.getAccountId());
       if (account != null) {
-      	Map<String, Object> info = new HashMap<>(10);
-      	info.put("title", account.getTitle());
-      	info.put("contactName", account.getContactName());
-      	info.put("taxId", account.getTaxId());
-      	info.put("taxOffice", account.getTaxOffice());
-      	info.put("address1", account.getAddress1());
-      	info.put("address2", account.getAddress2());
-      	info.put("postcode", account.getPostcode());
-      	info.put("city", account.getCity());
-      	info.put("state", account.getState());
-      	info.put("country", account.getCountry());
+      	Map<String, Object> info = Map.of(
+      		"title", account.getTitle(),
+      		"contactName", account.getContactName(),
+      		"taxId", account.getTaxId(),
+      		"taxOffice", account.getTaxOffice(),
+      		"address1", account.getAddress1(),
+      		"address2", account.getAddress2(),
+      		"postcode", account.getPostcode(),
+      		"city", account.getCity(),
+      		"state", account.getState(),
+      		"country", account.getCountry()
+  			);
 
       	data.put("info", info);
       	
@@ -206,8 +209,8 @@ class SubscriptionService {
         
         List<AccountTrans> allTrans = subscriptionDao.findListByAccountId(CurrentUser.getAccountId());
         data.put("transactions", allTrans);
-  
-        if (allTrans != null && allTrans.size() > 0) {
+
+        if (CollectionUtils.isNotEmpty(allTrans)) {
           List<AccountTrans> invoiceTrans = new ArrayList<>();
           for (AccountTrans st : allTrans) {
             if (st.getFileUrl() != null) {

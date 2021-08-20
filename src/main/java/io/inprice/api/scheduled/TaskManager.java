@@ -21,7 +21,7 @@ public class TaskManager {
     scheduler = Executors.newScheduledThreadPool(1);
 
     TaskDef accessLoggerTask = TaskDef.builder()
-			.task(new AccessLoggerFlusher())
+			.task(new AccessLogger())
 			.delay(1)
 			.timePeriod(DateUtils.parseTimePeriod(Props.getConfig().INTERVALS.FLUSHING_ACCESS_LOGS))
 		.build();
