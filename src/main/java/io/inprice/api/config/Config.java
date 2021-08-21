@@ -1,24 +1,24 @@
 package io.inprice.api.config;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.inprice.common.config.BaseConfig;
 
 public class Config extends BaseConfig {
 
-	@SerializedName("app")
+	@JsonProperty("app")
 	public App APP;
 
-	@SerializedName("keys")
+	@JsonProperty("keys")
 	public Keys KEYS;
 
-	@SerializedName("ttls")
+	@JsonProperty("ttls")
 	public Ttls TTLS;
 
-	@SerializedName("thresholds")
+	@JsonProperty("thresholds")
 	public Thresholds THRESHOLDS;
 
-	@SerializedName("queues")
+	@JsonProperty("queues")
 	public Queues QUEUES;
 
 }

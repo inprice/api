@@ -1,10 +1,10 @@
 package io.inprice.api.config;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Ttls {
 
-	@SerializedName("cookie")
+	@JsonProperty("cookie")
 	public int COOKIE;
 	
 }

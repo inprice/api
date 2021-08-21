@@ -25,7 +25,7 @@ import io.javalin.core.util.RouteOverviewPlugin;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
-import io.javalin.plugin.json.JavalinJson;
+import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.openapi.annotations.ContentType;
 
 /**
@@ -72,7 +72,7 @@ public class Application {
     
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       logger.info("APPLICATION IS TERMINATING...");
-
+      
       logger.info(" - Web server is shutting down...");
       app.stop();
 
@@ -106,8 +106,7 @@ public class Application {
 
       config.accessManager(new AccessGuard());
 
-      JavalinJson.setFromJsonMapper(JsonConverter.gson::fromJson);
-      JavalinJson.setToJsonMapper(JsonConverter.gson::toJson);
+      JavalinJackson.configure(JsonConverter.mapper);
     }).start(Props.getConfig().APP.PORT);
 
     app.before(ctx -> {

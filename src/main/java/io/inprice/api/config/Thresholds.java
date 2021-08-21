@@ -1,13 +1,13 @@
 package io.inprice.api.config;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Thresholds {
 
-	@SerializedName("responseTimeLatency")
+	@JsonProperty("responseTimeLatency")
 	public int RESPONSE_TIME_LATENCY;
 
-	@SerializedName("accessLogRowLimit")
+	@JsonProperty("accessLogRowLimit")
 	public int ACCESS_LOG_ROW_LIMIT;
 	
 }

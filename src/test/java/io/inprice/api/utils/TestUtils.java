@@ -56,16 +56,16 @@ public class TestUtils {
 
   		Application.main(null);
 			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-			}
-
-		} else { //redis must be cleaned up before starting any test
-	    try (Jedis jedis = Redis.getPool().getResource()) {
-	    	jedis.flushAll();
-	    }
+				Thread.sleep(1200);
+			} catch (InterruptedException e) { }
 		}
 		Database.cleanDBForTests(sqlScripts.toString(), Props.getConfig().APP.ENV);
+	}
+	
+	public static void cleanRedis() {
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	jedis.flushAll();
+    }
 	}
 
 	/**

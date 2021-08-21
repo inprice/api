@@ -1,7 +1,6 @@
 package io.inprice.api.publisher;
 
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,17 +21,23 @@ public class EmailPublisher {
 
   private static final Logger logger = LoggerFactory.getLogger(EmailPublisher.class);
 	
-	private static final Connection conn;
+	private static Connection conn;
+	private static Channel channel;
 
 	static {
-		conn = RabbitMQ.createConnection("api-publisher: " + Props.getConfig().QUEUES.SENDING_EMAILS.NAME);
+		try {
+			conn = RabbitMQ.createConnection("Api-PUB: " + Props.getConfig().QUEUES.SENDING_EMAILS.NAME);
+			channel = conn.createChannel();
+  	} catch (IOException e) {
+      logger.error("Failed to establish RabbitMQ connection", e);
+		}
 	}
 
 	public static void publish(EmailData emailData) {
-  	try (Channel channel = conn.createChannel()) {
+  	try {
 	  	String outMessage = JsonConverter.toJson(emailData);
 	  	channel.basicPublish("", Props.getConfig().QUEUES.SENDING_EMAILS.NAME, null, outMessage.getBytes());
-  	} catch (IOException | TimeoutException e) {
+  	} catch (IOException e) {
       logger.error("Failed to publish email", e);
 		}
 	}

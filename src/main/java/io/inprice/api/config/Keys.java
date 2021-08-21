@@ -1,19 +1,19 @@
 package io.inprice.api.config;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Keys {
 
-	@SerializedName("superUser")
+	@JsonProperty("superUser")
 	public String SUPER_USER;
 
-	@SerializedName("user")
+	@JsonProperty("user")
 	public String USER;
 
-	@SerializedName("encryption")
+	@JsonProperty("encryption")
 	public String ENCRYPTION;
 
-	@SerializedName("geoLocation")
+	@JsonProperty("geoLocation")
 	public String GEO_LOCATION;
 	
 }

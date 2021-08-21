@@ -1,12 +1,12 @@
 package io.inprice.api.config;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.inprice.common.config.QueueDef;
 
 public class Queues {
 
-	@SerializedName("sendingEmails")
+	@JsonProperty("sendingEmails")
 	public QueueDef SENDING_EMAILS;
 	
 }

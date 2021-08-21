@@ -37,7 +37,7 @@ public class RequestRegistrationTest {
 	public static void setup() {
 		TestUtils.setup();
 	}
-
+	
 	@Test
 	public void Request_body_is_invalid_WITHOUT_body() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).asJson();
@@ -271,6 +271,8 @@ public class RequestRegistrationTest {
 
 	@Test
 	public void Everything_must_be_ok() {
+		TestUtils.cleanRedis();
+
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("email", "user-99@acme-x.com");
 
