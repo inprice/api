@@ -7,7 +7,7 @@ import io.inprice.common.config.BaseConfig;
 public class Config extends BaseConfig {
 
 	@SerializedName("app")
-	public System APP;
+	public App APP;
 
 	@SerializedName("keys")
 	public Keys KEYS;
@@ -15,8 +15,8 @@ public class Config extends BaseConfig {
 	@SerializedName("ttls")
 	public Ttls TTLS;
 
-	@SerializedName("intervals")
-	public Intervals INTERVALS;
+	@SerializedName("thresholds")
+	public Thresholds THRESHOLDS;
 
 	@SerializedName("queues")
 	public Queues QUEUES;

@@ -4,7 +4,7 @@ import com.google.gson.annotations.SerializedName;
 
 import io.inprice.common.config.BaseSystem;
 
-public class System extends BaseSystem {
+public class App extends BaseSystem {
 
 	@SerializedName("webUrl")
 	public String WEB_URL;
@@ -20,8 +20,5 @@ public class System extends BaseSystem {
 
 	@SerializedName("freeUseDays")
 	public int FREE_USE_DAYS;
-
-	@SerializedName("requestExecutionThreshold")
-	public int REQUEST_EXECUTION_THRESHOLD;
 
 }

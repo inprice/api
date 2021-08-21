@@ -352,7 +352,7 @@ public class AuthService {
                 dto.setEmail(sendDto.getEmail());
                 dto.setTimezone(timezone);
 
-                String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
+                String saltedHash = PasswordHelper.getSaltedHash(acceptDto.getPassword());
                 long savedId = userDao.insert(dto.getEmail(), saltedHash, dto.getName(), dto.getTimezone());
 
                 if (savedId > 0) {

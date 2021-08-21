@@ -11,7 +11,6 @@ import org.apache.commons.io.IOUtils;
 
 import io.inprice.api.Application;
 import io.inprice.api.config.Props;
-import io.inprice.api.consts.Global;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.Redis;
 import kong.unirest.Cookies;
@@ -56,13 +55,11 @@ public class TestUtils {
   		}
 
   		Application.main(null);
-  		while (!Global.isApplicationRunning) {
-  			try {
-  				Thread.sleep(1000);
-  			} catch (InterruptedException e) {
-  			}
-  		}
-  		
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+			}
+
 		} else { //redis must be cleaned up before starting any test
 	    try (Jedis jedis = Redis.getPool().getResource()) {
 	    	jedis.flushAll();

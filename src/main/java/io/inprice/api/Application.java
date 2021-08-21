@@ -7,12 +7,11 @@ import org.slf4j.MDC;
 
 import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
-import io.inprice.api.consts.Global;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.framework.ConfigScanner;
 import io.inprice.api.framework.HandlerInterruptException;
+import io.inprice.api.helpers.AccessLogger;
 import io.inprice.api.info.Response;
-import io.inprice.api.scheduled.AccessLogger;
 import io.inprice.api.session.AccessGuard;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
@@ -68,17 +67,17 @@ public class Application {
       ConfigScanner.scanControllers(app);
       
       logger.info("APPLICATION STARTED.");
-      Global.isApplicationRunning = true;
 
     }, "app-starter").start();
     
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-
-      Global.isApplicationRunning = false;
       logger.info("APPLICATION IS TERMINATING...");
 
       logger.info(" - Web server is shutting down...");
       app.stop();
+
+      logger.info(" - Access logger is shutting down...");
+      AccessLogger.flush(true);
 
       logger.info(" - Redis connection is closing...");
       Redis.stop();
@@ -146,7 +145,7 @@ public class Application {
     		elapsed = (int)(System.currentTimeMillis()-started);
     	}
     	
-    	boolean isSlow = (elapsed > Props.getConfig().APP.REQUEST_EXECUTION_THRESHOLD);
+    	boolean isSlow = (elapsed > Props.getConfig().THRESHOLDS.RESPONSE_TIME_LATENCY);
 
     	boolean
     		beLogged =
