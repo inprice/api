@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.inprice</groupId>
   <artifactId>api</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
-
-  <modelVersion>4.0.0</modelVersion>
 
   <!-- package will created in target folder. look for the jar file, conf 
     and lib folders -->
@@ -18,91 +17,86 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <slf4j.version>1.7.26</slf4j.version>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <maven.compiler.source>1.8</maven.compiler.source>
+
+    <!-- Versions -->
+    <jdk.version>11</jdk.version>
+    <maven-compiler.version>3.8.0</maven-compiler.version>
+    <inprice-common.version>1.0.0</inprice-common.version>
+
+    <javalin.version>3.13.10</javalin.version>
+    <reflections.version>0.9.12</reflections.version>
+    <json.version>20210307</json.version>
+    <jjwt.version>0.11.2</jjwt.version>
+    <junit.version>4.13.2</junit.version>
+    <kong.version>3.11.12</kong.version>
+    <embedded-redis.version>0.7.3</embedded-redis.version>
+    <httpclient.version>4.5.13</httpclient.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>io.inprice</groupId>
       <artifactId>common</artifactId>
-      <version>1.0.0</version>
+      <version>${inprice-common.version}</version>
     </dependency>
 
     <dependency>
       <groupId>io.javalin</groupId>
       <artifactId>javalin</artifactId>
-      <version>3.10.1</version>
+      <version>${javalin.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.reflections</groupId>
       <artifactId>reflections</artifactId>
-      <version>0.9.12</version>
-    </dependency>
-
-    <dependency>
-      <groupId>commons-io</groupId>
-      <artifactId>commons-io</artifactId>
-      <version>2.8.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-collections4</artifactId>
-      <version>4.1</version>
+      <version>${reflections.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
-      <version>20200518</version>
+      <version>${json.version}</version>
     </dependency>
 
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
-      <version>0.11.2</version>
+      <version>${jjwt.version}</version>
     </dependency>
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-impl</artifactId>
-      <version>0.11.2</version>
+      <version>${jjwt.version}</version>
     </dependency>
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
-      <artifactId>jjwt-jackson</artifactId>
-      <version>0.11.2</version>
+      <artifactId>jjwt-gson</artifactId>
+      <version>${jjwt.version}</version>
+      <scope>compile</scope> <!-- Not runtime -->
     </dependency>
 
     <!-- Testing -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.13.2</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.konghq</groupId>
       <artifactId>unirest-java</artifactId>
-      <version>3.11.09</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-      <version>3.20.2</version>
+      <version>${kong.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>it.ozimov</groupId>
       <artifactId>embedded-redis</artifactId>
-      <version>0.7.3</version>
+      <version>${embedded-redis.version}</version>
       <scope>test</scope>
       <exclusions>
         <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
+           <groupId>org.slf4j</groupId>
+           <artifactId>slf4j-simple</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -110,30 +104,9 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
-      <version>4.5.12</version>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-      <version>2.11.2</version>
+      <version>${httpclient.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>eu.bitwalker</groupId>
-      <artifactId>UserAgentUtils</artifactId>
-      <version>1.21</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.jdbi</groupId>
-      <artifactId>jdbi3-core</artifactId>
-      <version>3.14.4</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jdbi</groupId>
-      <artifactId>jdbi3-sqlobject</artifactId>
-      <version>3.14.4</version>
-    </dependency>
   </dependencies>
 
   <build>
@@ -142,10 +115,9 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.0</version>
+        <version>${maven-compiler.version}</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+					<release>${jdk.version}</release>
         </configuration>
       </plugin>
 

@@ -17,15 +17,15 @@ public class ForRedis extends ForResponse {
   private static final long serialVersionUID = 3438172317056990343L;
 
   private Long userId;
-  private Long accountId;
   private String hash;
   private Date accessedAt = new Date();
 
   public ForRedis(ForResponse forResponse, Membership mem, String hash) {
     super(forResponse);
     this.userId = mem.getUserId();
-    this.accountId = mem.getAccountId();
     this.hash = hash;
+
+    setAccountId(mem.getAccountId());
   }
 
 }

@@ -3,7 +3,6 @@ package io.inprice.api.app.group;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -104,10 +103,11 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_any_kind_of_users() {
-		Map<TestRoles, JSONObject> roleUserMap = new HashMap<>(3);
-		roleUserMap.put(TestRoles.ADMIN, TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
-		roleUserMap.put(TestRoles.EDITOR, TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
-		roleUserMap.put(TestRoles.VIEWER, TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Map<TestRoles, JSONObject> roleUserMap = Map.of(
+			TestRoles.ADMIN, TestAccounts.Standard_plan_and_two_extra_users.ADMIN(),
+			TestRoles.EDITOR, TestAccounts.Standard_plan_and_two_extra_users.EDITOR(),
+			TestRoles.VIEWER, TestAccounts.Standard_plan_and_two_extra_users.VIEWER()
+		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {
 			JSONObject json = callTheService(roleUser.getValue(), "Group K", (TestRoles.VIEWER.equals(roleUser.getKey()) ? 1 : 0));

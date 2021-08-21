@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -126,9 +125,10 @@ public class DeleteTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor_and_admin() {
-		Map<JSONObject, String> userGroupNameMap = new HashMap<>(2);
-		userGroupNameMap.put(TestAccounts.Standard_plan_and_two_extra_users.EDITOR(), "Group K");
-		userGroupNameMap.put(TestAccounts.Standard_plan_and_two_extra_users.ADMIN(), "Group G");
+		Map<JSONObject, String> userGroupNameMap = Map.of(
+			TestAccounts.Standard_plan_and_two_extra_users.EDITOR(), "Group K",
+			TestAccounts.Standard_plan_and_two_extra_users.ADMIN(), "Group G"
+		);
 
 		for (Entry<JSONObject, String> userGroupName: userGroupNameMap.entrySet()) {
 			Cookies cookies = TestUtils.login(userGroupName.getKey());

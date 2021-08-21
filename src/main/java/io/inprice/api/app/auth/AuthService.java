@@ -1,16 +1,16 @@
 package io.inprice.api.app.auth;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eu.bitwalker.useragentutils.UserAgent;
 import io.inprice.api.app.auth.dto.InvitationAcceptDTO;
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
 import io.inprice.api.app.membership.MembershipDao;
@@ -20,9 +20,9 @@ import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.dto.UserDTO;
 import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.app.user.validator.PasswordValidator;
+import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.CookieHelper;
@@ -30,17 +30,16 @@ import io.inprice.api.helpers.PasswordHelper;
 import io.inprice.api.helpers.SessionHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
+import io.inprice.api.publisher.EmailPublisher;
 import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.api.session.info.ForResponse;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
-import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
-import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Membership;
@@ -49,7 +48,7 @@ import io.javalin.http.Context;
 
 public class AuthService {
 
-  private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+  private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
   
@@ -80,14 +79,15 @@ public class AuthService {
         					)
             		);
 
-                Map<String, Object> sesInfoMap = new HashMap<>(3);
-                sesInfoMap.put("sessionNo", 0);
-                sesInfoMap.put("sessions", sesList);
-                sesInfoMap.put("isPriviledge", Boolean.TRUE);
+                Map<String, Object> sesInfoMap = Map.of(
+                	"sessionNo", 0,
+                	"sessions", sesList,
+                	"isPriviledge", Boolean.TRUE
+              	);
             		return new Response(sesInfoMap);
             	} else {
                 Map<String, Object> sesInfo = findSessionInfoByEmail(ctx, user.getEmail());
-                if (sesInfo != null && sesInfo.size() > 0) {
+                if (MapUtils.isNotEmpty(sesInfo)) {
                   return new Response(sesInfo);
                 } else {
                   return createSession(ctx, user);
@@ -121,13 +121,14 @@ public class AuthService {
         	if (! user.isBanned()) {
         		if (! user.isPrivileged()) {
               try {
-                Map<String, Object> mailMap = new HashMap<>(3);
-                mailMap.put("user", user.getName());
-                mailMap.put("token", Tokens.add(TokenType.FORGOT_PASSWORD, email));
-                mailMap.put("url", Props.APP_WEB_URL + Consts.Paths.Auth.RESET_PASSWORD);
+                Map<String, Object> mailMap = Map.of(
+                	"user", user.getName(),
+                	"token", Tokens.add(TokenType.FORGOT_PASSWORD, email),
+                	"url", Props.getConfig().APP.WEB_URL + Consts.Paths.Auth.RESET_PASSWORD
+              	);
                 
-                if (! SysProps.APP_ENV.equals(AppEnv.TEST)) {
-                  redis.sendEmail(
+                if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST) == false) {
+                	EmailPublisher.publish(
               			EmailData.builder()
                 			.template(EmailTemplate.FORGOT_PASSWORD)
                 			.to(user.getEmail())
@@ -141,7 +142,7 @@ public class AuthService {
                 }
   
               } catch (Exception e) {
-                log.error("Failed to render email for forgetting password", e);
+                logger.error("Failed to render email for forgetting password", e);
                 return Responses.ServerProblem.EXCEPTION;
               }
             } else {
@@ -171,7 +172,7 @@ public class AuthService {
         UserDao userDao = handle.attach(UserDao.class);
         UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
 
-        final String email = Tokens.get(TokenType.FORGOT_PASSWORD, dto.getToken());
+        final String email = Tokens.get(TokenType.FORGOT_PASSWORD, dto.getToken(), String.class);
         if (email != null) {
 
           User user = userDao.findByEmail(email);
@@ -187,10 +188,11 @@ public class AuthService {
                 if (isOK) {
                   Tokens.remove(TokenType.FORGOT_PASSWORD, dto.getToken());
                   List<ForDatabase> sessions = userSessionDao.findListByUserId(user.getId());
-                  if (sessions != null && sessions.size() > 0) {
-                    for (ForDatabase ses : sessions) {
-                      redis.removeSesion(ses.getHash());
-                    }
+                  if (CollectionUtils.isNotEmpty(sessions)) {
+                  	List<String> hashList = new ArrayList<>(sessions.size());
+                    for (ForDatabase ses : sessions) hashList.add(ses.getHash());
+                    redis.removeSesions(hashList);
+
                     userSessionDao.deleteByUserId(user.getId());
                   }
                   return createSession(ctx, user);
@@ -230,13 +232,11 @@ public class AuthService {
       if (StringUtils.isNotBlank(tokenString)) {
 
         List<ForCookie> sessions = SessionHelper.fromTokenForUser(tokenString);
-        if (sessions != null && sessions.size() > 0) {
+        if (CollectionUtils.isNotEmpty(sessions)) {
 
           List<String> hashList = new ArrayList<>(sessions.size());
-          for (ForCookie ses : sessions) {
-            redis.removeSesion(ses.getHash());
-            hashList.add(ses.getHash());
-          }
+          for (ForCookie ses : sessions) hashList.add(ses.getHash());
+          redis.removeSesions(hashList);
 
           boolean isOK = false;
           if (hashList.size() > 0) {
@@ -261,7 +261,7 @@ public class AuthService {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
       List<Membership> memberList = membershipDao.findListByEmailAndStatus(user.getEmail(), UserStatus.JOINED);
-      if (memberList != null && memberList.size() > 0) {
+    	if (CollectionUtils.isNotEmpty(memberList)) {
 
         List<ForRedis> redisSesList = new ArrayList<>();
         List<ForCookie> sessions = null;
@@ -287,7 +287,6 @@ public class AuthService {
         sessionNo = sessions.size();
 
         String ipAddress = ClientSide.getIp(ctx.req);
-        UserAgent ua = new UserAgent(ctx.userAgent());
 
         for (Membership mem : memberList) {
           ForCookie cookieSes = new ForCookie(user.getEmail(), mem.getRole().name());
@@ -304,8 +303,6 @@ public class AuthService {
           dbSes.setUserId(mem.getUserId());
           dbSes.setAccountId(mem.getAccountId());
           dbSes.setIp(ipAddress);
-          dbSes.setOs(ua.getOperatingSystem().getName());
-          dbSes.setBrowser(ua.getBrowser().getName());
           dbSes.setUserAgent(ctx.userAgent());
           dbSesList.add(dbSes);
         }
@@ -317,9 +314,10 @@ public class AuthService {
             ctx.cookie(CookieHelper.createUserCookie(SessionHelper.toTokenForUser(sessions)));
             
             // the response
-            Map<String, Object> map = new HashMap<>(2);
-            map.put("sessionNo", sessionNo);
-            map.put("sessions", responseSesList);
+            Map<String, Object> map = Map.of(
+            	"sessionNo", sessionNo,
+            	"sessions", responseSesList
+          	);
             return new Response(map);
           }
         }
@@ -335,7 +333,7 @@ public class AuthService {
     if (problem == null) {
       Response res = Responses.DataProblem.DB_PROBLEM;
 
-      InvitationSendDTO sendDto = Tokens.get(TokenType.INVITATION, acceptDto.getToken());
+      InvitationSendDTO sendDto = Tokens.get(TokenType.INVITATION, acceptDto.getToken(), InvitationSendDTO.class);
       if (sendDto != null) {
 
         try (Handle handle = Database.getHandle()) {
@@ -354,7 +352,7 @@ public class AuthService {
                 dto.setEmail(sendDto.getEmail());
                 dto.setTimezone(timezone);
 
-                String saltedHash = PasswordHelper.getSaltedHash(dto.getPassword());
+                String saltedHash = PasswordHelper.getSaltedHash(acceptDto.getPassword());
                 long savedId = userDao.insert(dto.getEmail(), saltedHash, dto.getName(), dto.getTimezone());
 
                 if (savedId > 0) {
@@ -428,7 +426,7 @@ public class AuthService {
       if (StringUtils.isNotBlank(tokenString)) {
 
         List<ForCookie> sessions = SessionHelper.fromTokenForUser(tokenString);
-        if (sessions != null && sessions.size() > 0) {
+        if (CollectionUtils.isNotEmpty(sessions)) {
 
           Integer sessionNo = null;
           for (int i = 0; i < sessions.size(); i++) {
@@ -451,9 +449,10 @@ public class AuthService {
             }
 
             if (responseSesList.size() == sessions.size()) {
-              Map<String, Object> map = new HashMap<>(2);
-              map.put("sessionNo", sessionNo);
-              map.put("sessions", responseSesList);
+              Map<String, Object> map = Map.of(
+              	"sessionNo", sessionNo,
+              	"sessions", responseSesList
+            	);
               return map;
             }
           }

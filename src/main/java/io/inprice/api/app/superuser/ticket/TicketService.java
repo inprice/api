@@ -1,8 +1,9 @@
 package io.inprice.api.app.superuser.ticket;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -30,7 +31,7 @@ import io.inprice.common.models.TicketHistory;
 */
 public class TicketService {
 
-  private static final Logger log = LoggerFactory.getLogger(TicketService.class);
+  private static final Logger logger = LoggerFactory.getLogger(TicketService.class);
   
   Response findById(Long id) {
   	try (Handle handle = Database.getHandle()) {
@@ -129,25 +130,25 @@ public class TicketService {
       where.append("%' ");
     }
 
-    if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getStatuses())) {
     	where.append(
 		    String.format(" and t.status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
     }
 
-    if (dto.getPriorities() != null && dto.getPriorities().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getPriorities())) {
     	where.append(
 		    String.format(" and priority in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPriorities()))
 			);
     }
 
-    if (dto.getTypes() != null && dto.getTypes().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getTypes())) {
     	where.append(
 		    String.format(" and type in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getTypes()))
 			);
     }
 
-    if (dto.getSubjects() != null && dto.getSubjects().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getSubjects())) {
     	where.append(
 		    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
 			);
@@ -192,9 +193,9 @@ public class TicketService {
       .map(new TicketMapper())
       .list();
 
-      return new Response(Collections.singletonMap("rows", searchResult));
+      return new Response(Map.of("rows", searchResult));
     } catch (Exception e) {
-      log.error("Failed in full search for tickets.", e);
+      logger.error("Failed in full search for tickets.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }

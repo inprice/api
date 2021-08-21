@@ -1,6 +1,5 @@
 package io.inprice.api.helpers;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.jetty.http.HttpStatus;
@@ -41,10 +40,7 @@ public class Commons {
       CurrentUser.getRole(),
       CurrentUser.getUserTimezone()
     );
-    Map<String, Object> dataMap = new HashMap<>(1);
-    dataMap.put("session", session);
-
-    return new Response(dataMap);
+    return new Response(Map.of("session", session));
   }
 
 }

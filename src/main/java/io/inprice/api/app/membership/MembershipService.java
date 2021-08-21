@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,19 +16,19 @@ import io.inprice.api.app.auth.dto.InvitationSendDTO;
 import io.inprice.api.app.membership.dto.InvitationUpdateDTO;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.validator.EmailValidator;
+import io.inprice.api.config.Props;
+import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.external.Props;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.Response;
+import io.inprice.api.publisher.EmailPublisher;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
-import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
-import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
@@ -37,7 +38,7 @@ import io.inprice.common.models.User;
 
 class MembershipService {
 
-  private static final Logger log = LoggerFactory.getLogger(MembershipService.class);
+  private static final Logger logger = LoggerFactory.getLogger(MembershipService.class);
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
 
@@ -48,7 +49,7 @@ class MembershipService {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
       List<Membership> list = membershipDao.findNormalMemberList(CurrentUser.getAccountId());
-      if (list != null && list.size() > 0) {
+      if (CollectionUtils.isNotEmpty(list)) {
         res = new Response(list);
       }
     }
@@ -338,11 +339,11 @@ class MembershipService {
     } else {
       mailMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')));
       mailMap.put("token", Tokens.add(TokenType.INVITATION, dto));
-      mailMap.put("url", Props.APP_WEB_URL + "/accept-invitation");
+      mailMap.put("url", Props.getConfig().APP.WEB_URL + "/accept-invitation");
       template = EmailTemplate.INVITATION_FOR_NEW_USERS;
     }
 
-    redis.sendEmail(
+    EmailPublisher.publish(
 			EmailData.builder()
   			.template(template)
   			.to(dto.getEmail())
@@ -351,9 +352,9 @@ class MembershipService {
   		.build()	
 		);
 
-    log.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
+    logger.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
 
-    if (AppEnv.TEST.equals(SysProps.APP_ENV)) {
+    if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST)) {
     	return new Response(mailMap);
     } else {
     	return Responses.OK;
@@ -392,7 +393,7 @@ class MembershipService {
     UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
     List<ForDatabase> dbSessions = userSessionDao.findListByUserId(userId);
 
-    if (dbSessions != null && dbSessions.size() > 0) {
+    if (CollectionUtils.isNotEmpty(dbSessions)) {
       List<String> hashList = new ArrayList<>(dbSessions.size());
 
       for (ForDatabase ses: dbSessions) {
@@ -403,7 +404,7 @@ class MembershipService {
       
       if (hashList.size() > 0) {
       	userSessionDao.deleteByHashList(hashList);
-      	for (String hash : hashList) redis.removeSesion(hash);
+        redis.removeSesions(hashList);
       }
     }
   }

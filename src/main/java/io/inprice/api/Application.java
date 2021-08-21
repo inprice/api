@@ -5,22 +5,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-
-import io.inprice.api.consts.Global;
+import io.inprice.api.config.Props;
+import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.external.Props;
-import io.inprice.api.external.RedisClient;
 import io.inprice.api.framework.ConfigScanner;
 import io.inprice.api.framework.HandlerInterruptException;
+import io.inprice.api.helpers.AccessLogger;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.AccessGuard;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.config.SysProps;
-import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.JsonConverter;
-import io.inprice.common.meta.AppEnv;
+import io.inprice.common.helpers.RabbitMQ;
+import io.inprice.common.helpers.Redis;
 import io.inprice.common.models.AccessLog;
 import io.javalin.Javalin;
 import io.javalin.core.util.Header;
@@ -28,7 +25,7 @@ import io.javalin.core.util.RouteOverviewPlugin;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
-import io.javalin.plugin.json.JavalinJackson;
+import io.javalin.plugin.json.JavalinJson;
 import io.javalin.plugin.openapi.annotations.ContentType;
 
 /**
@@ -39,43 +36,59 @@ import io.javalin.plugin.openapi.annotations.ContentType;
  */
 public class Application {
 
-  private static final Logger log = LoggerFactory.getLogger(Application.class);
+  private static final Logger logger = LoggerFactory.getLogger(Application.class);
 
   private static Javalin app;
-  private static RedisClient redis;
   
   public static void main(String[] args) {
   	MDC.put("email", "system");
   	MDC.put("ip", "NA");
   	
     new Thread(() -> {
-      log.info("APPLICATION IS STARTING...");
+
+    	Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+  			public void uncaughtException(Thread t1, Throwable e1) {
+  				logger.info("Unhandled exception", e1);
+  			}
+  		});
+
+      logger.info("APPLICATION IS STARTING...");
+
+      Database.start(Props.getConfig().MYSQL_CONF);
+      logger.info(" - Connected to Mysql server.");
+
+      RabbitMQ.start(Props.getConfig().RABBIT_CONF);
+      logger.info(" - Connected to RabbitMQ server.");
+
+      Redis.start(Props.getConfig().REDIS_CONF);
+      logger.info(" - Connected to Redis server.");
 
       createServer();
       ConfigScanner.scanControllers(app);
       
-      log.info("APPLICATION STARTED.");
-      Global.isApplicationRunning = true;
+      logger.info("APPLICATION STARTED.");
 
-      redis = Beans.getSingleton(RedisClient.class);
-      
     }, "app-starter").start();
-
+    
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      logger.info("APPLICATION IS TERMINATING...");
 
-      Global.isApplicationRunning = false;
-      log.info("APPLICATION IS TERMINATING...");
-
-      log.info(" - Web server is shutting down...");
+      logger.info(" - Web server is shutting down...");
       app.stop();
 
-      log.info(" - Redis connection is closing...");
-      redis.shutdown();
+      logger.info(" - Access logger is shutting down...");
+      AccessLogger.flush(true);
 
-      log.info(" - DB connection is closing...");
-      Database.shutdown();
+      logger.info(" - Redis connection is closing...");
+      Redis.stop();
 
-      log.info("ALL SERVICES IS DONE.");
+      logger.info(" - RabbitMQ connection is closing...");
+      RabbitMQ.stop();
+
+      logger.info(" - Mysql connection is closing...");
+      Database.stop();
+
+      logger.info("ALL SERVICES IS DONE.");
 
     }, "shutdown-hook"));
   }
@@ -86,16 +99,16 @@ public class Application {
       config.enableCorsForAllOrigins();
       config.logIfServerNotStarted = true;
       config.showJavalinBanner = false;
-      config.requestCacheSize = 8192L;
 
-      if (SysProps.APP_ENV.equals(AppEnv.DEV)) {
+      if (Props.getConfig().APP.ENV.equals(Consts.Env.DEV)) {
         config.registerPlugin(new RouteOverviewPlugin("/routes"));
       }
 
       config.accessManager(new AccessGuard());
 
-      JavalinJackson.configure(JsonConverter.mapper);
-    }).start(Props.APP_PORT);
+      JavalinJson.setFromJsonMapper(JsonConverter.gson::fromJson);
+      JavalinJson.setToJsonMapper(JsonConverter.gson::toJson);
+    }).start(Props.getConfig().APP.PORT);
 
     app.before(ctx -> {
       if (ctx.method() == "OPTIONS") {
@@ -121,7 +134,6 @@ public class Application {
 
     app.exception(NotFoundResponse.class, (e, ctx) -> ctx.json(Responses.PAGE_NOT_FOUND));
     app.exception(BadRequestResponse.class, (e, ctx) -> ctx.json(Responses.REQUEST_BODY_INVALID));
-    app.exception(MismatchedInputException.class, (e, ctx) -> ctx.json(Responses.Already.DELETED_MEMBER));
   }
 
   private static void logAccess(Context ctx, HandlerInterruptException e) {
@@ -133,7 +145,7 @@ public class Application {
     		elapsed = (int)(System.currentTimeMillis()-started);
     	}
     	
-    	boolean isSlow = (elapsed > Props.SERVICE_EXECUTION_THRESHOLD);
+    	boolean isSlow = (elapsed > Props.getConfig().THRESHOLDS.RESPONSE_TIME_LATENCY);
 
     	boolean
     		beLogged =
@@ -186,7 +198,7 @@ public class Application {
       		userLog.setReqBody(reqBody.replaceAll("(?:ssword).*\"", "ssword\":\"***\""));
       	}
 
-    		redis.addUserLog(userLog);
+    		AccessLogger.add(userLog);
     	}
   	}
   	CurrentUser.cleanup();

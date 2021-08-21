@@ -5,25 +5,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.system.PlanDao;
+import io.inprice.api.config.Props;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
-import io.inprice.api.external.Props;
-import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
+import io.inprice.api.publisher.EmailPublisher;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AccountStatus;
 import io.inprice.common.meta.EmailTemplate;
-import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.meta.SubsEvent;
+import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.AccountTrans;
 import io.inprice.common.models.Plan;
@@ -31,10 +31,6 @@ import io.inprice.common.models.UserMark;
 
 class SubscriptionService {
 
-  //private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
-
-  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
-	
   Response createCheckout(int planId) {
   	return Responses.METHOD_NOT_ALLOWED;
   }
@@ -83,11 +79,12 @@ class SubscriptionService {
                 account.getPlanId()
               );
             if (isOK) {
-              Map<String, Object> mailMap = new HashMap<>(2);
-              mailMap.put("user", CurrentUser.getEmail());
-              mailMap.put("account", StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName());
+              Map<String, Object> mailMap = Map.of(
+              	"user", CurrentUser.getEmail(),
+              	"account", StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName()
+        			);
               
-              redis.sendEmail(
+              EmailPublisher.publish(
           			EmailData.builder()
             			.template(EmailTemplate.FREE_ACCOUNT_CANCELLED)
             			.to(CurrentUser.getEmail())
@@ -143,7 +140,7 @@ class SubscriptionService {
                 CurrentUser.getAccountId(),
                 AccountStatus.FREE.name(),
                 basicPlan.getId(),
-                Props.APP_DAYS_FOR_FREE_USE
+                Props.getConfig().APP.FREE_USE_DAYS
               );
 
             if (isOK) {
@@ -211,8 +208,8 @@ class SubscriptionService {
         
         List<AccountTrans> allTrans = subscriptionDao.findListByAccountId(CurrentUser.getAccountId());
         data.put("transactions", allTrans);
-  
-        if (allTrans != null && allTrans.size() > 0) {
+
+        if (CollectionUtils.isNotEmpty(allTrans)) {
           List<AccountTrans> invoiceTrans = new ArrayList<>();
           for (AccountTrans st : allTrans) {
             if (st.getFileUrl() != null) {

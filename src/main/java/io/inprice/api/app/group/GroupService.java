@@ -2,7 +2,6 @@ package io.inprice.api.app.group;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,7 @@ import io.inprice.common.utils.URLUtils;
 
 class GroupService {
 
-  private static final Logger log = LoggerFactory.getLogger(GroupService.class);
+  private static final Logger logger = LoggerFactory.getLogger(GroupService.class);
 	
   Response findById(Long id) {
     try (Handle handle = Database.getHandle()) {
@@ -70,9 +69,10 @@ class GroupService {
 
       LinkGroup group = groupDao.findByIdWithAlarm(id, CurrentUser.getAccountId());
       if (group != null) {
-      	Map<String, Object> dataMap = new HashMap<>(2);
-        dataMap.put("group", group);
-        dataMap.put("links", linkDao.findListByGroupId(id, CurrentUser.getAccountId()));
+      	Map<String, Object> dataMap = Map.of(
+        	"group", group,
+        	"links", linkDao.findListByGroupId(id, CurrentUser.getAccountId())
+      	);
         return new Response(dataMap);
       }
     }
@@ -90,9 +90,7 @@ class GroupService {
         	Long id = groupDao.insert(dto);
         	if (id != null && id > 0) {
         		found = groupDao.findById(id, CurrentUser.getAccountId());
-            Map<String, LinkGroup> data = new HashMap<>(1);
-            data.put("group", found);
-            return new Response(data);
+            return new Response(Map.of("group", found));
           }
         } else {
         	return Responses.Already.Defined.GROUP;
@@ -145,9 +143,7 @@ class GroupService {
                 found.setName(dto.getName());
                 found.setPrice(dto.getPrice());
                 
-                Map<String, LinkGroup> data = new HashMap<>(1);
-                data.put("group", found);
-                res = new Response(data);
+                res = new Response(Map.of("group", found));
               } else {
               	res = Responses.DataProblem.DB_PROBLEM;
               }
@@ -201,9 +197,7 @@ class GroupService {
           int[] result = batch.execute();
 
           if (result[6] > 0) {
-            Map<String, Object> data = new HashMap<>(1);
-            data.put("count", group.getLinkCount());
-            res = new Response(data);
+            res = new Response(Map.of("count", group.getLinkCount()));
             handle.commit();
           } else {
           	handle.rollback();
@@ -278,16 +272,17 @@ class GroupService {
 
         	int accountLinkCount = account.getLinkCount() + urlList.size();
 
-          Map<String, Object> data = new HashMap<>(4);
-        	data.put("group", group);
-        	data.put("count", urlList.size());
-        	data.put("linkCount", accountLinkCount);
-        	data.put("links", linkDao.findListByGroupId(dto.getGroupId(), CurrentUser.getAccountId()));
+          Map<String, Object> data = Map.of(
+        		"group", group,
+        		"count", urlList.size(),
+        		"linkCount", accountLinkCount,
+        		"links", linkDao.findListByGroupId(dto.getGroupId(), CurrentUser.getAccountId())
+    			);
           res = new Response(data);
         }
 
       } catch (Exception e) {
-        log.error("Failed to import URL list!", e);
+        logger.error("Failed to import URL list!", e);
         res = Responses.ServerProblem.EXCEPTION;
       }
     }

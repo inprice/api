@@ -1,5 +1,6 @@
 package io.inprice.api.app.link;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -84,6 +85,6 @@ public interface LinkDao {
   long insertHistory(@BindBean("link") Link link);
 
   @SqlQuery("select group_id from link where id in (<linkIdSet>)")
-  Set<Long> findGroupIdSet(@BindList("linkIdSet") Set<Long> linkIdSet);
+  HashSet<Long> findGroupIdSet(@BindList("linkIdSet") Set<Long> linkIdSet);
 
 }

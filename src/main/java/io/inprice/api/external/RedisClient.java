@@ -1,107 +1,112 @@
 package io.inprice.api.external;
 
-import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import org.redisson.api.RMapCache;
-import org.redisson.api.RQueue;
-import org.redisson.api.RSetCache;
-import org.redisson.api.RTopic;
+import java.util.Map.Entry;
 
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
 import io.inprice.api.session.info.ForRedis;
-import io.inprice.common.config.SysProps;
-import io.inprice.common.helpers.BaseRedisClient;
-import io.inprice.common.info.EmailData;
-import io.inprice.common.models.AccessLog;
+import io.inprice.common.helpers.JsonConverter;
+import io.inprice.common.helpers.Redis;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Transaction;
 
+/**
+ *
+ * @since 2021-08-15
+ * @author mdpinar
+ */
 public class RedisClient {
 
-  private BaseRedisClient baseClient;
-
-  private RTopic sendingEmailsTopic;
-  private RTopic linkStatusChangeTopic;
-
-  public RQueue<AccessLog> accessLogQueue;
-  
-  private RSetCache<String> requestingEmailsSet;
-  private RMapCache<String, ForRedis> sessionsMap;
-
-  public RMapCache<String, Serializable> tokensMap;
-
-  public RedisClient() {
-    baseClient = new BaseRedisClient();
-    baseClient.open(() -> {
-    	sendingEmailsTopic = baseClient.getClient().getTopic(SysProps.REDIS_SENDING_EMAILS_TOPIC);
-      linkStatusChangeTopic = baseClient.getClient().getTopic(SysProps.REDIS_STATUS_CHANGE_TOPIC);
-
-      requestingEmailsSet = baseClient.getClient().getSetCache("api:requesting:emails");
-      sessionsMap = baseClient.getClient().getMapCache("api:token:sessions");
-      tokensMap = baseClient.getClient().getMapCache("api:tokens");
-      accessLogQueue = baseClient.getClient().getQueue(SysProps.REDIS_ACCESS_LOG_QUEUE);
-    });
-  }
-
+	private static final String SESSIONS_KEY = "sessions";
+	
   public Response isEmailRequested(RateLimiterType type, String email) {
-    boolean exists = requestingEmailsSet.contains(type.name() + email);
-    if (exists) {
-      return Responses.Already.REQUESTED_EMAIL;
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	String key = getRequestedEmailKey(type, email);
+
+    	String val = jedis.get(key);
+    	if (val != null) {
+    		return Responses.Already.REQUESTED_EMAIL;    		
+    	}
+
+    	jedis.set(key, "1"); //value doesn't matter here
+    	jedis.expire(key, type.getTTL());
+    	return Responses.OK;
     }
-    requestingEmailsSet.add(type.name() + email, type.ttl(), TimeUnit.MILLISECONDS);
-    return Responses.OK;
   }
 
   public boolean removeRequestedEmail(RateLimiterType type, String email) {
-    return requestingEmailsSet.remove(type.name() + email);
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	String key = getRequestedEmailKey(type, email);
+  		return jedis.del(key) > 0;
+    }
+  }
+
+  private static String getRequestedEmailKey(RateLimiterType type, String email) {
+    return String.format("requested-emails:%s:%s", type.name(), email);
   }
 
   public boolean addSesions(List<ForRedis> sessions) {
-    for (ForRedis ses : sessions) {
-      sessionsMap.put(ses.getHash(), ses);
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	Transaction trans = jedis.multi();
+    	for (ForRedis ses : sessions) {
+    		trans.hset(SESSIONS_KEY, ses.getHash(), JsonConverter.toJson(ses));
+    	}
+    	trans.exec();
     }
     return true;
   }
 
   public ForRedis getSession(String hash) {
-    return sessionsMap.get(hash);
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	String json = jedis.hget(SESSIONS_KEY, hash);
+    	if (json != null) {
+    		return JsonConverter.fromJson(json, ForRedis.class);
+    	}
+    }
+    return null;
   }
 
   public void updateSessions(Map<String, ForRedis> map) {
-    sessionsMap.putAll(map);
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	Transaction trans = jedis.multi();
+    	for (Entry<String, ForRedis> entry: map.entrySet()) {
+    		trans.hset(SESSIONS_KEY, entry.getKey(), JsonConverter.toJson(entry.getValue()));
+    	}
+    	trans.exec();
+    }
   }
 
   public void removeSesion(String hash) {
-    sessionsMap.removeAsync(hash);
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	jedis.hdel(SESSIONS_KEY, hash);
+    }
+  }
+
+  public void removeSesions(List<String> hashes) {
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	Transaction trans = jedis.multi();
+    	for (String hash: hashes) {
+    		trans.hdel(SESSIONS_KEY, hash);
+    	}
+    	trans.exec();
+    }
   }
 
   public boolean refreshSesion(String hash) {
-    ForRedis ses = sessionsMap.get(hash);
-    if (ses != null) {
-      ses.setAccessedAt(new Date());
-      sessionsMap.put(ses.getHash(), ses);
-      return true;
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	String json = jedis.hget(SESSIONS_KEY, hash);
+    	if (json != null) {
+    		ForRedis ses = JsonConverter.fromJson(json, ForRedis.class);
+    		ses.setAccessedAt(new Date());
+    		jedis.hset(SESSIONS_KEY, hash, JsonConverter.toJson(ses));
+    		return true;
+    	}
     }
     return false;
-  }
-
-  public void addUserLog(AccessLog accessLog) {
-  	accessLog.setCreatedAt(new Date());
-  	accessLogQueue.add(accessLog);
-  }
-
-  public void sendEmail(EmailData emailData) {
-    sendingEmailsTopic.publish(emailData);
-  }
-  
-  public void shutdown() {
-  	sendingEmailsTopic.removeAllListeners();
-    linkStatusChangeTopic.removeAllListeners();
-    baseClient.shutdown();
   }
 
 }

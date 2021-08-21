@@ -3,22 +3,21 @@ package io.inprice.api.utils;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
 import io.inprice.api.Application;
-import io.inprice.api.consts.Global;
-import io.inprice.common.helpers.BaseRedisClient;
+import io.inprice.api.config.Props;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.Redis;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
+import redis.clients.jedis.Jedis;
 import redis.embedded.RedisServer;
 
 /**
@@ -48,11 +47,6 @@ public class TestUtils {
 
 	public static void setup() {
 		if (isPortAvailable(SERVER_PORT)) {
-  		setSystemEnvVariable("APP_ENV", "TEST");
-  		setSystemEnvVariable("KEY_ENCRYPTION", "f7*$q{>AKbC<B)!s@n7=P");
-  		setSystemEnvVariable("KEY_SUPER_USER", ",~2w&RWmV3bchk']pKbC<B)!:F[*#Ss8");
-  		setSystemEnvVariable("KEY_USER", "-8'fq{>As@n77jcx24.U*$=PS]#Z5wY+");
-  		
   		Unirest.config().defaultBaseUrl("http://localhost:" + SERVER_PORT);
 
   		if (isPortAvailable(6379)) {
@@ -61,18 +55,17 @@ public class TestUtils {
   		}
 
   		Application.main(null);
-  		while (!Global.isApplicationRunning) {
-  			try {
-  				Thread.sleep(1000);
-  			} catch (InterruptedException e) {
-  			}
-  		}
-  		
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+			}
+
 		} else { //redis must be cleaned up before starting any test
-			BaseRedisClient redisClient = new BaseRedisClient();
-			redisClient.open(() -> redisClient.getClient().getKeys().flushall());
+	    try (Jedis jedis = Redis.getPool().getResource()) {
+	    	jedis.flushAll();
+	    }
 		}
-		Database.cleanDBForTests(sqlScripts.toString());
+		Database.cleanDBForTests(sqlScripts.toString(), Props.getConfig().APP.ENV);
 	}
 
 	/**
@@ -90,44 +83,6 @@ public class TestUtils {
 
 	public static HttpResponse<?> logout(Cookies cookies) {
 		return Unirest.post("/logout").cookie(cookies).asEmpty();
-	}
-
-	/**
-	 * Sets System env variables which are immutable by default
-	 * 
-	 * https://blog.sebastian-daschner.com/entries/changing_env_java
-	 */
-	@SuppressWarnings("unchecked")
-	private static void setSystemEnvVariable(String key, String value) {
-		try {
-  		Class<?> processEnvironment = Class.forName("java.lang.ProcessEnvironment");
-  
-  		Field unmodifiableMapField = getAccessibleField(processEnvironment, "theUnmodifiableEnvironment");
-  		Object unmodifiableMap = unmodifiableMapField.get(null);
-  		injectIntoUnmodifiableMap(key, value, unmodifiableMap);
-  
-  		Field mapField = getAccessibleField(processEnvironment, "theEnvironment");
-  		Map<String, String> map = (Map<String, String>) mapField.get(null);
-  		map.put(key, value);
-		} catch (Exception e) {
-			System.err.println(e);
-		}
-	}
-
-	private static Field getAccessibleField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
-		Field field = clazz.getDeclaredField(fieldName);
-		field.setAccessible(true);
-		return field;
-	}
-
-	@SuppressWarnings("unchecked")
-	private static void injectIntoUnmodifiableMap(String key, String value, Object map)
-	    throws ReflectiveOperationException {
-
-		Class<?> unmodifiableMap = Class.forName("java.util.Collections$UnmodifiableMap");
-		Field field = getAccessibleField(unmodifiableMap, "m");
-		Object obj = field.get(map);
-		((Map<String, String>) obj).put(key, value);
 	}
 
 	/**

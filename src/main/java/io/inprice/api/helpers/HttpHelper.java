@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
  */
 public class HttpHelper {
 
-  private static final Logger log = LoggerFactory.getLogger(HttpHelper.class);
+  private static final Logger logger = LoggerFactory.getLogger(HttpHelper.class);
 
   public static String GET(String url) {
     HttpGet request = new HttpGet(url);
@@ -28,7 +28,7 @@ public class HttpHelper {
       HttpEntity entity = response.getEntity();
       return EntityUtils.toString(entity);
     } catch (IOException e) {
-      log.error("Failed to get", e);
+      logger.error("Failed to get", e);
     }
     return null;
   }
@@ -39,7 +39,7 @@ public class HttpHelper {
       HttpEntity entity = response.getEntity();
       return EntityUtils.toString(entity);
     } catch (IOException e) {
-      log.error("Failed to get", e);
+      logger.error("Failed to get", e);
     }
     return null;
   }

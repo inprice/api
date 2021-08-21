@@ -1,6 +1,5 @@
 package io.inprice.api.app.superuser.user;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +33,7 @@ import io.inprice.common.utils.DateUtils;
 
 class Service {
 
-  private static final Logger log = LoggerFactory.getLogger("SU:User");
+  private static final Logger logger = LoggerFactory.getLogger("SU:User");
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
   
@@ -57,7 +56,7 @@ class Service {
     			.list();
       return new Response(searchResult);
     } catch (Exception e) {
-      log.error("Failed in search for access logs.", e);
+      logger.error("Failed in search for access logs.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
 	}
@@ -92,7 +91,7 @@ class Service {
 
   	          if (hashList.size() > 0) {
   	          	userSessionDao.deleteByHashList(hashList);
-  	          	for (String hash : hashList) redis.removeSesion(hash);
+  	          	redis.removeSesions(hashList);
   	          }
 
   	          handle.commit();
@@ -163,12 +162,12 @@ class Service {
   			List<ForDatabase> sessionList = superDao.fetchSessionListById(userId);
   			List<UserMark> usedServiceList = superDao.fetchUsedServiceListByEmail(user.getEmail());
   			
-  			Map<String, Object> data = new HashMap<>(4);
-  			data.put("user", user);
-  			data.put("membershipList", membershipList);
-  			data.put("sessionList", sessionList);
-  			data.put("usedServiceList", usedServiceList);
-
+  			Map<String, Object> data = Map.of(
+  				"user", user,
+  				"membershipList", membershipList,
+  				"sessionList", sessionList,
+  				"usedServiceList", usedServiceList
+				);
   			return new Response(data);
   		}
   	}

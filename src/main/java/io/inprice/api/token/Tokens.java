@@ -1,19 +1,17 @@
 package io.inprice.api.token;
 
-import java.io.Serializable;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
-import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.CodeGenerator;
-import io.inprice.common.helpers.Beans;
+import io.inprice.common.helpers.JsonConverter;
+import io.inprice.common.helpers.Redis;
+import redis.clients.jedis.Jedis;
 
 public class Tokens {
-
+	
   private static final Random random = new Random();
-  private static final RedisClient redis = Beans.getSingleton(RedisClient.class);
 
-  public static String add(TokenType tokenType, Serializable object) {
+  public static String add(TokenType tokenType, Object object) {
     String token = null;
     if (TokenType.REGISTRATION_REQUEST.equals(tokenType)) {
       token = generateNumericToken();
@@ -21,21 +19,33 @@ public class Tokens {
       token = CodeGenerator.hash();
     }
 
-    redis.tokensMap.put(getKey(tokenType, token), object, tokenType.ttl(), TimeUnit.MILLISECONDS);
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	String key = getKey(tokenType, token);
+    	jedis.set(key, JsonConverter.toJson(object));
+    	jedis.expire(key, tokenType.getTTL());
+    }
+
     return token;
   }
 
-  @SuppressWarnings("unchecked")
-  public static <T extends Serializable> T get(TokenType tokenType, String token) {
-    Serializable seri = redis.tokensMap.get(getKey(tokenType, token));
-    if (seri != null)
-      return (T) seri;
-    else
-      return null;
+  public static <T> T get(TokenType tokenType, String token, Class<T> expectedClass) {
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	String key = getKey(tokenType, token);
+    	String json = jedis.get(key);
+    	if (json != null) {
+    		return (T) JsonConverter.fromJson(json, expectedClass);
+    	} else {
+    		return null;
+    	}
+    }
   }
 
   public static boolean remove(TokenType tokenType, String token) {
-    return (redis.tokensMap.remove(getKey(tokenType, token)) != null);
+    try (Jedis jedis = Redis.getPool().getResource()) {
+    	String key = getKey(tokenType, token);
+    	long result = jedis.del(key);
+    	return (result > 0);
+    }
   }
 
   private static String getKey(TokenType tokenType, String token) {

@@ -2,6 +2,7 @@ package io.inprice.api.app.coupon;
 
 import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ import io.inprice.common.utils.CouponManager;
 
 public class CouponService {
 
-  private static final Logger log = LoggerFactory.getLogger(CouponService.class);
+  private static final Logger logger = LoggerFactory.getLogger(CouponService.class);
 
   Response getCoupons() {
   	if (CurrentUser.getAccountId() == null) return Responses.NotAllowed.NO_ACCOUNT;
@@ -33,7 +34,7 @@ public class CouponService {
       CouponDao couponDao = handle.attach(CouponDao.class);
 
       List<Coupon> coupons = couponDao.findListByAccountId(CurrentUser.getAccountId());
-      if (coupons != null && coupons.size() > 0) {
+    	if (CollectionUtils.isNotEmpty(coupons)) {
         return new Response(coupons);
       }
       return Responses.NotFound.COUPON;
@@ -99,7 +100,7 @@ public class CouponService {
                               
                       if (isOK) {
                         response = Commons.refreshSession(accountDao, account.getId());
-                        log.info("Coupon {}, is issued for {}", coupon.getCode(), account.getName());
+                        logger.info("Coupon {}, is issued for {}", coupon.getCode(), account.getName());
                       }
                     }
                   }

@@ -11,8 +11,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.google.common.collect.ImmutableMap;
-
 import io.inprice.api.utils.Fixtures;
 import io.inprice.api.utils.TestAccounts;
 import io.inprice.api.utils.TestUtils;
@@ -125,7 +123,7 @@ public class AnyonesGetServicesTests {
 		JSONObject json = res.getBody().getObject();
 		JSONArray data = json.getJSONArray("data");
 		
-		Map<String, Integer> countsMap = ImmutableMap.of("/memberships", 2, "/invitations", 1, "/opened-sessions", 0);
+		Map<String, Integer> countsMap = Map.of("/memberships", 2, "/invitations", 1, "/opened-sessions", 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(SERVICE_ENDPOINT, data);

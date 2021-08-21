@@ -1,8 +1,6 @@
 package io.inprice.api.app.superuser.link;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,15 +32,16 @@ import io.inprice.common.repository.PlatformDao;
 
 class LinkService {
 
-  private static final Logger log = LoggerFactory.getLogger(LinkService.class);
+  private static final Logger logger = LoggerFactory.getLogger(LinkService.class);
 
   private final Set<LinkStatus> STATUSES_FOR_CHANGE;
   
   public LinkService() {
-  	STATUSES_FOR_CHANGE = new HashSet<>(3);
-  	STATUSES_FOR_CHANGE.add(LinkStatus.RESOLVED);
-  	STATUSES_FOR_CHANGE.add(LinkStatus.PAUSED);
-  	STATUSES_FOR_CHANGE.add(LinkStatus.NOT_SUITABLE);
+  	STATUSES_FOR_CHANGE = Set.of(
+			LinkStatus.RESOLVED,
+			LinkStatus.PAUSED,
+			LinkStatus.NOT_SUITABLE
+		);
 	}
 
   Response search(SearchDTO dto) {
@@ -78,7 +77,7 @@ class LinkService {
       where.append("%' ");
     }
 
-    if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getStatuses())) {
     	where.append(
 		    String.format(" and l.status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
@@ -101,9 +100,9 @@ class LinkService {
       .map(new LinkMapper())
       .list();
       
-      return new Response(Collections.singletonMap("rows", searchResult));
+      return new Response(Map.of("rows", searchResult));
     } catch (Exception e) {
-      log.error("Failed in full search for links.", e);
+      logger.error("Failed in full search for links.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
@@ -128,10 +127,11 @@ class LinkService {
           if (StringUtils.isNotBlank(link.getSku())) specList.add(0, new LinkSpec("Code", link.getSku()));
           if (StringUtils.isNotBlank(link.getBrand())) specList.add(0, new LinkSpec("Brand", link.getBrand()));
           
-          Map<String, Object> data = new HashMap<>(3);
-          data.put("specList", specList);
-          data.put("priceList", priceList);
-          data.put("historyList", historyList);
+          Map<String, Object> data = Map.of(
+          	"specList", specList,
+          	"priceList", priceList,
+          	"historyList", historyList
+        	);
           res = new Response(data);
         }
       }

@@ -1,7 +1,6 @@
 package io.inprice.api.app.group;
 
 import java.math.BigDecimal;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.jdbi.v3.core.Handle;
@@ -16,9 +15,7 @@ import io.inprice.common.repository.CommonDao;
 public class GroupAlarmService {
 	
 	public static GroupRefreshResult updateAlarm(Long groupId, Handle handle) {
-		Set<Long> idSet = new HashSet<>(1);
-		idSet.add(groupId);
-		return updateAlarm(idSet, handle);
+		return updateAlarm(Set.of(groupId), handle);
 	}
 
 	public static GroupRefreshResult updateAlarm(Set<Long> groupIdSet, Handle handle) {

@@ -12,19 +12,19 @@ import io.javalin.Javalin;
 
 public class ConfigScanner {
 
-   private static final Logger log = LoggerFactory.getLogger("ConfigScanner");
+   private static final Logger logger = LoggerFactory.getLogger("ConfigScanner");
 
    public static void scanControllers(Javalin app) {
-      log.info("- Routers are being scanned...");
+      logger.info("- Routers are being scanned...");
       Reflections reflections = new Reflections("io.inprice.api.app", new SubTypesScanner(), new TypeAnnotationsScanner());
       Set<Class<?>> controllerSet = reflections.getTypesAnnotatedWith(Router.class);
 
       for (Class<?> clazz : controllerSet) {
          try {
-            log.info(String.format("  + %s : OK", clazz.getSimpleName()));
-            ((AbstractController) clazz.newInstance()).addRoutes(app);
+            logger.info(String.format("  + %s : OK", clazz.getSimpleName()));
+            ((AbstractController) clazz.getDeclaredConstructor().newInstance()).addRoutes(app);
          } catch (Exception e) {
-            log.error("Error in scanning Router methods.", e);
+            logger.error("Error in scanning Router methods.", e);
          }
       }
    }

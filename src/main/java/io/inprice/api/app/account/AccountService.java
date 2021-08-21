@@ -2,7 +2,6 @@ package io.inprice.api.app.account;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +21,7 @@ import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.app.user.validator.PasswordValidator;
+import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.GroupDTO;
@@ -31,17 +31,16 @@ import io.inprice.api.helpers.Commons;
 import io.inprice.api.helpers.PasswordHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.RateLimiterType;
+import io.inprice.api.publisher.EmailPublisher;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
 import io.inprice.api.utils.CurrencyFormats;
-import io.inprice.common.config.SysProps;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.AccountStatus;
-import io.inprice.common.meta.AppEnv;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.meta.UserRole;
@@ -53,7 +52,7 @@ import io.javalin.http.Context;
 
 class AccountService {
 
-  private static final Logger log = LoggerFactory.getLogger(AccountService.class);
+  private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
 
   private final AnnounceService announceService = Beans.getSingleton(AnnounceService.class);
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
@@ -78,15 +77,16 @@ class AccountService {
           if (isNotARegisteredUser) {
             String token = Tokens.add(TokenType.REGISTRATION_REQUEST, dto);
   
-            Map<String, Object> mailMap = new HashMap<>(3);
-            mailMap.put("user", dto.getEmail().split("@")[0]);
-            mailMap.put("account", dto.getAccountName());
-            mailMap.put("token", token.substring(0,3)+"-"+token.substring(3));
+            Map<String, Object> mailMap = Map.of(
+            	"user", dto.getEmail().split("@")[0],
+            	"account", dto.getAccountName(),
+            	"token", token.substring(0,3)+"-"+token.substring(3)
+          	);
             
-            if (!SysProps.APP_ENV.equals(AppEnv.PROD)) {
+            if (Props.getConfig().APP.ENV.equals(Consts.Env.PROD) == false) {
             	return new Response(mailMap);
             } else {
-            	redis.sendEmail(
+            	EmailPublisher.publish(
           			EmailData.builder()
             			.template(EmailTemplate.REGISTRATION_REQUEST)
             			.to(dto.getEmail())
@@ -106,7 +106,7 @@ class AccountService {
         }
 
       } catch (Exception e) {
-        log.error("Failed to render email for activating account register", e);
+        logger.error("Failed to render email for activating account register", e);
         return Responses.ServerProblem.EXCEPTION;
       }
     }
@@ -116,7 +116,7 @@ class AccountService {
   Response completeRegistration(Context ctx, String token) {
     Response response = Responses.Invalid.TOKEN;
 
-    RegisterDTO dto = Tokens.get(TokenType.REGISTRATION_REQUEST, token);
+    RegisterDTO dto = Tokens.get(TokenType.REGISTRATION_REQUEST, token, RegisterDTO.class);
     if (dto != null) {
       Map<String, String> clientInfo = ClientSide.getGeoInfo(ctx.req);
 
@@ -158,9 +158,12 @@ class AccountService {
         }
 
         if (response.isOK()) {
-          Map<String, Object> dataMap = new HashMap<>(2);
-          dataMap.put("email", dto.getEmail());
-          dataMap.put("account", dto.getAccountName());
+        	/*
+          Map<String, Object> dataMap = new Map.of(
+          	"email", dto.getEmail(),
+          	"account", dto.getAccountName()
+        	);
+          */
           response = new Response(user);
 
           announceService.createWelcomeMsg(handle, user.getId());
@@ -261,7 +264,7 @@ class AccountService {
   
           if (account != null) {
             if (! AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
-              log.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
+              logger.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
   
               String where = "where account_id=" + CurrentUser.getAccountId();
   
@@ -302,12 +305,10 @@ class AccountService {
   
               List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
               if (hashList != null && ! hashList.isEmpty()) {
-                for (String hash : hashList) {
-                	redis.removeSesion(hash);
-                }
+              	redis.removeSesions(hashList);
               }
   
-              log.info("{} is deleted. Id: {}.", account.getName(), account.getId());
+              logger.info("{} is deleted. Id: {}.", account.getName(), account.getId());
               res = Responses.OK;
             } else {
               res = Responses.Already.ACTIVE_SUBSCRIPTION;
@@ -384,7 +385,7 @@ class AccountService {
       				.accountId(accountId)
     				.build()
   				);
-          log.info("A new user registered: {} - {} ", userEmail, accountName);
+          logger.info("A new user registered: {} - {} ", userEmail, accountName);
           return new Response(accountId);
         }
       }

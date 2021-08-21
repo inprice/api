@@ -2,10 +2,8 @@ package io.inprice.api.helpers;
 
 import javax.servlet.http.Cookie;
 
+import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
-import io.inprice.api.external.Props;
-import io.inprice.common.config.SysProps;
-import io.inprice.common.meta.AppEnv;
 import io.javalin.http.Context;
 
 /**
@@ -16,7 +14,7 @@ public class CookieHelper {
 	public static Cookie createUserCookie(String token) {
 		Cookie cookie = new Cookie(Consts.SESSION, token);
 		cookie.setHttpOnly(true);
-		if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
+		if (Props.getConfig().APP.ENV.equals(Consts.Env.PROD)) {
 			cookie.setSecure(true);
 		}
 		cookie.setMaxAge(Integer.MAX_VALUE);
@@ -32,10 +30,10 @@ public class CookieHelper {
   public static Cookie createSuperCookie(String token) {
     Cookie cookie = new Cookie(Consts.SUPER_SESSION, token);
     cookie.setHttpOnly(true);
-    if (SysProps.APP_ENV.equals(AppEnv.PROD)) {
+    if (Props.getConfig().APP.ENV.equals(Consts.Env.PROD)) {
     	cookie.setSecure(true);
     }
-    cookie.setMaxAge(Props.TTL_FOR_COOKIES); // one hour
+    cookie.setMaxAge(Props.getConfig().TTLS.COOKIE);
     return cookie;
   }
 

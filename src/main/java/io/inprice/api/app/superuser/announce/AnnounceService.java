@@ -1,11 +1,11 @@
 package io.inprice.api.app.superuser.announce;
 
-import java.util.Collections;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.jdbi.v3.core.Handle;
@@ -32,7 +32,7 @@ import io.inprice.common.models.Announce;
 */
 public class AnnounceService {
 
-  private static final Logger log = LoggerFactory.getLogger(AnnounceService.class);
+  private static final Logger logger = LoggerFactory.getLogger(AnnounceService.class);
 
 	Response insert(AnnounceDTO dto) {
 		Response res = Responses.NotFound.ANNOUNCE;
@@ -159,9 +159,9 @@ public class AnnounceService {
       .map(new AnnounceMapper())
       .list();
 
-      return new Response(Collections.singletonMap("rows", searchResult));
+      return new Response(Map.of("rows", searchResult));
     } catch (Exception e) {
-      log.error("Failed in full search for announces.", e);
+      logger.error("Failed in full search for announces.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
@@ -206,11 +206,17 @@ public class AnnounceService {
       dto.setStartingAt(today);
       dto.setEndingAt(DateUtils.addDays(today, 3));
       dto.setTitle("Welcome on board!");
-      String body = IOUtils.toString(this.getClass().getResourceAsStream("/announces/welcome.html"), "UTF-8");
-      dto.setBody(body);
-      announceDao.insert(dto);
+
+  		try {
+  			String body = new String(this.getClass().getResourceAsStream("/announces/welcome.html").readAllBytes());
+        dto.setBody(body);
+        announceDao.insert(dto);
+  		} catch (IOException e) {
+  			logger.error("Failed to load config file", e);
+  		}
+      
     } catch (Exception e) {
-      log.error("Failed to read welcome announcement template!", e);
+      logger.error("Failed to read welcome announcement template!", e);
     }
 	}
 

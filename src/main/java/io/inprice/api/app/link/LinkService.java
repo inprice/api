@@ -1,8 +1,6 @@
 package io.inprice.api.app.link;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +37,7 @@ import io.inprice.common.repository.PlatformDao;
 
 class LinkService {
 
-  private static final Logger log = LoggerFactory.getLogger(LinkService.class);
+  private static final Logger logger = LoggerFactory.getLogger(LinkService.class);
 
   Response search(SearchDTO dto) {
   	dto = DTOHelper.normalizeSearch(dto, true);
@@ -72,13 +70,13 @@ class LinkService {
       where.append("%' ");
     }
 
-    if (dto.getLevels() != null && dto.getLevels().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getLevels())) {
     	where.append(
   			String.format(" and l.level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
 			);
     }
 
-    if (dto.getStatuses() != null && dto.getStatuses().size() > 0) {
+    if (CollectionUtils.isNotEmpty(dto.getStatuses())) {
     	where.append(
 		    String.format(" and status_group in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
 			);
@@ -101,9 +99,9 @@ class LinkService {
       .map(new LinkMapper())
       .list();
       
-      return new Response(Collections.singletonMap("rows", searchResult));
+      return new Response(Map.of("rows", searchResult));
     } catch (Exception e) {
-      log.error("Failed in full search for links.", e);
+      logger.error("Failed in full search for links.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
@@ -148,9 +146,7 @@ class LinkService {
 
           if (dto.getFromGroupId() != null) { //meaning that it is called from group definition (not from links search page)
           	LinkGroup group = handle.attach(GroupDao.class).findByIdWithAlarm(dto.getFromGroupId(), CurrentUser.getAccountId());
-          	Map<String, Object> data = new HashMap<>(1);
-            data.put("group", group);
-            response = new Response(data);
+            response = new Response(Map.of("group", group));
           } else { //from links page
           	response = Responses.OK;
           }
@@ -211,17 +207,16 @@ class LinkService {
         		LinkDao linkDao = handle.attach(LinkDao.class);
             
           	Set<Long> foundGroupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
-
           	if (CollectionUtils.isNotEmpty(foundGroupIdSet)) foundGroupIdSet.remove(null);
-          	
+
           	if (CollectionUtils.isNotEmpty(foundGroupIdSet)) {
-        			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
-        			final String 
-        				updatePart = 
-        					String.format(
-      							"set group_id=%d where link_id in (%s) and group_id!=%d and account_id=%d", 
-      							dto.getToGroupId(), joinedIds, dto.getToGroupId(), CurrentUser.getAccountId()
-    							);
+		    			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
+		    			final String 
+		    				updatePart = 
+		    					String.format(
+		  							"set group_id=%d where link_id in (%s) and group_id!=%d and account_id=%d", 
+		  							dto.getToGroupId(), joinedIds, dto.getToGroupId(), CurrentUser.getAccountId()
+								);
 
               Batch batch = handle.createBatch();
               batch.add("update alarm " + updatePart);
@@ -244,9 +239,10 @@ class LinkService {
                   GroupDao groupDao = handle.attach(GroupDao.class);
                 	LinkGroup group = groupDao.findById(dto.getFromGroupId(), CurrentUser.getAccountId());
 
-                	Map<String, Object> data = new HashMap<>(2);
-                	data.put("group", group);
-                  data.put("links", linkDao.findListByGroupId(dto.getFromGroupId(), CurrentUser.getAccountId()));
+                	Map<String, Object> data = Map.of(
+                		"group", group,
+                  	"links", linkDao.findListByGroupId(dto.getFromGroupId(), CurrentUser.getAccountId())
+              		);
                   res = new Response(data);
             		} else {
             			res = Responses.OK;
@@ -294,10 +290,11 @@ class LinkService {
           if (StringUtils.isNotBlank(link.getSku())) specList.add(0, new LinkSpec("Code", link.getSku()));
           if (StringUtils.isNotBlank(link.getBrand())) specList.add(0, new LinkSpec("Brand", link.getBrand()));
           
-          Map<String, Object> data = new HashMap<>(3);
-          data.put("specList", specList);
-          data.put("priceList", priceList);
-          data.put("historyList", historyList);
+          Map<String, Object> data = Map.of(
+          	"specList", specList,
+          	"priceList", priceList,
+          	"historyList", historyList
+        	);
           res = new Response(data);
         }
       }

@@ -1,7 +1,5 @@
 package io.inprice.api.app.superuser.account;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +41,7 @@ import io.javalin.http.Context;
 
 class Service {
 
-  private static final Logger log = LoggerFactory.getLogger("SU:Account");
+  private static final Logger logger = LoggerFactory.getLogger("SU:Account");
   
   Response search(BaseSearchDTO dto) {
   	try (Handle handle = Database.getHandle()) {
@@ -65,7 +63,7 @@ class Service {
       			.list();
         return new Response(searchResult);
       } catch (Exception e) {
-        log.error("Failed in search for access logs.", e);
+        logger.error("Failed in search for access logs.", e);
         return Responses.ServerProblem.EXCEPTION;
       }
   	}
@@ -82,12 +80,12 @@ class Service {
     		List<AccountHistory> historyList = superDao.fetchHistory(id);
     		List<AccountTrans> transList = superDao.fetchTransactionList(id);
 
-    		Map<String, Object> data = new HashMap<>(4);
-    		data.put("account", account);
-    		data.put("memberList", memberList);
-    		data.put("historyList", historyList);
-    		data.put("transList", transList);
-
+    		Map<String, Object> data = Map.of(
+    			"account", account,
+    			"memberList", memberList,
+    			"historyList", historyList,
+    			"transList", transList
+  			);
     		return new Response(data);
     	}
     }
@@ -266,7 +264,7 @@ class Service {
   	  	      trans.setReason(description);
   	  	      trans.setDescription("Issued coupon");
   	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-  	  	      res = new Response(Collections.singletonMap("code", couponCode));
+  	  	      res = new Response(Map.of("code", couponCode));
   	  	    } else {
   	  	    	res = Responses.DataProblem.DB_PROBLEM;
   	  	    }

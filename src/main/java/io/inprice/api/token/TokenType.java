@@ -10,19 +10,19 @@ public enum TokenType {
 
   INVITATION(3 * TokenType.ONE_DAY);
 
-  private static final int ONE_SECOND = 1000;
+  private static final int ONE_SECOND = 1;
   private static final int ONE_MINUTE = 60 * ONE_SECOND;
   private static final int ONE_HOUR = 60 * ONE_MINUTE;
   private static final int ONE_DAY = 24 * ONE_HOUR;
 
-  private long ttl; // as milliseconds
+  private long TTL; // as second
 
   private TokenType(long ttl) {
-    this.ttl = ttl;
+    this.TTL = ttl;
   }
 
-  public long ttl() {
-    return this.ttl;
+  public long getTTL() {
+    return this.TTL;
   }
 
 }

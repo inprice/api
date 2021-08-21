@@ -1,7 +1,7 @@
 package io.inprice.api.app.announce;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,7 +29,7 @@ import io.inprice.common.utils.DateUtils;
 */
 public class AnnounceService {
 
-  private static final Logger log = LoggerFactory.getLogger(AnnounceService.class);
+  private static final Logger logger = LoggerFactory.getLogger(AnnounceService.class);
 
 	Response fetchNewAnnounces() {
 		try (Handle handle = Database.getHandle()) {
@@ -141,9 +141,9 @@ public class AnnounceService {
       .map(new AnnounceMapper())
       .list();
 
-      return new Response(Collections.singletonMap("rows", searchResult));
+      return new Response(Map.of("rows", searchResult));
     } catch (Exception e) {
-      log.error("Failed in full search for announces.", e);
+      logger.error("Failed in full search for announces.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
   }
