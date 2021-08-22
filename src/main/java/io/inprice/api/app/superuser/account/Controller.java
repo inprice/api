@@ -3,11 +3,11 @@ package io.inprice.api.app.superuser.account;
 import io.inprice.api.app.superuser.account.dto.CreateCouponDTO;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.consts.Consts;
+import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
-import io.inprice.api.helpers.Commons;
 import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
@@ -21,20 +21,28 @@ public class Controller extends AbstractController {
 
     // search
     app.post(Consts.Paths.Super.Account.SEARCH, (ctx) -> {
-  		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
-  		ctx.json(Commons.createResponse(ctx, service.search(dto)));
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	  		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
+	  		ctx.json(service.search(dto));
+    	}
     }, AccessRoles.SUPER_ONLY());
 
     // search for id name list
     app.post(Consts.Paths.Super.Account.ID_NAME_PAIRS, (ctx) -> {
   		String term = ctx.queryParam("term", String.class).getValue();
-      ctx.json(Commons.createResponse(ctx, service.searchIdNameList(term)));
+      ctx.json(service.searchIdNameList(term));
     }, AccessRoles.SUPER_ONLY());
 
     // search for access logs
     app.post(Consts.Paths.Super.Account.AL_SEARCH, (ctx) -> {
-  		ALSearchDTO dto = ctx.bodyAsClass(ALSearchDTO.class);
-  		ctx.json(Commons.createResponse(ctx, service.searchForAccessLog(dto)));
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	  		ALSearchDTO dto = ctx.bodyAsClass(ALSearchDTO.class);
+	  		ctx.json(service.searchForAccessLog(dto));
+    	}
     }, AccessRoles.SUPER_ONLY());
     
     /*-------------------------------------------------------------------------------------*/
@@ -42,31 +50,31 @@ public class Controller extends AbstractController {
     // fetch account details
     app.get(Consts.Paths.Super.Account.DETAILS + "/:accountId", (ctx) -> {
     	Long accountId = ctx.pathParam("accountId", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(Commons.createResponse(ctx, service.fetchDetails(accountId)));
+    	ctx.json(service.fetchDetails(accountId));
     }, AccessRoles.SUPER_ONLY());
 
     // fetch account member list
     app.get(Consts.Paths.Super.Account.MEMBER_LIST + "/:accountId", (ctx) -> {
     	Long accountId = ctx.pathParam("accountId", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(Commons.createResponse(ctx, service.fetchMemberList(accountId)));
+    	ctx.json(service.fetchMemberList(accountId));
     }, AccessRoles.SUPER_ONLY());
 
     // fetch account history
     app.get(Consts.Paths.Super.Account.HISTORY + "/:accountId", (ctx) -> {
     	Long accountId = ctx.pathParam("accountId", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(Commons.createResponse(ctx, service.fetchHistory(accountId)));
+    	ctx.json(service.fetchHistory(accountId));
     }, AccessRoles.SUPER_ONLY());
     
     // fetch transaction list
     app.get(Consts.Paths.Super.Account.TRANSACTION_LIST + "/:accountId", (ctx) -> {
     	Long accountId = ctx.pathParam("accountId", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(Commons.createResponse(ctx, service.fetchTransactionList(accountId)));
+    	ctx.json(service.fetchTransactionList(accountId));
     }, AccessRoles.SUPER_ONLY());
 
     // fetch account's users list
     app.get(Consts.Paths.Super.Account.ACCOUNT_USERS + "/:accountId", (ctx) -> {
     	Long accountId = ctx.pathParam("accountId", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(Commons.createResponse(ctx, service.fetchUserList(accountId)));
+    	ctx.json(service.fetchUserList(accountId));
     }, AccessRoles.SUPER_ONLY());
 
     /*-------------------------------------------------------------------------------------*/
@@ -74,18 +82,22 @@ public class Controller extends AbstractController {
     // bind
     app.put(Consts.Paths.Super.Account.BIND + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(Commons.createResponse(ctx, service.bind(ctx, id)));
+      ctx.json(service.bind(ctx, id));
     }, AccessRoles.SUPER_ONLY());
     
     // unbind
     app.post(Consts.Paths.Super.Account.UNBIND, (ctx) -> {
-    	ctx.json(Commons.createResponse(ctx, service.unbind(ctx)));
+    	ctx.json(service.unbind(ctx));
     }, AccessRoles.SUPER_ONLY());
 
     // create coupon
     app.post(Consts.Paths.Super.Account.COUPON, (ctx) -> {
-  		CreateCouponDTO dto = ctx.bodyAsClass(CreateCouponDTO.class);
-  		ctx.json(Commons.createResponse(ctx, service.createCoupon(dto)));
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	  		CreateCouponDTO dto = ctx.bodyAsClass(CreateCouponDTO.class);
+	  		ctx.json(service.createCoupon(dto));
+    	}
     }, AccessRoles.SUPER_ONLY());
 
   }

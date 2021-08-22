@@ -108,7 +108,7 @@ public class ResetPasswordTest {
 	public void Your_password_is_already_reset_WITH_multiple_reset_calls() {
 		//first we need to call forgot password to get a token which is needed below!
 		HttpResponse<JsonNode> res = Unirest.post("/forgot-password")
-			.body(TestAccounts.Standard_plan_and_two_extra_users.VIEWER())
+			.body(TestAccounts.Pro_plan_with_two_extra_users.VIEWER())
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -122,7 +122,7 @@ public class ResetPasswordTest {
 		assertNotNull(token);
 		
 		res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody(token, TestAccounts.Standard_plan_and_two_extra_users.VIEWER()))
+			.body(createBody(token, TestAccounts.Pro_plan_with_two_extra_users.VIEWER()))
 			.asJson();
 
 		json = res.getBody().getObject();
@@ -130,7 +130,7 @@ public class ResetPasswordTest {
 		assertEquals(200, json.getInt("status"));
 
 		res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody(token, TestAccounts.Standard_plan_and_two_extra_users.VIEWER()))
+			.body(createBody(token, TestAccounts.Pro_plan_with_two_extra_users.VIEWER()))
 			.asJson();
 
 		json = res.getBody().getObject();

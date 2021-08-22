@@ -271,10 +271,8 @@ public class RequestRegistrationTest {
 
 	@Test
 	public void Everything_must_be_ok() {
-		TestUtils.cleanRedis();
-
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("email", "user-99@acme-x.com");
+		body.put("email", "user-00@acme-x.com");
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(body)

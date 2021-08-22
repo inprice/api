@@ -4,7 +4,6 @@ import io.inprice.api.consts.Consts;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
-import io.inprice.api.helpers.Commons;
 import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
@@ -17,11 +16,11 @@ public class DashboardController extends AbstractController {
   public void addRoutes(Javalin app) {
 
     app.get(Consts.Paths.Dashboard.BASE, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getReport(false)));
+      ctx.json(service.getReport(false));
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     app.get(Consts.Paths.Dashboard.REFRESH, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getReport(true)));
+      ctx.json(service.getReport(true));
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
   }

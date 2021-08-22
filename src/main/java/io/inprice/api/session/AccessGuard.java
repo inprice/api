@@ -14,7 +14,6 @@ import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.RedisClient;
-import io.inprice.api.helpers.Commons;
 import io.inprice.api.helpers.CookieHelper;
 import io.inprice.api.helpers.SessionHelper;
 import io.inprice.api.meta.ShadowRoles;
@@ -59,16 +58,16 @@ public class AccessGuard implements AccessManager {
           handler.handle(ctx);
   			} else {
   				if (permittedRoles.contains(ShadowRoles.SUPER_WITH_ACCOUNT) && user.getAccid() == null) {
-  					ctx.json(Commons.createResponse(ctx, Responses.NotAllowed.NO_ACCOUNT));
+  					ctx.json(Responses.NotAllowed.NO_ACCOUNT);
   				} else {
-  					ctx.json(Commons.createResponse(ctx, Responses.PermissionProblem.WRONG_USER));
+  					ctx.json(Responses.PermissionProblem.WRONG_USER);
   				}
   			}
 
   		} else {
   			CookieHelper.removeSuperCookie(ctx);
   			ctx.removeCookie(Consts.SUPER_SESSION);
-  			ctx.json(Commons.createResponse(ctx, Responses._403));
+  			ctx.json(Responses._403);
   		}
 
   	//normal user?
@@ -98,16 +97,16 @@ public class AccessGuard implements AccessManager {
               }
             } else {
               isDone = true;
-              ctx.json(Commons.createResponse(ctx, Responses._403));
+              ctx.json(Responses._403);
             }
           }
         }
         if (!isDone) {
           ctx.removeCookie(Consts.SESSION);
-          ctx.json(Commons.createResponse(ctx, Responses._401));
+          ctx.json(Responses._401);
         }
       } else {
-      	ctx.json(Commons.createResponse(ctx, Responses._403));
+      	ctx.json(Responses._403);
       }
     }
   }

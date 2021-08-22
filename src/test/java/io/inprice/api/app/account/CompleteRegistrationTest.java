@@ -56,8 +56,6 @@ public class CompleteRegistrationTest {
 
 	@Test
 	public void Everything_must_be_ok() {
-		TestUtils.cleanRedis();
-
 		JSONObject body = new JSONObject()
 			.put("accountName", "Acme X Inc.")
 			.put("email", "user-99@acme-x.com")

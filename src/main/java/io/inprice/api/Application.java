@@ -44,31 +44,27 @@ public class Application {
   	MDC.put("email", "system");
   	MDC.put("ip", "NA");
   	
-    new Thread(() -> {
+  	Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+			public void uncaughtException(Thread t1, Throwable e1) {
+				logger.info("Unhandled exception", e1);
+			}
+		});
 
-    	Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-  			public void uncaughtException(Thread t1, Throwable e1) {
-  				logger.info("Unhandled exception", e1);
-  			}
-  		});
+    logger.info("APPLICATION IS STARTING...");
 
-      logger.info("APPLICATION IS STARTING...");
+    Database.start(Props.getConfig().MYSQL_CONF);
+    logger.info(" - Connected to Mysql server.");
 
-      Database.start(Props.getConfig().MYSQL_CONF);
-      logger.info(" - Connected to Mysql server.");
+    RabbitMQ.start(Props.getConfig().RABBIT_CONF);
+    logger.info(" - Connected to RabbitMQ server.");
 
-      RabbitMQ.start(Props.getConfig().RABBIT_CONF);
-      logger.info(" - Connected to RabbitMQ server.");
+    Redis.start(Props.getConfig().REDIS_CONF);
+    logger.info(" - Connected to Redis server.");
 
-      Redis.start(Props.getConfig().REDIS_CONF);
-      logger.info(" - Connected to Redis server.");
-
-      createServer();
-      ConfigScanner.scanControllers(app);
-      
-      logger.info("APPLICATION STARTED.");
-
-    }, "app-starter").start();
+    createServer();
+    ConfigScanner.scanControllers(app);
+    
+    logger.info("APPLICATION STARTED.");
     
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       logger.info("APPLICATION IS TERMINATING...");
@@ -110,17 +106,17 @@ public class Application {
     }).start(Props.getConfig().APP.PORT);
 
     app.before(ctx -> {
-      if (ctx.method() == "OPTIONS") {
+      if ("OPTIONS".equals(ctx.method())) {
         ctx.header(Header.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
       } else {
       	MDC.put("ip", ctx.ip());
       	ctx.sessionAttribute("started", System.currentTimeMillis());
-    		ctx.sessionAttribute("body", ctx.body());
+      	ctx.sessionAttribute("body", ctx.body());
       }
     });
 
     app.after(ctx -> {
-    	if (ctx.method() != "OPTIONS") {
+    	if ("OPTIONS".equals(ctx.method()) == false) {
       	logAccess(ctx, null);
       	MDC.clear();
     	}
@@ -136,7 +132,7 @@ public class Application {
   }
 
   private static void logAccess(Context ctx, HandlerInterruptException e) {
-  	if (ctx.method() != "OPTIONS") {
+  	if ("OPTIONS".equals(ctx.method()) == false) {
 
   		int elapsed = 0;
   		Long started = ctx.sessionAttribute("started");

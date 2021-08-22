@@ -12,12 +12,10 @@ import org.apache.commons.io.IOUtils;
 import io.inprice.api.Application;
 import io.inprice.api.config.Props;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.helpers.Redis;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
-import redis.clients.jedis.Jedis;
 import redis.embedded.RedisServer;
 
 /**
@@ -55,17 +53,8 @@ public class TestUtils {
   		}
 
   		Application.main(null);
-			try {
-				Thread.sleep(1200);
-			} catch (InterruptedException e) { }
 		}
 		Database.cleanDBForTests(sqlScripts.toString(), Props.getConfig().APP.ENV);
-	}
-	
-	public static void cleanRedis() {
-    try (Jedis jedis = Redis.getPool().getResource()) {
-    	jedis.flushAll();
-    }
 	}
 
 	/**
