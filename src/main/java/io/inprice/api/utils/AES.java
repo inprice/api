@@ -20,7 +20,7 @@ public class AES {
 	private static byte[] key;
 
 	static {
-		final byte[] ENCRYPTION_KEY = Props.getConfig().KEYS.ENCRYPTION.getBytes();
+		byte[] ENCRYPTION_KEY = Props.getConfig().KEYS.ENCRYPTION.getBytes();
 		if (ENCRYPTION_KEY == null) {
 			System.err.println("Encryption key is empty!");
 			System.exit(-1);

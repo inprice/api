@@ -172,7 +172,7 @@ public class AuthService {
         UserDao userDao = handle.attach(UserDao.class);
         UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
 
-        final String email = Tokens.get(TokenType.FORGOT_PASSWORD, dto.getToken(), String.class);
+        String email = Tokens.get(TokenType.FORGOT_PASSWORD, dto.getToken(), String.class);
         if (email != null) {
 
           User user = userDao.findByEmail(email);

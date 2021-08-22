@@ -115,8 +115,7 @@ class LinkService {
     	int count = dto.getLinkIdSet().size();
     	
     	String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
-    	
-      final String where = String.format("where link_id in (%s) and account_id=%d ", joinedIds, CurrentUser.getAccountId());
+      String where = String.format("where link_id in (%s) and account_id=%d ", joinedIds, CurrentUser.getAccountId());
 
       try (Handle handle = Database.getHandle()) {
       	handle.begin();
@@ -211,7 +210,7 @@ class LinkService {
 
           	if (CollectionUtils.isNotEmpty(foundGroupIdSet)) {
 		    			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
-		    			final String 
+		    			String 
 		    				updatePart = 
 		    					String.format(
 		  							"set group_id=%d where link_id in (%s) and group_id!=%d and account_id=%d", 

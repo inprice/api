@@ -34,13 +34,13 @@ public class SessionHelper {
 
 	static {
 
-		final byte[] SUPER_KEY = Props.getConfig().KEYS.SUPER_USER.getBytes();
+		byte[] SUPER_KEY = Props.getConfig().KEYS.SUPER_USER.getBytes();
 		if (SUPER_KEY == null) {
 			System.err.println("Super user key is empty!");
 			System.exit(-1);
 		}
 
-		final byte[] USER_KEY = Props.getConfig().KEYS.USER.getBytes();
+		byte[] USER_KEY = Props.getConfig().KEYS.USER.getBytes();
 		if (USER_KEY == null) {
 			System.err.println("User user key is empty!");
 			System.exit(-1);

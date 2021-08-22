@@ -26,7 +26,7 @@ public class EmailPublisher {
 
 	static {
 		try {
-			conn = RabbitMQ.createConnection("Api-PUB: " + Props.getConfig().QUEUES.SENDING_EMAILS.NAME);
+			conn = RabbitMQ.createConnection("API-PUB: " + Props.getConfig().QUEUES.SENDING_EMAILS.NAME);
 			channel = conn.createChannel();
   	} catch (IOException e) {
       logger.error("Failed to establish RabbitMQ connection", e);

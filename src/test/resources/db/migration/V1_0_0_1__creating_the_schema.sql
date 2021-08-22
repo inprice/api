@@ -140,6 +140,7 @@ create table platform (
   class_name                varchar(100) not null,
   currency_code             char(3) not null,
   currency_format           varchar(30) not null,
+  parked                    boolean default false,
   status                    varchar(25),
   queue                     varchar(50) not null default 'active.links.queue.cap3',
   primary key (id),
