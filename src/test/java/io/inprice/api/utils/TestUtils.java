@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
@@ -34,9 +35,9 @@ public class TestUtils {
 		sqlScripts = new StringBuilder();
 		try {
 			String baseDir = "db/fixtures/";
-			List<String> files = IOUtils.readLines(TestUtils.class.getClassLoader().getResourceAsStream(baseDir), "UTF-8");
+			List<String> files = IOUtils.readLines(TestUtils.class.getClassLoader().getResourceAsStream(baseDir), StandardCharsets.UTF_8);
 			for (String file: files) {
-				sqlScripts.append(IOUtils.toString(TestUtils.class.getClassLoader().getResourceAsStream(baseDir+file), "UTF-8"));
+				sqlScripts.append(IOUtils.toString(TestUtils.class.getClassLoader().getResourceAsStream(baseDir+file), StandardCharsets.UTF_8));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

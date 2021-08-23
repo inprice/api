@@ -115,8 +115,8 @@ insert into platform (name, domain, country, class_name, currency_code, currency
   ('BestBuy US', 'bestbuy.com', 'United States', 'us.BestBuyUS', 'USD', '$#,##0.00', 'triple.queue')
   ;
 
-insert into platform (name, domain, country, class_name, currency_code, currency_format, status) values
-  ('Fnac FR', 'fnac.com', 'France', 'fr.FnacFR', 'EUR', '#,##0.00 €', 'BLOCKED'),
-  ('MediaMarkt ES', 'mediamarkt.es', 'Spain', 'xx.MediaMarktXX_1', 'EUR', '€ #,##0.00', 'BLOCKED')
+insert into platform (name, domain, country, class_name, currency_code, currency_format, blocked) values
+  ('Fnac FR', 'fnac.com', 'France', 'fr.FnacFR', 'EUR', '#,##0.00 €', true),
+  ('MediaMarkt ES', 'mediamarkt.es', 'Spain', 'xx.MediaMarktXX_1', 'EUR', '€ #,##0.00', true)
   ;
   

@@ -43,8 +43,8 @@ public interface LinkDao {
   int setStatus(@Bind("id") Long id, @Bind("status") LinkStatus status, @Bind("statusGroup") LinkStatusGroup statusGroup);
 
   @SqlUpdate(
-		"insert into link_history (link_id, status, http_status, group_id, account_id) " +
-		"select id, status, http_status, group_id, account_id from link where id in (<idSet>) "
+		"insert into link_history (link_id, status, parse_cod, group_id, account_id) " +
+		"select id, status, parse_code, group_id, account_id from link where id in (<idSet>) "
 	)
   int insertHistory(@BindList("idSet") Set<Long> idSet);
 
