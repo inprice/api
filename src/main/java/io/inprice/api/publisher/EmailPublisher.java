@@ -35,8 +35,8 @@ public class EmailPublisher {
 
 	public static void publish(EmailData emailData) {
   	try {
-	  	String outMessage = JsonConverter.toJson(emailData);
-	  	channel.basicPublish("", Props.getConfig().QUEUES.SENDING_EMAILS.NAME, null, outMessage.getBytes());
+	  	String message = JsonConverter.toJsonWithoutJsonIgnore(emailData);
+	  	channel.basicPublish("", Props.getConfig().QUEUES.SENDING_EMAILS.NAME, null, message.getBytes());
   	} catch (IOException e) {
       logger.error("Failed to publish email", e);
 		}

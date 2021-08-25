@@ -41,7 +41,9 @@ public class Application {
   private static Javalin app;
   
   public static void main(String[] args) {
-  	MDC.put("email", "system");
+		Thread.currentThread().setName("main");
+
+		MDC.put("email", "system");
   	MDC.put("ip", "NA");
   	
   	Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {

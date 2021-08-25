@@ -23,6 +23,7 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
 		<maven-compiler.version>3.8.0</maven-compiler.version>
+		<mojo-executor.version>3.0.0</mojo-executor.version>
     <inprice-common.version>1.0.0</inprice-common.version>
 
     <javalin.version>3.13.10</javalin.version>
@@ -112,6 +113,15 @@
 
   <build>
     <plugins>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>${mojo-executor.version}</version>
+				<configuration>
+					<mainClass>io.inprice.api.Application</mainClass>
+				</configuration>
+			</plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
