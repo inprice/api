@@ -142,6 +142,7 @@ create table platform (
   currency_format           varchar(30) not null,
   parked                    boolean default false,
   blocked                   boolean default false,
+  profile                   varchar(15) not null default 'default',
   queue                     varchar(50) not null default 'active.links.queue.cap3',
   primary key (id),
   key (domain)
@@ -268,7 +269,7 @@ create table link_history (
   id                        bigint unsigned auto_increment not null,
   link_id                   bigint unsigned not null,
   status                    varchar(25) not null,
-  parse_code                varchar(30) not null default 'OK',
+  parse_problem             varchar(255),
   group_id                  bigint unsigned not null,
   account_id                bigint unsigned not null,
   created_at                datetime not null default current_timestamp,
