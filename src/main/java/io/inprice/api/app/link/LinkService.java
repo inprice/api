@@ -290,6 +290,7 @@ class LinkService {
           if (StringUtils.isNotBlank(link.getBrand())) specList.add(0, new LinkSpec("Brand", link.getBrand()));
           
           Map<String, Object> data = Map.of(
+        		"info", link,
           	"specList", specList,
           	"priceList", priceList,
           	"historyList", historyList

@@ -352,7 +352,7 @@ class MembershipService {
   		.build()	
 		);
 
-    logger.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
+    logger.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountName());
 
     if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST)) {
     	return new Response(mailMap);

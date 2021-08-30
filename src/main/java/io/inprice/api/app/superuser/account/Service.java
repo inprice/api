@@ -13,7 +13,7 @@ import io.inprice.api.app.coupon.CouponDao;
 import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.app.superuser.account.dto.CreateCouponDTO;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
-import io.inprice.api.app.system.PlanDao;
+import io.inprice.api.app.system.SystemDao;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
@@ -224,7 +224,7 @@ class Service {
   private Response createCoupon(Handle handle, long accountId, SubsEvent subsEvent, Integer planId, long days, String description) {
   	Response res = Responses.NotFound.ACCOUNT;
 
-  	PlanDao planDao = handle.attach(PlanDao.class);
+  	SystemDao planDao = handle.attach(SystemDao.class);
   	Plan plan = planDao.findById(planId);
   	if (plan != null) {
 

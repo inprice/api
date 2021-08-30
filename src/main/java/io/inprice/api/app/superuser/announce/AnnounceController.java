@@ -7,7 +7,9 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
+import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
+import io.inprice.common.helpers.JsonConverter;
 import io.javalin.Javalin;
 
 @Router
@@ -24,7 +26,8 @@ public class AnnounceController extends AbstractController {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
 	  		AnnounceDTO dto = ctx.bodyAsClass(AnnounceDTO.class);
-	    	ctx.json(service.insert(dto));
+	  		Response res = service.insert(dto);
+	  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     	}
     }, AccessRoles.SUPER_ONLY());
 
@@ -34,14 +37,16 @@ public class AnnounceController extends AbstractController {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
 	  		AnnounceDTO dto = ctx.bodyAsClass(AnnounceDTO.class);
-	  		ctx.json(service.update(dto));
+	  		Response res = service.update(dto);
+	  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     	}
     }, AccessRoles.SUPER_ONLY());
 
   	// delete
     app.delete(Consts.Paths.Super.Announce._BASE + "/:id", (ctx) -> {
   		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(service.delete(id));
+  		Response res = service.delete(id);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
     
     // search
@@ -50,7 +55,8 @@ public class AnnounceController extends AbstractController {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
 	    	SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
-	    	ctx.json(service.search(dto));
+	  		Response res = service.search(dto);
+	  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     	}
     }, AccessRoles.SUPER_ONLY());
 

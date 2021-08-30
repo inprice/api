@@ -22,7 +22,7 @@ import io.inprice.common.models.Membership;
 public interface Dao {
 
   @SqlQuery(
-		"select a.id as xid, a.name, u.email, currency_code, country from account as a " +
+		"select a.id, a.name, u.email, currency_code, country from account as a " +
 		"inner join user as u on u.id = a.admin_id " +
 		"where a.name like :dto.term " +
 		"order by a.name " +
@@ -32,7 +32,7 @@ public interface Dao {
 	List<Account> search(@BindBean("dto") BaseSearchDTO dto);
 	
 	@SqlQuery(
-		"select a.*, u.email, a.id as xid, p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit from account as a "+
+		"select a.*, u.email, a.id, p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit from account as a "+
 		"inner join user as u on u.id = a.admin_id " +
 		"left join plan as p on p.id = a.plan_id " +
 		"where a.id=:id"

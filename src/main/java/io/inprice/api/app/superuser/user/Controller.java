@@ -10,7 +10,9 @@ import io.inprice.api.dto.IdTextDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
+import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
+import io.inprice.common.helpers.JsonConverter;
 import io.javalin.Javalin;
 
 @Router
@@ -27,7 +29,8 @@ public class Controller extends AbstractController {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
 	  		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
-	  		ctx.json(service.search(dto));
+	  		Response res = service.search(dto);
+	  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     	}
     }, AccessRoles.SUPER_ONLY());
 
@@ -37,7 +40,8 @@ public class Controller extends AbstractController {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
 	  		ALSearchDTO dto = ctx.bodyAsClass(ALSearchDTO.class);
-	  		ctx.json(service.searchForAccessLog(dto));
+	  		Response res = service.searchForAccessLog(dto);
+	  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     	}
     }, AccessRoles.SUPER_ONLY());
     
@@ -49,14 +53,16 @@ public class Controller extends AbstractController {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
 	  		IdTextDTO dto = ctx.bodyAsClass(IdTextDTO.class);
-	  		ctx.json(service.ban(dto));
+	  		Response res = service.ban(dto);
+	  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     	}
     }, AccessRoles.SUPER_ONLY());
 
     // revoke ban
     app.put(Consts.Paths.Super.User.REVOKE_BAN + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(service.revokeBan(id));
+  		Response res = service.revokeBan(id);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
 
     /*-------------------------------------------------------------------------------------*/
@@ -64,31 +70,36 @@ public class Controller extends AbstractController {
     // fetch user details
     app.get(Consts.Paths.Super.User.DETAILS + "/:userId", (ctx) -> {
     	Long userId = ctx.pathParam("userId", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(service.fetchDetails(userId));
+  		Response res = service.fetchDetails(userId);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
 
     // fetch user membership list
     app.get(Consts.Paths.Super.User.MEMBERSHIP_LIST + "/:userId", (ctx) -> {
     	Long userId = ctx.pathParam("userId", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(service.fetchMembershipList(userId));
+  		Response res = service.fetchMembershipList(userId);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
 
     // fetch user session list
     app.get(Consts.Paths.Super.User.SESSION_LIST + "/:userId", (ctx) -> {
     	Long userId = ctx.pathParam("userId", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(service.fetchSessionList(userId));
+  		Response res = service.fetchSessionList(userId);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
     
     // fetch used services list
     app.get(Consts.Paths.Super.User.USED_SERVICE + "s/:userId", (ctx) -> {
     	Long userId = ctx.pathParam("userId", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(service.fetchUsedServiceList(userId));
+  		Response res = service.fetchUsedServiceList(userId);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
 
     // fetch user's account list
     app.get(Consts.Paths.Super.User.USER_ACCOUNTS + "/:userId", (ctx) -> {
     	Long userId = ctx.pathParam("userId", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(service.fetchAccountList(userId));
+  		Response res = service.fetchAccountList(userId);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
 
     /*-------------------------------------------------------------------------------------*/
@@ -96,7 +107,8 @@ public class Controller extends AbstractController {
     // terminate session
     app.delete(Consts.Paths.Super.User.TERMINATE_SESSION + "/:hash", (ctx) -> {
     	String hash = ctx.pathParam("hash", String.class).check(it -> StringUtils.isNotBlank(it)).getValue();
-    	ctx.json(service.terminateSession(hash));
+  		Response res = service.terminateSession(hash);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
     
     /*-------------------------------------------------------------------------------------*/
@@ -104,13 +116,15 @@ public class Controller extends AbstractController {
     // delete used service
     app.delete(Consts.Paths.Super.User.USED_SERVICE + "/:id", (ctx) -> {
     	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-    	ctx.json(service.deleteUsedService(id));
+  		Response res = service.deleteUsedService(id);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
 
     // toggle used service for unlimited use
     app.put(Consts.Paths.Super.User.USED_SERVICE_TOGGLE + "/:id", (ctx) -> {
     	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-  		ctx.json(service.toggleUnlimitedUsedService(id));
+  		Response res = service.toggleUnlimitedUsedService(id);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
 
   }

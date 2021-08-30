@@ -125,6 +125,7 @@ public class Consts {
     	public static final String PLANS = BASE + "/plans";
     	public static final String REFRESH_SESSION = BASE + "/refresh-session";
     	public static final String STATISTICS = BASE + "/statistics";
+    	public static final String SEARCH = BASE + "/search";
     }
 
     public static class Super {
@@ -187,6 +188,13 @@ public class Consts {
       public static class Announce {
         public static final String _BASE = BASE + "/announce";
       	public static final String SEARCH = _BASE + "s/search";
+      }
+
+      public static class Platform {
+        public static final String _BASE = BASE + "/platform";
+        public static final String SEARCH = _BASE + "s/search";
+        public static final String TOGGLE_PARKED = _BASE + "/toggle-parked";
+        public static final String TOGGLE_BLOCKED = _BASE + "/toggle-blocked";
       }
 
     }

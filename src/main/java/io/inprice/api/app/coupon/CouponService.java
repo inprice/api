@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.subscription.SubscriptionDao;
-import io.inprice.api.app.system.PlanDao;
+import io.inprice.api.app.system.SystemDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
@@ -57,7 +57,7 @@ public class CouponService {
 
             if (coupon.getIssuedId() == null || coupon.getIssuedId().equals(CurrentUser.getAccountId())) {
               AccountDao accountDao = handle.attach(AccountDao.class);
-              PlanDao planDao = handle.attach(PlanDao.class);
+              SystemDao planDao = handle.attach(SystemDao.class);
 
               Account account = accountDao.findById(CurrentUser.getAccountId());
               if (account.getStatus().isOKForCoupon()) {

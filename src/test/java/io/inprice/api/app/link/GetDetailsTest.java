@@ -84,7 +84,7 @@ public class GetDetailsTest {
 
 		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/{accountId}")
 			.cookie(cookies)
-			.routeParam("accountId", ""+account.getLong("xid"))
+			.routeParam("accountId", ""+account.getLong("id"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -123,6 +123,7 @@ public class GetDetailsTest {
   		assertEquals(200, json.getInt("status"));
   
   		JSONObject data = json.getJSONObject("data");
+  		assertTrue(data.has("info"));
   		assertTrue(data.has("specList"));
   		assertTrue(data.has("priceList"));
   		assertTrue(data.has("historyList"));

@@ -7,7 +7,9 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
+import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
+import io.inprice.common.helpers.JsonConverter;
 import io.javalin.Javalin;
 
 @Router
@@ -21,7 +23,8 @@ public class TicketController extends AbstractController {
   	// find
     app.get(Consts.Paths.Super.Ticket._BASE + "/:id", (ctx) -> {
   		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-      ctx.json(service.findById(id));
+  		Response res = service.findById(id);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
 
     // search
@@ -30,7 +33,8 @@ public class TicketController extends AbstractController {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
 	  		SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
-	  		ctx.json(service.search(dto));
+	  		Response res = service.search(dto);
+	  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     	}
     }, AccessRoles.SUPER_ONLY());
     
@@ -40,14 +44,16 @@ public class TicketController extends AbstractController {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
 	    	ChangeStatusDTO dto = ctx.bodyAsClass(ChangeStatusDTO.class);
-	    	ctx.json(service.changeStatus(dto));
+	  		Response res = service.changeStatus(dto);
+	  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     	}
     }, AccessRoles.SUPER_ONLY());
 
     // toggle seen (by super user) value
     app.put(Consts.Paths.Super.Ticket.TOGGLE_SEEN_VALUE + "/:id", (ctx) -> {
   		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-  		ctx.json(service.toggleSeenValue(id));
+  		Response res = service.toggleSeenValue(id);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
     
   }

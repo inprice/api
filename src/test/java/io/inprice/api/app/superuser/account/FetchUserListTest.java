@@ -81,7 +81,7 @@ public class FetchUserListTest {
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.cookie(cookies)
-			.routeParam("accountId", ""+account.getLong("xid"))
+			.routeParam("accountId", ""+account.getLong("id"))
 			.asJson();
 		TestUtils.logout(cookies);
 		

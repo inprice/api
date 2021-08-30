@@ -79,7 +79,7 @@ public class SearchTest {
 		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/{accountId}")
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.routeParam("accountId", ""+account.getLong("xid"))
+			.routeParam("accountId", ""+account.getLong("id"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();

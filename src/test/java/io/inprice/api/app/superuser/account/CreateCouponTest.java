@@ -176,7 +176,7 @@ public class CreateCouponTest {
 		JSONObject account = accountList.getJSONObject(0);
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("accountId", account.getLong("xid"));
+		body.put("accountId", account.getLong("id"));
 
 		JSONObject json = callTheService(cookies, body);
 		TestUtils.logout(cookies);
@@ -196,7 +196,7 @@ public class CreateCouponTest {
 		JSONObject account = accountList.getJSONObject(0);
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("accountId", account.getLong("xid"));
+		body.put("accountId", account.getLong("id"));
 
 		JSONObject json = callTheService(cookies, body);
 		TestUtils.logout(cookies);
@@ -216,7 +216,7 @@ public class CreateCouponTest {
 		JSONObject account = accountList.getJSONObject(0);
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("accountId", account.getLong("xid"));
+		body.put("accountId", account.getLong("id"));
 
 		JSONObject json = callTheService(cookies, body);
 		TestUtils.logout(cookies);
