@@ -144,6 +144,8 @@ public class Responses {
 
     public static final Response SEARCH_NOT_FOUND = new Response("Nothing found!"); // not an error!
 
+    public static final Response PLATFORM = new Response(BASE, "Platform not found!");
+
     public static final Response ACCOUNT = new Response(BASE, "Account not found!");
     public static final Response PLAN = new Response(BASE, "Plan not found!");
     public static final Response TICKET = new Response(BASE, "Ticket not found!");

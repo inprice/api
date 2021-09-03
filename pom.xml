@@ -19,8 +19,11 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Versions -->
-    <jdk.version>11</jdk.version>
-    <maven-compiler.version>3.8.0</maven-compiler.version>
+    <java.version>11</java.version>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+		<maven-compiler.version>3.8.0</maven-compiler.version>
+		<mojo-executor.version>3.0.0</mojo-executor.version>
     <inprice-common.version>1.0.0</inprice-common.version>
 
     <javalin.version>3.13.10</javalin.version>
@@ -70,9 +73,8 @@
     </dependency>
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
-      <artifactId>jjwt-gson</artifactId>
+      <artifactId>jjwt-jackson</artifactId>
       <version>${jjwt.version}</version>
-      <scope>compile</scope> <!-- Not runtime -->
     </dependency>
 
     <!-- Testing -->
@@ -112,12 +114,21 @@
   <build>
     <plugins>
 
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>${mojo-executor.version}</version>
+				<configuration>
+					<mainClass>io.inprice.api.Application</mainClass>
+				</configuration>
+			</plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven-compiler.version}</version>
         <configuration>
-					<release>${jdk.version}</release>
+					<release>${java.version}</release>
         </configuration>
       </plugin>
 

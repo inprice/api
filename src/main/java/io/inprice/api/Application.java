@@ -25,7 +25,7 @@ import io.javalin.core.util.RouteOverviewPlugin;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
-import io.javalin.plugin.json.JavalinJson;
+import io.javalin.plugin.json.JavalinJackson;
 import io.javalin.plugin.openapi.annotations.ContentType;
 
 /**
@@ -41,38 +41,36 @@ public class Application {
   private static Javalin app;
   
   public static void main(String[] args) {
-  	MDC.put("email", "system");
+		Thread.currentThread().setName("main");
+
+		MDC.put("email", "system");
   	MDC.put("ip", "NA");
   	
-    new Thread(() -> {
+  	Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+			public void uncaughtException(Thread t1, Throwable e1) {
+				logger.info("Unhandled exception", e1);
+			}
+		});
 
-    	Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-  			public void uncaughtException(Thread t1, Throwable e1) {
-  				logger.info("Unhandled exception", e1);
-  			}
-  		});
+    logger.info("APPLICATION IS STARTING...");
 
-      logger.info("APPLICATION IS STARTING...");
+    Database.start(Props.getConfig().MYSQL_CONF);
+    logger.info(" - Connected to Mysql server.");
 
-      Database.start(Props.getConfig().MYSQL_CONF);
-      logger.info(" - Connected to Mysql server.");
+    RabbitMQ.start(Props.getConfig().RABBIT_CONF);
+    logger.info(" - Connected to RabbitMQ server.");
 
-      RabbitMQ.start(Props.getConfig().RABBIT_CONF);
-      logger.info(" - Connected to RabbitMQ server.");
+    Redis.start(Props.getConfig().REDIS_CONF);
+    logger.info(" - Connected to Redis server.");
 
-      Redis.start(Props.getConfig().REDIS_CONF);
-      logger.info(" - Connected to Redis server.");
-
-      createServer();
-      ConfigScanner.scanControllers(app);
-      
-      logger.info("APPLICATION STARTED.");
-
-    }, "app-starter").start();
+    createServer();
+    ConfigScanner.scanControllers(app);
+    
+    logger.info("APPLICATION STARTED.");
     
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
       logger.info("APPLICATION IS TERMINATING...");
-
+      
       logger.info(" - Web server is shutting down...");
       app.stop();
 
@@ -106,22 +104,21 @@ public class Application {
 
       config.accessManager(new AccessGuard());
 
-      JavalinJson.setFromJsonMapper(JsonConverter.gson::fromJson);
-      JavalinJson.setToJsonMapper(JsonConverter.gson::toJson);
+      JavalinJackson.configure(JsonConverter.mapper);
     }).start(Props.getConfig().APP.PORT);
 
     app.before(ctx -> {
-      if (ctx.method() == "OPTIONS") {
+      if ("OPTIONS".equals(ctx.method())) {
         ctx.header(Header.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
       } else {
       	MDC.put("ip", ctx.ip());
       	ctx.sessionAttribute("started", System.currentTimeMillis());
-    		ctx.sessionAttribute("body", ctx.body());
+      	ctx.sessionAttribute("body", ctx.body());
       }
     });
 
     app.after(ctx -> {
-    	if (ctx.method() != "OPTIONS") {
+    	if ("OPTIONS".equals(ctx.method()) == false) {
       	logAccess(ctx, null);
       	MDC.clear();
     	}
@@ -137,7 +134,7 @@ public class Application {
   }
 
   private static void logAccess(Context ctx, HandlerInterruptException e) {
-  	if (ctx.method() != "OPTIONS") {
+  	if ("OPTIONS".equals(ctx.method()) == false) {
 
   		int elapsed = 0;
   		Long started = ctx.sessionAttribute("started");

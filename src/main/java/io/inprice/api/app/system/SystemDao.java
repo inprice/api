@@ -8,12 +8,14 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 
+import io.inprice.api.app.system.mapper.SearchMapper;
+import io.inprice.api.app.system.model.Search;
 import io.inprice.common.info.PlanFeature;
 import io.inprice.common.mappers.PlanFeatureReducer;
 import io.inprice.common.mappers.PlanMapper;
 import io.inprice.common.models.Plan;
 
-public interface PlanDao {
+public interface SystemDao {
 	
 	@SqlQuery("select * from plan where id=:id")
 	@UseRowMapper(PlanMapper.class)
@@ -39,5 +41,13 @@ public interface PlanDao {
   @RegisterBeanMapper(value = PlanFeature.class, prefix = "f")
   @UseRowReducer(PlanFeatureReducer.class)
   List<Plan> fetchPublicPlans();
-  
+
+  @SqlQuery(
+		"(select 'L' as type, id, IFNULL(name, url) as name, seller as description from link where account_id=:accountId and IFNULL(name, url) like :term limit 10)" +
+		" UNION " +
+		"(select 'G' as type, id, name, description from link_group where account_id=:accountId and name like :term limit 10)"
+	)
+  @UseRowMapper(SearchMapper.class)
+  List<Search> search(@Bind("term") String term, @Bind("accountId") Long accountId);
+
 }

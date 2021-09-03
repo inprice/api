@@ -1,24 +1,24 @@
 package io.inprice.api.config;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.inprice.common.config.BaseSystem;
 
 public class App extends BaseSystem {
 
-	@SerializedName("webUrl")
+	@JsonProperty("webUrl")
 	public String WEB_URL;
 
-	@SerializedName("apiUrl")
+	@JsonProperty("apiUrl")
 	public String API_URL;
 
-	@SerializedName("port")
+	@JsonProperty("port")
 	public int PORT;
 
-	@SerializedName("saltRounds")
+	@JsonProperty("saltRounds")
 	public int SALT_ROUNDS;
 
-	@SerializedName("freeUseDays")
+	@JsonProperty("freeUseDays")
 	public int FREE_USE_DAYS;
 
 }

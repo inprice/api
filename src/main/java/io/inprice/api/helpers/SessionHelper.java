@@ -1,6 +1,5 @@
 package io.inprice	.api.helpers;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -10,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.internal.LinkedTreeMap;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import io.inprice.api.config.Props;
 import io.inprice.api.session.info.ForCookie;
@@ -21,9 +20,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.gson.io.GsonDeserializer;
-import io.jsonwebtoken.gson.io.GsonSerializer;
 import io.jsonwebtoken.impl.DefaultClaims;
+import io.jsonwebtoken.jackson.io.JacksonDeserializer;
+import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import io.jsonwebtoken.security.Keys;
 
 public class SessionHelper {
@@ -35,13 +34,13 @@ public class SessionHelper {
 
 	static {
 
-		final byte[] SUPER_KEY = Props.getConfig().KEYS.SUPER_USER.getBytes();
+		byte[] SUPER_KEY = Props.getConfig().KEYS.SUPER_USER.getBytes();
 		if (SUPER_KEY == null) {
 			System.err.println("Super user key is empty!");
 			System.exit(-1);
 		}
 
-		final byte[] USER_KEY = Props.getConfig().KEYS.USER.getBytes();
+		byte[] USER_KEY = Props.getConfig().KEYS.USER.getBytes();
 		if (USER_KEY == null) {
 			System.err.println("User user key is empty!");
 			System.exit(-1);
@@ -53,23 +52,23 @@ public class SessionHelper {
 		builderForSuper = Jwts
 			.builder()
 			.signWith(keyForSuper)
-			.serializeToJsonWith(new GsonSerializer<>(JsonConverter.gson));
+			.serializeToJsonWith(new JacksonSerializer<>(JsonConverter.mapper));
 
 		parserForSuper = Jwts
 			.parserBuilder()
 			.setSigningKey(keyForSuper)
-			.deserializeJsonWith(new GsonDeserializer<>(JsonConverter.gson))
+			.deserializeJsonWith(new JacksonDeserializer<>(JsonConverter.mapper))
 			.build();
 
 		builderForUser = Jwts
 			.builder()
 			.signWith(keyForUsers)
-			.serializeToJsonWith(new GsonSerializer<>(JsonConverter.gson));
+			.serializeToJsonWith(new JacksonSerializer<>(JsonConverter.mapper));
 
 		parserForUser = Jwts
 			.parserBuilder()
 			.setSigningKey(keyForUsers)
-			.deserializeJsonWith(new GsonDeserializer<>(JsonConverter.gson))
+	    .deserializeJsonWith(new JacksonDeserializer<>(JsonConverter.mapper))
 	    .build();
 	}
 
@@ -101,18 +100,12 @@ public class SessionHelper {
 		return builderForUser.setClaims(claims).compact();
 	}
 
-	@SuppressWarnings("unchecked")
 	public static List<ForCookie> fromTokenForUser(String token) {
 		if (StringUtils.isNotBlank(token)) {
   		try {
   			Claims claims = parserForUser.parseClaimsJws(token).getBody();
-  			List<LinkedTreeMap<String, String>> payload = claims.get("payload", List.class);
-
-  			List<ForCookie> sessions = new ArrayList<>(payload.size());
-  			for (LinkedTreeMap<String, String> ltm : payload) {
-  				sessions.add(new ForCookie(ltm.get("e"), ltm.get("r"), ltm.get("h")));
-				}
-  			return sessions;
+  			Object raw = claims.get("payload", List.class);
+  			return JsonConverter.mapper.convertValue(raw, new TypeReference<List<ForCookie>>() {});
   		} catch (Exception e) {
   			logger.error("User token error!", e);
   		}

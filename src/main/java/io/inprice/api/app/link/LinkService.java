@@ -115,31 +115,33 @@ class LinkService {
     	int count = dto.getLinkIdSet().size();
     	
     	String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
-    	
-      final String where = String.format("where link_id in (%s) and account_id=%d ", joinedIds, CurrentUser.getAccountId());
+      String where = String.format("where link_id in (%s) and account_id=%d ", joinedIds, CurrentUser.getAccountId());
 
       try (Handle handle = Database.getHandle()) {
       	handle.begin();
 
+      	//by links, finding the groups whose totals and alarms be refreshed
+      	LinkDao linkDao = handle.attach(LinkDao.class);
+      	Set<Long> groupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
+      	
         Batch batch = handle.createBatch();
+        batch.add("SET FOREIGN_KEY_CHECKS=0");
         batch.add("delete from alarm " + where);
         batch.add("delete from link_price " + where);
         batch.add("delete from link_history " + where);
         batch.add("delete from link_spec " + where);
-        batch.add("delete from link " + where.replace("link_", "")); //important!!!
+        batch.add("delete from link " + where.replace("link_", "")); //this query determines the success!
 				batch.add(
 					String.format(
 						"update account set link_count=link_count-%d where id=%d",
 						count, CurrentUser.getAccountId()
 					)
 				);
+				batch.add("SET FOREIGN_KEY_CHECKS=1");
+
 				int[] result = batch.execute();
 
-        if (result[4] > 0) {
-        	LinkDao linkDao = handle.attach(LinkDao.class);
-
-        	//refreshes groups' totals and alarm if needed!
-        	Set<Long> groupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
+        if (result[5] > 0) {
         	if (CollectionUtils.isNotEmpty(groupIdSet)) {
         		GroupAlarmService.updateAlarm(groupIdSet, handle);
         	}
@@ -176,11 +178,9 @@ class LinkService {
   	boolean isNewGroup = (dto.getToGroupId() == null && StringUtils.isNotBlank(dto.getToGroupName()));
 
   	if (isNewGroup || (dto.getToGroupId() != null && dto.getToGroupId() > 0)) {
-
   		if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) dto.getLinkIdSet().remove(null);
 
       if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) {
-
       	try (Handle handle = Database.getHandle()) {
         	handle.begin();
 
@@ -211,7 +211,7 @@ class LinkService {
 
           	if (CollectionUtils.isNotEmpty(foundGroupIdSet)) {
 		    			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
-		    			final String 
+		    			String 
 		    				updatePart = 
 		    					String.format(
 		  							"set group_id=%d where link_id in (%s) and group_id!=%d and account_id=%d", 
@@ -223,17 +223,13 @@ class LinkService {
               batch.add("update link_price " + updatePart);
               batch.add("update link_history " + updatePart);
               batch.add("update link_spec " + updatePart);
-              batch.add("update link " + updatePart.replace("link_", "")); //important!!!
+              batch.add("update link " + updatePart.replace("link_", "")); //this query determines the success!
     					int[] result = batch.execute();
 
     					if (result[4] > 0) {
+    						//refreshes groups' totals and alarm if needed!
             		foundGroupIdSet.add(dto.getToGroupId());
-
-            		//refreshes groups' totals and alarm if needed!
-              	Set<Long> groupIdSet = linkDao.findGroupIdSet(dto.getLinkIdSet());
-              	if (CollectionUtils.isNotEmpty(groupIdSet)) {
-              		GroupAlarmService.updateAlarm(groupIdSet, handle);
-              	}
+            		GroupAlarmService.updateAlarm(foundGroupIdSet, handle);
 
             		if (dto.getFromGroupId() != null) { //meaning that it is called from group definition (not from links searching page)
                   GroupDao groupDao = handle.attach(GroupDao.class);
@@ -291,6 +287,7 @@ class LinkService {
           if (StringUtils.isNotBlank(link.getBrand())) specList.add(0, new LinkSpec("Brand", link.getBrand()));
           
           Map<String, Object> data = Map.of(
+        		"info", link,
           	"specList", specList,
           	"priceList", priceList,
           	"historyList", historyList

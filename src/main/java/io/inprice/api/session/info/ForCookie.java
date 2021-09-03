@@ -2,7 +2,7 @@ package io.inprice.api.session.info;
 
 import java.io.Serializable;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.inprice.api.helpers.CodeGenerator;
 import lombok.AllArgsConstructor;
@@ -19,13 +19,13 @@ public class ForCookie implements Serializable {
 
   private static final long serialVersionUID = -2758435636435796934L;
 
-  @SerializedName("e")
+  @JsonProperty("e")
   private String email;
 
-  @SerializedName("r")
+  @JsonProperty("r")
   private String role;
 
-  @SerializedName("h")
+  @JsonProperty("h")
   private String hash;
 
   public ForCookie(String email, String role) {

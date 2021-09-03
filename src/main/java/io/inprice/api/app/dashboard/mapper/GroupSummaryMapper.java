@@ -17,6 +17,7 @@ public class GroupSummaryMapper implements RowMapper<GroupSummary> {
 
     if (Helper.hasColumn(rs, "id")) m.setId(rs.getLong("id"));
     if (Helper.hasColumn(rs, "name")) m.setName(rs.getString("name"));
+    if (Helper.hasColumn(rs, "description")) m.setDescription(rs.getString("description"));
     if (Helper.hasColumn(rs, "actives")) m.setActives(rs.getInt("actives"));
     if (Helper.hasColumn(rs, "tryings")) m.setTryings(rs.getInt("tryings"));
     if (Helper.hasColumn(rs, "waitings")) m.setWaitings(rs.getInt("waitings"));

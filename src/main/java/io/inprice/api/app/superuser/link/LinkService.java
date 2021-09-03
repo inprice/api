@@ -38,6 +38,7 @@ class LinkService {
   
   public LinkService() {
   	STATUSES_FOR_CHANGE = Set.of(
+			LinkStatus.REFRESHED,
 			LinkStatus.RESOLVED,
 			LinkStatus.PAUSED,
 			LinkStatus.NOT_SUITABLE
@@ -175,7 +176,7 @@ class LinkService {
 
         }
       } else {
-      	res = new Response("Acceptable statuses: PAUSED, RESOLVED and NOT_SUITABLE!");
+      	res = new Response("Acceptable statuses: REFRESHED, PAUSED, RESOLVED and NOT_SUITABLE!");
       }
     }
 

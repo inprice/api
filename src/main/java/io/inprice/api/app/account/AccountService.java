@@ -265,6 +265,11 @@ class AccountService {
           if (account != null) {
             if (! AccountStatus.SUBSCRIBED.equals(account.getStatus())) {
               logger.info("{} is being deleted. Id: {}...", account.getName(), account.getId());
+              
+              List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
+              if (hashList != null && ! hashList.isEmpty()) {
+              	redis.removeSesions(hashList);
+              }
   
               String where = "where account_id=" + CurrentUser.getAccountId();
   
@@ -302,11 +307,6 @@ class AccountService {
   
               batch.add("SET FOREIGN_KEY_CHECKS=1");
               batch.execute();
-  
-              List<String> hashList = sessionDao.findHashesByAccountId(CurrentUser.getAccountId());
-              if (hashList != null && ! hashList.isEmpty()) {
-              	redis.removeSesions(hashList);
-              }
   
               logger.info("{} is deleted. Id: {}.", account.getName(), account.getId());
               res = Responses.OK;

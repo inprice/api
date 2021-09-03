@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
@@ -12,12 +13,10 @@ import org.apache.commons.io.IOUtils;
 import io.inprice.api.Application;
 import io.inprice.api.config.Props;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.helpers.Redis;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
-import redis.clients.jedis.Jedis;
 import redis.embedded.RedisServer;
 
 /**
@@ -36,9 +35,9 @@ public class TestUtils {
 		sqlScripts = new StringBuilder();
 		try {
 			String baseDir = "db/fixtures/";
-			List<String> files = IOUtils.readLines(TestUtils.class.getClassLoader().getResourceAsStream(baseDir), "UTF-8");
+			List<String> files = IOUtils.readLines(TestUtils.class.getClassLoader().getResourceAsStream(baseDir), StandardCharsets.UTF_8);
 			for (String file: files) {
-				sqlScripts.append(IOUtils.toString(TestUtils.class.getClassLoader().getResourceAsStream(baseDir+file), "UTF-8"));
+				sqlScripts.append(IOUtils.toString(TestUtils.class.getClassLoader().getResourceAsStream(baseDir+file), StandardCharsets.UTF_8));
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -55,15 +54,6 @@ public class TestUtils {
   		}
 
   		Application.main(null);
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-			}
-
-		} else { //redis must be cleaned up before starting any test
-	    try (Jedis jedis = Redis.getPool().getResource()) {
-	    	jedis.flushAll();
-	    }
 		}
 		Database.cleanDBForTests(sqlScripts.toString(), Props.getConfig().APP.ENV);
 	}

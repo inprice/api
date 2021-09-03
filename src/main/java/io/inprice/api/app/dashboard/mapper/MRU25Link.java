@@ -12,6 +12,7 @@ public class MRU25Link implements Serializable {
   
   private static final long serialVersionUID = 2062234416267369942L;
 
+  private Long id;
   private String groupName;
   private String seller;
   private String platform;

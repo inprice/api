@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
 import io.inprice.api.app.account.AccountDao;
-import io.inprice.api.app.system.PlanDao;
+import io.inprice.api.app.system.SystemDao;
 import io.inprice.api.config.Props;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
@@ -128,7 +128,7 @@ class SubscriptionService {
         if (account != null) {
 
           if (account.getStatus().isOKForFreeUse()) {
-          	PlanDao planDao = handle.attach(PlanDao.class);
+          	SystemDao planDao = handle.attach(SystemDao.class);
             SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
             Plan basicPlan = planDao.findByName("Basic Plan");

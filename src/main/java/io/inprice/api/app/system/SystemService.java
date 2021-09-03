@@ -29,7 +29,7 @@ public class SystemService {
   		synchronized (SystemService.class) {
   			if (planList == null) {
           try (Handle handle = Database.getHandle()) {
-            PlanDao planDao = handle.attach(PlanDao.class);
+            SystemDao planDao = handle.attach(SystemDao.class);
             planList = planDao.fetchPublicPlans(); 
           }
   			}
@@ -48,6 +48,20 @@ public class SystemService {
     } catch (Exception e) {
       response = Responses.DataProblem.DB_PROBLEM;
       logger.error("Failed to refresh session!", e);
+    }
+
+    return response;
+  }
+
+  Response search(String term) {
+    Response response = Responses.OK;
+
+    try (Handle handle = Database.getHandle()) {
+      SystemDao systemDao = handle.attach(SystemDao.class);
+      response = new Response(systemDao.search("%"+term+"%", CurrentUser.getAccountId()));
+    } catch (Exception e) {
+      response = Responses.DataProblem.DB_PROBLEM;
+      logger.error("Failed to search!", e);
     }
 
     return response;

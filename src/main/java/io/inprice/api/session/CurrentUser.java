@@ -5,7 +5,9 @@ import io.inprice.common.meta.UserRole;
 import io.inprice.common.models.User;
 
 /**
- * Manages two type of users; a) Super user, b) Normal users
+ * Manages two type of users; 
+ * 	a) Super user, 
+ * 	b) Normal users
  * Super user has time limited token while normals have unlimeted ones!
  * 
  * @author mdpinar
@@ -13,7 +15,7 @@ import io.inprice.common.models.User;
  */
 public class CurrentUser {
 
-  private final static ThreadLocal<ThreadVariables> THREAD_VARIABLES = new ThreadLocal<ThreadVariables>() {
+  private static ThreadLocal<ThreadVariables> THREAD_VARIABLES = new ThreadLocal<ThreadVariables>() {
     @Override
     protected ThreadVariables initialValue() {
       return new ThreadVariables();

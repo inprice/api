@@ -6,12 +6,12 @@ import io.inprice.api.app.account.dto.CreateDTO;
 import io.inprice.api.app.account.dto.RegisterDTO;
 import io.inprice.api.app.auth.AuthService;
 import io.inprice.api.consts.Consts;
+import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.StringDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.helpers.ClientSide;
-import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
@@ -26,8 +26,12 @@ public class AccountController extends AbstractController {
   public void addRoutes(Javalin app) {
 
     app.post(Consts.Paths.Auth.REQUEST_REGISTRATION, (ctx) -> {
-      RegisterDTO dto = ctx.bodyAsClass(RegisterDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.requestRegistration(dto)));
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	      RegisterDTO dto = ctx.bodyAsClass(RegisterDTO.class);
+	      ctx.json(service.requestRegistration(dto));
+    	}
     });
 
     app.post(Consts.Paths.Auth.COMPLETE_REGISTRATION, (ctx) -> {
@@ -35,35 +39,47 @@ public class AccountController extends AbstractController {
       if (res.isOK()) {
         res = authService.createSession(ctx, res.getData());
       }
-      ctx.json(Commons.createResponse(ctx, res));
+      ctx.json(res);
     });
 
     // find
     app.get(Consts.Paths.Account.BASE, (ctx) -> {
-      ctx.json(Commons.createResponse(ctx, service.getCurrentAccount()));
+      ctx.json(service.getCurrentAccount());
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
     app.get(Consts.Paths.Account.GEO_INFO, (ctx) -> {
       Map<String, String> map = ClientSide.getGeoInfo(ctx.req);
-      ctx.json(Commons.createResponse(ctx, new Response(map)));
+      ctx.json(new Response(map));
     }, AccessRoles.ANYONE());
 
     // create
     app.post(Consts.Paths.Account.BASE, (ctx) -> {
-      CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.create(dto)));
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	      CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
+	      ctx.json(service.create(dto));
+    	}
     }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
     // update
     app.put(Consts.Paths.Account.BASE, (ctx) -> {
-      CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.update(dto)));
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	      CreateDTO dto = ctx.bodyAsClass(CreateDTO.class);
+	      ctx.json(service.update(dto));
+    	}
     }, AccessRoles.ADMIN());
 
     //delete
     app.delete(Consts.Paths.Account.BASE, (ctx) -> {
-      StringDTO dto = ctx.bodyAsClass(StringDTO.class);
-      ctx.json(Commons.createResponse(ctx, service.deleteAccount(dto.getValue())));
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	      StringDTO dto = ctx.bodyAsClass(StringDTO.class);
+	      ctx.json(service.deleteAccount(dto.getValue()));
+    	}
     }, AccessRoles.ADMIN());
 
   }

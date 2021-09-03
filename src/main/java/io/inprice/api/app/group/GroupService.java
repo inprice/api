@@ -178,7 +178,7 @@ class GroupService {
       	if (group != null) {
         	handle.begin();
       			
-    			final String where = String.format("where group_id=%d and account_id=%d", id, CurrentUser.getAccountId());
+    			String where = String.format("where group_id=%d and account_id=%d", id, CurrentUser.getAccountId());
           Batch batch = handle.createBatch();
           batch.add("SET FOREIGN_KEY_CHECKS=0");
           batch.add("delete from alarm " + where);
@@ -194,6 +194,7 @@ class GroupService {
     				)
       		);
           batch.add("SET FOREIGN_KEY_CHECKS=1");
+
           int[] result = batch.execute();
 
           if (result[6] > 0) {

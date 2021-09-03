@@ -70,21 +70,23 @@ public interface LinkDao {
   List<LinkSpec> findSpecListByLinkId(@Bind("linkId") Long linkId);
 
   @SqlUpdate(
-    "insert into link (url, url_hash, sku, name, brand, seller, shipment, status, http_status, platform_id, group_id, account_id) " +
-    "values (:link.url, :link.urlHash, :link.sku, :link.name, :link.brand, :link.seller, :link.shipment, :link.status, :link.httpStatus, " +
-      ":link.platformId, :link.groupId, :link.accountId)"
+    "insert into link (url, url_hash, group_id, account_id) " +
+    "values (:link.url, :link.urlHash, :link.groupId, :link.accountId)"
   )
   @GetGeneratedKeys
   long insert(@BindBean("link") Link sample);
 
   @SqlUpdate(
-    "insert into link_history (link_id, status, http_status, group_id, account_id) " +
-    "values (:link.id, :link.status, :link.httpStatus, :link.groupId, :link.accountId)"
+    "insert into link_history (link_id, status, group_id, account_id) " +
+    "values (:link.id, :link.status, :link.groupId, :link.accountId)"
   )
   @GetGeneratedKeys
   long insertHistory(@BindBean("link") Link link);
 
   @SqlQuery("select group_id from link where id in (<linkIdSet>)")
   HashSet<Long> findGroupIdSet(@BindList("linkIdSet") Set<Long> linkIdSet);
+
+  @SqlQuery("select status_group from link where id = :et")
+  String findGroupIdSet__(@Bind("et") Long et);
 
 }

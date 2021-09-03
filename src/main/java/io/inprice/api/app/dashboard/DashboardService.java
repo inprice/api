@@ -15,9 +15,10 @@ import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.dashboard.mapper.GroupSummary;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
-import io.inprice.api.lib.ExpiringConcurrentHashMap;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.lib.ExpiringHashMap;
+import io.inprice.common.lib.ExpiringMap;
 import io.inprice.common.meta.Level;
 import io.inprice.common.meta.LinkStatusGroup;
 import io.inprice.common.utils.DateUtils;
@@ -26,7 +27,7 @@ class DashboardService {
 
   private static final Logger logger = LoggerFactory.getLogger(DashboardService.class);
 
-  private Map<Long, Map<String, Object>> expiringMap = new ExpiringConcurrentHashMap<>(5 * 60 * 1000); //expires in 5 mins
+  private ExpiringMap<Long, Map<String, Object>> expiringMap = new ExpiringHashMap<>(5 * 60 * 1000); //expires in 5 mins
 
   Response getReport(boolean refresh) {
     Map<String, Object> report = null;

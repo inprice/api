@@ -12,7 +12,7 @@ public class EmailValidator {
   public static String verify(String email) {
   	if (StringUtils.isBlank(email)) return "Email address cannot be empty!";
   	
-  	final Matcher matcher = pattern.matcher(email);
+  	Matcher matcher = pattern.matcher(email);
     if (email.length() < 8 || email.length() > 128) {
       return "Email address must be between 8 - 128 chars!";
     } else if (!matcher.matches()) {

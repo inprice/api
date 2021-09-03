@@ -2,6 +2,7 @@ package io.inprice.api.helpers;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -71,7 +72,7 @@ public class ClientSide {
           String res = 
             HttpHelper.GET(
               httpClient, String.format("https://api.ipgeolocation.io/ipgeo?apiKey=%s&ip=%s",
-                Props.getConfig().KEYS.GEO_LOCATION, URLEncoder.encode(ip, "UTF-8")
+                Props.getConfig().KEYS.GEO_LOCATION, URLEncoder.encode(ip, StandardCharsets.UTF_8)
               )
             );
           if (res != null) {
