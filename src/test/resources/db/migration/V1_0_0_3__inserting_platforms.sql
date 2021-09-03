@@ -4,6 +4,7 @@ insert into platform (name, domain, country, class_name, currency_code, currency
   ('Amazon US', 'amazon.com', 'United States', 'xx.AmazonXX', 'USD', '$#,##0.00'),
   ('Ebay US', 'ebay.com', 'United States', 'xx.EbayXX', 'USD', '$#,##0.00'),
   ('Apple US', 'apple.com/us-hed', 'United States', 'xx.AppleXX', 'USD', '$#,##0.00'),
+  ('BestBuy US', 'bestbuy.com', 'United States', 'us.BestBuyUS', 'USD', '$#,##0.00'),
   ('Bonanza US', 'bonanza.com', 'United States', 'us.BonanzaUS', 'USD', '$#,##0.00'),
   ('Etsy US', 'etsy.com', 'United States', 'us.EtsyUS', 'USD', '$#,##0.00'),
   ('Lidl US', 'lidl.com', 'United States', 'us.LidlUS', 'USD', '$#,##0.00'),
@@ -111,8 +112,7 @@ insert into platform (name, domain, country, class_name, currency_code, currency
   ;
 
 insert into platform (name, domain, country, class_name, currency_code, currency_format, queue) values
-  ('Walmart CA', 'walmart.ca', 'Canada', 'ca.WalmartCA', 'CAD', '$#,##0.00', 'single.queue'),
-  ('BestBuy US', 'bestbuy.com', 'United States', 'us.BestBuyUS', 'USD', '$#,##0.00', 'triple.queue')
+  ('Walmart CA', 'walmart.ca', 'Canada', 'ca.WalmartCA', 'CAD', '$#,##0.00', 'active.links.queue.cap1')
   ;
 
 insert into platform (name, domain, country, class_name, currency_code, currency_format, blocked) values

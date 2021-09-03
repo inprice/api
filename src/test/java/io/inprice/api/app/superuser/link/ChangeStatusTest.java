@@ -66,7 +66,7 @@ public class ChangeStatusTest {
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-		assertEquals("Acceptable statuses: PAUSED, RESOLVED and NOT_SUITABLE!", json.getString("reason"));
+		assertEquals("Acceptable statuses: REFRESHED, PAUSED, RESOLVED and NOT_SUITABLE!", json.getString("reason"));
 	}
 
 	@Test
@@ -77,7 +77,7 @@ public class ChangeStatusTest {
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-		assertEquals("Acceptable statuses: PAUSED, RESOLVED and NOT_SUITABLE!", json.getString("reason"));
+		assertEquals("Acceptable statuses: REFRESHED, PAUSED, RESOLVED and NOT_SUITABLE!", json.getString("reason"));
 	}
 	
 	@Test

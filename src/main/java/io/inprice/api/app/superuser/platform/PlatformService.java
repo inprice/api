@@ -162,12 +162,8 @@ class PlatformService {
 	    }
     }
 
-    if (problem == null) {
-    	if (StringUtils.isBlank(dto.getProfile())) {
-	      problem = "Profile cannot be empty!";
-	    } else if (dto.getProfile().length() < 3 || dto.getProfile().length() > 15) {
-	      problem = "Profile must be between 3 - 15 chars!";
-	    }
+    if (problem == null && StringUtils.isNotBlank(dto.getProfile()) && (dto.getProfile().length() < 3 || dto.getProfile().length() > 15)) {
+      problem = "If given, profile can be between 3 - 15 chars!";
     }
 
     return problem;

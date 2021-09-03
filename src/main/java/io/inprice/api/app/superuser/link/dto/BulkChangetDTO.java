@@ -15,7 +15,7 @@ public class BulkChangetDTO implements Serializable {
 
 	private static final long serialVersionUID = 5206568143952756331L;
 
-	//acceptable statuses: PAUSED, RESOLVED and NOT_SUITABLE
+	//acceptable statuses: REFRESHED, PAUSED, RESOLVED and NOT_SUITABLE
 	private LinkStatus status;
 	private Set<Long> idSet;
 

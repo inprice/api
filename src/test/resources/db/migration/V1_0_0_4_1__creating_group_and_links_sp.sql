@@ -37,7 +37,7 @@ begin
       set @link_id = last_insert_id();
   
       -- link price of link of group
-      insert into link_price (link_id, price, group_id, account_id) values (@link_id, @price, @group_id, in_account_id);
+      insert into link_price (link_id, new_price, group_id, account_id) values (@link_id, @price, @group_id, in_account_id);
   
       -- link history of link of group
       insert into link_history (link_id, status, group_id, account_id) values (@link_id, @status, @group_id, in_account_id);
@@ -62,7 +62,7 @@ begin
       set @link_id = last_insert_id();
   
       -- link price of link of group
-      insert into link_price (link_id, price, group_id, account_id) values (@link_id, @price, @group_id, in_account_id);
+      insert into link_price (link_id, new_price, group_id, account_id) values (@link_id, @price, @group_id, in_account_id);
   
       -- link history of link of group
       insert into link_history (link_id, status, group_id, account_id) values (@link_id, @status, @group_id, in_account_id);
@@ -87,7 +87,7 @@ begin
       set @link_id = last_insert_id();
   
       -- link price of link of group
-      insert into link_price (link_id, price, group_id, account_id) values (@link_id, @price, @group_id, in_account_id);
+      insert into link_price (link_id, new_price, group_id, account_id) values (@link_id, @price, @group_id, in_account_id);
   
       -- link history of link of group
       insert into link_history (link_id, status, group_id, account_id) values (@link_id, @status, @group_id, in_account_id);

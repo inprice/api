@@ -142,7 +142,7 @@ create table platform (
   currency_format           varchar(30) not null,
   parked                    boolean default false,
   blocked                   boolean default false,
-  profile                   varchar(15) not null default 'default',
+  profile                   varchar(15),
   queue                     varchar(50) not null default 'active.links.queue.cap3',
   primary key (id),
   key (domain)
@@ -254,7 +254,8 @@ alter table link_spec add foreign key (link_id) references link (id);
 create table link_price (
   id                        bigint unsigned auto_increment not null,
   link_id                   bigint unsigned not null,
-  price                     decimal(9,2) default 0,
+  old_price                 decimal(9,2) default 0,
+  new_price                 decimal(9,2) default 0,
   diff_amount               decimal(9,2) default 0,
   diff_rate                 decimal(9,2) default 0,
   group_id                  bigint unsigned not null,

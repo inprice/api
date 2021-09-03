@@ -86,4 +86,7 @@ public interface LinkDao {
   @SqlQuery("select group_id from link where id in (<linkIdSet>)")
   HashSet<Long> findGroupIdSet(@BindList("linkIdSet") Set<Long> linkIdSet);
 
+  @SqlQuery("select status_group from link where id = :et")
+  String findGroupIdSet__(@Bind("et") Long et);
+
 }

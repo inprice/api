@@ -14,6 +14,7 @@ public class GroupSummary implements Serializable {
 
   private Long id;
   private String name;
+  private String description;
   private Integer actives;
   private Integer waitings;
   private Integer tryings;

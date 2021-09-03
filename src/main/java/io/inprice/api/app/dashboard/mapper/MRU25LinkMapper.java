@@ -18,6 +18,7 @@ public class MRU25LinkMapper implements RowMapper<MRU25Link> {
   public MRU25Link map(ResultSet rs, StatementContext ctx) throws SQLException {
     MRU25Link m = new MRU25Link();
 
+    if (Helper.hasColumn(rs, "id")) m.setId(rs.getLong("id"));
     if (Helper.hasColumn(rs, "group_name")) m.setGroupName(rs.getString("group_name"));
     if (Helper.hasColumn(rs, "seller")) m.setSeller(rs.getString("seller"));
     if (Helper.hasColumn(rs, "url")) m.setUrl(rs.getString("url"));

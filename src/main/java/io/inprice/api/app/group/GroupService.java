@@ -194,6 +194,7 @@ class GroupService {
     				)
       		);
           batch.add("SET FOREIGN_KEY_CHECKS=1");
+
           int[] result = batch.execute();
 
           if (result[6] > 0) {

@@ -219,36 +219,25 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void Profile_cannot_be_empty() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.remove("profile");
-		
-		JSONObject json = callTheService(body);
-
-		assertEquals(400, json.getInt("status"));
-		assertEquals("Profile cannot be empty!", json.getString("reason"));
-	}
-
-	@Test
-	public void Profile_must_be_between_3_and_15_chars_WITH_shorter_value() {
+	public void Profile_can_be_between_3_and_15_chars_WITH_shorter_value() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("profile", "AB");
 
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Profile must be between 3 - 15 chars!", json.getString("reason"));
+    assertEquals("If given, profile can be between 3 - 15 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void Profile_must_be_between_3_and_15_chars_WITH_longer_value() {
+	public void Profile_can_be_between_3_and_15_chars_WITH_longer_value() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("profile", RandomStringUtils.randomAlphabetic(51));
 		
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-		assertEquals("Profile must be between 3 - 15 chars!", json.getString("reason"));
+		assertEquals("If given, profile can be between 3 - 15 chars!", json.getString("reason"));
 	}
 
 	/**
