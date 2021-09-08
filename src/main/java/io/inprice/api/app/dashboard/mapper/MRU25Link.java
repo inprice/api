@@ -16,6 +16,7 @@ public class MRU25Link implements Serializable {
   private String groupName;
   private String seller;
   private String platform;
+  private String name;
   private String url;
   private BigDecimal price;
   private String status;

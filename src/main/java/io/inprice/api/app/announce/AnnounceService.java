@@ -81,7 +81,15 @@ public class AnnounceService {
     		where.append(CurrentUser.getUserId());
     		where.append(") ");
     	}
-    }
+
+    } else {
+			where.append(" and (type='SYSTEM' ");
+			where.append(" or account_id=");
+			where.append(CurrentUser.getAccountId());
+			where.append(" or user_id=");
+			where.append(CurrentUser.getUserId());
+			where.append(") ");
+  	}
     
     if (StringUtils.isNotBlank(dto.getTerm())) {
     	where.append(" and ");

@@ -1,6 +1,6 @@
 {
   "app": {
-		"env": "dev",
+    "env": "prod",
     "webUrl": "http://localhost:8080",
     "port": 4567,
     "apiUrl": "http://localhost:4567",
