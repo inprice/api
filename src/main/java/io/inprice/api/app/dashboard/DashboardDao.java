@@ -34,7 +34,7 @@ interface DashboardDao {
   Map<String, Integer> findLinkLevelDists(@Bind("accountId") Long accountId);
 
   @SqlQuery(
-    "select l.id, g.name as group_name, p.domain as platform, l.seller, l.price, l.status, l.level, l.name, l.url, l.updated_at, l.created_at, l.url from link as l " + 
+    "select l.id, g.name as group_name, p.domain as platform, l.seller, l.price, l.status, l.parse_code, l.level, l.name, l.url, l.updated_at, l.created_at, l.url from link as l " + 
 		"inner join link_group as g on g.id = l.group_id " + 
     "left join platform as p on p.id = l.platform_id " + 
     "where l.account_id=:accountId " +
