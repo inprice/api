@@ -1,4 +1,4 @@
-package io.inprice.api.app.group;
+package io.inprice.api.app.product;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -25,7 +25,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of GroupController.getIdNameList(Long excludedGroupId)
+ * Tests the functionality of ProductController.getIdNameList(Long excludedProductId)
  * 
  * @author mdpinar
  * @since 2021-07-20
@@ -33,7 +33,7 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class GetIdNameListTest {
 
-	private static final String SERVICE_ENDPOINT = "/group/pairs/{excludedGroupId}";
+	private static final String SERVICE_ENDPOINT = "/product/pairs/{excludedProductId}";
 
 	@BeforeClass
 	public static void setup() {
@@ -60,7 +60,7 @@ public class GetIdNameListTest {
 	 * Consists of three steps;
 	 * 	a) super user logs in
 	 * 	b) binds to a specific account
-	 * 	c) gets group list (must not be empty)
+	 * 	c) gets product list (must not be empty)
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_superuser_AND_bound_account() {
@@ -77,13 +77,13 @@ public class GetIdNameListTest {
 		JSONObject json = res.getBody().getObject();
 		assertEquals(200, json.getInt("status"));
 
-		JSONArray groupList = TestFinder.searchGroups(cookies, "Group D");
-		JSONObject group = groupList.getJSONObject(0);
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product D");
+		JSONObject product = productList.getJSONObject(0);
 		
 		res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.routeParam("excludedGroupId", ""+group.getLong("id"))
+			.routeParam("excludedProductId", ""+product.getLong("id"))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -116,38 +116,38 @@ public class GetIdNameListTest {
 	public void Everything_must_be_ok_WITH_excluded_id() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
 
-		JSONArray groupList = TestFinder.searchGroups(cookies, "Group X");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product X");
 		TestUtils.logout(cookies); //here is important!
 		
-		assertNotNull(groupList);
-		JSONObject group = groupList.getJSONObject(0);
+		assertNotNull(productList);
+		JSONObject product = productList.getJSONObject(0);
 
-		//evil user tries to find the group
-		JSONObject json = callTheService(TestAccounts.Starter_plan_and_one_extra_user.EDITOR(), group.getLong("id"));
+		//evil user tries to find the product
+		JSONObject json = callTheService(TestAccounts.Starter_plan_and_one_extra_user.EDITOR(), product.getLong("id"));
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
 
 		JSONArray data = json.getJSONArray("data");
 		assertEquals(1, data.length());
-		assertTrue(data.getJSONObject(0).getString("right").startsWith("Group Y"));
+		assertTrue(data.getJSONObject(0).getString("right").startsWith("Product Y"));
 	}
 
-	private JSONObject callTheService(Long excludedGroupId) {
-		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), excludedGroupId);
+	private JSONObject callTheService(Long excludedProductId) {
+		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), excludedProductId);
 	}
 
-	private JSONObject callTheService(JSONObject user, Long excludedGroupId) {
-		return callTheService(user, excludedGroupId, 0);
+	private JSONObject callTheService(JSONObject user, Long excludedProductId) {
+		return callTheService(user, excludedProductId, 0);
 	}
 	
-	private JSONObject callTheService(JSONObject user, Long excludedGroupId, int session) {
+	private JSONObject callTheService(JSONObject user, Long excludedProductId, int session) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS) //for allowing viewers
 			.cookie(cookies)
-			.routeParam("excludedGroupId", (excludedGroupId != null ? excludedGroupId.toString() : ""))
+			.routeParam("excludedProductId", (excludedProductId != null ? excludedProductId.toString() : ""))
 			.asJson();
 		TestUtils.logout(cookies);
 

@@ -31,8 +31,8 @@ insert into test.account_trans (account_id, event_id, event, successful, descrip
 values (@account_id, 'MM-004', 'SUBSCRIPTION', true, 'Subscription has been renewed successfully');
 
 -- -----------------------
--- 2 groups and 4 links
--- group_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
+-- 2 products and 4 links
+-- product_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
 -- -----------------------
-call sp_create_group_and_links('A', 1, 0, 0, 1, 'https://amazon.com/', 2, 'Account-G', @account_id);
-call sp_create_group_and_links('B', 1, 0, 0, 1, 'https://ebay.com/', 12, 'Account-G', @account_id);
+call sp_create_product_and_links('A', 1, 0, 0, 1, 'https://amazon.com/', 2, 'Account-G', @account_id);
+call sp_create_product_and_links('B', 1, 0, 0, 1, 'https://ebay.com/', 12, 'Account-G', @account_id);

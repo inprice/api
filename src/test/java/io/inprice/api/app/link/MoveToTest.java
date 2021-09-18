@@ -57,11 +57,11 @@ public class MoveToTest {
 	}
 
 	@Test
-	public void Group_not_found_WITHOUT_toGroup() {
+	public void Product_not_found_WITHOUT_toProduct() {
 		JSONObject json = callTheService(null, new Long[] { 1L });
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Group not found!", json.getString("reason"));
+		assertEquals("Product not found!", json.getString("reason"));
 	}
 
 	@Test
@@ -112,14 +112,14 @@ public class MoveToTest {
 		//picks one of those links
 		JSONObject link = linkList.getJSONObject(0);
 		Long[] linkIds = { link.getLong("id") };
-		Long toGroupId = findToGroupId(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), "Group 2 of Account-B");
+		Long toProductId = findToProductId(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), "Product 2 of Account-B");
 
 		//evil user logs in
 		cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.EDITOR());
 
 		//builds the body up
 		JSONObject body = new JSONObject();
-		body.put("toGroupId", toGroupId);
+		body.put("toProductId", toProductId);
 		body.put("linkIdSet", linkIds);
 
 		//tries to move other account's links
@@ -141,11 +141,11 @@ public class MoveToTest {
 	 *	a) an admin logs in
 	 *	b) searches some specific links
 	 *  c) pick one of them
-	 *  d) builds body up with a new group name
-	 *  e) tries to create new group by name and moves those links under it 
+	 *  d) builds body up with a new product name
+	 *  e) tries to create new product by name and moves those links under it 
 	 */
 	@Test
-	public void You_already_have_a_group_having_the_same_name_WHEN_creating_a_new_group() {
+	public void You_already_have_a_product_having_the_same_name_WHEN_creating_a_new_product() {
 		//user logs in
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
 
@@ -158,7 +158,7 @@ public class MoveToTest {
 
 		//builds the body up
 		JSONObject body = new JSONObject();
-		body.put("toGroupName", "Group 1 OF ACCOUNT-B");
+		body.put("toProductName", "Product 1 OF ACCOUNT-B");
 		body.put("linkIdSet", new Long[] { linkList.getJSONObject(0).getLong("id") });
 
 		cookies = TestUtils.login(TestAccounts.Basic_plan_but_no_extra_user.ADMIN());
@@ -174,7 +174,7 @@ public class MoveToTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(875, json.getInt("status"));
-		assertEquals("You already have a group having the same name!", json.getString("reason"));
+		assertEquals("You already have a product having the same name!", json.getString("reason"));
 	}
 
 	/**
@@ -186,7 +186,7 @@ public class MoveToTest {
 	 *  e) deletes those selected links
 	 */
 	@Test
-	public void Everything_must_be_ok_FOR_new_toGroupName() {
+	public void Everything_must_be_ok_FOR_new_toProductName() {
 		//a user logs in
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.EDITOR());
 
@@ -205,7 +205,7 @@ public class MoveToTest {
 
 		//builds the body up
 		JSONObject body = new JSONObject();
-		body.put("toGroupName", "This is a new group to move.");
+		body.put("toProductName", "This is a new product to move.");
 		body.put("linkIdSet", linkIds);
 		
 		//moves those selected links
@@ -232,7 +232,7 @@ public class MoveToTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_FOR_admin() {
-		Long toGroupId = findToGroupId(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), "Group 1 of Account-B");
+		Long toProductId = findToProductId(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), "Product 1 of Account-B");
 
 		//user logs in
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
@@ -253,7 +253,7 @@ public class MoveToTest {
 
 		//builds the body up
 		JSONObject body = new JSONObject();
-		body.put("toGroupId", toGroupId);
+		body.put("toProductId", toProductId);
 		body.put("linkIdSet", linkIds);
 
 		//moves those selected links
@@ -270,33 +270,33 @@ public class MoveToTest {
 		assertEquals("OK", json.getString("reason"));
 	}
 
-	private Long findToGroupId(JSONObject user, String groupName) {
+	private Long findToProductId(JSONObject user, String productName) {
 		Cookies cookies = TestUtils.login(user);
 
-		JSONArray groups = TestFinder.searchGroups(cookies, groupName);
+		JSONArray products = TestFinder.searchProducts(cookies, productName);
 		TestUtils.logout(cookies);
 
-		assertNotNull(groups);
+		assertNotNull(products);
 
-		return groups.getJSONObject(0).getLong("id");
+		return products.getJSONObject(0).getLong("id");
 	}
 
-	private JSONObject callTheService(Long toGroupId, Long[] linkIds) {
-		return callTheService(TestAccounts.Standard_plan_and_no_extra_users.ADMIN(), toGroupId, linkIds);
+	private JSONObject callTheService(Long toProductId, Long[] linkIds) {
+		return callTheService(TestAccounts.Standard_plan_and_no_extra_users.ADMIN(), toProductId, linkIds);
 	}
 
-	private JSONObject callTheService(JSONObject user, Long toGroupId, Long[] linkIds) {
-		return callTheService(user, toGroupId, linkIds, 0);
+	private JSONObject callTheService(JSONObject user, Long toProductId, Long[] linkIds) {
+		return callTheService(user, toProductId, linkIds, 0);
 	}
 	
-	private JSONObject callTheService(JSONObject user, Long toGroupId, Long[] linkIds, int session) {
+	private JSONObject callTheService(JSONObject user, Long toProductId, Long[] linkIds, int session) {
 		Cookies cookies = TestUtils.login(user);
 		
 		JSONObject body = null;
-		if (toGroupId != null || linkIds != null) {
+		if (toProductId != null || linkIds != null) {
 			body = new JSONObject();
 
-			if (toGroupId != null) body.put("toGroupId", toGroupId);
+			if (toProductId != null) body.put("toProductId", toProductId);
 			if (linkIds != null && linkIds.length > 0) body.put("linkIdSet", linkIds);
 		}
 

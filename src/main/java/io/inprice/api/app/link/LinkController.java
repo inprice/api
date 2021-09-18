@@ -45,7 +45,7 @@ public class LinkController extends AbstractController {
     	}
     }, AccessRoles.EDITOR());
 
-    // move links to another group
+    // move links to another product
     app.post(Consts.Paths.Link.MOVE, (ctx) -> {
     	if (ctx.body().isBlank()) {
     		ctx.json(Responses.REQUEST_BODY_INVALID);

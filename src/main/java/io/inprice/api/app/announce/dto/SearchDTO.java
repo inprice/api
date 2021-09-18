@@ -14,7 +14,6 @@ import lombok.Setter;
 @Setter
 public class SearchDTO extends BaseSearchDTO {
 
-	private SearchBy searchBy = SearchBy.TITLE;
   private Set<AnnounceType> types;
   private Set<AnnounceLevel> levels;
   private Date startingAt;

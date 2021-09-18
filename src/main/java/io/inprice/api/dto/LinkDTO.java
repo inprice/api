@@ -15,7 +15,7 @@ public class LinkDTO implements Serializable {
 
   private String url;
   private String urlHash;
-  private Long groupId;
+  private Long productId;
   private Long accountId;
 
 }

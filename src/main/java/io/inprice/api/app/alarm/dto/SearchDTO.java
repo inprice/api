@@ -14,7 +14,6 @@ import lombok.Setter;
 @Setter
 public class SearchDTO extends BaseSearchDTO {
 
-	private SearchBy searchBy = SearchBy.NAME;
 	private AlarmTopic topic;
   private Set<AlarmSubject> subjects;
   private Set<AlarmSubjectWhen> whens;

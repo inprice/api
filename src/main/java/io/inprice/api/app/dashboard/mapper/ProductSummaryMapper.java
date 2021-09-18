@@ -9,11 +9,11 @@ import org.jdbi.v3.core.statement.StatementContext;
 import io.inprice.common.mappers.Helper;
 import io.inprice.common.utils.DateUtils;
 
-public class GroupSummaryMapper implements RowMapper<GroupSummary> {
+public class ProductSummaryMapper implements RowMapper<ProductSummary> {
 
   @Override
-  public GroupSummary map(ResultSet rs, StatementContext ctx) throws SQLException {
-    GroupSummary m = new GroupSummary();
+  public ProductSummary map(ResultSet rs, StatementContext ctx) throws SQLException {
+    ProductSummary m = new ProductSummary();
 
     if (Helper.hasColumn(rs, "id")) m.setId(rs.getLong("id"));
     if (Helper.hasColumn(rs, "name")) m.setName(rs.getString("name"));

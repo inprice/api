@@ -14,7 +14,7 @@ public class LinkDeleteDTO implements Serializable {
 
 	private static final long serialVersionUID = 8504119602766630634L;
 
-	private Long fromGroupId;
+	private Long fromProductId;
   private Set<Long> linkIdSet;
 
 }

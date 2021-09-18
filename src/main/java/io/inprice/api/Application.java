@@ -58,7 +58,9 @@ public class Application {
     logger.info(" - Connected to Mysql server.");
 
     RabbitMQ.start(Props.getConfig().RABBIT_CONF);
-    logger.info(" - Connected to RabbitMQ server.");
+    logger.info(" - Connected to RabbitMQ server. Url: {}:{}, User:{}", 
+  		Props.getConfig().RABBIT_CONF.HOST, Props.getConfig().RABBIT_CONF.PORT, Props.getConfig().RABBIT_CONF.USERNAME
+		);
 
     Redis.start(Props.getConfig().REDIS_CONF);
     logger.info(" - Connected to Redis server.");

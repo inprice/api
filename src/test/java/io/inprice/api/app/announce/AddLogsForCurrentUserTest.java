@@ -74,7 +74,7 @@ public class AddLogsForCurrentUserTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_a_group_WITH_editor() {
+	public void Everything_must_be_ok_FOR_a_product_WITH_editor() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
 		
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
@@ -90,7 +90,7 @@ public class AddLogsForCurrentUserTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_a_group_WITH_viewer() {
+	public void Everything_must_be_ok_FOR_a_product_WITH_viewer() {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
 		
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)

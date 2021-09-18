@@ -25,8 +25,8 @@ public interface AlarmDao {
 	boolean doesExistByTopicId(@Define("topic") String topic, @Bind("topicId") Long topicId, @Bind("accountId") Long accountId);
 
 	@SqlUpdate(
-		"insert into alarm (topic, group_id, link_id, subject, subject_when, certain_status, amount_lower_limit, amount_upper_limit, last_status, last_amount, account_id) " +
-		"values (:dto.topic, :dto.groupId, :dto.linkId, :dto.subject, :dto.subjectWhen, :dto.certainStatus, :dto.amountLowerLimit, :dto.amountUpperLimit, :pair.left, :pair.right, :dto.accountId)"
+		"insert into alarm (topic, product_id, link_id, subject, subject_when, certain_status, amount_lower_limit, amount_upper_limit, last_status, last_amount, account_id) " +
+		"values (:dto.topic, :dto.productId, :dto.linkId, :dto.subject, :dto.subjectWhen, :dto.certainStatus, :dto.amountLowerLimit, :dto.amountUpperLimit, :pair.left, :pair.right, :dto.accountId)"
 	)
 	@GetGeneratedKeys
 	long insert(@BindBean("dto") AlarmDTO dto, @BindBean("pair") Pair<String, BigDecimal> pair);
@@ -48,12 +48,12 @@ public interface AlarmDao {
   boolean delete(@Bind("id") Long id, @Bind("accountId") Long accountId);
 
 	@SqlUpdate(
-		"update link_group " +
+		"update product " +
 		"set alarm_id=:alarmId " +
-		"where id=:groupId " +
+		"where id=:productId " +
 		"  and account_id=:accountId"
 	)
-	boolean setAlarmForGroup(@Bind("groupId") Long groupId, @Bind("alarmId") Long alarmId, @Bind("accountId") Long accountId);
+	boolean setAlarmForProduct(@Bind("productId") Long productId, @Bind("alarmId") Long alarmId, @Bind("accountId") Long accountId);
 
 	@SqlUpdate(
 		"update link " +
@@ -61,15 +61,15 @@ public interface AlarmDao {
 		"where id=:linkId " +
 		"  and account_id=:accountId"
 	)
-	boolean setAlarmForLink(@Bind("linkId") Long groupId, @Bind("alarmId") Long alarmId, @Bind("accountId") Long accountId);
+	boolean setAlarmForLink(@Bind("linkId") Long productId, @Bind("alarmId") Long alarmId, @Bind("accountId") Long accountId);
 
 	@SqlUpdate(
-		"update link_group " +
+		"update product " +
 		"set alarm_id=null " +
-		"where id=:groupId " +
+		"where id=:productId " +
 		"  and account_id=:accountId"
 	)
-	boolean removeAlarmFromGroup(@Bind("groupId") Long groupId, @Bind("accountId") Long accountId);
+	boolean removeAlarmFromProduct(@Bind("productId") Long productId, @Bind("accountId") Long accountId);
 
 	@SqlUpdate(
 		"update link " +

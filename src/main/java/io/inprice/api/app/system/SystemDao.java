@@ -45,7 +45,7 @@ public interface SystemDao {
   @SqlQuery(
 		"(select 'L' as type, id, IFNULL(name, url) as name, seller as description from link where account_id=:accountId and IFNULL(name, url) like :term limit 10)" +
 		" UNION " +
-		"(select 'G' as type, id, name, description from link_group where account_id=:accountId and name like :term limit 10)"
+		"(select 'G' as type, id, name, description from product where account_id=:accountId and name like :term limit 10)"
 	)
   @UseRowMapper(SearchMapper.class)
   List<Search> search(@Bind("term") String term, @Bind("accountId") Long accountId);

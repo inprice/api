@@ -119,7 +119,7 @@ public class GetAndRefreshReportTests {
 		JSONObject data = json.getJSONObject("data");
 		assertNotNull(data);
 		assertTrue(data.has("date"));
-		assertTrue(data.has("groups"));
+		assertTrue(data.has("products"));
 		assertTrue(data.has("links"));
 		assertTrue(data.has("account"));
 	}

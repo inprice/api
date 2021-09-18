@@ -1,6 +1,7 @@
-package io.inprice.api.app.group;
+package io.inprice.api.app.product;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -11,28 +12,31 @@ import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
 import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
+import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of GroupController.insert(GroupDTO)
+ * Tests the functionality of ProductController.update(ProductDTO)
  * 
  * @author mdpinar
  * @since 2021-07-20
  */
 @RunWith(JUnit4.class)
-public class InsertTest {
+public class UpdateTest {
 
-	private static final String SERVICE_ENDPOINT = "/group";
+	private static final String SERVICE_ENDPOINT = "/product";
 
 	private static final JSONObject SAMPLE_BODY = 
 			new JSONObject()
-  			.put("name", "NEW GROUP")
-	    	.put("description", "THIS IS ANOTHER GROUP")
+				.put("id", 1)
+  			.put("name", "NEW PRODUCT")
+	    	.put("description", "THIS IS ANOTHER PRODUCT")
 				.put("price", 5);
 
 	@BeforeClass
@@ -42,7 +46,7 @@ public class InsertTest {
 
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.body(SAMPLE_BODY)
 			.asJson();
@@ -59,6 +63,17 @@ public class InsertTest {
 
 		assertEquals(400, json.getInt("status"));
     assertEquals("Request body is invalid!", json.getString("reason"));
+	}
+
+	@Test
+	public void Product_not_found_WITHOUT_id() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.remove("id");
+		
+		JSONObject json = callTheService(body);
+
+		assertEquals(404, json.getInt("status"));
+		assertEquals("Product not found!", json.getString("reason"));
 	}
 
 	@Test
@@ -144,36 +159,79 @@ public class InsertTest {
 	}
 
 	@Test
-	public void You_already_have_a_group_having_the_same_name() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("name", "Group K of Account-F");
+	public void You_already_have_a_product_having_the_same_name() {
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product G");
+		TestUtils.logout(cookies); //here is important!
 
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
+		assertNotNull(productList);
+		assertEquals(1, productList.length());
+		
+		JSONObject product = productList.getJSONObject(0);
+
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("id", product.getLong("id")); //here is also important!
+		body.put("name", "Product K of Account-F");
+
+		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
 
 		assertEquals(875, json.getInt("status"));
-		assertEquals("You already have a group having the same name!", json.getString("reason"));
+		assertEquals("You already have a product having the same name!", json.getString("reason"));
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
+		
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product I");
+		TestUtils.logout(cookies); //here is important!
+
+		assertNotNull(productList);
+		assertEquals(1, productList.length());
+		
+		JSONObject product = productList.getJSONObject(0);
+
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("name", "Editor is trying to define a new group!");
+		body.put("id", product.getLong("id")); //here is also important!
+		body.put("name", "Changed name by EDITOR");
+		body.put("description", "This is a changed description!");
+		body.put("price", 20.12);
 
 		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
+
+		JSONObject data = json.getJSONObject("data");
+		assertTrue(data.has("product"));
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("name", "Admin is trying to define a new group!");
+		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.ADMIN());
+		
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product R");
+		TestUtils.logout(cookies); //here is important!
 
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
+		assertNotNull(productList);
+		assertEquals(1, productList.length());
+		
+		JSONObject product = productList.getJSONObject(0);
+
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("id", product.getLong("id")); //here is also important!
+		body.put("name", "Changed name by ADMIN");
+		body.put("description", "This description isn't descriptive enough!");
+		body.put("price", 0.12);
+
+		JSONObject json = callTheService(TestAccounts.Standard_plan_and_one_extra_user.ADMIN(), body, 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
+
+		JSONObject data = json.getJSONObject("data");
+		assertTrue(data.has("product"));
 	}
 
 	private JSONObject callTheService(JSONObject body) {
@@ -183,7 +241,7 @@ public class InsertTest {
 	private JSONObject callTheService(JSONObject user, JSONObject body, int session) {
 		Cookies cookies = TestUtils.login(user);
 
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS) //attention pls!
 			.cookie(cookies)
 			.body(body != null ? body : "")

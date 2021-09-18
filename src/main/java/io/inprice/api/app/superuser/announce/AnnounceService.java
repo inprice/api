@@ -96,8 +96,7 @@ public class AnnounceService {
     where.append("where 1=1 ");
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	where.append(" and ");
-    	where.append(dto.getSearchBy().getFieldName());
+    	where.append(" and CONCAT_WS(title, body)");
     	where.append(" like '%");
       where.append(dto.getTerm());
       where.append("%' ");

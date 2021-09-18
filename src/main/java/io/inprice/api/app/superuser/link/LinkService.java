@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.superuser.link.dto.BulkChangetDTO;
-import io.inprice.api.app.superuser.link.dto.SearchBy;
 import io.inprice.api.app.superuser.link.dto.SearchDTO;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
@@ -67,12 +66,7 @@ class LinkService {
     }
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	where.append(" and ");
-    	if (SearchBy.NAME.equals(dto.getSearchBy())) {
-    		where.append("IFNULL(l.name, l.url)");
-    	} else {
-    		where.append(dto.getSearchBy().getFieldName());
-    	}
+  		where.append(" and CONCAT_WS(l.name, l.sku, l.seller, l.brand)");
       where.append(" like '%");
       where.append(dto.getTerm());
       where.append("%' ");
@@ -90,8 +84,8 @@ class LinkService {
     try (Handle handle = Database.getHandle()) {
       List<Link> searchResult =
         handle.createQuery(
-          "select l.*" + PlatformDao.FIELDS + AlarmDao.FIELDS + ", g.name as group_name from link as l " + 
-      		"inner join link_group as g on g.id = l.group_id " + 
+          "select l.*" + PlatformDao.FIELDS + AlarmDao.FIELDS + ", g.name as product_name from link as l " + 
+      		"inner join product as g on g.id = l.product_id " + 
       		"left join platform as p on p.id = l.platform_id " + 
           "left join alarm as al on al.id = l.alarm_id " + 
           where +
@@ -162,7 +156,7 @@ class LinkService {
           if (CollectionUtils.isNotEmpty(selectedSet)) {
           	handle.begin();
 
-          	int affected = linkDao.setStatus(selectedSet, dto.getStatus(), dto.getStatus().getGroup());
+          	int affected = linkDao.setStatus(selectedSet, dto.getStatus(), dto.getStatus().getGrup());
   
           	if (affected == selectedSet.size()) {
             	linkDao.insertHistory(selectedSet);
@@ -201,7 +195,7 @@ class LinkService {
 
           	if (historyList.size() > 1 && STATUSES_FOR_CHANGE.contains(lastHistory.getStatus())) {
             	LinkHistory preHistory = historyList.get(1);
-            	affected += linkDao.setStatus(id, preHistory.getStatus(), preHistory.getStatus().getGroup());
+            	affected += linkDao.setStatus(id, preHistory.getStatus(), preHistory.getStatus().getGrup());
             	linkDao.deleteHistory(lastHistory.getId());
             }
           }

@@ -28,17 +28,17 @@ values (@account_id, 'SY-12A', 'FREE USE', 'Free use started.');
 insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');
 
 -- -----------------------
--- 2 groups and 24 links
--- group_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
+-- 2 products and 24 links
+-- product_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
 -- -----------------------
-call sp_create_group_and_links('1', 5, 4, 3, 2, 'https://amazon.com/', 2, 'Account-B', @account_id);
-call sp_create_group_and_links('2', 4, 3, 2, 1, 'https://ebay.com/', 12, 'Account-B', @account_id);
+call sp_create_product_and_links('1', 5, 4, 3, 2, 'https://amazon.com/', 2, 'Account-B', @account_id);
+call sp_create_product_and_links('2', 4, 3, 2, 1, 'https://ebay.com/', 12, 'Account-B', @account_id);
 
 -- -----------------------
 -- 5 alarms
 -- -----------------------
-insert into alarm (topic, group_id, subject, subject_when, account_id) 
-select 'GROUP', id, 'STATUS', 'CHANGED', @account_id from link_group where account_id = @account_id limit 2;
+insert into alarm (topic, product_id, subject, subject_when, account_id) 
+select 'PRODUCT', id, 'STATUS', 'CHANGED', @account_id from product where account_id = @account_id limit 2;
 
 insert into alarm (topic, link_id, subject, subject_when, account_id) 
 select 'LINK', id, 'STATUS', 'CHANGED', @account_id from link where account_id = @account_id limit 3;

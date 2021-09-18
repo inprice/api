@@ -127,15 +127,19 @@ public class AuthService {
                 	"url", Props.getConfig().APP.WEB_URL + Consts.Paths.Auth.RESET_PASSWORD
               	);
                 
-              	EmailPublisher.publish(
-            			EmailData.builder()
-              			.template(EmailTemplate.FORGOT_PASSWORD)
-              			.to(user.getEmail())
-              			.subject("Reset your password for inprice.io")
-              			.data(mailMap)
-              		.build()	
-        				);
-                return Responses.OK;
+                if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST)) {
+                	return new Response(mailMap);
+                } else {
+                	EmailPublisher.publish(
+              			EmailData.builder()
+                			.template(EmailTemplate.FORGOT_PASSWORD)
+                			.to(user.getEmail())
+                			.subject("Reset your password for inprice.io")
+                			.data(mailMap)
+                		.build()	
+          				);
+                  return Responses.OK;
+                }
   
               } catch (Exception e) {
                 logger.error("Failed to render email for forgetting password", e);

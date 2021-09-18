@@ -33,7 +33,7 @@ public enum TestAccounts {
 
 	Basic_plan_but_no_extra_user(
 		"With Basic Plan (Free Use) but No Extra User",
-  	"Has 9 active, 7 trying, 5 waiting and 3 problem links. 2 Group and 3 Link alarms, no coupon",
+  	"Has 9 active, 7 trying, 5 waiting and 3 problem links. 2 Product and 3 Link alarms, no coupon",
   	null,
 		Map.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-b.com")
@@ -42,7 +42,7 @@ public enum TestAccounts {
 
 	Starter_plan_and_one_extra_user(
 		"With Starter Plan and One Extra User",
-		"Has 6 active, 2 trying, 1 waiting and 3 problem links. 1 Group and 1 Link alarms. No coupon",
+		"Has 6 active, 2 trying, 1 waiting and 3 problem links. 1 Product and 1 Link alarms. No coupon",
   	null,
 		Map.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-c.com"),
@@ -52,7 +52,7 @@ public enum TestAccounts {
 
 	Standard_plan_and_no_extra_users(
 		"With Standard Plan (Couponed) but No Extra User",
-  	"Has no link or coupon. 1 Group 1 Link alarms",
+  	"Has no link or coupon. 1 Product 1 Link alarms",
   	null,
 		Map.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@account-d.com")

@@ -98,7 +98,7 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		JSONObject json = callTheService(TestAccounts.Starter_plan_and_one_extra_user.EDITOR(), createBody("GROUP"));
+		JSONObject json = callTheService(TestAccounts.Starter_plan_and_one_extra_user.EDITOR(), createBody("PRODUCT"));
 
 		JSONObject data = json.getJSONObject("data");
 		JSONArray rows = data.getJSONArray("rows");

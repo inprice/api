@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.account.dto.CreateDTO;
 import io.inprice.api.app.account.dto.RegisterDTO;
 import io.inprice.api.app.auth.UserSessionDao;
-import io.inprice.api.app.group.GroupDao;
 import io.inprice.api.app.membership.MembershipDao;
+import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.app.superuser.announce.AnnounceService;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
@@ -24,7 +24,7 @@ import io.inprice.api.app.user.validator.PasswordValidator;
 import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.GroupDTO;
+import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.Commons;
@@ -59,7 +59,7 @@ class AccountService {
 
   Response requestRegistration(RegisterDTO dto) {
     Response res = redis.isEmailRequested(RateLimiterType.REGISTER, dto.getEmail());
-    if (!res.isOK()) return res;
+    if (res.isOK() == false) return res;
 
     res = validateRegisterDTO(dto);
     if (res.isOK()) {
@@ -82,20 +82,20 @@ class AccountService {
             	"account", dto.getAccountName(),
             	"token", token.substring(0,3)+"-"+token.substring(3)
           	);
-            
-            if (Props.getConfig().APP.ENV.equals(Consts.Env.PROD) == false) {
+
+            if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST)) {
             	return new Response(mailMap);
-            } else {
-            	EmailPublisher.publish(
-          			EmailData.builder()
-            			.template(EmailTemplate.REGISTRATION_REQUEST)
-            			.to(dto.getEmail())
-            			.subject("About " + dto.getAccountName() + " registration on inprice.io")
-            			.data(mailMap)
-            		.build()	
-      				);
-            	redis.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
-              return Responses.OK;
+            } else {            
+	          	EmailPublisher.publish(
+	        			EmailData.builder()
+	          			.template(EmailTemplate.REGISTRATION_REQUEST)
+	          			.to(dto.getEmail())
+	          			.subject("About " + dto.getAccountName() + " registration on inprice.io")
+	          			.data(mailMap)
+	          		.build()	
+	    				);
+	          	redis.removeRequestedEmail(RateLimiterType.REGISTER, dto.getEmail());
+	            return Responses.OK;
             }
           } else {
             return Responses.Already.Defined.REGISTERED_USER;
@@ -279,7 +279,7 @@ class AccountService {
               batch.add("delete from link_history " + where);
               batch.add("delete from link_spec " + where);
               batch.add("delete from link " + where);
-              batch.add("delete from link_group " + where);
+              batch.add("delete from product " + where);
               batch.add("delete from coupon where issued_id=" + CurrentUser.getAccountId() + " or issuer_id=" + CurrentUser.getAccountId());
               batch.add("delete from alarm " + where);
               batch.add("delete from ticket_history " + where);
@@ -353,7 +353,7 @@ class AccountService {
   private Response createAccount(Handle handle, Long userId, String userEmail, String accountName, String currencyCode, String currencyFormat) {
     AccountDao accountDao = handle.attach(AccountDao.class);
     MembershipDao membershipDao = handle.attach(MembershipDao.class);
-    GroupDao groupDao = handle.attach(GroupDao.class);
+    ProductDao productDao = handle.attach(ProductDao.class);
 
     Account account = accountDao.findByNameAndAdminId(accountName, userId);
     if (account == null) {
@@ -377,10 +377,10 @@ class AccountService {
           );
 
         if (memberId > 0) {
-        	groupDao.insert(
-      			GroupDTO.builder()
-      				.name("Your first group")
-      				.description("You can use this group to bind and monitor your links")
+        	productDao.insert(
+      			ProductDTO.builder()
+      				.name("Your first product")
+      				.description("You can use this product to bind and monitor your links")
       				.price(BigDecimal.ZERO)
       				.accountId(accountId)
     				.build()

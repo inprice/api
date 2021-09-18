@@ -15,7 +15,6 @@ import lombok.Setter;
 @Setter
 public class SearchDTO extends BaseSearchDTO {
 
-	private SearchBy searchBy = SearchBy.BODY; //can be specified by only super users!
 	private Set<TicketStatus> statuses;
   private Set<TicketPriority> priorities;
   private Set<TicketType> types;

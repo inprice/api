@@ -31,7 +31,7 @@ public class Responses {
     public static final Response EMAIL_OR_PASSWORD = new Response(BASE + 13, "Invalid email or password!");
     public static final Response NAME = new Response(BASE + 14, "Invalid name!");
 
-    public static final Response GROUP = new Response(BASE + 20, "Invalid group!");
+    public static final Response PRODUCT = new Response(BASE + 20, "Invalid product!");
     public static final Response LINK = new Response(BASE + 21, "Invalid link!");
     public static final Response TOKEN = new Response(BASE + 30, "Invalid token!");
 
@@ -112,7 +112,7 @@ public class Responses {
       public static final Response ACCOUNT = new Response(BASE + 70, "Seems that you have already registered this account!");
       public static final Response MEMBERSHIP = new Response(BASE + 71, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");
       public static final Response REGISTERED_USER = new Response(BASE + 72, "Already registered user! Signing up is an option for only newcomers! Please use 'Create Account' menu after login.");
-      public static final Response GROUP = new Response(BASE + 75, "You already have a group having the same name!");
+      public static final Response PRODUCT = new Response(BASE + 75, "You already have a product having the same name!");
 
       public static final Response ALARM = new Response(BASE + 80, "You have already set an alarm for this record!");
     }
@@ -160,7 +160,7 @@ public class Responses {
     public static final Response INVITATION = new Response(BASE, "Invitation not found!");
     public static final Response SUBSCRIPTION = new Response(BASE, "Subscription not found!");
 
-    public static final Response GROUP = new Response(BASE, "Group not found!");
+    public static final Response PRODUCT = new Response(BASE, "Product not found!");
     public static final Response LINK = new Response(BASE, "Link not found!");
 
     public static final Response HISTORY = new Response(BASE, "History not found!");

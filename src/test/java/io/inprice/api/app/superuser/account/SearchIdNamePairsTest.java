@@ -18,7 +18,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of GroupController.searchIdNameList(String byName)
+ * Tests the functionality of ProductController.searchIdNameList(String byName)
  * 
  * @author mdpinar
  * @since 2021-07-22

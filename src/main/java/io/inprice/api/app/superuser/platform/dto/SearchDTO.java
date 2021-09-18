@@ -9,7 +9,6 @@ import lombok.Setter;
 @Setter
 public class SearchDTO extends BaseSearchDTO {
 
-	private SearchBy searchBy = SearchBy.NAME;
   private Boolean parked;
   private Boolean blocked;
   private OrderBy orderBy = OrderBy.NAME;

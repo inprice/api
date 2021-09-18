@@ -201,21 +201,21 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_a_group_WITH_editor() {
+	public void Everything_must_be_ok_FOR_a_product_WITH_editor() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
 
-		JSONArray alarmedGroupList = TestFinder.searchAlarms(cookies, "GROUP");
+		JSONArray alarmedProductList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
-		assertNotNull(alarmedGroupList);
-		assertEquals(1, alarmedGroupList.length());
+		assertNotNull(alarmedProductList);
+		assertEquals(1, alarmedProductList.length());
 
-		//get the first alarm for a group
-		JSONObject alarmedGroup = alarmedGroupList.getJSONObject(0);
+		//get the first alarm for a product
+		JSONObject alarmedProduct = alarmedProductList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody(alarmedGroup.getLong("id"), "GROUP", alarmedGroup.getLong("groupId"), "STATUS", "NOT_EQUAL", "MAXIMUM", null, null))
+			.body(createBody(alarmedProduct.getLong("id"), "PRODUCT", alarmedProduct.getLong("productId"), "STATUS", "NOT_EQUAL", "MAXIMUM", null, null))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -236,7 +236,7 @@ public class UpdateTest {
 		
 		if (topicId != null) {
   		if ("LINK".equals(topic)) body.put("linkId", topicId);
-  		if ("GROUP".equals(topic)) body.put("groupId", topicId);
+  		if ("PRODUCT".equals(topic)) body.put("productId", topicId);
 		}
 
 		if (topic != null) body.put("topic", topic);

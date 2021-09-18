@@ -24,7 +24,7 @@ public class AlarmDTO {
 	private BigDecimal amountUpperLimit;
 
   private Long linkId;
-  private Long groupId;
+  private Long productId;
 
   @JsonIgnore
   private Long accountId;

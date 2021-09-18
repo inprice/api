@@ -1,4 +1,4 @@
-package io.inprice.api.app.group;
+package io.inprice.api.app.product;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -15,85 +15,87 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.account.AccountDao;
-import io.inprice.api.app.group.dto.AddLinksDTO;
 import io.inprice.api.app.link.LinkDao;
+import io.inprice.api.app.product.dto.AddLinksDTO;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
-import io.inprice.api.dto.GroupDTO;
+import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
-import io.inprice.common.info.GroupRefreshResult;
+import io.inprice.common.info.ProductRefreshResult;
 import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.Link;
-import io.inprice.common.models.LinkGroup;
+import io.inprice.common.models.Product;
 import io.inprice.common.utils.URLUtils;
 
-class GroupService {
+class ProductService {
 
-  private static final Logger logger = LoggerFactory.getLogger(GroupService.class);
+  private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
 	
   Response findById(Long id) {
     try (Handle handle = Database.getHandle()) {
-      GroupDao groupDao = handle.attach(GroupDao.class);
+      ProductDao productDao = handle.attach(ProductDao.class);
 
-      LinkGroup group = groupDao.findByIdWithAlarm(id, CurrentUser.getAccountId());
-      if (group != null) {
-        return new Response(group);
+      Product product = productDao.findByIdWithAlarm(id, CurrentUser.getAccountId());
+      if (product != null) {
+        return new Response(product);
       }
-      return Responses.NotFound.GROUP;
+      return Responses.NotFound.PRODUCT;
     }
   }
 
-  Response getIdNameList(Long excludedGroupId) {
+  Response getIdNameList(Long excludedProductId) {
   	try (Handle handle = Database.getHandle()) {
-  		GroupDao groupDao = handle.attach(GroupDao.class);
-  		return new Response(groupDao.getIdNameList((excludedGroupId != null ? excludedGroupId : 0), CurrentUser.getAccountId()));
+  		ProductDao productDao = handle.attach(ProductDao.class);
+  		return new Response(productDao.getIdNameList((excludedProductId != null ? excludedProductId : 0), CurrentUser.getAccountId()));
   	}
   }
 
   Response search(BaseSearchDTO dto) {
     try (Handle handle = Database.getHandle()) {
-      GroupDao groupDao = handle.attach(GroupDao.class);
-      return new Response(groupDao.search(DTOHelper.normalizeSearch(dto, true, true)));
+      ProductDao productDao = handle.attach(ProductDao.class);
+      dto = DTOHelper.normalizeSearch(dto, true, true);
+      dto.setTerm("%"+dto.getTerm());
+      return new Response(productDao.search(dto));
     }
   }
 
   Response findLinksById(Long id) {
     try (Handle handle = Database.getHandle()) {
-    	GroupDao groupDao = handle.attach(GroupDao.class);
+    	ProductDao productDao = handle.attach(ProductDao.class);
       LinkDao linkDao = handle.attach(LinkDao.class);
 
-      LinkGroup group = groupDao.findByIdWithAlarm(id, CurrentUser.getAccountId());
-      if (group != null) {
+      Product product = productDao.findByIdWithAlarm(id, CurrentUser.getAccountId());
+      if (product != null) {
       	Map<String, Object> dataMap = Map.of(
-        	"group", group,
-        	"links", linkDao.findListByGroupId(id, CurrentUser.getAccountId())
+        	"product", product,
+        	"links", linkDao.findListByProductId(id, CurrentUser.getAccountId())
       	);
         return new Response(dataMap);
       }
     }
-    return Responses.NotFound.GROUP;
+    return Responses.NotFound.PRODUCT;
   }
 
-  Response insert(GroupDTO dto) {
+  Response insert(ProductDTO dto) {
     String problem = validate(dto);
     if (problem == null) {
       try (Handle handle = Database.getHandle()) {
-        GroupDao groupDao = handle.attach(GroupDao.class);
+        ProductDao productDao = handle.attach(ProductDao.class);
 
-        LinkGroup found = groupDao.findByName(dto.getName(), CurrentUser.getAccountId());
+        Product found = productDao.findByName(dto.getName(), CurrentUser.getAccountId());
         if (found == null) {
-        	Long id = groupDao.insert(dto);
+        	Long id = productDao.insert(dto);
         	if (id != null && id > 0) {
-        		found = groupDao.findById(id, CurrentUser.getAccountId());
-            return new Response(Map.of("group", found));
+        		found = productDao.findById(id, CurrentUser.getAccountId());
+            return new Response(Map.of("product", found));
           }
         } else {
-        	return Responses.Already.Defined.GROUP;
+        	return Responses.Already.Defined.PRODUCT;
         }
       }
       return Responses.DataProblem.DB_PROBLEM;
@@ -102,8 +104,8 @@ class GroupService {
     }
   }
 
-  Response update(GroupDTO dto) {
-  	Response res = Responses.NotFound.GROUP;
+  Response update(ProductDTO dto) {
+  	Response res = Responses.NotFound.PRODUCT;
 
   	if (dto.getId() != null && dto.getId() > 0) {
 
@@ -111,39 +113,40 @@ class GroupService {
       if (problem == null) {
 
         try (Handle handle = Database.getHandle()) {
-          GroupDao groupDao = handle.attach(GroupDao.class);
+          ProductDao productDao = handle.attach(ProductDao.class);
 
-          //to prevent duplication, checking if any group other than this has the same name!
-          LinkGroup found = groupDao.findByName(dto.getName(), dto.getId(), CurrentUser.getAccountId());
+          //to prevent duplication, checking if any product other than this has the same name!
+          Product found = productDao.findByName(dto.getName(), dto.getId(), CurrentUser.getAccountId());
           if (found == null) {
 
           	//must be found
-          	found = groupDao.findById(dto.getId(), CurrentUser.getAccountId());
+          	found = productDao.findById(dto.getId(), CurrentUser.getAccountId());
             if (found != null) {
             	handle.begin();
             	
-            	boolean isUpdated = groupDao.update(dto);
+            	boolean isUpdated = productDao.update(dto);
   
               if (isUpdated) {
                 // if base price is changed then all the prices and other 
-                // indicators (on both group itself and its links) must be re-calculated accordingly
+                // indicators (on both product itself and its links) must be re-calculated accordingly
                 if (found.getLinkCount() > 0 && found.getPrice().compareTo(dto.getPrice()) != 0) {
 
-                	//refreshes group's totals and alarm if needed!
-              		GroupRefreshResult grr = GroupAlarmService.updateAlarm(dto.getId(), handle);
+                	//refreshes product's totals and alarm if needed!
+              		ProductRefreshResult PRR = ProductAlarmService.updateAlarm(dto.getId(), handle);
   
                   //for returning data!
-            			found.setLevel(grr.getLevel());
-            			found.setTotal(grr.getTotal());
-            			found.setMinPrice(grr.getMinPrice());
-            			found.setAvgPrice(grr.getAvgPrice());
-            			found.setMaxPrice(grr.getMaxPrice());
+            			found.setLevel(PRR.getLevel());
+            			found.setTotal(PRR.getTotal());
+            			found.setMinPrice(PRR.getMinPrice());
+            			found.setAvgPrice(PRR.getAvgPrice());
+            			found.setMaxPrice(PRR.getMaxPrice());
                 }
                 //for returning data!
                 found.setName(dto.getName());
+                found.setDescription(dto.getDescription());
                 found.setPrice(dto.getPrice());
                 
-                res = new Response(Map.of("group", found));
+                res = new Response(Map.of("product", found));
               } else {
               	res = Responses.DataProblem.DB_PROBLEM;
               }
@@ -154,7 +157,7 @@ class GroupService {
               	handle.rollback();
             }
           } else {
-          	res = Responses.Already.Defined.GROUP;
+          	res = Responses.Already.Defined.PRODUCT;
           }
         }
         return res;
@@ -168,17 +171,17 @@ class GroupService {
   }
 
   Response delete(Long id) {
-  	Response res = Responses.Invalid.GROUP;
+  	Response res = Responses.Invalid.PRODUCT;
 
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
-      	GroupDao groupDao = handle.attach(GroupDao.class);
-      	LinkGroup group = groupDao.findById(id, CurrentUser.getAccountId());
+      	ProductDao productDao = handle.attach(ProductDao.class);
+      	Product product = productDao.findById(id, CurrentUser.getAccountId());
       	
-      	if (group != null) {
+      	if (product != null) {
         	handle.begin();
       			
-    			String where = String.format("where group_id=%d and account_id=%d", id, CurrentUser.getAccountId());
+    			String where = String.format("where product_id=%d and account_id=%d", id, CurrentUser.getAccountId());
           Batch batch = handle.createBatch();
           batch.add("SET FOREIGN_KEY_CHECKS=0");
           batch.add("delete from alarm " + where);
@@ -186,11 +189,11 @@ class GroupService {
           batch.add("delete from link_history " + where);
           batch.add("delete from link_spec " + where);
           batch.add("delete from link " + where);
-          batch.add("delete from link_group " + where.replace("group_", "")); //this query determines the success!
+          batch.add("delete from product " + where.replace("product_", "")); //this query determines the success!
           batch.add(
         		String.format(
       				"update account set link_count=link_count-%d where id=%d", 
-      				group.getLinkCount(), CurrentUser.getAccountId()
+      				product.getLinkCount(), CurrentUser.getAccountId()
     				)
       		);
           batch.add("SET FOREIGN_KEY_CHECKS=1");
@@ -198,13 +201,13 @@ class GroupService {
           int[] result = batch.execute();
 
           if (result[6] > 0) {
-            res = new Response(Map.of("count", group.getLinkCount()));
+            res = new Response(Map.of("count", product.getLinkCount()));
             handle.commit();
           } else {
           	handle.rollback();
       		}
       	} else {
-      		res = Responses.NotFound.GROUP;
+      		res = Responses.NotFound.PRODUCT;
       	}
       }
     }
@@ -218,7 +221,7 @@ class GroupService {
     if (res.isOK()) {
       try (Handle handle = Database.getHandle()) {
         AccountDao accountDao = handle.attach(AccountDao.class);
-        GroupDao groupDao = handle.attach(GroupDao.class);
+        ProductDao productDao = handle.attach(ProductDao.class);
     		LinkDao linkDao = handle.attach(LinkDao.class);
     		
     		Set<String> urlList = null;
@@ -237,7 +240,7 @@ class GroupService {
   							Link link = new Link();
   							link.setUrl(url);
   							link.setUrlHash(DigestUtils.md5Hex(url));
-  							link.setGroupId(dto.getGroupId());
+  							link.setProductId(dto.getProductId());
   							link.setAccountId(CurrentUser.getAccountId());
 
   							long id = linkDao.insert(link);
@@ -247,7 +250,7 @@ class GroupService {
   							linkDao.insertHistory(link);
             	});
 
-            	groupDao.increaseWaitingsCount(dto.getGroupId(), urlList.size());
+            	productDao.increaseWaitingsCount(dto.getProductId(), urlList.size());
             	accountDao.increaseLinkCount(CurrentUser.getAccountId(), urlList.size());
 
             	handle.commit();
@@ -269,15 +272,15 @@ class GroupService {
         }
 
         if (res.isOK()) {
-        	LinkGroup group = groupDao.findByIdWithAlarm(dto.getGroupId(), CurrentUser.getAccountId());
+        	Product product = productDao.findByIdWithAlarm(dto.getProductId(), CurrentUser.getAccountId());
 
         	int accountLinkCount = account.getLinkCount() + urlList.size();
 
           Map<String, Object> data = Map.of(
-        		"group", group,
+        		"product", product,
         		"count", urlList.size(),
         		"linkCount", accountLinkCount,
-        		"links", linkDao.findListByGroupId(dto.getGroupId(), CurrentUser.getAccountId())
+        		"links", linkDao.findListByProductId(dto.getProductId(), CurrentUser.getAccountId())
     			);
           res = new Response(data);
         }
@@ -291,7 +294,7 @@ class GroupService {
     return res;
   }
   
-  private String validate(GroupDTO dto) {
+  private String validate(ProductDTO dto) {
     String problem = null;
 
     if (StringUtils.isBlank(dto.getName())) {
@@ -325,7 +328,7 @@ class GroupService {
   private Response validate(AddLinksDTO dto) {
     Response res = null;
 
-  	if (dto.getGroupId() != null && dto.getGroupId() > 0) {
+  	if (dto.getProductId() != null && dto.getProductId() > 0) {
 
       if (StringUtils.isNotBlank(dto.getLinksText())) {
 
@@ -365,7 +368,7 @@ class GroupService {
       }
 
   	} else {
-  		res = Responses.NotFound.GROUP;
+  		res = Responses.NotFound.PRODUCT;
   	}
 
   	return res;

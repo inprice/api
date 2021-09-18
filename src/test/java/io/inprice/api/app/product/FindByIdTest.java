@@ -1,4 +1,4 @@
-package io.inprice.api.app.group;
+package io.inprice.api.app.product;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -25,7 +25,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of GroupController.findById(Long groupId)
+ * Tests the functionality of ProductController.findById(Long productId)
  * 
  * @author mdpinar
  * @since 2021-07-19
@@ -33,7 +33,7 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class FindByIdTest {
 
-	private static final String SERVICE_ENDPOINT = "/group/{id}";
+	private static final String SERVICE_ENDPOINT = "/product/{id}";
 
 	@BeforeClass
 	public static void setup() {
@@ -50,26 +50,26 @@ public class FindByIdTest {
 
 	/**
 	 * Consists of four steps;
-	 *	a) to gather other account's groups, admin is logged in
-	 *	b) finds some specific groups
+	 *	a) to gather other account's products, admin is logged in
+	 *	b) finds some specific products
 	 *  c) picks one of them
-	 *  d) evil user tries to find the group
+	 *  d) evil user tries to find the product
 	 */
 	@Test
-	public void Group_not_found_WHEN_trying_to_find_someone_elses_group() {
+	public void Product_not_found_WHEN_trying_to_find_someone_elses_product() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
 
-		JSONArray groupList = TestFinder.searchGroups(cookies, "Group X");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product X");
 		TestUtils.logout(cookies); //here is important!
 		
-		assertNotNull(groupList);
-		JSONObject group = groupList.getJSONObject(0);
+		assertNotNull(productList);
+		JSONObject product = productList.getJSONObject(0);
 
-		//evil user tries to find the group
-		JSONObject json = callTheService(group.getLong("id"));
+		//evil user tries to find the product
+		JSONObject json = callTheService(product.getLong("id"));
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Group not found!", json.getString("reason"));
+		assertEquals("Product not found!", json.getString("reason"));
 	}
 
 	@Test
@@ -84,7 +84,7 @@ public class FindByIdTest {
 	 * Consists of three steps;
 	 * 	a) super user logs in
 	 * 	b) binds to a specific account
-	 * 	c) gets group list (must not be empty)
+	 * 	c) gets product list (must not be empty)
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_superuser_AND_bound_account() {
@@ -101,13 +101,13 @@ public class FindByIdTest {
 		JSONObject json = res.getBody().getObject();
 		assertEquals(200, json.getInt("status"));
 
-		JSONArray groupList = TestFinder.searchGroups(cookies, "Group D");
-		JSONObject group = groupList.getJSONObject(0);
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product D");
+		JSONObject product = productList.getJSONObject(0);
 		
 		res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.routeParam("id", ""+group.getLong("id"))
+			.routeParam("id", ""+product.getLong("id"))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -127,17 +127,17 @@ public class FindByIdTest {
 
 		Cookies cookies = TestUtils.login(roleUserMap.get(TestRoles.ADMIN));
 
-		JSONArray groupList = TestFinder.searchGroups(cookies, "Group G");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product G");
 		TestUtils.logout(cookies);
 
-		assertNotNull(groupList);
-		assertEquals(1, groupList.length());
+		assertNotNull(productList);
+		assertEquals(1, productList.length());
 
-		//get the first group
-		JSONObject group = groupList.getJSONObject(0);
+		//get the first product
+		JSONObject product = productList.getJSONObject(0);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {
-			JSONObject json = callTheService(roleUser.getValue(), group.getLong("id"), (TestRoles.VIEWER.equals(roleUser.getKey()) ? 1 : 0));
+			JSONObject json = callTheService(roleUser.getValue(), product.getLong("id"), (TestRoles.VIEWER.equals(roleUser.getKey()) ? 1 : 0));
 
 			assertEquals(roleUser.getKey().name(), 200, json.getInt("status"));
   		assertTrue(json.has("data"));

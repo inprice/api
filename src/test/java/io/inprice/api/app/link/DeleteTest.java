@@ -103,14 +103,14 @@ public class DeleteTest {
 		//picks one of those links
 		JSONObject link = linkList.getJSONObject(0);
 		Long[] linkIds = { link.getLong("id") };
-		Long fromGroupId = link.getLong("groupId");
+		Long fromProductId = link.getLong("productId");
 
 		//evil user logs in
 		cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.EDITOR());
 
 		//builds the body up
 		JSONObject body = new JSONObject();
-		body.put("fromGroupId", fromGroupId);
+		body.put("fromProductId", fromProductId);
 		body.put("linkIdSet", linkIds);
 
 		//tries to delete other users' links
@@ -154,20 +154,20 @@ public class DeleteTest {
   		assertEquals(2, linkList.length());
   
   		//gathers two of them
-  		Long fromGroupId = null;
+  		Long fromProductId = null;
   		Long[] linkIds = new Long[2];
   		
   		for (int i = 0; i < 2; i++) {
   			JSONObject link = linkList.getJSONObject(i);
   			linkIds[i] = link.getLong("id");
-  			fromGroupId = link.getLong("groupId");
+  			fromProductId = link.getLong("productId");
   		}
 
-  		assertNotNull(fromGroupId);
+  		assertNotNull(fromProductId);
 
   		//builds the body up
   		JSONObject body = new JSONObject();
-  		body.put("fromGroupId", fromGroupId);
+  		body.put("fromProductId", fromProductId);
   		body.put("linkIdSet", linkIds);
   
   		//deletes those selected links
@@ -184,26 +184,26 @@ public class DeleteTest {
   		assertTrue(json.has("data"));
 
   		JSONObject data = json.getJSONObject("data");
-  		assertTrue(data.has("group"));
+  		assertTrue(data.has("product"));
 		}
 	}
 
-	private JSONObject callTheService(Long groupId, Long[] linkIds) {
-		return callTheService(TestAccounts.Standard_plan_and_no_extra_users.ADMIN(), groupId, linkIds);
+	private JSONObject callTheService(Long productId, Long[] linkIds) {
+		return callTheService(TestAccounts.Standard_plan_and_no_extra_users.ADMIN(), productId, linkIds);
 	}
 
-	private JSONObject callTheService(JSONObject user, Long groupId, Long[] linkIds) {
-		return callTheService(user, groupId, linkIds, 0);
+	private JSONObject callTheService(JSONObject user, Long productId, Long[] linkIds) {
+		return callTheService(user, productId, linkIds, 0);
 	}
 	
-	private JSONObject callTheService(JSONObject user, Long groupId, Long[] linkIds, int session) {
+	private JSONObject callTheService(JSONObject user, Long productId, Long[] linkIds, int session) {
 		Cookies cookies = TestUtils.login(user);
 		
 		JSONObject body = null;
-		if (groupId != null || linkIds != null) {
+		if (productId != null || linkIds != null) {
 			body = new JSONObject();
 
-			if (groupId != null) body.put("fromGroupId", groupId);
+			if (productId != null) body.put("fromProductId", productId);
 			if (linkIds != null && linkIds.length > 0) body.put("linkIdSet", linkIds);
 		}
 

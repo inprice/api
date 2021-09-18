@@ -15,7 +15,7 @@ truncate table test.announce_log;
 truncate table test.checkout;
 truncate table test.coupon;
 truncate table test.link;
-truncate table test.link_group;
+truncate table test.product;
 truncate table test.link_history;
 truncate table test.link_price;
 truncate table test.link_spec;

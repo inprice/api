@@ -1,4 +1,4 @@
-package io.inprice.api.app.group;
+package io.inprice.api.app.product;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -22,7 +22,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of GroupController.addLinks(AddLinksDTO)
+ * Tests the functionality of ProductController.addLinks(AddLinksDTO)
  * 
  * @author mdpinar
  * @since 2021-07-22
@@ -30,11 +30,11 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class AddLinksTest {
 
-	private static final String SERVICE_ENDPOINT = "/group/add-links";
+	private static final String SERVICE_ENDPOINT = "/product/add-links";
 
 	private static final JSONObject SAMPLE_BODY = 
 			new JSONObject()
-				.put("groupId", 1)
+				.put("productId", 1)
   			.put("linksText", "https://url-1.com/abc");
 
 	private static final String VALID_URLS = 
@@ -77,14 +77,14 @@ public class AddLinksTest {
 	}
 
 	@Test
-	public void Group_not_found_WITHOUT_id() {
+	public void Product_not_found_WITHOUT_id() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.remove("groupId");
+		body.remove("productId");
 		
 		JSONObject json = callTheService(body);
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Group not found!", json.getString("reason"));
+		assertEquals("Product not found!", json.getString("reason"));
 	}
 
 	@Test
@@ -162,16 +162,16 @@ public class AddLinksTest {
 	public void You_can_add_up_to_X_links() {
 		Cookies cookies = TestUtils.login(TestAccounts.Basic_plan_but_no_extra_user.ADMIN());
 		
-		JSONArray groupList = TestFinder.searchGroups(cookies, "Group 2");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product 2");
 		TestUtils.logout(cookies); //here is important!
 
-		assertNotNull(groupList);
-		assertEquals(1, groupList.length());
+		assertNotNull(productList);
+		assertEquals(1, productList.length());
 		
-		JSONObject group = groupList.getJSONObject(0);
+		JSONObject product = productList.getJSONObject(0);
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("groupId", group.getLong("id")); //here is also important!
+		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", VALID_URLS);
 
 		JSONObject json = callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
@@ -184,13 +184,13 @@ public class AddLinksTest {
 	public void You_are_allowed_to_upload_up_to_100_URLs_at_once() {
 		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_with_no_user.ADMIN());
 		
-		JSONArray groupList = TestFinder.searchGroups(cookies, "Group A");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product A");
 		TestUtils.logout(cookies); //here is important!
 
-		assertNotNull(groupList);
-		assertEquals(1, groupList.length());
+		assertNotNull(productList);
+		assertEquals(1, productList.length());
 		
-		JSONObject group = groupList.getJSONObject(0);
+		JSONObject product = productList.getJSONObject(0);
 		
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i <= 100; i++) {
@@ -200,7 +200,7 @@ public class AddLinksTest {
 		}
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("groupId", group.getLong("id")); //here is also important!
+		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", sb.toString());
 
 		JSONObject json = callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
@@ -213,16 +213,16 @@ public class AddLinksTest {
 	public void Everything_must_be_ok_WITH_editor() {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.EDITOR());
 		
-		JSONArray groupList = TestFinder.searchGroups(cookies, "Group R");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product R");
 		TestUtils.logout(cookies); //here is important!
 
-		assertNotNull(groupList);
-		assertEquals(1, groupList.length());
+		assertNotNull(productList);
+		assertEquals(1, productList.length());
 		
-		JSONObject group = groupList.getJSONObject(0);
+		JSONObject product = productList.getJSONObject(0);
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("groupId", group.getLong("id")); //here is also important!
+		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", "https://blue-dot.com/xsa-123");
 
 		JSONObject json = callTheService(TestAccounts.Standard_plan_and_one_extra_user.EDITOR(), body, 0);
@@ -231,23 +231,23 @@ public class AddLinksTest {
 		assertTrue(json.has("data"));
 
 		JSONObject data = json.getJSONObject("data");
-		assertTrue(data.has("group"));
+		assertTrue(data.has("product"));
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.ADMIN());
 		
-		JSONArray groupList = TestFinder.searchGroups(cookies, "Group S");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product S");
 		TestUtils.logout(cookies); //here is important!
 
-		assertNotNull(groupList);
-		assertEquals(1, groupList.length());
+		assertNotNull(productList);
+		assertEquals(1, productList.length());
 		
-		JSONObject group = groupList.getJSONObject(0);
+		JSONObject product = productList.getJSONObject(0);
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("groupId", group.getLong("id")); //here is also important!
+		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", "https://red-planet.com/mars/aa123");
 
 		JSONObject json = callTheService(TestAccounts.Standard_plan_and_one_extra_user.ADMIN(), body, 0);
@@ -256,7 +256,7 @@ public class AddLinksTest {
 		assertTrue(json.has("data"));
 
 		JSONObject data = json.getJSONObject("data");
-		assertTrue(data.has("group"));
+		assertTrue(data.has("product"));
 	}
 
 	private JSONObject callTheService(JSONObject body) {

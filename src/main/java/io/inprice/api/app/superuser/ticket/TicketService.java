@@ -123,9 +123,7 @@ public class TicketService {
     }
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	where.append(" and ");
-    	where.append(dto.getSearchBy().getFieldName());
-    	where.append(" like '%");
+    	where.append(" and body like '%");
       where.append(dto.getTerm());
       where.append("%' ");
     }

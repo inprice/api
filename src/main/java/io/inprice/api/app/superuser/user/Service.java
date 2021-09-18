@@ -40,7 +40,9 @@ class Service {
 	Response search(BaseSearchDTO dto) {
   	try (Handle handle = Database.getHandle()) {
     	Dao superDao = handle.attach(Dao.class);
-    	return new Response(superDao.search(DTOHelper.normalizeSearch(dto, true, false)));
+      dto = DTOHelper.normalizeSearch(dto, true, false);
+      dto.setTerm("%"+dto.getTerm());
+      return new Response(superDao.search(dto));
     }
 	}
 

@@ -69,7 +69,7 @@ public class DeleteTest {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
 
 		//searches some specific links
-		JSONArray alarmList = TestFinder.searchAlarms(cookies, "GROUP");
+		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(alarmList);
@@ -127,21 +127,21 @@ public class DeleteTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_a_group_WITH_editor() {
+	public void Everything_must_be_ok_FOR_a_product_WITH_editor() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
 
-		JSONArray alarmedGroupList = TestFinder.searchAlarms(cookies, "GROUP");
+		JSONArray alarmedProductList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
-		assertNotNull(alarmedGroupList);
-		assertEquals(1, alarmedGroupList.length());
+		assertNotNull(alarmedProductList);
+		assertEquals(1, alarmedProductList.length());
 
-		//get the first alarm for a group
-		JSONObject alarmedGroup = alarmedGroupList.getJSONObject(0);
+		//get the first alarm for a product
+		JSONObject alarmedProduct = alarmedProductList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.routeParam("id", ""+alarmedGroup.getLong("id"))
+			.routeParam("id", ""+alarmedProduct.getLong("id"))
 			.asJson();
 		TestUtils.logout(cookies);
 

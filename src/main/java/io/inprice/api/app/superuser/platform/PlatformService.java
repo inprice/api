@@ -30,8 +30,7 @@ class PlatformService {
     StringBuilder where = new StringBuilder("where 1=1 ");
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	where.append(" and ");
-  		where.append(dto.getSearchBy().getFieldName());
+    	where.append(" and CONCAT_WS(name, domain)");
       where.append(" like '%");
       where.append(dto.getTerm());
       where.append("%' ");

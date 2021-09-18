@@ -14,8 +14,8 @@ import io.inprice.api.app.account.AccountDao;
 import io.inprice.api.app.alarm.dto.AlarmDTO;
 import io.inprice.api.app.alarm.dto.OrderBy;
 import io.inprice.api.app.alarm.dto.SearchDTO;
-import io.inprice.api.app.group.GroupDao;
 import io.inprice.api.app.link.LinkDao;
+import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
@@ -30,7 +30,7 @@ import io.inprice.common.meta.AlarmTopic;
 import io.inprice.common.models.Account;
 import io.inprice.common.models.Alarm;
 import io.inprice.common.models.Link;
-import io.inprice.common.models.LinkGroup;
+import io.inprice.common.models.Product;
 
 /**
  * 
@@ -61,7 +61,7 @@ public class AlarmService {
           	boolean doesExist = 
           			alarmDao.doesExistByTopicId(
         					dto.getTopic().name().toLowerCase(), 
-        					(AlarmTopic.LINK.equals(dto.getTopic()) ? dto.getLinkId() : dto.getGroupId()), 
+        					(AlarmTopic.LINK.equals(dto.getTopic()) ? dto.getLinkId() : dto.getProductId()), 
         					CurrentUser.getAccountId()
       					);
           	
@@ -76,7 +76,7 @@ public class AlarmService {
     						if (AlarmTopic.LINK.equals(dto.getTopic())) {
     							isOK = alarmDao.setAlarmForLink(dto.getLinkId(), id, CurrentUser.getAccountId());
     						} else {
-    							isOK = alarmDao.setAlarmForGroup(dto.getGroupId(), id, CurrentUser.getAccountId());
+    							isOK = alarmDao.setAlarmForProduct(dto.getProductId(), id, CurrentUser.getAccountId());
     						}
     
     						if (isOK) {
@@ -90,7 +90,7 @@ public class AlarmService {
     							res = Responses.DataProblem.DB_PROBLEM;
     						}
   	          } else {
-  	            res = (AlarmTopic.LINK.equals(dto.getTopic()) ? Responses.NotFound.LINK : Responses.NotFound.GROUP);
+  	            res = (AlarmTopic.LINK.equals(dto.getTopic()) ? Responses.NotFound.LINK : Responses.NotFound.PRODUCT);
     					}
 	          } else {
 	          	res = Responses.Already.Defined.ALARM;
@@ -150,7 +150,7 @@ public class AlarmService {
 					if (AlarmTopic.LINK.equals(alarm.getTopic())) {
 						isOK = alarmDao.removeAlarmFromLink(alarm.getLinkId(), CurrentUser.getAccountId());
 					} else {
-						isOK = alarmDao.removeAlarmFromGroup(alarm.getGroupId(), CurrentUser.getAccountId());
+						isOK = alarmDao.removeAlarmFromProduct(alarm.getProductId(), CurrentUser.getAccountId());
 					}
 
 					if (isOK) {
@@ -225,10 +225,10 @@ public class AlarmService {
 		// ---------------------------------------------------
 		// fetching the data
 		// ---------------------------------------------------
-		
-		String selectForGroups = 
+
+		String selectForProducts = 
 				"select a.*, g.name as _name from alarm a " +
-		    "inner join link_group g on g.id = a.group_id " + generateNameLikeClause(dto, "g") +
+		    "inner join product g on g.id = a.product_id " + generateNameLikeClause(dto, "g") +
 		    where;
 		
 		String selectForLinks = 
@@ -238,12 +238,12 @@ public class AlarmService {
 
 		String select = null;
 		
-		if (AlarmTopic.GROUP.equals(dto.getTopic())) {
-			select = selectForGroups;
+		if (AlarmTopic.PRODUCT.equals(dto.getTopic())) {
+			select = selectForProducts;
 		} else if (AlarmTopic.LINK.equals(dto.getTopic())) {
 			select = selectForLinks;
 		} else {
-			select = selectForGroups + " union " + selectForLinks;
+			select = selectForProducts + " union " + selectForLinks;
 		}
 
 		String orderBy = " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir();
@@ -296,7 +296,7 @@ public class AlarmService {
 			problem = "Topic cannot be empty!";
 		}
 
-		if (problem == null && dto.getGroupId() == null && dto.getLinkId() == null) {
+		if (problem == null && dto.getProductId() == null && dto.getLinkId() == null) {
 			problem = "Topic id cannot be empty!";
 		}
 
@@ -359,33 +359,33 @@ public class AlarmService {
   			Link link = linkDao.findById(dto.getLinkId(), CurrentUser.getAccountId());
   			if (link != null) {
   				pair = new Pair<>();
-  				pair.setLeft(link.getStatusGroup().name());
+  				pair.setLeft(link.getGrup().name());
   				pair.setRight(link.getPrice());
   			}
   			break;
 			}
 
-			case GROUP: {
-  			GroupDao groupDao = handle.attach(GroupDao.class);
-  			LinkGroup group = groupDao.findById(dto.getGroupId(), CurrentUser.getAccountId());
-  			if (group != null) {
+			case PRODUCT: {
+  			ProductDao productDao = handle.attach(ProductDao.class);
+  			Product product = productDao.findById(dto.getProductId(), CurrentUser.getAccountId());
+  			if (product != null) {
   				pair = new Pair<>();
-  				pair.setLeft(group.getLevel().name());
+  				pair.setLeft(product.getLevel().name());
   				switch (dto.getSubject()) {
   				case MINIMUM: {
-  					pair.setRight(group.getMinPrice());
+  					pair.setRight(product.getMinPrice());
   					break;
   				}
   				case AVERAGE: {
-  					pair.setRight(group.getAvgPrice());
+  					pair.setRight(product.getAvgPrice());
   					break;
   				}
   				case MAXIMUM: {
-  					pair.setRight(group.getMaxPrice());
+  					pair.setRight(product.getMaxPrice());
   					break;
   				}
   				case TOTAL: {
-  					pair.setRight(group.getTotal());
+  					pair.setRight(product.getTotal());
   					break;
   				}
   				default:

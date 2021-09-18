@@ -1,4 +1,4 @@
-package io.inprice.api.app.group;
+package io.inprice.api.app.product;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -24,7 +24,7 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of GroupController.search(SearchDTO)
+ * Tests the functionality of ProductController.search(SearchDTO)
  * 
  * @author mdpinar
  * @since 2021-07-20
@@ -32,7 +32,7 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class SearchTest {
 
-	private static final String SERVICE_ENDPOINT = "/groups/search";
+	private static final String SERVICE_ENDPOINT = "/products/search";
 
 	@BeforeClass
 	public static void setup() {
@@ -54,7 +54,7 @@ public class SearchTest {
 
 	@Test
 	public void You_must_bind_an_account_WITH_superuser_WITHOUT_binding_account() {
-		JSONObject json = callTheService(Fixtures.SUPER_USER, "Group A");
+		JSONObject json = callTheService(Fixtures.SUPER_USER, "Product A");
 
 		assertEquals(915, json.getInt("status"));
 		assertEquals("You must bind an account!", json.getString("reason"));
@@ -110,7 +110,7 @@ public class SearchTest {
 		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {
-			JSONObject json = callTheService(roleUser.getValue(), "Group K", (TestRoles.VIEWER.equals(roleUser.getKey()) ? 1 : 0));
+			JSONObject json = callTheService(roleUser.getValue(), "Product K", (TestRoles.VIEWER.equals(roleUser.getKey()) ? 1 : 0));
 
 			assertEquals(roleUser.getKey().name(), 200, json.getInt("status"));
   		assertTrue(json.has("data"));

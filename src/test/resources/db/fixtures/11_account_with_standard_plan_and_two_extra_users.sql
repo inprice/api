@@ -50,12 +50,12 @@ insert into test.membership (email, user_id, account_id, role, status) values (@
 insert into test.membership (email, user_id, account_id, role, status) values (@viewer_email, @viewer_id, @account_id, 'VIEWER', 'JOINED');
 
 -- -----------------------
--- 2 groups and 12 links
--- group_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
+-- 2 products and 12 links
+-- product_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
 -- -----------------------
-call sp_create_group_and_links('K', 3, 0, 1, 1, 'https://amazon.com/', 2, 'Account-F', @account_id);
-call sp_create_group_and_links('G', 2, 1, 0, 1, 'https://ebay.com/', 12, 'Account-F', @account_id);
-call sp_create_group_and_links('I', 1, 1, 1, 0, 'https://mediamarkt.es', 40, 'Account-F', @account_id);
+call sp_create_product_and_links('K', 3, 0, 1, 1, 'https://amazon.com/', 2, 'Account-F', @account_id);
+call sp_create_product_and_links('G', 2, 1, 0, 1, 'https://ebay.com/', 12, 'Account-F', @account_id);
+call sp_create_product_and_links('I', 1, 1, 1, 0, 'https://mediamarkt.es', 40, 'Account-F', @account_id);
 
 -- tickets
 -- -----------------------

@@ -16,7 +16,7 @@ import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.mappers.LinkPriceMapper;
 import io.inprice.common.mappers.LinkSpecMapper;
 import io.inprice.common.meta.LinkStatus;
-import io.inprice.common.meta.LinkStatusGroup;
+import io.inprice.common.meta.Grup;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
@@ -36,15 +36,15 @@ public interface LinkDao {
   @UseRowMapper(LinkMapper.class)
   List<Link> findListByIdSet(@BindList("idSet") Set<Long> idSet);
 
-  @SqlUpdate("update link set pre_status=status, status=:status, status_group=:statusGroup, updated_at=now() where id in (<idSet>)")
-  int setStatus(@BindList("idSet") Set<Long> idSet, @Bind("status") LinkStatus status, @Bind("statusGroup") LinkStatusGroup statusGroup);
+  @SqlUpdate("update link set pre_status=status, status=:status, grup=:grup, updated_at=now() where id in (<idSet>)")
+  int setStatus(@BindList("idSet") Set<Long> idSet, @Bind("status") LinkStatus status, @Bind("grup") Grup grup);
 
-  @SqlUpdate("update link set pre_status=status, status=:status, status_group=:statusGroup, updated_at=now() where id=:id")
-  int setStatus(@Bind("id") Long id, @Bind("status") LinkStatus status, @Bind("statusGroup") LinkStatusGroup statusGroup);
+  @SqlUpdate("update link set pre_status=status, status=:status, grup=:grup, updated_at=now() where id=:id")
+  int setStatus(@Bind("id") Long id, @Bind("status") LinkStatus status, @Bind("grup") Grup grup);
 
   @SqlUpdate(
-		"insert into link_history (link_id, status, parse_problem, group_id, account_id) " +
-		"select id, status, parse_problem, group_id, account_id from link where id in (<idSet>) "
+		"insert into link_history (link_id, status, parse_problem, product_id, account_id) " +
+		"select id, status, parse_problem, product_id, account_id from link where id in (<idSet>) "
 	)
   int insertHistory(@BindList("idSet") Set<Long> idSet);
 

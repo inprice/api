@@ -151,18 +151,18 @@ public class InsertTest {
 	public void You_have_already_set_an_alarm_for_this_record() {
 		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_no_extra_users.ADMIN());
 
-		JSONArray alarmedGroupList = TestFinder.searchAlarms(cookies, "GROUP");
+		JSONArray alarmedProductList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
-		assertNotNull(alarmedGroupList);
-		assertEquals(1, alarmedGroupList.length());
+		assertNotNull(alarmedProductList);
+		assertEquals(1, alarmedProductList.length());
 
 		//get the first link
-		JSONObject alarmedGroup = alarmedGroupList.getJSONObject(0);
+		JSONObject alarmedProduct = alarmedProductList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody("GROUP", alarmedGroup.getLong("groupId"), "STATUS", "CHANGED"))
+			.body(createBody("PRODUCT", alarmedProduct.getLong("productId"), "STATUS", "CHANGED"))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -208,21 +208,21 @@ public class InsertTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_a_group_WITH_editor() {
+	public void Everything_must_be_ok_FOR_a_product_WITH_editor() {
 		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
 
-		JSONArray groupList = TestFinder.searchGroups(cookies, "");
+		JSONArray productList = TestFinder.searchProducts(cookies, "");
 
-		assertNotNull(groupList);
-		assertEquals(2, groupList.length());
+		assertNotNull(productList);
+		assertEquals(2, productList.length());
 
-		//get the first alarm for a group
-		JSONObject group = groupList.getJSONObject(1); //since first group is already alarmed!
+		//get the first alarm for a product
+		JSONObject product = productList.getJSONObject(1); //since first product is already alarmed!
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody("GROUP", group.getLong("id"), "STATUS", "CHANGED"))
+			.body(createBody("PRODUCT", product.getLong("id"), "STATUS", "CHANGED"))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -231,7 +231,7 @@ public class InsertTest {
 
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
-		assertEquals(group.getLong("id"), data.getLong("groupId"));
+		assertEquals(product.getLong("id"), data.getLong("productId"));
 	}
 
 	private JSONObject createBody(String topic, Long id, String subject, String when) {
@@ -243,7 +243,7 @@ public class InsertTest {
 
 		if (topicId != null) {
   		if ("LINK".equals(topic)) body.put("linkId", topicId);
-  		if ("GROUP".equals(topic)) body.put("groupId", topicId);
+  		if ("PRODUCT".equals(topic)) body.put("productId", topicId);
 		}
 
 		if (topic != null) body.put("topic", topic);

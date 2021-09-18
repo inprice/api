@@ -66,8 +66,8 @@ public class Consts {
       public static final String CHANGE_ROLE = BASE + "/change-role";
     }
 
-    public static class Group {
-      public static final String BASE = "/group";
+    public static class Product {
+      public static final String BASE = "/product";
       public static final String SEARCH = BASE + "s/search";
       public static final String ID_NAME_PAIRS = BASE + "/pairs";
       public static final String LINKS = BASE + "/links";

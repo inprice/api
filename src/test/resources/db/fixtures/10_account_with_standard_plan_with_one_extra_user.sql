@@ -30,11 +30,11 @@ insert into test.membership (email, user_id, account_id, role, status) values (@
 insert into test.membership (email, user_id, account_id, role, status) values (@editor_email, @editor_id, @account_id, 'EDITOR', 'JOINED');
 
 -- -----------------------
--- 2 groups and 11 links
--- group_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
+-- 2 products and 11 links
+-- product_name_addition, actives, tryings, waitings, problems, url, platform_id, account_name, account_id
 -- -----------------------
-call sp_create_group_and_links('R', 5, 2, 1, 2, 'https://amazon.com/', 2, 'Account-E', @account_id);
-call sp_create_group_and_links('S', 0, 0, 1, 0, 'https://gittigidiyor.com', 83, 'Account-E', @account_id);
+call sp_create_product_and_links('R', 5, 2, 1, 2, 'https://amazon.com/', 2, 'Account-E', @account_id);
+call sp_create_product_and_links('S', 0, 0, 1, 0, 'https://gittigidiyor.com', 83, 'Account-E', @account_id);
 
 -- tickets
 -- -----------------------

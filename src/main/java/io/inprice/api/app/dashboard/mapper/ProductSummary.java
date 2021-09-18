@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class GroupSummary implements Serializable {
+public class ProductSummary implements Serializable {
   
   private static final long serialVersionUID = -1701445492576224844L;
 

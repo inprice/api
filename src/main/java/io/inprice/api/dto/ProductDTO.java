@@ -15,7 +15,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class GroupDTO {
+public class ProductDTO {
 
   private Long id;
   private String name;

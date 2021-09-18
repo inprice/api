@@ -17,6 +17,7 @@ import io.inprice.api.app.membership.dto.InvitationUpdateDTO;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.config.Props;
+import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.info.Response;
@@ -342,18 +343,21 @@ class MembershipService {
       template = EmailTemplate.INVITATION_FOR_NEW_USERS;
     }
 
-    EmailPublisher.publish(
-			EmailData.builder()
-  			.template(template)
-  			.to(dto.getEmail())
-  			.subject("About your invitation for " + CurrentUser.getAccountName() + " at inprice.io")
-  			.data(mailMap)
-  		.build()	
-		);
-
     logger.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountName());
 
-  	return Responses.OK;
+    if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST)) {
+    	return new Response(mailMap);
+    } else {
+      EmailPublisher.publish(
+  			EmailData.builder()
+    			.template(template)
+    			.to(dto.getEmail())
+    			.subject("About your invitation for " + CurrentUser.getAccountName() + " at inprice.io")
+    			.data(mailMap)
+    		.build()	
+  		);
+    	return Responses.OK;
+    }
   }
 
   private String validate(InvitationSendDTO dto) {

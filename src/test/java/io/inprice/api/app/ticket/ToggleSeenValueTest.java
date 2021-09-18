@@ -97,7 +97,7 @@ public class ToggleSeenValueTest {
 		assertNotNull(ticketList);
 		assertEquals(1, ticketList.length());
 
-		//get the first alarm for a group
+		//get the first alarm for a product
 		JSONObject ticket = ticketList.getJSONObject(0);
 		ticket.put("level", "HIGH");
 		ticket.put("body", "This is an updated body!");

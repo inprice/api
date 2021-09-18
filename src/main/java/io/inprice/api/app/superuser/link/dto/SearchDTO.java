@@ -13,7 +13,6 @@ import lombok.Setter;
 @Setter
 public class SearchDTO extends BaseSearchDTO {
 
-	private SearchBy searchBy = SearchBy.NAME;
   private Set<LinkStatus> statuses;
   private AlarmStatus alarmStatus = AlarmStatus.ALL;
   private OrderBy orderBy = OrderBy.NAME;

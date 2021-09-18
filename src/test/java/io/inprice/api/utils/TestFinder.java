@@ -63,14 +63,14 @@ public class TestFinder {
 	}
 
 	/**
-	 * Searches groups by name
+	 * Searches products by name
 	 * 
 	 * @param cookies
 	 * @param term - LIKE by name
 	 * @return
 	 */
-	public static JSONArray searchGroups(Cookies cookies, String byName) {
-		HttpResponse<JsonNode> res = Unirest.post("/groups/search")
+	public static JSONArray searchProducts(Cookies cookies, String byName) {
+		HttpResponse<JsonNode> res = Unirest.post("/products/search")
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
