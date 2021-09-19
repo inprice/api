@@ -30,7 +30,7 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class SearchTest {
 
-	private static final String SERVICE_ENDPOINT = "/def/categorys";
+	private static final String SERVICE_ENDPOINT = "/def/categorys/search";
 
 	@BeforeClass
 	public static void setup() {

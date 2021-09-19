@@ -50,7 +50,7 @@ public class CategoryController extends AbstractController {
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     // search
-    app.post(Consts.Paths.Definitions.CATEGORY + "s", (ctx) -> {
+    app.post(Consts.Paths.Definitions.CATEGORY + "s/search", (ctx) -> {
     	if (ctx.body().isBlank()) {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
