@@ -23,20 +23,20 @@ public class ProductController extends AbstractController {
   	app.get(Consts.Paths.Product.BASE + "/:id", (ctx) -> {
   		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
   		ctx.json(service.findById(id));
-  	}, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+  	}, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     app.get(Consts.Paths.Product.ID_NAME_PAIRS + "/:id", (ctx) -> {
   		//Long excludedId = ctx.pathParam("id", Long.class).getOrNull();
   		Long excludedId = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
   		//Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(service.getIdNameList(excludedId));
-    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     // find links and details by id
     app.get(Consts.Paths.Product.LINKS + "/:id", (ctx) -> {
       Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(service.findLinksById(id));
-    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     // search
     app.post(Consts.Paths.Product.SEARCH, (ctx) -> {
@@ -46,7 +46,7 @@ public class ProductController extends AbstractController {
 	  		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
 	  		ctx.json(service.search(dto));
     	}
-    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     // insert
     app.post(Consts.Paths.Product.BASE, (ctx) -> {

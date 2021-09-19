@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import io.inprice.common.meta.UserRole;
-import io.inprice.common.models.Account;
+import io.inprice.common.models.Workspace;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
 import lombok.Getter;
@@ -22,8 +22,8 @@ public class ForResponse implements Serializable {
 
   private String user;
   private String email;
-  private String account;
-  private String accountStatus;
+  private String workspace;
+  private String workspaceStatus;
   private Integer planId;
   private String planName;
   private Integer linkCount;
@@ -34,31 +34,31 @@ public class ForResponse implements Serializable {
   private String currencyFormat;
   private UserRole role;
 
-  private Long accountId; //for only super users!
+  private Long workspaceId; //for only super users!
   
-  public ForResponse(Account account, String user, String email, UserRole role, String timezone) {
+  public ForResponse(Workspace workspace, String user, String email, UserRole role, String timezone) {
     this.user = user;
     this.email = email;
-    this.account = account.getName();
-    this.accountStatus = account.getStatus().name();
-    if (account.getPlan() != null) {
-    	this.planId = account.getPlan().getId();
-    	this.planName = account.getPlan().getName();
+    this.workspace = workspace.getName();
+    this.workspaceStatus = workspace.getStatus().name();
+    if (workspace.getPlan() != null) {
+    	this.planId = workspace.getPlan().getId();
+    	this.planName = workspace.getPlan().getName();
     }
-    this.linkCount = account.getLinkCount();
-    this.subsStartedAt = account.getSubsStartedAt();
-    this.subsRenewalAt = account.getSubsRenewalAt();
-    this.lastStatusUpdate = account.getLastStatusUpdate();
+    this.linkCount = workspace.getLinkCount();
+    this.subsStartedAt = workspace.getSubsStartedAt();
+    this.subsRenewalAt = workspace.getSubsRenewalAt();
+    this.lastStatusUpdate = workspace.getLastStatusUpdate();
     this.timezone = timezone;
-    this.currencyFormat = account.getCurrencyFormat();
+    this.currencyFormat = workspace.getCurrencyFormat();
     this.role = role;
   }
 
   public ForResponse(ForResponse forResponse) {
     this.user = forResponse.getUser();
     this.email = forResponse.getEmail();
-    this.account = forResponse.getAccount();
-    this.accountStatus = forResponse.getAccountStatus();
+    this.workspace = forResponse.getWorkspace();
+    this.workspaceStatus = forResponse.getWorkspaceStatus();
     this.planId = forResponse.getPlanId();
     this.planName = forResponse.getPlanName();
     this.linkCount = forResponse.getLinkCount();
@@ -73,8 +73,8 @@ public class ForResponse implements Serializable {
   public ForResponse(ForCookie forCookie, ForRedis forRedis) {
     this.user = forRedis.getUser();
     this.email = forCookie.getEmail();
-    this.account = forRedis.getAccount();
-    this.accountStatus = forRedis.getAccountStatus();
+    this.workspace = forRedis.getWorkspace();
+    this.workspaceStatus = forRedis.getWorkspaceStatus();
     this.planId = forRedis.getPlanId();
     this.planName = forRedis.getPlanName();
     this.linkCount = forRedis.getLinkCount();
@@ -89,8 +89,8 @@ public class ForResponse implements Serializable {
   public ForResponse(ForCookie forCookie, User user, Membership mem) {
     this.user = user.getName();
     this.email = forCookie.getEmail();
-    this.account = mem.getAccountName();
-    this.accountStatus = mem.getAccountStatus().name();
+    this.workspace = mem.getWorkspaceName();
+    this.workspaceStatus = mem.getWorkspaceStatus().name();
     this.planId = mem.getPlanId();
     this.planName = mem.getPlanName();
     this.linkCount = mem.getLinkCount();
@@ -102,14 +102,14 @@ public class ForResponse implements Serializable {
     this.role = UserRole.valueOf(forCookie.getRole());
   }
 
-  public ForResponse(Long accountId, String username, String email, String timezone) {
-  	this.accountId = accountId;
+  public ForResponse(Long workspaceId, String username, String email, String timezone) {
+  	this.workspaceId = workspaceId;
     this.user = username;
     this.email = email;
     this.timezone = timezone;
   	this.role = UserRole.SUPER;
-    this.account = "NOT SELECTED";
-    this.accountStatus = "UNKNOWN";
+    this.workspace = "NOT SELECTED";
+    this.workspaceStatus = "UNKNOWN";
     this.planId = 0;
     this.linkCount = 0;
   }

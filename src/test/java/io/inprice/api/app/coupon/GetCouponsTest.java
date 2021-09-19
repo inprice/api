@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -46,8 +46,8 @@ public class GetCouponsTest {
 	}
 
 	@Test
-	public void Coupon_not_found_FOR_no_coupon_account() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+	public void Coupon_not_found_FOR_no_coupon_workspace() {
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -62,7 +62,7 @@ public class GetCouponsTest {
 	}
 
 	@Test
-	public void You_must_bind_an_account_FOR_superuser_without_account_binding() {
+	public void You_must_bind_an_workspace_FOR_superuser_without_workspace_binding() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
@@ -74,20 +74,20 @@ public class GetCouponsTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an account!", json.get("reason"));
+		assertEquals("You must bind an workspace!", json.get("reason"));
 	}
 
 	/**
 	 * Consists of three steps;
 	 * 	a) super user logs in
-	 * 	b) binds to first account
+	 * 	b) binds to first workspace
 	 * 	c) gets coupon list
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_superuser_and_bound_account() {
+	public void Everything_must_be_ok_WITH_superuser_and_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
-		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/1")
+		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/1")
 			.cookie(cookies)
 			.asJson();
 
@@ -107,9 +107,9 @@ public class GetCouponsTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
-		TestAccounts account = TestAccounts.Second_without_a_plan_and_extra_user;
+		TestWorkspaces workspace = TestWorkspaces.Second_without_a_plan_and_extra_user;
 
-		Cookies cookies = TestUtils.login(account.ADMIN());
+		Cookies cookies = TestUtils.login(workspace.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -122,7 +122,7 @@ public class GetCouponsTest {
 		
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
-		assertEquals(account.getCoupons().size(), data.length());
+		assertEquals(workspace.getCoupons().size(), data.length());
 	}
 
 }

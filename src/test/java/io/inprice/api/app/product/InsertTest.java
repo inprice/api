@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -73,25 +73,25 @@ public class InsertTest {
 	}
 
 	@Test
-	public void Name_must_be_between_3_and_50_chars_WITH_shorter_name() {
+	public void Name_must_be_between_3_and_250_chars_WITH_shorter_name() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("name", "AB");
 
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Name must be between 3 - 50 chars!", json.getString("reason"));
+    assertEquals("Name must be between 3 - 250 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void Name_must_be_between_3_and_50_chars_WITH_longer_name() {
+	public void Name_must_be_between_3_and_250_chars_WITH_longer_name() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("name", RandomStringUtils.randomAlphabetic(51));
+		body.put("name", RandomStringUtils.randomAlphabetic(251));
 		
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-		assertEquals("Name must be between 3 - 50 chars!", json.getString("reason"));
+		assertEquals("Name must be between 3 - 250 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -137,7 +137,7 @@ public class InsertTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 1);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 1);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -146,9 +146,9 @@ public class InsertTest {
 	@Test
 	public void You_already_have_a_product_having_the_same_name() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("name", "Product K of Account-F");
+		body.put("name", "Product K of Workspace-F");
 
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
 
 		assertEquals(875, json.getInt("status"));
 		assertEquals("You already have a product having the same name!", json.getString("reason"));
@@ -159,7 +159,7 @@ public class InsertTest {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("name", "Editor is trying to define a new product!");
 
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
@@ -170,14 +170,14 @@ public class InsertTest {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("name", "Admin is trying to define a new product!");
 
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestAccounts.Pro_plan_with_no_user.ADMIN(), body, 0);
+		return callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), body, 0);
 	}
 	
 	private JSONObject callTheService(JSONObject user, JSONObject body, int session) {

@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -68,15 +68,15 @@ public class UpdateTest {
 
 	/**
 	 * Consists of four steps;
-	 *	a) to gather other account's alarms, admin is logged in
+	 *	a) to gather other workspace's alarms, admin is logged in
 	 *	b) searches some specific alarms
 	 *  c) picks one of those alarms
-	 *  d) evil user tries to update other account's alarm
+	 *  d) evil user tries to update other workspace's alarm
 	 */
 	@Test
 	public void Alarm_not_found_WHEN_trying_to_update_someone_elses_alarm() {
-		//to gather other account's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		//to gather other workspace's links, admin is logged in
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
 		//searches some specific links
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "LINK");
@@ -161,7 +161,7 @@ public class UpdateTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), createBody(1L, "LINK", 1L, "PRICE", "CHANGED"), 1); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(1L, "LINK", 1L, "PRICE", "CHANGED"), 1); //attention!
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));
@@ -177,7 +177,7 @@ public class UpdateTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_a_link_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray alarmedLinkList = TestFinder.searchAlarms(cookies, "LINK");
 
@@ -202,7 +202,7 @@ public class UpdateTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_a_product_WITH_editor() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR());
 
 		JSONArray alarmedProductList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
@@ -250,7 +250,7 @@ public class UpdateTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), body);
+		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), body);
 	}
 
 	private JSONObject callTheService(JSONObject user, JSONObject body) {

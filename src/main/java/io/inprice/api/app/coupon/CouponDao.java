@@ -28,11 +28,11 @@ public interface CouponDao {
 
   @SqlQuery(
     "select * from coupon " + 
-    "where (issued_id=:accountId) " + 
-    "   or (issuer_id=:accountId and issued_id is null) " +
+    "where (issued_id=:workspaceId) " + 
+    "   or (issuer_id=:workspaceId and issued_id is null) " +
     "order by issued_at desc"
   )
   @UseRowMapper(CouponMapper.class)
-  List<Coupon> findListByAccountId(@Bind("accountId") Long accountId);
+  List<Coupon> findListByWorkspaceId(@Bind("workspaceId") Long workspaceId);
 
 }

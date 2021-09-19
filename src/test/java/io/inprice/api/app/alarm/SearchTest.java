@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -48,24 +48,24 @@ public class SearchTest {
 	}
 
 	@Test
-	public void You_must_bind_an_account_WITH_superuser_WITHOUT_binding_account() {
+	public void You_must_bind_an_workspace_WITH_superuser_WITHOUT_binding_workspace() {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, createBody(null));
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an account!", json.getString("reason"));
+		assertEquals("You must bind an workspace!", json.getString("reason"));
 	}
 
 	/**
 	 * Consists of three steps;
 	 * 	a) super user logs in
-	 * 	b) binds to first account
+	 * 	b) binds to first workspace
 	 * 	c) gets alarm list (possibly empty)
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_superuser_AND_bound_account() {
+	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
-		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/1")
+		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/1")
 			.cookie(cookies)
 			.asJson();
 
@@ -87,7 +87,7 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		JSONObject json = callTheService(TestAccounts.Starter_plan_and_one_extra_user.ADMIN(), createBody("LINK"));
+		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN(), createBody("LINK"));
 
 		JSONObject data = json.getJSONObject("data");
 		JSONArray rows = data.getJSONArray("rows");
@@ -98,7 +98,7 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		JSONObject json = callTheService(TestAccounts.Starter_plan_and_one_extra_user.EDITOR(), createBody("PRODUCT"));
+		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR(), createBody("PRODUCT"));
 
 		JSONObject data = json.getJSONObject("data");
 		JSONArray rows = data.getJSONArray("rows");
@@ -109,7 +109,7 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_mixin() {
-		JSONObject json = callTheService(TestAccounts.Starter_plan_and_one_extra_user.EDITOR(), createBody(null));
+		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR(), createBody(null));
 
 		JSONObject data = json.getJSONObject("data");
 		JSONArray rows = data.getJSONArray("rows");
@@ -121,7 +121,7 @@ public class SearchTest {
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), createBody(null), 1); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(null), 1); //attention!
 
 		JSONObject data = json.getJSONObject("data");
 		JSONArray rows = data.getJSONArray("rows");

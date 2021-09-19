@@ -189,7 +189,7 @@ public class AnnounceService {
 		dto.setType(AnnounceType.SYSTEM);
 
 		if (dto.getUserId() != null) dto.setType(AnnounceType.USER);
-		if (dto.getAccountId() != null) dto.setType(AnnounceType.ACCOUNT);
+		if (dto.getWorkspaceId() != null) dto.setType(AnnounceType.WORKSPACE);
 
 		return problem;
 	}

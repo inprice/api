@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -124,7 +124,7 @@ public class InsertTest {
 
 	@Test
 	public void You_havent_picked_a_plan_yet() {
-		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody("LINK", 1L, "PRICE", "CHANGED"), 0);
+		JSONObject json = callTheService(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), createBody("LINK", 1L, "PRICE", "CHANGED"), 0);
 
 		assertEquals(903, json.getInt("status"));
 		assertEquals("You haven't picked a plan yet!", json.getString("reason"));
@@ -133,7 +133,7 @@ public class InsertTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), createBody("LINK", 1L, "PRICE", "CHANGED"), 1); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody("LINK", 1L, "PRICE", "CHANGED"), 1); //attention!
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));
@@ -149,7 +149,7 @@ public class InsertTest {
 
 	@Test
 	public void You_have_already_set_an_alarm_for_this_record() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_no_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN());
 
 		JSONArray alarmedProductList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
@@ -174,7 +174,7 @@ public class InsertTest {
 
 	@Test
 	public void You_have_reached_max_alarm_number_of_your_plan() {
-		JSONObject json = callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), createBody("LINK", 1L, "PRICE", "CHANGED"), 0);
+		JSONObject json = callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), createBody("LINK", 1L, "PRICE", "CHANGED"), 0);
 
 		assertEquals(910, json.getInt("status"));
 		assertEquals("You have reached max alarm number of your plan!", json.getString("reason"));
@@ -182,7 +182,7 @@ public class InsertTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_a_link_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray linkList = TestFinder.searchLinks(cookies, "WAITING");
 
@@ -209,7 +209,7 @@ public class InsertTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_a_product_WITH_editor() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray productList = TestFinder.searchProducts(cookies, "");
 
@@ -257,7 +257,7 @@ public class InsertTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
+		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
 	}
 	
 	private JSONObject callTheService(JSONObject user, JSONObject body, int session) {

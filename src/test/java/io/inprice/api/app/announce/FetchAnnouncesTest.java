@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -61,7 +61,7 @@ public class FetchAnnouncesTest {
 
 	@Test
 	public void Everything_must_be_ok() {
-		Cookies cookies = TestUtils.login(TestAccounts.Without_a_plan_and_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN());
 		
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -74,7 +74,7 @@ public class FetchAnnouncesTest {
 
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
-		assertEquals(3, data.length()); //1 for user, 1 for account and 1 for system level
+		assertEquals(3, data.length()); //1 for user, 1 for workspace and 1 for system level
 	}
 
 }

@@ -14,22 +14,22 @@ import io.inprice.common.models.Announce;
 public interface AnnounceDao {
 
   @SqlUpdate(
-		"insert into announce_log (announce_id, user_id, account_id) " + 
-		"select a.id, <userId>, <accountId> from announce a " +
+		"insert into announce_log (announce_id, user_id, workspace_id) " + 
+		"select a.id, <userId>, <workspaceId> from announce a " +
 		"where (a.type='SYSTEM' " +
       		"or (a.type='USER' and a.user_id=<userId>) " +
-      		"or (a.type='ACCOUNT' and a.account_id=<accountId>)" +
+      		"or (a.type='WORKSPACE' and a.workspace_id=<workspaceId>)" +
       	") " +
 		"  and (now() between a.starting_at and a.ending_at) " +
 		"  and a.id not in (select announce_id from announce_log l where l.user_id=<userId>) "
 	)
-  boolean addLogsForWaitingAnnounces(@Define("userId") Long userId, @Define("accountId") Long accountId);
+  boolean addLogsForWaitingAnnounces(@Define("userId") Long userId, @Define("workspaceId") Long workspaceId);
 
   @SqlQuery(
 		"select * from announce a " + 
 		"where (a.type='SYSTEM' " +
   				"or (a.type='USER' and a.user_id=:userId) " +
-  				"or (a.type='ACCOUNT' and a.account_id=:accountId)" +
+  				"or (a.type='WORKSPACE' and a.workspace_id=:workspaceId)" +
 				") " +
 		"  and a.id not in (select announce_id from announce_log l where l.user_id=:userId) " +
 		"  and (now() between a.starting_at and a.ending_at) " +
@@ -37,6 +37,6 @@ public interface AnnounceDao {
 		"limit 12"
 	)
   @UseRowMapper(AnnounceMapper.class)
-  List<Announce> fetchNotLoggedAnnounces(@Bind("userId") Long userId, @Bind("accountId") Long accountId);
+  List<Announce> fetchNotLoggedAnnounces(@Bind("userId") Long userId, @Bind("workspaceId") Long workspaceId);
 
 }

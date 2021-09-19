@@ -14,9 +14,11 @@ import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.definitions.brand.BrandDao;
+import io.inprice.api.app.definitions.category.CategoryDao;
 import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.app.product.dto.AddLinksDTO;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.dto.ProductDTO;
@@ -27,9 +29,11 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.ProductRefreshResult;
 import io.inprice.common.meta.LinkStatus;
-import io.inprice.common.models.Account;
+import io.inprice.common.models.Brand;
+import io.inprice.common.models.Category;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
+import io.inprice.common.models.Workspace;
 import io.inprice.common.utils.URLUtils;
 
 class ProductService {
@@ -40,7 +44,7 @@ class ProductService {
     try (Handle handle = Database.getHandle()) {
       ProductDao productDao = handle.attach(ProductDao.class);
 
-      Product product = productDao.findByIdWithAlarm(id, CurrentUser.getAccountId());
+      Product product = productDao.findByIdWithAlarm(id, CurrentUser.getWorkspaceId());
       if (product != null) {
         return new Response(product);
       }
@@ -51,7 +55,7 @@ class ProductService {
   Response getIdNameList(Long excludedProductId) {
   	try (Handle handle = Database.getHandle()) {
   		ProductDao productDao = handle.attach(ProductDao.class);
-  		return new Response(productDao.getIdNameList((excludedProductId != null ? excludedProductId : 0), CurrentUser.getAccountId()));
+  		return new Response(productDao.getIdNameList((excludedProductId != null ? excludedProductId : 0), CurrentUser.getWorkspaceId()));
   	}
   }
 
@@ -69,11 +73,11 @@ class ProductService {
     	ProductDao productDao = handle.attach(ProductDao.class);
       LinkDao linkDao = handle.attach(LinkDao.class);
 
-      Product product = productDao.findByIdWithAlarm(id, CurrentUser.getAccountId());
+      Product product = productDao.findByIdWithAlarm(id, CurrentUser.getWorkspaceId());
       if (product != null) {
       	Map<String, Object> dataMap = Map.of(
         	"product", product,
-        	"links", linkDao.findListByProductId(id, CurrentUser.getAccountId())
+        	"links", linkDao.findListByProductId(id, CurrentUser.getWorkspaceId())
       	);
         return new Response(dataMap);
       }
@@ -87,11 +91,21 @@ class ProductService {
       try (Handle handle = Database.getHandle()) {
         ProductDao productDao = handle.attach(ProductDao.class);
 
-        Product found = productDao.findByName(dto.getName(), CurrentUser.getAccountId());
+        //checks if code is given and it is used for another product
+        if (StringUtils.isNotBlank(dto.getCode())) {
+        	Product found = productDao.findByCode(dto.getCode(), CurrentUser.getWorkspaceId());
+          if (found != null) {
+          	return Responses.Already.Defined.PRODUCT;
+          }
+        }
+
+        Product found = productDao.findByName(dto.getName(), CurrentUser.getWorkspaceId());
         if (found == null) {
+        	checkBrand(dto, handle);
+        	checkCategory(dto, handle);
         	Long id = productDao.insert(dto);
         	if (id != null && id > 0) {
-        		found = productDao.findById(id, CurrentUser.getAccountId());
+        		found = productDao.findById(id, CurrentUser.getWorkspaceId());
             return new Response(Map.of("product", found));
           }
         } else {
@@ -103,7 +117,7 @@ class ProductService {
       return new Response(problem);
     }
   }
-
+  
   Response update(ProductDTO dto) {
   	Response res = Responses.NotFound.PRODUCT;
 
@@ -116,18 +130,21 @@ class ProductService {
           ProductDao productDao = handle.attach(ProductDao.class);
 
           //to prevent duplication, checking if any product other than this has the same name!
-          Product found = productDao.findByName(dto.getName(), dto.getId(), CurrentUser.getAccountId());
+          Product found = productDao.findByName(dto.getName(), dto.getId(), CurrentUser.getWorkspaceId());
           if (found == null) {
 
           	//must be found
-          	found = productDao.findById(dto.getId(), CurrentUser.getAccountId());
+          	found = productDao.findById(dto.getId(), CurrentUser.getWorkspaceId());
             if (found != null) {
             	handle.begin();
             	
             	boolean isUpdated = productDao.update(dto);
   
               if (isUpdated) {
-                // if base price is changed then all the prices and other 
+              	checkBrand(dto, handle);
+              	checkCategory(dto, handle);
+
+              	// if base price is changed then all the prices and other 
                 // indicators (on both product itself and its links) must be re-calculated accordingly
                 if (found.getLinkCount() > 0 && found.getPrice().compareTo(dto.getPrice()) != 0) {
 
@@ -176,12 +193,12 @@ class ProductService {
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
       	ProductDao productDao = handle.attach(ProductDao.class);
-      	Product product = productDao.findById(id, CurrentUser.getAccountId());
+      	Product product = productDao.findById(id, CurrentUser.getWorkspaceId());
       	
       	if (product != null) {
         	handle.begin();
       			
-    			String where = String.format("where product_id=%d and account_id=%d", id, CurrentUser.getAccountId());
+    			String where = String.format("where product_id=%d and workspace_id=%d", id, CurrentUser.getWorkspaceId());
           Batch batch = handle.createBatch();
           batch.add("SET FOREIGN_KEY_CHECKS=0");
           batch.add("delete from alarm " + where);
@@ -192,8 +209,8 @@ class ProductService {
           batch.add("delete from product " + where.replace("product_", "")); //this query determines the success!
           batch.add(
         		String.format(
-      				"update account set link_count=link_count-%d where id=%d", 
-      				product.getLinkCount(), CurrentUser.getAccountId()
+      				"update workspace set link_count=link_count-%d where id=%d", 
+      				product.getLinkCount(), CurrentUser.getWorkspaceId()
     				)
       		);
           batch.add("SET FOREIGN_KEY_CHECKS=1");
@@ -220,15 +237,15 @@ class ProductService {
 
     if (res.isOK()) {
       try (Handle handle = Database.getHandle()) {
-        AccountDao accountDao = handle.attach(AccountDao.class);
+        WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
         ProductDao productDao = handle.attach(ProductDao.class);
     		LinkDao linkDao = handle.attach(LinkDao.class);
     		
     		Set<String> urlList = null;
 
-        Account account = accountDao.findById(CurrentUser.getAccountId());
-        if (account.getPlan() != null) {
-          int allowedLinkCount = (account.getPlan().getLinkLimit() - account.getLinkCount());
+        Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
+        if (workspace.getPlan() != null) {
+          int allowedLinkCount = (workspace.getPlan().getLinkLimit() - workspace.getLinkCount());
           urlList = res.getData();
 
           if (allowedLinkCount > 0) {
@@ -241,7 +258,7 @@ class ProductService {
   							link.setUrl(url);
   							link.setUrlHash(DigestUtils.md5Hex(url));
   							link.setProductId(dto.getProductId());
-  							link.setAccountId(CurrentUser.getAccountId());
+  							link.setWorkspaceId(CurrentUser.getWorkspaceId());
 
   							long id = linkDao.insert(link);
 
@@ -251,7 +268,7 @@ class ProductService {
             	});
 
             	productDao.increaseWaitingsCount(dto.getProductId(), urlList.size());
-            	accountDao.increaseLinkCount(CurrentUser.getAccountId(), urlList.size());
+            	workspaceDao.increaseLinkCount(CurrentUser.getWorkspaceId(), urlList.size());
 
             	handle.commit();
             	
@@ -272,15 +289,15 @@ class ProductService {
         }
 
         if (res.isOK()) {
-        	Product product = productDao.findByIdWithAlarm(dto.getProductId(), CurrentUser.getAccountId());
+        	Product product = productDao.findByIdWithAlarm(dto.getProductId(), CurrentUser.getWorkspaceId());
 
-        	int accountLinkCount = account.getLinkCount() + urlList.size();
+        	int workspaceLinkCount = workspace.getLinkCount() + urlList.size();
 
           Map<String, Object> data = Map.of(
         		"product", product,
         		"count", urlList.size(),
-        		"linkCount", accountLinkCount,
-        		"links", linkDao.findListByProductId(dto.getProductId(), CurrentUser.getAccountId())
+        		"linkCount", workspaceLinkCount,
+        		"links", linkDao.findListByProductId(dto.getProductId(), CurrentUser.getWorkspaceId())
     			);
           res = new Response(data);
         }
@@ -297,10 +314,14 @@ class ProductService {
   private String validate(ProductDTO dto) {
     String problem = null;
 
-    if (StringUtils.isBlank(dto.getName())) {
+    if (StringUtils.isNotBlank(dto.getCode()) && (dto.getCode().length() < 3 || dto.getCode().length() > 50)) {
+  		problem = "If given, Code must be between 3 - 50 chars!";
+    }
+
+    if (problem == null && StringUtils.isBlank(dto.getName())) {
       problem = "Name cannot be empty!";
-    } else if (dto.getName().length() < 3 || dto.getName().length() > 50) {
-      problem = "Name must be between 3 - 50 chars!";
+    } else if (dto.getName().length() < 3 || dto.getName().length() > 250) {
+      problem = "Name must be between 3 - 250 chars!";
     }
 
     if (problem == null) {
@@ -308,15 +329,27 @@ class ProductService {
     		problem = "Description can be up to 128 chars!";
     	}
     }
-    
+
     if (problem == null) {
     	if (dto.getPrice() != null && (dto.getPrice().compareTo(BigDecimal.ZERO) < 0 || dto.getPrice().compareTo(new BigDecimal(9_999_999)) > 0)) {
     		problem = "Price is out of reasonable range!";
     	}
     }
 
+    if (problem == null && dto.getBrandId() == null && StringUtils.isNotBlank(dto.getBrandName())) {
+    	if (dto.getBrandName().length() < 2 || dto.getBrandName().length() > 50) {
+    		problem = "Brand name must be between 2 - 50 chars!";
+    	}
+    }
+
+    if (problem == null && dto.getCategoryId() == null && StringUtils.isNotBlank(dto.getCategoryName())) {
+    	if (dto.getCategoryName().length() < 2 || dto.getCategoryName().length() > 50) {
+    		problem = "Category name must be between 2 - 50 chars!";
+    	}
+    }
+
     if (problem == null) {
-      dto.setAccountId(CurrentUser.getAccountId());
+      dto.setWorkspaceId(CurrentUser.getWorkspaceId());
       dto.setName(SqlHelper.clear(dto.getName()));
       dto.setDescription(SqlHelper.clear(dto.getDescription()));
       if (dto.getPrice() == null) dto.setPrice(BigDecimal.ZERO);
@@ -372,6 +405,52 @@ class ProductService {
   	}
 
   	return res;
+  }
+
+  private void checkBrand(ProductDTO dto, Handle handle) {
+  	Brand found = null;
+  	BrandDao brandDao = handle.attach(BrandDao.class);
+
+  	if (dto.getBrandId() != null) {
+  		found = brandDao.findById(dto.getBrandId(), dto.getWorkspaceId());
+
+  	} else if (StringUtils.isNotBlank(dto.getBrandName())) {
+			String name = SqlHelper.clear(dto.getBrandName());
+			found = brandDao.findByName(name, dto.getWorkspaceId());
+  		if (found == null) {
+  			found = new Brand();
+  			found.setId(brandDao.insert(name, dto.getWorkspaceId()));
+  		}
+  	}
+
+  	if (found == null) {
+  		dto.setBrandId(null);
+  	} else {
+  		dto.setBrandId(found.getId());
+  	}
+  }
+
+  private void checkCategory(ProductDTO dto, Handle handle) {
+  	Category found = null;
+		CategoryDao categoryDao = handle.attach(CategoryDao.class);
+
+  	if (dto.getCategoryId() != null) {
+  		found = categoryDao.findById(dto.getCategoryId(), dto.getWorkspaceId());
+
+  	} else if (StringUtils.isNotBlank(dto.getCategoryName())) {
+			String name = SqlHelper.clear(dto.getCategoryName());
+			found = categoryDao.findByName(name, dto.getWorkspaceId());
+  		if (found == null) {
+  			found = new Category();
+  			found.setId(categoryDao.insert(name, dto.getWorkspaceId()));
+  		}
+  	}
+
+  	if (found == null) {
+  		dto.setCategoryId(null);
+  	} else {
+  		dto.setCategoryId(found.getId());
+  	}
   }
 
 }

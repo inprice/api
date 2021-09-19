@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -79,7 +79,7 @@ public class ToggleUnlimitedUsedServiceTest {
 	@Test
 	public void Everything_must_be_ok_WITH_superuser() {
 		//super user searches a specific user to get his userId
-		JSONArray userList = TestFinder.searchUsers(TestAccounts.Second_without_a_plan_and_extra_user.ADMIN().getString("email"));
+		JSONArray userList = TestFinder.searchUsers(TestWorkspaces.Second_without_a_plan_and_extra_user.ADMIN().getString("email"));
 		JSONObject foundUser = userList.getJSONObject(0);
 		
 		//fetches used service list of the foundUser

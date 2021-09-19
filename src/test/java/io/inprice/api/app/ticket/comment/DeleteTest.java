@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -59,16 +59,16 @@ public class DeleteTest {
 
 	/**
 	 * Consists of five steps;
-	 *	a) to find other account's comment, admin is logged in
+	 *	a) to find other workspace's comment, admin is logged in
 	 *	b) searches a specific comment
 	 *  c) picks first comment
 	 *  e) evil user logs in
-	 *  f) tries to delete other account's comment
+	 *  f) tries to delete other workspace's comment
 	 */
 	@Test
 	public void Comment_not_found_WITH_wrong_id() {
-		//to find other account's comment, admin is logged in
-		Cookies cookies = TestUtils.login(TestAccounts.Without_a_plan_and_extra_user.ADMIN());
+		//to find other workspace's comment, admin is logged in
+		Cookies cookies = TestUtils.login(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN());
 
 		//searches a specific comment
 		JSONArray commentList = TestFinder.searchComments(cookies, "CRITICAL", 0);
@@ -80,9 +80,9 @@ public class DeleteTest {
 		JSONObject comment = commentList.getJSONObject(0);
 
 		//evil user logs in
-		cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
-		//tries to delete other account's comment
+		//tries to delete other workspace's comment
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
@@ -106,7 +106,7 @@ public class DeleteTest {
 
 	@Test
 	public void You_are_not_allowed_to_do_this_operation_WITH_viewer_but_not_the_creator() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "HIGH", 1); //attention pls!
 
@@ -137,7 +137,7 @@ public class DeleteTest {
 
 	@Test
 	public void You_are_not_allowed_to_update_this_data_WITH_closed_comment() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL", 1); //attention pls!
 
@@ -168,7 +168,7 @@ public class DeleteTest {
 
 	@Test
 	public void Ticket_is_closed() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "LOW", 0);
 
@@ -193,7 +193,7 @@ public class DeleteTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_a_link_WHEN_admin_tries_to_someone_elses_comment() {
-		Cookies cookies = TestUtils.login(TestAccounts.Without_a_plan_and_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL", 0);
 
@@ -218,7 +218,7 @@ public class DeleteTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL", 1); //attention pls!
 
@@ -242,7 +242,7 @@ public class DeleteTest {
 	}
 
 	private JSONObject callTheService(Long id) {
-		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), id);
+		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), id);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long id) {

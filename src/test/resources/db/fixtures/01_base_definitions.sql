@@ -12,4 +12,4 @@ insert into test.user_mark (email, type, description) values ('banned@inprice.io
 
 -- creating a system wide announce for everyone
 insert into test.announce (type, level, title, body, starting_at, ending_at) 
-values ('SYSTEM', 'WARNING', 'Your account\'s expiration date is near!', 'Please verify if your payment method is valid!', now(), @one_year_later);
+values ('SYSTEM', 'WARNING', 'Your workspace\'s expiration date is near!', 'Please verify if your payment method is valid!', now(), @one_year_later);

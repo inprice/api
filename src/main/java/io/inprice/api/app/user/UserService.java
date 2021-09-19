@@ -154,7 +154,7 @@ public class UserService {
   		);
 
       return new Response(
-        membershipDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getAccountId(), activeStatuses)
+        membershipDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getWorkspaceId(), activeStatuses)
       );
     }
   }

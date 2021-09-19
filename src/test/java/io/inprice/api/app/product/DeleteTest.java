@@ -13,7 +13,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -70,14 +70,14 @@ public class DeleteTest {
 
 	/**
 	 * Consists of four steps;
-	 *	a) to gather other account's products, admin is logged in
+	 *	a) to gather other workspace's products, admin is logged in
 	 *	b) finds some specific products
 	 *  c) picks one of them
 	 *  d) evil user tries to delete the product
 	 */
 	@Test
 	public void Product_not_found_WHEN_trying_to_delete_someone_elses_product() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product X");
 		TestUtils.logout(cookies); //here is important!
@@ -97,7 +97,7 @@ public class DeleteTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
 
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product I");
 		TestUtils.logout(cookies); //here is important!
@@ -108,7 +108,7 @@ public class DeleteTest {
 		//get the first product
 		JSONObject product = productList.getJSONObject(0);
 
-		cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_1_HEADERS)
@@ -126,8 +126,8 @@ public class DeleteTest {
 	@Test
 	public void Everything_must_be_ok_WITH_editor_and_admin() {
 		Map<JSONObject, String> userProductNameMap = Map.of(
-			TestAccounts.Standard_plan_and_two_extra_users.EDITOR(), "Product K",
-			TestAccounts.Standard_plan_and_two_extra_users.ADMIN(), "Product G"
+			TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), "Product K",
+			TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), "Product G"
 		);
 
 		for (Entry<JSONObject, String> userProductName: userProductNameMap.entrySet()) {
@@ -156,7 +156,7 @@ public class DeleteTest {
 	}
 
 	private JSONObject callTheService(Long id) {
-		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), id);
+		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), id);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long id) {

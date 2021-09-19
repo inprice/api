@@ -17,7 +17,7 @@ public class DBSessionMapper implements RowMapper<ForDatabase> {
 
     if (Helper.hasColumn(rs, "_hash")) m.setHash(rs.getString("_hash"));
     if (Helper.hasColumn(rs, "user_id")) m.setUserId(Helper.nullLongHandler(rs, "user_id"));
-    if (Helper.hasColumn(rs, "account_id")) m.setAccountId(Helper.nullLongHandler(rs, "account_id"));
+    if (Helper.hasColumn(rs, "workspace_id")) m.setWorkspaceId(Helper.nullLongHandler(rs, "workspace_id"));
     if (Helper.hasColumn(rs, "ip")) m.setIp(rs.getString("ip"));
     if (Helper.hasColumn(rs, "os")) m.setOs(rs.getString("os"));
     if (Helper.hasColumn(rs, "browser")) m.setBrowser(rs.getString("browser"));
@@ -25,7 +25,7 @@ public class DBSessionMapper implements RowMapper<ForDatabase> {
     if (Helper.hasColumn(rs, "accessed_at")) m.setAccessedAt(rs.getTimestamp("accessed_at"));
     
     //transient
-    if (Helper.hasColumn(rs, "account_name")) m.setAccountName(rs.getString("account_name"));
+    if (Helper.hasColumn(rs, "workspace_name")) m.setWorkspaceName(rs.getString("workspace_name"));
 
     return m;
   }

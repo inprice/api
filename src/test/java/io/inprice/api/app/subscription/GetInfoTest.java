@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -46,29 +46,29 @@ public class GetInfoTest {
 	}
 
 	@Test
-	public void You_must_bind_an_account_WITH_superuser_WITHOUT_binding_account() {
+	public void You_must_bind_an_workspace_WITH_superuser_WITHOUT_binding_workspace() {
 		JSONObject json = callTheService(Fixtures.SUPER_USER);
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an account!", json.getString("reason"));
+		assertEquals("You must bind an workspace!", json.getString("reason"));
 	}
 
 	/**
 	 * Consists of three steps;
 	 * 	a) super user logs in
-	 * 	b) binds to a specific account
+	 * 	b) binds to a specific workspace
 	 * 	c) gets info
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_superuser_AND_bound_account() {
+	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
-		JSONArray accountList = TestFinder.searchAccounts(cookies, "Without A Plan and Extra User");
-		JSONObject account = accountList.getJSONObject(0);
+		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "Without A Plan and Extra User");
+		JSONObject workspace = workspaceList.getJSONObject(0);
 
-		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/{accountId}")
+		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/{workspaceId}")
 			.cookie(cookies)
-			.routeParam("accountId", ""+account.getLong("id"))
+			.routeParam("workspaceId", ""+workspace.getLong("id"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -88,19 +88,19 @@ public class GetInfoTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
 		assertEquals(200, json.getInt("status"));
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), 1); //attention pls!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1); //attention pls!
 		assertEquals(200, json.getInt("status"));
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 		assertEquals(200, json.getInt("status"));
 
 		JSONObject data = json.getJSONObject("data");

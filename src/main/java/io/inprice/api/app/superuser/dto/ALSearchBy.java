@@ -8,9 +8,9 @@ public enum ALSearchBy {
 	RES_BODY("res_body"),
 	IP("ip"),
 
-	//these two are for general searching and not used at account and user access log search ops
+	//these two are for general searching and not used at workspace and user access log search ops
 	EMAIL("user_email"),
-	ACCOUNT_NAME("account_name");
+	WORKSPACE_NAME("workspace_name");
 
   private String fieldName;
   

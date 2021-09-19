@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -144,7 +144,7 @@ public class AddLinksTest {
 	
 	@Test
 	public void You_havent_picked_a_plan_yet() {
-		JSONObject json = callTheService(TestAccounts.Second_without_a_plan_and_extra_user.ADMIN(), SAMPLE_BODY, 0);
+		JSONObject json = callTheService(TestWorkspaces.Second_without_a_plan_and_extra_user.ADMIN(), SAMPLE_BODY, 0);
 
 		assertEquals(903, json.getInt("status"));
 		assertEquals("You haven't picked a plan yet!", json.getString("reason"));
@@ -152,7 +152,7 @@ public class AddLinksTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 1);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 1);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -160,7 +160,7 @@ public class AddLinksTest {
 
 	@Test
 	public void You_can_add_up_to_X_links() {
-		Cookies cookies = TestUtils.login(TestAccounts.Basic_plan_but_no_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product 2");
 		TestUtils.logout(cookies); //here is important!
@@ -174,7 +174,7 @@ public class AddLinksTest {
 		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", VALID_URLS);
 
-		JSONObject json = callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("You can add up to 1 link(s)!", json.getString("reason"));
@@ -182,7 +182,7 @@ public class AddLinksTest {
 
 	@Test
 	public void You_are_allowed_to_upload_up_to_100_URLs_at_once() {
-		Cookies cookies = TestUtils.login(TestAccounts.Pro_plan_with_no_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Pro_plan_with_no_user.ADMIN());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product A");
 		TestUtils.logout(cookies); //here is important!
@@ -203,7 +203,7 @@ public class AddLinksTest {
 		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", sb.toString());
 
-		JSONObject json = callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
 
 		assertEquals(902, json.getInt("status"));
 		assertEquals("You are allowed to upload up to 100 URLs at once!", json.getString("reason"));
@@ -211,7 +211,7 @@ public class AddLinksTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product R");
 		TestUtils.logout(cookies); //here is important!
@@ -225,7 +225,7 @@ public class AddLinksTest {
 		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", "https://blue-dot.com/xsa-123");
 
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_one_extra_user.EDITOR(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR(), body, 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
@@ -236,7 +236,7 @@ public class AddLinksTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product S");
 		TestUtils.logout(cookies); //here is important!
@@ -250,7 +250,7 @@ public class AddLinksTest {
 		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", "https://red-planet.com/mars/aa123");
 
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_one_extra_user.ADMIN(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN(), body, 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
@@ -260,7 +260,7 @@ public class AddLinksTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestAccounts.Pro_plan_with_no_user.ADMIN(), body, 0);
+		return callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), body, 0);
 	}
 	
 	private JSONObject callTheService(JSONObject user, JSONObject body, int session) {

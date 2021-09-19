@@ -11,7 +11,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.app.dashboard.mapper.ProductSummary;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
@@ -31,21 +31,21 @@ class DashboardService {
 
   Response getReport(boolean refresh) {
     Map<String, Object> report = null;
-    if (! refresh) report = expiringMap.get(CurrentUser.getAccountId());
+    if (! refresh) report = expiringMap.get(CurrentUser.getWorkspaceId());
 
     if (report == null) {
       report = new HashMap<>(4);
 
       try (Handle handle = Database.getHandle()) {
-        AccountDao accountDao = handle.attach(AccountDao.class);
+        WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
         DashboardDao dashboardDao = handle.attach(DashboardDao.class);
 
         report.put("date", DateUtils.formatLongDate(new Date()));
         report.put("products", getProducts(dashboardDao));
         report.put("links", getLinks(dashboardDao));
-        report.put("account", accountDao.findById(CurrentUser.getAccountId()));
+        report.put("workspace", workspaceDao.findById(CurrentUser.getWorkspaceId()));
 
-        expiringMap.put(CurrentUser.getAccountId(), report);
+        expiringMap.put(CurrentUser.getWorkspaceId(), report);
         return new Response(report);
     
       } catch (Exception e) {
@@ -67,7 +67,7 @@ class DashboardService {
   	Map<String, Object> result = new HashMap<>(3);
   	result.put("grupSeries", findGrupSeries(dashboardDao));
   	result.put("levelSeries", findLinkLevelSeries(dashboardDao));
-		result.put("mru25", dashboardDao.findMR25Link(CurrentUser.getAccountId()));
+		result.put("mru25", dashboardDao.findMR25Link(CurrentUser.getWorkspaceId()));
     return result;
   }
 
@@ -85,7 +85,7 @@ class DashboardService {
 
     int[] result = new int[i];
 
-    Map<String, Integer> grupDistMap = dashboardDao.findGrupDists(CurrentUser.getAccountId());
+    Map<String, Integer> grupDistMap = dashboardDao.findGrupDists(CurrentUser.getWorkspaceId());
     if (MapUtils.isNotEmpty(grupDistMap)) {
       for (Entry<String, Integer> entry: grupDistMap.entrySet()) {
         Integer index = stats.get(entry.getKey());
@@ -102,7 +102,7 @@ class DashboardService {
    * finding product distributions by the Levels
    */
   private int[] findProductLevelSeries(DashboardDao dashboardDao) {
-    Map<String, Integer> levelDistMap = dashboardDao.findProductLevelDists(CurrentUser.getAccountId());
+    Map<String, Integer> levelDistMap = dashboardDao.findProductLevelDists(CurrentUser.getWorkspaceId());
     return findSeries(levelDistMap, dashboardDao);
   }
 
@@ -110,7 +110,7 @@ class DashboardService {
    * finding link distributions by the Levels
    */
   private int[] findLinkLevelSeries(DashboardDao dashboardDao) {
-    Map<String, Integer> levelDistMap = dashboardDao.findLinkLevelDists(CurrentUser.getAccountId());
+    Map<String, Integer> levelDistMap = dashboardDao.findLinkLevelDists(CurrentUser.getWorkspaceId());
     return findSeries(levelDistMap, dashboardDao);
   }
   
@@ -122,7 +122,7 @@ class DashboardService {
   	
   	Level[] selected = { Level.LOWEST, Level.HIGHEST };
   	for (Level level: selected) {
-  		result.put(level.name(), dashboardDao.findMostNProduct(5, level, CurrentUser.getAccountId()));
+  		result.put(level.name(), dashboardDao.findMostNProduct(5, level, CurrentUser.getWorkspaceId()));
   	}
   	
   	return result;

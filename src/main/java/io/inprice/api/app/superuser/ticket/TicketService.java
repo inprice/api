@@ -112,14 +112,14 @@ public class TicketService {
     //---------------------------------------------------
     StringBuilder where = new StringBuilder();
 
-    String accountOrdering = "";
+    String workspaceOrdering = "";
     
     if (CurrentUser.hasSession()) {
-      where.append("where account_id = ");
-      where.append(CurrentUser.getAccountId());
+      where.append("where workspace_id = ");
+      where.append(CurrentUser.getWorkspaceId());
     } else {
       where.append("where 1=1 ");
-      accountOrdering = "a.name, ";
+      workspaceOrdering = "a.name, ";
     }
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
@@ -181,11 +181,11 @@ public class TicketService {
     try (Handle handle = Database.getHandle()) {
       List<Ticket> searchResult =
         handle.createQuery(
-          "select t.*, u.name as username, a.name as account from ticket t " +
+          "select t.*, u.name as username, a.name as workspace from ticket t " +
       		"inner join user u on u.id = t.user_id " +
-      		"inner join account a on a.id = t.account_id " +
+      		"inner join workspace a on a.id = t.workspace_id " +
           where +
-          " order by " + accountOrdering + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", t.id " +
+          " order by " + workspaceOrdering + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", t.id " +
           limit
         )
       .map(new TicketMapper())

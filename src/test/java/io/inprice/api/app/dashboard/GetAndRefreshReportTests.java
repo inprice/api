@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -60,7 +60,7 @@ public class GetAndRefreshReportTests {
 	}
 
 	@Test
-	public void You_must_bind_an_account_WITH_superuser_and_no_binding() {
+	public void You_must_bind_an_workspace_WITH_superuser_and_no_binding() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
@@ -72,20 +72,20 @@ public class GetAndRefreshReportTests {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(915, json.getInt("status"));
-		assertNotNull("You must bind an account!", json.get("reason"));
+		assertNotNull("You must bind an workspace!", json.get("reason"));
 	}
 
 	/**
 	 * Consists of three steps;
 	 * 	a) super user logs in
-	 * 	b) binds to first account
+	 * 	b) binds to first workspace
 	 * 	c) gets the report
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_superuser_and_bound_account() {
+	public void Everything_must_be_ok_WITH_superuser_and_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
-		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/1")
+		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/1")
 			.cookie(cookies)
 			.asJson();
 
@@ -105,7 +105,7 @@ public class GetAndRefreshReportTests {
 
 	@Test
 	public void Everything_must_be_ok() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -121,7 +121,7 @@ public class GetAndRefreshReportTests {
 		assertTrue(data.has("date"));
 		assertTrue(data.has("products"));
 		assertTrue(data.has("links"));
-		assertTrue(data.has("account"));
+		assertTrue(data.has("workspace"));
 	}
 
 }

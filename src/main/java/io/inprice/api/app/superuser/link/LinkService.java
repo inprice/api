@@ -52,9 +52,9 @@ class LinkService {
     //---------------------------------------------------
     StringBuilder where = new StringBuilder("where 1=1 ");
     
-    if (dto.getAccountId() != null) {
-    	where.append(" and l.account_id = ");
-    	where.append(dto.getAccountId());
+    if (dto.getWorkspaceId() != null) {
+    	where.append(" and l.workspace_id = ");
+    	where.append(dto.getWorkspaceId());
     }
 
     if (dto.getAlarmStatus() != null && !AlarmStatus.ALL.equals(dto.getAlarmStatus())) {

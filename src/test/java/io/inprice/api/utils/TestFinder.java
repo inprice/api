@@ -21,14 +21,14 @@ import kong.unirest.json.JSONObject;
 public class TestFinder {
 
 	/**
-	 * Searches and returns registered accounts by name
+	 * Searches and returns registered workspaces by name
 	 * 
 	 * @param cookies - must be a super user!
 	 * @param name - to be searched (as LIKE)
 	 * @return
 	 */
-	public static JSONArray searchAccounts(Cookies cookies, String name) {
-		HttpResponse<JsonNode> res = Unirest.post("/sys/accounts/search")
+	public static JSONArray searchWorkspaces(Cookies cookies, String name) {
+		HttpResponse<JsonNode> res = Unirest.post("/sys/workspaces/search")
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()

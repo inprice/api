@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestCoupons;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -50,7 +50,7 @@ public class ApplyCouponTest {
 	@Test
 	public void Forbidden_WITH_editor() {
 		JSONObject json = callTheServiceWith(
-			TestAccounts.Standard_plan_and_one_extra_user.EDITOR(),
+			TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR(),
 			TestCoupons.AVAILABLE_FOR_BASIC_PLAN_1
 		);
 
@@ -61,7 +61,7 @@ public class ApplyCouponTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		JSONObject json = callTheServiceWith(
-			TestAccounts.Standard_plan_and_two_extra_users.VIEWER(),
+			TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(),
 			TestCoupons.AVAILABLE_FOR_BASIC_PLAN_1
 		);
 
@@ -71,7 +71,7 @@ public class ApplyCouponTest {
 
 	@Test
 	public void Page_not_found_WITHOUT_code() {
-		JSONObject json = callTheServiceWith(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), "");
+		JSONObject json = callTheServiceWith(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), "");
 
 		assertEquals(404, json.getInt("status"));
 		assertNotNull("Page not found!", json.getString("reason"));
@@ -79,7 +79,7 @@ public class ApplyCouponTest {
 
 	@Test
 	public void Invalid_coupon_WITH_empty_code() {
-		JSONObject json = callTheServiceWith(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), " ");
+		JSONObject json = callTheServiceWith(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), " ");
 
 		assertEquals(145, json.getInt("status"));
 		assertNotNull("Invalid coupon!", json.getString("reason"));
@@ -87,7 +87,7 @@ public class ApplyCouponTest {
 
 	@Test
 	public void Invalid_coupon_WITH_wrong_code() {
-		JSONObject json = callTheServiceWith(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), "XYZ-1234");
+		JSONObject json = callTheServiceWith(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), "XYZ-1234");
 
 		assertEquals(145, json.getInt("status"));
 		assertNotNull("Invalid coupon!", json.getString("reason"));
@@ -96,7 +96,7 @@ public class ApplyCouponTest {
 	@Test
 	public void Coupon_not_found_FOR_not_registered_code() {
 		JSONObject json = callTheServiceWith(
-			TestAccounts.Without_a_plan_and_extra_user.ADMIN(),
+			TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(),
 			TestCoupons.NOT_REGISTERED
 		);
 
@@ -107,7 +107,7 @@ public class ApplyCouponTest {
 	@Test
 	public void This_coupon_is_already_used_WITH_used_code() {
 		JSONObject json = callTheServiceWith(
-			TestAccounts.Without_a_plan_and_extra_user.ADMIN(),
+			TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(),
 			TestCoupons.ALREADY_USED
 		);
 
@@ -116,14 +116,14 @@ public class ApplyCouponTest {
 	}
 
 	@Test
-	public void This_coupon_is_issued_for_another_account_WITH_assigned_code() {
+	public void This_coupon_is_issued_for_another_workspace_WITH_assigned_code() {
 		JSONObject json = callTheServiceWith(
-			TestAccounts.Without_a_plan_and_extra_user.ADMIN(),
+			TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(),
 			TestCoupons.ASSIGNED_BUT_NOT_USED
 		);
 
 		assertEquals(702, json.getInt("status"));
-		assertNotNull("This coupon is issued for another account!", json.getString("reason"));
+		assertNotNull("This coupon is issued for another workspace!", json.getString("reason"));
 	}
 
 	@Test
@@ -140,7 +140,7 @@ public class ApplyCouponTest {
 	@Test
 	public void You_already_have_an_active_subscription_WITH_assigned_code() {
 		JSONObject json = callTheServiceWith(
-			TestAccounts.Standard_plan_and_no_extra_users.ADMIN(),
+			TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN(),
 			TestCoupons.AVAILABLE_FOR_BASIC_PLAN_1
 		);
 
@@ -151,7 +151,7 @@ public class ApplyCouponTest {
 	@Test
 	public void You_need_to_select_a_broader_plan() {
 		JSONObject json = callTheServiceWith(
-			TestAccounts.Cancelled_Starter_plan_30_links_6_alarms.ADMIN(),
+			TestWorkspaces.Cancelled_Starter_plan_30_links_6_alarms.ADMIN(),
 			TestCoupons.AVAILABLE_FOR_BASIC_PLAN_1
 		);
 
@@ -161,7 +161,7 @@ public class ApplyCouponTest {
 	@Test
 	public void Everything_must_be_ok() {
 		JSONObject json = callTheServiceWith(
-			TestAccounts.Cancelled_Basic_plan_no_link_no_alarm.ADMIN(),
+			TestWorkspaces.Cancelled_Basic_plan_no_link_no_alarm.ADMIN(),
 			TestCoupons.AVAILABLE_FOR_BASIC_PLAN_1
 		);
 

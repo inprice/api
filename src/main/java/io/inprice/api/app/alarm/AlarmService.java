@@ -10,7 +10,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.app.alarm.dto.AlarmDTO;
 import io.inprice.api.app.alarm.dto.OrderBy;
 import io.inprice.api.app.alarm.dto.SearchDTO;
@@ -27,7 +27,7 @@ import io.inprice.common.mappers.AlarmMapper;
 import io.inprice.common.meta.AlarmSubject;
 import io.inprice.common.meta.AlarmSubjectWhen;
 import io.inprice.common.meta.AlarmTopic;
-import io.inprice.common.models.Account;
+import io.inprice.common.models.Workspace;
 import io.inprice.common.models.Alarm;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
@@ -49,11 +49,11 @@ public class AlarmService {
 		if (problem == null) {
 			try (Handle handle = Database.getHandle()) {
 				
-        AccountDao accountDao = handle.attach(AccountDao.class);
-        Account account = accountDao.findById(CurrentUser.getAccountId());
+        WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+        Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
 
-        if (account.getPlan() != null) {
-          int allowedAlarmCount = (account.getPlan().getAlarmLimit() - account.getAlarmCount());
+        if (workspace.getPlan() != null) {
+          int allowedAlarmCount = (workspace.getPlan().getAlarmLimit() - workspace.getAlarmCount());
 				
           if (allowedAlarmCount > 0) {
           	AlarmDao alarmDao = handle.attach(AlarmDao.class);
@@ -62,7 +62,7 @@ public class AlarmService {
           			alarmDao.doesExistByTopicId(
         					dto.getTopic().name().toLowerCase(), 
         					(AlarmTopic.LINK.equals(dto.getTopic()) ? dto.getLinkId() : dto.getProductId()), 
-        					CurrentUser.getAccountId()
+        					CurrentUser.getWorkspaceId()
       					);
           	
 						if (doesExist == false) {
@@ -74,13 +74,13 @@ public class AlarmService {
     
     						boolean isOK = false;
     						if (AlarmTopic.LINK.equals(dto.getTopic())) {
-    							isOK = alarmDao.setAlarmForLink(dto.getLinkId(), id, CurrentUser.getAccountId());
+    							isOK = alarmDao.setAlarmForLink(dto.getLinkId(), id, CurrentUser.getWorkspaceId());
     						} else {
-    							isOK = alarmDao.setAlarmForProduct(dto.getProductId(), id, CurrentUser.getAccountId());
+    							isOK = alarmDao.setAlarmForProduct(dto.getProductId(), id, CurrentUser.getWorkspaceId());
     						}
     
     						if (isOK) {
-    		        	accountDao.increaseAlarmCount(CurrentUser.getAccountId());
+    		        	workspaceDao.increaseAlarmCount(CurrentUser.getWorkspaceId());
   
     		        	handle.commit();
     							dto.setId(id);
@@ -140,7 +140,7 @@ public class AlarmService {
 			try (Handle handle = Database.getHandle()) {
 				AlarmDao alarmDao = handle.attach(AlarmDao.class);
 
-				Alarm alarm = alarmDao.findById(id, CurrentUser.getAccountId());
+				Alarm alarm = alarmDao.findById(id, CurrentUser.getWorkspaceId());
 				if (alarm != null) {
 
 					handle.begin();
@@ -148,15 +148,15 @@ public class AlarmService {
 
 					boolean isOK = false;
 					if (AlarmTopic.LINK.equals(alarm.getTopic())) {
-						isOK = alarmDao.removeAlarmFromLink(alarm.getLinkId(), CurrentUser.getAccountId());
+						isOK = alarmDao.removeAlarmFromLink(alarm.getLinkId(), CurrentUser.getWorkspaceId());
 					} else {
-						isOK = alarmDao.removeAlarmFromProduct(alarm.getProductId(), CurrentUser.getAccountId());
+						isOK = alarmDao.removeAlarmFromProduct(alarm.getProductId(), CurrentUser.getWorkspaceId());
 					}
 
 					if (isOK) {
-						isOK = alarmDao.delete(id, CurrentUser.getAccountId());
+						isOK = alarmDao.delete(id, CurrentUser.getWorkspaceId());
 						if (isOK) {
-							handle.attach(AccountDao.class).decreaseAlarmCount(CurrentUser.getAccountId());
+							handle.attach(WorkspaceDao.class).decreaseAlarmCount(CurrentUser.getWorkspaceId());
 
 							handle.execute("SET FOREIGN_KEY_CHECKS=1");
 							handle.commit();
@@ -187,8 +187,8 @@ public class AlarmService {
 		// ---------------------------------------------------
 		StringBuilder where = new StringBuilder();
 
-		where.append("where a.account_id = ");
-		where.append(CurrentUser.getAccountId());
+		where.append("where a.workspace_id = ");
+		where.append(CurrentUser.getWorkspaceId());
 		
 		if (dto.getTopic() != null) {
 			where.append(" and a.topic = '");
@@ -344,7 +344,7 @@ public class AlarmService {
 		}
 
 		if (problem == null) {
-			dto.setAccountId(CurrentUser.getAccountId());
+			dto.setWorkspaceId(CurrentUser.getWorkspaceId());
 		}
 
 		return problem;
@@ -356,7 +356,7 @@ public class AlarmService {
 		switch (dto.getTopic()) {
 			case LINK: {
   			LinkDao linkDao = handle.attach(LinkDao.class);
-  			Link link = linkDao.findById(dto.getLinkId(), CurrentUser.getAccountId());
+  			Link link = linkDao.findById(dto.getLinkId(), CurrentUser.getWorkspaceId());
   			if (link != null) {
   				pair = new Pair<>();
   				pair.setLeft(link.getGrup().name());
@@ -367,7 +367,7 @@ public class AlarmService {
 
 			case PRODUCT: {
   			ProductDao productDao = handle.attach(ProductDao.class);
-  			Product product = productDao.findById(dto.getProductId(), CurrentUser.getAccountId());
+  			Product product = productDao.findById(dto.getProductId(), CurrentUser.getWorkspaceId());
   			if (product != null) {
   				pair = new Pair<>();
   				pair.setLeft(product.getLevel().name());

@@ -31,7 +31,7 @@ public class SearchTest {
 	private static final JSONObject SAMPLE_BODY = 
 			new JSONObject()
   			.put("searchBy", "TITLE")
-  			.put("types", new String[] { "USER", "ACCOUNT", "SYSTEM" })
+  			.put("types", new String[] { "USER", "WORKSPACE", "SYSTEM" })
   			.put("levels", new String[] { "INFO", "WARNING" })
 	    	.put("startingAt", "2020-07-23 12:00:00")
 	    	.put("endingAt", "2050-07-23 14:00:00")
@@ -69,8 +69,8 @@ public class SearchTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_account() {
-		String[] types = new String[] { "SYSTEM", "ACCOUNT", "USER" };
+	public void Everything_must_be_ok_FOR_workspace() {
+		String[] types = new String[] { "SYSTEM", "WORKSPACE", "USER" };
 		
 		int announceCount = 0;
 

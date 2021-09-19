@@ -12,7 +12,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestRoles;
 import io.inprice.api.utils.TestUtils;
@@ -52,7 +52,7 @@ public class GetDetailsTest {
 	}
 
 	@Test
-	public void You_must_bind_an_account_WITH_superuser_WITHOUT_binding_account() {
+	public void You_must_bind_an_workspace_WITH_superuser_WITHOUT_binding_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
@@ -65,26 +65,26 @@ public class GetDetailsTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an account!", json.getString("reason"));
+		assertEquals("You must bind an workspace!", json.getString("reason"));
 	}
 
 	/**
 	 * Consists of four steps;
 	 * 	a) super user logs in
-	 * 	b) binds to a specific account
+	 * 	b) binds to a specific workspace
 	 * 	c) finds link list
 	 * 	d) fetches the details of first link
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_superuser_AND_bound_account() {
+	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
-		JSONArray accountList = TestFinder.searchAccounts(cookies, "With Basic Plan (Free Use) but No Extra User");
-		JSONObject account = accountList.getJSONObject(0);
+		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "With Basic Plan (Free Use) but No Extra User");
+		JSONObject workspace = workspaceList.getJSONObject(0);
 
-		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/{accountId}")
+		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/{workspaceId}")
 			.cookie(cookies)
-			.routeParam("accountId", ""+account.getLong("id"))
+			.routeParam("workspaceId", ""+workspace.getLong("id"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -113,9 +113,9 @@ public class GetDetailsTest {
 	@Test
 	public void Everything_must_be_ok_WITH_anyone() {
 		Map<TestRoles, JSONObject> roleUserMap = Map.of(
-			TestRoles.VIEWER, TestAccounts.Standard_plan_and_two_extra_users.VIEWER(),
-			TestRoles.EDITOR, TestAccounts.Starter_plan_and_one_extra_user.EDITOR(),
-			TestRoles.ADMIN, TestAccounts.Starter_plan_and_one_extra_user.ADMIN()
+			TestRoles.VIEWER, TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(),
+			TestRoles.EDITOR, TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR(),
+			TestRoles.ADMIN, TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN()
 		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {

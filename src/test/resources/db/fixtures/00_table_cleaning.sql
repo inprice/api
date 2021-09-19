@@ -6,9 +6,9 @@
 set foreign_key_checks=0;
 
 truncate table test.access_log;
-truncate table test.account;
-truncate table test.account_history;
-truncate table test.account_trans;
+truncate table test.workspace;
+truncate table test.workspace_history;
+truncate table test.workspace_trans;
 truncate table test.alarm;
 truncate table test.announce;
 truncate table test.announce_log;
@@ -16,6 +16,8 @@ truncate table test.checkout;
 truncate table test.coupon;
 truncate table test.link;
 truncate table test.product;
+truncate table test.brand;
+truncate table test.category;
 truncate table test.link_history;
 truncate table test.link_price;
 truncate table test.link_spec;

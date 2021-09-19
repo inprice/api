@@ -17,11 +17,11 @@ public class DashboardController extends AbstractController {
 
     app.get(Consts.Paths.Dashboard.BASE, (ctx) -> {
       ctx.json(service.getReport(false));
-    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     app.get(Consts.Paths.Dashboard.REFRESH, (ctx) -> {
       ctx.json(service.getReport(true));
-    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
   }
 

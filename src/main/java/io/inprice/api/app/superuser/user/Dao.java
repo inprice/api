@@ -38,8 +38,8 @@ public interface Dao {
 	User findById(@Bind("id") Long id);
 
   @SqlQuery(
-		"select s.*, a.name as account_name from user_session s " +
-		"inner join account a on a.id = s.account_id " +
+		"select s.*, a.name as workspace_name from user_session s " +
+		"inner join workspace a on a.id = s.workspace_id " +
 		"where s.user_id=:userId " +
 		"order by created_at"
 	)
@@ -47,8 +47,8 @@ public interface Dao {
   List<ForDatabase> fetchSessionListById(@Bind("userId") Long userId);
 
   @SqlQuery(
-		"select m.*, a.name as account_name, a.status as account_status from membership m " +
-		"inner join account a on a.id = m.account_id "+
+		"select m.*, a.name as workspace_name, a.status as workspace_status from membership m " +
+		"inner join workspace a on a.id = m.workspace_id "+
 		"where user_id=:userId " +
 		"order by role, created_at"
 	)
@@ -60,12 +60,12 @@ public interface Dao {
   List<UserMark> fetchUsedServiceListByEmail(@Bind("email") String email);
 
 	@SqlQuery(
-		"select id, name from account " +
-		"where id in (select account_id from membership where user_id=:userId) " +
+		"select id, name from workspace " +
+		"where id in (select workspace_id from membership where user_id=:userId) " +
 		"order by name"
 	)
   @UseRowMapper(IdNamePairMapper.class)
-  List<Pair<Long, String>> fetchAccountListByUserId(@Bind("userId") Long userId);
+  List<Pair<Long, String>> fetchWorkspaceListByUserId(@Bind("userId") Long userId);
 
 	@SqlUpdate("update user set banned=true, ban_reason=:reason, banned_at=now() where id=:id")
 	boolean ban(@Bind("id") Long id, @Bind("reason") String reason);
@@ -73,11 +73,11 @@ public interface Dao {
 	@SqlUpdate("update user set banned=false, ban_reason=null, banned_at=null where id=:id")
 	boolean revokeBan(@Bind("id") Long id);
 
-  @SqlUpdate("update account set pre_status=status, status='BANNED', last_status_update=now() where admin_id=:userId")
-  int banAllBoundAccountsOfUser(@Bind("userId") Long userId);
+  @SqlUpdate("update workspace set pre_status=status, status='BANNED', last_status_update=now() where admin_id=:userId")
+  int banAllBoundWorkspacesOfUser(@Bind("userId") Long userId);
 
-  @SqlUpdate("update account set status=pre_status, pre_status='BANNED', last_status_update=now() where admin_id=:userId")
-  int revokeBanAllBoundAccountsOfUser(@Bind("userId") Long userId);
+  @SqlUpdate("update workspace set status=pre_status, pre_status='BANNED', last_status_update=now() where admin_id=:userId")
+  int revokeBanAllBoundWorkspacesOfUser(@Bind("userId") Long userId);
 
 	@SqlQuery("select * from user_mark where id=:id")
   @UseRowMapper(UserMarkMapper.class)

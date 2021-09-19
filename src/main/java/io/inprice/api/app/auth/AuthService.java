@@ -301,7 +301,7 @@ public class AuthService {
           ForDatabase dbSes = new ForDatabase();
           dbSes.setHash(cookieSes.getHash());
           dbSes.setUserId(mem.getUserId());
-          dbSes.setAccountId(mem.getAccountId());
+          dbSes.setWorkspaceId(mem.getWorkspaceId());
           dbSes.setIp(ipAddress);
           dbSes.setUserAgent(ctx.userAgent());
           dbSesList.add(dbSes);
@@ -343,7 +343,7 @@ public class AuthService {
           if (user == null || !user.isBanned()) {
 
           	MembershipDao membershipDao = handle.attach(MembershipDao.class);
-          	Membership membership = membershipDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING, sendDto.getAccountId());
+          	Membership membership = membershipDao.findByEmailAndStatus(sendDto.getEmail(), UserStatus.PENDING, sendDto.getWorkspaceId());
             if (membership != null) {
 
               if (user == null) { //user creation
@@ -375,7 +375,7 @@ public class AuthService {
                     UserStatus.PENDING,
                     UserStatus.JOINED,
                     newUser.getEmail(),
-                    sendDto.getAccountId()
+                    sendDto.getWorkspaceId()
                   );
 
                 if (isActivated) {

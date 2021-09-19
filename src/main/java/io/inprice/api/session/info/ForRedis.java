@@ -25,7 +25,7 @@ public class ForRedis extends ForResponse {
     this.userId = mem.getUserId();
     this.hash = hash;
 
-    setAccountId(mem.getAccountId());
+    setWorkspaceId(mem.getWorkspaceId());
   }
 
 }

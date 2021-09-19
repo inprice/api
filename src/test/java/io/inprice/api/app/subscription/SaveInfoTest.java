@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -253,7 +253,7 @@ public class SaveInfoTest {
 
 	@Test
 	public void Forbidden_WITH_editor() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -270,7 +270,7 @@ public class SaveInfoTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_1_HEADERS) //attention pls!
@@ -287,7 +287,7 @@ public class SaveInfoTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -303,7 +303,7 @@ public class SaveInfoTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestAccounts.Pro_plan_with_no_user.ADMIN(), body);
+		return callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), body);
 	}
 	
 	private JSONObject callTheService(JSONObject user, JSONObject body) {

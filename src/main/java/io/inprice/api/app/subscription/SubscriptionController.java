@@ -33,7 +33,7 @@ public class SubscriptionController extends AbstractController {
       ctx.json(service.startFreeUse());
     }, AccessRoles.ADMIN());
 
-    // updates account's extra info used in invoices
+    // updates workspace's extra info used in invoices
     app.post(Consts.Paths.Subscription.SAVE_INFO, (ctx) -> {
     	if (ctx.body().isBlank()) {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
@@ -46,7 +46,7 @@ public class SubscriptionController extends AbstractController {
     // returns all the transactions happened in payment provider
     app.get(Consts.Paths.Subscription.GET_INFO, (ctx) -> {
       ctx.json(service.getInfo());
-    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
   }
 

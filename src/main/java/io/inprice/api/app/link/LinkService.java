@@ -47,8 +47,8 @@ class LinkService {
     //---------------------------------------------------
     StringBuilder where = new StringBuilder();
 
-    where.append("where l.account_id = ");
-    where.append(dto.getAccountId());
+    where.append("where l.workspace_id = ");
+    where.append(dto.getWorkspaceId());
 
     if (dto.getAlarmStatus() != null && AlarmStatus.ALL.equals(dto.getAlarmStatus()) == false) {
   		where.append(" and l.alarm_id is ");
@@ -110,7 +110,7 @@ class LinkService {
     	int count = dto.getLinkIdSet().size();
     	
     	String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
-      String where = String.format("where link_id in (%s) and account_id=%d ", joinedIds, CurrentUser.getAccountId());
+      String where = String.format("where link_id in (%s) and workspace_id=%d ", joinedIds, CurrentUser.getWorkspaceId());
 
       try (Handle handle = Database.getHandle()) {
       	handle.begin();
@@ -128,8 +128,8 @@ class LinkService {
         batch.add("delete from link " + where.replace("link_", "")); //this query determines the success!
 				batch.add(
 					String.format(
-						"update account set link_count=link_count-%d where id=%d",
-						count, CurrentUser.getAccountId()
+						"update workspace set link_count=link_count-%d where id=%d",
+						count, CurrentUser.getWorkspaceId()
 					)
 				);
 				batch.add("SET FOREIGN_KEY_CHECKS=1");
@@ -142,10 +142,10 @@ class LinkService {
         	}
 
           if (dto.getFromProductId() != null) { //meaning that it is called from product definition (not from links search page)
-          	Product product = handle.attach(ProductDao.class).findByIdWithAlarm(dto.getFromProductId(), CurrentUser.getAccountId());
+          	Product product = handle.attach(ProductDao.class).findByIdWithAlarm(dto.getFromProductId(), CurrentUser.getWorkspaceId());
           	Map<String, Object> data = Map.of(
           		"product", product,
-            	"links", linkDao.findListByProductId(dto.getFromProductId(), CurrentUser.getAccountId())
+            	"links", linkDao.findListByProductId(dto.getFromProductId(), CurrentUser.getWorkspaceId())
         		);
           	response = new Response(data);
           } else { //from links page
@@ -187,13 +187,13 @@ class LinkService {
       			dto.setToProductName(SqlHelper.clear(dto.getToProductName()));
 
       			ProductDao productDao = handle.attach(ProductDao.class);
-      			Product found = productDao.findByName(dto.getToProductName(), CurrentUser.getAccountId());
+      			Product found = productDao.findByName(dto.getToProductName(), CurrentUser.getWorkspaceId());
       			if (found == null) { //creating a new product
       				dto.setToProductId(
     						productDao.insert(
   								ProductDTO.builder()
   									.name(dto.getToProductName())
-  									.accountId(CurrentUser.getAccountId())
+  									.workspaceId(CurrentUser.getWorkspaceId())
   									.price(BigDecimal.ZERO)
   									.build()
 									)
@@ -214,8 +214,8 @@ class LinkService {
 		    			String 
 		    				updatePart = 
 		    					String.format(
-		  							"set product_id=%d where link_id in (%s) and product_id!=%d and account_id=%d", 
-		  							dto.getToProductId(), joinedIds, dto.getToProductId(), CurrentUser.getAccountId()
+		  							"set product_id=%d where link_id in (%s) and product_id!=%d and workspace_id=%d", 
+		  							dto.getToProductId(), joinedIds, dto.getToProductId(), CurrentUser.getWorkspaceId()
 								);
 
               Batch batch = handle.createBatch();
@@ -233,11 +233,11 @@ class LinkService {
 
             		if (dto.getFromProductId() != null) { //meaning that it is called from product definition (not from links searching page)
                   ProductDao productDao = handle.attach(ProductDao.class);
-                	Product product = productDao.findById(dto.getFromProductId(), CurrentUser.getAccountId());
+                	Product product = productDao.findById(dto.getFromProductId(), CurrentUser.getWorkspaceId());
 
                 	Map<String, Object> data = Map.of(
                 		"product", product,
-                  	"links", linkDao.findListByProductId(dto.getFromProductId(), CurrentUser.getAccountId())
+                  	"links", linkDao.findListByProductId(dto.getFromProductId(), CurrentUser.getWorkspaceId())
               		);
                   res = new Response(data);
             		} else {
@@ -273,7 +273,7 @@ class LinkService {
       try (Handle handle = Database.getHandle()) {
         LinkDao linkDao = handle.attach(LinkDao.class);
 
-        Link link = linkDao.findWithAlarmById(id, CurrentUser.getAccountId());
+        Link link = linkDao.findWithAlarmById(id, CurrentUser.getWorkspaceId());
         if (link != null) {
           List<LinkSpec> specList = linkDao.findSpecListByLinkId(link.getId());
           List<LinkPrice> priceList = linkDao.findPriceListByLinkId(link.getId());

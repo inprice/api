@@ -27,6 +27,6 @@ public class AlarmDTO {
   private Long productId;
 
   @JsonIgnore
-  private Long accountId;
+  private Long workspaceId;
 	
 }

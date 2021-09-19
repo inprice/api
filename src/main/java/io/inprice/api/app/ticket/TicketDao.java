@@ -23,14 +23,14 @@ public interface TicketDao {
 		"select t.*, u.name as username from ticket t " +
 		"inner join user u on u.id= t.user_id " +
 		"where t.id=:id " + 
-		"  and t.account_id=:accountId"
+		"  and t.workspace_id=:workspaceId"
 	)
   @UseRowMapper(TicketMapper.class)
-  Ticket findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
+  Ticket findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
 	@SqlUpdate(
-		"insert into ticket (priority, type, subject, body, user_id, account_id) " +
-		"values (:dto.priority, :dto.type, :dto.subject, :dto.body, :dto.userId, :dto.accountId)"
+		"insert into ticket (priority, type, subject, body, user_id, workspace_id) " +
+		"values (:dto.priority, :dto.type, :dto.subject, :dto.body, :dto.userId, :dto.workspaceId)"
 	)
 	@GetGeneratedKeys
 	long insert(@BindBean("dto") TicketDTO dto);
@@ -40,7 +40,7 @@ public interface TicketDao {
 		"set priority=:dto.priority, type=:dto.type, subject=:dto.subject, body=:dto.body " +
 		"where id=:dto.id " +
 		"  and status='OPENED' " +
-		"  and account_id=:dto.accountId"
+		"  and workspace_id=:dto.workspaceId"
 	)
 	boolean update(@BindBean("dto") TicketDTO dto);
 
@@ -71,8 +71,8 @@ public interface TicketDao {
 	boolean decreaseCommentCount(@Bind("id") Long ticketId);
 
 	@SqlUpdate(
-		"insert into ticket_comment (ticket_id, body, added_by_user, user_id, account_id) " +
-		"values (:dto.ticketId, :dto.body, true, :dto.userId, :dto.accountId)"
+		"insert into ticket_comment (ticket_id, body, added_by_user, user_id, workspace_id) " +
+		"values (:dto.ticketId, :dto.body, true, :dto.userId, :dto.workspaceId)"
 	)
 	boolean insertComment(@BindBean("dto") TicketCommentDTO dto);
 
@@ -82,7 +82,7 @@ public interface TicketDao {
 		"where id=:dto.id " +
 		"  and editable=true " +
 		"  and added_by_user=true " +
-		"  and account_id=:dto.accountId"
+		"  and workspace_id=:dto.workspaceId"
 	)
 	boolean updateComment(@BindBean("dto") TicketCommentDTO dto);
 
@@ -94,9 +94,9 @@ public interface TicketDao {
 	)
   boolean deleteCommentById(@Bind("id") Long id);
 
-  @SqlQuery("select * from ticket_comment where id=:id and account_id=:accountId")
+  @SqlQuery("select * from ticket_comment where id=:id and workspace_id=:workspaceId")
   @UseRowMapper(TicketCommentMapper.class)
-  TicketComment findCommentById(@Bind("id") Long id, @Bind("accountId") Long accountId);
+  TicketComment findCommentById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
 		"select c.*, u.name as username from ticket_comment c " +
@@ -126,8 +126,8 @@ public interface TicketDao {
 	boolean makeOnePreviousCommentEditable(@Bind("ticketId") Long ticketId, @Bind("commentId") Long commentId);
 
 	@SqlUpdate(
-		"insert into ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) " +
-		"values (:dto.id, :dto.status, :dto.priority, :dto.type, :dto.subject, :dto.userId, :dto.accountId)"
+		"insert into ticket_history (ticket_id, status, priority, type, subject, user_id, workspace_id) " +
+		"values (:dto.id, :dto.status, :dto.priority, :dto.type, :dto.subject, :dto.userId, :dto.workspaceId)"
 	)
 	boolean insertHistory(@BindBean("dto") TicketDTO dto);
 

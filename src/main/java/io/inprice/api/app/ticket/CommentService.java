@@ -30,13 +30,13 @@ public class CommentService {
 			try (Handle handle = Database.getHandle()) {
 				TicketDao ticketDao = handle.attach(TicketDao.class);
 
-				Ticket ticket = ticketDao.findById(dto.getTicketId(), dto.getAccountId());
+				Ticket ticket = ticketDao.findById(dto.getTicketId(), dto.getWorkspaceId());
 				if (ticket != null) {
 					if (! TicketStatus.CLOSED.equals(ticket.getStatus())) {
 						handle.begin();
 						ticketDao.makeAllCommentsNotEditable(dto.getTicketId());
 
-						dto.setAccountId(ticket.getAccountId());
+						dto.setWorkspaceId(ticket.getWorkspaceId());
 						boolean isOK = ticketDao.insertComment(dto);
 						if (isOK) {
 							ticketDao.increaseCommentCount(dto.getTicketId());
@@ -70,15 +70,15 @@ public class CommentService {
 				try (Handle handle = Database.getHandle()) {
 					TicketDao ticketDao = handle.attach(TicketDao.class);
 
-					Ticket ticket = ticketDao.findById(dto.getTicketId(), dto.getAccountId());
+					Ticket ticket = ticketDao.findById(dto.getTicketId(), dto.getWorkspaceId());
 					if (ticket != null) {
 						if (! TicketStatus.CLOSED.equals(ticket.getStatus())) {
-							TicketComment comment = ticketDao.findCommentById(dto.getId(), dto.getAccountId());
+							TicketComment comment = ticketDao.findCommentById(dto.getId(), dto.getWorkspaceId());
 							if (comment != null) {
 								if (comment.getEditable()) {
 			  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || comment.getUserId().equals(CurrentUser.getUserId())) {
 
-										dto.setAccountId(ticket.getAccountId());
+										dto.setWorkspaceId(ticket.getWorkspaceId());
 			  						boolean isOK = ticketDao.updateComment(dto);
 										if (isOK) {
 											List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
@@ -114,11 +114,11 @@ public class CommentService {
 			try (Handle handle = Database.getHandle()) {
 				TicketDao ticketDao = handle.attach(TicketDao.class);
 
-				TicketComment comment = ticketDao.findCommentById(id, CurrentUser.getAccountId());
+				TicketComment comment = ticketDao.findCommentById(id, CurrentUser.getWorkspaceId());
 
 				if (comment != null) {
 					if (comment.getEditable()) {
-  					Ticket ticket = ticketDao.findById(comment.getTicketId(), comment.getAccountId());
+  					Ticket ticket = ticketDao.findById(comment.getTicketId(), comment.getWorkspaceId());
   
   					if (ticket != null) {
     					if (! TicketStatus.CLOSED.equals(ticket.getStatus())) {
@@ -170,7 +170,7 @@ public class CommentService {
 		}
 
 		if (problem == null) {
-			dto.setAccountId(CurrentUser.getAccountId());
+			dto.setWorkspaceId(CurrentUser.getWorkspaceId());
 			dto.setUserId(CurrentUser.getUserId());
 		}
 

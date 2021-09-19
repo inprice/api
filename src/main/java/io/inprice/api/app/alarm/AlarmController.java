@@ -52,7 +52,7 @@ public class AlarmController extends AbstractController {
 	    	SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
 	    	ctx.json(service.search(dto));
     	}
-    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
   }
 

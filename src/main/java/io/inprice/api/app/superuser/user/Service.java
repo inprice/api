@@ -84,8 +84,8 @@ class Service {
   						//he must be added in to user_mark table to prevent later registration or forgot pass. requests!
   						superDao.addUserMark(user.getEmail(), UserMarkType.BANNED, dto.getText());
 
-  						//and his accounts too
-  						superDao.banAllBoundAccountsOfUser(dto.getId());
+  						//and his workspaces too
+  						superDao.banAllBoundWorkspacesOfUser(dto.getId());
 
   						//his sessions are terminated as well!
               UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
@@ -132,8 +132,8 @@ class Service {
   						//his ban record in user_mark table must be revoked as well!
   						superDao.removeUserMark(user.getEmail(), UserMarkType.BANNED);
 
-      				//and from his accounts too
-        			superDao.revokeBanAllBoundAccountsOfUser(id);
+      				//and from his workspaces too
+        			superDao.revokeBanAllBoundWorkspacesOfUser(id);
 
   	          handle.commit();
   	          res = Responses.OK;
@@ -206,10 +206,10 @@ class Service {
   	return Responses.NotFound.USER;
   }
 
-  Response fetchAccountList(Long userId) {
+  Response fetchWorkspaceList(Long userId) {
   	try (Handle handle = Database.getHandle()) {
 			Dao superDao = handle.attach(Dao.class);
-			List<Pair<Long, String>> list = superDao.fetchAccountListByUserId(userId);
+			List<Pair<Long, String>> list = superDao.fetchWorkspaceListByUserId(userId);
 			return new Response(list);
   	}
   }
@@ -279,9 +279,9 @@ class Service {
     where.append("where user_id = ");
     where.append(dto.getUserId());
 
-    if (dto.getAccountId() != null) {
-    	where.append(" and account_id = ");
-    	where.append(dto.getAccountId());
+    if (dto.getWorkspaceId() != null) {
+    	where.append(" and workspace_id = ");
+    	where.append(dto.getWorkspaceId());
     }
 
     if (dto.getMethod() != null) {

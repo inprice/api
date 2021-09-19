@@ -14,6 +14,6 @@ public class UserDTO extends PasswordDTO {
   private String email;
   private String name;
   private String timezone;
-  private Long accountId;
+  private Long workspaceId;
 
 }

@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -154,7 +154,7 @@ public class LoginTest {
 	@Test
 	public void Everything_must_be_OK_WITH_correct_credentials() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(TestAccounts.Basic_plan_but_no_extra_user.ADMIN())
+			.body(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN())
 			.asJson();
 		TestUtils.logout(res.getCookies());
 

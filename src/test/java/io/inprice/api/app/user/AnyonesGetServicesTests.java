@@ -12,7 +12,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -67,7 +67,7 @@ public class AnyonesGetServicesTests {
 	}
 
 	@Test
-	public void You_must_bind_an_account_WITH_superuser_and_no_binding() {
+	public void You_must_bind_an_workspace_WITH_superuser_and_no_binding() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
@@ -85,14 +85,14 @@ public class AnyonesGetServicesTests {
 	/**
 	 * Consists of three steps;
 	 * 	a) super user logs in
-	 * 	b) binds to first account
+	 * 	b) binds to first workspace
 	 * 	c) gets membership list
 	 */
 	@Test
-	public void Data_must_be_empty_WITH_superuser_and_bound_account() {
+	public void Data_must_be_empty_WITH_superuser_and_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
-		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/1")
+		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/1")
 			.cookie(cookies)
 			.asJson();
 
@@ -112,7 +112,7 @@ public class AnyonesGetServicesTests {
 
 	@Test
 	public void Everything_must_be_ok_WITH_viewer_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_1_HEADERS) //this user has more than one role. he is VIEWER in his second session!

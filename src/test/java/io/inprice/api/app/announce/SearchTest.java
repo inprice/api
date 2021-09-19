@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -48,24 +48,24 @@ public class SearchTest {
 	}
 
 	@Test
-	public void You_must_bind_an_account_WITH_superuser_WITHOUT_binding_account() {
+	public void You_must_bind_an_workspace_WITH_superuser_WITHOUT_binding_workspace() {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, createBody(null));
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an account!", json.getString("reason"));
+		assertEquals("You must bind an workspace!", json.getString("reason"));
 	}
 
 	/**
 	 * Consists of three steps;
 	 * 	a) super user logs in
-	 * 	b) binds to first account
+	 * 	b) binds to first workspace
 	 * 	c) gets announce list (possibly empty)
 	 */
 	@Test
-	public void Everything_must_be_ok_WITH_superuser_AND_bound_account() {
+	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
-		HttpResponse<JsonNode> res = Unirest.put("/sys/account/bind/1")
+		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/1")
 			.cookie(cookies)
 			.asJson();
 
@@ -87,7 +87,7 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_user() {
-		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "USER" }));
+		JSONObject json = callTheService(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "USER" }));
 
 		JSONObject data = json.getJSONObject("data");
 		
@@ -96,8 +96,8 @@ public class SearchTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_account() {
-		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "ACCOUNT" }));
+	public void Everything_must_be_ok_FOR_workspace() {
+		JSONObject json = callTheService(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "WORKSPACE" }));
 
 		JSONObject data = json.getJSONObject("data");
 		JSONArray rows = data.getJSONArray("rows");
@@ -108,7 +108,7 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_system() {
-		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "SYSTEM" }));
+		JSONObject json = callTheService(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "SYSTEM" }));
 
 		JSONObject data = json.getJSONObject("data");
 		JSONArray rows = data.getJSONArray("rows");
@@ -119,7 +119,7 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_mixin() {
-		JSONObject json = callTheService(TestAccounts.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "SYSTEM", "ACCOUNT", "USER" }));
+		JSONObject json = callTheService(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "SYSTEM", "WORKSPACE", "USER" }));
 
 		JSONObject data = json.getJSONObject("data");
 		JSONArray rows = data.getJSONArray("rows");

@@ -10,14 +10,14 @@ create procedure sp_create_product_and_links (
     in in_problem_count int,
     in in_url varchar(100),
     in in_platform_id int,
-    in in_account_name varchar(50),
-    in in_account_id bigint unsigned
+    in in_workspace_name varchar(50),
+    in in_workspace_id bigint unsigned
   )
 begin
   start transaction;
   
-  insert into product (name, actives, waitings, tryings, problems, account_id) 
-  values (concat('Product ', in_product_name_addition, ' of ', in_account_name), in_active_count, in_waiting_count, in_trying_count, in_problem_count, in_account_id);
+  insert into product (name, actives, waitings, tryings, problems, workspace_id) 
+  values (concat('Product ', in_product_name_addition, ' of ', in_workspace_name), in_active_count, in_waiting_count, in_trying_count, in_problem_count, in_workspace_id);
 
   set @product_id = last_insert_id();
 
@@ -32,15 +32,15 @@ begin
       set @price = round(rand() * 50.49 + 0.01, 2);
   
       -- link of product
-      insert into link (url, url_hash, sku, price, status, grup, platform_id, product_id, account_id)
-      values (concat(in_url, @sku), md5(concat(in_url, @sku)), @sku, @price, @status, 'ACTIVE', in_platform_id, @product_id, in_account_id);
+      insert into link (url, url_hash, sku, price, status, grup, platform_id, product_id, workspace_id)
+      values (concat(in_url, @sku), md5(concat(in_url, @sku)), @sku, @price, @status, 'ACTIVE', in_platform_id, @product_id, in_workspace_id);
       set @link_id = last_insert_id();
   
       -- link price of link of product
-      insert into link_price (link_id, new_price, product_id, account_id) values (@link_id, @price, @product_id, in_account_id);
+      insert into link_price (link_id, new_price, product_id, workspace_id) values (@link_id, @price, @product_id, in_workspace_id);
   
       -- link history of link of product
-      insert into link_history (link_id, status, product_id, account_id) values (@link_id, @status, @product_id, in_account_id);
+      insert into link_history (link_id, status, product_id, workspace_id) values (@link_id, @status, @product_id, in_workspace_id);
   
       set @counter=@counter+1;
     end while;
@@ -57,15 +57,15 @@ begin
       set @price = round(rand() * 50.49 + 0.01, 2);
   
       -- link of product
-      insert into link (url, url_hash, sku, price, status, grup, platform_id, product_id, account_id)
-      values (concat(in_url, @sku), md5(concat(in_url, @sku)), @sku, @price, @status, 'TRYING', in_platform_id, @product_id, in_account_id);
+      insert into link (url, url_hash, sku, price, status, grup, platform_id, product_id, workspace_id)
+      values (concat(in_url, @sku), md5(concat(in_url, @sku)), @sku, @price, @status, 'TRYING', in_platform_id, @product_id, in_workspace_id);
       set @link_id = last_insert_id();
   
       -- link price of link of product
-      insert into link_price (link_id, new_price, product_id, account_id) values (@link_id, @price, @product_id, in_account_id);
+      insert into link_price (link_id, new_price, product_id, workspace_id) values (@link_id, @price, @product_id, in_workspace_id);
   
       -- link history of link of product
-      insert into link_history (link_id, status, product_id, account_id) values (@link_id, @status, @product_id, in_account_id);
+      insert into link_history (link_id, status, product_id, workspace_id) values (@link_id, @status, @product_id, in_workspace_id);
   
       set @counter=@counter+1;
     end while;
@@ -82,15 +82,15 @@ begin
       set @price = round(rand() * 50.49 + 0.01, 2);
   
       -- link of product
-      insert into link (url, url_hash, sku, price, status, grup, platform_id, product_id, account_id)
-      values (concat(in_url, @sku), md5(concat(in_url, @sku)), @sku, @price, @status, 'WAITING', in_platform_id, @product_id, in_account_id);
+      insert into link (url, url_hash, sku, price, status, grup, platform_id, product_id, workspace_id)
+      values (concat(in_url, @sku), md5(concat(in_url, @sku)), @sku, @price, @status, 'WAITING', in_platform_id, @product_id, in_workspace_id);
       set @link_id = last_insert_id();
   
       -- link price of link of product
-      insert into link_price (link_id, new_price, product_id, account_id) values (@link_id, @price, @product_id, in_account_id);
+      insert into link_price (link_id, new_price, product_id, workspace_id) values (@link_id, @price, @product_id, in_workspace_id);
   
       -- link history of link of product
-      insert into link_history (link_id, status, product_id, account_id) values (@link_id, @status, @product_id, in_account_id);
+      insert into link_history (link_id, status, product_id, workspace_id) values (@link_id, @status, @product_id, in_workspace_id);
   
       set @counter=@counter+1;
     end while;
@@ -106,18 +106,18 @@ begin
       set @sku = LEFT(UUID(), 6);
   
       -- link of product
-      insert into link (url, url_hash, sku, status, grup, platform_id, product_id, account_id)
-      values (concat(in_url, @sku), md5(concat(in_url, @sku)), @sku, @status, 'PROBLEM', in_platform_id, @product_id, in_account_id);
+      insert into link (url, url_hash, sku, status, grup, platform_id, product_id, workspace_id)
+      values (concat(in_url, @sku), md5(concat(in_url, @sku)), @sku, @status, 'PROBLEM', in_platform_id, @product_id, in_workspace_id);
       set @link_id = last_insert_id();
   
       -- link history of link of product
-      insert into link_history (link_id, status, product_id, account_id) values (@link_id, @status, @product_id, in_account_id);
+      insert into link_history (link_id, status, product_id, workspace_id) values (@link_id, @status, @product_id, in_workspace_id);
   
       set @counter=@counter+1;
     end while;
   end if;
 
-  update account set link_count = link_count + in_active_count + in_trying_count + in_waiting_count + in_problem_count where id = in_account_id;
+  update workspace set link_count = link_count + in_active_count + in_trying_count + in_waiting_count + in_problem_count where id = in_workspace_id;
 
   commit;
 

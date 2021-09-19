@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestRoles;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -94,7 +94,7 @@ public class AcceptNewUserTest {
 		/* -------------------------------- 
 		   Inviting a non-existing user
 		 -------------------------------- */
-		Cookies cookies = TestUtils.login(TestAccounts.Premium_plan_and_three_pending_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_three_pending_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post("/membership")
 			.headers(Fixtures.SESSION_0_HEADERS)

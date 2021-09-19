@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -79,7 +79,7 @@ public class TerminateSessionTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_superuser() {
-		JSONObject user = TestAccounts.Without_a_plan_and_extra_user.ADMIN();
+		JSONObject user = TestWorkspaces.Without_a_plan_and_extra_user.ADMIN();
 
 		//super user searches a specific user to get his userId
 		JSONArray userList = TestFinder.searchUsers(user.getString("email"));

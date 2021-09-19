@@ -3,7 +3,7 @@
 -- @since 2021-07-09
 -- -----------------------
 
-set @admin_email = 'admin@account-j.com';
+set @admin_email = 'admin@workspace-j.com';
 
 -- -----------------------
 
@@ -11,14 +11,14 @@ set @admin_email = 'admin@account-j.com';
 insert into test.user (email, password, name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
 set @admin_id = last_insert_id();
 
--- account
-insert into test.account (name, plan_id, status, link_count, alarm_count, admin_id) values ('Cancelled -Starter Plan- 30 links, 6 alarms', @starter_plan_id, 'CANCELLED', 30, 6, @admin_id);
-set @account_id = last_insert_id();
+-- workspace
+insert into test.workspace (name, plan_id, status, link_count, alarm_count, admin_id) values ('Cancelled -Starter Plan- 30 links, 6 alarms', @starter_plan_id, 'CANCELLED', 30, 6, @admin_id);
+set @workspace_id = last_insert_id();
 
--- account history
-insert into test.account_history (account_id, status) values (@account_id, 'CREATED');
-insert into test.account_history (account_id, status) values (@account_id, 'SUBSCRIBED');
-insert into test.account_history (account_id, status) values (@account_id, 'CANCELLED');
+-- workspace history
+insert into test.workspace_history (workspace_id, status) values (@workspace_id, 'CREATED');
+insert into test.workspace_history (workspace_id, status) values (@workspace_id, 'SUBSCRIBED');
+insert into test.workspace_history (workspace_id, status) values (@workspace_id, 'CANCELLED');
 
 -- membership
-insert into test.membership (email, user_id, account_id, role, status) values (@admin_email, @admin_id, @account_id, 'ADMIN', 'JOINED');
+insert into test.membership (email, user_id, workspace_id, role, status) values (@admin_email, @admin_id, @workspace_id, 'ADMIN', 'JOINED');

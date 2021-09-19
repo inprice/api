@@ -51,14 +51,14 @@ public class AccessGuard implements AccessManager {
 
   		if (user != null && user.isPrivileged()) {
   			
-      	if (permittedRoles.contains(ShadowRoles.SUPER) || (permittedRoles.contains(ShadowRoles.SUPER_WITH_ACCOUNT) && user.getAccid() != null)) {
+      	if (permittedRoles.contains(ShadowRoles.SUPER) || (permittedRoles.contains(ShadowRoles.SUPER_WITH_WORKSPACE) && user.getAccid() != null)) {
       		MDC.put("email", user.getEmail());
 
       		CurrentUser.set(user);
           handler.handle(ctx);
   			} else {
-  				if (permittedRoles.contains(ShadowRoles.SUPER_WITH_ACCOUNT) && user.getAccid() == null) {
-  					ctx.json(Responses.NotAllowed.NO_ACCOUNT);
+  				if (permittedRoles.contains(ShadowRoles.SUPER_WITH_WORKSPACE) && user.getAccid() == null) {
+  					ctx.json(Responses.NotAllowed.NO_WORKSPACE);
   				} else {
   					ctx.json(Responses.PermissionProblem.WRONG_USER);
   				}

@@ -43,8 +43,8 @@ public class AccessLogger {
       try (Handle handle = Database.getHandle()) {
         PreparedBatch batch = 
       		handle.prepareBatch(
-    				"insert into access_log (user_id, user_email, user_role, account_id, account_name, ip, agent, path, path_ext, method, req_body, res_body, status, elapsed, slow, created_at) " +
-    				"values (:log.userId, :log.userEmail, :log.userRole, :log.accountId, :log.accountName, :logger.ip, :log.agent, :log.path, :log.pathExt, :log.method, :log.reqBody, :log.resBody, " +
+    				"insert into access_log (user_id, user_email, user_role, workspace_id, workspace_name, ip, agent, path, path_ext, method, req_body, res_body, status, elapsed, slow, created_at) " +
+    				"values (:log.userId, :log.userEmail, :log.userRole, :log.workspaceId, :log.workspaceName, :logger.ip, :log.agent, :log.path, :log.pathExt, :log.method, :log.reqBody, :log.resBody, " +
     				":log.status, :logger.elapsed, :log.slow, :log.createdAt)"
 					);
 

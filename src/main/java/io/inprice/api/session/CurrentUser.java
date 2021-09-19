@@ -76,19 +76,19 @@ public class CurrentUser {
   	}
   }
 
-  public static Long getAccountId() {
+  public static Long getWorkspaceId() {
   	if (THREAD_VARIABLES.get().getSuperUser() != null) {
-  		return THREAD_VARIABLES.get().getAccountId();
+  		return THREAD_VARIABLES.get().getWorkspaceId();
   	} else {
-  		return THREAD_VARIABLES.get().getSession().getAccountId();
+  		return THREAD_VARIABLES.get().getSession().getWorkspaceId();
   	}
   }
 
-	public static String getAccountName() {
+	public static String getWorkspaceName() {
   	if (THREAD_VARIABLES.get().getSuperUser() != null) {
   		return "inprice.io";
   	} else {
-  		return THREAD_VARIABLES.get().getSession().getAccount();
+  		return THREAD_VARIABLES.get().getSession().getWorkspace();
   	}
   }
 

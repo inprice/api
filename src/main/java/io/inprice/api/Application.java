@@ -158,8 +158,8 @@ public class Application {
       		userLog.setUserId(CurrentUser.getUserId());
       		userLog.setUserEmail(CurrentUser.getEmail());
       		userLog.setUserRole(CurrentUser.getRole().name());
-      		userLog.setAccountId(CurrentUser.getAccountId());
-      		userLog.setAccountName(CurrentUser.getAccountName());
+      		userLog.setWorkspaceId(CurrentUser.getWorkspaceId());
+      		userLog.setWorkspaceName(CurrentUser.getWorkspaceName());
     		}
     		userLog.setIp(ctx.ip());
     		userLog.setAgent(ctx.userAgent());
