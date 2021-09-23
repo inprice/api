@@ -21,22 +21,22 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of superuser's Workspace -> Controller.createCoupon(CreateCouponDTO)
+ * Tests the functionality of superuser's Workspace -> Controller.createCredit(CreateCreditDTO)
  * 
  * @author mdpinar
  * @since 2021-07-22
  */
 @RunWith(JUnit4.class)
-public class CreateCouponTest {
+public class CreateCreditTest {
 
-	private static final String SERVICE_ENDPOINT = "/sys/workspace/coupon";
+	private static final String SERVICE_ENDPOINT = "/sys/workspace/credit";
 
 	private static final JSONObject SAMPLE_BODY = 
 			new JSONObject()
   			.put("workspaceId", 1)
   			.put("planId", 1)
 	    	.put("days", 30)
-	    	.put("description", "Here is your free coupon.");
+	    	.put("description", "Here is your free credit.");
 
 	@BeforeClass
 	public static void setup() {

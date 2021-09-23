@@ -283,7 +283,7 @@ class WorkspaceService {
               batch.add("delete from brand " + where);
               batch.add("delete from category " + where);
               batch.add("delete from alarm " + where);
-              batch.add("delete from coupon where issued_id=" + CurrentUser.getWorkspaceId() + " or issuer_id=" + CurrentUser.getWorkspaceId());
+              batch.add("delete from credit where issued_id=" + CurrentUser.getWorkspaceId() + " or issuer_id=" + CurrentUser.getWorkspaceId());
               batch.add("delete from ticket_history " + where);
               batch.add("delete from ticket_comment " + where);
               batch.add("delete from ticket " + where);
@@ -382,7 +382,6 @@ class WorkspaceService {
         	productDao.insert(
       			ProductDTO.builder()
       				.name("Your first product")
-      				.description("You can use this product to bind and monitor your links")
       				.price(BigDecimal.ZERO)
       				.workspaceId(workspaceId)
     				.build()

@@ -17,9 +17,9 @@ import io.inprice.api.app.link.dto.SearchDTO;
 import io.inprice.api.app.product.ProductAlarmService;
 import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
+import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.session.CurrentUser;
@@ -28,12 +28,10 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.models.Link;
-import io.inprice.common.models.Product;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
-import io.inprice.common.repository.AlarmDao;
-import io.inprice.common.repository.PlatformDao;
+import io.inprice.common.models.Product;
 
 class LinkService {
 
@@ -59,7 +57,7 @@ class LinkService {
     }
     
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	where.append(" and CONCAT_WS(l.name, l.sku, l.seller, l.brand)");
+    	where.append(" and CONCAT(ifnull(l.name, ''), ifnull(l.sku, ''), ifnull(l.seller, ''), ifnull(l.brand, ''))");
       where.append(" like '%");
       where.append(dto.getTerm());
       where.append("%' ");
@@ -83,10 +81,7 @@ class LinkService {
     try (Handle handle = Database.getHandle()) {
       List<Link> searchResult =
         handle.createQuery(
-          "select l.*" + PlatformDao.FIELDS + AlarmDao.FIELDS + ", g.name as product_name from link as l " + 
-      		"inner join product as g on g.id = l.product_id " + 
-      		"left join platform as p on p.id = l.platform_id " + 
-          "left join alarm as al on al.id = l.alarm_id " + 
+          "select * from link as l " + 
           where +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", l.id " +
           " limit " + dto.getRowCount() + ", " + dto.getRowLimit()
@@ -94,7 +89,7 @@ class LinkService {
       .map(new LinkMapper())
       .list();
       
-      return new Response(Map.of("rows", searchResult));
+      return new Response(searchResult);
     } catch (Exception e) {
       logger.error("Failed in full search for links.", e);
       return Responses.ServerProblem.EXCEPTION;
@@ -142,7 +137,7 @@ class LinkService {
         	}
 
           if (dto.getFromProductId() != null) { //meaning that it is called from product definition (not from links search page)
-          	Product product = handle.attach(ProductDao.class).findByIdWithAlarm(dto.getFromProductId(), CurrentUser.getWorkspaceId());
+          	Product product = handle.attach(ProductDao.class).findByIdWithLookups(dto.getFromProductId(), CurrentUser.getWorkspaceId());
           	Map<String, Object> data = Map.of(
           		"product", product,
             	"links", linkDao.findListByProductId(dto.getFromProductId(), CurrentUser.getWorkspaceId())

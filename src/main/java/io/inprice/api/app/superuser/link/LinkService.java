@@ -66,7 +66,7 @@ class LinkService {
     }
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-  		where.append(" and CONCAT_WS(l.name, l.sku, l.seller, l.brand)");
+    	where.append(" and CONCAT(ifnull(l.name, ''), ifnull(l.sku, ''), ifnull(l.seller, ''), ifnull(l.brand, ''))");
       where.append(" like '%");
       where.append(dto.getTerm());
       where.append("%' ");
@@ -95,7 +95,7 @@ class LinkService {
       .map(new LinkMapper())
       .list();
       
-      return new Response(Map.of("rows", searchResult));
+      return new Response(searchResult);
     } catch (Exception e) {
       logger.error("Failed in full search for links.", e);
       return Responses.ServerProblem.EXCEPTION;

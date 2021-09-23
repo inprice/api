@@ -30,7 +30,7 @@ class PlatformService {
     StringBuilder where = new StringBuilder("where 1=1 ");
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	where.append(" and CONCAT_WS(name, domain)");
+    	where.append(" and CONCAT(name, domain)");
       where.append(" like '%");
       where.append(dto.getTerm());
       where.append("%' ");
@@ -60,7 +60,7 @@ class PlatformService {
       .map(new PlatformMapper())
       .list();
       
-      return new Response(Map.of("rows", searchResult));
+      return new Response(searchResult);
     } catch (Exception e) {
       logger.error("Failed in full search for platforms.", e);
       return Responses.ServerProblem.EXCEPTION;

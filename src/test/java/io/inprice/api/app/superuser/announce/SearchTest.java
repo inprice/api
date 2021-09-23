@@ -80,11 +80,9 @@ public class SearchTest {
   		body.put("types", new String[] { type });
   
   		JSONObject json = callTheService(body);
-  		
-  		JSONObject data = json.getJSONObject("data");
-  		JSONArray rows = data.getJSONArray("rows");
-  		
   		assertEquals(200, json.getInt("status"));
+
+  		JSONArray rows = json.getJSONArray("data");
   		assertTrue(rows.length() > 0);
   		
   		announceCount += rows.length();
@@ -92,9 +90,7 @@ public class SearchTest {
 		
 		//finding total announce count
 		JSONObject json = callTheService(SAMPLE_BODY);
-		JSONObject data = json.getJSONObject("data");
-
-		JSONArray rows = data.getJSONArray("rows");
+		JSONArray rows = json.getJSONArray("data");
 		assertEquals(announceCount, rows.length());
 	}
 	

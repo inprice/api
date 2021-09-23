@@ -10,7 +10,8 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
-import io.inprice.api.dto.BaseSearchDTO;
+import io.inprice.api.app.definitions.brand.BrandDao;
+import io.inprice.api.app.definitions.category.CategoryDao;
 import io.inprice.api.dto.ProductDTO;
 import io.inprice.common.mappers.IdNamePairMapper;
 import io.inprice.common.mappers.ProductMapper;
@@ -23,22 +24,25 @@ public interface ProductDao {
 	@UseRowMapper(ProductMapper.class)
 	Product findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
-	@SqlQuery("select * from product where name=:name and id!=:id and workspace_id=:workspaceId limit 1")
-	@UseRowMapper(ProductMapper.class)
-	Product findByName(@Bind("name") String name, @Bind("id") Long otherThanThisId, @Bind("workspaceId") Long workspaceId);
+	@SqlQuery(
+		"select exists(" +
+			"select 1 from product " +
+			"where (code = :dto.code or name = :dto.name) " +
+			"  and id != :dto.id " +
+			"  and workspace_id = :workspaceId " +
+		")")
+	boolean doesExist(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
-		"select g.*" + AlarmDao.FIELDS + " from product g " +
+		"select g.*" + AlarmDao.FIELDS + BrandDao.FIELDS + CategoryDao.FIELDS + " from product g " +
 		"left join alarm as al on al.id=g.alarm_id " +
+		"left join brand as brn on brn.id=g.brand_id " +
+		"left join category as cat on cat.id=g.category_id " +
 		"where g.id=:id " +
 		"  and g.workspace_id=:workspaceId"
 	)
 	@UseRowMapper(ProductMapper.class)
-	Product findByIdWithAlarm(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
-
-  @SqlQuery("select * from product where code=:code and workspace_id=:workspaceId")
-  @UseRowMapper(ProductMapper.class)
-  Product findByCode(@Bind("code") String code, @Bind("workspaceId") Long workspaceId);
+	Product findByIdWithLookups(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery("select * from product where name=:name and workspace_id=:workspaceId limit 1")
   @UseRowMapper(ProductMapper.class)
@@ -48,27 +52,16 @@ public interface ProductDao {
   @UseRowMapper(IdNamePairMapper.class)
   List<IdNamePairMapper> getIdNameList(@Bind("excludedId") Long excludedId, @Bind("workspaceId") Long workspaceId);
 
-  @SqlQuery(
-		"select g.*" + AlarmDao.FIELDS + " from product as g " +
-		"left join alarm as al on al.id = g.alarm_id " +
-		"where g.name like :dto.term " +
-		"  and g.workspace_id = :dto.workspaceId " +
-		"order by g.name " +
-		"limit :dto.rowCount, :dto.rowLimit "
-	)
-  @UseRowMapper(ProductMapper.class)
-	List<Product> search(@BindBean("dto") BaseSearchDTO dto);
-
   @SqlUpdate(
-		"insert into product (code, name, description, price, brand_id, category_id, workspace_id) " +
-		"values (:dto.code, :dto.name, :dto.description, :dto.price, :dto.brandId, :dto.categoryId, :dto.workspaceId)"
+		"insert into product (code, name, price, brand_id, category_id, workspace_id) " +
+		"values (:dto.code, :dto.name, :dto.price, :dto.brandId, :dto.categoryId, :dto.workspaceId)"
 	)
   @GetGeneratedKeys()
   long insert(@BindBean("dto") ProductDTO dto);
 
   @SqlUpdate(
 		"update product " +
-		"set name=:dto.name, description=:dto.description, price=:dto.price, brand_id=:dto.brandId, category_id=:dto.categoryId " +
+		"set code=:dto.code, name=:dto.name, price=:dto.price, brand_id=:dto.brandId, category_id=:dto.categoryId " +
 		"where id=:dto.id " +
 		"  and workspace_id=:dto.workspaceId"
 	)

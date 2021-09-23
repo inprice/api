@@ -21,8 +21,8 @@ insert into test.workspace_history (workspace_id, status) values (@workspace_id,
 -- membership
 insert into test.membership (email, user_id, workspace_id, role, status) values (@admin_email, @admin_id, @workspace_id, 'ADMIN', 'JOINED');
 
--- coupon for Basic Plan
-insert into test.coupon (code, plan_id, days, description, issuer_id) values ('RB5QV6CF', @basic_plan_id, 30, 'Given for testing', @workspace_id);
+-- credit for Basic Plan
+insert into test.credit (code, plan_id, days, description, issuer_id) values ('RB5QV6CF', @basic_plan_id, 30, 'Given for testing', @workspace_id);
 
 -- announces
 insert into test.announce (type, level, title, body, starting_at, ending_at, user_id, workspace_id) 
@@ -36,12 +36,12 @@ values ('WORKSPACE', 'INFO', 'A kind reminder for your usage', 'Please consider 
 
 -- ticket 1
 insert into test.ticket (priority, type, subject, body, comment_count, user_id, workspace_id) 
-values ('NORMAL', 'FEEDBACK', 'COUPON', 'Are you planning to give free coupons out for a special time periods like Christmas.', 2, @admin_id, @workspace_id);
+values ('NORMAL', 'FEEDBACK', 'CREDIT', 'Are you planning to give free credits out for a special time periods like Christmas.', 2, @admin_id, @workspace_id);
 set @ticket_id = last_insert_id();
 
 -- history
 insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, workspace_id) 
-values (@ticket_id, 'OPENED', 'NORMAL', 'FEEDBACK', 'COUPON', @admin_id, @workspace_id);
+values (@ticket_id, 'OPENED', 'NORMAL', 'FEEDBACK', 'CREDIT', @admin_id, @workspace_id);
 
 -- comment 1
 insert into test.ticket_comment (ticket_id, body, editable, user_id, workspace_id) 

@@ -66,7 +66,7 @@ public class GetIdNameListTest {
 	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
-		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "With Standard Plan (Couponed) but No Extra User");
+		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "With Standard Plan (Credited) but No Extra User");
 		JSONObject workspace = workspaceList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/{workspaceId}")

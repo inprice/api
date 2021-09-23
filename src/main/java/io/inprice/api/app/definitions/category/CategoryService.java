@@ -96,9 +96,10 @@ public class CategoryService {
       	if (category != null) {
         	handle.begin();
         	
+        	categoryDao.releaseProducts(id, CurrentUser.getWorkspaceId());
         	boolean isOK = categoryDao.delete(id, CurrentUser.getWorkspaceId());
+
         	if (isOK) {
-        		categoryDao.releaseProducts(id, CurrentUser.getWorkspaceId());
             handle.commit();
             res = Responses.OK;
           } else {

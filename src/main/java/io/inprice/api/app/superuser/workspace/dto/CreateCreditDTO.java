@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class CreateCouponDTO implements Serializable {
+public class CreateCreditDTO implements Serializable {
 
 	private static final long serialVersionUID = -2320608884231408592L;
 

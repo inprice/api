@@ -56,8 +56,8 @@ class SubscriptionService {
           trans.setDescription(("Manual cancelation."));
           
           switch (workspace.getStatus()) {
-  					case COUPONED: {
-  						trans.setEvent(SubsEvent.COUPON_USE_CANCELLED);
+  					case CREDITED: {
+  						trans.setEvent(SubsEvent.CREDIT_USE_CANCELLED);
   						break;
   					}
   					case FREE: {
@@ -136,7 +136,7 @@ class SubscriptionService {
           	handle.begin();
             
             boolean isOK = 
-              subscriptionDao.startFreeUseOrApplyCoupon(
+              subscriptionDao.startFreeUseOrApplyCredit(
                 CurrentUser.getWorkspaceId(),
                 WorkspaceStatus.FREE.name(),
                 basicPlan.getId(),

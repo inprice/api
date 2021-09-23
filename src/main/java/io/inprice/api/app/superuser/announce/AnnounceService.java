@@ -158,7 +158,7 @@ public class AnnounceService {
       .map(new AnnounceMapper())
       .list();
 
-      return new Response(Map.of("rows", searchResult));
+      return new Response(searchResult);
     } catch (Exception e) {
       logger.error("Failed in full search for announces.", e);
       return Responses.ServerProblem.EXCEPTION;

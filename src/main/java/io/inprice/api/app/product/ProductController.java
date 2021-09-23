@@ -1,9 +1,9 @@
 package io.inprice.api.app.product;
 
 import io.inprice.api.app.product.dto.AddLinksDTO;
+import io.inprice.api.app.product.dto.SearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
@@ -43,7 +43,7 @@ public class ProductController extends AbstractController {
     	if (ctx.body().isBlank()) {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
-	  		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
+	  		SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
 	  		ctx.json(service.search(dto));
     	}
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());

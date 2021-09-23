@@ -8,11 +8,15 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
+import io.inprice.common.info.IdName;
 import io.inprice.common.mappers.BrandMapper;
+import io.inprice.common.mappers.IdNameMapper;
 import io.inprice.common.models.Brand;
 
 public interface BrandDao {
 
+  final String FIELDS = ", brn.id as brand_id, brn.name as brand_name ";
+	
   @SqlUpdate("insert into brand (name, workspace_id) values (:name, :workspaceId)")
   @GetGeneratedKeys()
   long insert(@Bind("name") String name, @Bind("workspaceId") Long workspaceId);
@@ -35,9 +39,9 @@ public interface BrandDao {
 	@UseRowMapper(BrandMapper.class)
 	Brand findByName(@Bind("name") String name, @Bind("id") Long otherThanThisId, @Bind("workspaceId") Long workspaceId);
 
-  @SqlQuery("select * from brand where workspace_id=:workspaceId order by name")
-  @UseRowMapper(BrandMapper.class)
-  List<Brand> list(@Bind("workspaceId") Long workspaceId);
+  @SqlQuery("select id, name from brand where workspace_id=:workspaceId order by name")
+  @UseRowMapper(IdNameMapper.class)
+  List<IdName> list(@Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
 		"select * from brand " +

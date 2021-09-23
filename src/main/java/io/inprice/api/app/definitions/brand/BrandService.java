@@ -96,9 +96,10 @@ public class BrandService {
       	if (brand != null) {
         	handle.begin();
         	
+        	brandDao.releaseProducts(id, CurrentUser.getWorkspaceId());
         	boolean isOK = brandDao.delete(id, CurrentUser.getWorkspaceId());
+
         	if (isOK) {
-        		brandDao.releaseProducts(id, CurrentUser.getWorkspaceId());
             handle.commit();
             res = Responses.OK;
           } else {

@@ -9,9 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.workspace.WorkspaceDao;
-import io.inprice.api.app.coupon.CouponDao;
+import io.inprice.api.app.credit.CreditDao;
 import io.inprice.api.app.subscription.SubscriptionDao;
-import io.inprice.api.app.superuser.workspace.dto.CreateCouponDTO;
+import io.inprice.api.app.superuser.workspace.dto.CreateCreditDTO;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.app.system.SystemDao;
 import io.inprice.api.app.user.UserDao;
@@ -35,7 +35,7 @@ import io.inprice.common.models.WorkspaceTrans;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.Plan;
 import io.inprice.common.models.User;
-import io.inprice.common.utils.CouponManager;
+import io.inprice.common.utils.CreditManager;
 import io.inprice.common.utils.DateUtils;
 import io.javalin.http.Context;
 
@@ -189,7 +189,7 @@ class Service {
     return false;
   }
 
-  Response createCoupon(CreateCouponDTO dto) {
+  Response createCredit(CreateCreditDTO dto) {
 		String problem = null;
 		
 		if (dto.getWorkspaceId() == null || dto.getWorkspaceId() < 1) {
@@ -210,10 +210,10 @@ class Service {
 		if (problem == null) {
   		try (Handle handle = Database.getHandle()) {
 				return 
-					createCoupon(
+					createCredit(
 						handle, 
 						dto.getWorkspaceId(), 
-						SubsEvent.GIVEN_COUPON, 
+						SubsEvent.GIVEN_CREDIT, 
 						dto.getPlanId(), 
 						dto.getDays(), 
 						dto.getDescription()
@@ -223,7 +223,7 @@ class Service {
 		return new Response(problem);
   }
 
-  private Response createCoupon(Handle handle, long workspaceId, SubsEvent subsEvent, Integer planId, long days, String description) {
+  private Response createCredit(Handle handle, long workspaceId, SubsEvent subsEvent, Integer planId, long days, String description) {
   	Response res = Responses.NotFound.WORKSPACE;
 
   	SystemDao planDao = handle.attach(SystemDao.class);
@@ -234,7 +234,7 @@ class Service {
     	Workspace workspace = workspaceDao.findById(workspaceId);
   		if (workspace != null) {
   			
-  			if (workspace.getStatus().isOKForCoupon()) {
+  			if (workspace.getStatus().isOKForCredit()) {
   				
   				boolean hasLimitProblem = false;
   				if (workspace.getPlanId() != null && workspace.getPlanId() != plan.getId()) {
@@ -246,10 +246,10 @@ class Service {
   				}
 
   	  		if (hasLimitProblem == false) {
-  	  	    String couponCode = CouponManager.generate();
-  	  	    CouponDao couponDao = handle.attach(CouponDao.class);
-  	  	    boolean isOK = couponDao.create(
-  	  	      couponCode,
+  	  	    String creditCode = CreditManager.generate();
+  	  	    CreditDao creditDao = handle.attach(CreditDao.class);
+  	  	    boolean isOK = creditDao.create(
+  	  	      creditCode,
   	  	      planId,
   	  	      days,
   	  	      description,
@@ -260,13 +260,13 @@ class Service {
   	  	      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
   	  	      WorkspaceTrans trans = new WorkspaceTrans();
   	  	      trans.setWorkspaceId(workspaceId);
-  	  	      trans.setEventId(couponCode);
+  	  	      trans.setEventId(creditCode);
   	  	      trans.setEvent(subsEvent);
   	  	      trans.setSuccessful(Boolean.TRUE);
   	  	      trans.setReason(description);
-  	  	      trans.setDescription("Issued coupon");
+  	  	      trans.setDescription("Issued credit");
   	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-  	  	      res = new Response(Map.of("code", couponCode));
+  	  	      res = new Response(Map.of("code", creditCode));
   	  	    } else {
   	  	    	res = Responses.DataProblem.DB_PROBLEM;
   	  	    }

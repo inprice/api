@@ -92,7 +92,7 @@ public class CancelTest {
 	}
 
 	@Test
-	public void Everything_must_be_ok_FOR_an_workspace_WITH_COUPONED() {
+	public void Everything_must_be_ok_FOR_an_workspace_WITH_CREDITED() {
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN());
 
 		assertEquals(200, json.getInt("status"));

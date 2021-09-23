@@ -31,8 +31,8 @@ insert into test.membership (email, user_id, workspace_id, role, status) values 
 -- 2 products and 24 links
 -- product_name_addition, actives, tryings, waitings, problems, url, platform_id, workspace_name, workspace_id
 -- -----------------------
-call sp_create_product_and_links('1', 5, 4, 3, 2, 'https://amazon.com/', 2, 'Workspace-B', @workspace_id);
-call sp_create_product_and_links('2', 4, 3, 2, 1, 'https://ebay.com/', 12, 'Workspace-B', @workspace_id);
+call sp_create_product_and_links(null, '1', 5, 4, 3, 2, 'https://amazon.com/', 2, 'Workspace-B', @workspace_id);
+call sp_create_product_and_links(null, '2', 4, 3, 2, 1, 'https://ebay.com/', 12, 'Workspace-B', @workspace_id);
 
 -- -----------------------
 -- 5 alarms

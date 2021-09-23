@@ -261,7 +261,7 @@ public class AlarmService {
 	        )
 		    .map(new AlarmMapper()).list();
 
-			return new Response(Map.of("rows", searchResult));
+			return new Response(searchResult);
 		} catch (Exception e) {
 			logger.error("Failed in full search for alarms.", e);
 			return Responses.ServerProblem.EXCEPTION;

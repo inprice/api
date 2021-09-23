@@ -74,7 +74,7 @@ public class SearchTest {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, SAMPLE_BODY);
 		assertTrue(json.has("data"));
 
-		JSONArray rows = json.getJSONObject("data").getJSONArray("rows");
+		JSONArray rows = json.getJSONArray("data");
 		assertEquals(9, rows.length());
 	}
 	

@@ -92,7 +92,7 @@ public class AnnounceService {
   	}
     
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	where.append(" and CONCAT_WS(title, body)");
+    	where.append(" and CONCAT(title, body)");
     	where.append(" like '%");
       where.append(dto.getTerm());
       where.append("%' ");
@@ -148,7 +148,7 @@ public class AnnounceService {
       .map(new AnnounceMapper())
       .list();
 
-      return new Response(Map.of("rows", searchResult));
+      return new Response(searchResult);
     } catch (Exception e) {
       logger.error("Failed in full search for announces.", e);
       return Responses.ServerProblem.EXCEPTION;

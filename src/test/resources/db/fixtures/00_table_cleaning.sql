@@ -13,7 +13,7 @@ truncate table test.alarm;
 truncate table test.announce;
 truncate table test.announce_log;
 truncate table test.checkout;
-truncate table test.coupon;
+truncate table test.credit;
 truncate table test.link;
 truncate table test.product;
 truncate table test.brand;

@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.statement.Batch;
@@ -18,16 +19,17 @@ import io.inprice.api.app.definitions.brand.BrandDao;
 import io.inprice.api.app.definitions.category.CategoryDao;
 import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.app.product.dto.AddLinksDTO;
+import io.inprice.api.app.product.dto.SearchDTO;
 import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.info.Response;
+import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
-import io.inprice.common.info.ProductRefreshResult;
+import io.inprice.common.mappers.ProductMapper;
 import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Brand;
 import io.inprice.common.models.Category;
@@ -44,7 +46,7 @@ class ProductService {
     try (Handle handle = Database.getHandle()) {
       ProductDao productDao = handle.attach(ProductDao.class);
 
-      Product product = productDao.findByIdWithAlarm(id, CurrentUser.getWorkspaceId());
+      Product product = productDao.findByIdWithLookups(id, CurrentUser.getWorkspaceId());
       if (product != null) {
         return new Response(product);
       }
@@ -59,12 +61,56 @@ class ProductService {
   	}
   }
 
-  Response search(BaseSearchDTO dto) {
+  Response search(SearchDTO dto) {
+  	dto = DTOHelper.normalizeSearch(dto, true);
+
+    //---------------------------------------------------
+    //building the criteria up
+    //---------------------------------------------------
+    StringBuilder where = new StringBuilder();
+
+    where.append("where p.workspace_id = ");
+    where.append(dto.getWorkspaceId());
+
+    if (dto.getAlarmStatus() != null && AlarmStatus.ALL.equals(dto.getAlarmStatus()) == false) {
+  		where.append(" and p.alarm_id is ");
+    	if (AlarmStatus.ALARMED.equals(dto.getAlarmStatus())) {
+    		where.append(" not ");
+    	}
+    	where.append(" null");
+    }
+
+    if (StringUtils.isNotBlank(dto.getTerm())) {
+    	where.append(" and CONCAT(ifnull(p.name, ''), ifnull(p.code, ''))");
+      where.append(" like '%");
+      where.append(dto.getTerm());
+      where.append("%' ");
+    }
+
+    if (CollectionUtils.isNotEmpty(dto.getLevels())) {
+    	where.append(
+  			String.format(" and p.level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
+			);
+    }
+
+    //---------------------------------------------------
+    //fetching the data
+    //---------------------------------------------------
     try (Handle handle = Database.getHandle()) {
-      ProductDao productDao = handle.attach(ProductDao.class);
-      dto = DTOHelper.normalizeSearch(dto, true, true);
-      dto.setTerm("%"+dto.getTerm());
-      return new Response(productDao.search(dto));
+      List<Product> searchResult =
+        handle.createQuery(
+          "select * from product as p " + 
+          where +
+          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", p.id " +
+          " limit " + dto.getRowCount() + ", " + dto.getRowLimit()
+        )
+      .map(new ProductMapper())
+      .list();
+
+			return new Response(searchResult);
+    } catch (Exception e) {
+      logger.error("Failed in full search for products.", e);
+      return Responses.ServerProblem.EXCEPTION;
     }
   }
 
@@ -73,7 +119,7 @@ class ProductService {
     	ProductDao productDao = handle.attach(ProductDao.class);
       LinkDao linkDao = handle.attach(LinkDao.class);
 
-      Product product = productDao.findByIdWithAlarm(id, CurrentUser.getWorkspaceId());
+      Product product = productDao.findByIdWithLookups(id, CurrentUser.getWorkspaceId());
       if (product != null) {
       	Map<String, Object> dataMap = Map.of(
         	"product", product,
@@ -91,21 +137,15 @@ class ProductService {
       try (Handle handle = Database.getHandle()) {
         ProductDao productDao = handle.attach(ProductDao.class);
 
-        //checks if code is given and it is used for another product
-        if (StringUtils.isNotBlank(dto.getCode())) {
-        	Product found = productDao.findByCode(dto.getCode(), CurrentUser.getWorkspaceId());
-          if (found != null) {
-          	return Responses.Already.Defined.PRODUCT;
-          }
-        }
-
-        Product found = productDao.findByName(dto.getName(), CurrentUser.getWorkspaceId());
-        if (found == null) {
+        dto.setId(0L); //necessary for the existency check here!
+      	boolean alreadyExists = productDao.doesExist(dto, CurrentUser.getWorkspaceId());
+        if (alreadyExists == false) {
         	checkBrand(dto, handle);
         	checkCategory(dto, handle);
+
         	Long id = productDao.insert(dto);
         	if (id != null && id > 0) {
-        		found = productDao.findById(id, CurrentUser.getWorkspaceId());
+        		Product found = productDao.findByIdWithLookups(id, CurrentUser.getWorkspaceId());
             return new Response(Map.of("product", found));
           }
         } else {
@@ -129,40 +169,30 @@ class ProductService {
         try (Handle handle = Database.getHandle()) {
           ProductDao productDao = handle.attach(ProductDao.class);
 
-          //to prevent duplication, checking if any product other than this has the same name!
-          Product found = productDao.findByName(dto.getName(), dto.getId(), CurrentUser.getWorkspaceId());
-          if (found == null) {
+          //checks if code or name is already used for another product
+        	boolean alreadyExists = productDao.doesExist(dto, CurrentUser.getWorkspaceId());
+          if (alreadyExists == false) {
 
           	//must be found
-          	found = productDao.findById(dto.getId(), CurrentUser.getWorkspaceId());
+          	Product found = productDao.findById(dto.getId(), CurrentUser.getWorkspaceId());
             if (found != null) {
             	handle.begin();
             	
+            	checkBrand(dto, handle);
+            	checkCategory(dto, handle);
             	boolean isUpdated = productDao.update(dto);
   
               if (isUpdated) {
-              	checkBrand(dto, handle);
-              	checkCategory(dto, handle);
-
               	// if base price is changed then all the prices and other 
                 // indicators (on both product itself and its links) must be re-calculated accordingly
                 if (found.getLinkCount() > 0 && found.getPrice().compareTo(dto.getPrice()) != 0) {
-
                 	//refreshes product's totals and alarm if needed!
-              		ProductRefreshResult PRR = ProductAlarmService.updateAlarm(dto.getId(), handle);
-  
-                  //for returning data!
-            			found.setLevel(PRR.getLevel());
-            			found.setTotal(PRR.getTotal());
-            			found.setMinPrice(PRR.getMinPrice());
-            			found.setAvgPrice(PRR.getAvgPrice());
-            			found.setMaxPrice(PRR.getMaxPrice());
+              		ProductAlarmService.updateAlarm(dto.getId(), handle);
                 }
-                //for returning data!
-                found.setName(dto.getName());
-                found.setDescription(dto.getDescription());
-                found.setPrice(dto.getPrice());
-                
+
+                //to return
+              	found = productDao.findByIdWithLookups(dto.getId(), CurrentUser.getWorkspaceId());
+
                 res = new Response(Map.of("product", found));
               } else {
               	res = Responses.DataProblem.DB_PROBLEM;
@@ -289,7 +319,7 @@ class ProductService {
         }
 
         if (res.isOK()) {
-        	Product product = productDao.findByIdWithAlarm(dto.getProductId(), CurrentUser.getWorkspaceId());
+        	Product product = productDao.findByIdWithLookups(dto.getProductId(), CurrentUser.getWorkspaceId());
 
         	int workspaceLinkCount = workspace.getLinkCount() + urlList.size();
 
@@ -325,34 +355,30 @@ class ProductService {
     }
 
     if (problem == null) {
-    	if (StringUtils.isNotBlank(dto.getDescription()) && dto.getDescription().length() > 128) {
-    		problem = "Description can be up to 128 chars!";
-    	}
-    }
-
-    if (problem == null) {
     	if (dto.getPrice() != null && (dto.getPrice().compareTo(BigDecimal.ZERO) < 0 || dto.getPrice().compareTo(new BigDecimal(9_999_999)) > 0)) {
     		problem = "Price is out of reasonable range!";
     	}
     }
 
-    if (problem == null && dto.getBrandId() == null && StringUtils.isNotBlank(dto.getBrandName())) {
-    	if (dto.getBrandName().length() < 2 || dto.getBrandName().length() > 50) {
+    if (problem == null && dto.getBrand() != null && dto.getBrand().getId() == null && StringUtils.isNotBlank(dto.getBrand().getName())) {
+    	if (dto.getBrand().getName().length() < 2 || dto.getBrand().getName().length() > 50) {
     		problem = "Brand name must be between 2 - 50 chars!";
     	}
     }
 
-    if (problem == null && dto.getCategoryId() == null && StringUtils.isNotBlank(dto.getCategoryName())) {
-    	if (dto.getCategoryName().length() < 2 || dto.getCategoryName().length() > 50) {
+    if (problem == null && dto.getCategory() != null && dto.getCategory().getId() == null && StringUtils.isNotBlank(dto.getCategory().getName())) {
+    	if (dto.getCategory().getName().length() < 2 || dto.getCategory().getName().length() > 50) {
     		problem = "Category name must be between 2 - 50 chars!";
     	}
     }
 
     if (problem == null) {
       dto.setWorkspaceId(CurrentUser.getWorkspaceId());
+      dto.setCode(SqlHelper.clear(dto.getCode()));
       dto.setName(SqlHelper.clear(dto.getName()));
-      dto.setDescription(SqlHelper.clear(dto.getDescription()));
       if (dto.getPrice() == null) dto.setPrice(BigDecimal.ZERO);
+      if (dto.getBrand() != null) dto.setBrandId(dto.getBrand().getId());
+      if (dto.getCategory() != null) dto.setCategoryId(dto.getCategory().getId());
     }
 
     return problem;
@@ -407,50 +433,52 @@ class ProductService {
   	return res;
   }
 
-  private void checkBrand(ProductDTO dto, Handle handle) {
-  	Brand found = null;
+  private Brand checkBrand(ProductDTO dto, Handle handle) {
   	BrandDao brandDao = handle.attach(BrandDao.class);
 
-  	if (dto.getBrandId() != null) {
-  		found = brandDao.findById(dto.getBrandId(), dto.getWorkspaceId());
+  	Brand found = null;
+  	if (dto.getBrand() != null) {
+	  	if (dto.getBrand().getId() != null) {
+	  		found = brandDao.findById(dto.getBrand().getId(), dto.getWorkspaceId());
 
-  	} else if (StringUtils.isNotBlank(dto.getBrandName())) {
-			String name = SqlHelper.clear(dto.getBrandName());
-			found = brandDao.findByName(name, dto.getWorkspaceId());
-  		if (found == null) {
-  			found = new Brand();
-  			found.setId(brandDao.insert(name, dto.getWorkspaceId()));
-  		}
+	  	} else if (StringUtils.isNotBlank(dto.getBrand().getName())) {
+				String name = SqlHelper.clear(dto.getBrand().getName());
+				found = brandDao.findByName(name, dto.getWorkspaceId());
+	  		if (found == null) {
+	  			found = new Brand();
+	  			found.setId(brandDao.insert(name, dto.getWorkspaceId()));
+	  			found.setName(name);
+	  		}
+	  	}
   	}
 
-  	if (found == null) {
-  		dto.setBrandId(null);
-  	} else {
-  		dto.setBrandId(found.getId());
-  	}
+  	if (found != null) dto.setBrandId(found.getId());
+  	
+  	return found;
   }
 
-  private void checkCategory(ProductDTO dto, Handle handle) {
-  	Category found = null;
+  private Category checkCategory(ProductDTO dto, Handle handle) {
 		CategoryDao categoryDao = handle.attach(CategoryDao.class);
 
-  	if (dto.getCategoryId() != null) {
-  		found = categoryDao.findById(dto.getCategoryId(), dto.getWorkspaceId());
-
-  	} else if (StringUtils.isNotBlank(dto.getCategoryName())) {
-			String name = SqlHelper.clear(dto.getCategoryName());
-			found = categoryDao.findByName(name, dto.getWorkspaceId());
-  		if (found == null) {
-  			found = new Category();
-  			found.setId(categoryDao.insert(name, dto.getWorkspaceId()));
-  		}
+		Category found = null;
+  	if (dto.getCategory() != null) {
+  		if (dto.getCategory().getId() != null) {
+	  		found = categoryDao.findById(dto.getCategory().getId(), dto.getWorkspaceId());
+	
+	  	} else if (StringUtils.isNotBlank(dto.getCategory().getName())) {
+				String name = SqlHelper.clear(dto.getCategory().getName());
+				found = categoryDao.findByName(name, dto.getWorkspaceId());
+	  		if (found == null) {
+	  			found = new Category();
+	  			found.setId(categoryDao.insert(name, dto.getWorkspaceId()));
+	  			found.setName(name);
+	  		}
+	  	}
   	}
 
-  	if (found == null) {
-  		dto.setCategoryId(null);
-  	} else {
-  		dto.setCategoryId(found.getId());
-  	}
+  	if (found != null) dto.setCategoryId(found.getId());
+
+  	return found;
   }
 
 }

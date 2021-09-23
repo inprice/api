@@ -3,6 +3,7 @@
 DELIMITER $$
 
 create procedure sp_create_product_and_links (
+    in in_code varchar(50),
     in in_product_name_addition char(1),
     in in_active_count int,
     in in_trying_count int,
@@ -16,8 +17,8 @@ create procedure sp_create_product_and_links (
 begin
   start transaction;
   
-  insert into product (name, actives, waitings, tryings, problems, workspace_id) 
-  values (concat('Product ', in_product_name_addition, ' of ', in_workspace_name), in_active_count, in_waiting_count, in_trying_count, in_problem_count, in_workspace_id);
+  insert into product (code, name, actives, waitings, tryings, problems, workspace_id) 
+  values (in_code, concat('Product ', in_product_name_addition, ' of ', in_workspace_name), in_active_count, in_waiting_count, in_trying_count, in_problem_count, in_workspace_id);
 
   set @product_id = last_insert_id();
 

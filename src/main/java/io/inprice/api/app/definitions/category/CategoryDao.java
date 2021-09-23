@@ -8,11 +8,15 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
+import io.inprice.common.info.IdName;
 import io.inprice.common.mappers.CategoryMapper;
+import io.inprice.common.mappers.IdNameMapper;
 import io.inprice.common.models.Category;
 
 public interface CategoryDao {
 
+  final String FIELDS = ", cat.id as category_id, cat.name as category_name ";
+	
   @SqlUpdate("insert into category (name, workspace_id) values (:name, :workspaceId)")
   @GetGeneratedKeys()
   long insert(@Bind("name") String name, @Bind("workspaceId") Long workspaceId);
@@ -35,9 +39,9 @@ public interface CategoryDao {
 	@UseRowMapper(CategoryMapper.class)
 	Category findByName(@Bind("name") String name, @Bind("id") Long otherThanThisId, @Bind("workspaceId") Long workspaceId);
 
-  @SqlQuery("select * from category where workspace_id=:workspaceId order by name")
-  @UseRowMapper(CategoryMapper.class)
-  List<Category> list(@Bind("workspaceId") Long workspaceId);
+	@SqlQuery("select id, name from category where workspace_id=:workspaceId order by name")
+  @UseRowMapper(IdNameMapper.class)
+  List<IdName> list(@Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
 		"select * from category " +

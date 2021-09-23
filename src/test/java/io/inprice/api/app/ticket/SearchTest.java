@@ -89,33 +89,27 @@ public class SearchTest {
 		TestUtils.logout(cookies);
 
 		json = res.getBody().getObject();
-
 		assertEquals(200, json.getInt("status"));
-		assertTrue(json.has("data"));
 
-		JSONObject data = json.getJSONObject("data");
-		assertEquals(3, data.getJSONArray("rows").length());
+		JSONArray rows = json.getJSONArray("data");
+		assertEquals(3, rows.length());
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
 		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN(), createBody(new String[] { "OPENED" }, null, null));
-
-		JSONObject data = json.getJSONObject("data");
-		JSONArray rows = data.getJSONArray("rows");
-		
 		assertEquals(200, json.getInt("status"));
+
+		JSONArray rows = json.getJSONArray("data");
 		assertEquals(2, rows.length());
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
 		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR(), createBody(new String[] { "IN_PROGRESS" }, null, null));
-
-		JSONObject data = json.getJSONObject("data");
-		JSONArray rows = data.getJSONArray("rows");
-		
 		assertEquals(200, json.getInt("status"));
+
+		JSONArray rows = json.getJSONArray("data");
 		assertEquals(1, rows.length());
 	}
 
@@ -123,11 +117,9 @@ public class SearchTest {
 	public void Everything_must_be_ok_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(null, null, new String[] { "OTHER" }), 1); //attention!
-
-		JSONObject data = json.getJSONObject("data");
-		JSONArray rows = data.getJSONArray("rows");
-		
 		assertEquals(200, json.getInt("status"));
+
+		JSONArray rows = json.getJSONArray("data");
 		assertEquals(1, rows.length());
 	}
 

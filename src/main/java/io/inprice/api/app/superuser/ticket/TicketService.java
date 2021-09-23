@@ -191,7 +191,7 @@ public class TicketService {
       .map(new TicketMapper())
       .list();
 
-      return new Response(Map.of("rows", searchResult));
+      return new Response(searchResult);
     } catch (Exception e) {
       logger.error("Failed in full search for tickets.", e);
       return Responses.ServerProblem.EXCEPTION;

@@ -20,15 +20,13 @@ public class ProductDTO {
   private Long id;
   private String code;
   private String name;
-  private String description;
   private BigDecimal price;
 
-  private Long brandId;
-  private String brandName;
+  private SimpleDef brand;
+  private SimpleDef category;
 
-  private Long categoryId;
-  private String categoryName;
-
+  private Long brandId;    //for dao
+  private Long categoryId; //for dao
   private Long workspaceId;
 
 }

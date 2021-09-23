@@ -22,9 +22,9 @@ insert into test.workspace_history (workspace_id, status) values (@workspace_id,
 -- membership
 insert into test.membership (email, user_id, workspace_id, role, status) values (@admin_email, @admin_id, @workspace_id, 'ADMIN', 'JOINED');
 
--- coupon for Basic and Standard Plan
-insert into test.coupon (code, plan_id, days, description, issuer_id) values ('MU3XF9NP', @basic_plan_id, 30, 'Another coupon for testing', @workspace_id);
-insert into test.coupon (code, plan_id, days, description, issued_id) values ('KJ9QF6G7', @standard_plan_id, 30, 'Assigned to the second workspace', @workspace_id);
+-- credit for Basic and Standard Plan
+insert into test.credit (code, plan_id, days, description, issuer_id) values ('MU3XF9NP', @basic_plan_id, 30, 'Another credit for testing', @workspace_id);
+insert into test.credit (code, plan_id, days, description, issued_id) values ('KJ9QF6G7', @standard_plan_id, 30, 'Assigned to the second workspace', @workspace_id);
 
 -- announces
 insert into test.announce (type, level, title, body, starting_at, ending_at, user_id, workspace_id) 

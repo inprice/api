@@ -56,9 +56,8 @@ public class TestFinder {
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
-		JSONObject data = json.getJSONObject("data");
-		JSONArray rows = data.getJSONArray("rows");
-		
+		JSONArray rows = json.getJSONArray("data");
+
 		return rows;
 	}
 
@@ -92,8 +91,7 @@ public class TestFinder {
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
-		JSONObject data = json.getJSONObject("data");
-		JSONArray rows = data.getJSONArray("rows");
+		JSONArray rows = json.getJSONArray("data");
 		
 		return rows;
 	}
@@ -108,8 +106,7 @@ public class TestFinder {
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
-		JSONObject data = json.getJSONObject("data");
-		JSONArray rows = data.getJSONArray("rows");
+		JSONArray rows = json.getJSONArray("data");
 		
 		return rows;
 	}
@@ -126,8 +123,7 @@ public class TestFinder {
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
-		JSONObject data = json.getJSONObject("data");
-		JSONArray rows = data.getJSONArray("rows");
+		JSONArray rows = json.getJSONArray("data");
 
 		JSONObject ticket = rows.getJSONObject(0);
 		
@@ -138,7 +134,7 @@ public class TestFinder {
 			.asJson();
 
 		json = res.getBody().getObject();
-		data = json.getJSONObject("data");
+		JSONObject data = json.getJSONObject("data");
 
 		return data.getJSONArray("commentList");
 	}

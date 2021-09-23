@@ -6,7 +6,6 @@ public enum OrderBy {
 	SELLER("seller"),
 	BRAND("brand"),
 	SKU("sku"),
-  PLATFORM("domain"),
   LEVEL("l.level"),
   PRICE("l.price"),
   LAST_CHECKED("checked_at"),

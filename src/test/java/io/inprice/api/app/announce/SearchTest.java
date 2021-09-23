@@ -88,43 +88,36 @@ public class SearchTest {
 	@Test
 	public void Everything_must_be_ok_FOR_user() {
 		JSONObject json = callTheService(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "USER" }));
-
-		JSONObject data = json.getJSONObject("data");
-		
 		assertEquals(200, json.getInt("status"));
-		assertEquals(1, data.length());
+
+		JSONArray rows = json.getJSONArray("data");
+		assertEquals(1, rows.length());
 	}
 
 	@Test
 	public void Everything_must_be_ok_FOR_workspace() {
 		JSONObject json = callTheService(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "WORKSPACE" }));
-
-		JSONObject data = json.getJSONObject("data");
-		JSONArray rows = data.getJSONArray("rows");
-		
 		assertEquals(200, json.getInt("status"));
+
+		JSONArray rows = json.getJSONArray("data");
 		assertEquals(1, rows.length());
 	}
 
 	@Test
 	public void Everything_must_be_ok_FOR_system() {
 		JSONObject json = callTheService(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "SYSTEM" }));
-
-		JSONObject data = json.getJSONObject("data");
-		JSONArray rows = data.getJSONArray("rows");
-		
 		assertEquals(200, json.getInt("status"));
+
+		JSONArray rows = json.getJSONArray("data");
 		assertEquals(1, rows.length());
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_mixin() {
 		JSONObject json = callTheService(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), createBody(new String[] { "SYSTEM", "WORKSPACE", "USER" }));
-
-		JSONObject data = json.getJSONObject("data");
-		JSONArray rows = data.getJSONArray("rows");
-		
 		assertEquals(200, json.getInt("status"));
+
+		JSONArray rows = json.getJSONArray("data");
 		assertEquals(3, rows.length());
 	}
 

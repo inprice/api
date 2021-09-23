@@ -13,16 +13,16 @@ set @admin_id = last_insert_id();
 
 -- workspace
 insert into test.workspace (name, plan_id, status, subs_started_at, subs_renewal_at, alarm_count, admin_id) 
-values ('With Standard Plan (Couponed) but No Extra User', @standard_plan_id, 'COUPONED', now(), @one_year_later, 2, @admin_id);
+values ('With Standard Plan (Credited) but No Extra User', @standard_plan_id, 'CREDITED', now(), @one_year_later, 2, @admin_id);
 set @workspace_id = last_insert_id();
 
 -- workspace history
 insert into test.workspace_history (workspace_id, status) values (@workspace_id, 'CREATED');
-insert into test.workspace_history (workspace_id, status) values (@workspace_id, 'COUPONED');
+insert into test.workspace_history (workspace_id, status) values (@workspace_id, 'CREDITED');
 
 -- workspace transaction
 insert into test.workspace_trans (workspace_id, event_id, event, reason)
-values (@workspace_id, 'SY-12A', 'COUPONED', 'Coupon use: AS34FGD3');
+values (@workspace_id, 'SY-12A', 'CREDITED', 'Credit use: AS34FGD3');
 
 -- membership
 insert into test.membership (email, user_id, workspace_id, role, status) values (@admin_email, @admin_id, @workspace_id, 'ADMIN', 'JOINED');
@@ -31,7 +31,7 @@ insert into test.membership (email, user_id, workspace_id, role, status) values 
 -- products and links
 -- product_name_addition, actives, tryings, waitings, problems, url, platform_id, workspace_name, workspace_id
 -- -----------------------
-call sp_create_product_and_links('D', 1, 0, 0, 0, 'https://hepsiburada.com/', 84, 'Workspace-D', @workspace_id);
+call sp_create_product_and_links(null, 'D', 1, 0, 0, 0, 'https://hepsiburada.com/', 84, 'Workspace-D', @workspace_id);
 
 -- -----------------------
 -- 2 alarms
