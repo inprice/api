@@ -9,9 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.workspace.WorkspaceDao;
-import io.inprice.api.app.credit.CreditDao;
+import io.inprice.api.app.voucher.VoucherDao;
 import io.inprice.api.app.subscription.SubscriptionDao;
-import io.inprice.api.app.superuser.workspace.dto.CreateCreditDTO;
+import io.inprice.api.app.superuser.workspace.dto.CreateVoucherDTO;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.app.system.SystemDao;
 import io.inprice.api.app.user.UserDao;
@@ -35,7 +35,7 @@ import io.inprice.common.models.WorkspaceTrans;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.Plan;
 import io.inprice.common.models.User;
-import io.inprice.common.utils.CreditManager;
+import io.inprice.common.utils.VoucherManager;
 import io.inprice.common.utils.DateUtils;
 import io.javalin.http.Context;
 
@@ -182,14 +182,14 @@ class Service {
     UserDao userDao = handle.attach(UserDao.class);
     User user = userDao.findById(CurrentUser.getUserId());
     if (user != null) {
-      user.setAccid(workspaceId);
+      user.setWsId(workspaceId);
     	ctx.cookie(CookieHelper.createSuperCookie(SessionHelper.toTokenForSuper(user)));
     	return true;
     }
     return false;
   }
 
-  Response createCredit(CreateCreditDTO dto) {
+  Response createVoucher(CreateVoucherDTO dto) {
 		String problem = null;
 		
 		if (dto.getWorkspaceId() == null || dto.getWorkspaceId() < 1) {
@@ -210,10 +210,10 @@ class Service {
 		if (problem == null) {
   		try (Handle handle = Database.getHandle()) {
 				return 
-					createCredit(
+					createVoucher(
 						handle, 
 						dto.getWorkspaceId(), 
-						SubsEvent.GIVEN_CREDIT, 
+						SubsEvent.GIVEN_VOUCHER, 
 						dto.getPlanId(), 
 						dto.getDays(), 
 						dto.getDescription()
@@ -223,7 +223,7 @@ class Service {
 		return new Response(problem);
   }
 
-  private Response createCredit(Handle handle, long workspaceId, SubsEvent subsEvent, Integer planId, long days, String description) {
+  private Response createVoucher(Handle handle, long workspaceId, SubsEvent subsEvent, Integer planId, long days, String description) {
   	Response res = Responses.NotFound.WORKSPACE;
 
   	SystemDao planDao = handle.attach(SystemDao.class);
@@ -234,7 +234,7 @@ class Service {
     	Workspace workspace = workspaceDao.findById(workspaceId);
   		if (workspace != null) {
   			
-  			if (workspace.getStatus().isOKForCredit()) {
+  			if (workspace.getStatus().isOKForVoucher()) {
   				
   				boolean hasLimitProblem = false;
   				if (workspace.getPlanId() != null && workspace.getPlanId() != plan.getId()) {
@@ -246,10 +246,10 @@ class Service {
   				}
 
   	  		if (hasLimitProblem == false) {
-  	  	    String creditCode = CreditManager.generate();
-  	  	    CreditDao creditDao = handle.attach(CreditDao.class);
-  	  	    boolean isOK = creditDao.create(
-  	  	      creditCode,
+  	  	    String voucherCode = VoucherManager.generate();
+  	  	    VoucherDao voucherDao = handle.attach(VoucherDao.class);
+  	  	    boolean isOK = voucherDao.create(
+  	  	      voucherCode,
   	  	      planId,
   	  	      days,
   	  	      description,
@@ -260,13 +260,13 @@ class Service {
   	  	      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
   	  	      WorkspaceTrans trans = new WorkspaceTrans();
   	  	      trans.setWorkspaceId(workspaceId);
-  	  	      trans.setEventId(creditCode);
+  	  	      trans.setEventId(voucherCode);
   	  	      trans.setEvent(subsEvent);
   	  	      trans.setSuccessful(Boolean.TRUE);
   	  	      trans.setReason(description);
-  	  	      trans.setDescription("Issued credit");
+  	  	      trans.setDescription("Issued voucher");
   	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-  	  	      res = new Response(Map.of("code", creditCode));
+  	  	      res = new Response(Map.of("code", voucherCode));
   	  	    } else {
   	  	    	res = Responses.DataProblem.DB_PROBLEM;
   	  	    }

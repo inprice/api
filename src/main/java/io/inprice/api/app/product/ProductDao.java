@@ -31,7 +31,16 @@ public interface ProductDao {
 			"  and id != :dto.id " +
 			"  and workspace_id = :workspaceId " +
 		")")
-	boolean doesExist(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
+	boolean doesExistByCodeAndName(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
+
+	@SqlQuery(
+		"select exists(" +
+			"select 1 from product " +
+			"where name = :dto.name " +
+			"  and id != :dto.id " +
+			"  and workspace_id = :workspaceId " +
+		")")
+	boolean doesExistByName(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
 		"select g.*" + AlarmDao.FIELDS + BrandDao.FIELDS + CategoryDao.FIELDS + " from product g " +

@@ -35,7 +35,7 @@ class ThreadVariables {
 	}
 
   public Long getWorkspaceId() {
-		return superUser.getAccid();
+		return superUser.getWsId();
 	}
 
 }

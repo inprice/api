@@ -1,4 +1,4 @@
-package io.inprice.api.app.credit;
+package io.inprice.api.app.voucher;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -20,15 +20,15 @@ import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of CreditController.getCredits() 
+ * Tests the functionality of VoucherController.getVouchers() 
  * 
  * @author mdpinar
  * @since 2021-07-08
  */
 @RunWith(JUnit4.class)
-public class GetCreditsTest {
+public class GetVouchersTest {
 
-	private static final String SERVICE_ENDPOINT = "/credit";
+	private static final String SERVICE_ENDPOINT = "/voucher";
 
 	@BeforeClass
 	public static void setup() {
@@ -46,7 +46,7 @@ public class GetCreditsTest {
 	}
 
 	@Test
-	public void Credit_not_found_FOR_no_credit_workspace() {
+	public void Voucher_not_found_FOR_no_voucher_workspace() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
@@ -58,7 +58,7 @@ public class GetCreditsTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Credit not found!", json.get("reason"));
+		assertEquals("Voucher not found!", json.get("reason"));
 	}
 
 	@Test
@@ -81,7 +81,7 @@ public class GetCreditsTest {
 	 * Consists of three steps;
 	 * 	a) super user logs in
 	 * 	b) binds to first workspace
-	 * 	c) gets credit list
+	 * 	c) gets voucher list
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_superuser_and_bound_workspace() {
@@ -122,7 +122,7 @@ public class GetCreditsTest {
 		
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
-		assertEquals(workspace.getCredits().size(), data.length());
+		assertEquals(workspace.getVouchers().size(), data.length());
 	}
 
 }

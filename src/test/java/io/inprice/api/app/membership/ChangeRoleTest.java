@@ -414,7 +414,7 @@ public class ChangeRoleTest {
 
 	private JSONObject createBody(Long memberId, TestRoles role) {
 		JSONObject body = new JSONObject();
-		if (memberId != null) body.put("memberId", memberId);
+		if (memberId != null) body.put("id", memberId);
 		if (role != null) body.put("role", role.name());
 		return body;
 	}

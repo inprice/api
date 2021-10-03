@@ -1,4 +1,4 @@
-package io.inprice.api.app.credit;
+package io.inprice.api.app.voucher;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -10,7 +10,7 @@ import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
 import io.inprice.api.utils.TestWorkspaces;
-import io.inprice.api.utils.TestCredits;
+import io.inprice.api.utils.TestVouchers;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -19,15 +19,15 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of CreditController.applyCredit(String code) 
+ * Tests the functionality of VoucherController.applyVoucher(String code) 
  * 
  * @author mdpinar
  * @since 2021-07-09
  */
 @RunWith(JUnit4.class)
-public class ApplyCreditTest {
+public class ApplyVoucherTest {
 
-	private static final String SERVICE_ENDPOINT = "/credit/apply/{code}";
+	private static final String SERVICE_ENDPOINT = "/voucher/apply/{code}";
 
 	@BeforeClass
 	public static void setup() {
@@ -51,7 +51,7 @@ public class ApplyCreditTest {
 	public void Forbidden_WITH_editor() {
 		JSONObject json = callTheServiceWith(
 			TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR(),
-			TestCredits.AVAILABLE_FOR_BASIC_PLAN_1
+			TestVouchers.AVAILABLE_FOR_BASIC_PLAN_1
 		);
 
 		assertEquals(403, json.getInt("status"));
@@ -62,7 +62,7 @@ public class ApplyCreditTest {
 	public void Forbidden_WITH_viewer() {
 		JSONObject json = callTheServiceWith(
 			TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(),
-			TestCredits.AVAILABLE_FOR_BASIC_PLAN_1
+			TestVouchers.AVAILABLE_FOR_BASIC_PLAN_1
 		);
 
 		assertEquals(403, json.getInt("status"));
@@ -78,59 +78,59 @@ public class ApplyCreditTest {
 	}
 
 	@Test
-	public void Invalid_credit_WITH_empty_code() {
+	public void Invalid_voucher_WITH_empty_code() {
 		JSONObject json = callTheServiceWith(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), " ");
 
 		assertEquals(145, json.getInt("status"));
-		assertNotNull("Invalid credit!", json.getString("reason"));
+		assertNotNull("Invalid voucher!", json.getString("reason"));
 	}
 
 	@Test
-	public void Invalid_credit_WITH_wrong_code() {
+	public void Invalid_voucher_WITH_wrong_code() {
 		JSONObject json = callTheServiceWith(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), "XYZ-1234");
 
 		assertEquals(145, json.getInt("status"));
-		assertNotNull("Invalid credit!", json.getString("reason"));
+		assertNotNull("Invalid voucher!", json.getString("reason"));
 	}
 
 	@Test
-	public void Credit_not_found_FOR_not_registered_code() {
+	public void Voucher_not_found_FOR_not_registered_code() {
 		JSONObject json = callTheServiceWith(
 			TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(),
-			TestCredits.NOT_REGISTERED
+			TestVouchers.NOT_REGISTERED
 		);
 
 		assertEquals(404, json.getInt("status"));
-		assertNotNull("Credit not found!", json.getString("reason"));
+		assertNotNull("Voucher not found!", json.getString("reason"));
 	}
 
 	@Test
-	public void This_credit_is_already_used_WITH_used_code() {
+	public void This_voucher_is_already_used_WITH_used_code() {
 		JSONObject json = callTheServiceWith(
 			TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(),
-			TestCredits.ALREADY_USED
+			TestVouchers.ALREADY_USED
 		);
 
 		assertEquals(804, json.getInt("status"));
-		assertNotNull("This credit is already used!", json.getString("reason"));
+		assertNotNull("This voucher is already used!", json.getString("reason"));
 	}
 
 	@Test
-	public void This_credit_is_issued_for_another_workspace_WITH_assigned_code() {
+	public void This_voucher_is_issued_for_another_workspace_WITH_assigned_code() {
 		JSONObject json = callTheServiceWith(
 			TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(),
-			TestCredits.ASSIGNED_BUT_NOT_USED
+			TestVouchers.ASSIGNED_BUT_NOT_USED
 		);
 
 		assertEquals(702, json.getInt("status"));
-		assertNotNull("This credit is issued for another workspace!", json.getString("reason"));
+		assertNotNull("This voucher is issued for another workspace!", json.getString("reason"));
 	}
 
 	@Test
 	public void You_are_not_allowed_to_do_this_operation_WITH_superuser() {
 		JSONObject json = callTheServiceWith(
 			Fixtures.SUPER_USER,
-			TestCredits.ALREADY_USED
+			TestVouchers.ALREADY_USED
 		);
 
 		assertEquals(511, json.getInt("status"));
@@ -141,7 +141,7 @@ public class ApplyCreditTest {
 	public void You_already_have_an_active_subscription_WITH_assigned_code() {
 		JSONObject json = callTheServiceWith(
 			TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN(),
-			TestCredits.AVAILABLE_FOR_BASIC_PLAN_1
+			TestVouchers.AVAILABLE_FOR_BASIC_PLAN_1
 		);
 
 		assertEquals(807, json.getInt("status"));
@@ -152,7 +152,7 @@ public class ApplyCreditTest {
 	public void You_need_to_select_a_broader_plan() {
 		JSONObject json = callTheServiceWith(
 			TestWorkspaces.Cancelled_Starter_plan_30_links_6_alarms.ADMIN(),
-			TestCredits.AVAILABLE_FOR_BASIC_PLAN_1
+			TestVouchers.AVAILABLE_FOR_BASIC_PLAN_1
 		);
 
  		assertNotNull("You need to select a broader plan since your actual plan has more permission!", json.getString("reason"));
@@ -162,14 +162,14 @@ public class ApplyCreditTest {
 	public void Everything_must_be_ok() {
 		JSONObject json = callTheServiceWith(
 			TestWorkspaces.Cancelled_Basic_plan_no_link_no_alarm.ADMIN(),
-			TestCredits.AVAILABLE_FOR_BASIC_PLAN_1
+			TestVouchers.AVAILABLE_FOR_BASIC_PLAN_1
 		);
 
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(json.getJSONObject("data"));
 	}
 
-	private JSONObject callTheServiceWith(JSONObject user, String creditCode) {
+	private JSONObject callTheServiceWith(JSONObject user, String voucherCode) {
 		//login with given user
 		Cookies cookies = TestUtils.login(user);
 
@@ -177,7 +177,7 @@ public class ApplyCreditTest {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.routeParam("code", creditCode)
+			.routeParam("code", voucherCode)
 			.asJson();
 		
 		//logout

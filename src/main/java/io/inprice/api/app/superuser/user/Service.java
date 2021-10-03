@@ -24,11 +24,11 @@ import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.AccessLogMapper;
-import io.inprice.common.meta.UserMarkType;
+import io.inprice.common.meta.Marks;
 import io.inprice.common.models.AccessLog;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
-import io.inprice.common.models.UserMark;
+import io.inprice.common.models.UserMarks;
 import io.inprice.common.utils.DateUtils;
 
 class Service {
@@ -81,8 +81,8 @@ class Service {
   					boolean isOK = superDao.ban(dto.getId(), dto.getText());
 
   					if (isOK) {
-  						//he must be added in to user_mark table to prevent later registration or forgot pass. requests!
-  						superDao.addUserMark(user.getEmail(), UserMarkType.BANNED, dto.getText());
+  						//he must be added in to user_marks table to prevent later registration or forgot pass. requests!
+  						superDao.addUserMark(user.getEmail(), Marks.BANNED.name(), dto.getText());
 
   						//and his workspaces too
   						superDao.banAllBoundWorkspacesOfUser(dto.getId());
@@ -129,8 +129,8 @@ class Service {
       			boolean isOK = superDao.revokeBan(id);
       			
       			if (isOK) {
-  						//his ban record in user_mark table must be revoked as well!
-  						superDao.removeUserMark(user.getEmail(), UserMarkType.BANNED);
+  						//his ban record in user_marks table must be revoked as well!
+  						superDao.removeUserMark(user.getEmail(), Marks.BANNED.name());
 
       				//and from his workspaces too
         			superDao.revokeBanAllBoundWorkspacesOfUser(id);
@@ -162,7 +162,7 @@ class Service {
   			Dao superDao = handle.attach(Dao.class);
   			List<Membership> membershipList = superDao.fetchMembershipListById(userId);
   			List<ForDatabase> sessionList = superDao.fetchSessionListById(userId);
-  			List<UserMark> usedServiceList = superDao.fetchUsedServiceListByEmail(user.getEmail());
+  			List<UserMarks> usedServiceList = superDao.fetchUsedServiceListByEmail(user.getEmail());
   			
   			Map<String, Object> data = Map.of(
   				"user", user,
@@ -199,7 +199,7 @@ class Service {
   		
   		if (user != null) {
   			Dao superDao = handle.attach(Dao.class);
-  			List<UserMark> list = superDao.fetchUsedServiceListByEmail(user.getEmail());
+  			List<UserMarks> list = superDao.fetchUsedServiceListByEmail(user.getEmail());
   			return new Response(list);
   		}
   	}
@@ -217,12 +217,12 @@ class Service {
   Response deleteUsedService(Long id) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
-  		UserMark used = superDao.findUsedServiceById(id);
+  		UserMarks used = superDao.findUsedServiceById(id);
 
   		if (used != null) {
     		boolean isOK = superDao.deleteUsedService(id);
     		if (isOK) {
-    			List<UserMark> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
+    			List<UserMarks> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
     			return new Response(newList);
     		} else {
     			return Responses.DataProblem.DB_PROBLEM;
@@ -235,12 +235,12 @@ class Service {
 	Response toggleUnlimitedUsedService(Long id) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
-  		UserMark used = superDao.findUsedServiceById(id);
+  		UserMarks used = superDao.findUsedServiceById(id);
 
   		if (used != null) {
     		boolean isOK = superDao.toggleUnlimitedUsedService(id);
     		if (isOK) {
-    			List<UserMark> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
+    			List<UserMarks> newList = superDao.fetchUsedServiceListByEmail(used.getEmail());
     			return new Response(newList);
     		} else {
     			return Responses.DataProblem.DB_PROBLEM;

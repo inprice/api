@@ -92,8 +92,8 @@ public class Consts {
       public static final String CHANGE_PLAN = BASE + "/change-plan";
     }
 
-    public static class Credit {
-    	public static final String BASE = "/credit";
+    public static class Voucher {
+    	public static final String BASE = "/voucher";
     	public static final String APPLY = BASE + "/apply";
     }
 
@@ -152,7 +152,7 @@ public class Consts {
 
       	public static final String BIND = _BASE + "/bind";
         public static final String UNBIND = _BASE + "/unbind";
-        public static final String CREDIT = _BASE + "/credit";
+        public static final String VOUCHER = _BASE + "/voucher";
       }
 
       public static class User {

@@ -22,12 +22,12 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.WorkspaceStatus;
 import io.inprice.common.meta.EmailTemplate;
+import io.inprice.common.meta.Marks;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.meta.UserMarkType;
 import io.inprice.common.models.Workspace;
 import io.inprice.common.models.WorkspaceTrans;
 import io.inprice.common.models.Plan;
-import io.inprice.common.models.UserMark;
+import io.inprice.common.models.UserMarks;
 
 class SubscriptionService {
 
@@ -56,8 +56,8 @@ class SubscriptionService {
           trans.setDescription(("Manual cancelation."));
           
           switch (workspace.getStatus()) {
-  					case CREDITED: {
-  						trans.setEvent(SubsEvent.CREDIT_USE_CANCELLED);
+  					case VOUCHERED: {
+  						trans.setEvent(SubsEvent.VOUCHER_USE_CANCELLED);
   						break;
   					}
   					case FREE: {
@@ -121,8 +121,8 @@ class SubscriptionService {
     try (Handle handle = Database.getHandle()) {
 
       WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
-      UserMark um_FREE_USE = workspaceDao.getUserMarkByEmail(CurrentUser.getEmail(), UserMarkType.FREE_USE);
-      if (um_FREE_USE == null || um_FREE_USE.getWhitelisted().equals(Boolean.TRUE)) {
+      UserMarks um_FREE_USE = workspaceDao.findUserMarkByEmail(CurrentUser.getEmail(), Marks.FREE_USE.name());
+      if (um_FREE_USE == null || um_FREE_USE.getBooleanVal().equals(Boolean.TRUE)) {
 
         Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
         if (workspace != null) {
@@ -136,7 +136,7 @@ class SubscriptionService {
           	handle.begin();
             
             boolean isOK = 
-              subscriptionDao.startFreeUseOrApplyCredit(
+              subscriptionDao.startFreeUseOrApplyVoucher(
                 CurrentUser.getWorkspaceId(),
                 WorkspaceStatus.FREE.name(),
                 basicPlan.getId(),
@@ -158,7 +158,7 @@ class SubscriptionService {
                     WorkspaceStatus.FREE.name(),
                     basicPlan.getId()
                   );
-                if (um_FREE_USE == null) workspaceDao.addUserMark(CurrentUser.getEmail(), UserMarkType.FREE_USE);
+                if (um_FREE_USE == null) workspaceDao.addUserMark(CurrentUser.getEmail(), Marks.FREE_USE.name(), true);
               }
             }
 

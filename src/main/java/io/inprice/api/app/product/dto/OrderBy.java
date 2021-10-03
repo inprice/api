@@ -4,7 +4,8 @@ public enum OrderBy {
 
 	NAME("p.name"),
 	CODE("code"),
-	CATEGORY("cat.name");
+	CATEGORY("cat.name"),
+	BRAND("brn.name");
 
   private String fieldName;
   

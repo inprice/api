@@ -13,12 +13,11 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 import io.inprice.api.app.workspace.mapper.WorkspaceInfo;
 import io.inprice.api.app.workspace.mapper.WorkspaceInfoMapper;
 import io.inprice.api.dto.CustomerDTO;
+import io.inprice.common.mappers.UserMarksMapper;
 import io.inprice.common.mappers.WorkspaceMapper;
-import io.inprice.common.mappers.UserMarkMapper;
 import io.inprice.common.meta.WorkspaceStatus;
-import io.inprice.common.meta.UserMarkType;
+import io.inprice.common.models.UserMarks;
 import io.inprice.common.models.Workspace;
-import io.inprice.common.models.UserMark;
 
 public interface WorkspaceDao {
 
@@ -88,11 +87,11 @@ public interface WorkspaceDao {
   )
   boolean insertStatusHistory(@Bind("workspaceId") Long workspaceId, @Bind("status") String status, @Bind("planId") Integer planId);
 
-  @SqlQuery("select * from user_mark where email=:email and type=:type")
-  @UseRowMapper(UserMarkMapper.class)
-  UserMark getUserMarkByEmail(@Bind("email") String email, @Bind("type") UserMarkType type);
+  @SqlQuery("select * from user_marks where email=:email and mark=:mark")
+  @UseRowMapper(UserMarksMapper.class)
+  UserMarks findUserMarkByEmail(@Bind("email") String email, @Bind("mark") String mark);
 
-  @SqlUpdate("insert into user_mark (email, type) values (:email, :type)")
-  void addUserMark(@Bind("email") String email, @Bind("type") UserMarkType type);
+  @SqlUpdate("insert into user_marks (email, mark, boolean_val) values (:email, :mark, :boolVal)")
+  void addUserMark(@Bind("email") String email, @Bind("mark") String mark, @Bind("boolVal") boolean boolVal);
 
 }

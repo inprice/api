@@ -164,7 +164,7 @@ class MembershipService {
       Membership mem = membershipDao.findNormalMemberById(memId, CurrentUser.getWorkspaceId());
       if (mem != null) {
 
-      	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
+      	if (mem.getEmail().equals(CurrentUser.getEmail()) == false) {
         	res = Responses.Already.DELETED_MEMBER;
   
         	if (! mem.getStatus().equals(UserStatus.DELETED)) {
@@ -198,17 +198,17 @@ class MembershipService {
 
     	try (Handle handle = Database.getHandle()) {
         MembershipDao membershipDao = handle.attach(MembershipDao.class);
-        Membership mem = membershipDao.findNormalMemberById(dto.getMemberId(), CurrentUser.getWorkspaceId());
+        Membership mem = membershipDao.findNormalMemberById(dto.getId(), CurrentUser.getWorkspaceId());
 
     		if (mem != null) {
-        	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
+        	if (mem.getEmail().equals(CurrentUser.getEmail()) == false) {
           
         		if (! mem.getStatus().equals(UserStatus.DELETED)) {
         			if (! mem.getRole().equals(dto.getRole())) {
   
               	handle.begin();
 
-                boolean isOK = membershipDao.changeRole(dto.getMemberId(), dto.getRole(), CurrentUser.getWorkspaceId());
+                boolean isOK = membershipDao.changeRole(dto.getId(), dto.getRole(), CurrentUser.getWorkspaceId());
                 if (isOK) {
                 	if (mem.getUserId() != null) {
                 		terminateUserSession(handle, mem.getUserId(), CurrentUser.getWorkspaceId());
@@ -247,7 +247,7 @@ class MembershipService {
 
       Membership mem = membershipDao.findNormalMemberById(id, CurrentUser.getWorkspaceId());
       if (mem != null) {
-      	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
+      	if (mem.getEmail().equals(CurrentUser.getEmail()) == false) {
 
         	if (! mem.getStatus().equals(UserStatus.DELETED)) {
         		if (! mem.getStatus().equals(UserStatus.PAUSED)) {
@@ -289,7 +289,7 @@ class MembershipService {
 
       Membership mem = membershipDao.findNormalMemberById(id, CurrentUser.getWorkspaceId());
       if (mem != null) {
-      	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
+      	if (mem.getEmail().equals(CurrentUser.getEmail()) == false) {
 
         	if (! mem.getStatus().equals(UserStatus.DELETED)) {
           	if (mem.getStatus().equals(UserStatus.PAUSED)) {
@@ -377,7 +377,7 @@ class MembershipService {
   private String validate(InvitationUpdateDTO dto) {
     String problem = null;
 
-    if (dto.getMemberId() == null || dto.getMemberId() < 1) {
+    if (dto.getId() == null || dto.getId() < 1) {
       problem = "Invalid member id!";
     }
 

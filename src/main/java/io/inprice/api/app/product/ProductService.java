@@ -87,6 +87,16 @@ class ProductService {
       where.append("%' ");
     }
 
+    if (dto.getBrand() != null) {
+  		where.append(" and p.brand_id = ");
+  		where.append(dto.getBrand().getId());
+    }
+
+    if (dto.getCategory() != null) {
+  		where.append(" and p.category_id = ");
+  		where.append(dto.getCategory().getId());
+    }
+
     if (CollectionUtils.isNotEmpty(dto.getLevels())) {
     	where.append(
   			String.format(" and p.level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
@@ -99,7 +109,9 @@ class ProductService {
     try (Handle handle = Database.getHandle()) {
       List<Product> searchResult =
         handle.createQuery(
-          "select * from product as p " + 
+          "select p.*, brn.name as brand_name, cat.name as category_name from product as p " +
+      		"left join brand as brn on brn.id = p.brand_id " +
+      		"left join category as cat on cat.id = p.category_id " +
           where +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", p.id " +
           " limit " + dto.getRowCount() + ", " + dto.getRowLimit()
@@ -138,8 +150,14 @@ class ProductService {
         ProductDao productDao = handle.attach(ProductDao.class);
 
         dto.setId(0L); //necessary for the existency check here!
-      	boolean alreadyExists = productDao.doesExist(dto, CurrentUser.getWorkspaceId());
-        if (alreadyExists == false) {
+      	boolean alreadyExists = false;
+      	if (StringUtils.isBlank(dto.getCode())) {
+      		alreadyExists = productDao.doesExistByName(dto, CurrentUser.getWorkspaceId());
+      	} else {
+      		alreadyExists = productDao.doesExistByCodeAndName(dto, CurrentUser.getWorkspaceId());
+      	}
+
+      	if (alreadyExists == false) {
         	checkBrand(dto, handle);
         	checkCategory(dto, handle);
 
@@ -170,9 +188,14 @@ class ProductService {
           ProductDao productDao = handle.attach(ProductDao.class);
 
           //checks if code or name is already used for another product
-        	boolean alreadyExists = productDao.doesExist(dto, CurrentUser.getWorkspaceId());
-          if (alreadyExists == false) {
+        	boolean alreadyExists = false;
+        	if (StringUtils.isBlank(dto.getCode())) {
+        		alreadyExists = productDao.doesExistByName(dto, CurrentUser.getWorkspaceId());
+        	} else {
+        		alreadyExists = productDao.doesExistByCodeAndName(dto, CurrentUser.getWorkspaceId());
+        	}
 
+          if (alreadyExists == false) {
           	//must be found
           	Product found = productDao.findById(dto.getId(), CurrentUser.getWorkspaceId());
             if (found != null) {

@@ -11,8 +11,6 @@ import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.workspace.dto.CreateDTO;
-import io.inprice.api.app.workspace.dto.RegisterDTO;
 import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.membership.MembershipDao;
 import io.inprice.api.app.product.ProductDao;
@@ -21,6 +19,8 @@ import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.validator.EmailValidator;
 import io.inprice.api.app.user.validator.PasswordValidator;
+import io.inprice.api.app.workspace.dto.CreateDTO;
+import io.inprice.api.app.workspace.dto.RegisterDTO;
 import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
@@ -40,14 +40,14 @@ import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.EmailData;
-import io.inprice.common.meta.WorkspaceStatus;
 import io.inprice.common.meta.EmailTemplate;
-import io.inprice.common.meta.UserMarkType;
+import io.inprice.common.meta.Marks;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
-import io.inprice.common.models.Workspace;
+import io.inprice.common.meta.WorkspaceStatus;
 import io.inprice.common.models.User;
-import io.inprice.common.models.UserMark;
+import io.inprice.common.models.UserMarks;
+import io.inprice.common.models.Workspace;
 import io.javalin.http.Context;
 
 class WorkspaceService {
@@ -66,7 +66,7 @@ class WorkspaceService {
 
       try (Handle handle = Database.getHandle()) {
     		WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
-        UserMark um_BANNED = workspaceDao.getUserMarkByEmail(dto.getEmail(), UserMarkType.BANNED);
+        UserMarks um_BANNED = workspaceDao.findUserMarkByEmail(dto.getEmail(), Marks.BANNED.name());
         
         if (um_BANNED == null) {
       		UserDao userDao = handle.attach(UserDao.class);
@@ -283,7 +283,7 @@ class WorkspaceService {
               batch.add("delete from brand " + where);
               batch.add("delete from category " + where);
               batch.add("delete from alarm " + where);
-              batch.add("delete from credit where issued_id=" + CurrentUser.getWorkspaceId() + " or issuer_id=" + CurrentUser.getWorkspaceId());
+              batch.add("delete from voucher where issued_id=" + CurrentUser.getWorkspaceId() + " or issuer_id=" + CurrentUser.getWorkspaceId());
               batch.add("delete from ticket_history " + where);
               batch.add("delete from ticket_comment " + where);
               batch.add("delete from ticket " + where);

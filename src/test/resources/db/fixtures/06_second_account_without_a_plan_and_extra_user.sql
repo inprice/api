@@ -22,13 +22,13 @@ insert into test.workspace_history (workspace_id, status) values (@workspace_id,
 -- membership
 insert into test.membership (email, user_id, workspace_id, role, status) values (@admin_email, @admin_id, @workspace_id, 'ADMIN', 'JOINED');
 
--- credit for Basic and Standard Plan
-insert into test.credit (code, plan_id, days, description, issuer_id) values ('MU3XF9NP', @basic_plan_id, 30, 'Another credit for testing', @workspace_id);
-insert into test.credit (code, plan_id, days, description, issued_id) values ('KJ9QF6G7', @standard_plan_id, 30, 'Assigned to the second workspace', @workspace_id);
+-- voucher for Basic and Standard Plan
+insert into test.voucher (code, plan_id, days, description, issuer_id) values ('MU3XF9NP', @basic_plan_id, 30, 'Another voucher for testing', @workspace_id);
+insert into test.voucher (code, plan_id, days, description, issued_id) values ('KJ9QF6G7', @standard_plan_id, 30, 'Assigned to the second workspace', @workspace_id);
 
 -- announces
 insert into test.announce (type, level, title, body, starting_at, ending_at, user_id, workspace_id) 
 values ('USER', 'WARNING', 'Here is another good news for someone else', 'This is another test announce for the admin user of Workspace-AS', now(), @one_month_later, @admin_id, @workspace_id);
 
 -- adding free use right
-insert into test.user_mark (email, type) values (@admin_email, 'FREE_USE');
+insert into test.user_marks (email, mark) values (@admin_email, 'FREE_USE');

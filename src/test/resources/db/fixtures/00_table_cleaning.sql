@@ -13,7 +13,7 @@ truncate table test.alarm;
 truncate table test.announce;
 truncate table test.announce_log;
 truncate table test.checkout;
-truncate table test.credit;
+truncate table test.voucher;
 truncate table test.link;
 truncate table test.product;
 truncate table test.brand;
@@ -27,7 +27,7 @@ truncate table test.ticket_comment;
 truncate table test.ticket_history;
 truncate table test.user;
 truncate table test.user_session;
-truncate table test.user_mark;
+truncate table test.user_marks;
 
 set foreign_key_checks=1;
 

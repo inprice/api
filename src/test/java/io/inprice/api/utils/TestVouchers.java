@@ -1,6 +1,6 @@
 package io.inprice.api.utils;
 
-public class TestCredits {
+public class TestVouchers {
 
 	public static final String NOT_REGISTERED = "NY1MW2XQ";
 	public static final String ALREADY_USED = "ZL7QN69L";

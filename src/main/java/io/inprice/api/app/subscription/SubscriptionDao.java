@@ -54,7 +54,7 @@ public interface SubscriptionDao {
     "set plan_id=:planId, pre_status=status, status=:status, subs_renewal_at=DATE_ADD(now(), interval <interval> day), last_status_update=now() " +
     "where id=:workspaceId"
   )
-  boolean startFreeUseOrApplyCredit(@Bind("workspaceId") Long workspaceId, @Bind("status") String status, 
+  boolean startFreeUseOrApplyVoucher(@Bind("workspaceId") Long workspaceId, @Bind("status") String status, 
     @Bind("planId") Integer planId, @Define("interval") Integer interval);
 
   @SqlUpdate(

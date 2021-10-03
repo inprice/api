@@ -111,7 +111,7 @@ public class ToggleUnlimitedUsedServiceTest {
 		assertEquals(1, data.length());
 		JSONObject lastStateOfUsedService = data.getJSONObject(0);
 
-		assertNotEquals(firstStateOfUsedService.getBoolean("whitelisted"), lastStateOfUsedService.getBoolean("whitelisted"));
+		assertNotEquals(firstStateOfUsedService.getBoolean("booleanVal"), lastStateOfUsedService.getBoolean("booleanVal"));
 	}
 
 	private JSONObject callTheService(JSONObject user, Long id) {

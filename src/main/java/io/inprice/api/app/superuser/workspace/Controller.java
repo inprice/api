@@ -1,6 +1,6 @@
 package io.inprice.api.app.superuser.workspace;
 
-import io.inprice.api.app.superuser.workspace.dto.CreateCreditDTO;
+import io.inprice.api.app.superuser.workspace.dto.CreateVoucherDTO;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
@@ -102,13 +102,13 @@ public class Controller extends AbstractController {
   		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
 
-    // create credit
-    app.post(Consts.Paths.Super.Workspace.CREDIT, (ctx) -> {
+    // create voucher
+    app.post(Consts.Paths.Super.Workspace.VOUCHER, (ctx) -> {
     	if (ctx.body().isBlank()) {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
-	  		CreateCreditDTO dto = ctx.bodyAsClass(CreateCreditDTO.class);
-	  		Response res = service.createCredit(dto);
+	  		CreateVoucherDTO dto = ctx.bodyAsClass(CreateVoucherDTO.class);
+	  		Response res = service.createVoucher(dto);
 	  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     	}
     }, AccessRoles.SUPER_ONLY());

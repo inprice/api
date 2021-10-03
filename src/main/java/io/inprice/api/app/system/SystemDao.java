@@ -28,7 +28,7 @@ public interface SystemDao {
   List<Plan> findPublicPlans();
   
   @SqlQuery(
-		"select p.id as p_id, p.type as p_type, p.name as p_name, f.description as p_description, p.price as p_price, p.user_limit as p_userLimit, p.link_limit as p_linkLimit, " +
+		"select p.id as p_id, p.type as p_type, p.name as p_name, p.description as p_description, p.price as p_price, p.user_limit as p_userLimit, p.link_limit as p_linkLimit, " +
 		"p.alarm_limit as p_alarmLimit, f.id as f_id, f.description as f_description, f.allowed as f_allowed, f.order_no as f_orderNo from plan as p " +
 		"inner join plans_and_features as pf on pf.plan_id = p.id " +
 		"inner join plan_feature as f on f.id = pf.feature_id " +

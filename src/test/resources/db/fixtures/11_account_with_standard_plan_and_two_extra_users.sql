@@ -36,7 +36,7 @@ insert into test.workspace_history (workspace_id, status) values (@workspace_id,
 
 -- workspace transactions
 insert into test.workspace_trans (workspace_id, event_id, event, reason)
-values (@workspace_id, 'AX-123', 'PAYMENT', 'Insufficient credit.');
+values (@workspace_id, 'AX-123', 'PAYMENT', 'Insufficient voucher.');
 
 insert into test.workspace_trans (workspace_id, event_id, event, reason)
 values (@workspace_id, 'AX-124', 'PAYMENT', 'Not authorized.');
