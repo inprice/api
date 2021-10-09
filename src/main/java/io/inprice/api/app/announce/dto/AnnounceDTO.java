@@ -22,6 +22,6 @@ public class AnnounceDTO {
   private Date endingAt;
   
   private Long userId;
-  private Long accountId;
+  private Long workspaceId;
 
 }

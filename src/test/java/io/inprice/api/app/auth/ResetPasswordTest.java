@@ -9,7 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -45,7 +45,7 @@ public class ResetPasswordTest {
 	@Test
 	public void Invalid_token_WITH_empty_token() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody(null, "1234", "1234"))
+			.body(createBody(null, "1234-AB", "1234-AB"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -57,7 +57,7 @@ public class ResetPasswordTest {
 	@Test
 	public void Password_cannot_be_empty_WITH_empty_password() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("XYZ-123", null, "1234"))
+			.body(createBody("XYZ-123", null, "1234-AB"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -67,19 +67,19 @@ public class ResetPasswordTest {
 	}
 
 	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_shorter_password() {
+	public void Password_length_must_be_between_6_and_16_chars_WITH_shorter_password() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("XYZ-123", "123", "123"))
+			.body(createBody("XYZ-123", "1234A", "1234A"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 6 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_longer_password() {
+	public void Password_length_must_be_between_6_and_16_chars_WITH_longer_password() {
 		final String password = RandomStringUtils.randomAlphabetic(17);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
@@ -89,13 +89,13 @@ public class ResetPasswordTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 6 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
 	public void Passwords_are_mismatch_WITH_different_passwords() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("XYZ-123", "1234", "1235"))
+			.body(createBody("XYZ-123", "1234-AB", "1234-Ab"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -108,7 +108,7 @@ public class ResetPasswordTest {
 	public void Your_password_is_already_reset_WITH_multiple_reset_calls() {
 		//first we need to call forgot password to get a token which is needed below!
 		HttpResponse<JsonNode> res = Unirest.post("/forgot-password")
-			.body(TestAccounts.Pro_plan_with_two_extra_users.VIEWER())
+			.body(TestWorkspaces.Pro_plan_with_two_extra_users.VIEWER())
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -122,7 +122,7 @@ public class ResetPasswordTest {
 		assertNotNull(token);
 		
 		res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody(token, TestAccounts.Pro_plan_with_two_extra_users.VIEWER()))
+			.body(createBody(token, TestWorkspaces.Pro_plan_with_two_extra_users.VIEWER()))
 			.asJson();
 
 		json = res.getBody().getObject();
@@ -130,7 +130,7 @@ public class ResetPasswordTest {
 		assertEquals(200, json.getInt("status"));
 
 		res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody(token, TestAccounts.Pro_plan_with_two_extra_users.VIEWER()))
+			.body(createBody(token, TestWorkspaces.Pro_plan_with_two_extra_users.VIEWER()))
 			.asJson();
 
 		json = res.getBody().getObject();
@@ -143,7 +143,7 @@ public class ResetPasswordTest {
 	public void Everything_must_be_OK_WITH_correct_credentials() {
 		//first we need to call forgot password to get a token which is needed below!
 		HttpResponse<JsonNode> res = Unirest.post("/forgot-password")
-			.body(TestAccounts.Standard_plan_and_two_extra_users.EDITOR())
+			.body(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR())
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -157,7 +157,7 @@ public class ResetPasswordTest {
 		assertNotNull(token);
 		
 		res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody(token, TestAccounts.Standard_plan_and_two_extra_users.EDITOR()))
+			.body(createBody(token, TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR()))
 			.asJson();
 		TestUtils.logout(res.getCookies());
 

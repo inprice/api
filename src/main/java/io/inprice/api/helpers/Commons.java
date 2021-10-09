@@ -4,31 +4,31 @@ import java.util.Map;
 
 import org.jdbi.v3.core.Handle;
 
-import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.session.info.ForResponse;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.models.Account;
+import io.inprice.common.models.Workspace;
 
 public class Commons {
 
-  public static Response refreshSession(Long accountId) {
+  public static Response refreshSession(Long workspaceId) {
     try (Handle handle = Database.getHandle()) {
-      AccountDao accountDao = handle.attach(AccountDao.class);
-      return refreshSession(accountDao, accountId);
+      WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+      return refreshSession(workspaceDao, workspaceId);
     }
   }
 
-  public static Response refreshSession(AccountDao accountDao, Long accountId) {
-    Account account = accountDao.findById(accountId);
-    return refreshSession(account);
+  public static Response refreshSession(WorkspaceDao workspaceDao, Long workspaceId) {
+    Workspace workspace = workspaceDao.findById(workspaceId);
+    return refreshSession(workspace);
   }
 
-  public static Response refreshSession(Account account) {
+  public static Response refreshSession(Workspace workspace) {
     ForResponse session = new ForResponse(
-      account,
-      CurrentUser.getUserName(),
+      workspace,
+      CurrentUser.getFullName(),
       CurrentUser.getEmail(),
       CurrentUser.getRole(),
       CurrentUser.getUserTimezone()

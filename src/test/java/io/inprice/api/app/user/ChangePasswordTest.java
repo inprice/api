@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -37,7 +37,7 @@ public class ChangePasswordTest {
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
-			.body(createBody("1234", "ABCD", "ABCD"))
+			.body(createBody("1234-AB", "ABCD-10", "ABCD-10"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -48,7 +48,7 @@ public class ChangePasswordTest {
 
 	@Test
 	public void Request_body_is_invalid_WITHOUT_body() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -65,31 +65,31 @@ public class ChangePasswordTest {
 
 	@Test
 	public void Password_cannot_be_empty() {
-		JSONObject json = callTheServiceWith("1234", null, "ABCD");
+		JSONObject json = callTheServiceWith("1234-AB", null, "ABCD-11");
 
 		assertEquals(400, json.getInt("status"));
     assertEquals("Password cannot be empty!", json.getString("reason"));
 	}
 
 	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_shorter_password() {
-		JSONObject json = callTheServiceWith("1234", "ABC");
+	public void Password_length_must_be_between_6_and_16_chars_WITH_shorter_password() {
+		JSONObject json = callTheServiceWith("1234-AB", "ABCDX");
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 6 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_longer_password() {
-		JSONObject json = callTheServiceWith("1234", RandomStringUtils.randomAlphabetic(17));
+	public void Password_length_must_be_between_6_and_16_chars_WITH_longer_password() {
+		JSONObject json = callTheServiceWith("1234-AB", RandomStringUtils.randomAlphabetic(17));
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 6 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
 	public void Passwords_are_mismatch_WITH_different_passwords() {
-		JSONObject json = callTheServiceWith("1234", "ABCD", "ABCd");
+		JSONObject json = callTheServiceWith("1234-AB", "ABCD-10", "ABCD-11");
 
 		assertEquals(400, json.getInt("status"));
     assertEquals("Passwords are mismatch!", json.getString("reason"));
@@ -97,7 +97,7 @@ public class ChangePasswordTest {
 
 	@Test
 	public void Old_password_cannot_be_empty() {
-		JSONObject json = callTheServiceWith("", "ABCD", "ABCD");
+		JSONObject json = callTheServiceWith("", "ABCD-10", "ABCD-10");
 		
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Old password cannot be empty!", json.get("reason"));
@@ -105,7 +105,7 @@ public class ChangePasswordTest {
 
 	@Test
 	public void Old_password_is_incorrect() {
-		JSONObject json = callTheServiceWith("1235", "ABCD", "ABCD");
+		JSONObject json = callTheServiceWith("1234-AC", "ABCD-10", "ABCD-10");
 		
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Old password is incorrect!", json.get("reason"));
@@ -113,7 +113,7 @@ public class ChangePasswordTest {
 
 	@Test
 	public void New_password_cannot_be_the_same_as_old_password() {
-		JSONObject json = callTheServiceWith("1234", "1234", "1234");
+		JSONObject json = callTheServiceWith("1234-AB", "1234-AB", "1234-AB");
 		
 		assertEquals(400, json.getInt("status"));
 		assertEquals("New password cannot be the same as old password!", json.get("reason"));
@@ -121,11 +121,11 @@ public class ChangePasswordTest {
 
 	@Test
 	public void Everything_must_be_ok() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
-			.body(createBody("1234", "';\"~", "';\"~"))
+			.body(createBody("1234-AB", "';\"~.1", "';\"~.1"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -136,7 +136,7 @@ public class ChangePasswordTest {
 		//we have to set old password again for the health of other tests
 		res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
-			.body(createBody("';\"~", "1234", "1234"))
+			.body(createBody("';\"~.1", "1234-AB", "1234-AB"))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -164,7 +164,7 @@ public class ChangePasswordTest {
 		JSONObject body = createBody(oldPassword, password, repeatPassword);
 
 		//login with an admin
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR());
 
 		//making service call
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)

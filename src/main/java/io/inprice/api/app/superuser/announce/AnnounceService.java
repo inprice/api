@@ -3,7 +3,6 @@ package io.inprice.api.app.superuser.announce;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -158,7 +157,7 @@ public class AnnounceService {
       .map(new AnnounceMapper())
       .list();
 
-      return new Response(Map.of("rows", searchResult));
+      return new Response(searchResult);
     } catch (Exception e) {
       logger.error("Failed in full search for announces.", e);
       return Responses.ServerProblem.EXCEPTION;
@@ -189,7 +188,7 @@ public class AnnounceService {
 		dto.setType(AnnounceType.SYSTEM);
 
 		if (dto.getUserId() != null) dto.setType(AnnounceType.USER);
-		if (dto.getAccountId() != null) dto.setType(AnnounceType.ACCOUNT);
+		if (dto.getWorkspaceId() != null) dto.setType(AnnounceType.WORKSPACE);
 
 		return problem;
 	}

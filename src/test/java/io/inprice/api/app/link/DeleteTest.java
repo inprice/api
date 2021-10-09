@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -74,7 +74,7 @@ public class DeleteTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 1);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 1);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -82,17 +82,17 @@ public class DeleteTest {
 
 	/**
 	 * Consists of six steps;
-	 *	a) to gather other account's links, admin is logged in
+	 *	a) to gather other workspace's links, admin is logged in
 	 *	b) searches some specific links
 	 *  c) picks one of those links
 	 *  d) builds body up
 	 *  e) evil user logs in
-	 *  f) tries to delete other account's links
+	 *  f) tries to delete other workspace's links
 	 */
 	@Test
 	public void Link_not_found_WHEN_trying_to_delete_someone_elses_links() {
-		//to gather other account's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		//to gather other workspace's links, admin is logged in
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
 		//searches some specific links
 		JSONArray linkList = TestFinder.searchLinks(cookies, "ACTIVE");
@@ -106,7 +106,7 @@ public class DeleteTest {
 		Long fromProductId = link.getLong("productId");
 
 		//evil user logs in
-		cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.EDITOR());
+		cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
 
 		//builds the body up
 		JSONObject body = new JSONObject();
@@ -137,10 +137,10 @@ public class DeleteTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_FOR_editor_and_admin() {
-		//both account have 2 links in PROBLEM status!
+		//both workspace have 2 links in PROBLEM status!
 		JSONObject[] users = {
-			TestAccounts.Standard_plan_and_two_extra_users.ADMIN(),
-			TestAccounts.Standard_plan_and_one_extra_user.EDITOR()
+			TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(),
+			TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR()
 		};
 
 		for (JSONObject user: users) {
@@ -189,7 +189,7 @@ public class DeleteTest {
 	}
 
 	private JSONObject callTheService(Long productId, Long[] linkIds) {
-		return callTheService(TestAccounts.Standard_plan_and_no_extra_users.ADMIN(), productId, linkIds);
+		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN(), productId, linkIds);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long productId, Long[] linkIds) {

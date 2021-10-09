@@ -9,7 +9,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.BeforeParam;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -75,7 +75,7 @@ public class AcceptLeaveAndRejectInvitationTests {
 
 	@Test
 	public void Membership_not_found_WITH_membership_id() {
-		JSONObject json = callTheService(TestAccounts.Premium_plan_and_three_pending_users.ADMIN(), 1L);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_three_pending_users.ADMIN(), 1L);
 
 		assertEquals(404, json.getInt("status"));
 		assertEquals("Membership not found!", json.getString("reason"));
@@ -134,7 +134,7 @@ public class AcceptLeaveAndRejectInvitationTests {
 		assertNotNull(endpointPostfix, memberId);
 
 		//must not have a permission to change the member's role!
-		Cookies cookies = TestUtils.login(TestAccounts.Second_without_a_plan_and_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Second_without_a_plan_and_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)

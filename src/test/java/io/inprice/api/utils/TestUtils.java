@@ -59,9 +59,9 @@ public class TestUtils {
 	}
 
 	/**
-	 * Logs in for the given role of the given account and returns cookies.
+	 * Logs in for the given role of the given workspace and returns cookies.
 	 * 
-	 * @param forAccount X, Y and Z...
+	 * @param forWorkspace X, Y and Z...
 	 * @param role any role is ok
 	 * @return authorized cookies
 	 */

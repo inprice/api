@@ -11,7 +11,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.app.dashboard.mapper.ProductSummary;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
@@ -19,7 +19,7 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.lib.ExpiringHashMap;
 import io.inprice.common.lib.ExpiringMap;
-import io.inprice.common.meta.Level;
+import io.inprice.common.meta.Position;
 import io.inprice.common.meta.Grup;
 import io.inprice.common.utils.DateUtils;
 
@@ -31,21 +31,21 @@ class DashboardService {
 
   Response getReport(boolean refresh) {
     Map<String, Object> report = null;
-    if (! refresh) report = expiringMap.get(CurrentUser.getAccountId());
+    if (! refresh) report = expiringMap.get(CurrentUser.getWorkspaceId());
 
     if (report == null) {
       report = new HashMap<>(4);
 
       try (Handle handle = Database.getHandle()) {
-        AccountDao accountDao = handle.attach(AccountDao.class);
+        WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
         DashboardDao dashboardDao = handle.attach(DashboardDao.class);
 
         report.put("date", DateUtils.formatLongDate(new Date()));
         report.put("products", getProducts(dashboardDao));
         report.put("links", getLinks(dashboardDao));
-        report.put("account", accountDao.findById(CurrentUser.getAccountId()));
+        report.put("workspace", workspaceDao.findById(CurrentUser.getWorkspaceId()));
 
-        expiringMap.put(CurrentUser.getAccountId(), report);
+        expiringMap.put(CurrentUser.getWorkspaceId(), report);
         return new Response(report);
     
       } catch (Exception e) {
@@ -58,7 +58,7 @@ class DashboardService {
 
   private Map<String, Object> getProducts(DashboardDao dashboardDao) {
     Map<String, Object> result = new HashMap<>(2);
-    result.put("levelSeries", findProductLevelSeries(dashboardDao));
+    result.put("positionSeries", findProductPositionSeries(dashboardDao));
     result.put("extremePrices", findNProductsHavingExtremePrices(dashboardDao));
     return result;
   }
@@ -66,8 +66,8 @@ class DashboardService {
   private Map<String, Object> getLinks(DashboardDao dashboardDao) {
   	Map<String, Object> result = new HashMap<>(3);
   	result.put("grupSeries", findGrupSeries(dashboardDao));
-  	result.put("levelSeries", findLinkLevelSeries(dashboardDao));
-		result.put("mru25", dashboardDao.findMR25Link(CurrentUser.getAccountId()));
+  	result.put("positionSeries", findLinkPositionSeries(dashboardDao));
+		result.put("mru25", dashboardDao.findMR25Link(CurrentUser.getWorkspaceId()));
     return result;
   }
 
@@ -85,7 +85,7 @@ class DashboardService {
 
     int[] result = new int[i];
 
-    Map<String, Integer> grupDistMap = dashboardDao.findGrupDists(CurrentUser.getAccountId());
+    Map<String, Integer> grupDistMap = dashboardDao.findGrupDists(CurrentUser.getWorkspaceId());
     if (MapUtils.isNotEmpty(grupDistMap)) {
       for (Entry<String, Integer> entry: grupDistMap.entrySet()) {
         Integer index = stats.get(entry.getKey());
@@ -99,19 +99,19 @@ class DashboardService {
   }
   
   /**
-   * finding product distributions by the Levels
+   * finding product distributions by the Positions
    */
-  private int[] findProductLevelSeries(DashboardDao dashboardDao) {
-    Map<String, Integer> levelDistMap = dashboardDao.findProductLevelDists(CurrentUser.getAccountId());
-    return findSeries(levelDistMap, dashboardDao);
+  private int[] findProductPositionSeries(DashboardDao dashboardDao) {
+    Map<String, Integer> positionDistMap = dashboardDao.findProductPositionDists(CurrentUser.getWorkspaceId());
+    return findSeries(positionDistMap, dashboardDao);
   }
 
   /**
-   * finding link distributions by the Levels
+   * finding link distributions by the Positions
    */
-  private int[] findLinkLevelSeries(DashboardDao dashboardDao) {
-    Map<String, Integer> levelDistMap = dashboardDao.findLinkLevelDists(CurrentUser.getAccountId());
-    return findSeries(levelDistMap, dashboardDao);
+  private int[] findLinkPositionSeries(DashboardDao dashboardDao) {
+    Map<String, Integer> positionDistMap = dashboardDao.findLinkPositionDists(CurrentUser.getWorkspaceId());
+    return findSeries(positionDistMap, dashboardDao);
   }
   
   /**
@@ -120,9 +120,9 @@ class DashboardService {
   private Map<String, List<ProductSummary>> findNProductsHavingExtremePrices(DashboardDao dashboardDao) {
   	Map<String, List<ProductSummary>> result = new HashMap<>(2);
   	
-  	Level[] selected = { Level.LOWEST, Level.HIGHEST };
-  	for (Level level: selected) {
-  		result.put(level.name(), dashboardDao.findMostNProduct(5, level, CurrentUser.getAccountId()));
+  	Position[] selected = { Position.LOWEST, Position.HIGHEST };
+  	for (Position position: selected) {
+  		result.put(position.name(), dashboardDao.findMostNProduct(5, position, CurrentUser.getWorkspaceId()));
   	}
   	
   	return result;
@@ -131,13 +131,13 @@ class DashboardService {
   private int[] findSeries(Map<String, Integer> dataMap, DashboardDao dashboardDao) {
   	int i = 0;
     Map<String, Integer> stats = Map.of(
-    	Level.LOWEST.name(), i++,
-    	Level.HIGHEST.name(), i++,
-    	Level.LOWER.name(), i++,
-    	Level.AVERAGE.name(), i++,
-    	Level.HIGHER.name(), i++,
-    	Level.EQUAL.name(), i++,
-    	Level.NA.name(), i++
+    	Position.LOWEST.name(), i++,
+    	Position.HIGHEST.name(), i++,
+    	Position.LOWER.name(), i++,
+    	Position.AVERAGE.name(), i++,
+    	Position.HIGHER.name(), i++,
+    	Position.EQUAL.name(), i++,
+    	Position.UNKNOWN.name(), i++
   	);
 
     int[] result = new int[i];

@@ -1,7 +1,6 @@
 package io.inprice.api.app.alarm;
 
 import io.inprice.api.app.alarm.dto.AlarmDTO;
-import io.inprice.api.app.alarm.dto.SearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.framework.AbstractController;
@@ -43,16 +42,6 @@ public class AlarmController extends AbstractController {
     	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
     	ctx.json(service.delete(id));
     }, AccessRoles.EDITOR());
-
-    // search
-    app.post(Consts.Paths.Alarm.SEARCH, (ctx) -> {
-    	if (ctx.body().isBlank()) {
-    		ctx.json(Responses.REQUEST_BODY_INVALID);
-    	} else {
-	    	SearchDTO dto = ctx.bodyAsClass(SearchDTO.class);
-	    	ctx.json(service.search(dto));
-    	}
-    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_ACCOUNT());
 
   }
 

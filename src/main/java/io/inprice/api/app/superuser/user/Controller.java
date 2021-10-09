@@ -95,10 +95,10 @@ public class Controller extends AbstractController {
   		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
 
-    // fetch user's account list
-    app.get(Consts.Paths.Super.User.USER_ACCOUNTS + "/:userId", (ctx) -> {
+    // fetch user's workspace list
+    app.get(Consts.Paths.Super.User.USER_WORKSPACES + "/:userId", (ctx) -> {
     	Long userId = ctx.pathParam("userId", Long.class).check(it -> it > 0).getValue();
-  		Response res = service.fetchAccountList(userId);
+  		Response res = service.fetchWorkspaceList(userId);
   		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
 

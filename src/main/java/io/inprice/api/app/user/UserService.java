@@ -12,16 +12,13 @@ import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.membership.MembershipDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.dto.UserDTO;
-import io.inprice.api.app.user.validator.PasswordValidator;
-import io.inprice.api.consts.Consts;
+import io.inprice.api.app.user.verifier.PasswordVerifier;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LongDTO;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.PasswordHelper;
-import io.inprice.api.helpers.SessionHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.api.session.info.ForCookie;
 import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.Timezones;
 import io.inprice.common.helpers.Beans;
@@ -43,7 +40,7 @@ public class UserService {
       try (Handle handle = Database.getHandle()) {
         UserDao userDao = handle.attach(UserDao.class);
 
-        boolean isOK = userDao.updateName(CurrentUser.getUserId(), dto.getName(), dto.getTimezone());
+        boolean isOK = userDao.updateInfo(CurrentUser.getUserId(), dto.getFullName(), dto.getTimezone());
         if (isOK) {
           return Responses.OK;
         } else {
@@ -58,7 +55,7 @@ public class UserService {
   Response changePassword(PasswordDTO dto) {
   	Response res = Responses.NotFound.USER;
 
-  	String problem = PasswordValidator.verify(dto);
+  	String problem = PasswordVerifier.verify(dto);
 
   	if (problem == null) {
   		if (StringUtils.isBlank(dto.getOldPassword())) {
@@ -154,31 +151,19 @@ public class UserService {
   		);
 
       return new Response(
-        membershipDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getAccountId(), activeStatuses)
+        membershipDao.findMembershipsByEmail(CurrentUser.getEmail(), CurrentUser.getWorkspaceId(), activeStatuses)
       );
     }
   }
 
   Response getOpenedSessions(Context ctx) {
   	if (CurrentUser.getRole().equals(UserRole.SUPER)) return Responses.OK;
-
-		String tokenString = ctx.cookie(Consts.SESSION);
-		List<ForCookie> cookieSesList = SessionHelper.fromTokenForUser(tokenString);
-  	
-    List<String> excludedHashes = new ArrayList<>(cookieSesList.size());
-    for (ForCookie ses: cookieSesList) {
-      excludedHashes.add(ses.getHash());
+    try (Handle handle = Database.getHandle()) { 
+      UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
+      return new Response(
+        userSessionDao.findOpenedSessions(CurrentUser.getUserId())
+      );
     }
-
-    if (excludedHashes.size() > 0) {
-      try (Handle handle = Database.getHandle()) { 
-        UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
-        return new Response(
-          userSessionDao.findOpenedSessions(CurrentUser.getUserId(), excludedHashes)
-        );
-      }
-    }
-    return Responses.NotFound.USER;
   }
 
   Response closeAllSessions() {
@@ -202,10 +187,10 @@ public class UserService {
   private String validateUserDTOForUpdate(UserDTO dto) {
     String problem = null;
 
-    if (StringUtils.isBlank(dto.getName())) {
-      problem = "User name cannot be empty!";
-    } else if (dto.getName().length() < 3 || dto.getName().length() > 70) {
-      problem = "User name must be between 3 - 70 chars!";
+    if (StringUtils.isBlank(dto.getFullName())) {
+      problem = "Full Name cannot be empty!";
+    } else if (dto.getFullName().length() < 3 || dto.getFullName().length() > 70) {
+      problem = "Full Name must be between 3 - 70 chars!";
     }
 
     if (problem == null) {
@@ -218,7 +203,7 @@ public class UserService {
 
     if (problem == null) {
       dto.setEmail(SqlHelper.clear(dto.getEmail()));
-      dto.setName(SqlHelper.clear(dto.getName()));
+      dto.setFullName(SqlHelper.clear(dto.getFullName()));
     }
 
     return problem;

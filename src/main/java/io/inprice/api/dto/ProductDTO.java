@@ -10,18 +10,23 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Getter
 @Setter
 @ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductDTO {
 
   private Long id;
+  private String sku;
   private String name;
-  private String description;
   private BigDecimal price;
-  
-  private Long accountId;
+
+  private SimpleDef brand;
+  private SimpleDef category;
+
+  private Long brandId;    //for dao
+  private Long categoryId; //for dao
+  private Long workspaceId;
 
 }

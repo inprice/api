@@ -17,66 +17,66 @@ import io.inprice.common.models.Alarm;
 
 public interface AlarmDao {
 
-	@SqlQuery("select * from alarm where id=:id and account_id=:accountId")
+	@SqlQuery("select * from alarm where id=:id and workspace_id=:workspaceId")
   @UseRowMapper(AlarmMapper.class)
-	Alarm findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
+	Alarm findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
-	@SqlQuery("select exists(select 1 from alarm where <topic>_id=:topicId and account_id=:accountId)")
-	boolean doesExistByTopicId(@Define("topic") String topic, @Bind("topicId") Long topicId, @Bind("accountId") Long accountId);
+	@SqlQuery("select exists(select 1 from alarm where <topic>_id=:topicId and workspace_id=:workspaceId)")
+	boolean doesExistByTopicId(@Define("topic") String topic, @Bind("topicId") Long topicId, @Bind("workspaceId") Long workspaceId);
 
 	@SqlUpdate(
-		"insert into alarm (topic, product_id, link_id, subject, subject_when, certain_status, amount_lower_limit, amount_upper_limit, last_status, last_amount, account_id) " +
-		"values (:dto.topic, :dto.productId, :dto.linkId, :dto.subject, :dto.subjectWhen, :dto.certainStatus, :dto.amountLowerLimit, :dto.amountUpperLimit, :pair.left, :pair.right, :dto.accountId)"
+		"insert into alarm (topic, product_id, link_id, subject, subject_when, certain_position, amount_lower_limit, amount_upper_limit, last_position, last_amount, workspace_id) " +
+		"values (:dto.topic, :dto.productId, :dto.linkId, :dto.subject, :dto.subjectWhen, :dto.certainPosition, :dto.amountLowerLimit, :dto.amountUpperLimit, :pair.left, :pair.right, :dto.workspaceId)"
 	)
 	@GetGeneratedKeys
 	long insert(@BindBean("dto") AlarmDTO dto, @BindBean("pair") Pair<String, BigDecimal> pair);
 
 	@SqlUpdate(
 		"update alarm " +
-		"set subject=:dto.subject, subject_when=:dto.subjectWhen, certain_status=:dto.certainStatus, amount_lower_limit=:dto.amountLowerLimit, " +
-		"    amount_upper_limit=:dto.amountUpperLimit, last_status=:pair.left, last_amount=:pair.right, updated_at=now() " +
+		"set subject=:dto.subject, subject_when=:dto.subjectWhen, certain_position=:dto.certainPosition, amount_lower_limit=:dto.amountLowerLimit, " +
+		"    amount_upper_limit=:dto.amountUpperLimit, last_position=:pair.left, last_amount=:pair.right, updated_at=now() " +
 		"where id=:dto.id " +
-		"  and account_id=:dto.accountId"
+		"  and workspace_id=:dto.workspaceId"
 	)
 	boolean update(@BindBean("dto") AlarmDTO dto, @BindBean("pair") Pair<String, BigDecimal> pair);
 	
   @SqlUpdate(
 		"delete from alarm " +
 		"where id=:id  " +
-		"  and account_id=:accountId"
+		"  and workspace_id=:workspaceId"
 	)
-  boolean delete(@Bind("id") Long id, @Bind("accountId") Long accountId);
+  boolean delete(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
 	@SqlUpdate(
 		"update product " +
 		"set alarm_id=:alarmId " +
 		"where id=:productId " +
-		"  and account_id=:accountId"
+		"  and workspace_id=:workspaceId"
 	)
-	boolean setAlarmForProduct(@Bind("productId") Long productId, @Bind("alarmId") Long alarmId, @Bind("accountId") Long accountId);
+	boolean setAlarmForProduct(@Bind("productId") Long productId, @Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
 
 	@SqlUpdate(
 		"update link " +
 				"set alarm_id=:alarmId " +
 		"where id=:linkId " +
-		"  and account_id=:accountId"
+		"  and workspace_id=:workspaceId"
 	)
-	boolean setAlarmForLink(@Bind("linkId") Long productId, @Bind("alarmId") Long alarmId, @Bind("accountId") Long accountId);
+	boolean setAlarmForLink(@Bind("linkId") Long productId, @Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
 
 	@SqlUpdate(
 		"update product " +
 		"set alarm_id=null " +
 		"where id=:productId " +
-		"  and account_id=:accountId"
+		"  and workspace_id=:workspaceId"
 	)
-	boolean removeAlarmFromProduct(@Bind("productId") Long productId, @Bind("accountId") Long accountId);
+	boolean removeAlarmFromProduct(@Bind("productId") Long productId, @Bind("workspaceId") Long workspaceId);
 
 	@SqlUpdate(
 		"update link " +
 		"set alarm_id=null " +
 		"where id=:linkId " +
-		"  and account_id=:accountId"
+		"  and workspace_id=:workspaceId"
 	)
-	boolean removeAlarmFromLink(@Bind("linkId") Long linkId, @Bind("accountId") Long accountId);
+	boolean removeAlarmFromLink(@Bind("linkId") Long linkId, @Bind("workspaceId") Long workspaceId);
 
 }

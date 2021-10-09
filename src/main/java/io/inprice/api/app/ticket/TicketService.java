@@ -1,7 +1,6 @@
 package io.inprice.api.app.ticket;
 
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,7 +35,7 @@ public class TicketService {
   Response findById(Long id) {
   	try (Handle handle = Database.getHandle()) {
   		TicketDao ticketDao = handle.attach(TicketDao.class);
-  		Ticket ticket = ticketDao.findById(id, CurrentUser.getAccountId());
+  		Ticket ticket = ticketDao.findById(id, CurrentUser.getWorkspaceId());
   		if (ticket != null) {
   			if (Boolean.FALSE.equals(ticket.getSeenByUser())) {
   				ticketDao.toggleSeenByUser(id, true);
@@ -50,7 +49,7 @@ public class TicketService {
 	Response toggleSeenValue(Long id) {
 		try (Handle handle = Database.getHandle()) {
 			TicketDao ticketDao = handle.attach(TicketDao.class);
-			Ticket ticket = ticketDao.findById(id, CurrentUser.getAccountId());
+			Ticket ticket = ticketDao.findById(id, CurrentUser.getWorkspaceId());
 			if (ticket != null) {
 				if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
   				ticketDao.toggleSeenByUser(id, !ticket.getSeenByUser());
@@ -96,7 +95,7 @@ public class TicketService {
 				try (Handle handle = Database.getHandle()) {
 					TicketDao ticketDao = handle.attach(TicketDao.class);
 
-					Ticket ticket = ticketDao.findById(dto.getId(), dto.getAccountId());
+					Ticket ticket = ticketDao.findById(dto.getId(), dto.getWorkspaceId());
 					if (ticket != null) {
 						if (TicketStatus.OPENED.equals(ticket.getStatus())) {
 	  					if (CurrentUser.getRole().equals(UserRole.ADMIN) || ticket.getUserId().equals(CurrentUser.getUserId())) {
@@ -135,7 +134,7 @@ public class TicketService {
 		if (id != null && id > 0) {
 			try (Handle handle = Database.getHandle()) {
 				TicketDao ticketDao = handle.attach(TicketDao.class);
-				Ticket ticket = ticketDao.findById(id, CurrentUser.getAccountId());
+				Ticket ticket = ticketDao.findById(id, CurrentUser.getWorkspaceId());
 
 				if (ticket != null) {
 					if (TicketStatus.OPENED.equals(ticket.getStatus())) {
@@ -174,11 +173,11 @@ public class TicketService {
     //---------------------------------------------------
     StringBuilder where = new StringBuilder();
 
-    where.append("where account_id = ");
-    where.append(CurrentUser.getAccountId());
+    where.append("where workspace_id = ");
+    where.append(CurrentUser.getWorkspaceId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	where.append(" and body like '%");
+    	where.append(" and CONCAT(subject, body) like '%");
       where.append(dto.getTerm());
       where.append("%' ");
     }
@@ -236,7 +235,7 @@ public class TicketService {
     try (Handle handle = Database.getHandle()) {
       List<Ticket> searchResult =
         handle.createQuery(
-          "select t.*, u.name as username from ticket t " +
+          "select t.*, u.full_name from ticket t " +
       		"inner join user u on u.id= t.user_id " +
           where +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", t.id " +
@@ -245,7 +244,7 @@ public class TicketService {
       .map(new TicketMapper())
       .list();
 
-      return new Response(Map.of("rows", searchResult));
+      return new Response(searchResult);
     } catch (Exception e) {
       logger.error("Failed in full search for tickets.", e);
       return Responses.ServerProblem.EXCEPTION;
@@ -277,7 +276,7 @@ public class TicketService {
 
 		if (problem == null) {
 			dto.setUserId(CurrentUser.getUserId());
-			dto.setAccountId(CurrentUser.getAccountId());
+			dto.setWorkspaceId(CurrentUser.getWorkspaceId());
 		}
 
 		return problem;

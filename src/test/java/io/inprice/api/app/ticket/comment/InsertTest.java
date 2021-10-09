@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -123,10 +123,10 @@ public class InsertTest {
 
 	@Test
 	public void Ticket_is_closed() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 		
 		// there must be only one ticket in
-		// 11_account_with_standard_plan_and_two_extra_users.sql
+		// 11_workspace_with_standard_plan_and_two_extra_users.sql
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 1);
 		JSONObject ticket = ticketList.getJSONObject(0);
 
@@ -148,7 +148,7 @@ public class InsertTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 		
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 1);
 		JSONObject ticket = ticketList.getJSONObject(0);
@@ -170,7 +170,7 @@ public class InsertTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestAccounts.Pro_plan_with_no_user.ADMIN(), body);
+		return callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), body);
 	}
 	
 	private JSONObject callTheService(JSONObject user, JSONObject body) {

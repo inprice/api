@@ -25,18 +25,18 @@ import io.inprice.common.repository.PlatformDao;
 
 public interface LinkDao {
 
-  @SqlQuery("select * from link where id=:id and account_id=:accountId")
+  @SqlQuery("select * from link where id=:id and workspace_id=:workspaceId")
   @UseRowMapper(LinkMapper.class)
-  Link findById(@Bind("id") Long id, @Bind("accountId") Long accountId);
+  Link findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
 		"select *" + AlarmDao.FIELDS + " from link as l " +
     "left join alarm as al on al.id = l.alarm_id " + 
     "where l.id=:id " +
-    "  and l.account_id=:accountId"
+    "  and l.workspace_id=:workspaceId"
 	)
   @UseRowMapper(LinkMapper.class)
-  Link findWithAlarmById(@Bind("id") Long id, @Bind("accountId") Long accountId);
+  Link findWithAlarmById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery("select * from link where product_id=:productId and url_hash=:urlHash limit 1")
   @UseRowMapper(LinkMapper.class)
@@ -48,11 +48,11 @@ public interface LinkDao {
 		"left join platform as p on p.id = l.platform_id " + 
     "left join alarm as al on al.id = l.alarm_id " + 
     "where l.product_id=:productId " +
-    "  and l.account_id=:accountId " +
-    "order by l.grup, l.level, l.price"
+    "  and l.workspace_id=:workspaceId " +
+    "order by l.grup, l.price, l.status"
   )
   @UseRowMapper(LinkMapper.class)
-  List<Link> findListByProductId(@Bind("productId") Long productId, @Bind("accountId") Long accountId);
+  List<Link> findListByProductId(@Bind("productId") Long productId, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery("select * from link_price where product_id=:productId order by link_id, id desc")
   @UseRowMapper(LinkPriceMapper.class)
@@ -79,15 +79,15 @@ public interface LinkDao {
   List<LinkSpec> findSpecListByLinkId(@Bind("linkId") Long linkId);
 
   @SqlUpdate(
-    "insert into link (url, url_hash, product_id, account_id) " +
-    "values (:link.url, :link.urlHash, :link.productId, :link.accountId)"
+    "insert into link (url, url_hash, product_id, workspace_id) " +
+    "values (:link.url, :link.urlHash, :link.productId, :link.workspaceId)"
   )
   @GetGeneratedKeys
   long insert(@BindBean("link") Link sample);
 
   @SqlUpdate(
-    "insert into link_history (link_id, status, product_id, account_id) " +
-    "values (:link.id, :link.status, :link.productId, :link.accountId)"
+    "insert into link_history (link_id, status, product_id, workspace_id) " +
+    "values (:link.id, :link.status, :link.productId, :link.workspaceId)"
   )
   @GetGeneratedKeys
   long insertHistory(@BindBean("link") Link link);

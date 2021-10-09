@@ -1,7 +1,6 @@
 package io.inprice.api.app.announce;
 
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +33,7 @@ public class AnnounceService {
 	Response fetchNewAnnounces() {
 		try (Handle handle = Database.getHandle()) {
 			AnnounceDao announceDao = handle.attach(AnnounceDao.class);
-			List<Announce> list = announceDao.fetchNotLoggedAnnounces(CurrentUser.getUserId(), CurrentUser.getAccountId());
+			List<Announce> list = announceDao.fetchNotLoggedAnnounces(CurrentUser.getUserId(), CurrentUser.getWorkspaceId());
 			return new Response(list);
 		}
 	}
@@ -42,7 +41,7 @@ public class AnnounceService {
 	Response addLogsForCurrentUser() {
 		try (Handle handle = Database.getHandle()) {
 			AnnounceDao announceDao = handle.attach(AnnounceDao.class);
-			announceDao.addLogsForWaitingAnnounces(CurrentUser.getUserId(), CurrentUser.getAccountId());
+			announceDao.addLogsForWaitingAnnounces(CurrentUser.getUserId(), CurrentUser.getWorkspaceId());
 			return Responses.OK;
 		}
 	}
@@ -57,23 +56,23 @@ public class AnnounceService {
 
     if (CollectionUtils.isNotEmpty(dto.getTypes())) {
     	boolean hasSYSTEM = dto.getTypes().contains(AnnounceType.SYSTEM);
-    	boolean hasACCOUNT = dto.getTypes().contains(AnnounceType.ACCOUNT);
+    	boolean hasWORKSPACE = dto.getTypes().contains(AnnounceType.WORKSPACE);
     	boolean hasUSER = dto.getTypes().contains(AnnounceType.USER);
     	
     	if (hasSYSTEM) where.append(" and type='SYSTEM' ");
 
-    	if (hasACCOUNT) {
+    	if (hasWORKSPACE) {
     		if (hasSYSTEM) 
     			where.append(" or ");
     		else
     			where.append(" and ");
-    		where.append(" (type='ACCOUNT' and account_id=");
-    		where.append(CurrentUser.getAccountId());
+    		where.append(" (type='WORKSPACE' and workspace_id=");
+    		where.append(CurrentUser.getWorkspaceId());
     		where.append(") ");
     	}
 
     	if (hasUSER) {
-    		if (hasSYSTEM || hasACCOUNT) 
+    		if (hasSYSTEM || hasWORKSPACE) 
     			where.append(" or ");
     		else
     			where.append(" and ");
@@ -84,15 +83,15 @@ public class AnnounceService {
 
     } else {
 			where.append(" and (type='SYSTEM' ");
-			where.append(" or account_id=");
-			where.append(CurrentUser.getAccountId());
+			where.append(" or workspace_id=");
+			where.append(CurrentUser.getWorkspaceId());
 			where.append(" or user_id=");
 			where.append(CurrentUser.getUserId());
 			where.append(") ");
   	}
     
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	where.append(" and CONCAT_WS(title, body)");
+    	where.append(" and CONCAT(title, body)");
     	where.append(" like '%");
       where.append(dto.getTerm());
       where.append("%' ");
@@ -148,7 +147,7 @@ public class AnnounceService {
       .map(new AnnounceMapper())
       .list();
 
-      return new Response(Map.of("rows", searchResult));
+      return new Response(searchResult);
     } catch (Exception e) {
       logger.error("Failed in full search for announces.", e);
       return Responses.ServerProblem.EXCEPTION;

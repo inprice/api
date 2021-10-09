@@ -9,8 +9,8 @@ import io.inprice.api.app.announce.dto.AnnounceDTO;
 public interface AnnounceDao {
 
   @SqlUpdate(
-		"insert into announce (type, level, title, body, link, starting_at, ending_at, user_id, account_id) " + 
-		"values (:dto.type, :dto.level, :dto.title, :dto.body, :dto.link, :dto.startingAt, :dto.endingAt, :dto.userId, :dto.accountId) "
+		"insert into announce (type, level, title, body, link, starting_at, ending_at, user_id, workspace_id) " + 
+		"values (:dto.type, :dto.level, :dto.title, :dto.body, :dto.link, :dto.startingAt, :dto.endingAt, :dto.userId, :dto.workspaceId) "
 	)
   boolean insert(@BindBean("dto") AnnounceDTO dto);
 

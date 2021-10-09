@@ -10,12 +10,12 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
 import io.inprice.api.app.membership.dto.InvitationUpdateDTO;
 import io.inprice.api.app.user.UserDao;
-import io.inprice.api.app.user.validator.EmailValidator;
+import io.inprice.api.app.user.verifier.EmailVerifier;
 import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
@@ -32,7 +32,7 @@ import io.inprice.common.info.EmailData;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
-import io.inprice.common.models.Account;
+import io.inprice.common.models.Workspace;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
 
@@ -48,7 +48,7 @@ class MembershipService {
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      List<Membership> list = membershipDao.findNormalMemberList(CurrentUser.getAccountId());
+      List<Membership> list = membershipDao.findNormalMemberList(CurrentUser.getWorkspaceId());
       if (CollectionUtils.isNotEmpty(list)) {
         res = new Response(list);
       }
@@ -69,29 +69,29 @@ class MembershipService {
           if (user == null || user.isBanned() == false) {
           	if (user == null || user.isPrivileged() == false) {
   
-          		AccountDao accountDao = handle.attach(AccountDao.class);
-          		Account account = accountDao.findById(CurrentUser.getAccountId());
-          		if (account != null) {
-          			if (account.getPlan() == null) {
+          		WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+          		Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
+          		if (workspace != null) {
+          			if (workspace.getPlan() == null) {
           				return Responses.PermissionProblem.DONT_HAVE_A_PLAN;
-          			} else if (account.getPlan().getUserLimit().compareTo(account.getUserCount()) <= 0) {
+          			} else if (workspace.getPlan().getUserLimit().compareTo(workspace.getUserCount()) <= 0) {
           				return Responses.PermissionProblem.USER_LIMIT_PROBLEM;
           			}
           		}
   
           		MembershipDao membershipDao = handle.attach(MembershipDao.class);
-              Membership mem = membershipDao.findByEmail(dto.getEmail(), CurrentUser.getAccountId());
+              Membership mem = membershipDao.findByEmail(dto.getEmail(), CurrentUser.getWorkspaceId());
               if (mem == null) {
               	
               	handle.begin();
   
               	//TODO: an announce must be fired here!
-                boolean isAdded = membershipDao.insertInvitation(dto.getEmail(), dto.getRole(), CurrentUser.getAccountId());
+                boolean isAdded = membershipDao.insertInvitation(dto.getEmail(), dto.getRole(), CurrentUser.getWorkspaceId());
                 if (isAdded) {
-                  boolean isOK = accountDao.increaseUserCount(CurrentUser.getAccountId());
+                  boolean isOK = workspaceDao.increaseUserCount(CurrentUser.getWorkspaceId());
                   if (isOK) {
                   	handle.commit();
-                    dto.setAccountId(CurrentUser.getAccountId());
+                    dto.setWorkspaceId(CurrentUser.getWorkspaceId());
                     return sendMail(userDao, dto);
                   } else {
                   	handle.rollback();
@@ -99,7 +99,7 @@ class MembershipService {
                   }
                 }
               } else {
-                return new Response("This user has already been added to this account!");
+                return new Response("This user has already been added to this workspace!");
               }
             } else {
             	return Responses.PermissionProblem.WRONG_USER;
@@ -122,7 +122,7 @@ class MembershipService {
       UserDao userDao = handle.attach(UserDao.class);
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
       
-      Membership mem = membershipDao.findNormalMemberById(memId, CurrentUser.getAccountId());
+      Membership mem = membershipDao.findNormalMemberById(memId, CurrentUser.getWorkspaceId());
       if (mem != null) {
       	if (mem.getUserId() == null || mem.getUserId().equals(CurrentUser.getUserId()) == false) {
 
@@ -130,12 +130,12 @@ class MembershipService {
             User user = userDao.findById(mem.getUserId());
     
             if (user == null || (user.isBanned() == false && user.isPrivileged() == false)) {
-              boolean isOK = membershipDao.increaseSendingCount(memId, UserStatus.PENDING, CurrentUser.getAccountId());
+              boolean isOK = membershipDao.increaseSendingCount(memId, UserStatus.PENDING, CurrentUser.getWorkspaceId());
               if (isOK) {
                 InvitationSendDTO dto = new InvitationSendDTO();
                 dto.setEmail(mem.getEmail());
                 dto.setRole(mem.getRole());
-                dto.setAccountId(CurrentUser.getAccountId());
+                dto.setWorkspaceId(CurrentUser.getWorkspaceId());
                 res = sendMail(userDao, dto);
               } else {
               	res = new Response("You can re-send invitation for the same user up to three times!");
@@ -161,19 +161,19 @@ class MembershipService {
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      Membership mem = membershipDao.findNormalMemberById(memId, CurrentUser.getAccountId());
+      Membership mem = membershipDao.findNormalMemberById(memId, CurrentUser.getWorkspaceId());
       if (mem != null) {
 
-      	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
+      	if (mem.getEmail().equals(CurrentUser.getEmail()) == false) {
         	res = Responses.Already.DELETED_MEMBER;
   
         	if (! mem.getStatus().equals(UserStatus.DELETED)) {
           	handle.begin();
           	
-            boolean isOK = membershipDao.setStatusDeleted(memId, UserStatus.DELETED, CurrentUser.getAccountId());
+            boolean isOK = membershipDao.setStatusDeleted(memId, UserStatus.DELETED, CurrentUser.getWorkspaceId());
             if (isOK) {
             	if (mem.getUserId() != null) {
-            		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+            		terminateUserSession(handle, mem.getUserId(), CurrentUser.getWorkspaceId());
             	}
   
             	handle.commit();
@@ -198,20 +198,20 @@ class MembershipService {
 
     	try (Handle handle = Database.getHandle()) {
         MembershipDao membershipDao = handle.attach(MembershipDao.class);
-        Membership mem = membershipDao.findNormalMemberById(dto.getMemberId(), CurrentUser.getAccountId());
+        Membership mem = membershipDao.findNormalMemberById(dto.getId(), CurrentUser.getWorkspaceId());
 
     		if (mem != null) {
-        	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
+        	if (mem.getEmail().equals(CurrentUser.getEmail()) == false) {
           
         		if (! mem.getStatus().equals(UserStatus.DELETED)) {
         			if (! mem.getRole().equals(dto.getRole())) {
   
               	handle.begin();
 
-                boolean isOK = membershipDao.changeRole(dto.getMemberId(), dto.getRole(), CurrentUser.getAccountId());
+                boolean isOK = membershipDao.changeRole(dto.getId(), dto.getRole(), CurrentUser.getWorkspaceId());
                 if (isOK) {
                 	if (mem.getUserId() != null) {
-                		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+                		terminateUserSession(handle, mem.getUserId(), CurrentUser.getWorkspaceId());
                 	}
 
                 	handle.commit();
@@ -245,19 +245,19 @@ class MembershipService {
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      Membership mem = membershipDao.findNormalMemberById(id, CurrentUser.getAccountId());
+      Membership mem = membershipDao.findNormalMemberById(id, CurrentUser.getWorkspaceId());
       if (mem != null) {
-      	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
+      	if (mem.getEmail().equals(CurrentUser.getEmail()) == false) {
 
         	if (! mem.getStatus().equals(UserStatus.DELETED)) {
         		if (! mem.getStatus().equals(UserStatus.PAUSED)) {
   
             	handle.begin();
   
-              boolean isOK = membershipDao.pause(id, CurrentUser.getAccountId());
+              boolean isOK = membershipDao.pause(id, CurrentUser.getWorkspaceId());
               if (isOK) {
               	if (mem.getUserId() != null) {
-              		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+              		terminateUserSession(handle, mem.getUserId(), CurrentUser.getWorkspaceId());
               	}
   
               	handle.commit();
@@ -287,19 +287,19 @@ class MembershipService {
     try (Handle handle = Database.getHandle()) {
       MembershipDao membershipDao = handle.attach(MembershipDao.class);
 
-      Membership mem = membershipDao.findNormalMemberById(id, CurrentUser.getAccountId());
+      Membership mem = membershipDao.findNormalMemberById(id, CurrentUser.getWorkspaceId());
       if (mem != null) {
-      	if (mem.getUserId().equals(CurrentUser.getUserId()) == false) {
+      	if (mem.getEmail().equals(CurrentUser.getEmail()) == false) {
 
         	if (! mem.getStatus().equals(UserStatus.DELETED)) {
           	if (mem.getStatus().equals(UserStatus.PAUSED)) {
   
             	handle.begin();
   
-              boolean isOK = membershipDao.resume(id, CurrentUser.getAccountId());
+              boolean isOK = membershipDao.resume(id, CurrentUser.getWorkspaceId());
               if (isOK) {
               	if (mem.getUserId() != null) {
-              		terminateUserSession(handle, mem.getUserId(), CurrentUser.getAccountId());
+              		terminateUserSession(handle, mem.getUserId(), CurrentUser.getWorkspaceId());
               	}
   
               	handle.commit();
@@ -327,23 +327,23 @@ class MembershipService {
 
   private Response sendMail(UserDao userDao, InvitationSendDTO dto) {
     Map<String, Object> mailMap = new HashMap<>(5);
-    mailMap.put("account", CurrentUser.getAccountName());
-    mailMap.put("admin", CurrentUser.getUserName());
+    mailMap.put("workspaceName", CurrentUser.getWorkspaceName());
+    mailMap.put("adminName", CurrentUser.getFullName());
 
     EmailTemplate template = null;
 
-    String userName = userDao.findUserNameByEmail(dto.getEmail());
-    if (userName != null) {
-      mailMap.put("user", userName);
+    String fullName = userDao.findFullNameByEmail(dto.getEmail());
+    if (fullName != null) {
+      mailMap.put("fullName", fullName);
       template = EmailTemplate.INVITATION_FOR_EXISTING_USERS;
     } else {
-      mailMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')));
+      mailMap.put("fullName", dto.getEmail());
       mailMap.put("token", Tokens.add(TokenType.INVITATION, dto));
-      mailMap.put("url", Props.getConfig().APP.WEB_URL + "/accept-invitation");
+      mailMap.put("url", Props.getConfig().APP.WEB_URL + Consts.Paths.Auth.ACCEPT_INVITATION);
       template = EmailTemplate.INVITATION_FOR_NEW_USERS;
     }
 
-    logger.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getAccountName());
+    logger.info("{} is invited as {} to {} ", dto.getEmail(), dto.getRole(), CurrentUser.getWorkspaceName());
 
     if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST)) {
     	return new Response(mailMap);
@@ -352,7 +352,7 @@ class MembershipService {
   			EmailData.builder()
     			.template(template)
     			.to(dto.getEmail())
-    			.subject("About your invitation for " + CurrentUser.getAccountName() + " at inprice.io")
+    			.subject("About your invitation for " + CurrentUser.getWorkspaceName() + " at inprice.io")
     			.data(mailMap)
     		.build()	
   		);
@@ -361,7 +361,7 @@ class MembershipService {
   }
 
   private String validate(InvitationSendDTO dto) {
-    String problem = EmailValidator.verify(dto.getEmail());
+    String problem = EmailVerifier.verify(dto.getEmail());
     
     if (problem == null && dto.getEmail().equalsIgnoreCase(CurrentUser.getEmail())) {
     	problem = "You cannot invite yourself!";
@@ -377,7 +377,7 @@ class MembershipService {
   private String validate(InvitationUpdateDTO dto) {
     String problem = null;
 
-    if (dto.getMemberId() == null || dto.getMemberId() < 1) {
+    if (dto.getId() == null || dto.getId() < 1) {
       problem = "Invalid member id!";
     }
 
@@ -388,7 +388,7 @@ class MembershipService {
     return problem;
   }
   
-  private void terminateUserSession(Handle handle, long userId, long accountId) {
+  private void terminateUserSession(Handle handle, long userId, long workspaceId) {
     UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
     List<ForDatabase> dbSessions = userSessionDao.findListByUserId(userId);
 
@@ -396,7 +396,7 @@ class MembershipService {
       List<String> hashList = new ArrayList<>(dbSessions.size());
 
       for (ForDatabase ses: dbSessions) {
-      	if (ses.getAccountId().equals(accountId)) {
+      	if (ses.getWorkspaceId().equals(workspaceId)) {
       		hashList.add(ses.getHash());
       	}
       }

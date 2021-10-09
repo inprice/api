@@ -28,20 +28,20 @@ public interface UserSessionDao {
   @UseRowMapper(DBSessionMapper.class)
   List<ForDatabase> findListByUserId(@Bind("userId") Long userId);
   
-  @SqlQuery("select _hash from user_session where account_id=:accountId")
-  List<String> findHashesByAccountId(@Bind("accountId") Long accountId);
+  @SqlQuery("select _hash from user_session where workspace_id=:workspaceId")
+  List<String> findHashesByWorkspaceId(@Bind("workspaceId") Long workspaceId);
 
   @SqlQuery("select _hash from user_session where user_id=:userId")
   List<String> findHashesByUserId(@Bind("userId") Long userId);
 
   @SqlBatch(
-    "insert into user_session (_hash, user_id, account_id, ip, os, browser, user_agent) " +
-    "values (:ses.hash, :ses.userId, :ses.accountId, :ses.ip, :ses.os, :ses.browser, :ses.userAgent)"
+    "insert into user_session (_hash, user_id, workspace_id, ip, os, browser, user_agent) " +
+    "values (:ses.hash, :ses.userId, :ses.workspaceId, :ses.ip, :ses.os, :ses.browser, :ses.userAgent)"
   )
   void insertBulk(@BindBean("ses") List<ForDatabase> sesList);
 
-  @SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId and _hash not in (<hashList>)")
+  @SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId")
   @UseRowMapper(DBSessionMapper.class)
-  List<ForDatabase> findOpenedSessions(@Bind("userId") Long userId, @BindList("hashList") List<String> hashList);
+  List<ForDatabase> findOpenedSessions(@Bind("userId") Long userId);
 
 }

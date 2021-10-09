@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -47,7 +47,7 @@ public class StartFreeUseTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 		
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_1_HEADERS)
@@ -78,8 +78,8 @@ public class StartFreeUseTest {
 	}
 
 	@Test
-	public void You_have_no_free_use_right_FOR_not_suitable_account() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+	public void You_have_no_free_use_right_FOR_not_suitable_workspace() {
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 		
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.cookie(cookies)
@@ -95,7 +95,7 @@ public class StartFreeUseTest {
 
 	@Test
 	public void You_have_already_used_your_free_use() {
-		Cookies cookies = TestUtils.login(TestAccounts.Second_without_a_plan_and_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Second_without_a_plan_and_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.cookie(cookies)
@@ -111,7 +111,7 @@ public class StartFreeUseTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestAccounts.Without_a_plan_and_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN());
 		
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.cookie(cookies)

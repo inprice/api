@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -66,14 +66,14 @@ public class DeleteTest {
 
 	/**
 	 * Consists of four steps;
-	 *	a) to gather other account's tickets, admin is logged in
+	 *	a) to gather other workspace's tickets, admin is logged in
 	 *	b) finds some specific tickets
 	 *  c) picks one of them
 	 *  d) evil user tries to delete the ticket
 	 */
 	@Test
 	public void Ticket_not_found_WHEN_trying_to_delete_someone_elses_ticket() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
 		TestUtils.logout(cookies); //here is important!
@@ -90,7 +90,7 @@ public class DeleteTest {
 
 	@Test
 	public void You_are_not_allowed_to_do_this_operation_WITH_editor_but_not_the_creator() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
 
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
 
@@ -115,7 +115,7 @@ public class DeleteTest {
 
 	@Test
 	public void You_are_not_allowed_to_update_this_data_FOR_IN_PROGRESS_ticket() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR());
 
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
 
@@ -140,7 +140,7 @@ public class DeleteTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_a_link_WHEN_admin_tries_someone_elses_ticket() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
 
@@ -165,7 +165,7 @@ public class DeleteTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 1); //for his viewer session!
 
@@ -189,7 +189,7 @@ public class DeleteTest {
 	}
 
 	private JSONObject callTheService(Long id) {
-		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), id);
+		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), id);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long id) {

@@ -10,7 +10,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -131,7 +131,7 @@ public class ForgotPasswordTest {
 	public void This_email_is_already_requested_please_wait_some_time_to_try_again_WITH_correct_credentials() {
 		//first request
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(TestAccounts.Standard_plan_and_two_extra_users.VIEWER())
+			.body(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER())
 			.asJson();
 		
 		JSONObject json = res.getBody().getObject();
@@ -140,7 +140,7 @@ public class ForgotPasswordTest {
 		
 		//second request
 		res = Unirest.post(SERVICE_ENDPOINT)
-			.body(TestAccounts.Standard_plan_and_two_extra_users.VIEWER())
+			.body(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER())
 			.asJson();
 			
 		json = res.getBody().getObject();
@@ -152,7 +152,7 @@ public class ForgotPasswordTest {
 	@Test
 	public void Everything_must_be_OK_WITH_correct_credentials() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(TestAccounts.Starter_plan_and_one_extra_user.EDITOR())
+			.body(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR())
 			.asJson();
 		
 		JSONObject json = res.getBody().getObject();

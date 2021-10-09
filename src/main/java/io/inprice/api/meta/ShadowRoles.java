@@ -5,7 +5,7 @@ import io.javalin.core.security.Role;
 public enum ShadowRoles implements Role {
 
 	SUPER,
-	SUPER_WITH_ACCOUNT,
+	SUPER_WITH_WORKSPACE,
 
 	ADMIN,
   EDITOR,

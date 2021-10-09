@@ -7,14 +7,14 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.models.Account;
 import io.inprice.common.models.Plan;
+import io.inprice.common.models.Workspace;
 
 public class SystemService {
 
@@ -40,11 +40,11 @@ public class SystemService {
   }
 
   Response refreshSession() {
-    Response response = Responses.NotFound.ACCOUNT;
+    Response response = Responses.NotFound.WORKSPACE;
 
     try (Handle handle = Database.getHandle()) {
-      AccountDao accountDao = handle.attach(AccountDao.class);
-      response = Commons.refreshSession(accountDao, CurrentUser.getAccountId());
+      WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+      response = Commons.refreshSession(workspaceDao, CurrentUser.getWorkspaceId());
     } catch (Exception e) {
       response = Responses.DataProblem.DB_PROBLEM;
       logger.error("Failed to refresh session!", e);
@@ -53,34 +53,20 @@ public class SystemService {
     return response;
   }
 
-  Response search(String term) {
-    Response response = Responses.OK;
-
-    try (Handle handle = Database.getHandle()) {
-      SystemDao systemDao = handle.attach(SystemDao.class);
-      response = new Response(systemDao.search("%"+term+"%", CurrentUser.getAccountId()));
-    } catch (Exception e) {
-      response = Responses.DataProblem.DB_PROBLEM;
-      logger.error("Failed to search!", e);
-    }
-
-    return response;
-  }
-
   Response getStatistics() {
-    Response response = Responses.NotFound.ACCOUNT;
+    Response response = Responses.NotFound.WORKSPACE;
 
     try (Handle handle = Database.getHandle()) {
-      AccountDao accountDao = handle.attach(AccountDao.class);
-      Account account = accountDao.findById(CurrentUser.getAccountId());
+      WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+      Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
       
       Integer userLimit = 0;
       Integer linkLimit = 0;
       Integer alarmLimit = 0;
-      if (account != null && account.getPlan() != null) {
-      	userLimit = account.getPlan().getUserLimit();
-      	linkLimit = account.getPlan().getLinkLimit();
-      	alarmLimit = account.getPlan().getAlarmLimit();
+      if (workspace != null && workspace.getPlan() != null) {
+      	userLimit = workspace.getPlan().getUserLimit();
+      	linkLimit = workspace.getPlan().getLinkLimit();
+      	alarmLimit = workspace.getPlan().getAlarmLimit();
       	if (userLimit == null) userLimit = 0;
       	if (linkLimit == null) linkLimit = 0;
       	if (alarmLimit == null) alarmLimit = 0;
@@ -88,14 +74,14 @@ public class SystemService {
 
       Map<String, Integer> data = Map.of(
 	      "userLimit", userLimit,
-	      "userCount", account.getUserCount(),
-	      "remainingUser", userLimit-account.getUserCount(),
+	      "userCount", workspace.getUserCount(),
+	      "remainingUser", userLimit-workspace.getUserCount(),
 	      "linkLimit", linkLimit,
-	      "linkCount", account.getLinkCount(),
-	      "remainingLink", linkLimit-account.getLinkCount(),
+	      "linkCount", workspace.getLinkCount(),
+	      "remainingLink", linkLimit-workspace.getLinkCount(),
 	      "alarmLimit", alarmLimit,
-	      "alarmCount", account.getAlarmCount(),
-	      "remainingAlarm", alarmLimit-account.getAlarmCount()
+	      "alarmCount", workspace.getAlarmCount(),
+	      "remainingAlarm", alarmLimit-workspace.getAlarmCount()
       );
       response = new Response(data);
     } catch (Exception e) {

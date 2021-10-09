@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -83,7 +83,7 @@ public class MoveToTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 1); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 1); //attention!
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -91,17 +91,17 @@ public class MoveToTest {
 
 	/**
 	 * Consists of six steps;
-	 *	a) to gather other account's links, admin is logged in
+	 *	a) to gather other workspace's links, admin is logged in
 	 *	b) searches some specific links
 	 *  c) picks one of those links
 	 *  d) builds body up
 	 *  e) evil user logs in
-	 *  f) tries to move other account's links
+	 *  f) tries to move other workspace's links
 	 */
 	@Test
 	public void Link_not_found_WHEN_trying_to_move_someone_elses_links() {
-		//to gather other account's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		//to gather other workspace's links, admin is logged in
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
 		//searches some specific links
 		JSONArray linkList = TestFinder.searchLinks(cookies, "ACTIVE");
@@ -112,17 +112,17 @@ public class MoveToTest {
 		//picks one of those links
 		JSONObject link = linkList.getJSONObject(0);
 		Long[] linkIds = { link.getLong("id") };
-		Long toProductId = findToProductId(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), "Product 2 of Account-B");
+		Long toProductId = findToProductId(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), "Product 2 of Workspace-B");
 
 		//evil user logs in
-		cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.EDITOR());
+		cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
 
 		//builds the body up
 		JSONObject body = new JSONObject();
 		body.put("toProductId", toProductId);
 		body.put("linkIdSet", linkIds);
 
-		//tries to move other account's links
+		//tries to move other workspace's links
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
@@ -147,7 +147,7 @@ public class MoveToTest {
 	@Test
 	public void You_already_have_a_product_having_the_same_name_WHEN_creating_a_new_product() {
 		//user logs in
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
 		//searches some specific links
 		JSONArray linkList = TestFinder.searchLinks(cookies, "TRYING");
@@ -158,10 +158,10 @@ public class MoveToTest {
 
 		//builds the body up
 		JSONObject body = new JSONObject();
-		body.put("toProductName", "Product 1 OF ACCOUNT-B");
+		body.put("toProductName", "Product 1 OF WORKSPACE-B");
 		body.put("linkIdSet", new Long[] { linkList.getJSONObject(0).getLong("id") });
 
-		cookies = TestUtils.login(TestAccounts.Basic_plan_but_no_extra_user.ADMIN());
+		cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN());
 
 		//moves those selected links
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
@@ -174,7 +174,7 @@ public class MoveToTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(875, json.getInt("status"));
-		assertEquals("You already have a product having the same name!", json.getString("reason"));
+		assertEquals("You already have a product having the same sku or name!", json.getString("reason"));
 	}
 
 	/**
@@ -188,7 +188,7 @@ public class MoveToTest {
 	@Test
 	public void Everything_must_be_ok_FOR_new_toProductName() {
 		//a user logs in
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
 
 		//searches some specific links
 		JSONArray linkList = TestFinder.searchLinks(cookies, "TRYING");
@@ -232,10 +232,10 @@ public class MoveToTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_FOR_admin() {
-		Long toProductId = findToProductId(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), "Product 1 of Account-B");
+		Long toProductId = findToProductId(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), "Product 1 of Workspace-B");
 
 		//user logs in
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
 		//searches some specific links
 		JSONArray linkList = TestFinder.searchLinks(cookies, "PROBLEM");
@@ -282,7 +282,7 @@ public class MoveToTest {
 	}
 
 	private JSONObject callTheService(Long toProductId, Long[] linkIds) {
-		return callTheService(TestAccounts.Standard_plan_and_no_extra_users.ADMIN(), toProductId, linkIds);
+		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN(), toProductId, linkIds);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long toProductId, Long[] linkIds) {

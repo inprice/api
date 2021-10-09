@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -49,7 +49,7 @@ public class UpdateInfoTest {
 
 	@Test
 	public void Request_body_is_invalid_WITHOUT_body() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -64,27 +64,27 @@ public class UpdateInfoTest {
 	}
 
 	@Test
-	public void User_name_cannot_be_empty() {
+	public void Full_Name_cannot_be_empty() {
 		JSONObject json = callTheServiceWith(null, TIMEZONE);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("User name cannot be empty!", json.getString("reason"));
+    assertEquals("Full Name cannot be empty!", json.getString("reason"));
 	}
 
 	@Test
-	public void User_name_must_be_between_3_and_70_chars_WITH_shorter_name() {
+	public void Full_Name_must_be_between_3_and_70_chars_WITH_shorter_name() {
 		JSONObject json = callTheServiceWith("XY", TIMEZONE);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("User name must be between 3 - 70 chars!", json.getString("reason"));
+    assertEquals("Full Name must be between 3 - 70 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void User_name_must_be_between_3_and_70_chars_WITH_longer_name() {
+	public void Full_Name_must_be_between_3_and_70_chars_WITH_longer_name() {
 		JSONObject json = callTheServiceWith(RandomStringUtils.randomAlphabetic(71), TIMEZONE);
 
 		assertEquals(400, json.getInt("status"));
-		assertEquals("User name must be between 3 - 70 chars!", json.getString("reason"));
+		assertEquals("Full Name must be between 3 - 70 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -128,19 +128,12 @@ public class UpdateInfoTest {
 		assertEquals("OK", json.get("reason"));
 	}
 
-	private JSONObject createBody(String name, String timezone) {
-		JSONObject body = new JSONObject();
-		if (name != null) body.put("name", name);
-		if (timezone != null) body.put("timezone", timezone);
-		return body;
-	}
-
 	private JSONObject callTheServiceWith(String name, String timezone) {
 		//creating the body
 		JSONObject body = createBody(name, timezone);
 
 		//login with an admin
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR());
 
 		//making service call
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
@@ -154,6 +147,13 @@ public class UpdateInfoTest {
 
 		//returning the result to be tested
 		return res.getBody().getObject();
+	}
+
+	private JSONObject createBody(String name, String timezone) {
+		JSONObject body = new JSONObject();
+		if (name != null) body.put("fullName", name);
+		if (timezone != null) body.put("timezone", timezone);
+		return body;
 	}
 
 }

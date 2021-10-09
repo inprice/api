@@ -15,6 +15,6 @@ public class BaseSearchDTO {
   private Integer rowLimit = Consts.LOWER_ROW_LIMIT_FOR_LISTS;
   private Boolean loadMore = Boolean.FALSE;
 
-  private Long accountId;
+  private Long workspaceId;
 
 }

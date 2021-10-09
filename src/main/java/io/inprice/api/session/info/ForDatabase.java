@@ -16,7 +16,7 @@ public class ForDatabase implements Serializable {
 
   private String hash;
   private Long userId;
-  private Long accountId;
+  private Long workspaceId;
   private String ip;
   private String os;
   private String browser;
@@ -24,6 +24,6 @@ public class ForDatabase implements Serializable {
   private Date accessedAt = new Date();
 
   //transient
-  private String accountName;
+  private String workspaceName;
 
 }

@@ -17,7 +17,7 @@ public class Responses {
 
   public static class Invalid {
     private static final int BASE = 100;
-    public static final Response ACCOUNT = new Response(BASE + 1, "Invalid account!");
+    public static final Response WORKSPACE = new Response(BASE + 1, "Invalid workspace!");
     public static final Response PLAN = new Response(BASE + 3, "Invalid plan!");
     public static final Response TICKET = new Response(BASE + 4, "Invalid ticket!");
     public static final Response COMMENT = new Response(BASE + 5, "Invalid comment!");
@@ -35,7 +35,7 @@ public class Responses {
     public static final Response LINK = new Response(BASE + 21, "Invalid link!");
     public static final Response TOKEN = new Response(BASE + 30, "Invalid token!");
 
-    public static final Response COUPON = new Response(BASE + 45, "Invalid coupon!");
+    public static final Response VOUCHER = new Response(BASE + 45, "Invalid voucher!");
     public static final Response DATA = new Response(BASE + 99, "Invalid data!");
   }
 
@@ -56,7 +56,7 @@ public class Responses {
     public static final Response UNAUTHORIZED = new Response(BASE + 1, "Unauthrozied!");
     public static final Response ADMIN_ONLY = new Response(BASE + 2, "This operation can only be done by an admin!");
     public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to subscribe to a plan!");
-    public static final Response NO_ACCOUNT = new Response(BASE + 5, "You have no active account! Please either create a new one or participate in an existing!");
+    public static final Response NO_WORKSPACE = new Response(BASE + 5, "You have no active workspace! Please either create a new one or participate in an existing!");
     public static final Response USER_LIMIT_PROBLEM = new Response(BASE + 6, "Your user count is reached your plans limit!");
     public static final Response LINK_LIMIT_PROBLEM = new Response(BASE + 7, "Your link count is reached your plans limit! You need to pass a broader plan to proceed");
     public static final Response ALARM_LIMIT_PROBLEM = new Response(BASE + 8, "Your alarm count is reached your plans limit! You need to pass a broader plan to proceed");
@@ -79,7 +79,7 @@ public class Responses {
   public static class Illegal {
     private static final int BASE = 700;
     public static final Response TIMED_OUT_FORGOT_PASSWORD = new Response(BASE + 1, "Your session seems to expire, please send us a new 'forgot password request' again!");
-    public static final Response COUPON_ISSUED_FOR_ANOTHER_ACCOUNT = new Response(BASE + 2, "This coupon is issued for another account!");
+    public static final Response VOUCHER_ISSUED_FOR_ANOTHER_WORKSPACE = new Response(BASE + 2, "This voucher is issued for another workspace!");
     public static final Response INCOMPATIBLE_CONTENT = new Response(BASE + 3, "Incompatible content!");
     public static final Response NOT_SUITABLE_FOR_CANCELLATION = new Response(BASE + 10, "You don't have an active plan to cancel!");
     public static final Response NO_FREE_USE_RIGHT = new Response(BASE + 11, "You have no free use right!");
@@ -92,11 +92,11 @@ public class Responses {
     public static final Response DELETED_MEMBER = new Response(BASE + 2, "This member is already deleted!");
     public static final Response PAUSED_MEMBER = new Response(BASE + 3, "This member is already paused!");
 
-    public static final Response USED_COUPON = new Response(BASE + 4, "This coupon is already used!");
+    public static final Response USED_VOUCHER = new Response(BASE + 4, "This voucher is already used!");
     public static final Response FREE_USE_USED = new Response(BASE + 5, "You have already used your free use!");
 
     public static final Response ACTIVE_SUBSCRIPTION = new Response(BASE + 7, "You already have an active subscription!");
-    public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 8, "This account has no active subscription at the moment!");
+    public static final Response PASSIVE_SUBSCRIPTION = new Response(BASE + 8, "This workspace has no active subscription at the moment!");
     public static final Response HAS_THE_SAME_PLAN = new Response(BASE + 10, "You have already this plan at the moment!");
 
     public static final Response REQUESTED_EMAIL = new Response(BASE + 14, "This email is already requested, please wait some time to try again!");
@@ -105,14 +105,16 @@ public class Responses {
     public static final Response BANNED_USER = new Response(BASE + 25, "User is already banned!");
     public static final Response NOT_BANNED_USER = new Response(BASE + 26, "User is not banned!");
 
-    public static final Response BANNED_ACCOUNT = new Response(BASE + 30, "Account is already banned!");
-    public static final Response NOT_BANNED_ACCOUNT = new Response(BASE + 31, "Account is not banned!");
+    public static final Response BANNED_WORKSPACE = new Response(BASE + 30, "Workspace is already banned!");
+    public static final Response NOT_BANNED_WORKSPACE = new Response(BASE + 31, "Workspace is not banned!");
 
     public static class Defined {
-      public static final Response ACCOUNT = new Response(BASE + 70, "Seems that you have already registered this account!");
-      public static final Response MEMBERSHIP = new Response(BASE + 71, "Seems that this user has an account, please sign in with your credentials and manage your members under user settings page!");
-      public static final Response REGISTERED_USER = new Response(BASE + 72, "Already registered user! Signing up is an option for only newcomers! Please use 'Create Account' menu after login.");
-      public static final Response PRODUCT = new Response(BASE + 75, "You already have a product having the same name!");
+      public static final Response WORKSPACE = new Response(BASE + 70, "Seems that you have already registered this workspace!");
+      public static final Response MEMBERSHIP = new Response(BASE + 71, "Seems that this user has an workspace, please sign in with your credentials and manage your members under user settings page!");
+      public static final Response REGISTERED_USER = new Response(BASE + 72, "Already registered user! Signing up is an option for only newcomers! Please use 'Create Workspace' menu after login.");
+      public static final Response PRODUCT = new Response(BASE + 75, "You already have a product having the same sku or name!");
+      public static final Response BRAND = new Response(BASE + 76, "This brand has already been added!");
+      public static final Response CATEGORY = new Response(BASE + 77, "This category has already been added!");
 
       public static final Response ALARM = new Response(BASE + 80, "You have already set an alarm for this record!");
     }
@@ -128,7 +130,7 @@ public class Responses {
     public static final Response SUPER_USER = new Response(BASE + 12, "User is not suitable for this operation!");
 
     public static final Response CLOSED_TICKET = new Response(BASE + 14, "Ticket is closed!");
-    public static final Response NO_ACCOUNT = new Response(BASE + 15, "You must bind an account!");
+    public static final Response NO_WORKSPACE = new Response(BASE + 15, "You must bind an workspace!");
   }
 
   public static class NotSuitable {
@@ -146,11 +148,11 @@ public class Responses {
 
     public static final Response PLATFORM = new Response(BASE, "Platform not found!");
 
-    public static final Response ACCOUNT = new Response(BASE, "Account not found!");
+    public static final Response WORKSPACE = new Response(BASE, "Workspace not found!");
     public static final Response PLAN = new Response(BASE, "Plan not found!");
     public static final Response TICKET = new Response(BASE, "Ticket not found!");
     public static final Response COMMENT = new Response(BASE, "Comment not found!");
-    public static final Response COUPON = new Response(BASE, "Coupon not found!");
+    public static final Response VOUCHER = new Response(BASE, "Voucher not found!");
     public static final Response ANNOUNCE = new Response(BASE, "Announce not found!");
     public static final Response ALARM = new Response(BASE, "Alarm not found!");
 
@@ -163,6 +165,9 @@ public class Responses {
     public static final Response PRODUCT = new Response(BASE, "Product not found!");
     public static final Response LINK = new Response(BASE, "Link not found!");
 
+    public static final Response BRAND = new Response(BASE, "Brand not found!");
+    public static final Response CATEGORY = new Response(BASE, "Category not found!");
+    
     public static final Response HISTORY = new Response(BASE, "History not found!");
     public static final Response TRANSACTION = new Response(BASE, "Transaction not found!");
 

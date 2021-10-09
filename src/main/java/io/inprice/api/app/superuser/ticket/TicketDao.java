@@ -21,9 +21,9 @@ import io.inprice.common.models.TicketHistory;
 public interface TicketDao {
 
   @SqlQuery(
-		"select t.*, u.name as username, a.name as account from ticket t " +
+		"select t.*, u.full_name, a.name as workspace from ticket t " +
 		"inner join user u on u.id= t.user_id " +
-		"inner join account a on a.id= t.account_id " +
+		"inner join workspace a on a.id= t.workspace_id " +
 		"where t.id=:id "
 	)
   @UseRowMapper(TicketMapper.class)
@@ -52,8 +52,8 @@ public interface TicketDao {
 	boolean decreaseCommentCount(@Bind("id") Long ticketId);
 
 	@SqlUpdate(
-		"insert into ticket_comment (ticket_id, body, added_by_user, user_id, account_id) " +
-		"values (:dto.ticketId, :dto.body, false, :dto.userId, :dto.accountId)"
+		"insert into ticket_comment (ticket_id, body, added_by_user, user_id, workspace_id) " +
+		"values (:dto.ticketId, :dto.body, false, :dto.userId, :dto.workspaceId)"
 	)
 	boolean insertComment(@BindBean("dto") TicketCommentDTO dto);
 
@@ -63,7 +63,7 @@ public interface TicketDao {
 		"where id=:dto.id " +
 		"  and editable=true " +
 		"  and added_by_user=false " +
-		"  and account_id=:dto.accountId"
+		"  and workspace_id=:dto.workspaceId"
 	)
 	boolean updateComment(@BindBean("dto") TicketCommentDTO dto);
 
@@ -80,7 +80,7 @@ public interface TicketDao {
   TicketComment findCommentById(@Bind("id") Long id);
 
   @SqlQuery(
-		"select c.*, u.name as username from ticket_comment c " +
+		"select c.*, u.full_name from ticket_comment c " +
 		"inner join user u on u.id= c.user_id " +
 		"where ticket_id=:ticketId"
 	)
@@ -107,13 +107,13 @@ public interface TicketDao {
 	boolean makeOnePreviousCommentEditable(@Bind("ticketId") Long ticketId, @Bind("commentId") Long commentId);
 
 	@SqlUpdate(
-		"insert into ticket_history (ticket_id, status, priority, type, subject, user_id, account_id) " +
-		"values (:dto.id, :dto.status, :dto.priority, :dto.type, :dto.subject, :dto.userId, :dto.accountId)"
+		"insert into ticket_history (ticket_id, status, priority, type, subject, user_id, workspace_id) " +
+		"values (:dto.id, :dto.status, :dto.priority, :dto.type, :dto.subject, :dto.userId, :dto.workspaceId)"
 	)
 	boolean insertHistory(@BindBean("dto") TicketDTO dto);
 
   @SqlQuery(
-		"select h.*, u.name as username from ticket_history h " +
+		"select h.*, u.full_name from ticket_history h " +
 		"inner join user u on u.id= h.user_id " +
 		"where ticket_id=:ticketId " +
 		"order by h.created_at desc"

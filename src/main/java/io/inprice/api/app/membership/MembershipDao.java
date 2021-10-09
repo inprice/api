@@ -18,51 +18,51 @@ import io.inprice.common.models.Membership;
 
 public interface MembershipDao {
 
-  final String ACCOUNT_FIELDS = 
-    ", a.name as account_name, a.status as account_status, a.subs_started_at, " +
+  final String WORKSPACE_FIELDS = 
+    ", a.name as workspace_name, a.status as workspace_status, a.subs_started_at, " +
     "a.subs_renewal_at, a.last_status_update, a.plan_id, a.currency_format, a.user_count, a.link_count, a.alarm_count ";
 
   final String PLAN_FIELDS = ", p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit ";
   
-  @SqlQuery("select * from membership where id=:id and account_id=:accountId and role in ('VIEWER', 'EDITOR')")
+  @SqlQuery("select * from membership where id=:id and workspace_id=:workspaceId and role in ('VIEWER', 'EDITOR')")
   @UseRowMapper(MembershipMapper.class)
-  Membership findNormalMemberById(@Bind("id") Long id, @Bind("accountId") Long accountId);
+  Membership findNormalMemberById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
-  @SqlQuery("select * from membership where email=:email and account_id=:accountId")
+  @SqlQuery("select * from membership where email=:email and workspace_id=:workspaceId")
   @UseRowMapper(MembershipMapper.class)
-  Membership findByEmail(@Bind("email") String email, @Bind("accountId") Long accountId);
+  Membership findByEmail(@Bind("email") String email, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-    "select m.*" + ACCOUNT_FIELDS + PLAN_FIELDS + " from membership as m " +
-    "inner join account as a on a.id = m.account_id " + 
+    "select m.*" + WORKSPACE_FIELDS + PLAN_FIELDS + " from membership as m " +
+    "inner join workspace as a on a.id = m.workspace_id " + 
     "left join plan as p on p.id = a.plan_id " + 
     "where a.status != 'BANNED' " +
-    "  and m.account_id = :accountId " + 
+    "  and m.workspace_id = :workspaceId " + 
     "  and role in ('VIEWER', 'EDITOR') " + 
     "order by m.email"
   )
   @UseRowMapper(MembershipMapper.class)
-  List<Membership> findNormalMemberList(@Bind("accountId") Long accountId);
+  List<Membership> findNormalMemberList(@Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-    "select m.*" + ACCOUNT_FIELDS + PLAN_FIELDS + " from membership as m " +
-    "inner join account as a on a.id = m.account_id " + 
+    "select m.*" + WORKSPACE_FIELDS + PLAN_FIELDS + " from membership as m " +
+    "inner join workspace as a on a.id = m.workspace_id " + 
     "left join plan as p on p.id = a.plan_id " + 
     "where a.status != 'BANNED' " +
     "  and m.email=:email " +
     "  and m.status=:status " + 
-    "order by m.role, m.created_at"
+    "order by a.name, m.role"
   )
   @UseRowMapper(MembershipMapper.class)
   List<Membership> findListByEmailAndStatus(@Bind("email") String email, @Bind("status") UserStatus status);
 
-  @SqlQuery("select * from membership where email=:email and status=:status and account_id=:accountId")
+  @SqlQuery("select * from membership where email=:email and status=:status and workspace_id=:workspaceId")
   @UseRowMapper(MembershipMapper.class)
-  Membership findByEmailAndStatus(@Bind("email") String email, @Bind("status") UserStatus status, @Bind("accountId") Long accountId);
+  Membership findByEmailAndStatus(@Bind("email") String email, @Bind("status") UserStatus status, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
     "select m.id, a.name, m.role, m.status, m.created_at from membership as m " + 
-    "left join account as a on a.id = m.account_id " + 
+    "left join workspace as a on a.id = m.workspace_id " + 
     "where a.status != 'BANNED' " +
     "  and m.email=:email " + 
     "  and m.status=:status " + 
@@ -73,42 +73,42 @@ public interface MembershipDao {
 
   @SqlQuery(
     "select user_id from membership as prim " + 
-    "where prim.account_id=:accountId " + 
+    "where prim.workspace_id=:workspaceId " + 
     "  and (select count(1) from membership as secon where secon.user_id=prim.user_id) <= 1"
   )
-  List<Long> findUserIdListHavingJustThisAccount(@Bind("accountId") Long accountId);
+  List<Long> findUserIdListHavingJustThisWorkspace(@Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
     "select m.id, a.name, m.role, m.status, m.updated_at from membership as m " + 
-    "left join account as a on a.id = m.account_id " + 
+    "left join workspace as a on a.id = m.workspace_id " + 
     "where a.status != 'BANNED' " +
     "  and m.email=:email " + 
-    "  and m.account_id != :accountId  " + 
+    "  and m.workspace_id != :workspaceId  " + 
     "  and m.status in (<statusList>) " + 
     "order by m.status, m.updated_at desc"
   )
   @UseRowMapper(ActiveMemberMapper.class)
-  List<ActiveMember> findMembershipsByEmail(@Bind("email") String email, @Bind("accountId") Long accountId, @BindList("statusList") List<String> statusList);
+  List<ActiveMember> findMembershipsByEmail(@Bind("email") String email, @Bind("workspaceId") Long workspaceId, @BindList("statusList") List<String> statusList);
 
   @SqlUpdate(
-    "insert into membership (user_id, email, account_id, role, status, updated_at) " + 
-    "values (:userId, :email, :accountId, :role, :status, now())"
+    "insert into membership (user_id, email, workspace_id, role, status, updated_at) " + 
+    "values (:userId, :email, :workspaceId, :role, :status, now())"
   )
   @GetGeneratedKeys
   long insert(@Bind("userId") Long userId, @Bind("email") String email, 
-    @Bind("accountId") Long accountId, @Bind("role") UserRole role, @Bind("status") UserStatus status);
+    @Bind("workspaceId") Long workspaceId, @Bind("role") UserRole role, @Bind("status") UserStatus status);
 
-  @SqlUpdate("insert into membership (email, role, account_id) values (:email, :role, :accountId)")
-  boolean insertInvitation(@Bind("email") String email, @Bind("role") UserRole role, @Bind("accountId") Long accountId);
+  @SqlUpdate("insert into membership (email, role, workspace_id) values (:email, :role, :workspaceId)")
+  boolean insertInvitation(@Bind("email") String email, @Bind("role") UserRole role, @Bind("workspaceId") Long workspaceId);
 
-  @SqlUpdate("update membership set retry=retry+1 where id=:id and retry<3 and status=:status and account_id=:accountId")
-  boolean increaseSendingCount(@Bind("id") Long id, @Bind("status") UserStatus status, @Bind("accountId") Long accountId);
+  @SqlUpdate("update membership set retry=retry+1 where id=:id and retry<3 and status=:status and workspace_id=:workspaceId")
+  boolean increaseSendingCount(@Bind("id") Long id, @Bind("status") UserStatus status, @Bind("workspaceId") Long workspaceId);
 
-  @SqlUpdate("update membership set status=:status, updated_at=now() where id=:id and status!=:status and account_id=:accountId")
-  boolean setStatusDeleted(@Bind("id") Long id, @Bind("status") UserStatus status, @Bind("accountId") Long accountId);
+  @SqlUpdate("update membership set status=:status, updated_at=now() where id=:id and status!=:status and workspace_id=:workspaceId")
+  boolean setStatusDeleted(@Bind("id") Long id, @Bind("status") UserStatus status, @Bind("workspaceId") Long workspaceId);
 
-  @SqlUpdate("update membership set role=:role where id=:id and account_id=:accountId")
-  boolean changeRole(@Bind("id") Long id, @Bind("role") UserRole role, @Bind("accountId") Long accountId);
+  @SqlUpdate("update membership set role=:role where id=:id and workspace_id=:workspaceId")
+  boolean changeRole(@Bind("id") Long id, @Bind("role") UserRole role, @Bind("workspaceId") Long workspaceId);
 
   @SqlUpdate(
 		"update membership " +
@@ -120,14 +120,14 @@ public interface MembershipDao {
   boolean changeStatus(@Bind("id") Long id, @BindList("fromStatuses") List<UserStatus> fromStatuses, 
   		@Bind("toStatus") UserStatus toStatus, @Bind("userId") Long userId);
 
-  @SqlUpdate("update membership set pre_status=status, status='PAUSED', updated_at=now() where id=:id and account_id=:accountId and status!='PAUSED'")
-  boolean pause(@Bind("id") Long id, @Bind("accountId") Long accountId);
+  @SqlUpdate("update membership set pre_status=status, status='PAUSED', updated_at=now() where id=:id and workspace_id=:workspaceId and status!='PAUSED'")
+  boolean pause(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
-  @SqlUpdate("update membership set status=pre_status, pre_status='PAUSED', updated_at=now() where id=:id and account_id=:accountId and status='PAUSED'")
-  boolean resume(@Bind("id") Long id, @Bind("accountId") Long accountId);
+  @SqlUpdate("update membership set status=pre_status, pre_status='PAUSED', updated_at=now() where id=:id and workspace_id=:workspaceId and status='PAUSED'")
+  boolean resume(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
-  @SqlUpdate("update membership set user_id=:userId, status=:newStatus, updated_at=now() where email=:email and status=:oldStatus and account_id=:accountId")
+  @SqlUpdate("update membership set user_id=:userId, status=:newStatus, updated_at=now() where email=:email and status=:oldStatus and workspace_id=:workspaceId")
   boolean activate(@Bind("userId") Long userId, @Bind("oldStatus") UserStatus oldStatus, 
-    @Bind("newStatus") UserStatus newStatus, @Bind("email") String email, @Bind("accountId") Long accountId);
+    @Bind("newStatus") UserStatus newStatus, @Bind("email") String email, @Bind("workspaceId") Long workspaceId);
 
 }

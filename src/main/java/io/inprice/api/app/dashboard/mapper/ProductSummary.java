@@ -13,8 +13,8 @@ public class ProductSummary implements Serializable {
   private static final long serialVersionUID = -1701445492576224844L;
 
   private Long id;
+  private String sku;
   private String name;
-  private String description;
   private Integer actives;
   private Integer waitings;
   private Integer tryings;

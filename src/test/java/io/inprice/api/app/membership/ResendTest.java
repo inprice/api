@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestRoles;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -53,7 +53,7 @@ public class ResendTest {
 
 	@Test
 	public void Forbidden_WITH_viewer_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -70,7 +70,7 @@ public class ResendTest {
 
 	@Test
 	public void Forbidden_WITH_editor_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -87,7 +87,7 @@ public class ResendTest {
 
 	@Test
 	public void Member_not_found_WITH_wrong_id() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -104,7 +104,7 @@ public class ResendTest {
 
 	@Test
 	public void You_cannot_re_send_an_invitation_since_this_user_is_not_in_PENDING_status_FOR_joined_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 		
 		Long memberId = findMemberIdByIndex(cookies, 0);
 
@@ -129,7 +129,7 @@ public class ResendTest {
 	 */
 	@Test
 	public void You_can_re_send_invitation_for_the_same_user_up_to_three_times_FOR_the_same_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN());
 		
 		//invites a non-existing user
 		HttpResponse<JsonNode> res = Unirest.post("/membership")
@@ -199,10 +199,10 @@ public class ResendTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
-		Cookies cookies = TestUtils.login(TestAccounts.Premium_plan_and_three_pending_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_three_pending_users.ADMIN());
 		
 		//get member list to find member id
-		Long memberId = findMemberIdByEmail(cookies, TestAccounts.Premium_plan_and_three_pending_users.EDITOR().getString("email"));
+		Long memberId = findMemberIdByEmail(cookies, TestWorkspaces.Premium_plan_and_three_pending_users.EDITOR().getString("email"));
 
 		//re-sends the invitation
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)

@@ -52,9 +52,9 @@ class LinkService {
     //---------------------------------------------------
     StringBuilder where = new StringBuilder("where 1=1 ");
     
-    if (dto.getAccountId() != null) {
-    	where.append(" and l.account_id = ");
-    	where.append(dto.getAccountId());
+    if (dto.getWorkspaceId() != null) {
+    	where.append(" and l.workspace_id = ");
+    	where.append(dto.getWorkspaceId());
     }
 
     if (dto.getAlarmStatus() != null && !AlarmStatus.ALL.equals(dto.getAlarmStatus())) {
@@ -66,7 +66,7 @@ class LinkService {
     }
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-  		where.append(" and CONCAT_WS(l.name, l.sku, l.seller, l.brand)");
+    	where.append(" and CONCAT(ifnull(l.name, ''), ifnull(l.sku, ''), ifnull(l.seller, ''), ifnull(l.brand, ''))");
       where.append(" like '%");
       where.append(dto.getTerm());
       where.append("%' ");
@@ -95,7 +95,7 @@ class LinkService {
       .map(new LinkMapper())
       .list();
       
-      return new Response(Map.of("rows", searchResult));
+      return new Response(searchResult);
     } catch (Exception e) {
       logger.error("Failed in full search for links.", e);
       return Responses.ServerProblem.EXCEPTION;
@@ -119,7 +119,7 @@ class LinkService {
           if (priceList == null) priceList = new ArrayList<>();
           if (historyList == null) historyList = new ArrayList<>();
         
-          if (StringUtils.isNotBlank(link.getSku())) specList.add(0, new LinkSpec("Code", link.getSku()));
+          if (StringUtils.isNotBlank(link.getSku())) specList.add(0, new LinkSpec("Sku", link.getSku()));
           if (StringUtils.isNotBlank(link.getBrand())) specList.add(0, new LinkSpec("Brand", link.getBrand()));
           
           Map<String, Object> data = Map.of(

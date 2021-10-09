@@ -9,7 +9,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
-import io.inprice.api.app.account.AccountDao;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.app.system.SystemDao;
 import io.inprice.api.config.Props;
 import io.inprice.api.consts.Responses;
@@ -20,14 +20,14 @@ import io.inprice.api.publisher.EmailPublisher;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
-import io.inprice.common.meta.AccountStatus;
+import io.inprice.common.meta.WorkspaceStatus;
 import io.inprice.common.meta.EmailTemplate;
+import io.inprice.common.meta.Marks;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.meta.UserMarkType;
-import io.inprice.common.models.Account;
-import io.inprice.common.models.AccountTrans;
+import io.inprice.common.models.Workspace;
+import io.inprice.common.models.WorkspaceTrans;
 import io.inprice.common.models.Plan;
-import io.inprice.common.models.UserMark;
+import io.inprice.common.models.UserMarks;
 
 class SubscriptionService {
 
@@ -39,25 +39,25 @@ class SubscriptionService {
     Response res = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
 
     try (Handle handle = Database.getHandle()) {
-      AccountDao accountDao = handle.attach(AccountDao.class);
+      WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
 
-      Account account = accountDao.findById(CurrentUser.getAccountId());
-      if (account.getStatus().isOKForCancel()) {
+      Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
+      if (workspace.getStatus().isOKForCancel()) {
 
       	handle.begin();
       	
         SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
-        boolean isOK = subscriptionDao.terminate(account.getId(), AccountStatus.CANCELLED);
+        boolean isOK = subscriptionDao.terminate(workspace.getId(), WorkspaceStatus.CANCELLED);
         if (isOK) {
 
-          AccountTrans trans = new AccountTrans();
-          trans.setAccountId(account.getId());
+          WorkspaceTrans trans = new WorkspaceTrans();
+          trans.setWorkspaceId(workspace.getId());
           trans.setSuccessful(Boolean.TRUE);
           trans.setDescription(("Manual cancelation."));
           
-          switch (account.getStatus()) {
-  					case COUPONED: {
-  						trans.setEvent(SubsEvent.COUPON_USE_CANCELLED);
+          switch (workspace.getStatus()) {
+  					case VOUCHERED: {
+  						trans.setEvent(SubsEvent.VOUCHER_USE_CANCELLED);
   						break;
   					}
   					case FREE: {
@@ -73,20 +73,20 @@ class SubscriptionService {
 
           if (isOK) {
             isOK = 
-              accountDao.insertStatusHistory(
-                account.getId(),
-                AccountStatus.CANCELLED.name(),
-                account.getPlanId()
+              workspaceDao.insertStatusHistory(
+                workspace.getId(),
+                WorkspaceStatus.CANCELLED.name(),
+                workspace.getPlanId()
               );
             if (isOK) {
               Map<String, Object> mailMap = Map.of(
-              	"user", CurrentUser.getEmail(),
-              	"account", StringUtils.isNotBlank(account.getTitle()) ? account.getTitle() : account.getName()
+              	"fullName", CurrentUser.getFullName(),
+              	"workspaceName", StringUtils.isNotBlank(workspace.getTitle()) ? workspace.getTitle() : workspace.getName()
         			);
               
               EmailPublisher.publish(
           			EmailData.builder()
-            			.template(EmailTemplate.FREE_ACCOUNT_CANCELLED)
+            			.template(EmailTemplate.FREE_WORKSPACE_CANCELLED)
             			.to(CurrentUser.getEmail())
             			.subject("Notification about your cancelled plan in inprice.")
             			.data(mailMap)
@@ -109,7 +109,7 @@ class SubscriptionService {
     }
 
     if (res.isOK()) {
-      res = Commons.refreshSession(CurrentUser.getAccountId());
+      res = Commons.refreshSession(CurrentUser.getWorkspaceId());
     }
 
     return res;
@@ -120,14 +120,14 @@ class SubscriptionService {
 
     try (Handle handle = Database.getHandle()) {
 
-      AccountDao accountDao = handle.attach(AccountDao.class);
-      UserMark um_FREE_USE = accountDao.getUserMarkByEmail(CurrentUser.getEmail(), UserMarkType.FREE_USE);
-      if (um_FREE_USE == null || um_FREE_USE.getWhitelisted().equals(Boolean.TRUE)) {
+      WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+      UserMarks um_FREE_USE = workspaceDao.findUserMarkByEmail(CurrentUser.getEmail(), Marks.FREE_USE.name());
+      if (um_FREE_USE == null || um_FREE_USE.getBooleanVal().equals(Boolean.FALSE)) {
 
-        Account account = accountDao.findById(CurrentUser.getAccountId());
-        if (account != null) {
+        Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
+        if (workspace != null) {
 
-          if (account.getStatus().isOKForFreeUse()) {
+          if (workspace.getStatus().isOKForFreeUse()) {
           	SystemDao planDao = handle.attach(SystemDao.class);
             SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
@@ -136,16 +136,16 @@ class SubscriptionService {
           	handle.begin();
             
             boolean isOK = 
-              subscriptionDao.startFreeUseOrApplyCoupon(
-                CurrentUser.getAccountId(),
-                AccountStatus.FREE.name(),
+              subscriptionDao.startFreeUseOrApplyVoucher(
+                CurrentUser.getWorkspaceId(),
+                WorkspaceStatus.FREE.name(),
                 basicPlan.getId(),
                 Props.getConfig().APP.FREE_USE_DAYS
               );
 
             if (isOK) {
-              AccountTrans trans = new AccountTrans();
-              trans.setAccountId(CurrentUser.getAccountId());
+              WorkspaceTrans trans = new WorkspaceTrans();
+              trans.setWorkspaceId(CurrentUser.getWorkspaceId());
               trans.setEvent(SubsEvent.FREE_USE_STARTED);
               trans.setSuccessful(Boolean.TRUE);
               trans.setDescription(("Free subscription has been started."));
@@ -153,17 +153,17 @@ class SubscriptionService {
               isOK = subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
               if (isOK) {
                 isOK = 
-                  accountDao.insertStatusHistory(
-                    account.getId(),
-                    AccountStatus.FREE.name(),
+                  workspaceDao.insertStatusHistory(
+                    workspace.getId(),
+                    WorkspaceStatus.FREE.name(),
                     basicPlan.getId()
                   );
-                if (um_FREE_USE == null) accountDao.addUserMark(CurrentUser.getEmail(), UserMarkType.FREE_USE);
+                if (um_FREE_USE == null) workspaceDao.addUserMark(CurrentUser.getEmail(), Marks.FREE_USE.name(), true);
               }
             }
 
             if (isOK) {
-              response = Commons.refreshSession(accountDao, account.getId());
+              response = Commons.refreshSession(workspaceDao, workspace.getId());
               handle.commit();
             } else {
             	handle.rollback();
@@ -173,7 +173,7 @@ class SubscriptionService {
             response = Responses.Illegal.NO_FREE_USE_RIGHT;
           }
         } else {
-        	response = Responses.NotFound.ACCOUNT;
+        	response = Responses.NotFound.WORKSPACE;
         }
       } else {
         response = Responses.Already.FREE_USE_USED;
@@ -187,31 +187,31 @@ class SubscriptionService {
     Map<String, Object> data = new HashMap<>(3);
 
     try (Handle handle = Database.getHandle()) {
-      AccountDao dao = handle.attach(AccountDao.class);
-      Account account = dao.findById(CurrentUser.getAccountId());
-      if (account != null) {
+      WorkspaceDao dao = handle.attach(WorkspaceDao.class);
+      Workspace workspace = dao.findById(CurrentUser.getWorkspaceId());
+      if (workspace != null) {
       	Map<String, Object> info = new HashMap<>(10);
-      	info.put("title", account.getTitle());
-      	info.put("contactName", account.getContactName());
-      	info.put("taxId", account.getTaxId());
-      	info.put("taxOffice", account.getTaxOffice());
-      	info.put("address1", account.getAddress1());
-      	info.put("address2", account.getAddress2());
-      	info.put("postcode", account.getPostcode());
-      	info.put("city", account.getCity());
-      	info.put("state", account.getState());
-      	info.put("country", account.getCountry());
+      	info.put("title", workspace.getTitle());
+      	info.put("contactName", workspace.getContactName());
+      	info.put("taxId", workspace.getTaxId());
+      	info.put("taxOffice", workspace.getTaxOffice());
+      	info.put("address1", workspace.getAddress1());
+      	info.put("address2", workspace.getAddress2());
+      	info.put("postcode", workspace.getPostcode());
+      	info.put("city", workspace.getCity());
+      	info.put("state", workspace.getState());
+      	info.put("country", workspace.getCountry());
 
       	data.put("info", info);
       	
         SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
         
-        List<AccountTrans> allTrans = subscriptionDao.findListByAccountId(CurrentUser.getAccountId());
+        List<WorkspaceTrans> allTrans = subscriptionDao.findListByWorkspaceId(CurrentUser.getWorkspaceId());
         data.put("transactions", allTrans);
 
         if (CollectionUtils.isNotEmpty(allTrans)) {
-          List<AccountTrans> invoiceTrans = new ArrayList<>();
-          for (AccountTrans st : allTrans) {
+          List<WorkspaceTrans> invoiceTrans = new ArrayList<>();
+          for (WorkspaceTrans st : allTrans) {
             if (st.getFileUrl() != null) {
               invoiceTrans.add(st);
             }
@@ -219,7 +219,7 @@ class SubscriptionService {
           data.put("invoices", invoiceTrans);
         }
       } else {
-      	return Responses.NotFound.ACCOUNT;
+      	return Responses.NotFound.WORKSPACE;
       }
     }
 
@@ -227,18 +227,18 @@ class SubscriptionService {
   }
 
   Response saveInfo(CustomerDTO dto) {
-  	Response res = Responses.NotFound.ACCOUNT;
+  	Response res = Responses.NotFound.WORKSPACE;
 
     String problem = validateInvoiceInfo(dto);
 
     if (problem == null) {
-      Account account = null;
+      Workspace workspace = null;
       try (Handle handle = Database.getHandle()) {
-        AccountDao dao = handle.attach(AccountDao.class);
-        account = dao.findById(CurrentUser.getAccountId());
+        WorkspaceDao dao = handle.attach(WorkspaceDao.class);
+        workspace = dao.findById(CurrentUser.getWorkspaceId());
 
-        if (account != null) {
-          boolean isOK = dao.update(dto, CurrentUser.getAccountId());
+        if (workspace != null) {
+          boolean isOK = dao.update(dto, CurrentUser.getWorkspaceId());
           if (isOK) {
             res = Responses.OK;
           } else {

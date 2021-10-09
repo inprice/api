@@ -41,8 +41,8 @@ public class Consts {
       public static final String SEARCH = BASE + "s/search";
     }
 
-    public static class Account {
-      public static final String BASE = "/account";
+    public static class Workspace {
+      public static final String BASE = "/workspace";
       public static final String GEO_INFO = BASE + "/geo";
     }
 
@@ -91,9 +91,9 @@ public class Consts {
       public static final String CANCEL_CHECKOUT = BASE + "/cancel-checkout";
       public static final String CHANGE_PLAN = BASE + "/change-plan";
     }
-    
-    public static class Coupon {
-    	public static final String BASE = "/coupon";
+
+    public static class Voucher {
+    	public static final String BASE = "/voucher";
     	public static final String APPLY = BASE + "/apply";
     }
 
@@ -112,7 +112,12 @@ public class Consts {
 
     public static class Alarm {
       public static final String BASE = "/alarm";
-    	public static final String SEARCH = BASE + "s/search";
+    }
+
+    public static class Definitions {
+      public static final String BASE = "/def";
+    	public static final String BRAND = BASE + "/brand";
+    	public static final String CATEGORY = BASE + "/category";
     }
 
     public static class Dashboard {
@@ -125,20 +130,19 @@ public class Consts {
     	public static final String PLANS = BASE + "/plans";
     	public static final String REFRESH_SESSION = BASE + "/refresh-session";
     	public static final String STATISTICS = BASE + "/statistics";
-    	public static final String SEARCH = BASE + "/search";
     }
 
     public static class Super {
       public static final String BASE = "/sys";
 
-      public static class Account {
-      	public static final String _BASE = BASE + "/account";
+      public static class Workspace {
+      	public static final String _BASE = BASE + "/workspace";
       	public static final String SEARCH = _BASE + "s/search";
         public static final String AL_SEARCH = _BASE + "/search-logs";
         public static final String ID_NAME_PAIRS = _BASE + "/id-name-pairs";
         public static final String BAN = _BASE + "/ban";
         public static final String REVOKE_BAN = BAN + "-revoke";
-        public static final String ACCOUNT_USERS = _BASE + "/users";
+        public static final String WORKSPACE_USERS = _BASE + "/users";
       	
         public static final String DETAILS = _BASE + "/details";
         public static final String MEMBER_LIST = DETAILS + "/members";
@@ -147,7 +151,7 @@ public class Consts {
 
       	public static final String BIND = _BASE + "/bind";
         public static final String UNBIND = _BASE + "/unbind";
-        public static final String COUPON = _BASE + "/coupon";
+        public static final String VOUCHER = _BASE + "/voucher";
       }
 
       public static class User {
@@ -156,7 +160,7 @@ public class Consts {
         public static final String AL_SEARCH = _BASE + "/search-logs";
         public static final String BAN = _BASE + "/ban";
         public static final String REVOKE_BAN = BAN + "-revoke";
-        public static final String USER_ACCOUNTS = _BASE + "/accounts";
+        public static final String USER_WORKSPACES = _BASE + "/workspaces";
 
         public static final String USED_SERVICE = _BASE + "/used-service";
         public static final String USED_SERVICE_TOGGLE = USED_SERVICE + "/toggle";

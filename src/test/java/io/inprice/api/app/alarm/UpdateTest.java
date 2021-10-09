@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
@@ -41,7 +41,7 @@ public class UpdateTest {
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
-			.body(createBody(1L, "LINK", 1L, "STATUS", "CHANGED"))
+			.body(createBody(1L, "LINK", 1L, "POSITION", "CHANGED"))
 			.asJson();
 		
 		JSONObject json = res.getBody().getObject();
@@ -60,7 +60,7 @@ public class UpdateTest {
 
 	@Test
 	public void Alarm_not_found_WITH_null_id() {
-		JSONObject json = callTheService(createBody(null, "LINK", 1L, "STATUS", "CHANGED"));
+		JSONObject json = callTheService(createBody(null, "LINK", 1L, "POSITION", "CHANGED"));
 
 		assertEquals(404, json.getInt("status"));
 		assertEquals("Alarm not found!", json.getString("reason"));
@@ -68,15 +68,15 @@ public class UpdateTest {
 
 	/**
 	 * Consists of four steps;
-	 *	a) to gather other account's alarms, admin is logged in
+	 *	a) to gather other workspace's alarms, admin is logged in
 	 *	b) searches some specific alarms
 	 *  c) picks one of those alarms
-	 *  d) evil user tries to update other account's alarm
+	 *  d) evil user tries to update other workspace's alarm
 	 */
 	@Test
 	public void Alarm_not_found_WHEN_trying_to_update_someone_elses_alarm() {
-		//to gather other account's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		//to gather other workspace's links, admin is logged in
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
 		//searches some specific links
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "LINK");
@@ -88,7 +88,7 @@ public class UpdateTest {
 		JSONObject alarm = alarmList.getJSONObject(0);
 
 		//evil user tries to update the alarm
-		JSONObject json = callTheService(createBody(alarm.getLong("id"), "LINK", 1L, "STATUS", "CHANGED"));
+		JSONObject json = callTheService(createBody(alarm.getLong("id"), "LINK", 1L, "POSITION", "CHANGED"));
 
 		assertEquals(404, json.getInt("status"));
 		assertEquals("Alarm not found!", json.getString("reason"));
@@ -96,7 +96,7 @@ public class UpdateTest {
 
 	@Test
 	public void Topic_cannot_be_empty() {
-		JSONObject json = callTheService(createBody(1L, null, 1L, "STATUS", "CHANGED"));
+		JSONObject json = callTheService(createBody(1L, null, 1L, "POSITION", "CHANGED"));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Topic cannot be empty!", json.getString("reason"));
@@ -104,7 +104,7 @@ public class UpdateTest {
 
 	@Test
 	public void Topic_id_cannot_be_empty() {
-		JSONObject json = callTheService(createBody(1L, "LINK", null, "STATUS", "CHANGED"));
+		JSONObject json = callTheService(createBody(1L, "LINK", null, "POSITION", "CHANGED"));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Topic id cannot be empty!", json.getString("reason"));
@@ -120,18 +120,18 @@ public class UpdateTest {
 
 	@Test
 	public void You_are_expected_to_specify_when_the_subject_should_be_considered() {
-		JSONObject json = callTheService(createBody(1L, "LINK", 1L, "STATUS", null));
+		JSONObject json = callTheService(createBody(1L, "LINK", 1L, "POSITION", null));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("You are expected to specify when the subject should be considered!", json.getString("reason"));
 	}
 
 	@Test
-	public void You_are_expected_to_specify_a_certain_status() {
-		JSONObject json = callTheService(createBody(1L, "LINK", 1L, "STATUS", "EQUAL"));
+	public void You_are_expected_to_specify_a_certain_position() {
+		JSONObject json = callTheService(createBody(1L, "LINK", 1L, "POSITION", "EQUAL"));
 
 		assertEquals(400, json.getInt("status"));
-		assertEquals("You are expected to specify a certain status!", json.getString("reason"));
+		assertEquals("You are expected to specify a certain position!", json.getString("reason"));
 	}
 
 	@Test
@@ -161,7 +161,7 @@ public class UpdateTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), createBody(1L, "LINK", 1L, "PRICE", "CHANGED"), 1); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(1L, "LINK", 1L, "PRICE", "CHANGED"), 1); //attention!
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));
@@ -177,7 +177,7 @@ public class UpdateTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_a_link_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray alarmedLinkList = TestFinder.searchAlarms(cookies, "LINK");
 
@@ -190,7 +190,7 @@ public class UpdateTest {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody(alarmedLink.getLong("id"), "LINK", alarmedLink.getLong("linkId"), "STATUS", "NOT_EQUAL", "MAXIMUM", null, null))
+			.body(createBody(alarmedLink.getLong("id"), "LINK", alarmedLink.getLong("linkId"), "POSITION", "NOT_EQUAL", "MAXIMUM", null, null))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -202,7 +202,7 @@ public class UpdateTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_a_product_WITH_editor() {
-		Cookies cookies = TestUtils.login(TestAccounts.Starter_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR());
 
 		JSONArray alarmedProductList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
@@ -215,7 +215,7 @@ public class UpdateTest {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody(alarmedProduct.getLong("id"), "PRODUCT", alarmedProduct.getLong("productId"), "STATUS", "NOT_EQUAL", "MAXIMUM", null, null))
+			.body(createBody(alarmedProduct.getLong("id"), "PRODUCT", alarmedProduct.getLong("productId"), "POSITION", "NOT_EQUAL", "MAXIMUM", null, null))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -229,7 +229,7 @@ public class UpdateTest {
 		return createBody(id, topic, topicId, subject, when, null, null, null);
 	}
 
-	private JSONObject createBody(Long id, String topic, Long topicId, String subject, String when, String certainStatus, BigDecimal amountLowerLimit, BigDecimal amountUpperLimit) {
+	private JSONObject createBody(Long id, String topic, Long topicId, String subject, String when, String certainPosition, BigDecimal amountLowerLimit, BigDecimal amountUpperLimit) {
 		JSONObject body = new JSONObject();
 
 		if (id != null) body.put("id", id);
@@ -242,7 +242,7 @@ public class UpdateTest {
 		if (topic != null) body.put("topic", topic);
 		if (subject != null) body.put("subject", subject);
 		if (when != null) body.put("subjectWhen", when);
-		if (certainStatus != null) body.put("certainStatus", certainStatus);
+		if (certainPosition != null) body.put("certainPosition", certainPosition);
 		if (amountLowerLimit != null) body.put("amountLowerLimit", amountLowerLimit);
 		if (amountUpperLimit != null) body.put("amountUpperLimit", amountUpperLimit);
 
@@ -250,7 +250,7 @@ public class UpdateTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestAccounts.Basic_plan_but_no_extra_user.ADMIN(), body);
+		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), body);
 	}
 
 	private JSONObject callTheService(JSONObject user, JSONObject body) {

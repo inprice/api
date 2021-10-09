@@ -8,7 +8,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestAccounts;
+import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
@@ -55,7 +55,7 @@ public class CreateCheckoutTest {
 
 	@Test
 	public void Forbidden_WITH_editor() {
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.EDITOR());
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
 		
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -63,7 +63,7 @@ public class CreateCheckoutTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.VIEWER(), 1); //attention pls!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1); //attention pls!
 		
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -71,7 +71,7 @@ public class CreateCheckoutTest {
 
 	@Test
 	public void Page_not_found_WITH_null_id() {
-		Cookies cookies = TestUtils.login(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -88,7 +88,7 @@ public class CreateCheckoutTest {
 
 	@Test
 	public void Method_not_allowed_WITH_admin() { //later this will become Everything must be ok!
-		JSONObject json = callTheService(TestAccounts.Standard_plan_and_two_extra_users.ADMIN());
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
 		assertEquals(405, json.getInt("status"));
     assertEquals("Method not allowed!", json.getString("reason"));

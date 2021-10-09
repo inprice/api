@@ -36,7 +36,7 @@ public class CommentService {
 						handle.begin();
 						ticketDao.makeAllCommentsNotEditable(dto.getTicketId());
 
-						dto.setAccountId(ticket.getAccountId());
+						dto.setWorkspaceId(ticket.getWorkspaceId());
 						boolean isOK = ticketDao.insertComment(dto);
 						if (isOK) {
 							ticketDao.increaseCommentCount(dto.getTicketId());
@@ -88,7 +88,7 @@ public class CommentService {
 							TicketComment comment = ticketDao.findCommentById(dto.getId());
 							if (comment != null) {
 								if (comment.getEditable()) {
-									dto.setAccountId(ticket.getAccountId());
+									dto.setWorkspaceId(ticket.getWorkspaceId());
 		  						boolean isOK = ticketDao.updateComment(dto);
 									if (isOK) {
 										List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
