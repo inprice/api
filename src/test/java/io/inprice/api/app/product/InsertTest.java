@@ -31,7 +31,7 @@ public class InsertTest {
 
 	private static final JSONObject SAMPLE_BODY = 
 			new JSONObject()
-	    	.put("code", "A123")
+	    	.put("sku", "A123")
 	    	.put("name", "NEW PRODUCT")
 				.put("price", 5);
 
@@ -62,25 +62,25 @@ public class InsertTest {
 	}
 
 	@Test
-	public void If_given_Code_must_be_between_3_50_chars_WITH_shorter_code() {
+	public void If_given_Sku_must_be_between_3_50_chars_WITH_shorter_value() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("code", "AB");
+		body.put("sku", "AB");
 
 		JSONObject json = callTheService(body);
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("If given, Code must be between 3 - 50 chars!", json.getString("reason"));
+    assertEquals("If given, Sku must be between 3 - 50 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void If_given_Code_must_be_between_3_50_chars_WITH_longer_code() {
+	public void If_given_Sku_must_be_between_3_50_chars_WITH_longer_value() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("code", RandomStringUtils.randomAlphabetic(51));
+		body.put("sku", RandomStringUtils.randomAlphabetic(51));
 
 		JSONObject json = callTheService(body);
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("If given, Code must be between 3 - 50 chars!", json.getString("reason"));
+    assertEquals("If given, Sku must be between 3 - 50 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -155,31 +155,31 @@ public class InsertTest {
 	}
 
 	@Test
-	public void You_already_have_a_product_having_the_same_code_or_name_WITH_code() {
+	public void You_already_have_a_product_having_the_same_sku_or_name_FOR_sku() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("code", "F-1");
+		body.put("sku", "F-1");
 
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
 
 		assertEquals(875, json.getInt("status"));
-		assertEquals("You already have a product having the same code or name!", json.getString("reason"));
+		assertEquals("You already have a product having the same sku or name!", json.getString("reason"));
 	}
 
 	@Test
-	public void You_already_have_a_product_having_the_same_code_or_name_WITH_name() {
+	public void You_already_have_a_product_having_the_same_sku_or_name_FOR_name() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("name", "Product K of Workspace-F");
 
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
 
 		assertEquals(875, json.getInt("status"));
-		assertEquals("You already have a product having the same code or name!", json.getString("reason"));
+		assertEquals("You already have a product having the same sku or name!", json.getString("reason"));
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("code", "Z-1");		
+		body.put("sku", "Z-1");		
 		body.put("name", "Editor is trying to define a new product!");
 
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);

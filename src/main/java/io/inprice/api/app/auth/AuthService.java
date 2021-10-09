@@ -18,8 +18,8 @@ import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.LoginDTO;
 import io.inprice.api.app.user.dto.PasswordDTO;
 import io.inprice.api.app.user.dto.UserDTO;
-import io.inprice.api.app.user.validator.EmailValidator;
-import io.inprice.api.app.user.validator.PasswordValidator;
+import io.inprice.api.app.user.verifier.EmailVerifier;
+import io.inprice.api.app.user.verifier.PasswordVerifier;
 import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
@@ -73,7 +73,7 @@ public class AuthService {
                 sesList.add(
               		new ForResponse(
             				null,
-            				user.getName(),
+            				user.getFullName(),
             				user.getEmail(),
             				user.getPassword()
         					)
@@ -107,7 +107,7 @@ public class AuthService {
   }
 
   Response forgotPassword(String email) {
-    String problem = EmailValidator.verify(email);
+    String problem = EmailVerifier.verify(email);
     if (problem == null) {
 
       Response res = redis.isEmailRequested(RateLimiterType.FORGOT_PASSWORD, email);
@@ -122,7 +122,7 @@ public class AuthService {
         		if (! user.isPrivileged()) {
               try {
                 Map<String, Object> mailMap = Map.of(
-                	"user", user.getName(),
+                	"fullName", user.getFullName(),
                 	"token", Tokens.add(TokenType.FORGOT_PASSWORD, email),
                 	"url", Props.getConfig().APP.WEB_URL + Consts.Paths.Auth.RESET_PASSWORD
               	);
@@ -161,7 +161,7 @@ public class AuthService {
   }
 
   Response resetPassword(Context ctx, PasswordDTO dto) {
-    String problem = PasswordValidator.verify(dto);
+    String problem = PasswordVerifier.verify(dto);
     
     if (problem == null) {
     	if (StringUtils.isBlank(dto.getToken())) problem = Responses.Invalid.TOKEN.getReason();
@@ -348,18 +348,18 @@ public class AuthService {
 
               if (user == null) { //user creation
                 UserDTO dto = new UserDTO();
-                dto.setName(sendDto.getEmail().split("@")[0]);
+                dto.setFullName(acceptDto.getFullName());
                 dto.setEmail(sendDto.getEmail());
                 dto.setTimezone(timezone);
 
                 String saltedHash = PasswordHelper.getSaltedHash(acceptDto.getPassword());
-                long savedId = userDao.insert(dto.getEmail(), saltedHash, dto.getName(), dto.getTimezone());
+                long savedId = userDao.insert(dto.getFullName(), dto.getEmail(), saltedHash, dto.getTimezone());
 
                 if (savedId > 0) {
                   User newUser = new User(); //user in response is needed for auto login
                   newUser.setId(savedId);
                   newUser.setEmail(dto.getEmail());
-                  newUser.setName(dto.getName());
+                  newUser.setFullName(dto.getFullName());
                   newUser.setTimezone(dto.getTimezone());
                   res = new Response(newUser);
                 }
@@ -410,10 +410,18 @@ public class AuthService {
     }
 
     if (problem == null) {
+    	if (StringUtils.isBlank(dto.getFullName())) {
+    		problem = "Full Name cannot be empty!";
+    	} else if (dto.getFullName().length() < 3 || dto.getFullName().length() > 70) {
+    		problem = "Full Name must be between 3 - 70 chars!";
+    	}
+    }
+
+    if (problem == null) {
       PasswordDTO pswDTO = new PasswordDTO();
       pswDTO.setPassword(dto.getPassword());
       pswDTO.setRepeatPassword(dto.getRepeatPassword());
-      problem = PasswordValidator.verify(pswDTO);
+      problem = PasswordVerifier.verify(pswDTO);
     }
 
     return problem;
@@ -463,9 +471,9 @@ public class AuthService {
   }
 
   public static String verifyLogin(LoginDTO dto) {
-    String problem = PasswordValidator.verify(dto, false);
+    String problem = PasswordVerifier.verify(dto, false);
     if (problem == null) {
-      problem = EmailValidator.verify(dto.getEmail());
+      problem = EmailVerifier.verify(dto.getEmail());
     }
     return problem;
   }

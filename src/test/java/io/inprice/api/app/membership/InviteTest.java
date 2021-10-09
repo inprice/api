@@ -11,9 +11,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestRoles;
 import io.inprice.api.utils.TestUtils;
+import io.inprice.api.utils.TestWorkspaces;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -306,7 +306,6 @@ public class InviteTest {
 		assertNotNull(data);
 		assertNotNull(data.get("url"));
 		assertNotNull(data.getString("token"));
-		assertTrue(Fixtures.NON_EXISTING_EMAIL_1.startsWith(data.getString("user")));
 	}
 
 	/**
@@ -329,8 +328,10 @@ public class InviteTest {
 		
 		assertEquals(200, json.getInt("status"));
 		assertNotNull(data);
+		assertTrue(data.has("workspaceName"));
+		assertTrue(data.has("adminName"));
+		assertTrue(data.has("fullName"));
 		assertFalse(data.has("url"));
-		assertTrue(email.startsWith(data.getString("user")));
 	}
 
 	private JSONObject createBody(String email, TestRoles role) {

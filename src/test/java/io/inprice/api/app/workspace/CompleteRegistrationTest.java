@@ -57,21 +57,23 @@ public class CompleteRegistrationTest {
 	@Test
 	public void Everything_must_be_ok() {
 		JSONObject body = new JSONObject()
+			.put("fullName", "John Doe")
 			.put("workspaceName", "Acme X Inc.")
 			.put("email", "user-99@acme-x.com")
-    	.put("password", "1234")
-    	.put("repeatPassword", "1234");
+    	.put("password", "1234-AB")
+    	.put("repeatPassword", "1234-AB");
 
 		HttpResponse<JsonNode> res = Unirest.post("/request-registration")
 			.body(body)
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
-		JSONObject data = json.getJSONObject("data");
 		
 		assertEquals(200, json.getInt("status"));
-		assertNotNull(data);
-		
+		assertNotNull(json.getJSONObject("data"));
+
+		JSONObject data = json.getJSONObject("data");
+				
 		res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.queryString("token", data.getString("token").replace("-", ""))

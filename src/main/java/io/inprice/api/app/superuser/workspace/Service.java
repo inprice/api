@@ -134,7 +134,7 @@ class Service {
       	ForResponse session = 
     			new ForResponse(
   					workspace.getId(),
-  					CurrentUser.getUserName(),
+  					CurrentUser.getFullName(),
   					CurrentUser.getEmail(),
   					CurrentUser.getUserTimezone()
 					);
@@ -167,7 +167,7 @@ class Service {
         	return new Response ( 
       			new ForResponse(
       				null,
-      				CurrentUser.getUserName(),
+      				CurrentUser.getFullName(),
       				CurrentUser.getEmail(),
       				CurrentUser.getUserTimezone()
       			)

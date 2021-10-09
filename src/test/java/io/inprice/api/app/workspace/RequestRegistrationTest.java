@@ -29,9 +29,10 @@ public class RequestRegistrationTest {
 
 	private static final JSONObject SAMPLE_BODY = 
 		new JSONObject()
+			.put("fullName", "John Doe")
     	.put("workspaceName", "Acme X Inc.")
-    	.put("password", "1234")
-    	.put("repeatPassword", "1234");
+    	.put("password", "1234-AB")
+    	.put("repeatPassword", "1234-AB");
 
 	@BeforeClass
 	public static void setup() {
@@ -49,10 +50,58 @@ public class RequestRegistrationTest {
 	}
 
 	@Test
-	public void Workspace_name_cannot_be_empty_WITH_empty_workspace_name() {
+	public void Full_Name_cannot_be_empty_WITH_empty_name() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.remove("fullName");
+		body.put("email", "user-01@acme-x.com");
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.body(body)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Full Name cannot be empty!", json.getString("reason"));
+	}
+
+	@Test
+	public void Full_Name_must_be_between_3_and_70_chars_WITH_shorter_name() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("fullName", "ab");
+		body.put("email", "user-02@acme-x.com");
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.body(body)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Full Name must be between 3 - 70 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Full_Name_must_be_between_3_and_70_chars_WITH_longer_name() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("fullName", RandomStringUtils.randomAlphabetic(71));
+		body.put("email", "user-03@acme-x.com");
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.body(body)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		
+		assertEquals(400, json.getInt("status"));
+		assertEquals("Full Name must be between 3 - 70 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Workspace_name_cannot_be_empty_WITH_empty_name() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.remove("workspaceName");
-		body.put("email", "user-01@acme-x.com");
+		body.put("email", "user-04@acme-x.com");
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(body)
@@ -65,10 +114,10 @@ public class RequestRegistrationTest {
 	}
 
 	@Test
-	public void Workspace_name_must_be_between_3_and_70_chars_WITH_shorter_email() {
+	public void Workspace_name_must_be_between_3_and_70_chars_WITH_shorter_name() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("workspaceName", "ab");
-		body.put("email", "user-02@acme-x.com");
+		body.put("email", "user-05@acme-x.com");
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(body)
@@ -81,10 +130,10 @@ public class RequestRegistrationTest {
 	}
 
 	@Test
-	public void Workspace_name_must_be_between_3_and_70_chars_WITH_longer_email() {
+	public void Workspace_name_must_be_between_3_and_70_chars_WITH_longer_name() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("workspaceName", RandomStringUtils.randomAlphabetic(71));
-		body.put("email", "user-03@acme-x.com");
+		body.put("email", "user-06@acme-x.com");
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(body)
@@ -159,7 +208,7 @@ public class RequestRegistrationTest {
 	public void Password_cannot_be_empty_WITH_empty_password() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.remove("password");
-		body.put("email", "user-04@acme-x.com");
+		body.put("email", "user-07@acme-x.com");
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(body)
@@ -172,10 +221,10 @@ public class RequestRegistrationTest {
 	}
 
 	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_shorter_password() {
+	public void Password_length_must_be_between_6_and_16_chars_WITH_shorter_password() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("password", "123");
-		body.put("email", "user-05@acme-x.com");
+		body.put("email", "user-08@acme-x.com");
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(body)
@@ -184,14 +233,14 @@ public class RequestRegistrationTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 6 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_longer_password() {
+	public void Password_length_must_be_between_6_and_16_chars_WITH_longer_password() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("password", RandomStringUtils.randomAlphabetic(17));
-		body.put("email", "user-06@acme-x.com");
+		body.put("email", "user-09@acme-x.com");
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(body)
@@ -200,14 +249,14 @@ public class RequestRegistrationTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 6 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
 	public void Passwords_are_mismatch_WITH_different_passwords() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("repeatPassword", "1235");
-		body.put("email", "user-07@acme-x.com");
+		body.put("email", "user-10@acme-x.com");
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(body)
@@ -279,10 +328,9 @@ public class RequestRegistrationTest {
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
-		JSONObject data = json.getJSONObject("data");
-		
+
 		assertEquals(200, json.getInt("status"));
-		assertNotNull(data);
+		assertNotNull(json.getJSONObject("data"));
 	}
 
 }

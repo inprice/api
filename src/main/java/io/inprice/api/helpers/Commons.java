@@ -28,7 +28,7 @@ public class Commons {
   public static Response refreshSession(Workspace workspace) {
     ForResponse session = new ForResponse(
       workspace,
-      CurrentUser.getUserName(),
+      CurrentUser.getFullName(),
       CurrentUser.getEmail(),
       CurrentUser.getRole(),
       CurrentUser.getUserTimezone()

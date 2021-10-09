@@ -45,7 +45,7 @@ public class ResetPasswordTest {
 	@Test
 	public void Invalid_token_WITH_empty_token() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody(null, "1234", "1234"))
+			.body(createBody(null, "1234-AB", "1234-AB"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -57,7 +57,7 @@ public class ResetPasswordTest {
 	@Test
 	public void Password_cannot_be_empty_WITH_empty_password() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("XYZ-123", null, "1234"))
+			.body(createBody("XYZ-123", null, "1234-AB"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -67,19 +67,19 @@ public class ResetPasswordTest {
 	}
 
 	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_shorter_password() {
+	public void Password_length_must_be_between_6_and_16_chars_WITH_shorter_password() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("XYZ-123", "123", "123"))
+			.body(createBody("XYZ-123", "1234A", "1234A"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 6 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_longer_password() {
+	public void Password_length_must_be_between_6_and_16_chars_WITH_longer_password() {
 		final String password = RandomStringUtils.randomAlphabetic(17);
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
@@ -89,13 +89,13 @@ public class ResetPasswordTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 6 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
 	public void Passwords_are_mismatch_WITH_different_passwords() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("XYZ-123", "1234", "1235"))
+			.body(createBody("XYZ-123", "1234-AB", "1234-Ab"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();

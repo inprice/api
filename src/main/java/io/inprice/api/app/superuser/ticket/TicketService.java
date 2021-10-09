@@ -180,7 +180,7 @@ public class TicketService {
     try (Handle handle = Database.getHandle()) {
       List<Ticket> searchResult =
         handle.createQuery(
-          "select t.*, u.name as username, a.name as workspace from ticket t " +
+          "select t.*, u.full_name, a.name as workspace from ticket t " +
       		"inner join user u on u.id = t.user_id " +
       		"inner join workspace a on a.id = t.workspace_id " +
           where +

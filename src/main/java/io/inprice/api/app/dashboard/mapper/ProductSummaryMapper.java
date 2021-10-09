@@ -16,7 +16,7 @@ public class ProductSummaryMapper implements RowMapper<ProductSummary> {
     ProductSummary m = new ProductSummary();
 
     if (Helper.hasColumn(rs, "id")) m.setId(rs.getLong("id"));
-    if (Helper.hasColumn(rs, "code")) m.setCode(rs.getString("code"));
+    if (Helper.hasColumn(rs, "sku")) m.setSku(rs.getString("sku"));
     if (Helper.hasColumn(rs, "name")) m.setName(rs.getString("name"));
     if (Helper.hasColumn(rs, "actives")) m.setActives(rs.getInt("actives"));
     if (Helper.hasColumn(rs, "tryings")) m.setTryings(rs.getInt("tryings"));

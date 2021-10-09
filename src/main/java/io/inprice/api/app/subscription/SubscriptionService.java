@@ -80,8 +80,8 @@ class SubscriptionService {
               );
             if (isOK) {
               Map<String, Object> mailMap = Map.of(
-              	"user", CurrentUser.getEmail(),
-              	"workspace", StringUtils.isNotBlank(workspace.getTitle()) ? workspace.getTitle() : workspace.getName()
+              	"fullName", CurrentUser.getFullName(),
+              	"workspaceName", StringUtils.isNotBlank(workspace.getTitle()) ? workspace.getTitle() : workspace.getName()
         			);
               
               EmailPublisher.publish(
@@ -122,7 +122,7 @@ class SubscriptionService {
 
       WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
       UserMarks um_FREE_USE = workspaceDao.findUserMarkByEmail(CurrentUser.getEmail(), Marks.FREE_USE.name());
-      if (um_FREE_USE == null || um_FREE_USE.getBooleanVal().equals(Boolean.TRUE)) {
+      if (um_FREE_USE == null || um_FREE_USE.getBooleanVal().equals(Boolean.FALSE)) {
 
         Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
         if (workspace != null) {

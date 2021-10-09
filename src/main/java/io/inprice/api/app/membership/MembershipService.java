@@ -15,7 +15,7 @@ import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.auth.dto.InvitationSendDTO;
 import io.inprice.api.app.membership.dto.InvitationUpdateDTO;
 import io.inprice.api.app.user.UserDao;
-import io.inprice.api.app.user.validator.EmailValidator;
+import io.inprice.api.app.user.verifier.EmailVerifier;
 import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
@@ -327,19 +327,19 @@ class MembershipService {
 
   private Response sendMail(UserDao userDao, InvitationSendDTO dto) {
     Map<String, Object> mailMap = new HashMap<>(5);
-    mailMap.put("workspace", CurrentUser.getWorkspaceName());
-    mailMap.put("admin", CurrentUser.getUserName());
+    mailMap.put("workspaceName", CurrentUser.getWorkspaceName());
+    mailMap.put("adminName", CurrentUser.getFullName());
 
     EmailTemplate template = null;
 
-    String userName = userDao.findUserNameByEmail(dto.getEmail());
-    if (userName != null) {
-      mailMap.put("user", userName);
+    String fullName = userDao.findFullNameByEmail(dto.getEmail());
+    if (fullName != null) {
+      mailMap.put("fullName", fullName);
       template = EmailTemplate.INVITATION_FOR_EXISTING_USERS;
     } else {
-      mailMap.put("user", dto.getEmail().substring(0, dto.getEmail().indexOf('@')));
+      mailMap.put("fullName", dto.getEmail());
       mailMap.put("token", Tokens.add(TokenType.INVITATION, dto));
-      mailMap.put("url", Props.getConfig().APP.WEB_URL + "/accept-invitation");
+      mailMap.put("url", Props.getConfig().APP.WEB_URL + Consts.Paths.Auth.ACCEPT_INVITATION);
       template = EmailTemplate.INVITATION_FOR_NEW_USERS;
     }
 
@@ -361,7 +361,7 @@ class MembershipService {
   }
 
   private String validate(InvitationSendDTO dto) {
-    String problem = EmailValidator.verify(dto.getEmail());
+    String problem = EmailVerifier.verify(dto.getEmail());
     
     if (problem == null && dto.getEmail().equalsIgnoreCase(CurrentUser.getEmail())) {
     	problem = "You cannot invite yourself!";

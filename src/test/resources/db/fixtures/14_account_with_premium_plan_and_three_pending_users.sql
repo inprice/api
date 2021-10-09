@@ -15,7 +15,7 @@ set @other_viewer_email = 'editor@workspace-e.com';
 -- -----------------------
 
 -- admin
-insert into test.user (email, password, name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
+insert into test.user (email, password, full_name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
 set @admin_id = last_insert_id();
 
 -- viewer

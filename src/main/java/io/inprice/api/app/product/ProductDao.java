@@ -27,11 +27,11 @@ public interface ProductDao {
 	@SqlQuery(
 		"select exists(" +
 			"select 1 from product " +
-			"where (code = :dto.code or name = :dto.name) " +
+			"where (sku = :dto.sku or name = :dto.name) " +
 			"  and id != :dto.id " +
 			"  and workspace_id = :workspaceId " +
 		")")
-	boolean doesExistByCodeAndName(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
+	boolean doesExistBySkuAndName(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
 		"select exists(" +
@@ -62,15 +62,15 @@ public interface ProductDao {
   List<IdNamePairMapper> getIdNameList(@Bind("excludedId") Long excludedId, @Bind("workspaceId") Long workspaceId);
 
   @SqlUpdate(
-		"insert into product (code, name, price, brand_id, category_id, workspace_id) " +
-		"values (:dto.code, :dto.name, :dto.price, :dto.brandId, :dto.categoryId, :dto.workspaceId)"
+		"insert into product (sku, name, price, brand_id, category_id, workspace_id) " +
+		"values (:dto.sku, :dto.name, :dto.price, :dto.brandId, :dto.categoryId, :dto.workspaceId)"
 	)
   @GetGeneratedKeys()
   long insert(@BindBean("dto") ProductDTO dto);
 
   @SqlUpdate(
 		"update product " +
-		"set code=:dto.code, name=:dto.name, price=:dto.price, brand_id=:dto.brandId, category_id=:dto.categoryId " +
+		"set sku=:dto.sku, name=:dto.name, price=:dto.price, brand_id=:dto.brandId, category_id=:dto.categoryId " +
 		"where id=:dto.id " +
 		"  and workspace_id=:dto.workspaceId"
 	)

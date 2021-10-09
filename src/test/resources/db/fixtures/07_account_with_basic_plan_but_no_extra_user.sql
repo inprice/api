@@ -8,7 +8,7 @@ set @admin_email = 'admin@workspace-b.com';
 -- -----------------------
 
 -- admin
-insert into test.user (email, password, name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
+insert into test.user (email, password, full_name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
 set @admin_id = last_insert_id();
 
 -- workspace
@@ -38,7 +38,7 @@ call sp_create_product_and_links(null, '2', 4, 3, 2, 1, 'https://ebay.com/', 12,
 -- 5 alarms
 -- -----------------------
 insert into alarm (topic, product_id, subject, subject_when, workspace_id) 
-select 'PRODUCT', id, 'STATUS', 'CHANGED', @workspace_id from product where workspace_id = @workspace_id limit 2;
+select 'PRODUCT', id, 'POSITION', 'CHANGED', @workspace_id from product where workspace_id = @workspace_id limit 2;
 
 insert into alarm (topic, link_id, subject, subject_when, workspace_id) 
-select 'LINK', id, 'STATUS', 'CHANGED', @workspace_id from link where workspace_id = @workspace_id limit 3;
+select 'LINK', id, 'POSITION', 'CHANGED', @workspace_id from link where workspace_id = @workspace_id limit 3;

@@ -8,7 +8,7 @@ set @admin_email = 'admin@workspace-d.com';
 -- -----------------------
 
 -- admin
-insert into test.user (email, password, name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
+insert into test.user (email, password, full_name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
 set @admin_id = last_insert_id();
 
 -- workspace
@@ -37,7 +37,7 @@ call sp_create_product_and_links(null, 'D', 1, 0, 0, 0, 'https://hepsiburada.com
 -- 2 alarms
 -- -----------------------
 insert into alarm (topic, product_id, subject, subject_when, workspace_id) 
-select 'PRODUCT', id, 'TOTAL', 'INCREASED', @workspace_id from product where workspace_id = @workspace_id limit 1;
+select 'PRODUCT', id, 'MINIMUM', 'INCREASED', @workspace_id from product where workspace_id = @workspace_id limit 1;
 
 insert into alarm (topic, link_id, subject, subject_when, workspace_id) 
 select 'LINK', id, 'PRICE', 'DECREASED', @workspace_id from link where workspace_id = @workspace_id limit 1;

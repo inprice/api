@@ -41,7 +41,7 @@ public class InsertTest {
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
-			.body(createBody("LINK", 1L, "STATUS", "CHANGED"))
+			.body(createBody("LINK", 1L, "POSITION", "CHANGED"))
 			.asJson();
 		
 		JSONObject json = res.getBody().getObject();
@@ -60,7 +60,7 @@ public class InsertTest {
 
 	@Test
 	public void Topic_cannot_be_empty() {
-		JSONObject json = callTheService(createBody(null, 1L, "STATUS", "CHANGED"));
+		JSONObject json = callTheService(createBody(null, 1L, "POSITION", "CHANGED"));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Topic cannot be empty!", json.getString("reason"));
@@ -68,7 +68,7 @@ public class InsertTest {
 
 	@Test
 	public void Topic_id_cannot_be_empty() {
-		JSONObject json = callTheService(createBody("LINK", null, "STATUS", "CHANGED"));
+		JSONObject json = callTheService(createBody("LINK", null, "POSITION", "CHANGED"));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Topic id cannot be empty!", json.getString("reason"));
@@ -84,18 +84,18 @@ public class InsertTest {
 
 	@Test
 	public void You_are_expected_to_specify_when_the_subject_should_be_considered() {
-		JSONObject json = callTheService(createBody("LINK", 1L, "STATUS", null));
+		JSONObject json = callTheService(createBody("LINK", 1L, "POSITION", null));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("You are expected to specify when the subject should be considered!", json.getString("reason"));
 	}
 
 	@Test
-	public void You_are_expected_to_specify_a_certain_status() {
-		JSONObject json = callTheService(createBody("LINK", 1L, "STATUS", "EQUAL"));
+	public void You_are_expected_to_specify_a_certain_position() {
+		JSONObject json = callTheService(createBody("LINK", 1L, "POSITION", "EQUAL"));
 
 		assertEquals(400, json.getInt("status"));
-		assertEquals("You are expected to specify a certain status!", json.getString("reason"));
+		assertEquals("You are expected to specify a certain position!", json.getString("reason"));
 	}
 
 	@Test
@@ -162,7 +162,7 @@ public class InsertTest {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody("PRODUCT", alarmedProduct.getLong("productId"), "STATUS", "CHANGED"))
+			.body(createBody("PRODUCT", alarmedProduct.getLong("productId"), "POSITION", "CHANGED"))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -195,7 +195,7 @@ public class InsertTest {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody("LINK", link.getLong("id"), "STATUS", "CHANGED"))
+			.body(createBody("LINK", link.getLong("id"), "POSITION", "CHANGED"))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -222,7 +222,7 @@ public class InsertTest {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody("PRODUCT", product.getLong("id"), "STATUS", "CHANGED"))
+			.body(createBody("PRODUCT", product.getLong("id"), "POSITION", "CHANGED"))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -238,7 +238,7 @@ public class InsertTest {
 		return createBody(topic, id, subject, when, null, null, null);
 	}
 
-	private JSONObject createBody(String topic, Long topicId, String subject, String when, String certainStatus, BigDecimal amountLowerLimit, BigDecimal amountUpperLimit) {
+	private JSONObject createBody(String topic, Long topicId, String subject, String when, String certainPosition, BigDecimal amountLowerLimit, BigDecimal amountUpperLimit) {
 		JSONObject body = new JSONObject();
 
 		if (topicId != null) {
@@ -249,7 +249,7 @@ public class InsertTest {
 		if (topic != null) body.put("topic", topic);
 		if (subject != null) body.put("subject", subject);
 		if (when != null) body.put("subjectWhen", when);
-		if (certainStatus != null) body.put("certainStatus", certainStatus);
+		if (certainPosition != null) body.put("certainPosition", certainPosition);
 		if (amountLowerLimit != null) body.put("amountLowerLimit", amountLowerLimit);
 		if (amountUpperLimit != null) body.put("amountUpperLimit", amountUpperLimit);
 

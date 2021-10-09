@@ -112,7 +112,6 @@ public class Consts {
 
     public static class Alarm {
       public static final String BASE = "/alarm";
-    	public static final String SEARCH = BASE + "s/search";
     }
 
     public static class Definitions {

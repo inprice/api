@@ -40,8 +40,8 @@ public interface UserSessionDao {
   )
   void insertBulk(@BindBean("ses") List<ForDatabase> sesList);
 
-  @SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId and _hash not in (<hashList>)")
+  @SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId")
   @UseRowMapper(DBSessionMapper.class)
-  List<ForDatabase> findOpenedSessions(@Bind("userId") Long userId, @BindList("hashList") List<String> hashList);
+  List<ForDatabase> findOpenedSessions(@Bind("userId") Long userId);
 
 }

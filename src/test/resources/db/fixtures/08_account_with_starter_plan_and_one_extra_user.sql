@@ -9,11 +9,11 @@ set @editor_email = 'editor@workspace-c.com'; -- will be a pending user in 12_wo
 -- -----------------------
 
 -- admin
-insert into test.user (email, password, name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
+insert into test.user (email, password, full_name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
 set @admin_id = last_insert_id();
 
 -- editor
-insert into test.user (email, password, name, timezone) values (@editor_email, @salted_pass, SUBSTRING_INDEX(@editor_email, '@', 1), @timezone);
+insert into test.user (email, password, full_name, timezone) values (@editor_email, @salted_pass, SUBSTRING_INDEX(@editor_email, '@', 1), @timezone);
 set @editor_id = last_insert_id();
 
 -- workspace
@@ -42,8 +42,8 @@ call sp_create_product_and_links(null, 'Y', 4, 1, 0, 3, 'https://ebay.com/', 12,
 insert into alarm (topic, product_id, subject, subject_when, amount_lower_limit, amount_upper_limit, workspace_id) 
 select 'PRODUCT', id, 'MINIMUM', 'OUT_OF_LIMITS', 15.17, 50.23, @workspace_id from product where workspace_id = @workspace_id limit 1;
 
-insert into alarm (topic, link_id, subject, subject_when, certain_status, workspace_id) 
-select 'LINK', id, 'STATUS', 'EQUAL', 'AVERAGE', @workspace_id from link where workspace_id = @workspace_id limit 1;
+insert into alarm (topic, link_id, subject, subject_when, certain_position, workspace_id) 
+select 'LINK', id, 'POSITION', 'EQUAL', 'AVERAGE', @workspace_id from link where workspace_id = @workspace_id limit 1;
 
 -- tickets
 insert into test.ticket (priority, type, subject, body, user_id, workspace_id) 

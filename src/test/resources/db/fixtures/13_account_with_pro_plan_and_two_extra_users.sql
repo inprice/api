@@ -10,15 +10,15 @@ set @viewer_email = 'viewer@workspace-m.com';
 -- -----------------------
 
 -- admin
-insert into test.user (email, password, name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
+insert into test.user (email, password, full_name, timezone) values (@admin_email, @salted_pass, SUBSTRING_INDEX(@admin_email, '@', 1), @timezone);
 set @admin_id = last_insert_id();
 
 -- editor
-insert into test.user (email, password, name, timezone) values (@editor_email, @salted_pass, SUBSTRING_INDEX(@editor_email, '@', 1), @timezone);
+insert into test.user (email, password, full_name, timezone) values (@editor_email, @salted_pass, SUBSTRING_INDEX(@editor_email, '@', 1), @timezone);
 set @editor_id = last_insert_id();
 
 -- viewer
-insert into test.user (email, password, name, timezone) values (@viewer_email, @salted_pass, SUBSTRING_INDEX(@viewer_email, '@', 1), @timezone);
+insert into test.user (email, password, full_name, timezone) values (@viewer_email, @salted_pass, SUBSTRING_INDEX(@viewer_email, '@', 1), @timezone);
 set @viewer_id = last_insert_id();
 
 -- workspace

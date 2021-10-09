@@ -1,11 +1,11 @@
-package io.inprice.api.app.user.validator;
+package io.inprice.api.app.user.verifier;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class EmailValidator {
+public class EmailVerifier {
 
   private static final Pattern pattern = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
 

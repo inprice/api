@@ -20,7 +20,7 @@ public class ForResponse implements Serializable {
 
   private static final long serialVersionUID = -3414991620052194958L;
 
-  private String user;
+  private String fullName;
   private String email;
   private String workspace;
   private String workspaceStatus;
@@ -36,8 +36,8 @@ public class ForResponse implements Serializable {
 
   private Long workspaceId; //for only super users!
   
-  public ForResponse(Workspace workspace, String user, String email, UserRole role, String timezone) {
-    this.user = user;
+  public ForResponse(Workspace workspace, String fullName, String email, UserRole role, String timezone) {
+    this.fullName = fullName;
     this.email = email;
     this.workspace = workspace.getName();
     this.workspaceStatus = workspace.getStatus().name();
@@ -55,7 +55,7 @@ public class ForResponse implements Serializable {
   }
 
   public ForResponse(ForResponse forResponse) {
-    this.user = forResponse.getUser();
+    this.fullName = forResponse.getFullName();
     this.email = forResponse.getEmail();
     this.workspace = forResponse.getWorkspace();
     this.workspaceStatus = forResponse.getWorkspaceStatus();
@@ -71,7 +71,7 @@ public class ForResponse implements Serializable {
   }
 
   public ForResponse(ForCookie forCookie, ForRedis forRedis) {
-    this.user = forRedis.getUser();
+    this.fullName = forRedis.getFullName();
     this.email = forCookie.getEmail();
     this.workspace = forRedis.getWorkspace();
     this.workspaceStatus = forRedis.getWorkspaceStatus();
@@ -87,7 +87,7 @@ public class ForResponse implements Serializable {
   }
 
   public ForResponse(ForCookie forCookie, User user, Membership mem) {
-    this.user = user.getName();
+    this.fullName = user.getFullName();
     this.email = forCookie.getEmail();
     this.workspace = mem.getWorkspaceName();
     this.workspaceStatus = mem.getWorkspaceStatus().name();
@@ -102,9 +102,9 @@ public class ForResponse implements Serializable {
     this.role = UserRole.valueOf(forCookie.getRole());
   }
 
-  public ForResponse(Long workspaceId, String username, String email, String timezone) {
+  public ForResponse(Long workspaceId, String fullName, String email, String timezone) {
   	this.workspaceId = workspaceId;
-    this.user = username;
+    this.fullName = fullName;
     this.email = email;
     this.timezone = timezone;
   	this.role = UserRole.SUPER;

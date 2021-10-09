@@ -21,7 +21,7 @@ import io.inprice.common.models.TicketHistory;
 public interface TicketDao {
 
   @SqlQuery(
-		"select t.*, u.name as username, a.name as workspace from ticket t " +
+		"select t.*, u.full_name, a.name as workspace from ticket t " +
 		"inner join user u on u.id= t.user_id " +
 		"inner join workspace a on a.id= t.workspace_id " +
 		"where t.id=:id "
@@ -80,7 +80,7 @@ public interface TicketDao {
   TicketComment findCommentById(@Bind("id") Long id);
 
   @SqlQuery(
-		"select c.*, u.name as username from ticket_comment c " +
+		"select c.*, u.full_name from ticket_comment c " +
 		"inner join user u on u.id= c.user_id " +
 		"where ticket_id=:ticketId"
 	)
@@ -113,7 +113,7 @@ public interface TicketDao {
 	boolean insertHistory(@BindBean("dto") TicketDTO dto);
 
   @SqlQuery(
-		"select h.*, u.name as username from ticket_history h " +
+		"select h.*, u.full_name from ticket_history h " +
 		"inner join user u on u.id= h.user_id " +
 		"where ticket_id=:ticketId " +
 		"order by h.created_at desc"

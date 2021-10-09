@@ -51,7 +51,7 @@ public interface MembershipDao {
     "where a.status != 'BANNED' " +
     "  and m.email=:email " +
     "  and m.status=:status " + 
-    "order by m.role, m.created_at"
+    "order by a.name, m.role"
   )
   @UseRowMapper(MembershipMapper.class)
   List<Membership> findListByEmailAndStatus(@Bind("email") String email, @Bind("status") UserStatus status);

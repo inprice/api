@@ -169,7 +169,7 @@ public enum TestWorkspaces {
 	public JSONObject findUser(TestRoles role) {
 		JSONObject user = this.roleEmailMap.get(role);
 		if (user != null) {
-			user.put("password", "1234");
+			user.put("password", "1234-AB");
 		}
 		return user;
 	}

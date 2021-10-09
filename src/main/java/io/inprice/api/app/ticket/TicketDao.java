@@ -20,7 +20,7 @@ import io.inprice.common.models.TicketComment;
 public interface TicketDao {
 
   @SqlQuery(
-		"select t.*, u.name as username from ticket t " +
+		"select t.*, u.full_name from ticket t " +
 		"inner join user u on u.id= t.user_id " +
 		"where t.id=:id " + 
 		"  and t.workspace_id=:workspaceId"
@@ -99,7 +99,7 @@ public interface TicketDao {
   TicketComment findCommentById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-		"select c.*, u.name as username from ticket_comment c " +
+		"select c.*, u.full_name from ticket_comment c " +
 		"inner join user u on u.id= c.user_id " +
 		"where ticket_id=:ticketId"
 	)

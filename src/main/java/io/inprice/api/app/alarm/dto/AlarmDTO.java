@@ -19,7 +19,7 @@ public class AlarmDTO {
   private AlarmSubject subject;
   private AlarmSubjectWhen subjectWhen;
 
-	private String certainStatus;
+	private String certainPosition;
 	private BigDecimal amountLowerLimit;
 	private BigDecimal amountUpperLimit;
 

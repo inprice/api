@@ -3,7 +3,7 @@ package io.inprice.api.app.product.dto;
 public enum OrderBy {
 
 	NAME("p.name"),
-	CODE("code"),
+	SKU("sku"),
 	CATEGORY("cat.name"),
 	BRAND("brn.name");
 

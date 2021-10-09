@@ -20,7 +20,7 @@ public interface UserDao {
   User findById(@Bind("id") Long id);
 
   //password related columns are excluded!
-  @SqlQuery("select id, email, name, timezone, privileged, banned, banned_at, ban_reason from user where email=:email")
+  @SqlQuery("select id, email, full_name, timezone, privileged, banned, banned_at, ban_reason from user where email=:email")
   @UseRowMapper(UserMapper.class)
   User findByEmail(@Bind("email") String email);
 
@@ -28,15 +28,15 @@ public interface UserDao {
   @UseRowMapper(UserMapper.class)
   User findByEmailWithPassword(@Bind("email") String email);
 
-  @SqlQuery("select name from user where email=:email")
-  String findUserNameByEmail(@Bind("email") String email);
+  @SqlQuery("select full_name from user where email=:email")
+  String findFullNameByEmail(@Bind("email") String email);
 
-  @SqlUpdate("insert into user (email, password, name, timezone) values (:email, :saltedHash, :name, :timezone)")
+  @SqlUpdate("insert into user (email, password, full_name, timezone) values (:email, :saltedHash, :fullName, :timezone)")
   @GetGeneratedKeys
-  long insert(@Bind("email") String email, @Bind("saltedHash") String saltedHash, @Bind("name") String name, @Bind("timezone") String timezone);
+  long insert(@Bind("fullName") String fullName, @Bind("email") String email, @Bind("saltedHash") String saltedHash, @Bind("timezone") String timezone);
 
-  @SqlUpdate("update user set name=:name, timezone=:timezone where id=:id")
-  boolean updateName(@Bind("id") Long id, @Bind("name") String name, @Bind("timezone") String timezone);
+  @SqlUpdate("update user set full_name=:fullName, timezone=:timezone where id=:id")
+  boolean updateInfo(@Bind("id") Long id, @Bind("fullName") String fullName, @Bind("timezone") String timezone);
 
   @SqlUpdate("update user set password=:saltedHash where id=:id")
   boolean updatePassword(@Bind("id") Long id, @Bind("saltedHash") String saltedHash);

@@ -64,27 +64,27 @@ public class UpdateInfoTest {
 	}
 
 	@Test
-	public void User_name_cannot_be_empty() {
+	public void Full_Name_cannot_be_empty() {
 		JSONObject json = callTheServiceWith(null, TIMEZONE);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("User name cannot be empty!", json.getString("reason"));
+    assertEquals("Full Name cannot be empty!", json.getString("reason"));
 	}
 
 	@Test
-	public void User_name_must_be_between_3_and_70_chars_WITH_shorter_name() {
+	public void Full_Name_must_be_between_3_and_70_chars_WITH_shorter_name() {
 		JSONObject json = callTheServiceWith("XY", TIMEZONE);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("User name must be between 3 - 70 chars!", json.getString("reason"));
+    assertEquals("Full Name must be between 3 - 70 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void User_name_must_be_between_3_and_70_chars_WITH_longer_name() {
+	public void Full_Name_must_be_between_3_and_70_chars_WITH_longer_name() {
 		JSONObject json = callTheServiceWith(RandomStringUtils.randomAlphabetic(71), TIMEZONE);
 
 		assertEquals(400, json.getInt("status"));
-		assertEquals("User name must be between 3 - 70 chars!", json.getString("reason"));
+		assertEquals("Full Name must be between 3 - 70 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -128,13 +128,6 @@ public class UpdateInfoTest {
 		assertEquals("OK", json.get("reason"));
 	}
 
-	private JSONObject createBody(String name, String timezone) {
-		JSONObject body = new JSONObject();
-		if (name != null) body.put("name", name);
-		if (timezone != null) body.put("timezone", timezone);
-		return body;
-	}
-
 	private JSONObject callTheServiceWith(String name, String timezone) {
 		//creating the body
 		JSONObject body = createBody(name, timezone);
@@ -154,6 +147,13 @@ public class UpdateInfoTest {
 
 		//returning the result to be tested
 		return res.getBody().getObject();
+	}
+
+	private JSONObject createBody(String name, String timezone) {
+		JSONObject body = new JSONObject();
+		if (name != null) body.put("fullName", name);
+		if (timezone != null) body.put("timezone", timezone);
+		return body;
 	}
 
 }

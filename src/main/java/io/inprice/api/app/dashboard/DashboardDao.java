@@ -14,7 +14,7 @@ import io.inprice.api.app.dashboard.mapper.MRU25Link;
 import io.inprice.api.app.dashboard.mapper.MRU25LinkMapper;
 import io.inprice.api.app.dashboard.mapper.ProductSummary;
 import io.inprice.api.app.dashboard.mapper.ProductSummaryMapper;
-import io.inprice.common.meta.Level;
+import io.inprice.common.meta.Position;
 
 interface DashboardDao {
 
@@ -23,18 +23,19 @@ interface DashboardDao {
   @ValueColumn("counter")
   Map<String, Integer> findGrupDists(@Bind("workspaceId") Long workspaceId);
   
-  @SqlQuery("select level, count(1) as counter from product where workspace_id=:workspaceId group by level")
-  @KeyColumn("level")
+  @SqlQuery("select position, count(1) as counter from product where workspace_id=:workspaceId group by position")
+  @KeyColumn("position")
   @ValueColumn("counter")
-  Map<String, Integer> findProductLevelDists(@Bind("workspaceId") Long workspaceId);
+  Map<String, Integer> findProductPositionDists(@Bind("workspaceId") Long workspaceId);
 
-  @SqlQuery("select level, count(1) as counter from link where workspace_id=:workspaceId group by level")
-  @KeyColumn("level")
+  @SqlQuery("select position, count(1) as counter from link where workspace_id=:workspaceId group by position")
+  @KeyColumn("position")
   @ValueColumn("counter")
-  Map<String, Integer> findLinkLevelDists(@Bind("workspaceId") Long workspaceId);
+  Map<String, Integer> findLinkPositionDists(@Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-    "select l.id, g.name as product_name, p.domain as platform, l.seller, l.price, l.status, l.parse_code, l.level, l.name, l.url, l.updated_at, l.created_at, l.url from link as l " + 
+    "select l.id, g.name as product_name, p.domain as platform, l.seller, l.price, l.status, l.alarm_id, " +
+    "l.parse_code, l.position, l.name, l.url, l.updated_at, l.created_at, l.url from link as l " + 
 		"inner join product as g on g.id = l.product_id " + 
     "left join platform as p on p.id = l.platform_id " + 
     "where l.workspace_id=:workspaceId " +
@@ -46,12 +47,12 @@ interface DashboardDao {
 
   @SqlQuery(
     "select * from product " +
-    "where level=:level " +
+    "where position=:position " +
     "  and workspace_id=:workspaceId " +
     "order by updated_at desc " +
     "limit <number>"
   )
   @UseRowMapper(ProductSummaryMapper.class)
-  List<ProductSummary> findMostNProduct(@Define("number") int number, @Bind("level") Level level, @Bind("workspaceId") Long workspaceId);
+  List<ProductSummary> findMostNProduct(@Define("number") int number, @Bind("position") Position position, @Bind("workspaceId") Long workspaceId);
 
 }

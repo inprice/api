@@ -60,11 +60,11 @@ public class CurrentUser {
   	}
   }
 
-  public static String getUserName() {
+  public static String getFullName() {
   	if (THREAD_VARIABLES.get().getSuperUser() != null) {
-  		return THREAD_VARIABLES.get().getSuperUser().getName();
+  		return THREAD_VARIABLES.get().getSuperUser().getFullName();
   	} else {
-  		return THREAD_VARIABLES.get().getSession().getUser();
+  		return THREAD_VARIABLES.get().getSession().getFullName();
   	}
   }
 

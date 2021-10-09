@@ -63,9 +63,9 @@ public interface Dao {
   List<WorkspaceTrans> fetchTransactionList(@Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
-		"select id, name from user " +
+		"select id, full_name as name from user " +
 		"where id in (select user_id from membership where workspace_id=:workspaceId) " +
-		"order by name"
+		"order by full_name"
 	)
   @UseRowMapper(IdNamePairMapper.class)
   List<Pair<Long, String>> fetchUserListByWorkspaceId(@Bind("workspaceId") Long workspaceId);

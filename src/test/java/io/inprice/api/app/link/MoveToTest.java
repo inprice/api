@@ -174,7 +174,7 @@ public class MoveToTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(875, json.getInt("status"));
-		assertEquals("You already have a product having the same code or name!", json.getString("reason"));
+		assertEquals("You already have a product having the same sku or name!", json.getString("reason"));
 	}
 
 	/**

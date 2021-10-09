@@ -25,16 +25,16 @@ public interface AlarmDao {
 	boolean doesExistByTopicId(@Define("topic") String topic, @Bind("topicId") Long topicId, @Bind("workspaceId") Long workspaceId);
 
 	@SqlUpdate(
-		"insert into alarm (topic, product_id, link_id, subject, subject_when, certain_status, amount_lower_limit, amount_upper_limit, last_status, last_amount, workspace_id) " +
-		"values (:dto.topic, :dto.productId, :dto.linkId, :dto.subject, :dto.subjectWhen, :dto.certainStatus, :dto.amountLowerLimit, :dto.amountUpperLimit, :pair.left, :pair.right, :dto.workspaceId)"
+		"insert into alarm (topic, product_id, link_id, subject, subject_when, certain_position, amount_lower_limit, amount_upper_limit, last_position, last_amount, workspace_id) " +
+		"values (:dto.topic, :dto.productId, :dto.linkId, :dto.subject, :dto.subjectWhen, :dto.certainPosition, :dto.amountLowerLimit, :dto.amountUpperLimit, :pair.left, :pair.right, :dto.workspaceId)"
 	)
 	@GetGeneratedKeys
 	long insert(@BindBean("dto") AlarmDTO dto, @BindBean("pair") Pair<String, BigDecimal> pair);
 
 	@SqlUpdate(
 		"update alarm " +
-		"set subject=:dto.subject, subject_when=:dto.subjectWhen, certain_status=:dto.certainStatus, amount_lower_limit=:dto.amountLowerLimit, " +
-		"    amount_upper_limit=:dto.amountUpperLimit, last_status=:pair.left, last_amount=:pair.right, updated_at=now() " +
+		"set subject=:dto.subject, subject_when=:dto.subjectWhen, certain_position=:dto.certainPosition, amount_lower_limit=:dto.amountLowerLimit, " +
+		"    amount_upper_limit=:dto.amountUpperLimit, last_position=:pair.left, last_amount=:pair.right, updated_at=now() " +
 		"where id=:dto.id " +
 		"  and workspace_id=:dto.workspaceId"
 	)

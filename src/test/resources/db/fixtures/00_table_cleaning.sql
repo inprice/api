@@ -32,7 +32,7 @@ truncate table test.user_marks;
 set foreign_key_checks=1;
 
 -- global variables
-set @salted_pass = 'tgeCgsZWyabjtsslplwMrGJRHyTyI4zS4DlAWHnjrMQi2Nn9KwXBS9RROaPWK3BhIkEFtQcLK5TO3q8iihlhbg'; -- 1234
+set @salted_pass = 'eLgUOcQnH/Twai9hJF4Ing25yXoR2eGA0DseixPycjcTb//WqlbdEct3rykdJI7MAmoO2MBDBaAoVYGsV7LLuo'; -- 1234-AB
 
 set @timezone = 'Europe/Istanbul';
 set @one_month_later = DATE_ADD(now(), INTERVAL 1 MONTH);

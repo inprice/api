@@ -70,7 +70,7 @@ public class PasswordHelper {
   }
   
   public static void main(String[] args) {
-		System.out.println(isValid("1234", "tgeCgsZWyabjtsslplwMrGJRHyTyI4zS4DlAWHnjrMQi2Nn9KwXBS9RROaPWK3BhIkEFtQcLK5TO3q8iihlhbg"));
+		System.out.println(isValid("1234-AB", "eLgUOcQnH/Twai9hJF4Ing25yXoR2eGA0DseixPycjcTb//WqlbdEct3rykdJI7MAmoO2MBDBaAoVYGsV7LLuo"));
 	}
 
 }

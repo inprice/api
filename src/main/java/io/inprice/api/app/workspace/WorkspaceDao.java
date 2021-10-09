@@ -94,4 +94,7 @@ public interface WorkspaceDao {
   @SqlUpdate("insert into user_marks (email, mark, boolean_val) values (:email, :mark, :boolVal)")
   void addUserMark(@Bind("email") String email, @Bind("mark") String mark, @Bind("boolVal") boolean boolVal);
 
+  @SqlQuery("select count(1) from workspace where admin_id=:adminId")
+  int findWorkspaceCount(@Bind("adminId") Long adminId);
+
 }

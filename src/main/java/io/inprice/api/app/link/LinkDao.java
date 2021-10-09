@@ -49,7 +49,7 @@ public interface LinkDao {
     "left join alarm as al on al.id = l.alarm_id " + 
     "where l.product_id=:productId " +
     "  and l.workspace_id=:workspaceId " +
-    "order by l.grup, l.level, l.price"
+    "order by l.grup, l.price, l.status"
   )
   @UseRowMapper(LinkMapper.class)
   List<Link> findListByProductId(@Bind("productId") Long productId, @Bind("workspaceId") Long workspaceId);

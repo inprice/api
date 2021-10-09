@@ -81,7 +81,7 @@ class ProductService {
     }
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	where.append(" and CONCAT(ifnull(p.name, ''), ifnull(p.code, ''))");
+    	where.append(" and CONCAT(ifnull(p.name, ''), ifnull(p.sku, ''))");
       where.append(" like '%");
       where.append(dto.getTerm());
       where.append("%' ");
@@ -97,9 +97,9 @@ class ProductService {
   		where.append(dto.getCategory().getId());
     }
 
-    if (CollectionUtils.isNotEmpty(dto.getLevels())) {
+    if (CollectionUtils.isNotEmpty(dto.getPositions())) {
     	where.append(
-  			String.format(" and p.level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
+  			String.format(" and p.position in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPositions()))
 			);
     }
 
@@ -151,10 +151,10 @@ class ProductService {
 
         dto.setId(0L); //necessary for the existency check here!
       	boolean alreadyExists = false;
-      	if (StringUtils.isBlank(dto.getCode())) {
+      	if (StringUtils.isBlank(dto.getSku())) {
       		alreadyExists = productDao.doesExistByName(dto, CurrentUser.getWorkspaceId());
       	} else {
-      		alreadyExists = productDao.doesExistByCodeAndName(dto, CurrentUser.getWorkspaceId());
+      		alreadyExists = productDao.doesExistBySkuAndName(dto, CurrentUser.getWorkspaceId());
       	}
 
       	if (alreadyExists == false) {
@@ -187,12 +187,12 @@ class ProductService {
         try (Handle handle = Database.getHandle()) {
           ProductDao productDao = handle.attach(ProductDao.class);
 
-          //checks if code or name is already used for another product
+          //checks if sku or name is already used for another product
         	boolean alreadyExists = false;
-        	if (StringUtils.isBlank(dto.getCode())) {
+        	if (StringUtils.isBlank(dto.getSku())) {
         		alreadyExists = productDao.doesExistByName(dto, CurrentUser.getWorkspaceId());
         	} else {
-        		alreadyExists = productDao.doesExistByCodeAndName(dto, CurrentUser.getWorkspaceId());
+        		alreadyExists = productDao.doesExistBySkuAndName(dto, CurrentUser.getWorkspaceId());
         	}
 
           if (alreadyExists == false) {
@@ -209,7 +209,7 @@ class ProductService {
               	// if base price is changed then all the prices and other 
                 // indicators (on both product itself and its links) must be re-calculated accordingly
                 if (found.getLinkCount() > 0 && found.getPrice().compareTo(dto.getPrice()) != 0) {
-                	//refreshes product's totals and alarm if needed!
+                	//refreshes product's sums and alarm if needed!
               		ProductAlarmService.updateAlarm(dto.getId(), handle);
                 }
 
@@ -367,8 +367,8 @@ class ProductService {
   private String validate(ProductDTO dto) {
     String problem = null;
 
-    if (StringUtils.isNotBlank(dto.getCode()) && (dto.getCode().length() < 3 || dto.getCode().length() > 50)) {
-  		problem = "If given, Code must be between 3 - 50 chars!";
+    if (StringUtils.isNotBlank(dto.getSku()) && (dto.getSku().length() < 3 || dto.getSku().length() > 50)) {
+  		problem = "If given, Sku must be between 3 - 50 chars!";
     }
 
     if (problem == null && StringUtils.isBlank(dto.getName())) {
@@ -397,7 +397,7 @@ class ProductService {
 
     if (problem == null) {
       dto.setWorkspaceId(CurrentUser.getWorkspaceId());
-      dto.setCode(SqlHelper.clear(dto.getCode()));
+      dto.setSku(SqlHelper.clear(dto.getSku()));
       dto.setName(SqlHelper.clear(dto.getName()));
       if (dto.getPrice() == null) dto.setPrice(BigDecimal.ZERO);
       if (dto.getBrand() != null) dto.setBrandId(dto.getBrand().getId());

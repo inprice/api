@@ -119,7 +119,7 @@ class LinkService {
           if (priceList == null) priceList = new ArrayList<>();
           if (historyList == null) historyList = new ArrayList<>();
         
-          if (StringUtils.isNotBlank(link.getSku())) specList.add(0, new LinkSpec("Code", link.getSku()));
+          if (StringUtils.isNotBlank(link.getSku())) specList.add(0, new LinkSpec("Sku", link.getSku()));
           if (StringUtils.isNotBlank(link.getBrand())) specList.add(0, new LinkSpec("Brand", link.getBrand()));
           
           Map<String, Object> data = Map.of(

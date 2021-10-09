@@ -35,7 +35,7 @@ public class UpdateTest {
 	private static final JSONObject SAMPLE_BODY = 
 			new JSONObject()
 				.put("id", 1)
-				.put("code", "A-1")
+				.put("sku", "A-1")
   			.put("name", "NEW PRODUCT")
 				.put("price", 5);
 
@@ -148,7 +148,7 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void You_already_have_a_product_having_the_same_code_or_name_WITH_code() {
+	public void You_already_have_a_product_having_the_same_sku_or_name_FOR_sku() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product G");
@@ -161,16 +161,16 @@ public class UpdateTest {
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("id", product.getLong("id")); //here is also important!
-		body.put("code", "F-1");
+		body.put("sku", "F-1");
 
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
 
 		assertEquals(875, json.getInt("status"));
-		assertEquals("You already have a product having the same code or name!", json.getString("reason"));
+		assertEquals("You already have a product having the same sku or name!", json.getString("reason"));
 	}
 
 	@Test
-	public void You_already_have_a_product_having_the_same_code_or_name_WITH_name() {
+	public void You_already_have_a_product_having_the_same_sku_or_name_FOR_name() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product G");
@@ -188,7 +188,7 @@ public class UpdateTest {
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
 
 		assertEquals(875, json.getInt("status"));
-		assertEquals("You already have a product having the same code or name!", json.getString("reason"));
+		assertEquals("You already have a product having the same sku or name!", json.getString("reason"));
 	}
 
 	@Test
@@ -205,7 +205,7 @@ public class UpdateTest {
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("id", product.getLong("id")); //here is also important!
-		body.put("code", "A-2!");
+		body.put("sku", "A-2!");
 		body.put("name", "Changed name by EDITOR");
 		body.put("price", 20.12);
 
@@ -232,7 +232,7 @@ public class UpdateTest {
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("id", product.getLong("id")); //here is also important!
-		body.put("code", "X-1");
+		body.put("sku", "X-1");
 		body.put("name", "Changed name by ADMIN");
 		body.put("price", 0.12);
 

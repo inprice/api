@@ -17,8 +17,8 @@ import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.app.superuser.announce.AnnounceService;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
-import io.inprice.api.app.user.validator.EmailValidator;
-import io.inprice.api.app.user.validator.PasswordValidator;
+import io.inprice.api.app.user.verifier.EmailVerifier;
+import io.inprice.api.app.user.verifier.PasswordVerifier;
 import io.inprice.api.app.workspace.dto.CreateDTO;
 import io.inprice.api.app.workspace.dto.RegisterDTO;
 import io.inprice.api.config.Props;
@@ -78,9 +78,10 @@ class WorkspaceService {
             String token = Tokens.add(TokenType.REGISTRATION_REQUEST, dto);
   
             Map<String, Object> mailMap = Map.of(
-            	"user", dto.getEmail().split("@")[0],
-            	"workspace", dto.getWorkspaceName(),
-            	"token", token.substring(0,3)+"-"+token.substring(3)
+            	"fullName", dto.getFullName(),
+            	"workspaceName", dto.getWorkspaceName(),
+            	"token", token.substring(0,3)+"-"+token.substring(3),
+            	"url", Props.getConfig().APP.WEB_URL + Consts.Paths.Auth.COMPLETE_REGISTRATION
           	);
 
             if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST)) {
@@ -128,16 +129,16 @@ class WorkspaceService {
         User user = userDao.findByEmail(dto.getEmail());
         if (user == null) {
           user = new User();
+          user.setFullName(dto.getFullName());
           user.setEmail(dto.getEmail());
-          user.setName(dto.getEmail().split("@")[0]);
           user.setTimezone(clientInfo.get(Consts.TIMEZONE));
           user.setCreatedAt(new Date());
 
           user.setId(
             userDao.insert(
+          		user.getFullName(), 
               user.getEmail(), 
               PasswordHelper.getSaltedHash(dto.getPassword()), 
-              user.getName(), 
               clientInfo.get(Consts.TIMEZONE)
             )
           );
@@ -158,17 +159,23 @@ class WorkspaceService {
         }
 
         if (response.isOK()) {
-        	/*
-          Map<String, Object> dataMap = new Map.of(
-          	"email", dto.getEmail(),
-          	"workspace", dto.getWorkspaceName()
-        	);
-          */
           response = new Response(user);
-
           announceService.createWelcomeMsg(handle, user.getId());
-          
           handle.commit();
+
+          Map<String, Object> mailMap = Map.of(
+          	"fullName", dto.getFullName(),
+          	"workspaceName", dto.getWorkspaceName()
+        	);
+        	EmailPublisher.publish(
+      			EmailData.builder()
+        			.template(EmailTemplate.REGISTRATION_COMPLETE)
+        			.to(dto.getEmail())
+        			.subject(dto.getWorkspaceName() + " is active.")
+        			.data(mailMap)
+        		.build()	
+  				);
+          
           Tokens.remove(TokenType.REGISTRATION_REQUEST, token);
         } else {
         	handle.rollback();
@@ -191,27 +198,33 @@ class WorkspaceService {
 
     if (response.isOK()) {
       try (Handle handle = Database.getHandle()) {
-      	handle.begin();
+      	WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
 
-        response = 
-          createWorkspace(
-            handle,
-            CurrentUser.getUserId(),
-            CurrentUser.getEmail(),
-            dto.getName(),
-            dto.getCurrencyCode(),
-            dto.getCurrencyFormat()
-          );
-        if (response.isOK()) {
-          WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
-          Workspace workspace = workspaceDao.findById(response.getData());
-          response = Commons.refreshSession(workspace);
+      	int wsCount = workspaceDao.findWorkspaceCount(CurrentUser.getUserId());
+        if (wsCount < 5) {
+	      	handle.begin();
+	
+	        response = 
+	          createWorkspace(
+	            handle,
+	            CurrentUser.getUserId(),
+	            CurrentUser.getEmail(),
+	            dto.getName(),
+	            dto.getCurrencyCode(),
+	            dto.getCurrencyFormat()
+	          );
+	        if (response.isOK()) {
+	          Workspace workspace = workspaceDao.findById(response.getData());
+	          response = Commons.refreshSession(workspace);
+	        }
+	
+	        if (response.isOK())
+	        	handle.commit();
+	        else
+	        	handle.rollback();
+        } else {
+        	response = new Response("You can create up to 5 workspaces!");
         }
-
-        if (response.isOK())
-        	handle.commit();
-        else
-        	handle.rollback();
       }
     }
 
@@ -334,13 +347,13 @@ class WorkspaceService {
     Response res = validateWorkspaceDTO(dto);
 
     if (res.isOK()) {
-      String problem = EmailValidator.verify(dto.getEmail());
+      String problem = EmailVerifier.verify(dto.getEmail());
 
       if (problem == null) {
         PasswordDTO pswDTO = new PasswordDTO();
         pswDTO.setPassword(dto.getPassword());
         pswDTO.setRepeatPassword(dto.getRepeatPassword());
-        problem = PasswordValidator.verify(pswDTO);
+        problem = PasswordVerifier.verify(pswDTO);
       }
 
       if (problem == null)
@@ -443,7 +456,15 @@ class WorkspaceService {
   }
 
   private Response validateWorkspaceDTO(RegisterDTO dto) {
-    String problem = EmailValidator.verify(dto.getEmail());
+    String problem = EmailVerifier.verify(dto.getEmail());
+
+    if (problem == null) {
+    	if (StringUtils.isBlank(dto.getFullName())) {
+    		problem = "Full Name cannot be empty!";
+    	} else if (dto.getFullName().length() < 3 || dto.getFullName().length() > 70) {
+    		problem = "Full Name must be between 3 - 70 chars!";
+    	}
+    }
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getWorkspaceName())) {

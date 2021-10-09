@@ -3,6 +3,7 @@ package io.inprice.api.app.auth;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,6 +34,13 @@ public class AcceptNewUserTest {
 
 	private static final String SERVICE_ENDPOINT = "/accept-invitation";
 
+	private static final JSONObject SAMPLE_BODY = 
+		new JSONObject()
+			.put("fullName", "John Doe")
+			.put("token", "XYZ-123")
+    	.put("password", "1234-AB")
+    	.put("repeatPassword", "1234-AB");
+
 	@BeforeClass
 	public static void setup() {
 		TestUtils.setup();
@@ -49,9 +57,57 @@ public class AcceptNewUserTest {
 	}
 
 	@Test
-	public void Invalid_token_WITH_empty_token() {
+	public void Full_Name_cannot_be_empty_WITH_empty_name() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.remove("fullName");
+
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody(null, "1234", "1234"))
+			.body(body)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Full Name cannot be empty!", json.getString("reason"));
+	}
+
+	@Test
+	public void Full_Name_must_be_between_3_and_70_chars_WITH_shorter_name() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("fullName", "ab");
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.body(body)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Full Name must be between 3 - 70 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Full_Name_must_be_between_3_and_70_chars_WITH_longer_name() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("fullName", RandomStringUtils.randomAlphabetic(71));
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.body(body)
+			.asJson();
+
+		JSONObject json = res.getBody().getObject();
+		
+		assertEquals(400, json.getInt("status"));
+		assertEquals("Full Name must be between 3 - 70 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Invalid_token_WITH_empty_token() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.remove("token");
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.body(body)
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -62,8 +118,11 @@ public class AcceptNewUserTest {
 
 	@Test
 	public void Invalid_token_WITH_wrong_token() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("token", "XYZ-123");
+
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("XYZ-123", "1234", "1234"))
+			.body(body)
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -74,8 +133,11 @@ public class AcceptNewUserTest {
 
 	@Test
 	public void Password_cannot_be_empty_WITH_empty_password() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.remove("password");
+
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("XYZ-123", null, "1234"))
+			.body(body)
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -104,16 +166,20 @@ public class AcceptNewUserTest {
 		TestUtils.logout(cookies);
 
 		JSONObject json = res.getBody().getObject();
-		JSONObject data = json.getJSONObject("data");
 		
 		assertEquals(200, json.getInt("status"));
+
+		JSONObject data = json.getJSONObject("data");
 		assertNotNull(data.getString("token"));
 
 		/* -------------------------------- 
 	   Accepting him/her
   	 -------------------------------- */
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("token", data.getString("token"));
+
 		res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody(data.getString("token"), "1234", "1234"))
+			.body(body)
 			.asJson();
 		//new users can have session cookies. we need to log new user out here for the sake of other test cases!
 		TestUtils.logout(res.getCookies());
@@ -128,14 +194,6 @@ public class AcceptNewUserTest {
 		JSONObject body = new JSONObject();
 		if (email != null) body.put("email", email);
 		if (role != null) body.put("role", role.name());
-		return body;
-	}
-
-	private JSONObject createBody(String token, String password, String repeatPassword) {
-		JSONObject body = new JSONObject();
-		if (token != null) body.put("token", token);
-		if (password != null) body.put("password", password);
-		if (repeatPassword != null) body.put("repeatPassword", repeatPassword);
 		return body;
 	}
 

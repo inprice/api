@@ -46,7 +46,7 @@ public class LoginTest {
 	@Test
 	public void Email_address_cannot_be_empty_WITH_empty_email() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody(null, "1234"))
+			.body(createBody(null, "1234-AB"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -70,7 +70,7 @@ public class LoginTest {
 	@Test
 	public void Invalid_email_address_WITH_wrong_email() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("admininprice.io", "1234"))
+			.body(createBody("admininprice.io", "1234-AB"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -82,7 +82,7 @@ public class LoginTest {
 	@Test
 	public void Email_address_must_be_between_8_and_128_chars_WITH_shorter_email() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("a@xy.io", "1234"))
+			.body(createBody("a@xy.io", "1234-AB"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -94,7 +94,7 @@ public class LoginTest {
 	@Test
 	public void Email_address_must_be_between_8_and_128_chars_WITH_longer_email() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody(RandomStringUtils.randomAlphabetic(118)+"@inprice.io", "1234"))
+			.body(createBody(RandomStringUtils.randomAlphabetic(118)+"@inprice.io", "1234-AB"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -104,19 +104,19 @@ public class LoginTest {
 	}
 
 	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_shorter_password() {
+	public void Password_length_must_be_between_6_and_16_chars_WITH_shorter_password() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("admin@inprice.io", "123"))
+			.body(createBody("admin@inprice.io", "1235A"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 6 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void Password_length_must_be_between_4_and_16_chars_WITH_longer_password() {
+	public void Password_length_must_be_between_6_and_16_chars_WITH_longer_password() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.body(createBody("admin@inprice.io", RandomStringUtils.randomAlphabetic(17)))
 			.asJson();
@@ -124,13 +124,13 @@ public class LoginTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Password length must be between 4 - 16 chars!", json.getString("reason"));
+    assertEquals("Password length must be between 6 - 16 chars!", json.getString("reason"));
 	}
 
 	@Test
 	public void Invalid_email_or_password_WITH_wrong_password() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(createBody("admin@inprice.io", "1235"))
+			.body(createBody("admin@inprice.io", "1234-AC"))
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();
@@ -174,10 +174,11 @@ public class LoginTest {
 		TestUtils.logout(res.getCookies());
 
 		JSONObject json = res.getBody().getObject();
-		JSONObject data = json.getJSONObject("data");
 		
 		assertEquals(200, json.getInt("status"));
-		assertNotNull(data);
+		assertNotNull(json.getJSONObject("data"));
+		
+		JSONObject data = json.getJSONObject("data");
     assertEquals(2, data.getJSONArray("sessions").length());
 	}
 

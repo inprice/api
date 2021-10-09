@@ -63,9 +63,9 @@ class LinkService {
       where.append("%' ");
     }
 
-    if (CollectionUtils.isNotEmpty(dto.getLevels())) {
+    if (CollectionUtils.isNotEmpty(dto.getPositions())) {
     	where.append(
-  			String.format(" and l.level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
+  			String.format(" and l.position in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPositions()))
 			);
     }
 
@@ -110,7 +110,7 @@ class LinkService {
       try (Handle handle = Database.getHandle()) {
       	handle.begin();
 
-      	//by links, finding the products whose totals and alarms be refreshed
+      	//by links, finding the products whose sums and alarms be refreshed
       	LinkDao linkDao = handle.attach(LinkDao.class);
       	Set<Long> productIdSet = linkDao.findProductIdSet(dto.getLinkIdSet());
       	
@@ -163,7 +163,7 @@ class LinkService {
    * 
    * Two operations are done accordingly;
    * 	a) setting new product id for all the selected links 
-   * 	b) refreshing product totals
+   * 	b) refreshing product sums
    * 
    */
   Response moveTo(LinkMoveDTO dto) {
@@ -222,7 +222,7 @@ class LinkService {
     					int[] result = batch.execute();
 
     					if (result[4] > 0) {
-    						//refreshes products' totals and alarm if needed!
+    						//refreshes product sums and alarm if needed!
             		foundProductIdSet.add(dto.getToProductId());
             		ProductAlarmService.updateAlarm(foundProductIdSet, handle);
 
