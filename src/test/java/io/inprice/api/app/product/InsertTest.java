@@ -148,7 +148,7 @@ public class InsertTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 1);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 0);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));

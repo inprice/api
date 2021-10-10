@@ -127,14 +127,14 @@ public class InsertTest {
 		
 		// there must be only one ticket in
 		// 11_workspace_with_standard_plan_and_two_extra_users.sql
-		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 1);
+		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
 		JSONObject ticket = ticketList.getJSONObject(0);
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("ticketId", ""+ticket.getLong("id"));
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(body)
 			.asJson();
@@ -150,14 +150,14 @@ public class InsertTest {
 	public void Everything_must_be_ok_WITH_viewer() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 		
-		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 1);
+		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 0);
 		JSONObject ticket = ticketList.getJSONObject(0);
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("ticketId", ""+ticket.getLong("id"));
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(body)
 			.asJson();

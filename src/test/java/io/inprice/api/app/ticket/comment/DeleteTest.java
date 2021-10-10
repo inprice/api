@@ -71,7 +71,7 @@ public class DeleteTest {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN());
 
 		//searches a specific comment
-		JSONArray commentList = TestFinder.searchComments(cookies, "CRITICAL", 0);
+		JSONArray commentList = TestFinder.searchComments(cookies, "CRITICAL");
 		assertNotNull(commentList);
 
 		TestUtils.logout(cookies);
@@ -108,7 +108,7 @@ public class DeleteTest {
 	public void You_are_not_allowed_to_do_this_operation_WITH_viewer_but_not_the_creator() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
-		JSONArray commentList = TestFinder.searchComments(cookies, "HIGH", 1); //attention pls!
+		JSONArray commentList = TestFinder.searchComments(cookies, "HIGH");
 
 		assertNotNull(commentList);
 		assertEquals(2, commentList.length());
@@ -123,7 +123,7 @@ public class DeleteTest {
 		}
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS) //attention pls!
+			.headers(Fixtures.SESSION_0_HEADERS) //attention pls!
 			.cookie(cookies)
 			.routeParam("id", ""+comment.getLong("id"))
 			.asJson();
@@ -139,7 +139,7 @@ public class DeleteTest {
 	public void You_are_not_allowed_to_update_this_data_WITH_closed_comment() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
-		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL", 1); //attention pls!
+		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL");
 
 		assertNotNull(commentList);
 		assertEquals(2, commentList.length());
@@ -154,7 +154,7 @@ public class DeleteTest {
 		}
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS) //attention pls!
+			.headers(Fixtures.SESSION_0_HEADERS) //attention pls!
 			.cookie(cookies)
 			.routeParam("id", ""+comment.getLong("id"))
 			.asJson();
@@ -170,7 +170,7 @@ public class DeleteTest {
 	public void Ticket_is_closed() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
-		JSONArray commentList = TestFinder.searchComments(cookies, "LOW", 0);
+		JSONArray commentList = TestFinder.searchComments(cookies, "LOW");
 
 		assertNotNull(commentList);
 		assertEquals(1, commentList.length());
@@ -195,7 +195,7 @@ public class DeleteTest {
 	public void Everything_must_be_ok_FOR_a_link_WHEN_admin_tries_to_someone_elses_comment() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN());
 
-		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL", 0);
+		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL");
 
 		assertNotNull(commentList);
 		assertEquals(2, commentList.length());
@@ -220,7 +220,7 @@ public class DeleteTest {
 	public void Everything_must_be_ok_WITH_viewer() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
-		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL", 1); //attention pls!
+		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL");
 
 		assertNotNull(commentList);
 		assertEquals(2, commentList.length());
@@ -229,7 +229,7 @@ public class DeleteTest {
 		JSONObject comment = commentList.getJSONObject(1);
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS) //attention pls!
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", ""+comment.getLong("id"))
 			.asJson();
@@ -246,14 +246,10 @@ public class DeleteTest {
 	}
 
 	private JSONObject callTheService(JSONObject user, Long id) {
-		return callTheService(user, id, 0);
-	}
-	
-	private JSONObject callTheService(JSONObject user, Long id, int session) {
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS) //for allowing viewers
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", (id != null ? id.toString() : ""))
 			.asJson();

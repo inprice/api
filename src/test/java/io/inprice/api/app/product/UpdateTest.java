@@ -141,7 +141,7 @@ public class UpdateTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 1);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 0);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -151,7 +151,7 @@ public class UpdateTest {
 	public void You_already_have_a_product_having_the_same_sku_or_name_FOR_sku() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product G");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product G", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);
@@ -173,7 +173,7 @@ public class UpdateTest {
 	public void You_already_have_a_product_having_the_same_sku_or_name_FOR_name() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product G");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product G", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);
@@ -195,7 +195,7 @@ public class UpdateTest {
 	public void Everything_must_be_ok_WITH_editor() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
 		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product I");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product I", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);
@@ -222,7 +222,7 @@ public class UpdateTest {
 	public void Everything_must_be_ok_WITH_admin() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN());
 		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product R");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product R", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);

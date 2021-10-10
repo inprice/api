@@ -31,4 +31,4 @@ insert into test.announce (type, level, title, body, starting_at, ending_at, use
 values ('USER', 'WARNING', 'Here is another good news for someone else', 'This is another test announce for the admin user of Workspace-AS', now(), @one_month_later, @admin_id, @workspace_id);
 
 -- adding free use right
-insert into test.user_marks (email, mark) values (@admin_email, 'FREE_USE');
+insert into test.user_marks (email, mark, boolean_val) values (@admin_email, 'FREE_USE', true);

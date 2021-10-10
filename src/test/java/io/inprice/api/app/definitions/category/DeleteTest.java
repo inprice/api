@@ -83,7 +83,7 @@ public class DeleteTest {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", "1")
 			.asJson();

@@ -59,7 +59,7 @@ public class FindLinksByIdTest {
 	public void Product_not_found_WHEN_trying_to_find_someone_elses_product() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product X");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product X", 0);
 		TestUtils.logout(cookies); //here is important!
 		
 		assertNotNull(productList);
@@ -101,7 +101,7 @@ public class FindLinksByIdTest {
 		JSONObject json = res.getBody().getObject();
 		assertEquals(200, json.getInt("status"));
 
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product D");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product D", 0);
 		JSONObject product = productList.getJSONObject(0);
 		
 		res = Unirest.get(SERVICE_ENDPOINT)
@@ -133,7 +133,7 @@ public class FindLinksByIdTest {
 
 		Cookies cookies = TestUtils.login(roleUserMap.get(TestRoles.ADMIN));
 
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product G");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product G", 0);
 		TestUtils.logout(cookies);
 
 		assertNotNull(productList);
@@ -143,7 +143,7 @@ public class FindLinksByIdTest {
 		JSONObject product = productList.getJSONObject(0);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {
-			JSONObject json = callTheService(roleUser.getValue(), product.getLong("id"), (TestRoles.VIEWER.equals(roleUser.getKey()) ? 1 : 0));
+			JSONObject json = callTheService(roleUser.getValue(), product.getLong("id"), 0);
 
 			assertEquals(roleUser.getKey().name(), 200, json.getInt("status"));
 			assertTrue(json.has("data"));

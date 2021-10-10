@@ -3,8 +3,6 @@ package io.inprice.api.utils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.util.Map;
-
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -68,9 +66,9 @@ public class TestFinder {
 	 * @param term - LIKE by name
 	 * @return
 	 */
-	public static JSONArray searchProducts(Cookies cookies, String byName) {
+	public static JSONArray searchProducts(Cookies cookies, String byName, int session) {
 		HttpResponse<JsonNode> res = Unirest.post("/products/search")
-			.headers(Fixtures.SESSION_0_HEADERS)
+				.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
 					.put("term", byName)
@@ -111,11 +109,9 @@ public class TestFinder {
 		return rows;
 	}
 
-	public static JSONArray searchComments(Cookies cookies, String ticketPriority, int session) {
-		Map<String, String> headers = (session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS);
-
+	public static JSONArray searchComments(Cookies cookies, String ticketPriority) {
 		HttpResponse<JsonNode> res = Unirest.post("/tickets/search")
-			.headers(headers)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
 					.put("priorities", new String[] { ticketPriority })
@@ -128,7 +124,7 @@ public class TestFinder {
 		JSONObject ticket = rows.getJSONObject(0);
 		
 		res = Unirest.get("/ticket/{id}")
-			.headers(headers)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", ""+ticket.getLong("id"))
 			.asJson();

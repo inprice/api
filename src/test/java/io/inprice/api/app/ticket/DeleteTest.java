@@ -89,10 +89,10 @@ public class DeleteTest {
 	}
 
 	@Test
-	public void You_are_not_allowed_to_do_this_operation_WITH_editor_but_not_the_creator() {
+	public void You_are_not_allowed_to_update_this_operation_WITH_editor_but_not_the_creator() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
 
-		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
+		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 1);
 
 		assertNotNull(ticketList);
 		assertEquals(1, ticketList.length());
@@ -101,7 +101,7 @@ public class DeleteTest {
 		JSONObject ticket = ticketList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
+			.headers(Fixtures.SESSION_1_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", ""+ticket.getLong("id"))
 			.asJson();
@@ -167,7 +167,7 @@ public class DeleteTest {
 	public void Everything_must_be_ok_WITH_viewer() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
-		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 1); //for his viewer session!
+		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 0); //for his viewer session!
 
 		assertNotNull(ticketList);
 		assertEquals(1, ticketList.length());
@@ -176,7 +176,7 @@ public class DeleteTest {
 		JSONObject ticket = ticketList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS) //for his viewer session!
+			.headers(Fixtures.SESSION_0_HEADERS) //for his viewer session!
 			.cookie(cookies)
 			.routeParam("id", ""+ticket.getLong("id"))
 			.asJson();

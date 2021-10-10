@@ -161,7 +161,7 @@ public class UpdateTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(1L, "LINK", 1L, "PRICE", "CHANGED"), 1); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(1L, "LINK", 1L, "PRICE", "CHANGED"), 0); //attention!
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));

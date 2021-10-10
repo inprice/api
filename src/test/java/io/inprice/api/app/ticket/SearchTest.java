@@ -115,7 +115,7 @@ public class SearchTest {
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(null, null, new String[] { "OTHER" }), 1); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(null, null, new String[] { "OTHER" }), 0); //attention!
 		assertEquals(200, json.getInt("status"));
 
 		JSONArray rows = json.getJSONArray("data");

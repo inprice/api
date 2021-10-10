@@ -152,7 +152,7 @@ public class AddLinksTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 1);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 0);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -162,7 +162,7 @@ public class AddLinksTest {
 	public void You_can_add_up_to_X_links() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN());
 		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product 2");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product 2", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);
@@ -184,7 +184,7 @@ public class AddLinksTest {
 	public void You_are_allowed_to_upload_up_to_100_URLs_at_once() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Pro_plan_with_no_user.ADMIN());
 		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product A");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product A", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);
@@ -213,7 +213,7 @@ public class AddLinksTest {
 	public void Everything_must_be_ok_WITH_editor() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
 		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product R");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product R", 1);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);
@@ -225,7 +225,7 @@ public class AddLinksTest {
 		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", "https://blue-dot.com/xsa-123");
 
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR(), body, 1);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
@@ -238,7 +238,7 @@ public class AddLinksTest {
 	public void Everything_must_be_ok_WITH_admin() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN());
 		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product S");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product S", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);

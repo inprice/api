@@ -92,7 +92,7 @@ public class ToggleSeenValueTest {
 	public void Everything_must_be_ok_WITH_viewer() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
-		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 1); //since he is a viewer!
+		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 0); //since he is a viewer!
 
 		assertNotNull(ticketList);
 		assertEquals(1, ticketList.length());
@@ -103,7 +103,7 @@ public class ToggleSeenValueTest {
 		ticket.put("body", "This is an updated body!");
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS) //attention pls!
+			.headers(Fixtures.SESSION_0_HEADERS) //attention pls!
 			.cookie(cookies)
 			.routeParam("id", ""+ticket.getLong("id"))
 			.asJson();

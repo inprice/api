@@ -81,7 +81,7 @@ public class UpdateTest {
 
 		Cookies cookies = TestUtils.login(user);
 
-		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL", 0);
+		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL");
 		TestUtils.logout(cookies);
 
 		assertNotNull(commentList);
@@ -110,7 +110,7 @@ public class UpdateTest {
 	public void Ticket_is_closed() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
-		JSONArray commentList = TestFinder.searchComments(cookies, "LOW", 0);
+		JSONArray commentList = TestFinder.searchComments(cookies, "LOW");
 
 		assertNotNull(commentList);
 		assertEquals(1, commentList.length());
@@ -149,7 +149,7 @@ public class UpdateTest {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN());
 
 		//searches a specific comment
-		JSONArray commentList = TestFinder.searchComments(cookies, "CRITICAL", 0);
+		JSONArray commentList = TestFinder.searchComments(cookies, "CRITICAL");
 		assertNotNull(commentList);
 
 		TestUtils.logout(cookies);
@@ -231,7 +231,7 @@ public class UpdateTest {
 	public void You_are_not_allowed_to_do_this_operation_WITH_viewer_but_not_the_creator() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
-		JSONArray commentList = TestFinder.searchComments(cookies, "HIGH", 1); //since he is a viewer!
+		JSONArray commentList = TestFinder.searchComments(cookies, "HIGH");
 
 		assertNotNull(commentList);
 		assertEquals(2, commentList.length());
@@ -242,7 +242,7 @@ public class UpdateTest {
 		comment.put("body", "This is an updated body!");
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS) //attention pls!
+			.headers(Fixtures.SESSION_0_HEADERS) //attention pls!
 			.cookie(cookies)
 			.body(comment)
 			.asJson();
@@ -258,7 +258,7 @@ public class UpdateTest {
 	public void Everything_must_be_ok_WITH_editor() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
 
-		JSONArray commentList = TestFinder.searchComments(cookies, "HIGH", 0);
+		JSONArray commentList = TestFinder.searchComments(cookies, "HIGH");
 
 		assertNotNull(commentList);
 		assertEquals(2, commentList.length());

@@ -125,10 +125,10 @@ public class UpdateTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Pro_plan_with_two_extra_users.VIEWER());
 
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(SAMPLE_BODY)
 			.asJson();

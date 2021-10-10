@@ -61,7 +61,7 @@ public class DeleteTest {
 	public void You_are_not_allowed_to_update_this_data_WITH_closed_comment() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN());
 
-		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL", 0);
+		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL");
 		TestUtils.logout(cookies);
 
 		assertNotNull(commentList);

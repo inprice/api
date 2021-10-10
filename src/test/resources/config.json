@@ -2,8 +2,8 @@
   "app": {
     "env": "test",
     "webUrl": "http://localhost:8080",
-    "port": 4567,
-    "apiUrl": "http://localhost:4567",
+    "port": 8888,
+    "apiUrl": "http://localhost:8888",
     "saltRounds": 6,
     "freeUseDays": 14
   },

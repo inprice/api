@@ -83,12 +83,11 @@ public interface MembershipDao {
     "left join workspace as a on a.id = m.workspace_id " + 
     "where a.status != 'BANNED' " +
     "  and m.email=:email " + 
-    "  and m.workspace_id != :workspaceId  " + 
     "  and m.status in (<statusList>) " + 
-    "order by m.status, m.updated_at desc"
+    "order by a.name, m.status"
   )
   @UseRowMapper(ActiveMemberMapper.class)
-  List<ActiveMember> findMembershipsByEmail(@Bind("email") String email, @Bind("workspaceId") Long workspaceId, @BindList("statusList") List<String> statusList);
+  List<ActiveMember> findMembershipsByEmail(@Bind("email") String email, @BindList("statusList") List<String> statusList);
 
   @SqlUpdate(
     "insert into membership (user_id, email, workspace_id, role, status, updated_at) " + 

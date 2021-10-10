@@ -155,7 +155,7 @@ public class FindByIdTest {
 	public void Everything_must_be_ok_WITH_viewer() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
-		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 1); //for his viewer session!
+		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 0); //for his viewer session!
 
 		assertNotNull(ticketList);
 		assertEquals(1, ticketList.length());
@@ -164,7 +164,7 @@ public class FindByIdTest {
 		JSONObject ticket = ticketList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS) //for his viewer session!
+			.headers(Fixtures.SESSION_0_HEADERS) //for his viewer session!
 			.cookie(cookies)
 			.routeParam("id", ""+ticket.getLong("id"))
 			.asJson();

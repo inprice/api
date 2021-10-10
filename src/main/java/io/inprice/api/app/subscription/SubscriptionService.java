@@ -257,16 +257,16 @@ class SubscriptionService {
     String problem = null;
 
     if (StringUtils.isBlank(dto.getTitle())) {
-      problem = "Title cannot be empty!";
+      problem = "Company Name cannot be empty!";
     } else if (dto.getTitle().length() < 3 || dto.getTitle().length() > 255) {
-      problem = "Title must be between 3 - 255 chars";
+      problem = "Company Name must be between 3 - 255 chars!";
     }
 
     if (problem == null) {
       if (StringUtils.isBlank(dto.getAddress1())) {
         problem = "Address line 1 cannot be empty!";
-      } else if (dto.getAddress1().length() < 12 || dto.getAddress1().length() > 255) {
-        problem = "Address line 1 must be between 12 - 255 chars!";
+      } else if (dto.getAddress1().length() > 255) {
+      	problem = "Address line 1 can be up to 255 chars!";
       }
     }
 

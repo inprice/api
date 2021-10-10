@@ -133,7 +133,7 @@ public class InsertTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody("LINK", 1L, "PRICE", "CHANGED"), 1); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody("LINK", 1L, "PRICE", "CHANGED"), 0); //attention!
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));
@@ -211,7 +211,7 @@ public class InsertTest {
 	public void Everything_must_be_ok_FOR_a_product_WITH_editor() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
-		JSONArray productList = TestFinder.searchProducts(cookies, "");
+		JSONArray productList = TestFinder.searchProducts(cookies, "", 0);
 
 		assertNotNull(productList);
 		assertEquals(2, productList.length());

@@ -77,7 +77,7 @@ public class GetIdNameListTest {
 		JSONObject json = res.getBody().getObject();
 		assertEquals(200, json.getInt("status"));
 
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product D");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product D", 0);
 		JSONObject product = productList.getJSONObject(0);
 		
 		res = Unirest.get(SERVICE_ENDPOINT)
@@ -102,13 +102,13 @@ public class GetIdNameListTest {
 		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {
-			JSONObject json = callTheService(roleUser.getValue(), 0L, (TestRoles.VIEWER.equals(roleUser.getKey()) ? 1 : 0));
+			JSONObject json = callTheService(roleUser.getValue(), 0L, 0);
 
 			assertEquals(200, json.getInt("status"));
 			assertTrue(json.has("data"));
 
 			JSONArray data = json.getJSONArray("data");
-			assertEquals(3, data.length());
+			assertEquals(roleUser.getKey().name(), 3, data.length());
 		}
 	}
 
@@ -116,7 +116,7 @@ public class GetIdNameListTest {
 	public void Everything_must_be_ok_WITH_excluded_id() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR());
 
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product X");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product X", 0);
 		TestUtils.logout(cookies); //here is important!
 		
 		assertNotNull(productList);

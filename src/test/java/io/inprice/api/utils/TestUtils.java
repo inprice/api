@@ -27,7 +27,7 @@ import redis.embedded.RedisServer;
  */
 public class TestUtils {
 	
-	private static final int SERVER_PORT = 4567;
+	private static final int SERVER_PORT = 8888;
 	
 	private static final StringBuilder sqlScripts;
 	

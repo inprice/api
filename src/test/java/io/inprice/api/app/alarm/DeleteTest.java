@@ -87,7 +87,7 @@ public class DeleteTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1L, 1); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1L, 0);
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));

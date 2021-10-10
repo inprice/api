@@ -83,7 +83,7 @@ public class MoveToTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 1); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 0); //attention!
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -124,7 +124,7 @@ public class MoveToTest {
 
 		//tries to move other workspace's links
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
+			.headers(Fixtures.SESSION_1_HEADERS)
 			.cookie(cookies)
 			.body(body)
 			.asJson();
@@ -191,7 +191,7 @@ public class MoveToTest {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
 
 		//searches some specific links
-		JSONArray linkList = TestFinder.searchLinks(cookies, "TRYING");
+		JSONArray linkList = TestFinder.searchLinks(cookies, "TRYING", 1);
 
 		assertNotNull(linkList);
 
@@ -210,7 +210,7 @@ public class MoveToTest {
 		
 		//moves those selected links
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
+			.headers(Fixtures.SESSION_1_HEADERS)
 			.cookie(cookies)
 			.body(body)
 			.asJson();
@@ -273,7 +273,7 @@ public class MoveToTest {
 	private Long findToProductId(JSONObject user, String productName) {
 		Cookies cookies = TestUtils.login(user);
 
-		JSONArray products = TestFinder.searchProducts(cookies, productName);
+		JSONArray products = TestFinder.searchProducts(cookies, productName, 0);
 		TestUtils.logout(cookies);
 
 		assertNotNull(products);

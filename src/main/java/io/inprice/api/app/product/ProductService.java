@@ -343,7 +343,6 @@ class ProductService {
 
         if (res.isOK()) {
         	Product product = productDao.findByIdWithLookups(dto.getProductId(), CurrentUser.getWorkspaceId());
-
         	int workspaceLinkCount = workspace.getLinkCount() + urlList.size();
 
           Map<String, Object> data = Map.of(

@@ -181,7 +181,7 @@ public class CreateAndUpdateTests {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		JSONObject json = callTheServiceWith("Acme Inc X", "USD", "$#,##0.00");
+		JSONObject json = callTheServiceWith("Pure Acme Inc", "USD", "$#,##0.00");
 
 		assertEquals(200, json.getInt("status"));
 		if (httpMethod.equals("POST")) { //for only create operation!

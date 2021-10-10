@@ -129,7 +129,7 @@ public class UpdateTest {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.body(SAMPLE_BODY)
 			.asJson();

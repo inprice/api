@@ -74,7 +74,7 @@ public class DeleteTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 1);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 0);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -95,7 +95,7 @@ public class DeleteTest {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 
 		//searches some specific links
-		JSONArray linkList = TestFinder.searchLinks(cookies, "ACTIVE");
+		JSONArray linkList = TestFinder.searchLinks(cookies, "ACTIVE", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(linkList);
@@ -115,7 +115,7 @@ public class DeleteTest {
 
 		//tries to delete other users' links
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
+			.headers(Fixtures.SESSION_1_HEADERS)
 			.cookie(cookies)
 			.body(body)
 			.asJson();
@@ -146,9 +146,10 @@ public class DeleteTest {
 		for (JSONObject user: users) {
   		//user logs in
   		Cookies cookies = TestUtils.login(user);
+  		boolean isEditor = user.getString("email").startsWith("editor");
   
   		//searches some specific links
-  		JSONArray linkList = TestFinder.searchLinks(cookies, "PROBLEM");
+  		JSONArray linkList = TestFinder.searchLinks(cookies, "PROBLEM", (isEditor ? 1 : 0));
   
   		assertNotNull(linkList);
   		assertEquals(2, linkList.length());
@@ -172,7 +173,7 @@ public class DeleteTest {
   
   		//deletes those selected links
   		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-  			.headers(Fixtures.SESSION_0_HEADERS)
+  			.headers(isEditor ? Fixtures.SESSION_1_HEADERS : Fixtures.SESSION_0_HEADERS)
   			.cookie(cookies)
   			.body(body)
   			.asJson();

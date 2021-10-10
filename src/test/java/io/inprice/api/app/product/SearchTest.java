@@ -110,12 +110,12 @@ public class SearchTest {
 		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {
-			JSONObject json = callTheService(roleUser.getValue(), "Product K", (TestRoles.VIEWER.equals(roleUser.getKey()) ? 1 : 0));
+			JSONObject json = callTheService(roleUser.getValue(), "Product K", 0);
 
 			assertEquals(roleUser.getKey().name(), 200, json.getInt("status"));
   		assertTrue(json.has("data"));
 
-  		assertEquals(1, json.getJSONArray("data").length());
+  		assertEquals(roleUser.getKey().name(), 1, json.getJSONArray("data").length());
 		}
 	}
 

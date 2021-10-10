@@ -68,14 +68,36 @@ public class SaveInfoTest {
 	}
 
 	@Test
-	public void Title_cannot_be_empty() {
+	public void Company_Name_cannot_be_empty() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.remove("title");
 		
 		JSONObject json = callTheService(body);
 
 		assertEquals(400, json.getInt("status"));
-		assertEquals("Title cannot be empty!", json.getString("reason"));
+		assertEquals("Company Name cannot be empty!", json.getString("reason"));
+	}
+
+	@Test
+	public void Company_Name_must_be_between_3_and_255_chars_WITH_shorter_title() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("title", "AB");
+
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Company Name must be between 3 - 255 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Company_Name_must_be_between_3_and_255_chars_WITH_longer_title() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("title", RandomStringUtils.randomAlphabetic(256));
+		
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Company Name must be between 3 - 255 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -90,25 +112,14 @@ public class SaveInfoTest {
 	}
 
 	@Test
-	public void Address_line_1_must_be_between_12_and_255_chars_WITH_shorter_address() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("address1", RandomStringUtils.randomAlphabetic(11));
-
-		JSONObject json = callTheService(body);
-		
-		assertEquals(400, json.getInt("status"));
-    assertEquals("Address line 1 must be between 12 - 255 chars!", json.getString("reason"));
-	}
-
-	@Test
-	public void Address_line_1_must_be_between_12_and_255_chars_WITH_longer_address() {
+	public void Address_line_1_can_be_up_to_255_chars_WITH_longer_address() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("address1", RandomStringUtils.randomAlphabetic(256));
 		
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Address line 1 must be between 12 - 255 chars!", json.getString("reason"));
+    assertEquals("Address line 1 can be up to 255 chars!", json.getString("reason"));
 	}
 
 	@Test

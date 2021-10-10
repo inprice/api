@@ -79,7 +79,7 @@ public class DeleteTest {
 	public void Product_not_found_WHEN_trying_to_delete_someone_elses_product() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product X");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product X", 0);
 		TestUtils.logout(cookies); //here is important!
 		
 		assertNotNull(productList);
@@ -99,7 +99,7 @@ public class DeleteTest {
 	public void Forbidden_WITH_viewer() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
 
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product I");
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product I", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);
@@ -111,7 +111,7 @@ public class DeleteTest {
 		cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_1_HEADERS)
+			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
 			.routeParam("id", ""+product.getLong("id"))
 			.asJson();
@@ -133,7 +133,7 @@ public class DeleteTest {
 		for (Entry<JSONObject, String> userProductName: userProductNameMap.entrySet()) {
 			Cookies cookies = TestUtils.login(userProductName.getKey());
 
-			JSONArray productList = TestFinder.searchProducts(cookies, userProductName.getValue());
+			JSONArray productList = TestFinder.searchProducts(cookies, userProductName.getValue(), 0);
   
   		assertNotNull(productList);
   		assertEquals(1, productList.length());
