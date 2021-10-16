@@ -1,4 +1,4 @@
-package io.inprice.api.app.definitions.brand;
+package io.inprice.api.app.brand;
 
 import java.util.List;
 

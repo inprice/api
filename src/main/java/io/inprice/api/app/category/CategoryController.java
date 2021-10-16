@@ -1,4 +1,4 @@
-package io.inprice.api.app.definitions.category;
+package io.inprice.api.app.category;
 
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;

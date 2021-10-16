@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.link.dto.SearchDTO;
-import io.inprice.api.app.product.ProductAlarmService;
+import io.inprice.api.app.product.ProductPriceService;
 import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LinkDeleteDTO;
@@ -133,7 +133,7 @@ class LinkService {
 
         if (result[5] > 0) {
         	if (CollectionUtils.isNotEmpty(productIdSet)) {
-        		ProductAlarmService.updateAlarm(productIdSet, handle);
+        		ProductPriceService.refresh(productIdSet, handle);
         	}
 
           if (dto.getFromProductId() != null) { //meaning that it is called from product definition (not from links search page)
@@ -224,7 +224,7 @@ class LinkService {
     					if (result[4] > 0) {
     						//refreshes product sums and alarm if needed!
             		foundProductIdSet.add(dto.getToProductId());
-            		ProductAlarmService.updateAlarm(foundProductIdSet, handle);
+            		ProductPriceService.refresh(foundProductIdSet, handle);
 
             		if (dto.getFromProductId() != null) { //meaning that it is called from product definition (not from links searching page)
                   ProductDao productDao = handle.attach(ProductDao.class);

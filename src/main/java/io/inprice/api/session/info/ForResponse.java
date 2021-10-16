@@ -31,6 +31,7 @@ public class ForResponse implements Serializable {
   private Date subsRenewalAt;
   private Date lastStatusUpdate;
   private String timezone;
+  private String currencyCode;
   private String currencyFormat;
   private UserRole role;
 
@@ -50,6 +51,7 @@ public class ForResponse implements Serializable {
     this.subsRenewalAt = workspace.getSubsRenewalAt();
     this.lastStatusUpdate = workspace.getLastStatusUpdate();
     this.timezone = timezone;
+    this.currencyCode = workspace.getCurrencyCode();
     this.currencyFormat = workspace.getCurrencyFormat();
     this.role = role;
   }
@@ -66,6 +68,7 @@ public class ForResponse implements Serializable {
     this.subsRenewalAt = forResponse.getSubsRenewalAt();
     this.lastStatusUpdate = forResponse.getLastStatusUpdate();
     this.timezone = forResponse.getTimezone();
+    this.currencyCode = forResponse.getCurrencyCode();
     this.currencyFormat = forResponse.getCurrencyFormat();
     this.role = forResponse.getRole();
   }
@@ -82,6 +85,7 @@ public class ForResponse implements Serializable {
     this.subsRenewalAt = forRedis.getSubsRenewalAt();
     this.lastStatusUpdate = forRedis.getLastStatusUpdate();
     this.timezone = forRedis.getTimezone();
+    this.currencyCode = forRedis.getCurrencyCode();
     this.currencyFormat = forRedis.getCurrencyFormat();
     this.role = UserRole.valueOf(forCookie.getRole());
   }
@@ -98,6 +102,7 @@ public class ForResponse implements Serializable {
     this.subsRenewalAt = mem.getSubsRenewalAt();
     this.lastStatusUpdate = mem.getLastStatusUpdate();
     this.timezone = user.getTimezone();
+    this.currencyCode = mem.getCurrencyCode();
     this.currencyFormat = mem.getCurrencyFormat();
     this.role = UserRole.valueOf(forCookie.getRole());
   }

@@ -1,4 +1,4 @@
-package io.inprice.api.app.definitions.category;
+package io.inprice.api.app.brand;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -10,8 +10,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
+import io.inprice.api.utils.TestWorkspaces;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -19,17 +19,20 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of CategoryController.insert(StringDTO)
+ * Tests the functionality of BrandController.update(IdTextDTO)
  * 
  * @author mdpinar
  * @since 2021-09-19
  */
 @RunWith(JUnit4.class)
-public class InsertTest {
+public class UpdateTest {
 
-	private static final String SERVICE_ENDPOINT = "/def/category";
+	private static final String SERVICE_ENDPOINT = "/def/brand";
 
-	private static final JSONObject SAMPLE_BODY = new JSONObject().put("value", "SPORTS");
+	private static final JSONObject SAMPLE_BODY = 
+			new JSONObject()
+				.put("id", "1")
+  			.put("text", "GROCERY");
 
 	@BeforeClass
 	public static void setup() {
@@ -38,7 +41,7 @@ public class InsertTest {
 
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.body(SAMPLE_BODY)
 			.asJson();
@@ -58,9 +61,32 @@ public class InsertTest {
 	}
 
 	@Test
+	public void Brand_not_found_WITH_null_id() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.remove("id");
+
+		JSONObject json = callTheService(body);
+
+		assertEquals(404, json.getInt("status"));
+		assertEquals("Brand not found!", json.getString("reason"));
+	}
+
+	@Test
+	public void Brand_not_found_WHEN_trying_to_update_someone_elses_brand() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("id", 3); //here is important!!!
+		body.put("text", "TEST");
+
+		JSONObject json = callTheService(body);
+
+		assertEquals(404, json.getInt("status"));
+		assertEquals("Brand not found!", json.getString("reason"));
+	}
+
+	@Test
 	public void Name_cannot_be_empty() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.remove("value");
+		body.remove("text");
 		
 		JSONObject json = callTheService(body);
 
@@ -71,7 +97,7 @@ public class InsertTest {
 	@Test
 	public void Name_must_be_between_2_and_50_chars_WITH_shorter_body() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("value", "A");
+		body.put("text", "A");
 
 		JSONObject json = callTheService(body);
 		
@@ -82,7 +108,7 @@ public class InsertTest {
 	@Test
 	public void Name_must_be_between_2_and_50_chars_WITH_longer_body() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("value", RandomStringUtils.randomAlphabetic(51));
+		body.put("text", RandomStringUtils.randomAlphabetic(51));
 		
 		JSONObject json = callTheService(body);
 		
@@ -116,51 +142,38 @@ public class InsertTest {
 	}
 
 	@Test
-	public void This_category_has_already_been_added() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN());
-
+	public void This_brand_has_already_been_added() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("value", "BEVERAGES");
+		body.put("text", "SAMSUNG");
 
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
-			.cookie(cookies)
-			.body(body)
-			.asJson();
-		TestUtils.logout(cookies);
+		JSONObject json = callTheService(body);
 
-		JSONObject json = res.getBody().getObject();
-
-		assertEquals(877, json.getInt("status"));
-    assertEquals("This category has already been added!", json.getString("reason"));
+		assertEquals(876, json.getInt("status"));
+    assertEquals("This brand has already been added!", json.getString("reason"));
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
-
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
-			.cookie(cookies)
-			.body(SAMPLE_BODY)
-			.asJson();
-		TestUtils.logout(cookies);
-
-		JSONObject json = res.getBody().getObject();
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		JSONObject json = callTheService(body);
 
 		assertEquals(200, json.getInt("status"));
 		assertEquals("OK", json.getString("reason"));
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), body);
+		return callTheService(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), body);
 	}
 
 	private JSONObject callTheService(JSONObject user, JSONObject body) {
+		return callTheService(user, body, 0);
+	}
+	
+	private JSONObject callTheService(JSONObject user, JSONObject body, int session) {
 		Cookies cookies = TestUtils.login(user);
 
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
+			.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS) //for allowing viewers
 			.cookie(cookies)
 			.body(body != null ? body : "")
 			.asJson();

@@ -34,3 +34,12 @@ insert into test.workspace_history (workspace_id, status) values (@workspace_id,
 insert into test.membership (email, user_id, workspace_id, role, status) values (@admin_email, @admin_id, @workspace_id, 'ADMIN', 'JOINED');
 insert into test.membership (email, user_id, workspace_id, role, status) values (@editor_email, @editor_id, @workspace_id, 'EDITOR', 'JOINED');
 insert into test.membership (email, user_id, workspace_id, role, status) values (@viewer_email, @viewer_id, @workspace_id, 'VIEWER', 'JOINED');
+
+-- -----------------------
+-- 2 smart prices
+-- -----------------------
+insert into smart_price (name, formula, lower_limit_formula, upper_limit_formula, workspace_id) 
+values ('Special Formula', '(a*1.10)', 'min(i,a)', 'max(p,x)', @workspace_id);
+
+insert into smart_price (name, formula, lower_limit_formula, upper_limit_formula, workspace_id) 
+values ('Secret Formula', '(p*1.05)', 'min(i,a)/2', 'max(p,x)+0.30', @workspace_id);

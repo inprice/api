@@ -1,7 +1,8 @@
-package io.inprice.api.app.definitions.brand;
+package io.inprice.api.app.smartprice;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.BeforeClass;
@@ -19,20 +20,24 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of BrandController.update(IdTextDTO)
+ * Tests the functionality of SmartPriceController.update(SmartPriceDTO)
  * 
  * @author mdpinar
- * @since 2021-09-19
+ * @since 2021-10-16
  */
 @RunWith(JUnit4.class)
 public class UpdateTest {
 
-	private static final String SERVICE_ENDPOINT = "/def/brand";
+	private static final String SERVICE_ENDPOINT = "/smart-price";
 
 	private static final JSONObject SAMPLE_BODY = 
 			new JSONObject()
 				.put("id", "1")
-  			.put("text", "GROCERY");
+				.put("name", "New formula")
+				.put("formula", "min((p*1.10)+0.75,a)")
+				.put("lowerLimitformula", "(i-(i*10/100))")
+				.put("upperLimitformula", "a+1.50")
+				;
 
 	@BeforeClass
 	public static void setup() {
@@ -61,32 +66,32 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void Brand_not_found_WITH_null_id() {
+	public void Smart_price_not_found_WITH_null_id() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.remove("id");
 
 		JSONObject json = callTheService(body);
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Brand not found!", json.getString("reason"));
+		assertEquals("Smart price not found!", json.getString("reason"));
 	}
 
 	@Test
-	public void Brand_not_found_WHEN_trying_to_update_someone_elses_brand() {
+	public void Smart_price_not_found_WHEN_trying_to_update_someone_elses_brand() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("id", 3); //here is important!!!
-		body.put("text", "TEST");
+		body.put("id", 3); //important!!!
+		body.put("name", "Updated name");
 
 		JSONObject json = callTheService(body);
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Brand not found!", json.getString("reason"));
+		assertEquals("Smart price not found!", json.getString("reason"));
 	}
 
 	@Test
 	public void Name_cannot_be_empty() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.remove("text");
+		body.remove("name");
 		
 		JSONObject json = callTheService(body);
 
@@ -95,25 +100,91 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void Name_must_be_between_2_and_50_chars_WITH_shorter_body() {
+	public void Name_can_be_up_to_70_chars_WITH_longer_body() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("text", "A");
-
+		body.put("name", RandomStringUtils.randomAlphabetic(71));
+		
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Name must be between 2 - 50 chars!", json.getString("reason"));
+    assertEquals("Name can be up to 70 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void Name_must_be_between_2_and_50_chars_WITH_longer_body() {
+	public void Formula_cannot_be_empty_WITH_empty_formula() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("text", RandomStringUtils.randomAlphabetic(51));
+		body.put("formula", "");
+		
+		JSONObject json = callTheService(body);
+
+		assertEquals(400, json.getInt("status"));
+		assertEquals("Formula cannot be empty!", json.getString("reason"));
+	}
+
+	@Test
+	public void Formula_cannot_be_empty_WITHOUT_formula() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.remove("formula");
+		
+		JSONObject json = callTheService(body);
+
+		assertEquals(400, json.getInt("status"));
+		assertEquals("Formula cannot be empty!", json.getString("reason"));
+	}
+
+	@Test
+	public void Formula_can_be_up_to_255_chars_WITH_longer_body() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("formula", RandomStringUtils.randomAlphabetic(256));
 		
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Name must be between 2 - 50 chars!", json.getString("reason"));
+    assertEquals("Formula can be up to 255 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Division_by_zero_error_FOR_formula() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("formula", "i/0");
+		
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertTrue(json.getString("reason").contains("Division by zero"));
+	}
+
+	@Test
+	public void Paranthesis_error_FOR_lower_limit_formula() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("lowerLimitFormula", "(i+10");
+		
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertTrue(json.getString("reason").contains("parentheses"));
+	}
+
+	@Test
+	public void Lower_Limit_Formula_can_be_up_to_255_chars_WITH_longer_body() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("lowerLimitFormula", RandomStringUtils.randomAlphabetic(256));
+		
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Lower Limit Formula can be up to 255 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Upper_Limit_Formula_can_be_up_to_255_chars_WITH_longer_body() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("upperLimitFormula", RandomStringUtils.randomAlphabetic(256));
+		
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Upper Limit Formula can be up to 255 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -142,14 +213,14 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void This_brand_has_already_been_added() {
+	public void This_formula_has_already_been_added() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("text", "SAMSUNG");
+		body.put("name", "Other Formula");
 
 		JSONObject json = callTheService(body);
 
-		assertEquals(876, json.getInt("status"));
-    assertEquals("This brand has already been added!", json.getString("reason"));
+		assertEquals(881, json.getInt("status"));
+    assertEquals("This formula has already been added!", json.getString("reason"));
 	}
 
 	@Test

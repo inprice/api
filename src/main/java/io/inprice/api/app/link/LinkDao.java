@@ -20,7 +20,7 @@ import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
-import io.inprice.common.repository.AlarmDao;
+import io.inprice.common.repository.ProductPriceDao;
 import io.inprice.common.repository.PlatformDao;
 
 public interface LinkDao {
@@ -30,7 +30,7 @@ public interface LinkDao {
   Link findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-		"select *" + AlarmDao.FIELDS + " from link as l " +
+		"select *" + ProductPriceDao.ALARM_FIELDS + " from link as l " +
     "left join alarm as al on al.id = l.alarm_id " + 
     "where l.id=:id " +
     "  and l.workspace_id=:workspaceId"
@@ -43,9 +43,10 @@ public interface LinkDao {
   Link findByProductIdAndUrlHash(@Bind("productId") Long productId, @Bind("urlHash") String urlHash);
 
   @SqlQuery(
-    "select l.*" + PlatformDao.FIELDS + AlarmDao.FIELDS + ", g.price as product_price from link as l " + 
-		"inner join product as g on g.id = l.product_id " + 
-		"left join platform as p on p.id = l.platform_id " + 
+    "select l.*" + PlatformDao.FIELDS + ProductPriceDao.ALARM_FIELDS + 
+    ", p.price as product_price, p.name as product_name, p.alarm_id as product_alarm_id, p.smart_price_id as product_smart_price_id from link as l " + 
+		"inner join product as p on p.id = l.product_id " + 
+		"left join platform as pl on pl.id = l.platform_id " + 
     "left join alarm as al on al.id = l.alarm_id " + 
     "where l.product_id=:productId " +
     "  and l.workspace_id=:workspaceId " +

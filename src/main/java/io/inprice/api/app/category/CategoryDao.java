@@ -1,4 +1,4 @@
-package io.inprice.api.app.definitions.category;
+package io.inprice.api.app.category;
 
 import java.util.List;
 

@@ -160,9 +160,13 @@ public class UserService {
   	if (CurrentUser.getRole().equals(UserRole.SUPER)) return Responses.OK;
     try (Handle handle = Database.getHandle()) { 
       UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
-      return new Response(
-        userSessionDao.findOpenedSessions(CurrentUser.getUserId())
-      );
+      List<ForDatabase> sessions = userSessionDao.findOpenedSessions(CurrentUser.getUserId());
+      if (CurrentUser.getEmail().equals("demo@inprice.io")) {
+      	for (ForDatabase ses: sessions) {
+      		ses.setIp("HIDDEN");
+      	}
+      }
+      return new Response(sessions);
     }
   }
 

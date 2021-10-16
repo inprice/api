@@ -70,7 +70,8 @@ public class PasswordHelper {
   }
   
   public static void main(String[] args) {
-		System.out.println(isValid("1234-AB", "eLgUOcQnH/Twai9hJF4Ing25yXoR2eGA0DseixPycjcTb//WqlbdEct3rykdJI7MAmoO2MBDBaAoVYGsV7LLuo"));
+  	System.out.println(getSaltedHash("1n.S4per1ce"));
+		//System.out.println(isValid("1234-AB", "eLgUOcQnH/Twai9hJF4Ing25yXoR2eGA0DseixPycjcTb//WqlbdEct3rykdJI7MAmoO2MBDBaAoVYGsV7LLuo"));
 	}
 
 }

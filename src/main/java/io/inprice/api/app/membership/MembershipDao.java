@@ -20,7 +20,7 @@ public interface MembershipDao {
 
   final String WORKSPACE_FIELDS = 
     ", a.name as workspace_name, a.status as workspace_status, a.subs_started_at, " +
-    "a.subs_renewal_at, a.last_status_update, a.plan_id, a.currency_format, a.user_count, a.link_count, a.alarm_count ";
+    "a.subs_renewal_at, a.last_status_update, a.plan_id, a.currency_code, a.currency_format, a.user_count, a.link_count, a.alarm_count ";
 
   final String PLAN_FIELDS = ", p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit ";
   

@@ -1,4 +1,4 @@
-package io.inprice.api.app.definitions.brand;
+package io.inprice.api.app.category;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -18,7 +18,7 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of BrandController.delete(Long)
+ * Tests the functionality of CategoryController.delete(Long)
  * 
  * @author mdpinar
  * @since 2021-09-19
@@ -26,7 +26,7 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class DeleteTest {
 
-	private static final String SERVICE_ENDPOINT = "/def/brand/{id}";
+	private static final String SERVICE_ENDPOINT = "/def/category/{id}";
 
 	@BeforeClass
 	public static void setup() {
@@ -47,27 +47,27 @@ public class DeleteTest {
 	}
 
 	@Test
-	public void Brand_not_found_WITHOUT_id() {
+	public void Category_not_found_WITHOUT_id() {
 		JSONObject json = callTheService(null);
 
 		assertEquals(404, json.getInt("status"));
-    assertEquals("Brand not found!", json.getString("reason"));
+    assertEquals("Category not found!", json.getString("reason"));
 	}
 
 	@Test
-	public void Brand_not_found_WITH_wrong_id() {
+	public void Category_not_found_WITH_wrong_id() {
 		JSONObject json = callTheService(999L);
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Brand not found!", json.getString("reason"));
+		assertEquals("Category not found!", json.getString("reason"));
 	}
 
 	@Test
-	public void Brand_not_found_WHEN_trying_to_delete_someone_elses_brand() {
+	public void Category_not_found_WHEN_trying_to_delete_someone_elses_category() {
 		JSONObject json = callTheService(3L);
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Brand not found!", json.getString("reason"));
+		assertEquals("Category not found!", json.getString("reason"));
 	}
 
 	@Test

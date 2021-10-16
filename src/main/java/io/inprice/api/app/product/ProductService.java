@@ -15,8 +15,8 @@ import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.definitions.brand.BrandDao;
-import io.inprice.api.app.definitions.category.CategoryDao;
+import io.inprice.api.app.brand.BrandDao;
+import io.inprice.api.app.category.CategoryDao;
 import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.app.product.dto.AddLinksDTO;
 import io.inprice.api.app.product.dto.SearchDTO;
@@ -210,7 +210,7 @@ class ProductService {
                 // indicators (on both product itself and its links) must be re-calculated accordingly
                 if (found.getLinkCount() > 0 && found.getPrice().compareTo(dto.getPrice()) != 0) {
                 	//refreshes product's sums and alarm if needed!
-              		ProductAlarmService.updateAlarm(dto.getId(), handle);
+              		ProductPriceService.refresh(dto.getId(), handle);
                 }
 
                 //to return

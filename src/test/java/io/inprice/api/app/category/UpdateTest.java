@@ -1,4 +1,4 @@
-package io.inprice.api.app.definitions.category;
+package io.inprice.api.app.category;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
