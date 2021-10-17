@@ -44,8 +44,9 @@ public interface ProductDao {
 	boolean doesExistByName(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
-		"select p.*" + ProductPriceDao.ALARM_FIELDS + BrandDao.FIELDS + CategoryDao.FIELDS + " from product p " +
+		"select p.*" + ProductPriceDao.ALARM_FIELDS + ProductPriceDao.SMART_PRICE_FIELDS + BrandDao.FIELDS + CategoryDao.FIELDS + " from product p " +
 		"left join alarm as al on al.id = p.alarm_id " +
+		"left join smart_price as sp on sp.id = p.smart_price_id " +
 		"left join brand as brn on brn.id = p.brand_id " +
 		"left join category as cat on cat.id = p.category_id " +
 		"where p.id=:id " +
@@ -77,14 +78,6 @@ public interface ProductDao {
 	)
   @GetGeneratedKeys()
   long insert(@BindBean("dto") ProductDTO dto);
-
-  @SqlUpdate(
-		"update product " +
-		"set sku=:dto.sku, name=:dto.name, price=:dto.price, brand_id=:dto.brandId, category_id=:dto.categoryId " +
-		"where id=:dto.id " +
-		"  and workspace_id=:dto.workspaceId"
-	)
-  boolean update(@BindBean("dto") ProductDTO dto);
 
   //called after adding links
   @SqlUpdate("update product set waitings=waitings + <count> where id=:id")

@@ -226,7 +226,10 @@ public class UpdateTest {
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		JSONObject json = callTheService(body);
+		body.put("id", 4L);
+		body.put("formula", "a/2+i/2+1.12"); //this must be cause re-calculated the product's suggested price
+
+		JSONObject json = callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), body);
 
 		assertEquals(200, json.getInt("status"));
 		assertEquals("OK", json.getString("reason"));

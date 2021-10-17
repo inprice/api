@@ -97,7 +97,7 @@ public class DeleteTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		JSONObject json = callTheService(1L);
+		JSONObject json = callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), 4L);
 
 		assertEquals(200, json.getInt("status"));
 		assertEquals("OK", json.getString("reason"));

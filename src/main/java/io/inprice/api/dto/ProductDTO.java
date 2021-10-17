@@ -25,8 +25,13 @@ public class ProductDTO {
   private SimpleDef brand;
   private SimpleDef category;
 
+  private Long smartPriceId;  //set by user
+  private BigDecimal suggestedPrice; //set by the system in update section
+  private BigDecimal suggestedPriceProblem; //set by the system in update section
+
   private Long brandId;    //for dao
   private Long categoryId; //for dao
+
   private Long workspaceId;
 
 }

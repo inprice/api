@@ -19,8 +19,8 @@ import io.inprice.common.models.Membership;
 public interface MembershipDao {
 
   final String WORKSPACE_FIELDS = 
-    ", a.name as workspace_name, a.status as workspace_status, a.subs_started_at, " +
-    "a.subs_renewal_at, a.last_status_update, a.plan_id, a.currency_code, a.currency_format, a.user_count, a.link_count, a.alarm_count ";
+    ", w.name as workspace_name, w.status as workspace_status, w.subs_started_at, " +
+    "w.subs_renewal_at, w.last_status_update, w.plan_id, w.currency_code, w.currency_format, w.user_count, w.link_count, w.alarm_count ";
 
   final String PLAN_FIELDS = ", p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit ";
   
@@ -34,9 +34,9 @@ public interface MembershipDao {
 
   @SqlQuery(
     "select m.*" + WORKSPACE_FIELDS + PLAN_FIELDS + " from membership as m " +
-    "inner join workspace as a on a.id = m.workspace_id " + 
-    "left join plan as p on p.id = a.plan_id " + 
-    "where a.status != 'BANNED' " +
+    "inner join workspace as w on w.id = m.workspace_id " + 
+    "left join plan as p on p.id = w.plan_id " + 
+    "where w.status != 'BANNED' " +
     "  and m.workspace_id = :workspaceId " + 
     "  and role in ('VIEWER', 'EDITOR') " + 
     "order by m.email"
@@ -46,12 +46,12 @@ public interface MembershipDao {
 
   @SqlQuery(
     "select m.*" + WORKSPACE_FIELDS + PLAN_FIELDS + " from membership as m " +
-    "inner join workspace as a on a.id = m.workspace_id " + 
-    "left join plan as p on p.id = a.plan_id " + 
-    "where a.status != 'BANNED' " +
+    "inner join workspace as w on w.id = m.workspace_id " + 
+    "left join plan as p on p.id = w.plan_id " + 
+    "where w.status != 'BANNED' " +
     "  and m.email=:email " +
     "  and m.status=:status " + 
-    "order by a.name, m.role"
+    "order by w.name, m.role"
   )
   @UseRowMapper(MembershipMapper.class)
   List<Membership> findListByEmailAndStatus(@Bind("email") String email, @Bind("status") UserStatus status);
@@ -61,9 +61,9 @@ public interface MembershipDao {
   Membership findByEmailAndStatus(@Bind("email") String email, @Bind("status") UserStatus status, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-    "select m.id, a.name, m.role, m.status, m.created_at from membership as m " + 
-    "left join workspace as a on a.id = m.workspace_id " + 
-    "where a.status != 'BANNED' " +
+    "select m.id, w.name, m.role, m.status, m.created_at from membership as m " + 
+    "left join workspace as w on w.id = m.workspace_id " + 
+    "where w.status != 'BANNED' " +
     "  and m.email=:email " + 
     "  and m.status=:status " + 
     "order by m.id desc"
@@ -79,12 +79,12 @@ public interface MembershipDao {
   List<Long> findUserIdListHavingJustThisWorkspace(@Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-    "select m.id, a.name, m.role, m.status, m.updated_at from membership as m " + 
-    "left join workspace as a on a.id = m.workspace_id " + 
-    "where a.status != 'BANNED' " +
+    "select m.id, w.name, m.role, m.status, m.updated_at from membership as m " + 
+    "left join workspace as w on w.id = m.workspace_id " + 
+    "where w.status != 'BANNED' " +
     "  and m.email=:email " + 
     "  and m.status in (<statusList>) " + 
-    "order by a.name, m.status"
+    "order by w.name, m.status"
   )
   @UseRowMapper(ActiveMemberMapper.class)
   List<ActiveMember> findMembershipsByEmail(@Bind("email") String email, @BindList("statusList") List<String> statusList);

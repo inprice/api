@@ -1,15 +1,22 @@
 package io.inprice.api.app.smartprice;
 
+import java.util.List;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.statement.Batch;
 
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.common.formula.EvaluationResult;
 import io.inprice.common.formula.FormulaHelper;
 import io.inprice.common.formula.SmartPriceDTO;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
+import io.inprice.common.info.ProductRefreshResult;
+import io.inprice.common.models.Product;
 import io.inprice.common.models.SmartPrice;
 
 public class SmartPriceService {
@@ -64,14 +71,59 @@ public class SmartPriceService {
 
         try (Handle handle = Database.getHandle()) {
           SmartPriceDao smartPriceDao = handle.attach(SmartPriceDao.class);
+          
+          SmartPrice oldForm = smartPriceDao.findById(dto.getId(), CurrentUser.getWorkspaceId());
+          if (oldForm != null) {
+          	
+	          //to prevent duplication, checking if any smartPrice other than this has the same name!
+	          SmartPrice found = smartPriceDao.findByName(dto.getName(), dto.getId(), CurrentUser.getWorkspaceId());
+	          if (found == null) {
+            	
+          		handle.begin();
+	          	
+	          	boolean isUpdated = smartPriceDao.update(dto, CurrentUser.getWorkspaceId());
+	            if (isUpdated) {
 
-          //to prevent duplication, checking if any smartPrice other than this has the same name!
-          SmartPrice found = smartPriceDao.findByName(dto.getName(), dto.getId(), CurrentUser.getWorkspaceId());
-          if (found == null) {
-          	boolean isUpdated = smartPriceDao.update(dto, CurrentUser.getWorkspaceId());
-            if (isUpdated) res = Responses.OK;
-          } else {
-          	res = Responses.Already.Defined.SMART_PRICE;
+	            	String oldFormulas = (oldForm.getFormula()+oldForm.getLowerLimitFormula()+oldForm.getUpperLimitFormula());
+	            	String newFormulas = (dto.getFormula()+dto.getLowerLimitFormula()+dto.getUpperLimitFormula());
+
+		          	//if there is a change on formulas, we need to update every related product
+		          	if (oldFormulas.equals(newFormulas) == false) {
+		          		List<Product> productList = smartPriceDao.findProductListBySmartPriceId(dto.getId(), CurrentUser.getWorkspaceId());
+		          		if (CollectionUtils.isNotEmpty(productList)) {
+
+		                Batch batch = handle.createBatch();
+		          			
+		          			for (Product product: productList) {
+		          				ProductRefreshResult prr = new ProductRefreshResult();
+		          				prr.setActives(product.getActives());
+		          				prr.setProductPrice(product.getPrice());
+		          				prr.setMinPrice(product.getMinPrice());
+		          				prr.setAvgPrice(product.getAvgPrice());
+		          				prr.setMaxPrice(product.getMaxPrice());
+
+		          		  	EvaluationResult result = FormulaHelper.evaluate(product.getSmartPrice(), prr);
+			                batch.add(
+	                			String.format(
+		          		        "update product set suggested_price=%f, suggested_price_problem=%s where id=%d ",
+		          		        result.getValue(),
+		          		        (result.getProblem() != null ? "'"+result.getProblem()+"'" : "null"),
+		          		        product.getId()
+	          		        )
+	          		      );
+		          			}
+		          			batch.execute();
+		          		}
+		          	}
+		          	handle.commit();
+		          	res = Responses.OK;
+
+	            } else {
+		          	res = Responses.DataProblem.DB_PROBLEM;
+	            }
+	          } else {
+	          	res = Responses.Already.Defined.SMART_PRICE;
+	          }
           }
         }
       } else {
