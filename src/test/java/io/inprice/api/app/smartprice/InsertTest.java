@@ -39,8 +39,8 @@ public class InsertTest {
 	private static final JSONObject SAMPLE_BODY = new JSONObject()
 			.put("name", "Suitable and in-limit formula")
 			.put("formula", "min((p*1.10)+0.75,a)")
-			.put("lowerLimitformula", "(i-(i*10/100))")
-			.put("upperLimitformula", "a+1.50")
+			.put("lowerLimitFormula", "(i-(i*10/100))")
+			.put("upperLimitFormula", "a+1.50")
 			;
 	
 	@BeforeClass

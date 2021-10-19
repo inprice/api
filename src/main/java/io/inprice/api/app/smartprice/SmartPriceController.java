@@ -44,6 +44,22 @@ public class SmartPriceController extends AbstractController {
     	ctx.json(service.delete(id));
     }, AccessRoles.EDITOR());
 
+    // get
+    app.get(Consts.Paths.SmartPrice.BASE + "/:id", (ctx) -> {
+    	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+    	ctx.json(service.findById(id));
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
+
+    // test
+    app.post(Consts.Paths.SmartPrice.TEST, (ctx) -> {
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+    		SmartPriceDTO dto = ctx.bodyAsClass(SmartPriceDTO.class);
+	  		ctx.json(service.test(dto));
+    	}
+    }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
+
     // list
     app.get(Consts.Paths.SmartPrice.BASE + "/list", (ctx) -> {
   		ctx.json(service.list());

@@ -1,5 +1,7 @@
 package io.inprice.api.app.smartprice;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -157,6 +159,52 @@ public class SmartPriceService {
       		}
       	}
       }
+    }
+
+    return res;
+  }
+
+  Response findById(Long id) {
+  	Response res = Responses.NotFound.SMART_PRICE;
+    if (id != null && id > 0) {
+      try (Handle handle = Database.getHandle()) {
+      	SmartPriceDao smartPriceDao = handle.attach(SmartPriceDao.class);
+      	SmartPrice smartPrice = smartPriceDao.findById(id, CurrentUser.getWorkspaceId());
+      	if (smartPrice != null) {
+          res = new Response(smartPrice);
+      	}
+      }
+    }
+    return res;
+  }
+
+  Response test(SmartPriceDTO dto) {
+  	Response res = Responses.DataProblem.DB_PROBLEM;
+  	
+    String problem = validate(dto);
+    if (problem == null) {
+  		SmartPrice smartPrice = new SmartPrice();
+  		smartPrice.setFormula(dto.getFormula());
+  		smartPrice.setLowerLimitFormula(dto.getLowerLimitFormula());
+  		smartPrice.setUpperLimitFormula(dto.getUpperLimitFormula());
+
+    	ProductRefreshResult prr = new ProductRefreshResult();
+    	prr.setActives(3);
+  		prr.setMinPrice(BigDecimal.valueOf(100));
+  		prr.setAvgPrice(BigDecimal.valueOf(200));
+  		prr.setMaxPrice(BigDecimal.valueOf(300));
+  		
+    	double[] prices = { 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0 };
+    	List<EvaluationResult> resultList = new ArrayList<>(prices.length);
+
+    	for (double price: prices) {
+    		prr.setProductPrice(BigDecimal.valueOf(price));
+    		EvaluationResult er = FormulaHelper.evaluate(smartPrice, prr);
+    		resultList.add(er);
+    	}
+    	res = new Response(resultList);
+    } else {
+    	res = new Response(problem);
     }
 
     return res;

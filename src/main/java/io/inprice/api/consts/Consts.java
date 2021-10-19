@@ -123,6 +123,7 @@ public class Consts {
 
     public static class SmartPrice {
       public static final String BASE = "/smart-price";
+    	public static final String TEST = BASE + "/test";
     	public static final String SEARCH = BASE + "s/search";
     }
 
