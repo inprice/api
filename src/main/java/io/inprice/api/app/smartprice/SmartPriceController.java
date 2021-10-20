@@ -61,7 +61,7 @@ public class SmartPriceController extends AbstractController {
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     // list
-    app.get(Consts.Paths.SmartPrice.BASE + "/list", (ctx) -> {
+    app.get(Consts.Paths.SmartPrice.LIST, (ctx) -> {
   		ctx.json(service.list());
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
