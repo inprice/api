@@ -42,3 +42,9 @@ select 'PRODUCT', id, 'POSITION', 'CHANGED', @workspace_id from product where wo
 
 insert into alarm (topic, link_id, subject, subject_when, workspace_id) 
 select 'LINK', id, 'POSITION', 'CHANGED', @workspace_id from link where workspace_id = @workspace_id limit 3;
+
+-- -----------------------
+-- 1 smart price
+-- -----------------------
+insert into smart_price (name, formula, lower_limit_formula, upper_limit_formula, workspace_id) 
+values ('Base Formula', 'min((p*1.10)+0.75,a)', '(i-(i*10/100))', 'a+1.50', @workspace_id);

@@ -40,7 +40,7 @@ public interface UserSessionDao {
   )
   void insertBulk(@BindBean("ses") List<ForDatabase> sesList);
 
-  @SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId")
+  @SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId order by accessed_at desc limit 25")
   @UseRowMapper(DBSessionMapper.class)
   List<ForDatabase> findOpenedSessions(@Bind("userId") Long userId);
 

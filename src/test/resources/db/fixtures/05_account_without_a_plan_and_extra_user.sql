@@ -65,3 +65,12 @@ values (@ticket_id,'OPENED', 'CRITICAL', 'PROBLEM', 'WORKSPACE', @admin_id, @wor
 -- comment
 insert into test.ticket_comment (ticket_id, body, user_id, workspace_id) 
 values (@ticket_id, 'I am still waiting a response for this problem!', @admin_id, @workspace_id);
+
+-- -----------------------
+-- 2 smart prices
+-- -----------------------
+insert into smart_price (name, formula, lower_limit_formula, upper_limit_formula, workspace_id) 
+values ('Smart Formula', '(p*1.10)', 'a', 'x', @workspace_id);
+
+insert into smart_price (name, formula, lower_limit_formula, upper_limit_formula, workspace_id) 
+values ('Other Formula', '(p/1.10)', 'a+i', 'x*2', @workspace_id);

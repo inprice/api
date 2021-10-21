@@ -37,8 +37,8 @@ public interface Dao {
 	User findById(@Bind("id") Long id);
 
   @SqlQuery(
-		"select s.*, a.name as workspace_name from user_session s " +
-		"inner join workspace a on a.id = s.workspace_id " +
+		"select s.*, w.name as workspace_name from user_session s " +
+		"inner join workspace w on w.id = s.workspace_id " +
 		"where s.user_id=:userId " +
 		"order by created_at"
 	)
@@ -46,8 +46,8 @@ public interface Dao {
   List<ForDatabase> fetchSessionListById(@Bind("userId") Long userId);
 
   @SqlQuery(
-		"select m.*, a.name as workspace_name, a.status as workspace_status from membership m " +
-		"inner join workspace a on a.id = m.workspace_id "+
+		"select m.*, w.name as workspace_name, w.status as workspace_status from membership m " +
+		"inner join workspace w on w.id = m.workspace_id "+
 		"where user_id=:userId " +
 		"order by role, created_at"
 	)

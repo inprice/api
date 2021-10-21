@@ -121,6 +121,13 @@ public class Consts {
     	public static final String CATEGORY = BASE + "/category";
     }
 
+    public static class SmartPrice {
+      public static final String BASE = "/smart-price";
+    	public static final String TEST = BASE + "/test";
+    	public static final String LIST = BASE + "s";
+    	public static final String SEARCH = BASE + "s/search";
+    }
+
     public static class Dashboard {
       public static final String BASE = "/dashboard";
       public static final String REFRESH = BASE + "/refresh";

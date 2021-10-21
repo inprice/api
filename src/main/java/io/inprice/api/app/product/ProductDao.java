@@ -10,13 +10,14 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
-import io.inprice.api.app.definitions.brand.BrandDao;
-import io.inprice.api.app.definitions.category.CategoryDao;
+import io.inprice.api.app.brand.BrandDao;
+import io.inprice.api.app.category.CategoryDao;
+import io.inprice.api.app.smartprice.SmartPriceDao;
 import io.inprice.api.dto.ProductDTO;
 import io.inprice.common.mappers.IdNamePairMapper;
 import io.inprice.common.mappers.ProductMapper;
 import io.inprice.common.models.Product;
-import io.inprice.common.repository.AlarmDao;
+import io.inprice.common.repository.ProductPriceDao;
 
 public interface ProductDao {
 
@@ -43,15 +44,25 @@ public interface ProductDao {
 	boolean doesExistByName(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
-		"select g.*" + AlarmDao.FIELDS + BrandDao.FIELDS + CategoryDao.FIELDS + " from product g " +
-		"left join alarm as al on al.id=g.alarm_id " +
-		"left join brand as brn on brn.id=g.brand_id " +
-		"left join category as cat on cat.id=g.category_id " +
-		"where g.id=:id " +
-		"  and g.workspace_id=:workspaceId"
+		"select p.*" + ProductPriceDao.ALARM_FIELDS + ProductPriceDao.SMART_PRICE_FIELDS + BrandDao.FIELDS + CategoryDao.FIELDS + " from product p " +
+		"left join alarm as al on al.id = p.alarm_id " +
+		"left join smart_price as sp on sp.id = p.smart_price_id " +
+		"left join brand as brn on brn.id = p.brand_id " +
+		"left join category as cat on cat.id = p.category_id " +
+		"where p.id=:id " +
+		"  and p.workspace_id=:workspaceId"
 	)
 	@UseRowMapper(ProductMapper.class)
 	Product findByIdWithLookups(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
+
+	@SqlQuery(
+		"select p.*" + SmartPriceDao.FIELDS + " from product p " +
+		"left join smart_price as sp on sp.id = p.smart_price_id " +
+		"where p.id=:id " +
+		"  and p.workspace_id=:workspaceId"
+	)
+	@UseRowMapper(ProductMapper.class)
+	Product findByIdWithSmarPrice(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery("select * from product where name=:name and workspace_id=:workspaceId limit 1")
   @UseRowMapper(ProductMapper.class)
@@ -67,14 +78,6 @@ public interface ProductDao {
 	)
   @GetGeneratedKeys()
   long insert(@BindBean("dto") ProductDTO dto);
-
-  @SqlUpdate(
-		"update product " +
-		"set sku=:dto.sku, name=:dto.name, price=:dto.price, brand_id=:dto.brandId, category_id=:dto.categoryId " +
-		"where id=:dto.id " +
-		"  and workspace_id=:dto.workspaceId"
-	)
-  boolean update(@BindBean("dto") ProductDTO dto);
 
   //called after adding links
   @SqlUpdate("update product set waitings=waitings + <count> where id=:id")

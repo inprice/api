@@ -1,4 +1,4 @@
-package io.inprice.api.app.definitions.brand;
+package io.inprice.api.app.category;
 
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
@@ -11,15 +11,15 @@ import io.inprice.common.helpers.Beans;
 import io.javalin.Javalin;
 
 @Router
-public class BrandController extends AbstractController {
+public class CategoryController extends AbstractController {
 
-  private static final BrandService service = Beans.getSingleton(BrandService.class);
+  private static final CategoryService service = Beans.getSingleton(CategoryService.class);
 
   @Override
   public void addRoutes(Javalin app) {
 
     // insert
-    app.post(Consts.Paths.Definitions.BRAND, (ctx) -> {
+    app.post(Consts.Paths.Definitions.CATEGORY, (ctx) -> {
     	if (ctx.body().isBlank()) {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
@@ -29,7 +29,7 @@ public class BrandController extends AbstractController {
     }, AccessRoles.EDITOR());
 
     // update
-    app.put(Consts.Paths.Definitions.BRAND, (ctx) -> {
+    app.put(Consts.Paths.Definitions.CATEGORY, (ctx) -> {
     	if (ctx.body().isBlank()) {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
@@ -39,18 +39,18 @@ public class BrandController extends AbstractController {
     }, AccessRoles.EDITOR());
 
     // delete
-    app.delete(Consts.Paths.Definitions.BRAND + "/:id", (ctx) -> {
+    app.delete(Consts.Paths.Definitions.CATEGORY + "/:id", (ctx) -> {
     	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
     	ctx.json(service.delete(id));
     }, AccessRoles.EDITOR());
 
     // list
-    app.get(Consts.Paths.Definitions.BRAND + "/list", (ctx) -> {
+    app.get(Consts.Paths.Definitions.CATEGORY + "/list", (ctx) -> {
   		ctx.json(service.list());
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     // search
-    app.post(Consts.Paths.Definitions.BRAND + "s/search", (ctx) -> {
+    app.post(Consts.Paths.Definitions.CATEGORY + "s/search", (ctx) -> {
     	if (ctx.body().isBlank()) {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {

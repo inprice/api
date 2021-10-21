@@ -21,9 +21,9 @@ import io.inprice.common.models.TicketHistory;
 public interface TicketDao {
 
   @SqlQuery(
-		"select t.*, u.full_name, a.name as workspace from ticket t " +
+		"select t.*, u.full_name, w.name as workspace from ticket t " +
 		"inner join user u on u.id= t.user_id " +
-		"inner join workspace a on a.id= t.workspace_id " +
+		"inner join workspace w on w.id= t.workspace_id " +
 		"where t.id=:id "
 	)
   @UseRowMapper(TicketMapper.class)

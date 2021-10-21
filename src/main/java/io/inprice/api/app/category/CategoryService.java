@@ -1,4 +1,4 @@
-package io.inprice.api.app.definitions.brand;
+package io.inprice.api.app.category;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
@@ -9,23 +9,23 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
-import io.inprice.common.models.Brand;
+import io.inprice.common.models.Category;
 
-public class BrandService {
+public class CategoryService {
 
   Response search(String value) {
     try (Handle handle = Database.getHandle()) {
-      BrandDao brandDao = handle.attach(BrandDao.class);
+      CategoryDao categoryDao = handle.attach(CategoryDao.class);
       if (value == null) value = "";
       value = SqlHelper.clear(value) + "%";
-      return new Response(brandDao.search(value, CurrentUser.getWorkspaceId()));
+      return new Response(categoryDao.search(value, CurrentUser.getWorkspaceId()));
     }
   }
 
   Response list() {
     try (Handle handle = Database.getHandle()) {
-      BrandDao brandDao = handle.attach(BrandDao.class);
-      return new Response(brandDao.list(CurrentUser.getWorkspaceId()));
+      CategoryDao categoryDao = handle.attach(CategoryDao.class);
+      return new Response(categoryDao.list(CurrentUser.getWorkspaceId()));
     }
   }
 
@@ -35,18 +35,18 @@ public class BrandService {
     String problem = validate(value);
     if (problem == null) {
       try (Handle handle = Database.getHandle()) {
-        BrandDao brandDao = handle.attach(BrandDao.class);
+        CategoryDao categoryDao = handle.attach(CategoryDao.class);
 
         String name = SqlHelper.clear(value);
-        Brand found = brandDao.findByName(name, CurrentUser.getWorkspaceId());
+        Category found = categoryDao.findByName(name, CurrentUser.getWorkspaceId());
 
         if (found == null) {
-        	Long id = brandDao.insert(name, CurrentUser.getWorkspaceId());
+        	Long id = categoryDao.insert(name, CurrentUser.getWorkspaceId());
         	if (id != null && id > 0) {
         		res = Responses.OK;
           }
         } else {
-        	res = Responses.Already.Defined.BRAND;
+        	res = Responses.Already.Defined.CATEGORY;
         }
       }
     } else {
@@ -57,7 +57,7 @@ public class BrandService {
   }
 
   Response update(IdTextDTO dto) {
-  	Response res = Responses.NotFound.BRAND;
+  	Response res = Responses.NotFound.CATEGORY;
 
   	if (dto.getId() != null && dto.getId() > 0) {
       String problem = validate(dto.getText());
@@ -66,15 +66,15 @@ public class BrandService {
         String name = SqlHelper.clear(dto.getText());
       	
         try (Handle handle = Database.getHandle()) {
-          BrandDao brandDao = handle.attach(BrandDao.class);
+          CategoryDao categoryDao = handle.attach(CategoryDao.class);
 
-          //to prevent duplication, checking if any brand other than this has the same name!
-          Brand found = brandDao.findByName(name, dto.getId(), CurrentUser.getWorkspaceId());
+          //to prevent duplication, checking if any category other than this has the same name!
+          Category found = categoryDao.findByName(name, dto.getId(), CurrentUser.getWorkspaceId());
           if (found == null) {
-          	boolean isUpdated = brandDao.update(dto.getId(), name, CurrentUser.getWorkspaceId());
+          	boolean isUpdated = categoryDao.update(dto.getId(), name, CurrentUser.getWorkspaceId());
             if (isUpdated) res = Responses.OK;
           } else {
-          	res = Responses.Already.Defined.BRAND;
+          	res = Responses.Already.Defined.CATEGORY;
           }
         }
       } else {
@@ -86,18 +86,18 @@ public class BrandService {
   }
 
   Response delete(Long id) {
-  	Response res = Responses.NotFound.BRAND;
+  	Response res = Responses.NotFound.CATEGORY;
 
     if (id != null && id > 0) {
       try (Handle handle = Database.getHandle()) {
-      	BrandDao brandDao = handle.attach(BrandDao.class);
-      	Brand brand = brandDao.findById(id, CurrentUser.getWorkspaceId());
+      	CategoryDao categoryDao = handle.attach(CategoryDao.class);
+      	Category category = categoryDao.findById(id, CurrentUser.getWorkspaceId());
 
-      	if (brand != null) {
+      	if (category != null) {
         	handle.begin();
         	
-        	brandDao.releaseProducts(id, CurrentUser.getWorkspaceId());
-        	boolean isOK = brandDao.delete(id, CurrentUser.getWorkspaceId());
+        	categoryDao.releaseProducts(id, CurrentUser.getWorkspaceId());
+        	boolean isOK = categoryDao.delete(id, CurrentUser.getWorkspaceId());
 
         	if (isOK) {
             handle.commit();

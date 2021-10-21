@@ -15,11 +15,12 @@ import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.definitions.brand.BrandDao;
-import io.inprice.api.app.definitions.category.CategoryDao;
+import io.inprice.api.app.brand.BrandDao;
+import io.inprice.api.app.category.CategoryDao;
 import io.inprice.api.app.link.LinkDao;
 import io.inprice.api.app.product.dto.AddLinksDTO;
 import io.inprice.api.app.product.dto.SearchDTO;
+import io.inprice.api.app.smartprice.SmartPriceDao;
 import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.ProductDTO;
@@ -27,14 +28,18 @@ import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
+import io.inprice.common.formula.EvaluationResult;
+import io.inprice.common.formula.FormulaHelper;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
+import io.inprice.common.info.ProductRefreshResult;
 import io.inprice.common.mappers.ProductMapper;
 import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.models.Brand;
 import io.inprice.common.models.Category;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
+import io.inprice.common.models.SmartPrice;
 import io.inprice.common.models.Workspace;
 import io.inprice.common.utils.URLUtils;
 
@@ -160,6 +165,7 @@ class ProductService {
       	if (alreadyExists == false) {
         	checkBrand(dto, handle);
         	checkCategory(dto, handle);
+        	checkSmartPrice(dto, handle);
 
         	Long id = productDao.insert(dto);
         	if (id != null && id > 0) {
@@ -196,26 +202,50 @@ class ProductService {
         	}
 
           if (alreadyExists == false) {
-          	//must be found
           	Product found = productDao.findById(dto.getId(), CurrentUser.getWorkspaceId());
-            if (found != null) {
+            if (found != null) { //must be found
             	handle.begin();
-            	
+
             	checkBrand(dto, handle);
             	checkCategory(dto, handle);
-            	boolean isUpdated = productDao.update(dto);
-  
-              if (isUpdated) {
-              	// if base price is changed then all the prices and other 
-                // indicators (on both product itself and its links) must be re-calculated accordingly
-                if (found.getLinkCount() > 0 && found.getPrice().compareTo(dto.getPrice()) != 0) {
-                	//refreshes product's sums and alarm if needed!
-              		ProductAlarmService.updateAlarm(dto.getId(), handle);
-                }
+            	checkSmartPrice(dto, handle);
 
-                //to return
+            	String suggestedPricePart = null;
+            	if (found.getActives() > 0) {
+            		ProductRefreshResult prr = null;
+
+            		if (found.getPrice().equals(dto.getPrice()) == false) {
+            			prr = ProductPriceService.refresh(dto.getId(), handle);
+            		}
+              	if ((found.getSmartPriceId() == null && dto.getSmartPriceId() != null) ||
+          				  (found.getSmartPriceId() != null && dto.getSmartPriceId() != null && found.getSmartPriceId().equals(dto.getSmartPriceId()) == false) ||
+          				  (found.getSmartPriceId() != null && dto.getSmartPriceId() != null && found.getSmartPriceId().equals(dto.getSmartPriceId()) == true && prr != null)) {
+
+               		if (prr == null) {
+               			prr = ProductPriceService.refresh(dto.getId(), handle);
+               		}
+                	EvaluationResult result = FormulaHelper.evaluate(found.getSmartPrice(), prr);
+                	suggestedPricePart =
+	                    String.format(
+	                      ", suggested_price=%f, suggested_price_problem=%s where id=%d ",
+	                      result.getValue(),
+	                      (result.getProblem() != null ? "'"+result.getProblem()+"'" : "null"),
+	                      dto.getId()
+	                    );
+              	}
+            	}
+            	
+            	//we need to take care of sums, alarm and suggested price 
+            	//since because all these indicators are sensitive for the changings on price and smart_price_id!
+            	String updateQuery = generateUpdateQuery(found, dto, suggestedPricePart);
+
+            	int affected = handle.execute(
+          			updateQuery,
+          			dto.getSku(), dto.getName(), dto.getPrice(), dto.getBrandId(), dto.getCategoryId(), dto.getId(), CurrentUser.getWorkspaceId()
+        			);
+
+              if (affected > 0) {
               	found = productDao.findByIdWithLookups(dto.getId(), CurrentUser.getWorkspaceId());
-
                 res = new Response(Map.of("product", found));
               } else {
               	res = Responses.DataProblem.DB_PROBLEM;
@@ -238,6 +268,31 @@ class ProductService {
     }
 
   	return res;
+  }
+  
+  private String generateUpdateQuery(Product found, ProductDTO dto, String suggestedPricePart) {
+  	StringBuilder query = new StringBuilder("update product set sku=?, name=?, price=?, brand_id=?, category_id=?");
+
+  	if (dto.getSmartPriceId() != null) {
+  		query.append(", smart_price_id=" + dto.getSmartPriceId());
+  		if (suggestedPricePart != null) {
+  			query.append(suggestedPricePart);
+  		}
+  	} else {
+  		query.append(", smart_price_id=null, suggested_price=0, suggested_price_problem=null");
+  	}
+
+  	if (found.getActives() < 1) {
+  		query.append(
+				", min_price=0, min_diff=0, min_platform=null, min_seller=null, " +
+				"max_price=0, max_diff=0, max_platform=null, max_seller=null, " +
+				"avg_price=0, avg_diff=0, position='UNKNOWN'"
+			);
+  	}
+
+  	query.append(" where id=? and workspace_id=?");
+
+  	return query.toString();
   }
 
   Response delete(Long id) {
@@ -501,6 +556,16 @@ class ProductService {
   	if (found != null) dto.setCategoryId(found.getId());
 
   	return found;
+  }
+
+  private void checkSmartPrice(ProductDTO dto, Handle handle) {
+  	if (dto.getSmartPriceId() != null) {
+  		SmartPriceDao smartPriceDao = handle.attach(SmartPriceDao.class);
+    	SmartPrice found = smartPriceDao.findById(dto.getSmartPriceId(), dto.getWorkspaceId());
+    	if (found == null) {
+    		dto.setSmartPriceId(null);
+    	}
+  	}
   }
 
 }

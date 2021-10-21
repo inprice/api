@@ -1,4 +1,4 @@
-package io.inprice.api.app.definitions.brand;
+package io.inprice.api.app.smartprice;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -22,15 +22,15 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of BrandController.list()
+ * Tests the functionality of SmartPriceController.search(StringDTO)
  * 
  * @author mdpinar
- * @since 2021-09-19
+ * @since 2021-10-16
  */
 @RunWith(JUnit4.class)
-public class ListTest {
+public class SearchTest {
 
-	private static final String SERVICE_ENDPOINT = "/def/brand/list";
+	private static final String SERVICE_ENDPOINT = "/smart-prices/search";
 
 	@BeforeClass
 	public static void setup() {
@@ -39,7 +39,7 @@ public class ListTest {
 
 	@Test
 	public void No_active_session_please_sign_in_WITHOUT_login() {
-		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.asJson();
 		
@@ -49,6 +49,13 @@ public class ListTest {
 		assertEquals("No active session, please sign in!", json.get("reason"));
 	}
 
+	@Test
+	public void Request_body_is_invalid_WITHOUT_body() {
+		JSONObject json = callTheService(TestWorkspaces.Pro_plan_with_two_extra_users.ADMIN(), null);
+
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Request body is invalid!", json.getString("reason"));
+	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_anyone() {
@@ -57,21 +64,32 @@ public class ListTest {
 			TestRoles.EDITOR, TestWorkspaces.Pro_plan_with_two_extra_users.EDITOR(),
 			TestRoles.ADMIN, TestWorkspaces.Pro_plan_with_two_extra_users.ADMIN()
 		);
+		
+		Map<String, Integer> wordsMap = Map.of(
+			"Secret", 1,
+			"S", 2
+		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {
-			JSONObject json = callTheService(roleUser.getValue());
-  		assertEquals(200, json.getInt("status"));
-  		assertTrue(json.has("data"));
-  		assertTrue(json.getJSONArray("data").length() == 4);
+			for (Entry<String, Integer> entry: wordsMap.entrySet()) {
+				JSONObject body = new JSONObject();
+				body.put("value", entry.getKey());
+				
+				JSONObject json = callTheService(roleUser.getValue(), body);
+	  		assertEquals(200, json.getInt("status"));
+	  		assertTrue(json.has("data"));
+	  		assertTrue(json.getJSONArray("data").length() == entry.getValue());
+			}
 		}
 	}
 
-	private JSONObject callTheService(JSONObject user) {
+	private JSONObject callTheService(JSONObject user, JSONObject body) {
 		Cookies cookies = TestUtils.login(user);
 
-		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
+			.body(body != null ? body : "")
 			.asJson();
 		TestUtils.logout(cookies);
 

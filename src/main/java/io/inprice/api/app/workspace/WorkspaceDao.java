@@ -22,9 +22,9 @@ import io.inprice.common.models.Workspace;
 public interface WorkspaceDao {
 
   @SqlQuery(
-		"select a.*, p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit from workspace as a " +
-		"left join plan as p on p.id = a.plan_id " +
-		"where a.id=:id"
+		"select w.*, p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit from workspace as w " +
+		"left join plan as p on p.id = w.plan_id " +
+		"where w.id=:id"
 	)
   @UseRowMapper(WorkspaceMapper.class)
   Workspace findById(@Bind("id") Long id);
@@ -70,10 +70,10 @@ public interface WorkspaceDao {
   boolean decreaseAlarmCount(@Bind("id") Long id);
 
   @SqlQuery(
-    "select c.id, c.name, u.email from workspace as c " +
-    "inner join user as u on u.id = c.admin_id " +
-    "where c.status='SUBSCRIBED' "+
-    "  and c.subs_renewal_at <= now() - interval 3 day"
+    "select w.id, w.name, u.email from workspace as w " +
+    "inner join user as u on u.id = w.admin_id " +
+    "where w.status='SUBSCRIBED' "+
+    "  and w.subs_renewal_at <= now() - interval 3 day"
   )
   @UseRowMapper(WorkspaceInfoMapper.class)
   List<WorkspaceInfo> findExpiredSubscriberWorkspaceList();

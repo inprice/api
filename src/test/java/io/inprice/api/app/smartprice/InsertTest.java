@@ -1,7 +1,8 @@
-package io.inprice.api.app.definitions.category;
+package io.inprice.api.app.smartprice;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.BeforeClass;
@@ -19,18 +20,29 @@ import kong.unirest.Unirest;
 import kong.unirest.json.JSONObject;
 
 /**
- * Tests the functionality of CategoryController.insert(StringDTO)
+ * Tests the functionality of SmartPriceController.insert(SmartPriceDTO)
+ * 
+ * Formula variables;
+ * 	p --> Product Price
+ *  i --> Minimum Price
+ *  a --> Average Price
+ *  x --> Maximum Price
  * 
  * @author mdpinar
- * @since 2021-09-19
+ * @since 2021-10-16
  */
 @RunWith(JUnit4.class)
 public class InsertTest {
 
-	private static final String SERVICE_ENDPOINT = "/def/category";
+	private static final String SERVICE_ENDPOINT = "/smart-price";
 
-	private static final JSONObject SAMPLE_BODY = new JSONObject().put("value", "SPORTS");
-
+	private static final JSONObject SAMPLE_BODY = new JSONObject()
+			.put("name", "Suitable and in-limit formula")
+			.put("formula", "min((p*1.10)+0.75,a)")
+			.put("lowerLimitFormula", "(i-(i*10/100))")
+			.put("upperLimitFormula", "a+1.50")
+			;
+	
 	@BeforeClass
 	public static void setup() {
 		TestUtils.setup();
@@ -58,9 +70,9 @@ public class InsertTest {
 	}
 
 	@Test
-	public void Name_cannot_be_empty() {
+	public void Name_cannot_be_empty_WITHOUT_name() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.remove("value");
+		body.put("name", "");
 		
 		JSONObject json = callTheService(body);
 
@@ -69,25 +81,102 @@ public class InsertTest {
 	}
 
 	@Test
-	public void Name_must_be_between_2_and_50_chars_WITH_shorter_body() {
+	public void Name_cannot_be_empty_WITH_empty_name() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("value", "A");
-
-		JSONObject json = callTheService(body);
+		body.remove("name");
 		
+		JSONObject json = callTheService(body);
+
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Name must be between 2 - 50 chars!", json.getString("reason"));
+		assertEquals("Name cannot be empty!", json.getString("reason"));
 	}
 
 	@Test
-	public void Name_must_be_between_2_and_50_chars_WITH_longer_body() {
+	public void Name_can_be_up_to_70_chars_WITH_longer_body() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("value", RandomStringUtils.randomAlphabetic(51));
+		body.put("name", RandomStringUtils.randomAlphabetic(71));
 		
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-    assertEquals("Name must be between 2 - 50 chars!", json.getString("reason"));
+    assertEquals("Name can be up to 70 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Formula_cannot_be_empty_WITH_empty_formula() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("formula", "");
+		
+		JSONObject json = callTheService(body);
+
+		assertEquals(400, json.getInt("status"));
+		assertEquals("Formula cannot be empty!", json.getString("reason"));
+	}
+
+	@Test
+	public void Formula_cannot_be_empty_WITHOUT_formula() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.remove("formula");
+		
+		JSONObject json = callTheService(body);
+
+		assertEquals(400, json.getInt("status"));
+		assertEquals("Formula cannot be empty!", json.getString("reason"));
+	}
+
+	@Test
+	public void Formula_can_be_up_to_255_chars_WITH_longer_body() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("formula", RandomStringUtils.randomAlphabetic(256));
+		
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Formula can be up to 255 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Division_by_zero_error_FOR_formula() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("formula", "i/0");
+		
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertTrue(json.getString("reason").contains("Division by zero"));
+	}
+
+	@Test
+	public void Paranthesis_error_FOR_lower_limit_formula() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("lowerLimitFormula", "(i+10");
+		
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertTrue(json.getString("reason").contains("parentheses"));
+	}
+
+	@Test
+	public void Lower_Limit_Formula_can_be_up_to_255_chars_WITH_longer_body() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("lowerLimitFormula", RandomStringUtils.randomAlphabetic(256));
+		
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Lower Limit Formula can be up to 255 chars!", json.getString("reason"));
+	}
+
+	@Test
+	public void Upper_Limit_Formula_can_be_up_to_255_chars_WITH_longer_body() {
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("upperLimitFormula", RandomStringUtils.randomAlphabetic(256));
+		
+		JSONObject json = callTheService(body);
+		
+		assertEquals(400, json.getInt("status"));
+    assertEquals("Upper Limit Formula can be up to 255 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -116,11 +205,11 @@ public class InsertTest {
 	}
 
 	@Test
-	public void This_category_has_already_been_added() {
+	public void This_formula_has_already_been_added() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN());
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("value", "BEVERAGES");
+		body.put("name", "Base Formula");
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -131,8 +220,8 @@ public class InsertTest {
 
 		JSONObject json = res.getBody().getObject();
 
-		assertEquals(877, json.getInt("status"));
-    assertEquals("This category has already been added!", json.getString("reason"));
+		assertEquals(881, json.getInt("status"));
+    assertEquals("This formula has already been added!", json.getString("reason"));
 	}
 
 	@Test

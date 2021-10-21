@@ -114,4 +114,3 @@ values (@ticket_id, 'OPENED', 'HIGH', 'PROBLEM', 'PAYMENT', @admin_id, @workspac
 -- history 2
 insert into test.ticket_history (ticket_id, status, priority, type, subject, user_id, workspace_id) 
 values (@ticket_id, 'CLOSED', 'LOW', 'SUPPORT', 'PAYMENT', @admin_id, @workspace_id);
-

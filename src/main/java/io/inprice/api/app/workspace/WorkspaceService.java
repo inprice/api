@@ -1,6 +1,5 @@
 package io.inprice.api.app.workspace;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.membership.MembershipDao;
-import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.app.superuser.announce.AnnounceService;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.user.dto.PasswordDTO;
@@ -24,7 +22,6 @@ import io.inprice.api.app.workspace.dto.RegisterDTO;
 import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.ClientSide;
 import io.inprice.api.helpers.Commons;
@@ -368,7 +365,6 @@ class WorkspaceService {
   private Response createWorkspace(Handle handle, Long userId, String userEmail, String workspaceName, String currencyCode, String currencyFormat) {
     WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
     MembershipDao membershipDao = handle.attach(MembershipDao.class);
-    ProductDao productDao = handle.attach(ProductDao.class);
 
     Workspace workspace = workspaceDao.findByNameAndAdminId(workspaceName, userId);
     if (workspace == null) {
@@ -392,13 +388,6 @@ class WorkspaceService {
           );
 
         if (memberId > 0) {
-        	productDao.insert(
-      			ProductDTO.builder()
-      				.name("Your first product")
-      				.price(BigDecimal.ZERO)
-      				.workspaceId(workspaceId)
-    				.build()
-  				);
           logger.info("A new user registered: {} - {} ", userEmail, workspaceName);
           return new Response(workspaceId);
         }

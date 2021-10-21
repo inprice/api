@@ -22,27 +22,27 @@ import io.inprice.common.models.Membership;
 public interface Dao {
 
   @SqlQuery(
-		"select a.id, a.name, u.email, currency_code, country from workspace as a " +
-		"inner join user as u on u.id = a.admin_id " +
-		"where a.name like :dto.term " +
-		"order by a.name " +
+		"select w.id, w.name, u.email, currency_code, country from workspace as w " +
+		"inner join user as u on u.id = w.admin_id " +
+		"where w.name like :dto.term " +
+		"order by w.name " +
 		"limit :dto.rowCount, :dto.rowLimit "
 	)
   @UseRowMapper(WorkspaceMapper.class)
 	List<Workspace> search(@BindBean("dto") BaseSearchDTO dto);
 	
 	@SqlQuery(
-		"select a.*, u.email, a.id, p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit from workspace as a "+
-		"inner join user as u on u.id = a.admin_id " +
-		"left join plan as p on p.id = a.plan_id " +
-		"where a.id=:id"
+		"select w.*, u.email, p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit from workspace as w "+
+		"inner join user as u on u.id = w.admin_id " +
+		"left join plan as p on p.id = w.plan_id " +
+		"where w.id=:id"
 	)
   @UseRowMapper(WorkspaceMapper.class)
 	Workspace findById(@Bind("id") Long id);
 
   @SqlQuery(
-		"select m.*, a.name as workspace_name, a.status as workspace_status from membership m " +
-		"inner join workspace a on a.id = m.workspace_id "+
+		"select m.*, w.name as workspace_name, w.status as workspace_status from membership m " +
+		"inner join workspace w on w.id = m.workspace_id "+
 		"where workspace_id=:workspace_id " +
 		"order by role, created_at"
 	)

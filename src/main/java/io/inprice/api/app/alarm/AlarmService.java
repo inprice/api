@@ -226,8 +226,8 @@ public class AlarmService {
 		// ---------------------------------------------------
 
 		String selectForProducts = 
-				"select a.*, g.name as _name from alarm a " +
-		    "inner join product g on g.id = a.product_id " + generateNameLikeClause(dto, "g") +
+				"select a.*, p.name as _name from alarm a " +
+		    "inner join product p on p.id = a.product_id " + generateNameLikeClause(dto, "p") +
 		    where;
 		
 		String selectForLinks = 

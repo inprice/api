@@ -117,6 +117,7 @@ public class Responses {
       public static final Response CATEGORY = new Response(BASE + 77, "This category has already been added!");
 
       public static final Response ALARM = new Response(BASE + 80, "You have already set an alarm for this record!");
+      public static final Response SMART_PRICE = new Response(BASE + 81, "This formula has already been added!");
     }
   }
 
@@ -155,6 +156,7 @@ public class Responses {
     public static final Response VOUCHER = new Response(BASE, "Voucher not found!");
     public static final Response ANNOUNCE = new Response(BASE, "Announce not found!");
     public static final Response ALARM = new Response(BASE, "Alarm not found!");
+    public static final Response SMART_PRICE = new Response(BASE, "Smart price not found!");
 
     public static final Response USER = new Response(BASE, "User not found!");
     public static final Response EMAIL = new Response(BASE, "Email not found!");

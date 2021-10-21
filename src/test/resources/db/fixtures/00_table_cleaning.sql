@@ -10,6 +10,7 @@ truncate table test.workspace;
 truncate table test.workspace_history;
 truncate table test.workspace_trans;
 truncate table test.alarm;
+truncate table test.smart_price;
 truncate table test.announce;
 truncate table test.announce_log;
 truncate table test.checkout;
