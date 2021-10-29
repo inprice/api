@@ -14,6 +14,9 @@ public class Responses {
   public static final Response REQUEST_BODY_INVALID = new Response(HttpStatus.BAD_REQUEST_400, "Request body is invalid!");
   public static final Response PAGE_NOT_FOUND = new Response(HttpStatus.NOT_FOUND_404, "Page not found!");
   public static final Response METHOD_NOT_ALLOWED = new Response(HttpStatus.METHOD_NOT_ALLOWED_405, "Method not allowed!");
+  
+  public static final Response EMPTY_REPORT = new Response(HttpStatus.BAD_REQUEST_400, "No data found to generate the report!");
+  public static final Response REPORT_PROBLEM = new Response(HttpStatus.INTERNAL_SERVER_ERROR_500, "We are sorry, the report you wanted to generate encountered an error.");
 
   public static class Invalid {
     private static final int BASE = 100;
@@ -36,6 +39,8 @@ public class Responses {
     public static final Response TOKEN = new Response(BASE + 30, "Invalid token!");
 
     public static final Response VOUCHER = new Response(BASE + 45, "Invalid voucher!");
+
+    public static final Response FORM = new Response(BASE + 90, "Invalid form data!");
     public static final Response DATA = new Response(BASE + 99, "Invalid data!");
   }
 

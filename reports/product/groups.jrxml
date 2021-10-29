@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.17.0.final using JasperReports Library version 6.17.0-6d93193241dd8cc42629e188b94f9e0bc5722efd  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="product-group" pageWidth="595" pageHeight="842" whenNoDataType="NoPages" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="772616b0-1569-4d15-9f2c-fcd5032bf2a2">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="224"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="768"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="TestDB"/>
+	<parameter name="SQL_CLAUSE" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="TIMEZONE" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["Europe/Berlin"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="WORKSPACE" class="java.lang.String" isForPrompting="false"/>
+	<parameter name="GROUP_FIELD" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="GROUP_NAME" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[select $P!{GROUP_FIELD} as group_field, p.sku, p.name as p_name, p.price, p.position, cat.name as cat_name, brn.name as brn_name 
+from product as p
+left join brand as brn on brn.id = p.brand_id 
+left join category as cat on cat.id = p.category_id
+where 1=1 
+$P!{SQL_CLAUSE} 
+order by group_field, p.name]]>
+	</queryString>
+	<field name="sku" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="sku"/>
+		<property name="com.jaspersoft.studio.field.label" value="sku"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="p_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="p_name"/>
+		<property name="com.jaspersoft.studio.field.label" value="p_name"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="price" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="price"/>
+		<property name="com.jaspersoft.studio.field.label" value="price"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="position" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="position"/>
+		<property name="com.jaspersoft.studio.field.label" value="position"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="group_field" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="group_field"/>
+		<property name="com.jaspersoft.studio.field.label" value="Group By"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="brn_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="brn_name"/>
+		<property name="com.jaspersoft.studio.field.label" value="Brand"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="cat_name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="cat_name"/>
+		<property name="com.jaspersoft.studio.field.label" value="Category"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<group name="Dynamic">
+		<groupExpression><![CDATA[$F{group_field}]]></groupExpression>
+		<groupHeader>
+			<band height="43">
+				<staticText>
+					<reportElement x="20" y="20" width="90" height="18" uuid="dd81fd68-c486-4dbf-80aa-28df85748e2a"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle"/>
+					<text><![CDATA[SKU]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="110" y="20" width="63" height="18" uuid="a3e98b48-e3b3-410a-91e5-e3188cd559a4"/>
+					<textElement textAlignment="Left" verticalAlignment="Middle"/>
+					<text><![CDATA[Name]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="397" y="20" width="70" height="18" uuid="fdc92aee-ea51-4e34-9535-a97de8c09d40"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle"/>
+					<text><![CDATA[Price]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="467" y="20" width="83" height="18" uuid="b1f93809-8064-4307-bc2c-58807f0b5d33"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle"/>
+					<text><![CDATA[Position]]></text>
+				</staticText>
+				<line>
+					<reportElement x="20" y="18" width="530" height="2" uuid="945e1915-a0d4-45d6-a73f-dc2c8267c2c9">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+				</line>
+				<textField>
+					<reportElement x="0" y="0" width="280" height="18" uuid="34078ca1-5616-4755-8bc9-f4090ff12c21">
+						<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+					</reportElement>
+					<textElement verticalAlignment="Middle">
+						<font isBold="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$P{GROUP_NAME} + ": " + $F{group_field}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement x="20" y="38" width="530" height="2" uuid="42388814-93c8-4c9b-bd67-c3c41ea5fed9">
+						<property name="com.jaspersoft.studio.unit.y" value="px"/>
+						<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					</reportElement>
+				</line>
+			</band>
+		</groupHeader>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="19" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="160" height="14" uuid="76587714-9c41-4c25-9f6a-3de5de13352d"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Monospaced" size="12" isBold="true" isItalic="false"/>
+				</textElement>
+				<text><![CDATA[Product Groups Report]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="320" y="0" width="230" height="14" uuid="5c6272e8-d140-4674-a6cb-bf4021c58f2a">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$P{WORKSPACE}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement x="20" y="0" width="90" height="18" uuid="77fe26ef-11ff-468c-899a-1917fb733a12">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{sku}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="110" y="0" width="287" height="18" uuid="2c5a38e4-bc84-4d8c-869e-aff7d5f1bbd7"/>
+				<textElement verticalAlignment="Middle">
+					<font size="11" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{p_name}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00">
+				<reportElement x="397" y="0" width="70" height="18" uuid="76741c7f-08b1-4189-bc4d-50cbda438802"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$F{price}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="467" y="0" width="83" height="18" uuid="4d03fbfa-5a03-40b4-ab9e-459973bc279b">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{position}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="19" splitType="Stretch">
+			<textField isBlankWhenNull="false">
+				<reportElement x="480" y="3" width="30" height="14" uuid="3849cbe0-5bb8-463a-bb9b-d2ff61fb02d8">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" isBlankWhenNull="false">
+				<reportElement x="520" y="3" width="30" height="14" uuid="ea7ca505-9b35-455a-954c-7816df9ac488">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="510" y="3" width="10" height="14" uuid="cf99177e-532a-4c53-86f6-857b345e92a5"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[/]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="3" width="130" height="14" uuid="7a9c2d6d-0f89-4940-8d1f-c382498186b8">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[java.time.format.DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm").withZone(java.time.ZoneId.of($P{TIMEZONE})).format(new java.util.Date().toInstant())]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

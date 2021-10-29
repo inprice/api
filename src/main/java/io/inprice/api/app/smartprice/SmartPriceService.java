@@ -100,6 +100,7 @@ public class SmartPriceService {
 		          				ProductRefreshResult prr = new ProductRefreshResult();
 		          				prr.setActives(product.getActives());
 		          				prr.setProductPrice(product.getPrice());
+		          				prr.setBasePrice(product.getBasePrice());
 		          				prr.setMinPrice(product.getMinPrice());
 		          				prr.setAvgPrice(product.getAvgPrice());
 		          				prr.setMaxPrice(product.getMaxPrice());
@@ -194,11 +195,12 @@ public class SmartPriceService {
   		prr.setAvgPrice(BigDecimal.valueOf(200));
   		prr.setMaxPrice(BigDecimal.valueOf(300));
   		
-    	double[] prices = { 50.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0 };
+    	double[][] prices = { { 40.0, 50.0 }, { 80.0, 100.0 }, { 100.0, 150.0 }, { 150.0, 200.0 }, { 180.0, 250.0 }, { 220.0, 300.0 }, { 300.0, 350.0 }};
     	List<EvaluationResult> resultList = new ArrayList<>(prices.length);
 
-    	for (double price: prices) {
-    		prr.setProductPrice(BigDecimal.valueOf(price));
+    	for (double[] prcs: prices) {
+    		prr.setProductPrice(BigDecimal.valueOf(prcs[1]));
+    		prr.setBasePrice(BigDecimal.valueOf(prcs[0]));
     		EvaluationResult er = FormulaHelper.evaluate(smartPrice, prr);
     		resultList.add(er);
     	}

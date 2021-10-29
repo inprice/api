@@ -30,7 +30,7 @@ import kong.unirest.json.JSONObject;
 @RunWith(JUnit4.class)
 public class ListTest {
 
-	private static final String SERVICE_ENDPOINT = "/smart-price/list";
+	private static final String SERVICE_ENDPOINT = "/smart-prices";
 
 	@BeforeClass
 	public static void setup() {

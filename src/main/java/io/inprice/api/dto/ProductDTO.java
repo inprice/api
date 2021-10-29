@@ -21,6 +21,7 @@ public class ProductDTO {
   private String sku;
   private String name;
   private BigDecimal price;
+  private BigDecimal basePrice;
 
   private SimpleDef brand;
   private SimpleDef category;

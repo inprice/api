@@ -41,6 +41,6 @@ call sp_create_product_and_links(null, 'B', 1, 0, 0, 1, 'https://ebay.com/', 12,
 -- 2 smart prices
 -- -----------------------
 insert into smart_price (name, formula, lower_limit_formula, upper_limit_formula, workspace_id) 
-values ('Riskless Formula', '(p*1.05)', 'min(i,a)/2', 'max(p,x)+0.30', @workspace_id);
+values ('Riskless Formula', '(b*1.05)', 'min(i,a)/2', 'max(b,p)+0.30', @workspace_id);
 
 update product set smart_price_id=last_insert_id() where workspace_id=@workspace_id;

@@ -214,7 +214,7 @@ class ProductService {
             	if (found.getActives() > 0) {
             		ProductRefreshResult prr = null;
 
-            		if (found.getPrice().equals(dto.getPrice()) == false) {
+            		if (found.getPrice().equals(dto.getPrice()) == false || found.getBasePrice().equals(dto.getBasePrice()) == false) {
             			prr = ProductPriceService.refresh(dto.getId(), handle);
             		}
               	if ((found.getSmartPriceId() == null && dto.getSmartPriceId() != null) ||
@@ -434,6 +434,12 @@ class ProductService {
     if (problem == null) {
     	if (dto.getPrice() != null && (dto.getPrice().compareTo(BigDecimal.ZERO) < 0 || dto.getPrice().compareTo(new BigDecimal(9_999_999)) > 0)) {
     		problem = "Price is out of reasonable range!";
+    	}
+    }
+
+    if (problem == null) {
+    	if (dto.getBasePrice() != null && (dto.getBasePrice().compareTo(BigDecimal.ZERO) < 0 || dto.getBasePrice().compareTo(new BigDecimal(9_999_999)) > 0)) {
+    		problem = "Base Price is out of reasonable range!";
     	}
     }
 

@@ -34,6 +34,8 @@
     <kong.version>3.11.12</kong.version>
     <embedded-redis.version>0.7.3</embedded-redis.version>
     <httpclient.version>4.5.13</httpclient.version>
+    <jasperreports.version>6.17.0</jasperreports.version>
+    <poi.version>5.0.0</poi.version>
   </properties>
 
   <dependencies>
@@ -109,6 +111,16 @@
       <version>${httpclient.version}</version>
     </dependency>
 
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports</artifactId>
+      <version>${jasperreports.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi</artifactId>
+      <version>${poi.version}</version>
+		</dependency>
   </dependencies>
 
   <build>
