@@ -120,7 +120,7 @@ class DashboardService {
   private Map<String, List<ProductSummary>> findNProductsHavingExtremePrices(DashboardDao dashboardDao) {
   	Map<String, List<ProductSummary>> result = new HashMap<>(2);
   	
-  	Position[] selected = { Position.LOWEST, Position.HIGHEST };
+  	Position[] selected = { Position.Lowest, Position.Highest };
   	for (Position position: selected) {
   		result.put(position.name(), dashboardDao.findMostNProduct(5, position, CurrentUser.getWorkspaceId()));
   	}
@@ -131,13 +131,13 @@ class DashboardService {
   private int[] findSeries(Map<String, Integer> dataMap, DashboardDao dashboardDao) {
   	int i = 0;
     Map<String, Integer> stats = Map.of(
-    	Position.LOWEST.name(), i++,
-    	Position.HIGHEST.name(), i++,
-    	Position.LOWER.name(), i++,
-    	Position.AVERAGE.name(), i++,
-    	Position.HIGHER.name(), i++,
-    	Position.EQUAL.name(), i++,
-    	Position.UNKNOWN.name(), i++
+    	Position.Lowest.name(), i++,
+    	Position.Lower.name(), i++,
+    	Position.Equal.name(), i++,
+    	Position.Average.name(), i++,
+    	Position.Higher.name(), i++,
+    	Position.Highest.name(), i++,
+    	Position.NotSet.name(), i++
   	);
 
     int[] result = new int[i];

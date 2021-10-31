@@ -43,7 +43,7 @@ insert into alarm (topic, product_id, subject, subject_when, amount_lower_limit,
 select 'PRODUCT', id, 'MINIMUM', 'OUT_OF_LIMITS', 15.17, 50.23, @workspace_id from product where workspace_id = @workspace_id limit 1;
 
 insert into alarm (topic, link_id, subject, subject_when, certain_position, workspace_id) 
-select 'LINK', id, 'POSITION', 'EQUAL', 'AVERAGE', @workspace_id from link where workspace_id = @workspace_id limit 1;
+select 'LINK', id, 'POSITION', 'EQUAL', 'Average', @workspace_id from link where workspace_id = @workspace_id limit 1;
 
 -- tickets
 insert into test.ticket (priority, type, subject, body, user_id, workspace_id) 

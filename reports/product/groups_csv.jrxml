@@ -28,7 +28,8 @@
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
 	<queryString language="SQL">
-		<![CDATA[select $P!{GROUP_FIELD} as group_field, p.sku, p.name as p_name, p.price, p.position, cat.name as cat_name, brn.name as brn_name 
+		<![CDATA[select $P!{GROUP_FIELD} as group_field, p.sku, p.name as p_name, p.price, p.position, 
+p.min_price, p.avg_price, p.max_price, cat.name as cat_name, brn.name as brn_name 
 from product as p
 left join brand as brn on brn.id = p.brand_id 
 left join category as cat on cat.id = p.category_id
@@ -60,6 +61,24 @@ order by group_field, p.name]]>
 		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
+	<field name="min_price" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="min_price"/>
+		<property name="com.jaspersoft.studio.field.label" value="min_price"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="avg_price" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="avg_price"/>
+		<property name="com.jaspersoft.studio.field.label" value="avg_price"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="max_price" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="max_price"/>
+		<property name="com.jaspersoft.studio.field.label" value="max_price"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
 	<field name="group_field" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="group_field"/>
 		<property name="com.jaspersoft.studio.field.label" value="Group By"/>
@@ -82,78 +101,129 @@ order by group_field, p.name]]>
 		<band splitType="Stretch"/>
 	</background>
 	<title>
-		<band height="19">
+		<band height="15">
 			<staticText>
-				<reportElement x="150" y="0" width="90" height="18" uuid="dd81fd68-c486-4dbf-80aa-28df85748e2a"/>
-				<textElement textAlignment="Left" verticalAlignment="Middle"/>
-				<text><![CDATA[SKU]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="240" y="0" width="287" height="18" uuid="a3e98b48-e3b3-410a-91e5-e3188cd559a4"/>
-				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<reportElement x="180" y="0" width="330" height="15" uuid="a3e98b48-e3b3-410a-91e5-e3188cd559a4"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
 				<text><![CDATA[Name]]></text>
 			</staticText>
-			<staticText>
-				<reportElement x="527" y="0" width="70" height="18" uuid="fdc92aee-ea51-4e34-9535-a97de8c09d40"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle"/>
-				<text><![CDATA[Price]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="597" y="0" width="83" height="18" uuid="b1f93809-8064-4307-bc2c-58807f0b5d33"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle"/>
-				<text><![CDATA[Position]]></text>
-			</staticText>
 			<textField>
-				<reportElement x="0" y="0" width="150" height="18" uuid="34078ca1-5616-4755-8bc9-f4090ff12c21">
+				<reportElement x="0" y="0" width="180" height="15" uuid="34078ca1-5616-4755-8bc9-f4090ff12c21">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 				</reportElement>
 				<textElement verticalAlignment="Middle">
-					<font isBold="false"/>
+					<font size="10" isBold="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{GROUP_NAME}]]></textFieldExpression>
 			</textField>
+			<staticText>
+				<reportElement x="510" y="0" width="50" height="15" uuid="a15bd6e4-02b0-4d12-af63-76cd2fcf35a9">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Position]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="560" y="0" width="50" height="15" uuid="a924fa1a-0a3c-4f95-9a29-23956ae3032b">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Price]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="610" y="0" width="50" height="15" uuid="d733b907-8263-4d63-8c82-666e3baeab26"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Min]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="660" y="0" width="50" height="15" uuid="820c9e0c-525b-4156-9774-c7920ea42d1c">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Avg]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="710" y="0" width="50" height="15" uuid="71e48c65-aaa1-4e91-a03f-8d3d38640e19"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Max]]></text>
+			</staticText>
 		</band>
 	</title>
 	<detail>
-		<band height="20" splitType="Stretch">
+		<band height="16" splitType="Stretch">
 			<textField>
-				<reportElement x="150" y="1" width="90" height="18" uuid="77fe26ef-11ff-468c-899a-1917fb733a12">
+				<reportElement x="180" y="1" width="330" height="15" uuid="2c5a38e4-bc84-4d8c-869e-aff7d5f1bbd7"/>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{p_name} + ($F{sku} != null ? " ("+$F{sku}+")" : "")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="1" width="180" height="15" uuid="4baff628-af19-48da-9c60-7c374955f372">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 				</reportElement>
 				<textElement verticalAlignment="Middle">
-					<font isBold="false"/>
+					<font size="10" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{sku}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{group_field}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="240" y="1" width="287" height="18" uuid="2c5a38e4-bc84-4d8c-869e-aff7d5f1bbd7"/>
-				<textElement verticalAlignment="Middle">
-					<font size="11" isBold="false"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{p_name}]]></textFieldExpression>
-			</textField>
-			<textField pattern="#,##0.00">
-				<reportElement x="527" y="1" width="70" height="18" uuid="76741c7f-08b1-4189-bc4d-50cbda438802"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle"/>
-				<textFieldExpression><![CDATA[$F{price}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="597" y="1" width="83" height="18" uuid="4d03fbfa-5a03-40b4-ab9e-459973bc279b">
+				<reportElement x="510" y="1" width="50" height="15" uuid="c18edbcc-9398-42e8-a28e-5d286a231afc">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font isBold="false"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{position}]]></textFieldExpression>
 			</textField>
-			<textField>
-				<reportElement x="0" y="1" width="150" height="18" uuid="4baff628-af19-48da-9c60-7c374955f372">
-					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+			<textField pattern="#,##0.00">
+				<reportElement x="560" y="1" width="50" height="15" uuid="d2596987-21ce-4ebb-a7bd-5761b8af2614">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement verticalAlignment="Middle">
-					<font isBold="false"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" pdfEncoding="Cp1254"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{group_field}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{price}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00">
+				<reportElement x="610" y="1" width="50" height="15" uuid="87fefe20-afbf-4fb9-8f5d-a5ed4fa00047">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{min_price}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00">
+				<reportElement x="660" y="1" width="50" height="15" uuid="191fca60-7bf9-4b3c-b7f5-db8b868bc074">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{avg_price}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00">
+				<reportElement x="710" y="1" width="50" height="15" uuid="68dd229d-ee4f-41ad-a839-b2cbf957d215">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{max_price}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>

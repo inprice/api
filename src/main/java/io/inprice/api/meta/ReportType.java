@@ -1,14 +1,15 @@
 package io.inprice.api.meta;
 
-public enum SelectedReport {
+public enum ReportType {
 
+	Product_Links("product", "links"),
 	Product_Prices("product", "prices"),
 	Product_Groups("product", "groups");
 
 	private String group;
 	private String fileName;
 
-	private SelectedReport(String group, String fileName) {
+	private ReportType(String group, String fileName) {
 		this.group = group;
 		this.fileName = fileName;
 	}

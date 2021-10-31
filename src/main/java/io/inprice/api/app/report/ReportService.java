@@ -4,12 +4,13 @@ import java.io.OutputStream;
 import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import io.inprice.api.app.report.info.ProductCriteriaDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.common.utils.StringUtils;
+import io.inprice.common.helpers.SqlHelper;
 
 /**
  * Generates reports
@@ -33,6 +34,12 @@ public class ReportService extends ReportBase {
     	sql.append(" null");
     }
 
+    if (StringUtils.isNotBlank(dto.getSku())) {
+  		sql.append(" and p.sku = '");
+  		sql.append(SqlHelper.clear(dto.getSku()));
+  		sql.append("'");
+    }
+
     if (dto.getBrandId() != null) {
   		sql.append(" and p.brand_id = ");
   		sql.append(dto.getBrandId());
@@ -45,7 +52,7 @@ public class ReportService extends ReportBase {
 
     if (CollectionUtils.isNotEmpty(dto.getPositions())) {
     	sql.append(
-  			String.format(" and p.position in (%s) ", StringUtils.join("'", dto.getPositions()))
+  			String.format(" and p.position in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPositions()))
 			);
     }
     

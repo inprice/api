@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.ReportUnit;
-import io.inprice.api.meta.SelectedReport;
+import io.inprice.api.meta.ReportType;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import net.sf.jasperreports.engine.JRException;
@@ -41,9 +41,10 @@ public class ReportBase {
 
   private static final Logger logger = LoggerFactory.getLogger(ReportBase.class);
 
-	Response generate(SelectedReport selected, ReportUnit reportUnit, String sqlClause, OutputStream outputStreamServlet, Map<String, Object> extraParams) {
+	Response generate(ReportType selected, ReportUnit reportUnit, String sqlClause, OutputStream outputStreamServlet, Map<String, Object> extraParams) {
   	Map<String, Object> params = new HashMap<>();
   	params.put("WORKSPACE", CurrentUser.getWorkspaceName());
+  	params.put("TIMEZONE", CurrentUser.getUserTimezone());
   	params.put("SQL_CLAUSE", sqlClause);
   	params.put(JRParameter.IS_IGNORE_PAGINATION, (reportUnit.equals(ReportUnit.Pdf) == false));
   	if (extraParams != null) {
@@ -72,9 +73,13 @@ public class ReportBase {
 					JRXlsxExporter exporter = new JRXlsxExporter();
 
 					SimpleXlsxReportConfiguration conf = new SimpleXlsxReportConfiguration ();
-					conf.setWhitePageBackground (false);
-					conf.setDetectCellType (true);
-					exporter.setConfiguration (conf);					
+					conf.setWhitePageBackground(false);
+					conf.setDetectCellType(true);
+					conf.setCollapseRowSpan(true);
+					conf.setFontSizeFixEnabled(true);
+					conf.setIgnoreCellBackground(true);
+					conf.setIgnoreCellBorder(true);
+					exporter.setConfiguration(conf);					
 
 					exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
 					exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(outputStream));

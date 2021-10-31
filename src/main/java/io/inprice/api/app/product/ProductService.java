@@ -215,6 +215,11 @@ class ProductService {
             		ProductRefreshResult prr = null;
 
             		if (found.getPrice().equals(dto.getPrice()) == false || found.getBasePrice().equals(dto.getBasePrice()) == false) {
+            			//prices must be updated before price refreshing sp called!
+            			handle.execute(
+          					"update product set price=?, base_price=? where id=? and workspace_id=?",
+              			dto.getPrice(), dto.getBasePrice(), dto.getId(), CurrentUser.getWorkspaceId()
+            			);
             			prr = ProductPriceService.refresh(dto.getId(), handle);
             		}
               	if ((found.getSmartPriceId() == null && dto.getSmartPriceId() != null) ||
@@ -241,7 +246,7 @@ class ProductService {
 
             	int affected = handle.execute(
           			updateQuery,
-          			dto.getSku(), dto.getName(), dto.getPrice(), dto.getBrandId(), dto.getCategoryId(), dto.getId(), CurrentUser.getWorkspaceId()
+          			dto.getSku(), dto.getName(), dto.getPrice(), dto.getBasePrice(), dto.getBrandId(), dto.getCategoryId(), dto.getId(), CurrentUser.getWorkspaceId()
         			);
 
               if (affected > 0) {
@@ -271,7 +276,7 @@ class ProductService {
   }
   
   private String generateUpdateQuery(Product found, ProductDTO dto, String suggestedPricePart) {
-  	StringBuilder query = new StringBuilder("update product set sku=?, name=?, price=?, brand_id=?, category_id=?");
+  	StringBuilder query = new StringBuilder("update product set sku=?, name=?, price=?, base_price=?, brand_id=?, category_id=?");
 
   	if (dto.getSmartPriceId() != null) {
   		query.append(", smart_price_id=" + dto.getSmartPriceId());
@@ -286,7 +291,7 @@ class ProductService {
   		query.append(
 				", min_price=0, min_diff=0, min_platform=null, min_seller=null, " +
 				"max_price=0, max_diff=0, max_platform=null, max_seller=null, " +
-				"avg_price=0, avg_diff=0, position='UNKNOWN'"
+				"avg_price=0, avg_diff=0, position='NotSet'"
 			);
   	}
 

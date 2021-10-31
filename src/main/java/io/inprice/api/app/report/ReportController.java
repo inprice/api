@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.inprice.api.app.report.info.Group;
 import io.inprice.api.app.report.info.ProductCriteriaDTO;
 import io.inprice.api.consts.Consts;
@@ -15,13 +18,15 @@ import io.inprice.api.helpers.AccessRoles;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.meta.ReportUnit;
-import io.inprice.api.meta.SelectedReport;
+import io.inprice.api.meta.ReportType;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.meta.Position;
 import io.javalin.Javalin;
 
 @Router
 public class ReportController extends AbstractController {
+
+  private static final Logger logger = LoggerFactory.getLogger(ReportController.class);
 
   private static final ReportService service = Beans.getSingleton(ReportService.class);
   
@@ -52,7 +57,11 @@ public class ReportController extends AbstractController {
   	ProductCriteriaDTO dto = new ProductCriteriaDTO();
 
   	try {
-  		dto.setSelectedReport(SelectedReport.valueOf(queryParams.get("selectedReport").get(0)));
+  		dto.setSelectedReport(ReportType.valueOf(queryParams.get("selectedReport").get(0)));
+
+	  	if (queryParams.get("sku") != null) {
+	  		dto.setSku(queryParams.get("sku").get(0));
+	  	}
 
 	  	if (queryParams.get("positions") != null) {
 	  		List<String> positions = queryParams.get("positions");
@@ -88,6 +97,7 @@ public class ReportController extends AbstractController {
 	  		dto.setReportUnit(ru);
 	  	}
   	} catch (Exception e) {
+  		logger.warn("Failed to convert report query params", e);
   		return null;
   	}
 

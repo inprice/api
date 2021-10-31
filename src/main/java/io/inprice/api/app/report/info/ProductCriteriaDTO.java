@@ -12,6 +12,7 @@ import lombok.Setter;
 @Setter
 public class ProductCriteriaDTO extends BaseReportDTO {
 
+	private String sku;
   private Set<Position> positions;
   private AlarmStatus alarmStatus = AlarmStatus.ALL;
   private Long brandId;
