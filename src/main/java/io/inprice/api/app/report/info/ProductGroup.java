@@ -1,6 +1,6 @@
 package io.inprice.api.app.report.info;
 
-public enum Group {
+public enum ProductGroup {
 	
 	POSITION("p.position", "Position"),
 	BRAND("brn.name", "Brand"),
@@ -9,7 +9,7 @@ public enum Group {
 	private String field;
 	private String label;
 
-	private Group(String field, String label) {
+	private ProductGroup(String field, String label) {
 		this.field = field;
 		this.label = label;
 	}

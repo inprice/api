@@ -4,7 +4,9 @@ public enum ReportType {
 
 	Product_Links("product", "links"),
 	Product_Prices("product", "prices"),
-	Product_Groups("product", "groups");
+	Product_Groups("product", "groups"),
+
+	Link_Status("link", "status");
 
 	private String group;
 	private String fileName;

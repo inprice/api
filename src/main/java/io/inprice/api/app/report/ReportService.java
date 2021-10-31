@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import io.inprice.api.app.report.info.LinkCriteriaDTO;
 import io.inprice.api.app.report.info.ProductCriteriaDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
@@ -65,6 +66,59 @@ public class ReportService extends ReportBase {
     }
 
     return generate(dto.getSelectedReport(), dto.getReportUnit(), sql.toString(), outputStream, extraParams);
+	}
+
+	Response generateLinkReport(LinkCriteriaDTO dto, OutputStream outputStream) {
+		StringBuilder sql = new StringBuilder();
+
+    sql.append("and l.workspace_id = ");
+    sql.append(CurrentUser.getWorkspaceId());
+
+    if (dto.getAlarmStatus() != null && AlarmStatus.ALL.equals(dto.getAlarmStatus()) == false) {
+  		sql.append(" and l.alarm_id is ");
+    	if (AlarmStatus.ALARMED.equals(dto.getAlarmStatus())) {
+    		sql.append(" not ");
+    	}
+    	sql.append(" null");
+    }
+
+    if (StringUtils.isNotBlank(dto.getSku())) {
+  		sql.append(" and l.sku = '");
+  		sql.append(SqlHelper.clear(dto.getSku()));
+  		sql.append("'");
+    }
+
+    if (StringUtils.isNotBlank(dto.getBrand())) {
+  		sql.append(" and l.brand = '");
+  		sql.append(SqlHelper.clear(dto.getBrand()));
+  		sql.append("'");
+    }
+
+    if (StringUtils.isNotBlank(dto.getSeller())) {
+  		sql.append(" and l.seller = '");
+  		sql.append(SqlHelper.clear(dto.getSeller()));
+  		sql.append("'");
+    }
+
+    if (StringUtils.isNotBlank(dto.getPlatform())) {
+  		sql.append(" and pl.name = '");
+  		sql.append(SqlHelper.clear(dto.getPlatform()));
+  		sql.append("'");
+    }
+
+    if (CollectionUtils.isNotEmpty(dto.getGrups())) {
+    	sql.append(
+  			String.format(" and l.grup in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getGrups()))
+			);
+    }
+
+    if (CollectionUtils.isNotEmpty(dto.getPositions())) {
+    	sql.append(
+  			String.format(" and l.position in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPositions()))
+			);
+    }
+
+    return generate(dto.getSelectedReport(), dto.getReportUnit(), sql.toString(), outputStream, null);
 	}
 	
 }
