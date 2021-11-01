@@ -215,7 +215,7 @@ public class UpdateTest {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody(alarmedProduct.getLong("id"), "PRODUCT", alarmedProduct.getLong("productId"), "POSITION", "NOT_EQUAL", "MAXIMUM", null, null))
+			.body(createBody(alarmedProduct.getLong("id"), "PRODUCT", alarmedProduct.getLong("productId"), "POSITION", "NOT_EQUAL", "Highest", null, null))
 			.asJson();
 		TestUtils.logout(cookies);
 

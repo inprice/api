@@ -211,6 +211,12 @@ public class Consts {
 
     }
 
+    public static class Report {
+      public static final String BASE = "/reports";
+      public static final String PRODUCT = BASE + "/product";
+    	public static final String LINK = BASE + "/link";
+    }
+    
   }
 
 }

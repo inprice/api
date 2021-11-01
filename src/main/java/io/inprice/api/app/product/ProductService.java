@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -214,24 +215,34 @@ class ProductService {
             	if (found.getActives() > 0) {
             		ProductRefreshResult prr = null;
 
-            		if (found.getPrice().equals(dto.getPrice()) == false) {
+            		if (found.getPrice().equals(dto.getPrice()) == false || found.getBasePrice().equals(dto.getBasePrice()) == false) {
+            			//prices must be updated before price refreshing sp called!
+            			handle.execute(
+          					"update product set price=?, base_price=? where id=? and workspace_id=?",
+              			dto.getPrice(), dto.getBasePrice(), dto.getId(), CurrentUser.getWorkspaceId()
+            			);
             			prr = ProductPriceService.refresh(dto.getId(), handle);
             		}
-              	if ((found.getSmartPriceId() == null && dto.getSmartPriceId() != null) ||
-          				  (found.getSmartPriceId() != null && dto.getSmartPriceId() != null && found.getSmartPriceId().equals(dto.getSmartPriceId()) == false) ||
-          				  (found.getSmartPriceId() != null && dto.getSmartPriceId() != null && found.getSmartPriceId().equals(dto.getSmartPriceId()) == true && prr != null)) {
 
-               		if (prr == null) {
-               			prr = ProductPriceService.refresh(dto.getId(), handle);
-               		}
-                	EvaluationResult result = FormulaHelper.evaluate(found.getSmartPrice(), prr);
-                	suggestedPricePart =
-	                    String.format(
-	                      ", suggested_price=%f, suggested_price_problem=%s where id=%d ",
-	                      result.getValue(),
-	                      (result.getProblem() != null ? "'"+result.getProblem()+"'" : "null"),
-	                      dto.getId()
-	                    );
+            		//if dto.getSmartPriceId() == null, suggested_price is zeroized in generateUpdateQuery method!
+            		if (dto.getSmartPriceId() != null && Objects.equals(found.getSmartPriceId(), dto.getSmartPriceId()) == false) {
+            			SmartPriceDao smartPriceDao = handle.attach(SmartPriceDao.class);
+            			SmartPrice smartPrice = smartPriceDao.findById(dto.getSmartPriceId(), CurrentUser.getWorkspaceId());
+            			if (smartPrice != null) {
+	            			if (prr == null) {
+	               			prr = ProductPriceService.refresh(dto.getId(), handle);
+	               		}
+										EvaluationResult result = FormulaHelper.evaluate(smartPrice, prr);
+	                	suggestedPricePart =
+		                    String.format(
+		                      ", suggested_price=%f, suggested_price_problem=%s ",
+		                      result.getValue(),
+		                      (result.getProblem() != null ? "'"+result.getProblem()+"'" : "null"),
+		                      dto.getId()
+		                    );
+            			} else {
+            				dto.setSmartPriceId(null);
+            			}
               	}
             	}
             	
@@ -241,7 +252,7 @@ class ProductService {
 
             	int affected = handle.execute(
           			updateQuery,
-          			dto.getSku(), dto.getName(), dto.getPrice(), dto.getBrandId(), dto.getCategoryId(), dto.getId(), CurrentUser.getWorkspaceId()
+          			dto.getSku(), dto.getName(), dto.getPrice(), dto.getBasePrice(), dto.getBrandId(), dto.getCategoryId(), dto.getId(), CurrentUser.getWorkspaceId()
         			);
 
               if (affected > 0) {
@@ -271,7 +282,7 @@ class ProductService {
   }
   
   private String generateUpdateQuery(Product found, ProductDTO dto, String suggestedPricePart) {
-  	StringBuilder query = new StringBuilder("update product set sku=?, name=?, price=?, brand_id=?, category_id=?");
+  	StringBuilder query = new StringBuilder("update product set sku=?, name=?, price=?, base_price=?, brand_id=?, category_id=?");
 
   	if (dto.getSmartPriceId() != null) {
   		query.append(", smart_price_id=" + dto.getSmartPriceId());
@@ -286,7 +297,7 @@ class ProductService {
   		query.append(
 				", min_price=0, min_diff=0, min_platform=null, min_seller=null, " +
 				"max_price=0, max_diff=0, max_platform=null, max_seller=null, " +
-				"avg_price=0, avg_diff=0, position='UNKNOWN'"
+				"avg_price=0, avg_diff=0, position='NotSet'"
 			);
   	}
 
@@ -434,6 +445,12 @@ class ProductService {
     if (problem == null) {
     	if (dto.getPrice() != null && (dto.getPrice().compareTo(BigDecimal.ZERO) < 0 || dto.getPrice().compareTo(new BigDecimal(9_999_999)) > 0)) {
     		problem = "Price is out of reasonable range!";
+    	}
+    }
+
+    if (problem == null) {
+    	if (dto.getBasePrice() != null && (dto.getBasePrice().compareTo(BigDecimal.ZERO) < 0 || dto.getBasePrice().compareTo(new BigDecimal(9_999_999)) > 0)) {
+    		problem = "Base Price is out of reasonable range!";
     	}
     }
 

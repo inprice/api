@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.17.0.final using JasperReports Library version 6.17.0-6d93193241dd8cc42629e188b94f9e0bc5722efd  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="product-price" pageWidth="595" pageHeight="842" whenNoDataType="NoPages" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="772616b0-1569-4d15-9f2c-fcd5032bf2a2">
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="224"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="768"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="TestDB"/>
+	<parameter name="SQL_CLAUSE" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="TIMEZONE" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["Europe/Berlin"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="WORKSPACE" class="java.lang.String" isForPrompting="false"/>
+	<queryString language="SQL">
+		<![CDATA[select p.* from product as p where 1=1 $P!{SQL_CLAUSE};]]>
+	</queryString>
+	<field name="sku" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="sku"/>
+		<property name="com.jaspersoft.studio.field.label" value="sku"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="name" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="name"/>
+		<property name="com.jaspersoft.studio.field.label" value="name"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="actives" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="actives"/>
+		<property name="com.jaspersoft.studio.field.label" value="actives"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="waitings" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="waitings"/>
+		<property name="com.jaspersoft.studio.field.label" value="waitings"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="tryings" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="tryings"/>
+		<property name="com.jaspersoft.studio.field.label" value="tryings"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="problems" class="java.lang.Integer">
+		<property name="com.jaspersoft.studio.field.name" value="problems"/>
+		<property name="com.jaspersoft.studio.field.label" value="problems"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="price" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="price"/>
+		<property name="com.jaspersoft.studio.field.label" value="price"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="base_price" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="base_price"/>
+		<property name="com.jaspersoft.studio.field.label" value="base_price"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="position" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="position"/>
+		<property name="com.jaspersoft.studio.field.label" value="position"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="min_platform" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="min_platform"/>
+		<property name="com.jaspersoft.studio.field.label" value="min_platform"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="min_seller" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="min_seller"/>
+		<property name="com.jaspersoft.studio.field.label" value="min_seller"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="min_price" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="min_price"/>
+		<property name="com.jaspersoft.studio.field.label" value="min_price"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="min_diff" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="min_diff"/>
+		<property name="com.jaspersoft.studio.field.label" value="min_diff"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="avg_price" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="avg_price"/>
+		<property name="com.jaspersoft.studio.field.label" value="avg_price"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="avg_diff" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="avg_diff"/>
+		<property name="com.jaspersoft.studio.field.label" value="avg_diff"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="max_platform" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="max_platform"/>
+		<property name="com.jaspersoft.studio.field.label" value="max_platform"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="max_seller" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="max_seller"/>
+		<property name="com.jaspersoft.studio.field.label" value="max_seller"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="max_price" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="max_price"/>
+		<property name="com.jaspersoft.studio.field.label" value="max_price"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="max_diff" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="max_diff"/>
+		<property name="com.jaspersoft.studio.field.label" value="max_diff"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="suggested_price" class="java.math.BigDecimal">
+		<property name="com.jaspersoft.studio.field.name" value="suggested_price"/>
+		<property name="com.jaspersoft.studio.field.label" value="suggested_price"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="updated_at" class="java.sql.Timestamp">
+		<property name="com.jaspersoft.studio.field.name" value="updated_at"/>
+		<property name="com.jaspersoft.studio.field.label" value="updated_at"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="21" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="180" height="14" uuid="76587714-9c41-4c25-9f6a-3de5de13352d"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" isBold="true" isItalic="false" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Product Prices Report]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="320" y="0" width="230" height="14" uuid="5c6272e8-d140-4674-a6cb-bf4021c58f2a">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{WORKSPACE}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="91" splitType="Stretch">
+			<textField>
+				<reportElement key="" x="0" y="4" width="410" height="15" uuid="2c5a38e4-bc84-4d8c-869e-aff7d5f1bbd7">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isBold="false" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{name} + ($F{sku} != null ? " ("+$F{sku}+")" : "")]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="107" y="34" width="63" height="15" uuid="fdc92aee-ea51-4e34-9535-a97de8c09d40">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Price :]]></text>
+			</staticText>
+			<textField pattern="#,##0.00">
+				<reportElement key="" x="172" y="34" width="70" height="15" uuid="76741c7f-08b1-4189-bc4d-50cbda438802">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{price}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="107" y="49" width="63" height="15" uuid="90f8a2c0-141c-4838-972e-03c9f44f2179">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Base :]]></text>
+			</staticText>
+			<textField pattern="#,##0.00">
+				<reportElement key="" x="172" y="49" width="70" height="15" uuid="6a4509df-9b1f-419d-9a21-2d54e9249bcc">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{base_price}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="107" y="64" width="63" height="15" uuid="d6332762-4965-42f3-b231-5c60ab96f2dd">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Suggested :]]></text>
+			</staticText>
+			<textField pattern="#,##0.00">
+				<reportElement key="" x="172" y="64" width="70" height="15" uuid="29940a63-06ef-4dcb-a53d-51d2aaf3e645">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{suggested_price}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="20" y="19" width="50" height="15" uuid="dd81fd68-c486-4dbf-80aa-28df85748e2a">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Actives :]]></text>
+			</staticText>
+			<textField pattern="###0">
+				<reportElement key="" x="72" y="19" width="27" height="15" uuid="68eadddf-bc11-4ee4-b266-c7c8edcbd83b">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{actives}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="20" y="49" width="50" height="15" uuid="a3e98b48-e3b3-410a-91e5-e3188cd559a4">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Tryings :]]></text>
+			</staticText>
+			<textField pattern="###0">
+				<reportElement key="" x="72" y="49" width="27" height="15" uuid="181bf091-46a3-485c-94c0-063baca6c709">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{tryings}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="20" y="34" width="50" height="15" uuid="5f2c814d-2305-4eed-b4ee-cbf32355f1f8">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Waitings :]]></text>
+			</staticText>
+			<textField pattern="###0">
+				<reportElement key="" x="72" y="34" width="27" height="15" uuid="ff7e4d8a-0967-4f73-9dc0-cffb4c78de61">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{waitings}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="247" y="34" width="42" height="15" uuid="b1f93809-8064-4307-bc2c-58807f0b5d33">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Min. :]]></text>
+			</staticText>
+			<textField pattern="#,##0.00">
+				<reportElement key="" x="291" y="34" width="68" height="15" uuid="96257390-b69f-4f2a-b2b5-28e15932615a">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{min_price}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="247" y="49" width="42" height="15" uuid="3bf2476a-fe04-4f70-b715-ad12f0550f4a">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Avg. :]]></text>
+			</staticText>
+			<textField pattern="#,##0.00">
+				<reportElement key="" x="291" y="49" width="68" height="15" uuid="b735c36f-f343-4fde-b05a-442b5e4dce98">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{avg_price}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="247" y="64" width="42" height="15" uuid="b7dd0934-55b9-4037-9a08-91fac509f182">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Max. :]]></text>
+			</staticText>
+			<textField pattern="#,##0.00">
+				<reportElement key="" x="291" y="64" width="68" height="15" uuid="b0d03bcf-cbe2-4a3b-8625-95673d7aaf66">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{max_price}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="84" width="550" height="1" uuid="1e2c0bb1-9de7-4eda-b657-6440de2391bc">
+					<property name="com.jaspersoft.studio.unit.y" value="px"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="1.0" lineColor="#EDEDED"/>
+				</graphicElement>
+			</line>
+			<textField>
+				<reportElement key="" x="172" y="19" width="70" height="15" uuid="4d03fbfa-5a03-40b4-ab9e-459973bc279b">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{position}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="20" y="64" width="50" height="15" uuid="7782bf8c-dab0-4b67-9132-a5c87db56ccc">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Problems :]]></text>
+			</staticText>
+			<textField pattern="###0">
+				<reportElement key="" x="72" y="64" width="27" height="15" uuid="f3ce6d66-4956-482a-bf8f-e294ebacb447">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{problems}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="107" y="19" width="63" height="15" uuid="b0e87e88-ac56-412f-9f0c-ed9029c0ccd6">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Position :]]></text>
+			</staticText>
+			<textField>
+				<reportElement key="" x="362" y="34" width="190" height="15" uuid="72379d70-6bd1-4e2a-9149-19e6c0210a97">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{min_seller} != null && $F{min_seller}.equals("NA")==false ?
+	$F{min_seller} + ($F{min_seller}.equals("You")==false ? " - " + $F{min_platform} : "")
+ : "")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement key="" x="362" y="64" width="190" height="15" uuid="b8e22456-956c-4dab-a3f0-a22246d8f1ab">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{max_seller} != null && $F{max_seller}.equals("NA")==false ?
+	$F{max_seller} + ($F{max_seller}.equals("You")==false ? " - " + $F{max_platform} : "")
+ : "")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement key="" x="462" y="4" width="90" height="15" uuid="47ede2d3-c242-478c-a504-d9fe0cbdb934">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(java.time.ZoneId.of($P{TIMEZONE})).format($F{updated_at}.toInstant())]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement key="" x="410" y="4" width="50" height="15" uuid="4e1b4ceb-dbec-41f0-8571-2a3ace9fa531">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Updated :]]></text>
+			</staticText>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="21" splitType="Stretch">
+			<textField isBlankWhenNull="false">
+				<reportElement x="480" y="3" width="30" height="14" uuid="3849cbe0-5bb8-463a-bb9b-d2ff61fb02d8">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report" isBlankWhenNull="false">
+				<reportElement x="520" y="3" width="30" height="14" uuid="ea7ca505-9b35-455a-954c-7816df9ac488">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="510" y="3" width="10" height="14" uuid="cf99177e-532a-4c53-86f6-857b345e92a5"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[/]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="3" width="130" height="14" uuid="7a9c2d6d-0f89-4940-8d1f-c382498186b8">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[java.time.format.DateTimeFormatter.ofPattern("dd-MMM-yyyy HH:mm").withZone(java.time.ZoneId.of($P{TIMEZONE})).format(new java.util.Date().toInstant())]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

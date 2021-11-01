@@ -188,8 +188,9 @@ class LinkService {
     						productDao.insert(
   								ProductDTO.builder()
   									.name(dto.getToProductName())
-  									.workspaceId(CurrentUser.getWorkspaceId())
   									.price(BigDecimal.ZERO)
+  									.basePrice(BigDecimal.ZERO)
+  									.workspaceId(CurrentUser.getWorkspaceId())
   									.build()
 									)
     						);
