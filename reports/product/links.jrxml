@@ -207,28 +207,7 @@ ORDER BY p.name, l.grup, l.price]]>
 	</pageHeader>
 	<detail>
 		<band height="15" splitType="Stretch">
-			<textField>
-				<reportElement key="" x="390" y="0" width="160" height="15" uuid="d7cefcc4-d096-44b6-b2a6-5e497481a963">
-					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					<printWhenExpression><![CDATA[$F{parse_problem} != null]]></printWhenExpression>
-				</reportElement>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="false" isItalic="true" pdfEncoding="Cp1254"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{parse_problem}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement key="" x="40" y="0" width="350" height="15" uuid="da1f6a68-a3e5-45c4-9057-cab6c70dd949">
-					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-					<printWhenExpression><![CDATA[$F{l_price}.compareTo(java.math.BigDecimal.ZERO) == 0]]></printWhenExpression>
-				</reportElement>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="false" isItalic="true" pdfEncoding="Cp1254"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{url}]]></textFieldExpression>
-			</textField>
+			<printWhenExpression><![CDATA[$F{parse_problem} == null && $F{l_price}.compareTo(java.math.BigDecimal.ZERO) > 0]]></printWhenExpression>
 			<textField>
 				<reportElement x="40" y="0" width="140" height="15" uuid="77fe26ef-11ff-468c-899a-1917fb733a12">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
@@ -280,6 +259,31 @@ ORDER BY p.name, l.grup, l.price]]>
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[java.time.format.DateTimeFormatter.ofPattern("dd-MMM, HH:mm").withZone(java.time.ZoneId.of($P{TIMEZONE})).format($F{checked_at}.toInstant())]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="15">
+			<printWhenExpression><![CDATA[$F{parse_problem} != null || $F{l_price}.compareTo(java.math.BigDecimal.ZERO) == 0]]></printWhenExpression>
+			<textField>
+				<reportElement key="" x="390" y="0" width="160" height="15" uuid="d7cefcc4-d096-44b6-b2a6-5e497481a963">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{parse_problem} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isBold="false" isItalic="true" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{parse_problem}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement key="" x="40" y="0" width="350" height="15" uuid="da1f6a68-a3e5-45c4-9057-cab6c70dd949">
+					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+					<printWhenExpression><![CDATA[$F{l_price}.compareTo(java.math.BigDecimal.ZERO) == 0]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isBold="false" isItalic="true" pdfEncoding="Cp1254"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{url}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>

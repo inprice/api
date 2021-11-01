@@ -167,7 +167,7 @@
 	<detail>
 		<band height="91" splitType="Stretch">
 			<textField>
-				<reportElement key="" x="0" y="4" width="420" height="15" uuid="2c5a38e4-bc84-4d8c-869e-aff7d5f1bbd7">
+				<reportElement key="" x="0" y="4" width="410" height="15" uuid="2c5a38e4-bc84-4d8c-869e-aff7d5f1bbd7">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement verticalAlignment="Middle">
@@ -185,10 +185,10 @@
 				<text><![CDATA[Price :]]></text>
 			</staticText>
 			<textField pattern="#,##0.00">
-				<reportElement key="" x="170" y="34" width="70" height="15" uuid="76741c7f-08b1-4189-bc4d-50cbda438802">
+				<reportElement key="" x="172" y="34" width="70" height="15" uuid="76741c7f-08b1-4189-bc4d-50cbda438802">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{price}]]></textFieldExpression>
@@ -203,10 +203,10 @@
 				<text><![CDATA[Base :]]></text>
 			</staticText>
 			<textField pattern="#,##0.00">
-				<reportElement key="" x="170" y="49" width="70" height="15" uuid="6a4509df-9b1f-419d-9a21-2d54e9249bcc">
+				<reportElement key="" x="172" y="49" width="70" height="15" uuid="6a4509df-9b1f-419d-9a21-2d54e9249bcc">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{base_price}]]></textFieldExpression>
@@ -221,10 +221,10 @@
 				<text><![CDATA[Suggested :]]></text>
 			</staticText>
 			<textField pattern="#,##0.00">
-				<reportElement key="" x="170" y="64" width="70" height="15" uuid="29940a63-06ef-4dcb-a53d-51d2aaf3e645">
+				<reportElement key="" x="172" y="64" width="70" height="15" uuid="29940a63-06ef-4dcb-a53d-51d2aaf3e645">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{suggested_price}]]></textFieldExpression>
@@ -239,10 +239,10 @@
 				<text><![CDATA[Actives :]]></text>
 			</staticText>
 			<textField pattern="###0">
-				<reportElement key="" x="70" y="19" width="27" height="15" uuid="68eadddf-bc11-4ee4-b266-c7c8edcbd83b">
+				<reportElement key="" x="72" y="19" width="27" height="15" uuid="68eadddf-bc11-4ee4-b266-c7c8edcbd83b">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{actives}]]></textFieldExpression>
@@ -257,10 +257,10 @@
 				<text><![CDATA[Tryings :]]></text>
 			</staticText>
 			<textField pattern="###0">
-				<reportElement key="" x="70" y="49" width="27" height="15" uuid="181bf091-46a3-485c-94c0-063baca6c709">
+				<reportElement key="" x="72" y="49" width="27" height="15" uuid="181bf091-46a3-485c-94c0-063baca6c709">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{tryings}]]></textFieldExpression>
@@ -275,10 +275,10 @@
 				<text><![CDATA[Waitings :]]></text>
 			</staticText>
 			<textField pattern="###0">
-				<reportElement key="" x="70" y="34" width="27" height="15" uuid="ff7e4d8a-0967-4f73-9dc0-cffb4c78de61">
+				<reportElement key="" x="72" y="34" width="27" height="15" uuid="ff7e4d8a-0967-4f73-9dc0-cffb4c78de61">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{waitings}]]></textFieldExpression>
@@ -293,10 +293,10 @@
 				<text><![CDATA[Min. :]]></text>
 			</staticText>
 			<textField pattern="#,##0.00">
-				<reportElement key="" x="289" y="34" width="68" height="15" uuid="96257390-b69f-4f2a-b2b5-28e15932615a">
+				<reportElement key="" x="291" y="34" width="68" height="15" uuid="96257390-b69f-4f2a-b2b5-28e15932615a">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{min_price}]]></textFieldExpression>
@@ -311,10 +311,10 @@
 				<text><![CDATA[Avg. :]]></text>
 			</staticText>
 			<textField pattern="#,##0.00">
-				<reportElement key="" x="289" y="49" width="68" height="15" uuid="b735c36f-f343-4fde-b05a-442b5e4dce98">
+				<reportElement key="" x="291" y="49" width="68" height="15" uuid="b735c36f-f343-4fde-b05a-442b5e4dce98">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{avg_price}]]></textFieldExpression>
@@ -329,10 +329,10 @@
 				<text><![CDATA[Max. :]]></text>
 			</staticText>
 			<textField pattern="#,##0.00">
-				<reportElement key="" x="289" y="64" width="68" height="15" uuid="b0d03bcf-cbe2-4a3b-8625-95673d7aaf66">
+				<reportElement key="" x="291" y="64" width="68" height="15" uuid="b0d03bcf-cbe2-4a3b-8625-95673d7aaf66">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{max_price}]]></textFieldExpression>
@@ -347,11 +347,11 @@
 				</graphicElement>
 			</line>
 			<textField>
-				<reportElement key="" x="170" y="19" width="70" height="15" uuid="4d03fbfa-5a03-40b4-ab9e-459973bc279b">
+				<reportElement key="" x="172" y="19" width="70" height="15" uuid="4d03fbfa-5a03-40b4-ab9e-459973bc279b">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{position}]]></textFieldExpression>
@@ -366,10 +366,10 @@
 				<text><![CDATA[Problems :]]></text>
 			</staticText>
 			<textField pattern="###0">
-				<reportElement key="" x="70" y="64" width="27" height="15" uuid="f3ce6d66-4956-482a-bf8f-e294ebacb447">
+				<reportElement key="" x="72" y="64" width="27" height="15" uuid="f3ce6d66-4956-482a-bf8f-e294ebacb447">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{problems}]]></textFieldExpression>
@@ -384,7 +384,7 @@
 				<text><![CDATA[Position :]]></text>
 			</staticText>
 			<textField>
-				<reportElement key="" x="367" y="34" width="183" height="15" uuid="72379d70-6bd1-4e2a-9149-19e6c0210a97">
+				<reportElement key="" x="362" y="34" width="190" height="15" uuid="72379d70-6bd1-4e2a-9149-19e6c0210a97">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -392,11 +392,11 @@
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[($F{min_seller} != null && $F{min_seller}.equals("NA")==false ?
-	$F{min_seller} + ($F{min_seller}.equals("You")==false ? ", " + $F{min_platform} : "")
+	$F{min_seller} + ($F{min_seller}.equals("You")==false ? " - " + $F{min_platform} : "")
  : "")]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement key="" x="367" y="64" width="183" height="15" uuid="b8e22456-956c-4dab-a3f0-a22246d8f1ab">
+				<reportElement key="" x="362" y="64" width="190" height="15" uuid="b8e22456-956c-4dab-a3f0-a22246d8f1ab">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -404,19 +404,28 @@
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[($F{max_seller} != null && $F{max_seller}.equals("NA")==false ?
-	$F{max_seller} + ($F{max_seller}.equals("You")==false ? ", " + $F{max_platform} : "")
+	$F{max_seller} + ($F{max_seller}.equals("You")==false ? " - " + $F{max_platform} : "")
  : "")]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement key="" x="420" y="4" width="130" height="15" uuid="47ede2d3-c242-478c-a504-d9fe0cbdb934">
+				<reportElement key="" x="462" y="4" width="90" height="15" uuid="47ede2d3-c242-478c-a504-d9fe0cbdb934">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
+				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(java.time.ZoneId.of($P{TIMEZONE})).format($F{updated_at}.toInstant())]]></textFieldExpression>
 			</textField>
+			<staticText>
+				<reportElement key="" x="410" y="4" width="50" height="15" uuid="4e1b4ceb-dbec-41f0-8571-2a3ace9fa531">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
+				</textElement>
+				<text><![CDATA[Updated :]]></text>
+			</staticText>
 		</band>
 	</detail>
 	<pageFooter>

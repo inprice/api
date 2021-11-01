@@ -1,19 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.17.0.final using JasperReports Library version 6.17.0-6d93193241dd8cc42629e188b94f9e0bc5722efd  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="link-status" pageWidth="1300" pageHeight="1684" whenNoDataType="NoPages" columnWidth="1260" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isIgnorePagination="true" uuid="772616b0-1569-4d15-9f2c-fcd5032bf2a2">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="link-status" pageWidth="1450" pageHeight="1684" whenNoDataType="NoPages" columnWidth="1410" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isIgnorePagination="true" uuid="772616b0-1569-4d15-9f2c-fcd5032bf2a2">
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="224"/>
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="768"/>
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="TestDB"/>
-	<property name="com.jaspersoft.studio.unit." value="pixel"/>
-	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
-	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
-	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
-	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
-	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
-	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
-	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
-	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
 	<parameter name="SQL_CLAUSE" class="java.lang.String" isForPrompting="false">
 		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
 	</parameter>
@@ -22,15 +13,16 @@
 	</parameter>
 	<parameter name="WORKSPACE" class="java.lang.String" isForPrompting="false"/>
 	<queryString language="SQL">
-		<![CDATA[select l.sku, l.name, l.url, l.price, l.position, l.shipment, l.seller, l.updated_at, l.checked_at, l.parse_problem, pl.name as pl_name
+		<![CDATA[select l.sku as l_sku, l.name, l.url, l.price, l.position, l.shipment, l.seller, l.updated_at, l.checked_at, l.parse_problem, pl.name as pl_name, p.sku as p_sku
 from link as l
+inner join product as p on p.id = l.product_id
 left join platform as pl on pl.id = l.platform_id
 where 1=1 $P!{SQL_CLAUSE}
-order by l.name, l.url, l.price;]]>
+order by l.name, l.sku, p.sku, l.url, l.price;]]>
 	</queryString>
-	<field name="sku" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="sku"/>
-		<property name="com.jaspersoft.studio.field.label" value="sku"/>
+	<field name="l_sku" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="l_sku"/>
+		<property name="com.jaspersoft.studio.field.label" value="l_sku"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="link"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
@@ -94,6 +86,12 @@ order by l.name, l.url, l.price;]]>
 		<property name="com.jaspersoft.studio.field.tree.path" value="platform"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
+	<field name="p_sku" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="p_sku"/>
+		<property name="com.jaspersoft.studio.field.label" value="p_sku"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
@@ -121,14 +119,14 @@ order by l.name, l.url, l.price;]]>
 				<text><![CDATA[Price]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="660" y="0" width="50" height="18" uuid="39688245-3544-410a-9564-f213a29cf07e"/>
+				<reportElement x="810" y="0" width="50" height="18" uuid="39688245-3544-410a-9564-f213a29cf07e"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font size="10" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Seller]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="890" y="0" width="70" height="18" uuid="261cf9f3-a225-4c4e-8922-2147f34ecfaa"/>
+				<reportElement x="1040" y="0" width="70" height="18" uuid="261cf9f3-a225-4c4e-8922-2147f34ecfaa"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font size="10" isBold="true"/>
 				</textElement>
@@ -142,7 +140,7 @@ order by l.name, l.url, l.price;]]>
 				<text><![CDATA[Updated At]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="790" y="0" width="60" height="18" uuid="94714a30-a7f0-4a8d-892c-1ac59cb3e6de"/>
+				<reportElement x="940" y="0" width="60" height="18" uuid="94714a30-a7f0-4a8d-892c-1ac59cb3e6de"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font size="10" isBold="true"/>
 				</textElement>
@@ -156,11 +154,18 @@ order by l.name, l.url, l.price;]]>
 				<text><![CDATA[Checked At]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="1080" y="0" width="70" height="18" uuid="594078f4-c59e-4251-9c80-e9aa2a82f507"/>
+				<reportElement x="1230" y="0" width="70" height="18" uuid="594078f4-c59e-4251-9c80-e9aa2a82f507"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font size="10" isBold="true"/>
 				</textElement>
 				<text><![CDATA[Problem]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="660" y="0" width="80" height="18" uuid="8572c3fa-9da2-4ecf-ba89-875c08be15b1"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Product]]></text>
 			</staticText>
 		</band>
 	</title>
@@ -173,9 +178,9 @@ order by l.name, l.url, l.price;]]>
 				<textElement verticalAlignment="Middle">
 					<font size="10" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA[($F{name} != null ? $F{name} + ($F{sku} != null ? " ("+$F{sku}+")" : "") : $F{url})]]></textFieldExpression>
+				<textFieldExpression><![CDATA[($F{name} != null ? $F{name} + ($F{l_sku} != null ? " ("+$F{l_sku}+")" : "") : $F{url})]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00">
+			<textField pattern="###0.00">
 				<reportElement x="380" y="0" width="50" height="16" uuid="6a4509df-9b1f-419d-9a21-2d54e9249bcc">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -195,7 +200,7 @@ order by l.name, l.url, l.price;]]>
 				<textFieldExpression><![CDATA[$F{position}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="660" y="0" width="130" height="16" uuid="18839f97-61cd-40b0-9fd8-9c8eb0fd33cb">
+				<reportElement x="810" y="0" width="130" height="16" uuid="18839f97-61cd-40b0-9fd8-9c8eb0fd33cb">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -205,7 +210,7 @@ order by l.name, l.url, l.price;]]>
 				<textFieldExpression><![CDATA[$F{seller}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="890" y="0" width="190" height="16" uuid="bee74cee-4bfe-47c9-be50-c3da7e959658">
+				<reportElement x="1040" y="0" width="190" height="16" uuid="bee74cee-4bfe-47c9-be50-c3da7e959658">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -215,7 +220,7 @@ order by l.name, l.url, l.price;]]>
 				<textFieldExpression><![CDATA[$F{shipment}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="790" y="0" width="100" height="16" uuid="dd1a5f90-1892-4078-bd43-f1d765922f72">
+				<reportElement x="940" y="0" width="100" height="16" uuid="dd1a5f90-1892-4078-bd43-f1d765922f72">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -232,7 +237,7 @@ order by l.name, l.url, l.price;]]>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Serif" size="10" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
-				<textFieldExpression><![CDATA[java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(java.time.ZoneId.of($P{TIMEZONE})).format($F{updated_at}.toInstant())]]></textFieldExpression>
+				<textFieldExpression><![CDATA[java.time.format.DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm").withZone(java.time.ZoneId.of($P{TIMEZONE})).format($F{updated_at}.toInstant())]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement key="" x="480" y="0" width="90" height="16" uuid="38f863b7-f067-4dbf-99db-c1b9ecf8821d">
@@ -242,10 +247,10 @@ order by l.name, l.url, l.price;]]>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Serif" size="10" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
-				<textFieldExpression><![CDATA[java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(java.time.ZoneId.of($P{TIMEZONE})).format($F{checked_at}.toInstant())]]></textFieldExpression>
+				<textFieldExpression><![CDATA[java.time.format.DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm").withZone(java.time.ZoneId.of($P{TIMEZONE})).format($F{checked_at}.toInstant())]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="1080" y="0" width="180" height="16" uuid="88fa59f4-fc05-4e0b-b6a2-33601286be37">
+				<reportElement x="1230" y="0" width="180" height="16" uuid="88fa59f4-fc05-4e0b-b6a2-33601286be37">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -253,6 +258,15 @@ order by l.name, l.url, l.price;]]>
 					<font size="10" isBold="false"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{parse_problem}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="660" y="0" width="150" height="16" uuid="ed9bbff1-d89a-463d-8ee0-8d3513e5b503">
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{p_sku}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>

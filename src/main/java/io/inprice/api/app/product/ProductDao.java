@@ -21,7 +21,7 @@ import io.inprice.common.repository.ProductPriceDao;
 
 public interface ProductDao {
 
-	@SqlQuery("select * from product where id=:id and workspace_id=:workspaceId")
+	@SqlQuery("select * from product p where id=:id and workspace_id=:workspaceId")
 	@UseRowMapper(ProductMapper.class)
 	Product findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 

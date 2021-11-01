@@ -326,7 +326,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$F{name} + ($F{sku} != null ? " ("+$F{sku}+")" : "")]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00">
+			<textField pattern="###0.00">
 				<reportElement x="550" y="0" width="50" height="16" uuid="76741c7f-08b1-4189-bc4d-50cbda438802">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -335,7 +335,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$F{base_price}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00">
+			<textField pattern="###0.00">
 				<reportElement x="290" y="0" width="50" height="16" uuid="6a4509df-9b1f-419d-9a21-2d54e9249bcc">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -344,7 +344,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$F{price}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00">
+			<textField pattern="###0.00">
 				<reportElement x="600" y="0" width="50" height="16" uuid="29940a63-06ef-4dcb-a53d-51d2aaf3e645">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -380,7 +380,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$F{waitings}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00">
+			<textField pattern="###0.00">
 				<reportElement x="700" y="0" width="50" height="16" uuid="96257390-b69f-4f2a-b2b5-28e15932615a">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -389,7 +389,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$F{min_price}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00">
+			<textField pattern="###0.00">
 				<reportElement x="980" y="0" width="50" height="16" uuid="b735c36f-f343-4fde-b05a-442b5e4dce98">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -398,7 +398,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$F{avg_price}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00">
+			<textField pattern="###0.00">
 				<reportElement x="650" y="0" width="50" height="16" uuid="b0d03bcf-cbe2-4a3b-8625-95673d7aaf66">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -427,44 +427,24 @@
 				<textFieldExpression><![CDATA[$F{problems}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="750" y="0" width="130" height="16" uuid="18839f97-61cd-40b0-9fd8-9c8eb0fd33cb">
+				<reportElement x="750" y="0" width="230" height="16" uuid="18839f97-61cd-40b0-9fd8-9c8eb0fd33cb">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font size="10" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{min_seller}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{min_seller} + " - " + $F{min_platform}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="1030" y="0" width="130" height="16" uuid="bee74cee-4bfe-47c9-be50-c3da7e959658">
+				<reportElement x="1030" y="0" width="230" height="16" uuid="bee74cee-4bfe-47c9-be50-c3da7e959658">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font size="10" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{max_seller}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="880" y="0" width="100" height="16" uuid="dd1a5f90-1892-4078-bd43-f1d765922f72">
-					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font size="10" isBold="false"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{min_platform}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="1160" y="0" width="100" height="16" uuid="007a9d5f-a1c7-48e1-b5ee-f4dc9f9a9b63">
-					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
-					<property name="com.jaspersoft.studio.unit.height" value="px"/>
-				</reportElement>
-				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font size="10" isBold="false"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{max_platform}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{max_seller} + " - " + $F{max_platform}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>

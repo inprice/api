@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -222,21 +223,26 @@ class ProductService {
             			);
             			prr = ProductPriceService.refresh(dto.getId(), handle);
             		}
-              	if ((found.getSmartPriceId() == null && dto.getSmartPriceId() != null) ||
-          				  (found.getSmartPriceId() != null && dto.getSmartPriceId() != null && found.getSmartPriceId().equals(dto.getSmartPriceId()) == false) ||
-          				  (found.getSmartPriceId() != null && dto.getSmartPriceId() != null && found.getSmartPriceId().equals(dto.getSmartPriceId()) == true && prr != null)) {
 
-               		if (prr == null) {
-               			prr = ProductPriceService.refresh(dto.getId(), handle);
-               		}
-                	EvaluationResult result = FormulaHelper.evaluate(found.getSmartPrice(), prr);
-                	suggestedPricePart =
-	                    String.format(
-	                      ", suggested_price=%f, suggested_price_problem=%s where id=%d ",
-	                      result.getValue(),
-	                      (result.getProblem() != null ? "'"+result.getProblem()+"'" : "null"),
-	                      dto.getId()
-	                    );
+            		//if dto.getSmartPriceId() == null, suggested_price is zeroized in generateUpdateQuery method!
+            		if (dto.getSmartPriceId() != null && Objects.equals(found.getSmartPriceId(), dto.getSmartPriceId()) == false) {
+            			SmartPriceDao smartPriceDao = handle.attach(SmartPriceDao.class);
+            			SmartPrice smartPrice = smartPriceDao.findById(dto.getSmartPriceId(), CurrentUser.getWorkspaceId());
+            			if (smartPrice != null) {
+	            			if (prr == null) {
+	               			prr = ProductPriceService.refresh(dto.getId(), handle);
+	               		}
+										EvaluationResult result = FormulaHelper.evaluate(smartPrice, prr);
+	                	suggestedPricePart =
+		                    String.format(
+		                      ", suggested_price=%f, suggested_price_problem=%s ",
+		                      result.getValue(),
+		                      (result.getProblem() != null ? "'"+result.getProblem()+"'" : "null"),
+		                      dto.getId()
+		                    );
+            			} else {
+            				dto.setSmartPriceId(null);
+            			}
               	}
             	}
             	

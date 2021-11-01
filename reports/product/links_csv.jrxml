@@ -178,7 +178,7 @@ ORDER BY p.name, l.grup, l.price]]>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{name} + ($F{sku} != null ? " ("+$F{sku}+")" : "")]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00">
+			<textField pattern="###0.00">
 				<reportElement x="630" y="0" width="50" height="15" uuid="6a4509df-9b1f-419d-9a21-2d54e9249bcc">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>

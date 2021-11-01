@@ -189,7 +189,7 @@ order by group_field, p.name]]>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{position}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00">
+			<textField pattern="###0.00">
 				<reportElement x="560" y="1" width="50" height="15" uuid="d2596987-21ce-4ebb-a7bd-5761b8af2614">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>

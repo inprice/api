@@ -6,6 +6,7 @@ public enum ReportType {
 	Product_Prices("product", "prices"),
 	Product_Groups("product", "groups"),
 
+	Link_Prices("link", "prices"),
 	Link_Status("link", "status");
 
 	private String group;
