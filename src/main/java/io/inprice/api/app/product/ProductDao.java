@@ -28,20 +28,11 @@ public interface ProductDao {
 	@SqlQuery(
 		"select exists(" +
 			"select 1 from product " +
-			"where (sku = :dto.sku or name = :dto.name) " +
+			"where sku = :dto.sku " +
 			"  and id != :dto.id " +
 			"  and workspace_id = :workspaceId " +
 		")")
-	boolean doesExistBySkuAndName(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
-
-	@SqlQuery(
-		"select exists(" +
-			"select 1 from product " +
-			"where name = :dto.name " +
-			"  and id != :dto.id " +
-			"  and workspace_id = :workspaceId " +
-		")")
-	boolean doesExistByName(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
+	boolean doesExistBySku(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
 		"select p.*" + ProductPriceDao.ALARM_FIELDS + ProductPriceDao.SMART_PRICE_FIELDS + BrandDao.FIELDS + CategoryDao.FIELDS + " from product p " +

@@ -117,7 +117,7 @@ public class Responses {
       public static final Response WORKSPACE = new Response(BASE + 70, "Seems that you have already registered this workspace!");
       public static final Response MEMBERSHIP = new Response(BASE + 71, "Seems that this user has an workspace, please sign in with your credentials and manage your members under user settings page!");
       public static final Response REGISTERED_USER = new Response(BASE + 72, "Already registered user! Signing up is an option for only newcomers! Please use 'Create Workspace' menu after login.");
-      public static final Response PRODUCT = new Response(BASE + 75, "You already have a product having the same sku or name!");
+      public static final Response PRODUCT = new Response(BASE + 75, "You already have a product having the same sku!");
       public static final Response BRAND = new Response(BASE + 76, "This brand has already been added!");
       public static final Response CATEGORY = new Response(BASE + 77, "This category has already been added!");
 

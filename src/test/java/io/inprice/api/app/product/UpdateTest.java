@@ -166,14 +166,14 @@ public class UpdateTest {
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
 
 		assertEquals(875, json.getInt("status"));
-		assertEquals("You already have a product having the same sku or name!", json.getString("reason"));
+		assertEquals("You already have a product having the same sku!", json.getString("reason"));
 	}
 
 	@Test
-	public void You_already_have_a_product_having_the_same_sku_or_name_FOR_name() {
+	public void Everything_must_be_ok_FOR_duplicate_name_WITH_admin() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
 		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product G", 0);
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product I", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);
@@ -187,8 +187,8 @@ public class UpdateTest {
 
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
 
-		assertEquals(875, json.getInt("status"));
-		assertEquals("You already have a product having the same sku or name!", json.getString("reason"));
+		assertEquals(200, json.getInt("status"));
+		assertTrue(json.has("data"));
 	}
 
 	@Test

@@ -156,12 +156,7 @@ class ProductService {
         ProductDao productDao = handle.attach(ProductDao.class);
 
         dto.setId(0L); //necessary for the existency check here!
-      	boolean alreadyExists = false;
-      	if (StringUtils.isBlank(dto.getSku())) {
-      		alreadyExists = productDao.doesExistByName(dto, CurrentUser.getWorkspaceId());
-      	} else {
-      		alreadyExists = productDao.doesExistBySkuAndName(dto, CurrentUser.getWorkspaceId());
-      	}
+      	boolean alreadyExists = productDao.doesExistBySku(dto, CurrentUser.getWorkspaceId());
 
       	if (alreadyExists == false) {
         	checkBrand(dto, handle);
@@ -194,13 +189,8 @@ class ProductService {
         try (Handle handle = Database.getHandle()) {
           ProductDao productDao = handle.attach(ProductDao.class);
 
-          //checks if sku or name is already used for another product
-        	boolean alreadyExists = false;
-        	if (StringUtils.isBlank(dto.getSku())) {
-        		alreadyExists = productDao.doesExistByName(dto, CurrentUser.getWorkspaceId());
-        	} else {
-        		alreadyExists = productDao.doesExistBySkuAndName(dto, CurrentUser.getWorkspaceId());
-        	}
+          //checks if sku is already used for another product
+        	boolean alreadyExists = productDao.doesExistBySku(dto, CurrentUser.getWorkspaceId());
 
           if (alreadyExists == false) {
           	Product found = productDao.findById(dto.getId(), CurrentUser.getWorkspaceId());
