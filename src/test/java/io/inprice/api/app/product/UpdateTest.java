@@ -110,14 +110,14 @@ public class UpdateTest {
 	}
 
 	@Test
-	public void Price_is_out_of_reasonable_range_FOR_a_value_of_less_than_zero() {
+	public void Price_must_be_greater_than_zero_FOR_a_value_of_less_than_zero() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("price", -5.0);
 		
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-		assertEquals("Price is out of reasonable range!", json.getString("reason"));
+		assertEquals("Price must be greater than zero!", json.getString("reason"));
 	}
 
 	@Test

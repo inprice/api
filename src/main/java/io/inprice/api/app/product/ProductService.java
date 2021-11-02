@@ -432,8 +432,10 @@ class ProductService {
   private String validate(ProductDTO dto) {
     String problem = null;
 
-    if (StringUtils.isNotBlank(dto.getSku()) && (dto.getSku().length() < 3 || dto.getSku().length() > 50)) {
-  		problem = "If given, Sku must be between 3 - 50 chars!";
+    if (StringUtils.isBlank(dto.getSku())) {
+      problem = "Sku cannot be empty!";
+    } else if (dto.getSku().length() < 3 || dto.getSku().length() > 50) {
+  		problem = "Sku must be between 3 - 50 chars!";
     }
 
     if (problem == null && StringUtils.isBlank(dto.getName())) {
@@ -443,15 +445,21 @@ class ProductService {
     }
 
     if (problem == null) {
-    	if (dto.getPrice() != null && (dto.getPrice().compareTo(BigDecimal.ZERO) < 0 || dto.getPrice().compareTo(new BigDecimal(9_999_999)) > 0)) {
+    	if (dto.getPrice() == null) {
+    		problem = "Price cannot be empty!";
+    	} else if (dto.getPrice().compareTo(BigDecimal.ZERO) < 1) {
+    		problem = "Price must be greater than zero!";
+    	} else if (dto.getPrice().compareTo(new BigDecimal(9_999_999)) > 0) {
     		problem = "Price is out of reasonable range!";
     	}
     }
 
-    if (problem == null) {
-    	if (dto.getBasePrice() != null && (dto.getBasePrice().compareTo(BigDecimal.ZERO) < 0 || dto.getBasePrice().compareTo(new BigDecimal(9_999_999)) > 0)) {
-    		problem = "Base Price is out of reasonable range!";
-    	}
+    if (problem == null && dto.getBasePrice() != null) {
+    	if (dto.getBasePrice().compareTo(BigDecimal.ZERO) < 1) {
+	  		problem = "Base Price must be greater than zero!";
+	  	} else if (dto.getBasePrice().compareTo(new BigDecimal(9_999_999)) > 0) {
+	  		problem = "Base Price is out of reasonable range!";
+	    }
     }
 
     if (problem == null && dto.getBrand() != null && dto.getBrand().getId() == null && StringUtils.isNotBlank(dto.getBrand().getName())) {

@@ -62,25 +62,25 @@ public class InsertTest {
 	}
 
 	@Test
-	public void If_given_Sku_must_be_between_3_50_chars_WITH_shorter_value() {
+	public void Sku_must_be_between_3_50_chars_WITH_shorter_value() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("sku", "AB");
 
 		JSONObject json = callTheService(body);
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("If given, Sku must be between 3 - 50 chars!", json.getString("reason"));
+    assertEquals("Sku must be between 3 - 50 chars!", json.getString("reason"));
 	}
 
 	@Test
-	public void If_given_Sku_must_be_between_3_50_chars_WITH_longer_value() {
+	public void Sku_must_be_between_3_50_chars_WITH_longer_value() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("sku", RandomStringUtils.randomAlphabetic(51));
 
 		JSONObject json = callTheService(body);
 
 		assertEquals(400, json.getInt("status"));
-    assertEquals("If given, Sku must be between 3 - 50 chars!", json.getString("reason"));
+    assertEquals("Sku must be between 3 - 50 chars!", json.getString("reason"));
 	}
 
 	@Test
@@ -117,14 +117,14 @@ public class InsertTest {
 	}
 
 	@Test
-	public void Price_is_out_of_reasonable_range_FOR_a_value_of_less_than_zero() {
+	public void Price_must_be_greater_than_zero_FOR_a_value_of_less_than_zero() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("price", -5.0);
 		
 		JSONObject json = callTheService(body);
 		
 		assertEquals(400, json.getInt("status"));
-		assertEquals("Price is out of reasonable range!", json.getString("reason"));
+		assertEquals("Price must be greater than zero!", json.getString("reason"));
 	}
 
 	@Test
