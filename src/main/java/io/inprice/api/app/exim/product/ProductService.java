@@ -5,7 +5,6 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +23,6 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
-import io.inprice.common.info.IdName;
 import io.inprice.common.utils.NumberHelper;
 import io.inprice.common.utils.StringHelper;
 
@@ -39,24 +37,9 @@ public class ProductService {
 
     	ProductDao dao = handle.attach(ProductDao.class);
 
-    	List<IdName> brandList = dao.getBrandList(CurrentUser.getWorkspaceId());
-    	List<IdName> categoryList = dao.getCategoryList(CurrentUser.getWorkspaceId());
-
     	//to prevent multiple lookups to db
-    	Map<String, Long> brandMap = new HashMap<>();
-    	if (brandList.size() > 0) {
-    		for (IdName pair: brandList) {
-    			brandMap.put(pair.getName(), pair.getId());
-    		}
-    	}
-
-    	//to prevent multiple lookups to db
-    	Map<String, Long> categoryMap = new HashMap<>(categoryList.size());
-    	if (categoryList.size() > 0) {
-    		for (IdName pair: categoryList) {
-    			categoryMap.put(pair.getName(), pair.getId());
-    		}
-    	}
+    	Map<String, Long> brandMap = dao.getBrands(CurrentUser.getWorkspaceId());
+    	Map<String, Long> categoryMap = dao.getCategories(CurrentUser.getWorkspaceId());
 
     	int lineNumber = 1;
     	Set<String> looked = new HashSet<>(); //by sku
@@ -111,27 +94,6 @@ public class ProductService {
 		}
   }
 
-  Response download(OutputStream outputStream) {
-    try (Handle handle = Database.getHandle()) {
-    	ProductDao dao = handle.attach(ProductDao.class);
-    	List<String> categories = dao.getList(CurrentUser.getWorkspaceId());
-    	if (categories.size() > 0) {
-    		StringBuilder lines = new StringBuilder("name\n");
-    		for (String name: categories) {
-    			lines.append(normalizeValue(name, true));
-    		}
-    		IOUtils.copy(IOUtils.toInputStream(lines.toString(), "UTF-8") , outputStream);
-    		return Responses.OK;
-    	} else {
-    		return Responses.NotFound.CATEGORY;
-    	}
-    } catch (IOException e) {
-			logger.error("Failed to export categories", e);
-		}
-
-    return Responses.ServerProblem.EXCEPTION;
-  }
-
   /**
    * Extract ProductDTO out of csv line
    * 
@@ -148,6 +110,7 @@ public class ProductService {
   	//the next two columns brand and category names are optional 
   	List<String> columns = StringHelper.splitCSV(line);
   	if (columns.size() >= 3 && columns.size() <= 5) {
+  		dto.setWorkspaceId(CurrentUser.getWorkspaceId());
   		dto.setSku(SqlHelper.clear(columns.get(0)));
   		dto.setName(SqlHelper.clear(columns.get(1)));
   		try {
@@ -188,6 +151,31 @@ public class ProductService {
 		} else {
 			return Responses.Invalid.CSV_COLUMN_COUNT;
   	}
+  }
+
+  Response download(OutputStream outputStream) {
+    try (Handle handle = Database.getHandle()) {
+    	ProductDao dao = handle.attach(ProductDao.class);
+    	List<String[]> products = dao.getList(CurrentUser.getWorkspaceId());
+    	if (products.size() > 0) {
+    		StringBuilder lines = new StringBuilder("name\n");
+    		for (String[] fields: products) {
+    			lines.append(normalizeValue(fields[0], false));
+    			lines.append(normalizeValue(fields[1], false));
+    			lines.append(normalizeValue(fields[2], false));
+    			lines.append(normalizeValue(fields[3], false));
+    			lines.append(normalizeValue(fields[4], true));
+    		}
+    		IOUtils.copy(IOUtils.toInputStream(lines.toString(), "UTF-8") , outputStream);
+    		return Responses.OK;
+    	} else {
+    		return Responses.NotFound.CATEGORY;
+    	}
+    } catch (IOException e) {
+			logger.error("Failed to export categories", e);
+		}
+
+    return Responses.ServerProblem.EXCEPTION;
   }
   
   private String normalizeValue(String value, boolean isLastValue) {

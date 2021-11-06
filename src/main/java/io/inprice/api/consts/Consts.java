@@ -136,6 +136,7 @@ public class Consts {
     public static class Exim {
       public static final String BASE = "/exim";
       public static final String PRODUCT = BASE + "/product";
+      public static final String LINK = BASE + "/link";
       public static final String BRAND = BASE + "/brand";
       public static final String CATEGORY = BASE + "/category";
     }
