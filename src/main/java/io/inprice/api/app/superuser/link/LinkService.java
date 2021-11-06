@@ -27,6 +27,7 @@ import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
 import io.inprice.common.repository.ProductPriceDao;
+import io.inprice.common.utils.StringHelper;
 import io.inprice.common.repository.PlatformDao;
 
 class LinkService {
@@ -74,7 +75,7 @@ class LinkService {
 
     if (CollectionUtils.isNotEmpty(dto.getStatuses())) {
     	where.append(
-		    String.format(" and l.status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
+		    String.format(" and l.status in (%s) ", StringHelper.join("'", dto.getStatuses()))
 			);
     }
 

@@ -22,6 +22,7 @@ import io.inprice.common.mappers.TicketMapper;
 import io.inprice.common.models.Ticket;
 import io.inprice.common.models.TicketComment;
 import io.inprice.common.models.TicketHistory;
+import io.inprice.common.utils.StringHelper;
 
 /**
  * 
@@ -129,25 +130,25 @@ public class TicketService {
 
     if (CollectionUtils.isNotEmpty(dto.getStatuses())) {
     	where.append(
-		    String.format(" and t.status in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
+		    String.format(" and t.status in (%s) ", StringHelper.join("'", dto.getStatuses()))
 			);
     }
 
     if (CollectionUtils.isNotEmpty(dto.getPriorities())) {
     	where.append(
-		    String.format(" and priority in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPriorities()))
+		    String.format(" and priority in (%s) ", StringHelper.join("'", dto.getPriorities()))
 			);
     }
 
     if (CollectionUtils.isNotEmpty(dto.getTypes())) {
     	where.append(
-		    String.format(" and type in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getTypes()))
+		    String.format(" and type in (%s) ", StringHelper.join("'", dto.getTypes()))
 			);
     }
 
     if (CollectionUtils.isNotEmpty(dto.getSubjects())) {
     	where.append(
-		    String.format(" and subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
+		    String.format(" and subject in (%s) ", StringHelper.join("'", dto.getSubjects()))
 			);
     }
 

@@ -1,6 +1,5 @@
 package io.inprice.api.app.product;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,6 +41,7 @@ import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
 import io.inprice.common.models.SmartPrice;
 import io.inprice.common.models.Workspace;
+import io.inprice.common.utils.StringHelper;
 import io.inprice.common.utils.URLUtils;
 
 class ProductService {
@@ -105,7 +105,7 @@ class ProductService {
 
     if (CollectionUtils.isNotEmpty(dto.getPositions())) {
     	where.append(
-  			String.format(" and p.position in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPositions()))
+  			String.format(" and p.position in (%s) ", StringHelper.join("'", dto.getPositions()))
 			);
     }
 
@@ -150,7 +150,7 @@ class ProductService {
   }
 
   Response insert(ProductDTO dto) {
-    String problem = validate(dto);
+    String problem = ProductVerifier.verify(dto);
     if (problem == null) {
       try (Handle handle = Database.getHandle()) {
         ProductDao productDao = handle.attach(ProductDao.class);
@@ -188,7 +188,7 @@ class ProductService {
 
   	if (dto.getId() != null && dto.getId() > 0) {
 
-      String problem = validate(dto);
+  		String problem = ProductVerifier.verify(dto);
       if (problem == null) {
 
         try (Handle handle = Database.getHandle()) {
@@ -427,63 +427,6 @@ class ProductService {
     }
 
     return res;
-  }
-  
-  private String validate(ProductDTO dto) {
-    String problem = null;
-
-    if (StringUtils.isBlank(dto.getSku())) {
-      problem = "Sku cannot be empty!";
-    } else if (dto.getSku().length() < 3 || dto.getSku().length() > 50) {
-  		problem = "Sku must be between 3 - 50 chars!";
-    }
-
-    if (problem == null && StringUtils.isBlank(dto.getName())) {
-      problem = "Name cannot be empty!";
-    } else if (dto.getName().length() < 3 || dto.getName().length() > 250) {
-      problem = "Name must be between 3 - 250 chars!";
-    }
-
-    if (problem == null) {
-    	if (dto.getPrice() == null) {
-    		problem = "Price cannot be empty!";
-    	} else if (dto.getPrice().compareTo(BigDecimal.ZERO) < 1) {
-    		problem = "Price must be greater than zero!";
-    	} else if (dto.getPrice().compareTo(new BigDecimal(9_999_999)) > 0) {
-    		problem = "Price is out of reasonable range!";
-    	}
-    }
-
-    if (problem == null && dto.getBasePrice() != null) {
-    	if (dto.getBasePrice().compareTo(BigDecimal.ZERO) < 1) {
-	  		problem = "Base Price must be greater than zero!";
-	  	} else if (dto.getBasePrice().compareTo(new BigDecimal(9_999_999)) > 0) {
-	  		problem = "Base Price is out of reasonable range!";
-	    }
-    }
-
-    if (problem == null && dto.getBrand() != null && dto.getBrand().getId() == null && StringUtils.isNotBlank(dto.getBrand().getName())) {
-    	if (dto.getBrand().getName().length() < 2 || dto.getBrand().getName().length() > 50) {
-    		problem = "Brand name must be between 2 - 50 chars!";
-    	}
-    }
-
-    if (problem == null && dto.getCategory() != null && dto.getCategory().getId() == null && StringUtils.isNotBlank(dto.getCategory().getName())) {
-    	if (dto.getCategory().getName().length() < 2 || dto.getCategory().getName().length() > 50) {
-    		problem = "Category name must be between 2 - 50 chars!";
-    	}
-    }
-
-    if (problem == null) {
-      dto.setWorkspaceId(CurrentUser.getWorkspaceId());
-      dto.setSku(SqlHelper.clear(dto.getSku()));
-      dto.setName(SqlHelper.clear(dto.getName()));
-      if (dto.getPrice() == null) dto.setPrice(BigDecimal.ZERO);
-      if (dto.getBrand() != null) dto.setBrandId(dto.getBrand().getId());
-      if (dto.getCategory() != null) dto.setCategoryId(dto.getCategory().getId());
-    }
-
-    return problem;
   }
   
   private Response validate(AddLinksDTO dto) {

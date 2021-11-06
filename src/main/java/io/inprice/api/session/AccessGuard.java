@@ -22,7 +22,7 @@ import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.models.User;
-import io.inprice.common.utils.NumberUtils;
+import io.inprice.common.utils.NumberHelper;
 import io.javalin.core.security.AccessManager;
 import io.javalin.core.security.Role;
 import io.javalin.http.Context;
@@ -72,7 +72,7 @@ public class AccessGuard implements AccessManager {
 
   	//normal user?
     } else {
-      Integer sessionNo = NumberUtils.toInteger(ctx.header(Consts.SESSION_NO));
+      Integer sessionNo = NumberHelper.toInteger(ctx.header(Consts.SESSION_NO));
       if (sessionNo != null && sessionNo > -1) {
         boolean isDone = false;
   

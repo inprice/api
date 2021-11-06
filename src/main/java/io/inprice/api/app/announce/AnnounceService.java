@@ -20,6 +20,7 @@ import io.inprice.common.mappers.AnnounceMapper;
 import io.inprice.common.meta.AnnounceType;
 import io.inprice.common.models.Announce;
 import io.inprice.common.utils.DateUtils;
+import io.inprice.common.utils.StringHelper;
 
 /**
  * 
@@ -109,7 +110,7 @@ public class AnnounceService {
 
     if (CollectionUtils.isNotEmpty(dto.getLevels())) {
     	where.append(
-		    String.format(" and level in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getLevels()))
+		    String.format(" and level in (%s) ", StringHelper.join("'", dto.getLevels()))
 			);
     }
 

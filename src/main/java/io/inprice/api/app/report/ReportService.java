@@ -12,6 +12,7 @@ import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.SqlHelper;
+import io.inprice.common.utils.StringHelper;
 
 /**
  * Generates reports
@@ -53,7 +54,7 @@ public class ReportService extends ReportBase {
 
     if (CollectionUtils.isNotEmpty(dto.getPositions())) {
     	sql.append(
-  			String.format(" and p.position in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPositions()))
+  			String.format(" and p.position in (%s) ", StringHelper.join("'", dto.getPositions()))
 			);
     }
     
@@ -108,13 +109,13 @@ public class ReportService extends ReportBase {
 
     if (CollectionUtils.isNotEmpty(dto.getGrups())) {
     	sql.append(
-  			String.format(" and l.grup in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getGrups()))
+  			String.format(" and l.grup in (%s) ", StringHelper.join("'", dto.getGrups()))
 			);
     }
 
     if (CollectionUtils.isNotEmpty(dto.getPositions())) {
     	sql.append(
-  			String.format(" and l.position in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPositions()))
+  			String.format(" and l.position in (%s) ", StringHelper.join("'", dto.getPositions()))
 			);
     }
 
