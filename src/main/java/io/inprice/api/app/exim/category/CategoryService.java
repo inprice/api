@@ -25,7 +25,7 @@ public class CategoryService extends EximBase {
 
   private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
 
-  Response upload(String fileContent) {
+  Response upload(String csvContent) {
   	List<String> problems = new ArrayList<>();
 
     try (Handle handle = Database.getHandle()) {
@@ -36,7 +36,7 @@ public class CategoryService extends EximBase {
     	Set<String> looked = new HashSet<>();
     	Set<String> names = new HashSet<>();
     	
-    	String[] rows = fileContent.lines().toArray(String[]::new);
+    	String[] rows = csvContent.lines().toArray(String[]::new);
       for (String row : rows) {
       	if (StringUtils.isBlank(row)) continue;
 

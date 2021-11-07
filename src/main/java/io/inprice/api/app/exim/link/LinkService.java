@@ -31,7 +31,7 @@ public class LinkService extends EximBase {
 
   private static final Logger logger = LoggerFactory.getLogger(LinkService.class);
 
-  Response upload(String fileContent) {
+  Response upload(String csvContent) {
   	List<String> problems = new ArrayList<>();
 
     try (Handle handle = Database.getHandle()) {
@@ -45,7 +45,7 @@ public class LinkService extends EximBase {
     	Set<String> looked = new HashSet<>(); //by product id and # and url hash
     	List<LinkDTO> dtos = new ArrayList<>();
     	
-    	String[] rows = fileContent.lines().toArray(String[]::new);
+    	String[] rows = csvContent.lines().toArray(String[]::new);
       for (String row : rows) {
       	if (StringUtils.isBlank(row)) continue;
       	
@@ -200,12 +200,6 @@ public class LinkService extends EximBase {
   	if (ctx.queryParam("seller") != null) {
   		sql.append(" and l.seller = '");
 			sql.append(SqlHelper.clear(ctx.queryParam("seller")));
-  		sql.append("'");
-  	}
-
-  	if (ctx.queryParam("platform") != null) {
-  		sql.append(" and pl.name = '");
-  		sql.append(SqlHelper.clear(ctx.queryParam("platform")));
   		sql.append("'");
   	}
 

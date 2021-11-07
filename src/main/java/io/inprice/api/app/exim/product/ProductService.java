@@ -2,7 +2,6 @@ package io.inprice.api.app.exim.product;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,7 +24,6 @@ import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
-import io.inprice.common.utils.NumberHelper;
 import io.inprice.common.utils.StringHelper;
 import io.javalin.http.Context;
 
@@ -33,7 +31,7 @@ public class ProductService extends EximBase {
 
   private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
-  Response upload(String fileContent) {
+  Response upload(String csvContent) {
   	List<String> problems = new ArrayList<>();
 
     try (Handle handle = Database.getHandle()) {
@@ -48,7 +46,7 @@ public class ProductService extends EximBase {
     	Set<String> looked = new HashSet<>(); //by sku
     	List<ProductDTO> dtos = new ArrayList<>();
     	
-    	String[] rows = fileContent.lines().toArray(String[]::new);
+    	String[] rows = csvContent.lines().toArray(String[]::new);
       for (String row : rows) {
       	if (StringUtils.isBlank(row)) continue;
       	
@@ -117,8 +115,7 @@ public class ProductService extends EximBase {
   		dto.setSku(SqlHelper.clear(columns.get(0)));
   		dto.setName(SqlHelper.clear(columns.get(1)));
   		try {
-	  		BigDecimal price = new BigDecimal(NumberHelper.extractPrice(columns.get(2)));
-	  		dto.setPrice(price.setScale(2, RoundingMode.HALF_UP));
+	  		dto.setPrice(new BigDecimal(columns.get(2)));
   		} catch (Exception e) { 
   			return Responses.Invalid.PRICE;
   		}
@@ -185,7 +182,7 @@ public class ProductService extends EximBase {
     		IOUtils.copy(IOUtils.toInputStream(lines.toString(), "UTF-8") , ctx.res.getOutputStream());
     		return Responses.OK;
     	} else {
-    		return Responses.NotFound.LINK;
+    		return Responses.NotFound.PRODUCT;
     	}
     } catch (IOException e) {
 			logger.error("Failed to export categories", e);

@@ -31,7 +31,7 @@ insert into test.membership (email, user_id, workspace_id, role, status) values 
 -- products and links
 -- product_name_addition, actives, tryings, waitings, problems, url, platform_id, workspace_name, workspace_id
 -- -----------------------
-call sp_create_product_and_links(null, 'D', 1, 0, 0, 0, 'https://hepsiburada.com/', 84, 'Workspace-D', @workspace_id);
+call sp_create_product_and_links('CX-001', 'D', 1, 0, 0, 0, 'https://hepsiburada.com/', 84, 'Workspace-D', @workspace_id);
 
 -- -----------------------
 -- 2 alarms

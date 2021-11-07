@@ -33,8 +33,8 @@ insert into test.membership (email, user_id, workspace_id, role, status) values 
 -- 2 products and 11 links
 -- product_name_addition, actives, tryings, waitings, problems, url, platform_id, workspace_name, workspace_id
 -- -----------------------
-call sp_create_product_and_links(null, 'R', 5, 2, 1, 2, 'https://amazon.com/', 2, 'Workspace-E', @workspace_id);
-call sp_create_product_and_links(null, 'S', 0, 0, 1, 0, 'https://gittigidiyor.com', 83, 'Workspace-E', @workspace_id);
+call sp_create_product_and_links('DX-001', 'R', 5, 2, 1, 2, 'https://amazon.com/', 2, 'Workspace-E', @workspace_id);
+call sp_create_product_and_links('DX-002', 'S', 0, 0, 1, 0, 'https://gittigidiyor.com', 83, 'Workspace-E', @workspace_id);
 
 -- tickets
 -- -----------------------
