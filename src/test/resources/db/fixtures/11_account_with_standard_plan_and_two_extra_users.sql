@@ -50,6 +50,22 @@ insert into test.membership (email, user_id, workspace_id, role, status) values 
 insert into test.membership (email, user_id, workspace_id, role, status) values (@viewer_email, @viewer_id, @workspace_id, 'VIEWER', 'JOINED');
 
 -- -----------------------
+-- brands
+-- -----------------------
+insert into test.brand (name, workspace_id) values
+  ('APPLE', @workspace_id),
+  ('LENOVO', @workspace_id),
+  ('SAMSUNG', @workspace_id);
+
+-- -----------------------
+-- categories
+-- -----------------------
+insert into test.category (name, workspace_id) values
+  ('MEN', @workspace_id),
+  ('KIDS', @workspace_id),
+  ('WOMEN', @workspace_id);
+
+-- -----------------------
 -- 3 products and 12 links
 -- product_name_addition, actives, tryings, waitings, problems, url, platform_id, workspace_name, workspace_id
 -- -----------------------

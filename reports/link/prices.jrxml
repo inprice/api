@@ -113,7 +113,7 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
 	<group name="Dynamic">
-		<groupExpression><![CDATA[$F{name}+$F{seller}+$F{p_sku}]]></groupExpression>
+		<groupExpression><![CDATA[$F{name}+$F{p_sku}]]></groupExpression>
 		<groupHeader>
 			<band height="39">
 				<line>

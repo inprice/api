@@ -30,6 +30,7 @@ import io.inprice.common.models.Alarm;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
 import io.inprice.common.models.Workspace;
+import io.inprice.common.utils.StringHelper;
 
 /**
  * 
@@ -197,13 +198,13 @@ public class AlarmService {
 
 		if (CollectionUtils.isNotEmpty(dto.getSubjects())) {
 			where.append(
-		    String.format(" and a.subject in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getSubjects()))
+		    String.format(" and a.subject in (%s) ", StringHelper.join("'", dto.getSubjects()))
 	    );
 		}
 
 		if (CollectionUtils.isNotEmpty(dto.getWhens())) {
 			where.append(
-		    String.format(" and a.subject_when in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getWhens()))
+		    String.format(" and a.subject_when in (%s) ", StringHelper.join("'", dto.getWhens()))
 	    );
 		}
 

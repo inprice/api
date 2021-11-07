@@ -32,6 +32,7 @@ import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
 import io.inprice.common.models.Product;
+import io.inprice.common.utils.StringHelper;
 
 class LinkService {
 
@@ -65,13 +66,13 @@ class LinkService {
 
     if (CollectionUtils.isNotEmpty(dto.getPositions())) {
     	where.append(
-  			String.format(" and l.position in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getPositions()))
+  			String.format(" and l.position in (%s) ", StringHelper.join("'", dto.getPositions()))
 			);
     }
 
     if (CollectionUtils.isNotEmpty(dto.getStatuses())) {
     	where.append(
-		    String.format(" and grup in (%s) ", io.inprice.common.utils.StringUtils.join("'", dto.getStatuses()))
+		    String.format(" and grup in (%s) ", StringHelper.join("'", dto.getStatuses()))
 			);
     }
 

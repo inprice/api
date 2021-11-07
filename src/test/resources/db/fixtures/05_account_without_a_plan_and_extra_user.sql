@@ -31,6 +31,16 @@ values ('USER', 'INFO', 'Here is a good news for you', 'This is a test announce 
 insert into test.announce (type, level, title, body, starting_at, ending_at, workspace_id) 
 values ('WORKSPACE', 'INFO', 'A kind reminder for your usage', 'Please consider to pick a broader plan since your link count has reached its limit!', now(), @one_month_later,  @workspace_id);
 
+-- Brands
+-- -----------------------
+insert into test.brand (name, workspace_id) values ('LENOVO', @workspace_id);
+insert into test.brand (name, workspace_id) values ('SAMSUNG', @workspace_id);
+
+-- Categories
+-- -----------------------
+insert into test.category (name, workspace_id) values ('ELECTRONICS', @workspace_id);
+insert into test.category (name, workspace_id) values ('TOOLS', @workspace_id);
+
 -- tickets
 -- -----------------------
 

@@ -4,44 +4,51 @@ import io.inprice.api.consts.Responses;
 
 public final class Response {
 
-   private int status;
-   private String reason;
-   private Object data;
-   
-   Response() {
-  	 
-   }
+	private int status;
+	private String reason;
+	private Object data;
 
-   public Response(Object data) {
-      this.status = Responses.OK.getStatus();
-      this.data = data;
-   }
+	Response() {
 
-   public Response(String reason) {
-  	 this.status = Responses.BAD_REQUEST.getStatus();
-      this.reason = reason;
-   }
+	}
 
-   public Response(int status, String reason) {
-      this.status = status;
-      this.reason = reason;
-   }
+	public Response(Object data) {
+		this.status = Responses.OK.getStatus();
+		this.data = data;
+	}
 
-   public boolean isOK() {
-      return (status == Responses.OK.getStatus());
-   }
+	public Response(String reason) {
+		this.status = Responses.BAD_REQUEST.getStatus();
+		this.reason = reason;
+	}
 
-   public int getStatus() {
-      return status;
-   }
+	public Response(int status, String reason) {
+		this.status = status;
+		this.reason = reason;
+	}
 
-   public String getReason() {
-      return reason;
-   }
+	public boolean isOK() {
+		return (status == Responses.OK.getStatus());
+	}
 
-   @SuppressWarnings("unchecked")
-   public <T> T getData() {
-      return (T) data;
-   }
+	public int getStatus() {
+		return status;
+	}
+
+	public String getReason() {
+		return reason;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T getData() {
+		return (T) data;
+	}
+
+	public static Response dataAsString(String data) {
+		Response neu = new Response();
+		neu.status = Responses.OK.getStatus();
+		neu.data = data;
+		return neu;
+	}
 
 }

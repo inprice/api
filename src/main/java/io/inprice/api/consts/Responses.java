@@ -39,8 +39,13 @@ public class Responses {
     public static final Response TOKEN = new Response(BASE + 30, "Invalid token!");
 
     public static final Response VOUCHER = new Response(BASE + 45, "Invalid voucher!");
+    
+    public static final Response FILE_TYPE = new Response(BASE + 60, "Invalid file type!");
+    public static final Response FILE_LENGTH_TOO_LARGE = new Response(BASE + 62, "File length is too large! Must be less than 1 mb.");
 
-    public static final Response FORM = new Response(BASE + 90, "Invalid form data!");
+    public static final Response PRICE = new Response(BASE + 65, "Invalid price!");
+        
+    public static final Response CSV_COLUMN_COUNT = new Response(BASE + 90, "Column count mismatch!");
     public static final Response DATA = new Response(BASE + 99, "Invalid data!");
   }
 

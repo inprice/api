@@ -34,8 +34,8 @@ values (@workspace_id, 'MM-004', 'SUBSCRIPTION', true, 'Subscription has been re
 -- 2 products and 4 links
 -- product_name_addition, actives, tryings, waitings, problems, url, platform_id, workspace_name, workspace_id
 -- -----------------------
-call sp_create_product_and_links(null, 'A', 1, 0, 0, 1, 'https://amazon.com/', 2, 'Workspace-G', @workspace_id);
-call sp_create_product_and_links(null, 'B', 1, 0, 0, 1, 'https://ebay.com/', 12, 'Workspace-G', @workspace_id);
+call sp_create_product_and_links('EX-001', 'A', 1, 0, 0, 1, 'https://amazon.com/', 2, 'Workspace-G', @workspace_id);
+call sp_create_product_and_links('EX-002', 'B', 1, 0, 0, 1, 'https://ebay.com/', 12, 'Workspace-G', @workspace_id);
 
 -- -----------------------
 -- 2 smart prices

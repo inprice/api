@@ -35,6 +35,20 @@ insert into test.membership (email, user_id, workspace_id, role, status) values 
 insert into test.membership (email, user_id, workspace_id, role, status) values (@editor_email, @editor_id, @workspace_id, 'EDITOR', 'JOINED');
 insert into test.membership (email, user_id, workspace_id, role, status) values (@viewer_email, @viewer_id, @workspace_id, 'VIEWER', 'JOINED');
 
+-- brands
+-- -----------------------
+insert into test.brand (name, workspace_id) values ('NO BRAND', @workspace_id);
+insert into test.brand (name, workspace_id) values ('LEVIS', @workspace_id);
+insert into test.brand (name, workspace_id) values ('GREEN DOT', @workspace_id);
+insert into test.brand (name, workspace_id) values ('GREYDER', @workspace_id);
+
+-- Categories
+-- -----------------------
+insert into test.category (name, workspace_id) values ('COMPUTERS', @workspace_id);
+insert into test.category (name, workspace_id) values ('GARDENING', @workspace_id);
+insert into test.category (name, workspace_id) values ('ACCESSORIES', @workspace_id);
+insert into test.category (name, workspace_id) values ('ACCUMULATORS', @workspace_id);
+
 -- -----------------------
 -- 2 smart prices
 -- -----------------------

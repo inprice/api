@@ -27,12 +27,22 @@ values (@workspace_id, 'SY-12A', 'FREE USE', 'Free use started.');
 -- membership
 insert into test.membership (email, user_id, workspace_id, role, status) values (@admin_email, @admin_id, @workspace_id, 'ADMIN', 'JOINED');
 
+-- brands
+-- -----------------------
+insert into test.brand (name, workspace_id) values ('P&G', @workspace_id);
+insert into test.brand (name, workspace_id) values ('JACK DANIELS', @workspace_id);
+
+-- Categories
+-- -----------------------
+insert into test.category (name, workspace_id) values ('COSMETICS', @workspace_id);
+insert into test.category (name, workspace_id) values ('BEVERAGES', @workspace_id);
+
 -- -----------------------
 -- 2 products and 24 links
 -- product_name_addition, actives, tryings, waitings, problems, url, platform_id, workspace_name, workspace_id
 -- -----------------------
-call sp_create_product_and_links(null, '1', 5, 4, 3, 2, 'https://amazon.com/', 2, 'Workspace-B', @workspace_id);
-call sp_create_product_and_links(null, '2', 4, 3, 2, 1, 'https://ebay.com/', 12, 'Workspace-B', @workspace_id);
+call sp_create_product_and_links('AX-001', '1', 5, 4, 3, 2, 'https://amazon.com/', 2, 'Workspace-B', @workspace_id);
+call sp_create_product_and_links('AX-002', '2', 4, 3, 2, 1, 'https://ebay.com/', 12, 'Workspace-B', @workspace_id);
 
 -- -----------------------
 -- 5 alarms

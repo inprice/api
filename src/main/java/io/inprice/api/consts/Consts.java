@@ -132,7 +132,15 @@ public class Consts {
       public static final String BASE = "/dashboard";
       public static final String REFRESH = BASE + "/refresh";
     }
-    
+
+    public static class Exim {
+      public static final String BASE = "/exim";
+      public static final String PRODUCT = BASE + "/product";
+      public static final String LINK = BASE + "/link";
+      public static final String BRAND = BASE + "/brand";
+      public static final String CATEGORY = BASE + "/category";
+    }
+
     public static class System {
     	public static final String BASE = "/app";
     	public static final String PLANS = BASE + "/plans";
