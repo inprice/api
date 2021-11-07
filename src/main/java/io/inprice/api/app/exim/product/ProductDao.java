@@ -25,15 +25,6 @@ public interface ProductDao {
 	)
   void insertAll(@BindBean("prod") List<ProductDTO> prodList);	
 
-  @SqlQuery(
-      "select sku, name, price, brn.name as brand_name, cat.name as category_name from product as p " +
-  		"left join brand as brn on brn.id = p.brand_id " +
-  		"left join category as cat on cat.id = p.category_id " +
-  		"where p.workspace_id=:workspaceId " +
-  		"order by sku"
-	)
-  List<String[]> getList(@Bind("workspaceId") Long workspaceId);
-
   @SqlUpdate("insert into brand (name, workspace_id) values (:name, :workspaceId)")
   @GetGeneratedKeys()
   long insertBrand(@Bind("name") String name, @Bind("workspaceId") Long workspaceId);

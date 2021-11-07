@@ -23,14 +23,6 @@ public interface LinkDao {
 	)
   void insertAll(@BindBean("link") List<LinkDTO> linkList);	
 
-  @SqlQuery(
-      "select p.sku, l.url from link as l " +
-  		"inner join product as p on p.id = l.product_id " +
-  		"where l.workspace_id=:workspaceId " +
-  		"order by p.sku, l.url"
-	)
-  List<String[]> getList(@Bind("workspaceId") Long workspaceId);
-
   @SqlQuery("select lower(sku) as sku, id from product where workspace_id=:workspaceId")
   @KeyColumn("sku")
   @ValueColumn("id")

@@ -33,11 +33,11 @@ public class ProductController extends AbstractController {
     }, AccessRoles.EDITOR());
 
     app.get(Consts.Paths.Exim.PRODUCT + DOWNLOAD, (ctx) -> {
-  		Response res = service.download(ctx.res.getOutputStream());
+  		Response res = service.download(ctx);
   		if (res.isOK()) {
   			ctx
   				.contentType("text/csv")
-  				.header("Content-Disposition", "attachment; filename=Products.csv");
+  				.header("Content-Disposition", "attachment; filename=products.csv");
   		} else {
   			ctx.status(400).json(res);
   		}

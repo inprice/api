@@ -33,11 +33,11 @@ public class LinkController extends AbstractController {
     }, AccessRoles.EDITOR());
 
     app.get(Consts.Paths.Exim.LINK + DOWNLOAD, (ctx) -> {
-  		Response res = service.download(ctx.res.getOutputStream());
+  		Response res = service.download(ctx);
   		if (res.isOK()) {
   			ctx
   				.contentType("text/csv")
-  				.header("Content-Disposition", "attachment; filename=Links.csv");
+  				.header("Content-Disposition", "attachment; filename=links.csv");
   		} else {
   			ctx.status(400).json(res);
   		}

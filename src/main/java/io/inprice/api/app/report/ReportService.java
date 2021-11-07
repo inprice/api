@@ -84,7 +84,7 @@ public class ReportService extends ReportBase {
     }
 
     if (StringUtils.isNotBlank(dto.getSku())) {
-  		sql.append(" and l.sku = '");
+  		sql.append(" and p.sku = '");
   		sql.append(SqlHelper.clear(dto.getSku()));
   		sql.append("'");
     }

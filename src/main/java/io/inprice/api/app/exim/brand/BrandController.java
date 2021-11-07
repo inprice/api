@@ -37,7 +37,7 @@ public class BrandController extends AbstractController {
   		if (res.isOK()) {
   			ctx
   				.contentType("text/csv")
-  				.header("Content-Disposition", "attachment; filename=Brands.csv");
+  				.header("Content-Disposition", "attachment; filename=brands.csv");
   		} else {
   			ctx.status(400).json(res);
   		}

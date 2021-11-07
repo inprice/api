@@ -1,7 +1,6 @@
 package io.inprice.api.app.exim.link;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -15,6 +14,9 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.exim.EximBase;
+import io.inprice.api.app.exim.link.mapper.DownloadBean;
+import io.inprice.api.app.exim.link.mapper.DownloadBeanMapper;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LinkDTO;
 import io.inprice.api.info.Response;
@@ -23,8 +25,9 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.utils.StringHelper;
 import io.inprice.common.utils.URLUtils;
+import io.javalin.http.Context;
 
-public class LinkService {
+public class LinkService extends EximBase {
 
   private static final Logger logger = LoggerFactory.getLogger(LinkService.class);
 
@@ -141,20 +144,33 @@ public class LinkService {
   	}
   }
 
-  Response download(OutputStream outputStream) {
+  Response download(Context ctx) {
     try (Handle handle = Database.getHandle()) {
-    	LinkDao dao = handle.attach(LinkDao.class);
-    	List<String[]> links = dao.getList(CurrentUser.getWorkspaceId());
-    	if (links.size() > 0) {
-    		StringBuilder lines = new StringBuilder("name\n");
-    		for (String[] fields: links) {
-    			lines.append(normalizeValue(fields[0], false));
-    			lines.append(normalizeValue(fields[1], true));
+      //---------------------------------------------------
+      //fetching the data
+      //---------------------------------------------------
+    	handle.registerRowMapper(new DownloadBeanMapper());
+      List<DownloadBean> dDeans =
+        handle.createQuery(
+          "select p.sku, l.url from link as l " +
+      		"inner join product as p on p.id = l.product_id " +
+      		"left join platform as pl on pl.id = l.platform_id " +
+      		generateWhereClause(ctx) +
+      		" order by p.sku, l.url"
+        )
+      .mapTo(DownloadBean.class)
+      .list();
+
+    	if (dDeans.size() > 0) {
+    		StringBuilder lines = new StringBuilder();
+    		for (DownloadBean bean: dDeans) {
+    			lines.append(normalizeValue(bean.getSku()));
+    			lines.append(normalizeValue(bean.getUrl(), true));
     		}
-    		IOUtils.copy(IOUtils.toInputStream(lines.toString(), "UTF-8") , outputStream);
+    		IOUtils.copy(IOUtils.toInputStream(lines.toString(), "UTF-8") , ctx.res.getOutputStream());
     		return Responses.OK;
     	} else {
-    		return Responses.NotFound.CATEGORY;
+    		return Responses.NotFound.LINK;
     	}
     } catch (IOException e) {
 			logger.error("Failed to export categories", e);
@@ -162,23 +178,56 @@ public class LinkService {
 
     return Responses.ServerProblem.EXCEPTION;
   }
-  
-  private String normalizeValue(String value, boolean isLastValue) {
-  	StringBuilder sb = new StringBuilder();
-  	if (StringUtils.isNotBlank(value)) {
-			if (value.indexOf(',') >= 0) sb.append('"');
-			sb.append(value);
-			if (value.indexOf(',') >= 0) sb.append('"');
-  	} else {
-  		sb.append("");
+
+	String generateWhereClause(Context ctx) {
+		StringBuilder sql = new StringBuilder();
+
+    sql.append("where l.workspace_id = ");
+    sql.append(CurrentUser.getWorkspaceId());
+
+  	if (ctx.queryParam("sku") != null) {
+  		sql.append(" and p.sku = '");
+  		sql.append(SqlHelper.clear(ctx.queryParam("sku")));
+  		sql.append("'");
   	}
 
-  	if (isLastValue) {
-			sb.append('\n');
-		} else {
-			sb.append(',');
-		}
-  	return sb.toString(); 
-  }
+  	if (ctx.queryParam("brand") != null) {
+  		sql.append(" and l.brand = '");
+  		sql.append(SqlHelper.clear(ctx.queryParam("brand")));
+  		sql.append("'");
+  	}
 
+  	if (ctx.queryParam("seller") != null) {
+  		sql.append(" and l.seller = '");
+			sql.append(SqlHelper.clear(ctx.queryParam("seller")));
+  		sql.append("'");
+  	}
+
+  	if (ctx.queryParam("platform") != null) {
+  		sql.append(" and pl.name = '");
+  		sql.append(SqlHelper.clear(ctx.queryParam("platform")));
+  		sql.append("'");
+  	}
+
+  	if (ctx.queryParam("platform") != null) {
+  		sql.append(" and pl.name = '");
+  		sql.append(SqlHelper.clear(ctx.queryParam("platform")));
+  		sql.append("'");
+  	}
+  	
+  	if (ctx.queryParam("grups") != null) {
+    	sql.append(
+  			String.format(" and l.grup in (%s) ", StringHelper.join("'", ctx.queryParams("grups")))
+			);
+    }
+  	
+  	if (ctx.queryParam("positions") != null) {
+    	sql.append(
+  			String.format(" and l.position in (%s) ", StringHelper.join("'", ctx.queryParams("positions")))
+			);
+    }
+
+    return sql.toString();
+	}
+	
 }

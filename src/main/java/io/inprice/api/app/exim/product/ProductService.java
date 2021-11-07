@@ -1,7 +1,6 @@
 package io.inprice.api.app.exim.product;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -16,6 +15,9 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.exim.EximBase;
+import io.inprice.api.app.exim.product.mapper.DownloadBean;
+import io.inprice.api.app.exim.product.mapper.DownloadBeanMapper;
 import io.inprice.api.app.product.ProductVerifier;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.ProductDTO;
@@ -25,8 +27,9 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.utils.NumberHelper;
 import io.inprice.common.utils.StringHelper;
+import io.javalin.http.Context;
 
-public class ProductService {
+public class ProductService extends EximBase {
 
   private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
@@ -153,23 +156,36 @@ public class ProductService {
   	}
   }
 
-  Response download(OutputStream outputStream) {
+  Response download(Context ctx) {
     try (Handle handle = Database.getHandle()) {
-    	ProductDao dao = handle.attach(ProductDao.class);
-    	List<String[]> products = dao.getList(CurrentUser.getWorkspaceId());
-    	if (products.size() > 0) {
-    		StringBuilder lines = new StringBuilder("name\n");
-    		for (String[] fields: products) {
-    			lines.append(normalizeValue(fields[0], false));
-    			lines.append(normalizeValue(fields[1], false));
-    			lines.append(normalizeValue(fields[2], false));
-    			lines.append(normalizeValue(fields[3], false));
-    			lines.append(normalizeValue(fields[4], true));
+      //---------------------------------------------------
+      //fetching the data
+      //---------------------------------------------------
+    	handle.registerRowMapper(new DownloadBeanMapper());
+      List<DownloadBean> dDeans =
+        handle.createQuery(
+          "select sku, p.name, price, brn.name as brand_name, cat.name as category_name from product as p " +
+      		"left join brand as brn on brn.id = p.brand_id " +
+      		"left join category as cat on cat.id = p.category_id " +
+      		generateWhereClause(ctx) +
+      		" order by sku"
+        )
+      .mapTo(DownloadBean.class)
+      .list();
+
+    	if (dDeans.size() > 0) {
+    		StringBuilder lines = new StringBuilder();
+    		for (DownloadBean bean: dDeans) {
+    			lines.append(normalizeValue(bean.getSku()));
+    			lines.append(normalizeValue(bean.getName()));
+    			lines.append(bean.getPrice() + ",");
+    			lines.append(normalizeValue(bean.getBrandName()));
+    			lines.append(normalizeValue(bean.getCategoryName(), true));
     		}
-    		IOUtils.copy(IOUtils.toInputStream(lines.toString(), "UTF-8") , outputStream);
+    		IOUtils.copy(IOUtils.toInputStream(lines.toString(), "UTF-8") , ctx.res.getOutputStream());
     		return Responses.OK;
     	} else {
-    		return Responses.NotFound.CATEGORY;
+    		return Responses.NotFound.LINK;
     	}
     } catch (IOException e) {
 			logger.error("Failed to export categories", e);
@@ -177,23 +193,32 @@ public class ProductService {
 
     return Responses.ServerProblem.EXCEPTION;
   }
-  
-  private String normalizeValue(String value, boolean isLastValue) {
-  	StringBuilder sb = new StringBuilder();
-  	if (StringUtils.isNotBlank(value)) {
-			if (value.indexOf(',') >= 0) sb.append('"');
-			sb.append(value);
-			if (value.indexOf(',') >= 0) sb.append('"');
-  	} else {
-  		sb.append("");
+
+	String generateWhereClause(Context ctx) {
+		StringBuilder sql = new StringBuilder();
+
+    sql.append("where p.workspace_id = ");
+    sql.append(CurrentUser.getWorkspaceId());
+
+  	if (ctx.queryParam("brand") != null) {
+  		sql.append(" and brn.name = '");
+  		sql.append(SqlHelper.clear(ctx.queryParam("brand")));
+  		sql.append("'");
   	}
 
-  	if (isLastValue) {
-			sb.append('\n');
-		} else {
-			sb.append(',');
-		}
-  	return sb.toString(); 
-  }
+  	if (ctx.queryParam("category") != null) {
+  		sql.append(" and cat.name = '");
+			sql.append(SqlHelper.clear(ctx.queryParam("category")));
+  		sql.append("'");
+  	}
+  	
+  	if (ctx.queryParam("positions") != null) {
+    	sql.append(
+  			String.format(" and p.position in (%s) ", StringHelper.join("'", ctx.queryParams("positions")))
+			);
+    }
+
+    return sql.toString();
+	}
 
 }

@@ -14,13 +14,14 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.exim.EximBase;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 
-public class CategoryService {
+public class CategoryService extends EximBase {
 
   private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
 
@@ -90,7 +91,7 @@ public class CategoryService {
     	CategoryDao dao = handle.attach(CategoryDao.class);
     	List<String> categories = dao.getList(CurrentUser.getWorkspaceId());
     	if (categories.size() > 0) {
-    		StringBuilder lines = new StringBuilder("name\n");
+    		StringBuilder lines = new StringBuilder();
     		for (String name: categories) {
     			lines.append(normalizeValue(name, true));
     		}
@@ -104,24 +105,6 @@ public class CategoryService {
 		}
 
     return Responses.ServerProblem.EXCEPTION;
-  }
-  
-  private String normalizeValue(String value, boolean isLastValue) {
-  	StringBuilder sb = new StringBuilder();
-  	if (StringUtils.isNotBlank(value)) {
-			if (value.indexOf(',') >= 0) sb.append('"');
-			sb.append(value);
-			if (value.indexOf(',') >= 0) sb.append('"');
-  	} else {
-  		sb.append("");
-  	}
-
-  	if (isLastValue) {
-			sb.append('\n');
-		} else {
-			sb.append(',');
-		}
-  	return sb.toString(); 
   }
 
 }
