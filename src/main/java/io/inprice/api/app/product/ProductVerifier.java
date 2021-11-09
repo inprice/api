@@ -47,6 +47,8 @@ public class ProductVerifier {
 	  	} else if (dto.getBasePrice().compareTo(new BigDecimal(9_999_999)) > 0) {
 	  		problem = "Base Price is out of reasonable range!";
 	    }
+    } else if (dto.getBasePrice() == null) {
+    	dto.setBasePrice(BigDecimal.ZERO);
     }
 
     if (problem == null && dto.getBrand() != null && dto.getBrand().getId() == null && StringUtils.isNotBlank(dto.getBrand().getName())) {

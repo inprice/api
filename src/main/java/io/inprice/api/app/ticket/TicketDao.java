@@ -60,7 +60,7 @@ public interface TicketDao {
 		"where id=:id " +
 		"  and status!='CLOSED'"
 	)
-  boolean increaseCommentCount(@Bind("id") Long ticketId);
+  boolean incCommentCount(@Bind("id") Long ticketId);
 
   @SqlUpdate(
 		"update ticket " +

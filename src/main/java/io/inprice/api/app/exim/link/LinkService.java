@@ -17,12 +17,14 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.exim.EximBase;
 import io.inprice.api.app.exim.link.mapper.DownloadBean;
 import io.inprice.api.app.exim.link.mapper.DownloadBeanMapper;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LinkDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
+import io.inprice.common.models.Workspace;
 import io.inprice.common.utils.StringHelper;
 import io.inprice.common.utils.URLUtils;
 import io.javalin.http.Context;
@@ -36,8 +38,22 @@ public class LinkService extends EximBase {
 
     try (Handle handle = Database.getHandle()) {
 
-    	LinkDao dao = handle.attach(LinkDao.class);
+    	int allowedLinkCount = 0;
+    	
+      WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
 
+      Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
+      if (workspace.getPlan() != null) {
+        allowedLinkCount = (workspace.getPlan().getLinkLimit() - workspace.getLinkCount());
+        if (allowedLinkCount < 1) {
+        	return Responses.NotAllowed.NO_LINK_LIMIT;
+        }
+      } else {
+      	return Responses.NotAllowed.HAVE_NO_PLAN;
+      }
+
+    	LinkDao dao = handle.attach(LinkDao.class);
+      
     	//to prevent multiple lookups to db
     	Map<String, Long> productMap = dao.getProducts(CurrentUser.getWorkspaceId());
 
@@ -46,7 +62,8 @@ public class LinkService extends EximBase {
     	List<LinkDTO> dtos = new ArrayList<>();
     	
     	String[] rows = csvContent.lines().toArray(String[]::new);
-      for (String row : rows) {
+      for (int i=0; i<rows.length; i++) {
+      	String row = rows[i];
       	if (StringUtils.isBlank(row)) continue;
       	
       	Response buildRes = buildLinkDTO(row, dao, productMap);
@@ -68,10 +85,15 @@ public class LinkService extends EximBase {
       	} else {
       		problems.add(lineNumber + ". " + buildRes.getReason());
       	}
+
       	if (lineNumber == 1000) break;
       	if (problems.size() >= 25) {
       		problems.add("Cancelled because there are too many problems in your file!");
       		dtos.clear();
+      		break;
+      	}
+      	if (dtos.size() >= allowedLinkCount && i < rows.length-1) {
+      		problems.add("Reached your plan's maximum link limit!");
       		break;
       	}
       	lineNumber++;
@@ -81,6 +103,7 @@ public class LinkService extends EximBase {
       if (dtos.size() > 0) {
       	handle.begin();
       	dao.insertAll(dtos);
+      	workspaceDao.incLinkCount(CurrentUser.getWorkspaceId(), dtos.size());
       	handle.commit();
       }
 

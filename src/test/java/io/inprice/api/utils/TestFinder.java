@@ -71,8 +71,8 @@ public class TestFinder {
 				.headers(session == 0 ? Fixtures.SESSION_0_HEADERS : Fixtures.SESSION_1_HEADERS)
 			.cookie(cookies)
 			.body(new JSONObject()
-					.put("term", byName)
-				)
+				.put("term", byName)
+			)
 			.asJson();
 
 		JSONObject json = res.getBody().getObject();

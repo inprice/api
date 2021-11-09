@@ -41,7 +41,7 @@ public interface TicketDao {
 		"where id=:id " +
 		"  and status!='CLOSED'"
 	)
-  boolean increaseCommentCount(@Bind("id") Long ticketId);
+  boolean incCommentCount(@Bind("id") Long ticketId);
 
   @SqlUpdate(
 		"update ticket " +
@@ -49,7 +49,7 @@ public interface TicketDao {
 		"where id=:id " +
 		"  and status!='CLOSED'"
 	)
-	boolean decreaseCommentCount(@Bind("id") Long ticketId);
+	boolean decCommentCount(@Bind("id") Long ticketId);
 
 	@SqlUpdate(
 		"insert into ticket_comment (ticket_id, body, added_by_user, user_id, workspace_id) " +

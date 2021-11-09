@@ -58,16 +58,16 @@ public interface WorkspaceDao {
   boolean update(@BindBean("dto") CustomerDTO dto, @Bind("id") Long id);
 
   @SqlUpdate("update workspace set user_count=user_count+1 where id=:id")
-  boolean increaseUserCount(@Bind("id") Long id);
+  boolean incUserCount(@Bind("id") Long id);
   
   @SqlUpdate("update workspace set link_count=link_count+<count> where id=:id")
-  boolean increaseLinkCount(@Bind("id") Long id, @Define("count") Integer count);
+  boolean incLinkCount(@Bind("id") Long id, @Define("count") Integer count);
   
   @SqlUpdate("update workspace set alarm_count=alarm_count+1 where id=:id")
-  boolean increaseAlarmCount(@Bind("id") Long id);
+  boolean incAlarmCount(@Bind("id") Long id);
 
   @SqlUpdate("update workspace set alarm_count=alarm_count-1 where id=:id")
-  boolean decreaseAlarmCount(@Bind("id") Long id);
+  boolean decAlarmCount(@Bind("id") Long id);
 
   @SqlQuery(
     "select w.id, w.name, u.email from workspace as w " +

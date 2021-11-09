@@ -1,6 +1,5 @@
 package io.inprice.api.app.link;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,18 +13,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.link.dto.SearchDTO;
-import io.inprice.api.app.product.ProductPriceService;
 import io.inprice.api.app.product.ProductDao;
+import io.inprice.api.app.product.ProductPriceService;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
-import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
@@ -170,83 +167,58 @@ class LinkService {
   Response moveTo(LinkMoveDTO dto) {
   	Response res = Responses.OK;
   	
-  	boolean isNewProduct = (dto.getToProductId() == null && StringUtils.isNotBlank(dto.getToProductName()));
-
-  	if (isNewProduct || (dto.getToProductId() != null && dto.getToProductId() > 0)) {
+  	if (dto.getToProductId() != null && dto.getToProductId() > 0) {
   		if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) dto.getLinkIdSet().remove(null);
 
       if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) {
       	try (Handle handle = Database.getHandle()) {
         	handle.begin();
 
-      		if (isNewProduct) {
-      			dto.setToProductName(SqlHelper.clear(dto.getToProductName()));
+      		LinkDao linkDao = handle.attach(LinkDao.class);
+          
+        	Set<Long> foundProductIdSet = linkDao.findProductIdSet(dto.getLinkIdSet());
+        	if (CollectionUtils.isNotEmpty(foundProductIdSet)) foundProductIdSet.remove(null);
 
-      			ProductDao productDao = handle.attach(ProductDao.class);
-      			Product found = productDao.findByName(dto.getToProductName(), CurrentUser.getWorkspaceId());
-      			if (found == null) { //creating a new product
-      				dto.setToProductId(
-    						productDao.insert(
-  								ProductDTO.builder()
-  									.name(dto.getToProductName())
-  									.price(BigDecimal.ZERO)
-  									.basePrice(BigDecimal.ZERO)
-  									.workspaceId(CurrentUser.getWorkspaceId())
-  									.build()
-									)
-    						);
-      			} else {
-        			res = Responses.Already.Defined.PRODUCT;
-      			}
-      		}
+        	if (CollectionUtils.isNotEmpty(foundProductIdSet)) {
+	    			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
+	    			String 
+	    				updatePart = 
+	    					String.format(
+	  							"set product_id=%d where link_id in (%s) and product_id!=%d and workspace_id=%d", 
+	  							dto.getToProductId(), joinedIds, dto.getToProductId(), CurrentUser.getWorkspaceId()
+							);
 
-      		if (res.isOK()) {
-        		LinkDao linkDao = handle.attach(LinkDao.class);
-            
-          	Set<Long> foundProductIdSet = linkDao.findProductIdSet(dto.getLinkIdSet());
-          	if (CollectionUtils.isNotEmpty(foundProductIdSet)) foundProductIdSet.remove(null);
+            Batch batch = handle.createBatch();
+            batch.add("update alarm " + updatePart);
+            batch.add("update link_price " + updatePart);
+            batch.add("update link_history " + updatePart);
+            batch.add("update link_spec " + updatePart);
+            batch.add("update link " + updatePart.replace("link_", "")); //this query determines the success!
+  					int[] result = batch.execute();
 
-          	if (CollectionUtils.isNotEmpty(foundProductIdSet)) {
-		    			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
-		    			String 
-		    				updatePart = 
-		    					String.format(
-		  							"set product_id=%d where link_id in (%s) and product_id!=%d and workspace_id=%d", 
-		  							dto.getToProductId(), joinedIds, dto.getToProductId(), CurrentUser.getWorkspaceId()
-								);
+  					if (result[4] > 0) {
+  						//refreshes product sums and alarm if needed!
+          		foundProductIdSet.add(dto.getToProductId());
+          		ProductPriceService.refresh(foundProductIdSet, handle);
 
-              Batch batch = handle.createBatch();
-              batch.add("update alarm " + updatePart);
-              batch.add("update link_price " + updatePart);
-              batch.add("update link_history " + updatePart);
-              batch.add("update link_spec " + updatePart);
-              batch.add("update link " + updatePart.replace("link_", "")); //this query determines the success!
-    					int[] result = batch.execute();
+          		if (dto.getFromProductId() != null) { //meaning that it is called from product definition (not from links searching page)
+                ProductDao productDao = handle.attach(ProductDao.class);
+              	Product product = productDao.findById(dto.getFromProductId(), CurrentUser.getWorkspaceId());
 
-    					if (result[4] > 0) {
-    						//refreshes product sums and alarm if needed!
-            		foundProductIdSet.add(dto.getToProductId());
-            		ProductPriceService.refresh(foundProductIdSet, handle);
-
-            		if (dto.getFromProductId() != null) { //meaning that it is called from product definition (not from links searching page)
-                  ProductDao productDao = handle.attach(ProductDao.class);
-                	Product product = productDao.findById(dto.getFromProductId(), CurrentUser.getWorkspaceId());
-
-                	Map<String, Object> data = Map.of(
-                		"product", product,
-                  	"links", linkDao.findListByProductId(dto.getFromProductId(), CurrentUser.getWorkspaceId())
-              		);
-                  res = new Response(data);
-            		} else {
-            			res = Responses.OK;
-            		}
-              } else {
-              	res = Responses.NotFound.LINK;
-    					}
+              	Map<String, Object> data = Map.of(
+              		"product", product,
+                	"links", linkDao.findListByProductId(dto.getFromProductId(), CurrentUser.getWorkspaceId())
+            		);
+                res = new Response(data);
+          		} else {
+          			res = Responses.OK;
+          		}
             } else {
-            	res = Responses.NotFound.PRODUCT;
-            }
-      		}
+            	res = Responses.NotFound.LINK;
+  					}
+          } else {
+          	res = Responses.NotFound.PRODUCT;
+          }
 
           if (res.isOK())
           	handle.commit();
@@ -257,7 +229,7 @@ class LinkService {
       	res = Responses.NotFound.LINK;
       }
     } else {
-    	res = Responses.NotFound.PRODUCT;
+    	res = Responses.Invalid.PRODUCT;
     }
 
   	return res;

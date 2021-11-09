@@ -72,6 +72,6 @@ public interface ProductDao {
 
   //called after adding links
   @SqlUpdate("update product set waitings=waitings + <count> where id=:id")
-  boolean increaseWaitingsCount(@Bind("id") Long id, @Define("count") Integer count);
+  boolean incWaitingsCount(@Bind("id") Long id, @Define("count") Integer count);
 
 }

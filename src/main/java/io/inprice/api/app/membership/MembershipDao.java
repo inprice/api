@@ -101,7 +101,7 @@ public interface MembershipDao {
   boolean insertInvitation(@Bind("email") String email, @Bind("role") UserRole role, @Bind("workspaceId") Long workspaceId);
 
   @SqlUpdate("update membership set retry=retry+1 where id=:id and retry<3 and status=:status and workspace_id=:workspaceId")
-  boolean increaseSendingCount(@Bind("id") Long id, @Bind("status") UserStatus status, @Bind("workspaceId") Long workspaceId);
+  boolean incSendingCount(@Bind("id") Long id, @Bind("status") UserStatus status, @Bind("workspaceId") Long workspaceId);
 
   @SqlUpdate("update membership set status=:status, updated_at=now() where id=:id and status!=:status and workspace_id=:workspaceId")
   boolean setStatusDeleted(@Bind("id") Long id, @Bind("status") UserStatus status, @Bind("workspaceId") Long workspaceId);

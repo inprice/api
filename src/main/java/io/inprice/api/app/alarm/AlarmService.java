@@ -80,7 +80,7 @@ public class AlarmService {
     						}
     
     						if (isOK) {
-    		        	workspaceDao.increaseAlarmCount(CurrentUser.getWorkspaceId());
+    		        	workspaceDao.incAlarmCount(CurrentUser.getWorkspaceId());
   
     		        	handle.commit();
     							dto.setId(id);
@@ -156,7 +156,7 @@ public class AlarmService {
 					if (isOK) {
 						isOK = alarmDao.delete(id, CurrentUser.getWorkspaceId());
 						if (isOK) {
-							handle.attach(WorkspaceDao.class).decreaseAlarmCount(CurrentUser.getWorkspaceId());
+							handle.attach(WorkspaceDao.class).decAlarmCount(CurrentUser.getWorkspaceId());
 
 							handle.execute("SET FOREIGN_KEY_CHECKS=1");
 							handle.commit();

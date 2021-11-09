@@ -39,7 +39,7 @@ public class CommentService {
 						dto.setWorkspaceId(ticket.getWorkspaceId());
 						boolean isOK = ticketDao.insertComment(dto);
 						if (isOK) {
-							ticketDao.increaseCommentCount(dto.getTicketId());
+							ticketDao.incCommentCount(dto.getTicketId());
 
 							if (dto.getTicketNewStatus() != null && ticket.getStatus().equals(dto.getTicketNewStatus()) == false) {
 								ticket.setStatus(dto.getTicketNewStatus());
@@ -134,7 +134,7 @@ public class CommentService {
 
 							boolean isOK = ticketDao.deleteCommentById(id);
 							if (isOK) {
-								ticketDao.decreaseCommentCount(comment.getTicketId());
+								ticketDao.decCommentCount(comment.getTicketId());
 								handle.commit();
 								List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(comment.getTicketId());
 								res = new Response(commentList);

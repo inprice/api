@@ -88,7 +88,7 @@ class MembershipService {
               	//TODO: an announce must be fired here!
                 boolean isAdded = membershipDao.insertInvitation(dto.getEmail(), dto.getRole(), CurrentUser.getWorkspaceId());
                 if (isAdded) {
-                  boolean isOK = workspaceDao.increaseUserCount(CurrentUser.getWorkspaceId());
+                  boolean isOK = workspaceDao.incUserCount(CurrentUser.getWorkspaceId());
                   if (isOK) {
                   	handle.commit();
                     dto.setWorkspaceId(CurrentUser.getWorkspaceId());
@@ -130,7 +130,7 @@ class MembershipService {
             User user = userDao.findById(mem.getUserId());
     
             if (user == null || (user.isBanned() == false && user.isPrivileged() == false)) {
-              boolean isOK = membershipDao.increaseSendingCount(memId, UserStatus.PENDING, CurrentUser.getWorkspaceId());
+              boolean isOK = membershipDao.incSendingCount(memId, UserStatus.PENDING, CurrentUser.getWorkspaceId());
               if (isOK) {
                 InvitationSendDTO dto = new InvitationSendDTO();
                 dto.setEmail(mem.getEmail());

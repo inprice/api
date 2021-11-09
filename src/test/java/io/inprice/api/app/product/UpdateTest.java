@@ -149,9 +149,9 @@ public class UpdateTest {
 
 	@Test
 	public void You_already_have_a_product_having_the_same_sku_or_name_FOR_sku() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product G", 0);
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product X", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);
@@ -161,9 +161,9 @@ public class UpdateTest {
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("id", product.getLong("id")); //here is also important!
-		body.put("sku", "F-1");
+		body.put("sku", "BX-002");
 
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN(), body, 0);
 
 		assertEquals(875, json.getInt("status"));
 		assertEquals("You already have a product having the same sku!", json.getString("reason"));
@@ -195,7 +195,7 @@ public class UpdateTest {
 	public void Everything_must_be_ok_WITH_editor() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
 		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product I", 0);
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product G", 0);
 		TestUtils.logout(cookies); //here is important!
 
 		assertNotNull(productList);

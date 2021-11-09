@@ -85,7 +85,7 @@ public class LinkTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		JSONObject json = callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), "links_2.csv");
+		JSONObject json = callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), "links_2.csv");
 
 		assertEquals(200, json.getInt("status"));
 		

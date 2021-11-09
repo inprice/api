@@ -57,14 +57,6 @@ public class MoveToTest {
 	}
 
 	@Test
-	public void Product_not_found_WITHOUT_toProduct() {
-		JSONObject json = callTheService(null, new Long[] { 1L });
-
-		assertEquals(404, json.getInt("status"));
-		assertEquals("Product not found!", json.getString("reason"));
-	}
-
-	@Test
 	public void Link_not_found_WITHOUT_link_id_set() {
 		JSONObject json = callTheService(1L, null);
 
@@ -138,47 +130,6 @@ public class MoveToTest {
 
 	/**
 	 * Consists of five steps;
-	 *	a) an admin logs in
-	 *	b) searches some specific links
-	 *  c) pick one of them
-	 *  d) builds body up with a new product name
-	 *  e) tries to create new product by name and moves those links under it 
-	 */
-	@Test
-	public void You_already_have_a_product_having_the_same_name_WHEN_creating_a_new_product() {
-		//user logs in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
-
-		//searches some specific links
-		JSONArray linkList = TestFinder.searchLinks(cookies, "TRYING");
-		TestUtils.logout(cookies);
-
-		assertNotNull(linkList);
-		assertEquals(2, linkList.length());
-
-		//builds the body up
-		JSONObject body = new JSONObject();
-		body.put("toProductName", "Product 1 OF WORKSPACE-B");
-		body.put("linkIdSet", new Long[] { linkList.getJSONObject(0).getLong("id") });
-
-		cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN());
-
-		//moves those selected links
-		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.headers(Fixtures.SESSION_0_HEADERS)
-			.cookie(cookies)
-			.body(body)
-			.asJson();
-		TestUtils.logout(cookies);
-
-		JSONObject json = res.getBody().getObject();
-
-		assertEquals(875, json.getInt("status"));
-		assertEquals("You already have a product having the same sku or name!", json.getString("reason"));
-	}
-
-	/**
-	 * Consists of five steps;
 	 *	a) editor or admin logs in
 	 *	b) searches some specific links
 	 *  c) gathers two of them
@@ -186,7 +137,7 @@ public class MoveToTest {
 	 *  e) deletes those selected links
 	 */
 	@Test
-	public void Everything_must_be_ok_FOR_new_toProductName() {
+	public void Invalid_product_FOR_null_product_id() {
 		//a user logs in
 		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
 
@@ -218,8 +169,8 @@ public class MoveToTest {
 
 		JSONObject json = res.getBody().getObject();
 
-		assertEquals(200, json.getInt("status"));
-		assertEquals("OK", json.getString("reason"));
+		assertEquals(120, json.getInt("status"));
+		assertEquals("Invalid product!", json.getString("reason"));
 	}
 
 	/**

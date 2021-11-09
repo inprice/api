@@ -87,7 +87,7 @@ class ProductService {
     }
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
-    	where.append(" and CONCAT(ifnull(p.name, ''), ifnull(p.sku, ''))");
+    	where.append(" and CONCAT(p.name, p.sku)");
       where.append(" like '%");
       where.append(dto.getTerm());
       where.append("%' ");
@@ -376,8 +376,8 @@ class ProductService {
   							linkDao.insertHistory(link);
             	});
 
-            	productDao.increaseWaitingsCount(dto.getProductId(), urlList.size());
-            	workspaceDao.increaseLinkCount(CurrentUser.getWorkspaceId(), urlList.size());
+            	productDao.incWaitingsCount(dto.getProductId(), urlList.size());
+            	workspaceDao.incLinkCount(CurrentUser.getWorkspaceId(), urlList.size());
 
             	handle.commit();
             	

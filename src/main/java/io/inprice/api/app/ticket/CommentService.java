@@ -39,7 +39,7 @@ public class CommentService {
 						dto.setWorkspaceId(ticket.getWorkspaceId());
 						boolean isOK = ticketDao.insertComment(dto);
 						if (isOK) {
-							ticketDao.increaseCommentCount(dto.getTicketId());
+							ticketDao.incCommentCount(dto.getTicketId());
 							handle.commit();
 							List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
 							res = new Response(commentList);
