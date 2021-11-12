@@ -42,8 +42,8 @@ public class ProductVerifier {
     }
 
     if (problem == null && dto.getBasePrice() != null) {
-    	if (dto.getBasePrice().compareTo(BigDecimal.ZERO) < 1) {
-	  		problem = "Base Price must be greater than zero!";
+    	if (dto.getBasePrice().compareTo(BigDecimal.ZERO) < 0) {
+	  		problem = "Base Price must be equal or greater than zero!";
 	  	} else if (dto.getBasePrice().compareTo(new BigDecimal(9_999_999)) > 0) {
 	  		problem = "Base Price is out of reasonable range!";
 	    }

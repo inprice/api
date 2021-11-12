@@ -26,5 +26,7 @@ public class ProductDTO {
   private Long categoryId; //for dao
 
   private Long workspaceId;
+  
+  private String from; //to distinguish the source of the request
 
 }

@@ -165,8 +165,7 @@ class ProductService {
 
         	Long id = productDao.insert(dto);
         	if (id != null && id > 0) {
-        		Product found = productDao.findByIdWithLookups(id, CurrentUser.getWorkspaceId());
-            return new Response(Map.of("product", found));
+        		return Responses.OK;
           }
         } else {
         	return Responses.Already.Defined.PRODUCT;
@@ -246,8 +245,12 @@ class ProductService {
         			);
 
               if (affected > 0) {
-              	found = productDao.findByIdWithLookups(dto.getId(), CurrentUser.getWorkspaceId());
-                res = new Response(Map.of("product", found));
+              	if (Objects.equals(dto.getFrom(), "SearchPage")) {
+              		res = Responses.OK;
+              	} else {
+	              	found = productDao.findByIdWithLookups(dto.getId(), CurrentUser.getWorkspaceId());
+	                res = new Response(Map.of("product", found));
+              	}
               } else {
               	res = Responses.DataProblem.DB_PROBLEM;
               }
