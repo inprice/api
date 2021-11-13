@@ -29,7 +29,7 @@ public interface ProductDao {
   @GetGeneratedKeys()
   long insertBrand(@Bind("name") String name, @Bind("workspaceId") Long workspaceId);
 
-  @SqlQuery("select lower(name) as name, id from brand where workspace_id=:workspaceId")
+  @SqlQuery("select name, id from brand where workspace_id=:workspaceId")
   @KeyColumn("name")
   @ValueColumn("id")
   HashMap<String, Long> getBrands(@Bind("workspaceId") Long workspaceId);
@@ -38,7 +38,7 @@ public interface ProductDao {
   @GetGeneratedKeys()
   long insertCategory(@Bind("name") String name, @Bind("workspaceId") Long workspaceId);
 
-  @SqlQuery("select lower(name) as name, id from category where workspace_id=:workspaceId")
+  @SqlQuery("select name, id from category where workspace_id=:workspaceId")
   @KeyColumn("name")
   @ValueColumn("id")
   HashMap<String, Long> getCategories(@Bind("workspaceId") Long workspaceId);

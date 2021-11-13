@@ -21,6 +21,10 @@ public class ProductSummary implements Serializable {
   private Integer problems;
   private Integer total;
   private BigDecimal price;
-  private String updatedAt;
+  private BigDecimal minPrice;
+  private String minSeller;
+  private BigDecimal avgPrice;
+  private BigDecimal maxPrice;
+  private String maxSeller;
   
 }

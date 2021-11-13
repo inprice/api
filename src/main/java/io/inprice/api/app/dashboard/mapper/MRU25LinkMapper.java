@@ -19,6 +19,7 @@ public class MRU25LinkMapper implements RowMapper<MRU25Link> {
     MRU25Link m = new MRU25Link();
 
     if (Helper.hasColumn(rs, "id")) m.setId(rs.getLong("id"));
+    if (Helper.hasColumn(rs, "product_id")) m.setProductId(rs.getLong("product_id"));
     if (Helper.hasColumn(rs, "product_name")) m.setProductName(rs.getString("product_name"));
     if (Helper.hasColumn(rs, "seller")) m.setSeller(rs.getString("seller"));
     if (Helper.hasColumn(rs, "name")) m.setName(rs.getString("name"));

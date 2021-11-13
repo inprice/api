@@ -309,11 +309,17 @@ class ProductService {
       	
       	if (product != null) {
         	handle.begin();
-      			
+
     			String where = String.format("where product_id=%d and workspace_id=%d", id, CurrentUser.getWorkspaceId());
+        	
+    			//for the links of the product
+    			int alarmCount = handle.createQuery("select count(1) from alarm where link_id in (select id from link " + where + ")").mapTo(int.class).one();
+        	if (product.getAlarmId() != null) alarmCount++;
+
           Batch batch = handle.createBatch();
           batch.add("SET FOREIGN_KEY_CHECKS=0");
-          batch.add("delete from alarm " + where);
+          batch.add("delete from alarm " + where); //for the product
+          batch.add("delete from alarm where link_id in (select id from link " + where + ")"); //for the links of the product
           batch.add("delete from link_price " + where);
           batch.add("delete from link_history " + where);
           batch.add("delete from link_spec " + where);
@@ -321,15 +327,15 @@ class ProductService {
           batch.add("delete from product " + where.replace("product_", "")); //this query determines the success!
           batch.add(
         		String.format(
-      				"update workspace set link_count=link_count-%d where id=%d", 
-      				product.getLinkCount(), CurrentUser.getWorkspaceId()
+      				"update workspace set link_count=link_count-%d, alarm_count=alarm_count-%d where id=%d", 
+      				product.getLinkCount(), alarmCount, CurrentUser.getWorkspaceId()
     				)
       		);
           batch.add("SET FOREIGN_KEY_CHECKS=1");
 
           int[] result = batch.execute();
 
-          if (result[6] > 0) {
+          if (result[7] > 0) {
             res = new Response(Map.of("count", product.getLinkCount()));
             handle.commit();
           } else {

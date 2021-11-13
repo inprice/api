@@ -2,9 +2,9 @@ package io.inprice.api.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import io.inprice.common.config.BaseSystem;
+import io.inprice.common.config.AppBase;
 
-public class App extends BaseSystem {
+public class App extends AppBase {
 
 	@JsonProperty("webUrl")
 	public String WEB_URL;
