@@ -351,84 +351,85 @@ class ProductService {
   }
 
   Response addLinks(AddLinksDTO dto) {
-    Response res = validate(dto);
+  	Response res = Responses.Invalid.LINK;
 
-    if (res.isOK()) {
-      try (Handle handle = Database.getHandle()) {
-        WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
-        ProductDao productDao = handle.attach(ProductDao.class);
-    		LinkDao linkDao = handle.attach(LinkDao.class);
-    		
-    		Set<String> urlList = null;
+		try (Handle handle = Database.getHandle()) {
+    	LinkDao linkDao = handle.attach(LinkDao.class);
 
-        Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
-        if (workspace.getPlan() != null) {
-          int allowedLinkCount = (workspace.getPlan().getLinkLimit() - workspace.getLinkCount());
-          urlList = res.getData();
-
-          if (allowedLinkCount > 0) {
-          	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
-  
-            	handle.begin();
-          		
-            	urlList.forEach(url -> {
-  							Link link = new Link();
-  							link.setUrl(url);
-  							link.setUrlHash(DigestUtils.md5Hex(url));
-  							link.setProductId(dto.getProductId());
-  							link.setWorkspaceId(CurrentUser.getWorkspaceId());
-
-  							long id = linkDao.insert(link);
-
-  							link.setId(id);
-  							link.setStatus(LinkStatus.TOBE_CLASSIFIED);
-  							linkDao.insertHistory(link);
-            	});
-
-            	productDao.incWaitingsCount(dto.getProductId(), urlList.size());
-            	workspaceDao.incLinkCount(CurrentUser.getWorkspaceId(), urlList.size());
-
-            	handle.commit();
-            	
-          		res = Responses.OK;
-  
-            } else {
-            	if (urlList.size() > 100) {
-            		res = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
-            	} else if (urlList.size() > allowedLinkCount) {
-            		res = new Response("You can add up to " + allowedLinkCount + " link(s)!");
-            	}
-            }
-          } else {
-            res = Responses.NotAllowed.NO_LINK_LIMIT;
-          }
-        } else {
-          res = Responses.NotAllowed.HAVE_NO_PLAN;
-        }
-
-        if (res.isOK()) {
-        	Product product = productDao.findByIdWithLookups(dto.getProductId(), CurrentUser.getWorkspaceId());
-        	int workspaceLinkCount = workspace.getLinkCount() + urlList.size();
-
-          Map<String, Object> data = Map.of(
-        		"product", product,
-        		"count", urlList.size(),
-        		"linkCount", workspaceLinkCount,
-        		"links", linkDao.findListByProductId(dto.getProductId(), CurrentUser.getWorkspaceId())
-    			);
-          res = new Response(data);
-        }
-
-      } catch (Exception e) {
-        logger.error("Failed to import URL list!", e);
-        res = Responses.ServerProblem.EXCEPTION;
+      res = validate(dto, linkDao);
+      if (res.isOK()) {
+	    	WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+	      ProductDao productDao = handle.attach(ProductDao.class);
+	  		
+	  		Set<String> urlList = null;
+	
+	      Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
+	      if (workspace.getPlan() != null) {
+	        int allowedLinkCount = (workspace.getPlan().getLinkLimit() - workspace.getLinkCount());
+	        urlList = res.getData();
+	
+	        if (allowedLinkCount > 0) {
+	        	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
+	
+	          	handle.begin();
+	        		
+	          	urlList.forEach(url -> {
+								Link link = new Link();
+								link.setUrl(url);
+								link.setUrlHash(DigestUtils.md5Hex(url));
+								link.setProductId(dto.getProductId());
+								link.setWorkspaceId(CurrentUser.getWorkspaceId());
+	
+								long id = linkDao.insert(link);
+	
+								link.setId(id);
+								link.setStatus(LinkStatus.TOBE_CLASSIFIED);
+								linkDao.insertHistory(link);
+	          	});
+	
+	          	productDao.incWaitingsCount(dto.getProductId(), urlList.size());
+	          	workspaceDao.incLinkCount(CurrentUser.getWorkspaceId(), urlList.size());
+	
+	          	handle.commit();
+	          	
+	        		res = Responses.OK;
+	
+	          } else {
+	          	if (urlList.size() > 100) {
+	          		res = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
+	          	} else if (urlList.size() > allowedLinkCount) {
+	          		res = new Response("You can add up to " + allowedLinkCount + " link(s)!");
+	          	}
+	          }
+	        } else {
+	          res = Responses.NotAllowed.NO_LINK_LIMIT;
+	        }
+	      } else {
+	        res = Responses.NotAllowed.HAVE_NO_PLAN;
+	      }
+	
+	      if (res.isOK()) {
+	      	Product product = productDao.findByIdWithLookups(dto.getProductId(), CurrentUser.getWorkspaceId());
+	      	int workspaceLinkCount = workspace.getLinkCount() + urlList.size();
+	
+	        Map<String, Object> data = Map.of(
+	      		"product", product,
+	      		"count", urlList.size(),
+	      		"linkCount", workspaceLinkCount,
+	      		"links", linkDao.findListByProductId(dto.getProductId(), CurrentUser.getWorkspaceId())
+	  			);
+	        res = new Response(data);
+	      }
       }
+    } catch (Exception e) {
+      logger.error("Failed to import URL list!", e);
+      res = Responses.ServerProblem.EXCEPTION;
     }
 
     return res;
   }
   
-  private Response validate(AddLinksDTO dto) {
+  private Response validate(AddLinksDTO dto, LinkDao linkDao) {
     Response res = null;
 
   	if (dto.getProductId() != null && dto.getProductId() > 0) {
@@ -439,26 +440,31 @@ class ProductService {
         if (tempRows.length > 0) {
   
         	Set<String> urlList = new LinkedHashSet<>();
-          List<String> problemList = new ArrayList<>();
+        	List<String> problemList = new ArrayList<>();
+          List<String> dupliceList = new ArrayList<>();
       
           for (int i = 0; i < tempRows.length; i++) {
       			String row = tempRows[i];
       			if (StringUtils.isBlank(row)) continue;
 
       			if (URLUtils.isAValidURL(row)) {
-      				urlList.add(row);
+      				if (linkDao.doesExistByUrl(row, dto.getProductId()) == false) {
+      					urlList.add(row);
+      				} else {
+      					dupliceList.add(Integer.toString(i+1));
+      				}
       			} else {
       				problemList.add(Integer.toString(i+1));
       			}
       		}
 
-          if (problemList.size() == 0) {
+          if (problemList.size() + dupliceList.size() == 0) {
           	res = new Response(urlList);
           } else {
-          	if (problemList.size() > urlList.size()/2) {
-          		res = new Response("Mostly invalid URLs!");
+          	if (problemList.size() + dupliceList.size() > urlList.size()/2) {
+          		res = new Response("Mostly invalid or duplice URLs!");
           	} else {
-          		res = new Response("Invalid URL(s) at " + String.join(", ", problemList));
+          		res = new Response("Invalid URL(s) at " + String.join(", ", problemList) + (dupliceList.size() > 0 ? ". Duplice URL(s) at " + String.join(", ", dupliceList) : ""));
           	}
           }
 

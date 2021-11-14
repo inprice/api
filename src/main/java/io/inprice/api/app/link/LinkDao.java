@@ -20,8 +20,8 @@ import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
-import io.inprice.common.repository.ProductPriceDao;
 import io.inprice.common.repository.PlatformDao;
+import io.inprice.common.repository.ProductPriceDao;
 
 public interface LinkDao {
 
@@ -54,6 +54,14 @@ public interface LinkDao {
   )
   @UseRowMapper(LinkMapper.class)
   List<Link> findListByProductId(@Bind("productId") Long productId, @Bind("workspaceId") Long workspaceId);
+
+	@SqlQuery(
+		"select exists(" +
+			"select 1 from link " +
+			"where url = :url " +
+			"  and product_id = :productId " +
+		")")
+	boolean doesExistByUrl(@Bind("url") String url, @Bind("productId") Long productId);
 
   @SqlQuery("select * from link_price where product_id=:productId order by link_id, id desc")
   @UseRowMapper(LinkPriceMapper.class)
