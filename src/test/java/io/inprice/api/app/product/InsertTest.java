@@ -1,7 +1,6 @@
 package io.inprice.api.app.product;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.BeforeClass;
@@ -10,8 +9,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestWorkspaces;
 import io.inprice.api.utils.TestUtils;
+import io.inprice.api.utils.TestWorkspaces;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -172,9 +171,7 @@ public class InsertTest {
 		body.put("name", "Product K of Workspace-F");
 
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
-
 		assertEquals(200, json.getInt("status"));
-		assertTrue(json.has("data"));
 	}
 
 	@Test
@@ -184,9 +181,7 @@ public class InsertTest {
 		body.put("name", "Editor is trying to define a new product!");
 
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
-
 		assertEquals(200, json.getInt("status"));
-		assertTrue(json.has("data"));
 	}
 
 	@Test
@@ -195,9 +190,7 @@ public class InsertTest {
 		body.put("name", "Admin is trying to define a new product!");
 
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
-
 		assertEquals(200, json.getInt("status"));
-		assertTrue(json.has("data"));
 	}
 
 	private JSONObject callTheService(JSONObject body) {

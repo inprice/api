@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.statement.Batch;
 
+import io.inprice.api.app.smartprice.mapper.ProductSmartPrice;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
@@ -18,7 +19,6 @@ import io.inprice.common.formula.SmartPriceDTO;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.ProductRefreshResult;
-import io.inprice.common.models.Product;
 import io.inprice.common.models.SmartPrice;
 
 public class SmartPriceService {
@@ -89,29 +89,34 @@ public class SmartPriceService {
 	            	String oldFormulas = (oldForm.getFormula()+oldForm.getLowerLimitFormula()+oldForm.getUpperLimitFormula());
 	            	String newFormulas = (dto.getFormula()+dto.getLowerLimitFormula()+dto.getUpperLimitFormula());
 
-		          	//if there is a change on formulas, we need to update every related product
+		          	//if there is a change on formulas, we need to update every bound product
 		          	if (oldFormulas.equals(newFormulas) == false) {
-		          		List<Product> productList = smartPriceDao.findProductListBySmartPriceId(dto.getId(), CurrentUser.getWorkspaceId());
-		          		if (CollectionUtils.isNotEmpty(productList)) {
+		          		List<ProductSmartPrice> smartPriceList = smartPriceDao.getSmartPricesWithProductId(dto.getId(), CurrentUser.getWorkspaceId());
+		          		if (CollectionUtils.isNotEmpty(smartPriceList)) {
 
 		                Batch batch = handle.createBatch();
 		          			
-		          			for (Product product: productList) {
+		          			for (ProductSmartPrice psp: smartPriceList) {
 		          				ProductRefreshResult prr = new ProductRefreshResult();
-		          				prr.setActives(product.getActives());
-		          				prr.setProductPrice(product.getPrice());
-		          				prr.setBasePrice(product.getBasePrice());
-		          				prr.setMinPrice(product.getMinPrice());
-		          				prr.setAvgPrice(product.getAvgPrice());
-		          				prr.setMaxPrice(product.getMaxPrice());
+		          				prr.setActives(psp.getActives());
+		          				prr.setProductPrice(psp.getPrice());
+		          				prr.setBasePrice(psp.getBasePrice());
+		          				prr.setMinPrice(psp.getMinPrice());
+		          				prr.setAvgPrice(psp.getAvgPrice());
+		          				prr.setMaxPrice(psp.getMaxPrice());
+		          				
+		          				SmartPrice sp = new SmartPrice();
+		          				sp.setFormula(psp.getFormula());
+		          				sp.setLowerLimitFormula(psp.getLowerLimitFormula());
+		          				sp.setUpperLimitFormula(psp.getUpperLimitFormula());
 
-		          		  	EvaluationResult result = FormulaHelper.evaluate(product.getSmartPrice(), prr);
+		          		  	EvaluationResult result = FormulaHelper.evaluate(sp, prr);
 			                batch.add(
 	                			String.format(
 		          		        "update product set suggested_price=%f, suggested_price_problem=%s where id=%d ",
 		          		        result.getValue(),
 		          		        (result.getProblem() != null ? "'"+result.getProblem()+"'" : "null"),
-		          		        product.getId()
+		          		        dto.getId()
 	          		        )
 	          		      );
 		          			}

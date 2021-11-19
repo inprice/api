@@ -18,7 +18,7 @@ public class SearchDTO extends BaseSearchDTO {
   private Set<AlarmSubject> subjects;
   private Set<AlarmSubjectWhen> whens;
 
-  private OrderBy orderBy = OrderBy.NOTIFIED_AT;
+  private OrderBy orderBy = OrderBy.NAME;
   private OrderDir orderDir = OrderDir.DESC;
 
 }

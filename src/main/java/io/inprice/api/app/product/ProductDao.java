@@ -12,16 +12,14 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
 import io.inprice.api.app.brand.BrandDao;
 import io.inprice.api.app.category.CategoryDao;
-import io.inprice.api.app.smartprice.SmartPriceDao;
 import io.inprice.api.dto.ProductDTO;
 import io.inprice.common.mappers.IdNamePairMapper;
 import io.inprice.common.mappers.ProductMapper;
 import io.inprice.common.models.Product;
-import io.inprice.common.repository.ProductPriceDao;
 
 public interface ProductDao {
 
-	@SqlQuery("select * from product p where id=:id and workspace_id=:workspaceId")
+	@SqlQuery("select * from product where id=:id and workspace_id=:workspaceId")
 	@UseRowMapper(ProductMapper.class)
 	Product findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
@@ -35,7 +33,7 @@ public interface ProductDao {
 	boolean doesExistBySku(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
-		"select p.*" + ProductPriceDao.ALARM_FIELDS + ProductPriceDao.SMART_PRICE_FIELDS + BrandDao.FIELDS + CategoryDao.FIELDS + " from product p " +
+		"select p.*, al.name as al_name, sp.name as sp_name" + BrandDao.FIELDS + CategoryDao.FIELDS + " from product p " +
 		"left join alarm as al on al.id = p.alarm_id " +
 		"left join smart_price as sp on sp.id = p.smart_price_id " +
 		"left join brand as brn on brn.id = p.brand_id " +
@@ -45,15 +43,6 @@ public interface ProductDao {
 	)
 	@UseRowMapper(ProductMapper.class)
 	Product findByIdWithLookups(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
-
-	@SqlQuery(
-		"select p.*" + SmartPriceDao.FIELDS + " from product p " +
-		"left join smart_price as sp on sp.id = p.smart_price_id " +
-		"where p.id=:id " +
-		"  and p.workspace_id=:workspaceId"
-	)
-	@UseRowMapper(ProductMapper.class)
-	Product findByIdWithSmarPrice(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery("select * from product where name=:name and workspace_id=:workspaceId limit 1")
   @UseRowMapper(ProductMapper.class)

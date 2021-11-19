@@ -108,7 +108,7 @@ public class DeleteTest {
 		JSONArray alarmedLinkList = TestFinder.searchAlarms(cookies, "LINK");
 
 		assertNotNull(alarmedLinkList);
-		assertEquals(1, alarmedLinkList.length());
+		assertEquals(2, alarmedLinkList.length());
 
 		//get the first alarm for a link
 		JSONObject alarmedLink = alarmedLinkList.getJSONObject(0);

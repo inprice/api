@@ -34,10 +34,12 @@ insert into test.membership (email, user_id, workspace_id, role, status) values 
 call sp_create_product_and_links('CX-001', 'D', 1, 0, 0, 0, 'https://hepsiburada.com/', 84, 'Workspace-D', @workspace_id);
 
 -- -----------------------
--- 2 alarms
+-- 2 alarms definitions for 2 entities (1 product and 1 link)
 -- -----------------------
-insert into alarm (topic, product_id, subject, subject_when, workspace_id) 
-select 'PRODUCT', id, 'MINIMUM', 'INCREASED', @workspace_id from product where workspace_id = @workspace_id limit 1;
+insert into alarm (name, topic, subject, subject_when, workspace_id) 
+values ('Product minimum price is increased', 'PRODUCT', 'MINIMUM', 'INCREASED', @workspace_id);
+update product set alarm_id=last_insert_id() where sku = 'CX-001';
 
-insert into alarm (topic, link_id, subject, subject_when, workspace_id) 
-select 'LINK', id, 'PRICE', 'DECREASED', @workspace_id from link where workspace_id = @workspace_id limit 1;
+insert into alarm (name, topic, subject, subject_when, workspace_id) 
+values ('Link price is decreased', 'LINK', 'POSITION', 'EQUAL', @workspace_id);
+update link set alarm_id=last_insert_id() where grup = 'ACTIVE' and workspace_id = @workspace_id;

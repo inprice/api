@@ -126,7 +126,7 @@ public class Responses {
       public static final Response BRAND = new Response(BASE + 76, "This brand has already been added!");
       public static final Response CATEGORY = new Response(BASE + 77, "This category has already been added!");
 
-      public static final Response ALARM = new Response(BASE + 80, "You have already set an alarm for this record!");
+      public static final Response ALARM = new Response(BASE + 80, "You have already defined this alarm previously!");
       public static final Response SMART_PRICE = new Response(BASE + 81, "This formula has already been added!");
     }
   }

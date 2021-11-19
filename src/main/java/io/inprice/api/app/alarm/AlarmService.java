@@ -10,25 +10,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.alarm.dto.AlarmDTO;
-import io.inprice.api.app.alarm.dto.OrderBy;
 import io.inprice.api.app.alarm.dto.SearchDTO;
-import io.inprice.api.app.link.LinkDao;
-import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.app.workspace.WorkspaceDao;
-import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.helpers.SqlHelper;
-import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.AlarmMapper;
 import io.inprice.common.meta.AlarmSubject;
 import io.inprice.common.meta.AlarmSubjectWhen;
-import io.inprice.common.meta.AlarmTopic;
 import io.inprice.common.models.Alarm;
-import io.inprice.common.models.Link;
-import io.inprice.common.models.Product;
 import io.inprice.common.models.Workspace;
 import io.inprice.common.utils.StringHelper;
 
@@ -57,41 +49,24 @@ public class AlarmService {
 				
           if (allowedAlarmCount > 0) {
           	AlarmDao alarmDao = handle.attach(AlarmDao.class);
-          	
-          	boolean doesExist = 
-          			alarmDao.doesExistByTopicId(
-        					dto.getTopic().name().toLowerCase(), 
-        					(AlarmTopic.LINK.equals(dto.getTopic()) ? dto.getLinkId() : dto.getProductId()), 
-        					CurrentUser.getWorkspaceId()
-      					);
+
+        		String name = generateName(dto);
+          	boolean doesExist = alarmDao.doesExistByName(name, 0l, CurrentUser.getWorkspaceId());
           	
 						if (doesExist == false) {
-    					Pair<String, BigDecimal> pair = findCurrentPositionAndAmount(dto, handle);
-    
-    					if (pair != null) {
-    						handle.begin();
-    						long id = alarmDao.insert(dto, pair);
-    
-    						boolean isOK = false;
-    						if (AlarmTopic.LINK.equals(dto.getTopic())) {
-    							isOK = alarmDao.setAlarmForLink(dto.getLinkId(), id, CurrentUser.getWorkspaceId());
-    						} else {
-    							isOK = alarmDao.setAlarmForProduct(dto.getProductId(), id, CurrentUser.getWorkspaceId());
-    						}
-    
-    						if (isOK) {
-    		        	workspaceDao.incAlarmCount(CurrentUser.getWorkspaceId());
-  
-    		        	handle.commit();
-    							dto.setId(id);
-    							res = new Response(dto);
-    						} else {
-    							handle.rollback();
-    							res = Responses.DataProblem.DB_PROBLEM;
-    						}
-  	          } else {
-  	            res = (AlarmTopic.LINK.equals(dto.getTopic()) ? Responses.NotFound.LINK : Responses.NotFound.PRODUCT);
-    					}
+    					dto.setName(name);
+
+    					handle.begin();
+  						long id = alarmDao.insert(dto);
+  						if (id > 0) {
+  		        	workspaceDao.incAlarmCount(CurrentUser.getWorkspaceId());
+  		        	handle.commit();
+  							dto.setId(id);
+  							res = new Response(dto);
+  						} else {
+  							handle.rollback();
+  							res = Responses.DataProblem.DB_PROBLEM;
+  						}
 	          } else {
 	          	res = Responses.Already.Defined.ALARM;
   					}
@@ -116,14 +91,26 @@ public class AlarmService {
 			String problem = validate(dto);
 			if (problem == null) {
 				try (Handle handle = Database.getHandle()) {
-					Pair<String, BigDecimal> pair = findCurrentPositionAndAmount(dto, handle);
+        	AlarmDao alarmDao = handle.attach(AlarmDao.class);
 
-					if (pair != null) {
-						AlarmDao alarmDao = handle.attach(AlarmDao.class);
-						boolean isOK = alarmDao.update(dto, pair);
+      		String name = generateName(dto);
+      		boolean doesExist = alarmDao.doesExistByName(name, dto.getId(), CurrentUser.getWorkspaceId());
+
+					if (doesExist == false) {
+						dto.setName(name);
+
+						handle.begin();
+						boolean isOK = alarmDao.update(dto);
 						if (isOK) {
+							alarmDao.resetAlarm("product", dto.getId(), CurrentUser.getWorkspaceId());
+							alarmDao.resetAlarm("link", dto.getId(), CurrentUser.getWorkspaceId());
+							handle.commit();
 							res = new Response(dto);
+						} else {
+							handle.rollback();
 						}
+          } else {
+          	res = Responses.Already.Defined.ALARM;
 					}
 				}
 			} else {
@@ -142,35 +129,14 @@ public class AlarmService {
 
 				Alarm alarm = alarmDao.findById(id, CurrentUser.getWorkspaceId());
 				if (alarm != null) {
-
 					handle.begin();
 					handle.execute("SET FOREIGN_KEY_CHECKS=0");
-
-					boolean isOK = false;
-					if (AlarmTopic.LINK.equals(alarm.getTopic())) {
-						isOK = alarmDao.removeAlarmFromLink(alarm.getLinkId(), CurrentUser.getWorkspaceId());
-					} else {
-						isOK = alarmDao.removeAlarmFromProduct(alarm.getProductId(), CurrentUser.getWorkspaceId());
-					}
-
-					if (isOK) {
-						isOK = alarmDao.delete(id, CurrentUser.getWorkspaceId());
-						if (isOK) {
-							handle.attach(WorkspaceDao.class).decAlarmCount(CurrentUser.getWorkspaceId());
-
-							handle.execute("SET FOREIGN_KEY_CHECKS=1");
-							handle.commit();
-							res = Responses.OK;
-						} else {
-							handle.execute("SET FOREIGN_KEY_CHECKS=1");
-							handle.rollback();
-							res = Responses.DataProblem.DB_PROBLEM;
-						}
-					} else {
-						handle.execute("SET FOREIGN_KEY_CHECKS=1");
-						handle.rollback();
-						res = new Response("Parent record problem!");
-					}
+					alarmDao.removeAlarm("product", id, CurrentUser.getWorkspaceId());
+					alarmDao.removeAlarm("link", id, CurrentUser.getWorkspaceId());
+					handle.attach(WorkspaceDao.class).decAlarmCount(CurrentUser.getWorkspaceId());
+					handle.execute("SET FOREIGN_KEY_CHECKS=1");
+					handle.commit();
+					res = Responses.OK;
 				}
 			}
 		}
@@ -179,84 +145,56 @@ public class AlarmService {
 	}
 
 	Response search(SearchDTO dto) {
-		if (dto.getTerm() != null)
-			dto.setTerm(SqlHelper.clear(dto.getTerm()));
+  	dto = DTOHelper.normalizeSearch(dto, true);
 
 		// ---------------------------------------------------
 		// building the criteria up
 		// ---------------------------------------------------
 		StringBuilder where = new StringBuilder();
 
-		where.append("where a.workspace_id = ");
+		where.append("where workspace_id = ");
 		where.append(CurrentUser.getWorkspaceId());
-		
+
+    if (StringUtils.isNotBlank(dto.getTerm())) {
+    	where.append(" and name");
+      where.append(" like '%");
+      where.append(dto.getTerm());
+      where.append("%' ");
+    }
+
 		if (dto.getTopic() != null) {
-			where.append(" and a.topic = '");
+			where.append(" and topic = '");
 			where.append(dto.getTopic());
 			where.append("'");
 		}
 
 		if (CollectionUtils.isNotEmpty(dto.getSubjects())) {
 			where.append(
-		    String.format(" and a.subject in (%s) ", StringHelper.join("'", dto.getSubjects()))
+		    String.format(" and subject in (%s) ", StringHelper.join("'", dto.getSubjects()))
 	    );
 		}
 
 		if (CollectionUtils.isNotEmpty(dto.getWhens())) {
 			where.append(
-		    String.format(" and a.subject_when in (%s) ", StringHelper.join("'", dto.getWhens()))
+		    String.format(" and subject_when in (%s) ", StringHelper.join("'", dto.getWhens()))
 	    );
 		}
 
 		// limiting
 		String limit = "";
-		if (dto.getRowLimit() < Consts.LOWER_ROW_LIMIT_FOR_LISTS && dto.getRowLimit() <= Consts.UPPER_ROW_LIMIT_FOR_LISTS) {
-			dto.setRowLimit(Consts.LOWER_ROW_LIMIT_FOR_LISTS);
-		}
-		if (dto.getRowLimit() > Consts.UPPER_ROW_LIMIT_FOR_LISTS) {
-			dto.setRowLimit(Consts.UPPER_ROW_LIMIT_FOR_LISTS);
-		}
 		if (dto.getLoadMore()) {
 			limit = " limit " + dto.getRowCount() + ", " + dto.getRowLimit();
 		} else {
 			limit = " limit " + dto.getRowLimit();
 		}
 
-		// ---------------------------------------------------
-		// fetching the data
-		// ---------------------------------------------------
-
-		String selectForProducts = 
-				"select a.*, p.name as _name from alarm a " +
-		    "inner join product p on p.id = a.product_id " + generateNameLikeClause(dto, "p") +
-		    where;
-		
-		String selectForLinks = 
-				"select a.*, IFNULL(l.name, l.url) as _name from alarm a " +
-		    "inner join link l on l.id = a.link_id " + generateNameLikeClause(dto, "l") +
-		    where;
-
-		String select = null;
-		
-		if (AlarmTopic.PRODUCT.equals(dto.getTopic())) {
-			select = selectForProducts;
-		} else if (AlarmTopic.LINK.equals(dto.getTopic())) {
-			select = selectForLinks;
-		} else {
-			select = selectForProducts + " union " + selectForLinks;
-		}
-
-		String orderBy = " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir();
-		if (! OrderBy.NAME.equals(dto.getOrderBy())) {
-			orderBy += ", _name";
-		}
-
 		try (Handle handle = Database.getHandle()) {
 			List<Alarm> searchResult = 
 				handle
 			    .createQuery(
-		        select + 
-		        orderBy + ", id " + 
+		        "select * from alarm " +
+			      where +
+		        " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + 
 		        limit
 	        )
 		    .map(new AlarmMapper()).list();
@@ -268,36 +206,11 @@ public class AlarmService {
 		}
 	}
 
-	private String generateNameLikeClause(SearchDTO dto, String prefix) {
-		StringBuilder sb = new StringBuilder();
-		if (StringUtils.isNotBlank(dto.getTerm())) {
-			sb.append(" and ");
-			if ("l".equals(prefix)) {
-				sb.append("(");
-			}
-			sb.append(prefix);
-			sb.append(".name like '%");
-			sb.append(dto.getTerm());
-			sb.append("%' ");
-			if ("l".equals(prefix)) {
-				sb.append("or (l.name is null ");
-				sb.append(" and l.url like '%");
-				sb.append(dto.getTerm());
-				sb.append("%')) ");
-			}
-		}
-		return sb.toString();
-	}
-
 	private String validate(AlarmDTO dto) {
 		String problem = null;
 
 		if (dto.getTopic() == null) {
 			problem = "Topic cannot be empty!";
-		}
-
-		if (problem == null && dto.getProductId() == null && dto.getLinkId() == null) {
-			problem = "Topic id cannot be empty!";
 		}
 
 		if (problem == null && dto.getSubject() == null) {
@@ -350,49 +263,60 @@ public class AlarmService {
 		return problem;
 	}
 
-	private Pair<String, BigDecimal> findCurrentPositionAndAmount(AlarmDTO dto, Handle handle) {
-		Pair<String, BigDecimal> pair = null;
-		
-		switch (dto.getTopic()) {
-			case LINK: {
-  			LinkDao linkDao = handle.attach(LinkDao.class);
-  			Link link = linkDao.findById(dto.getLinkId(), CurrentUser.getWorkspaceId());
-  			if (link != null) {
-  				pair = new Pair<>();
-  				pair.setLeft(link.getGrup().name());
-  				pair.setRight(link.getPrice());
-  			}
-  			break;
+	private String generateName(AlarmDTO dto) {
+		StringBuilder sb = new StringBuilder();
+
+		sb.append(dto.getTopic());
+		sb.append(" ");
+
+		sb.append(dto.getSubject());
+		sb.append(" ");
+
+		switch (dto.getSubject()) {
+			case MINIMUM:
+			case AVERAGE:
+			case MAXIMUM: {
+				sb.append("price");
+				break;
+			}
+			default: break;
+		}
+
+		switch (dto.getSubjectWhen()) {
+			case EQUAL:
+			case NOT_EQUAL: {
+				sb.append(dto.getSubjectWhen());
+				sb.append("s to ");
+				sb.append(dto.getCertainPosition());
+				break;
+			}
+			case OUT_OF_LIMITS: {
+				sb.append(" is ");
+				boolean hasLowerLimit = (dto.getAmountLowerLimit() != null && dto.getAmountLowerLimit().compareTo(BigDecimal.ZERO) > 0);
+				boolean hasUpperLimit = (dto.getAmountUpperLimit() != null && dto.getAmountUpperLimit().compareTo(BigDecimal.ZERO) > 0);
+				if (hasLowerLimit && hasUpperLimit) {
+					sb.append(" less than ");
+					sb.append(dto.getAmountLowerLimit());
+					sb.append(" or greater than ");
+					sb.append(dto.getAmountUpperLimit());
+				} else if (hasLowerLimit) {
+					sb.append(" greater than ");
+					sb.append(dto.getAmountLowerLimit());
+				} else if (hasUpperLimit) {
+					sb.append(" less than ");
+					sb.append(dto.getAmountUpperLimit());
+				}
+				break;
 			}
 
-			case PRODUCT: {
-  			ProductDao productDao = handle.attach(ProductDao.class);
-  			Product product = productDao.findById(dto.getProductId(), CurrentUser.getWorkspaceId());
-  			if (product != null) {
-  				pair = new Pair<>();
-  				pair.setLeft(product.getPosition().name());
-  				pair.setRight(BigDecimal.ZERO);
-  				switch (dto.getSubject()) {
-	  				case MINIMUM: {
-	  					pair.setRight(product.getMinPrice());
-	  					break;
-	  				}
-	  				case AVERAGE: {
-	  					pair.setRight(product.getAvgPrice());
-	  					break;
-	  				}
-	  				case MAXIMUM: {
-	  					pair.setRight(product.getMaxPrice());
-	  					break;
-	  				}
-	  				default: break;
-  				}
-				}
+			default: {
+				sb.append(" is ");
+				sb.append(dto.getSubjectWhen());
 				break;
 			}
 		}
 
-		return pair;
+		return StringUtils.capitalize(sb.toString().toLowerCase().replaceAll("_",  " "));
 	}
 
 }

@@ -210,7 +210,7 @@ class ProductService {
           					"update product set price=?, base_price=? where id=? and workspace_id=?",
               			dto.getPrice(), dto.getBasePrice(), dto.getId(), CurrentUser.getWorkspaceId()
             			);
-            			prr = ProductPriceService.refresh(dto.getId(), handle);
+            			prr = ProductPriceService.refresh(found, handle);
             		}
 
             		//if dto.getSmartPriceId() == null, suggested_price is zeroized in generateUpdateQuery method!
@@ -219,7 +219,7 @@ class ProductService {
             			SmartPrice smartPrice = smartPriceDao.findById(dto.getSmartPriceId(), CurrentUser.getWorkspaceId());
             			if (smartPrice != null) {
 	            			if (prr == null) {
-	               			prr = ProductPriceService.refresh(dto.getId(), handle);
+	               			prr = ProductPriceService.refresh(found, handle);
 	               		}
 										EvaluationResult result = FormulaHelper.evaluate(smartPrice, prr);
 	                	suggestedPricePart =
@@ -312,14 +312,8 @@ class ProductService {
 
     			String where = String.format("where product_id=%d and workspace_id=%d", id, CurrentUser.getWorkspaceId());
         	
-    			//for the links of the product
-    			int alarmCount = handle.createQuery("select count(1) from alarm where link_id in (select id from link " + where + ")").mapTo(int.class).one();
-        	if (product.getAlarmId() != null) alarmCount++;
-
           Batch batch = handle.createBatch();
           batch.add("SET FOREIGN_KEY_CHECKS=0");
-          batch.add("delete from alarm " + where); //for the product
-          batch.add("delete from alarm where link_id in (select id from link " + where + ")"); //for the links of the product
           batch.add("delete from link_price " + where);
           batch.add("delete from link_history " + where);
           batch.add("delete from link_spec " + where);
@@ -327,15 +321,15 @@ class ProductService {
           batch.add("delete from product " + where.replace("product_", "")); //this query determines the success!
           batch.add(
         		String.format(
-      				"update workspace set link_count=link_count-%d, alarm_count=alarm_count-%d where id=%d", 
-      				product.getLinkCount(), alarmCount, CurrentUser.getWorkspaceId()
+      				"update workspace set link_count=link_count-%d where id=%d", 
+      				product.getLinkCount(), CurrentUser.getWorkspaceId()
     				)
       		);
           batch.add("SET FOREIGN_KEY_CHECKS=1");
 
           int[] result = batch.execute();
 
-          if (result[7] > 0) {
+          if (result[5] > 0) {
             res = new Response(Map.of("count", product.getLinkCount()));
             handle.commit();
           } else {
@@ -462,7 +456,7 @@ class ProductService {
           	res = new Response(urlList);
           } else {
           	if (problemList.size() + dupliceList.size() > urlList.size()/2) {
-          		res = new Response("Mostly invalid or duplice URLs!");
+          		res = new Response("Mostly invalid or duplicated URLs!");
           	} else {
           		res = new Response("Invalid URL(s) at " + String.join(", ", problemList) + (dupliceList.size() > 0 ? ". Duplice URL(s) at " + String.join(", ", dupliceList) : ""));
           	}

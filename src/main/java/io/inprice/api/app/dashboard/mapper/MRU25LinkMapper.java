@@ -27,7 +27,6 @@ public class MRU25LinkMapper implements RowMapper<MRU25Link> {
     if (Helper.hasColumn(rs, "price")) m.setPrice(rs.getBigDecimal("price"));
     if (Helper.hasColumn(rs, "position")) m.setPosition(rs.getString("position"));
     if (Helper.hasColumn(rs, "parse_code")) m.setStatusDesc(rs.getString("parse_code"));
-    if (Helper.hasColumn(rs, "alarm_id")) m.setAlarmId(Helper.nullLongHandler(rs, "alarm_id"));
 
     if (Helper.hasColumn(rs, "updated_at") && rs.getTimestamp("updated_at") != null) {
       m.setUpdatedAt(DateUtils.formatLongDate(rs.getTimestamp("updated_at")));

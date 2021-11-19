@@ -15,6 +15,8 @@ import lombok.Setter;
 public class AlarmDTO {
 
   private Long id;
+	private String name;
+
   private AlarmTopic topic;
   private AlarmSubject subject;
   private AlarmSubjectWhen subjectWhen;
@@ -22,9 +24,6 @@ public class AlarmDTO {
 	private String certainPosition;
 	private BigDecimal amountLowerLimit;
 	private BigDecimal amountUpperLimit;
-
-  private Long linkId;
-  private Long productId;
 
   @JsonIgnore
   private Long workspaceId;

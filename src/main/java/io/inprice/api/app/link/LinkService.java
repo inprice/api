@@ -107,14 +107,9 @@ class LinkService {
 
       try (Handle handle = Database.getHandle()) {
       	handle.begin();
-
-      	//by links, finding the products whose sums and alarms be refreshed
-      	LinkDao linkDao = handle.attach(LinkDao.class);
-      	Set<Long> productIdSet = linkDao.findProductIdSet(dto.getLinkIdSet());
       	
         Batch batch = handle.createBatch();
         batch.add("SET FOREIGN_KEY_CHECKS=0");
-        batch.add("delete from alarm " + where);
         batch.add("delete from link_price " + where);
         batch.add("delete from link_history " + where);
         batch.add("delete from link_spec " + where);
@@ -129,9 +124,13 @@ class LinkService {
 
 				int[] result = batch.execute();
 
-        if (result[5] > 0) {
-        	if (CollectionUtils.isNotEmpty(productIdSet)) {
-        		ProductPriceService.refresh(productIdSet, handle);
+        if (result[4] > 0) {
+        	//by links, finding the products whose sums and alarms be refreshed
+        	LinkDao linkDao = handle.attach(LinkDao.class);
+        	Set<Product> products = linkDao.findProductsByLinkIds(0l, dto.getLinkIdSet());
+
+        	if (CollectionUtils.isNotEmpty(products)) {
+        		ProductPriceService.refresh(products, handle);
         	}
 
           if (dto.getFromProductId() != null) { //meaning that it is called from product definition (not from links search page)
@@ -175,11 +174,9 @@ class LinkService {
         	handle.begin();
 
       		LinkDao linkDao = handle.attach(LinkDao.class);
-          
-        	Set<Long> foundProductIdSet = linkDao.findProductIdSet(dto.getLinkIdSet());
-        	if (CollectionUtils.isNotEmpty(foundProductIdSet)) foundProductIdSet.remove(null);
+        	Set<Product> products = linkDao.findProductsByLinkIds(dto.getToProductId(), dto.getLinkIdSet());
 
-        	if (CollectionUtils.isNotEmpty(foundProductIdSet)) {
+        	if (CollectionUtils.isNotEmpty(products)) {
 	    			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
 	    			String 
 	    				updatePart = 
@@ -189,17 +186,15 @@ class LinkService {
 							);
 
             Batch batch = handle.createBatch();
-            batch.add("update alarm " + updatePart);
             batch.add("update link_price " + updatePart);
             batch.add("update link_history " + updatePart);
             batch.add("update link_spec " + updatePart);
             batch.add("update link " + updatePart.replace("link_", "")); //this query determines the success!
   					int[] result = batch.execute();
 
-  					if (result[4] > 0) {
+  					if (result[3] > 0) {
   						//refreshes product sums and alarm if needed!
-          		foundProductIdSet.add(dto.getToProductId());
-          		ProductPriceService.refresh(foundProductIdSet, handle);
+          		ProductPriceService.refresh(products, handle);
 
           		if (dto.getFromProductId() != null) { //meaning that it is called from product definition (not from links searching page)
                 ProductDao productDao = handle.attach(ProductDao.class);

@@ -37,13 +37,18 @@ call sp_create_product_and_links('BX-001', 'X', 2, 1, 1, 0, 'https://amazon.com/
 call sp_create_product_and_links('BX-002', 'Y', 4, 1, 0, 3, 'https://ebay.com/', 12, 'Workspace-C', @workspace_id);
 
 -- -----------------------
--- 2 alarms
+-- 3 alarms definitions for 2 entities (1 product and 1 link)
 -- -----------------------
-insert into alarm (topic, product_id, subject, subject_when, amount_lower_limit, amount_upper_limit, workspace_id) 
-select 'PRODUCT', id, 'MINIMUM', 'OUT_OF_LIMITS', 15.17, 50.23, @workspace_id from product where workspace_id = @workspace_id limit 1;
+insert into alarm (name, topic, subject, subject_when, amount_lower_limit, amount_upper_limit, workspace_id) 
+values ('Product minimum price is out of limits', 'PRODUCT', 'MINIMUM', 'OUT_OF_LIMITS', 15.17, 50.23, @workspace_id);
+update product set alarm_id=last_insert_id() where sku = 'BX-001';
 
-insert into alarm (topic, link_id, subject, subject_when, certain_position, workspace_id) 
-select 'LINK', id, 'POSITION', 'EQUAL', 'Average', @workspace_id from link where workspace_id = @workspace_id limit 1;
+insert into alarm (name, topic, subject, subject_when, certain_position, workspace_id) 
+values ('Link position equals to average', 'LINK', 'POSITION', 'EQUAL', 'Average', @workspace_id);
+update link set alarm_id=last_insert_id() where grup = 'WAITING' and workspace_id = @workspace_id;
+
+insert into alarm (name, topic, subject, subject_when, certain_position, workspace_id) 
+values ('Link position equals to highest', 'LINK', 'POSITION', 'EQUAL', 'Highest', @workspace_id);
 
 -- tickets
 insert into test.ticket (priority, type, subject, body, user_id, workspace_id) 

@@ -34,7 +34,7 @@ interface DashboardDao {
   Map<String, Integer> findLinkPositionDists(@Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-    "select l.id, l.product_id, p.name as product_name, pl.domain as platform, l.seller, l.price, l.status, l.alarm_id, " +
+    "select l.id, l.product_id, p.name as product_name, pl.domain as platform, l.seller, l.price, l.status, " +
     "l.parse_code, l.position, l.name, l.url, l.updated_at, l.created_at, l.url from link as l " + 
 		"inner join product as p on p.id = l.product_id " + 
     "left join platform as pl on pl.id = l.platform_id " + 

@@ -45,13 +45,15 @@ call sp_create_product_and_links('AX-001', '1', 5, 4, 3, 2, 'https://amazon.com/
 call sp_create_product_and_links('AX-002', '2', 4, 3, 2, 1, 'https://ebay.com/', 12, 'Workspace-B', @workspace_id);
 
 -- -----------------------
--- 5 alarms
+-- 2 alarms definitions for 5 entities (2 product and 3 links)
 -- -----------------------
-insert into alarm (topic, product_id, subject, subject_when, workspace_id) 
-select 'PRODUCT', id, 'POSITION', 'CHANGED', @workspace_id from product where workspace_id = @workspace_id limit 2;
+insert into alarm (name, topic, subject, subject_when, workspace_id) 
+values ('Product position is changed', 'PRODUCT', 'POSITION', 'CHANGED', @workspace_id);
+update product set alarm_id=last_insert_id() where sku in ('AX-001', 'AX-002');
 
-insert into alarm (topic, link_id, subject, subject_when, workspace_id) 
-select 'LINK', id, 'POSITION', 'CHANGED', @workspace_id from link where workspace_id = @workspace_id limit 3;
+insert into alarm (name, topic, subject, subject_when, workspace_id) 
+values ('Link position is changed', 'LINK', 'POSITION', 'CHANGED', @workspace_id);
+update link set alarm_id=last_insert_id() where grup = 'PROBLEM' and workspace_id = @workspace_id;
 
 -- -----------------------
 -- 1 smart price
