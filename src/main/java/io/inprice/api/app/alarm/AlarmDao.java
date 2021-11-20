@@ -1,5 +1,8 @@
 package io.inprice.api.app.alarm;
 
+import java.util.List;
+import java.util.Set;
+
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.customizer.Define;
@@ -9,7 +12,11 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
 import io.inprice.api.app.alarm.dto.AlarmDTO;
+import io.inprice.api.app.alarm.mapper.AlarmEntity;
+import io.inprice.api.app.alarm.mapper.AlarmEntityMapper;
 import io.inprice.common.mappers.AlarmMapper;
+import io.inprice.common.mappers.IdNamePairMapper;
+import io.inprice.common.meta.AlarmTopic;
 import io.inprice.common.models.Alarm;
 
 public interface AlarmDao {
@@ -56,7 +63,16 @@ public interface AlarmDao {
 		"where alarm_id=:alarmId " +
 		"  and workspace_id=:workspaceId"
 	)
-	int removeAlarm(@Define("table") String table, @Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
+	int removeAlarmById(@Define("table") String table, @Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
+
+	@SqlUpdate(
+		"update <table> " +
+		"set alarm_id=null, tobe_alarmed=false " +
+		"where id in <idSet> " +
+		"  and alarm_id is not null " +
+		"  and workspace_id=:workspaceId"
+	)
+	int removeAlarmsByEntityIds(@Define("table") String table, @Bind("idSet") Set<Long> idSet, @Bind("workspaceId") Long workspaceId);
 
 	@SqlUpdate(
 		"update <table> " +
@@ -64,6 +80,18 @@ public interface AlarmDao {
 		"where alarm_id=:alarmId " +
 		"  and workspace_id=:workspaceId"
 	)
-	int resetAlarm(@Define("table") String table, @Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
+	int resetAlarmById(@Define("table") String table, @Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
+
+  @SqlQuery("select id, name from alarm where topic=:topic and workspace_id = :workspaceId order by name")
+  @UseRowMapper(IdNamePairMapper.class)
+  List<IdNamePairMapper> getIdNameList(@Bind("topic") AlarmTopic topic, @Bind("workspaceId") Long workspaceId);
+
+	@SqlQuery("select id, sku, name from product where alarm_id=:alarmId and workspace_id=:workspaceId order by name")
+  @UseRowMapper(AlarmEntityMapper.class)
+	List<AlarmEntity> findProductEntities(@Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
+
+	@SqlQuery("select id, sku, IFNULL(name, url) from link where alarm_id=:alarmId and workspace_id=:workspaceId order by name")
+  @UseRowMapper(AlarmEntityMapper.class)
+	List<AlarmEntity> findLinkEntities(@Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
 
 }

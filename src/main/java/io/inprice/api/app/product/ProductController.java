@@ -26,9 +26,7 @@ public class ProductController extends AbstractController {
   	}, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     app.get(Consts.Paths.Product.ID_NAME_PAIRS + "/:id", (ctx) -> {
-  		//Long excludedId = ctx.pathParam("id", Long.class).getOrNull();
   		Long excludedId = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-  		//Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(service.getIdNameList(excludedId));
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 

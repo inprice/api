@@ -182,7 +182,7 @@ public class InsertTest {
 		//searches for alarms
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
 		assertNotNull(alarmList);
-		assertTrue(alarmList.length() == 1);
+		assertTrue(alarmList.length() == 2);
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("sku", "T-1");

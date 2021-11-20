@@ -153,7 +153,7 @@ public class UpdateTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(1L, "LINK", "PRICE", "CHANGED"), 0); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(8L, "LINK", "PRICE", "CHANGED")); //attention!
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));
@@ -171,15 +171,16 @@ public class UpdateTest {
 	public void You_have_already_defined_this_alarm_previously() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
-		JSONArray alarmedLinkList = TestFinder.searchAlarms(cookies, "LINK");
+		JSONArray alarmList = TestFinder.searchAlarms(cookies, "LINK");
 
-		assertNotNull(alarmedLinkList);
-		assertEquals(2, alarmedLinkList.length());
+		assertNotNull(alarmList);
+		assertEquals(3, alarmList.length());
 
-		//get the first alarm for a link
-		JSONObject alarmedLink = alarmedLinkList.getJSONObject(0);
+		//get the first alarm
+		JSONObject alarm = alarmList.getJSONObject(0);
+		alarm.put("certainPosition", "HIGHEST");
 		
-		JSONObject json = callTheService(createBody(alarmedLink.getLong("id"), "LINK", "POSITION", "EQUAL", "Average", null, null));
+		JSONObject json = callTheService(alarm);
 
 		assertEquals(880, json.getInt("status"));
 		assertEquals("You have already defined this alarm previously!", json.getString("reason"));
@@ -192,7 +193,7 @@ public class UpdateTest {
 		JSONArray alarmedLinkList = TestFinder.searchAlarms(cookies, "LINK");
 
 		assertNotNull(alarmedLinkList);
-		assertEquals(2, alarmedLinkList.length());
+		assertEquals(3, alarmedLinkList.length());
 
 		//get the first alarm for a link
 		JSONObject alarmedLink = alarmedLinkList.getJSONObject(0);
@@ -217,7 +218,7 @@ public class UpdateTest {
 		JSONArray alarmedProductList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
 		assertNotNull(alarmedProductList);
-		assertEquals(1, alarmedProductList.length());
+		assertEquals(3, alarmedProductList.length());
 
 		//get the first alarm for a product
 		JSONObject alarmedProduct = alarmedProductList.getJSONObject(0);

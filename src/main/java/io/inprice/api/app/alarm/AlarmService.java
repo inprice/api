@@ -2,17 +2,19 @@ package io.inprice.api.app.alarm;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.alarm.dto.AlarmDTO;
-import io.inprice.api.app.alarm.dto.SearchDTO;
+import io.inprice.api.app.alarm.dto.SetAlarmOFFDTO;
+import io.inprice.api.app.alarm.mapper.AlarmEntity;
 import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
@@ -20,8 +22,8 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.mappers.AlarmMapper;
 import io.inprice.common.meta.AlarmSubject;
 import io.inprice.common.meta.AlarmSubjectWhen;
+import io.inprice.common.meta.AlarmTopic;
 import io.inprice.common.models.Alarm;
-import io.inprice.common.utils.StringHelper;
 
 /**
  * 
@@ -31,6 +33,38 @@ import io.inprice.common.utils.StringHelper;
 public class AlarmService {
 
 	private static final Logger logger = LoggerFactory.getLogger(AlarmService.class);
+
+	Response getDetails(Long id) {
+		Response res = Responses.NotFound.ALARM;
+
+		if (id != null && id > 0) {
+			try (Handle handle = Database.getHandle()) {
+				AlarmDao alarmDao = handle.attach(AlarmDao.class);
+
+				Alarm alarm = alarmDao.findById(id, CurrentUser.getWorkspaceId());
+				if (alarm != null) {
+					List<AlarmEntity> products = alarmDao.findProductEntities(id, CurrentUser.getWorkspaceId());
+					List<AlarmEntity> links = alarmDao.findLinkEntities(id, CurrentUser.getWorkspaceId());
+
+					Map<String, Object> dataMap = Map.of(
+						"alarm", alarm,
+						"products", products,
+						"links", links
+					);
+					res = new Response(dataMap);
+				}
+			}
+		}
+
+		return res;
+	}
+
+  Response getIdNameList(AlarmTopic topic) {
+  	try (Handle handle = Database.getHandle()) {
+  		AlarmDao alarmDao = handle.attach(AlarmDao.class);
+  		return new Response(alarmDao.getIdNameList(topic, CurrentUser.getWorkspaceId()));
+  	}
+  }
 
 	Response insert(AlarmDTO dto) {
 		Response res = Responses.Invalid.ALARM;
@@ -82,8 +116,8 @@ public class AlarmService {
 						handle.begin();
 						boolean isOK = alarmDao.update(dto);
 						if (isOK) {
-							alarmDao.resetAlarm("product", dto.getId(), CurrentUser.getWorkspaceId());
-							alarmDao.resetAlarm("link", dto.getId(), CurrentUser.getWorkspaceId());
+							alarmDao.resetAlarmById("product", dto.getId(), CurrentUser.getWorkspaceId());
+							alarmDao.resetAlarmById("link", dto.getId(), CurrentUser.getWorkspaceId());
 							handle.commit();
 							res = new Response(dto);
 						} else {
@@ -111,8 +145,8 @@ public class AlarmService {
 				if (alarm != null) {
 					handle.begin();
 					handle.execute("SET FOREIGN_KEY_CHECKS=0");
-					int productAlarms = alarmDao.removeAlarm("product", id, CurrentUser.getWorkspaceId());
-					int linkAlarms = alarmDao.removeAlarm("link", id, CurrentUser.getWorkspaceId());
+					int productAlarms = alarmDao.removeAlarmById("product", id, CurrentUser.getWorkspaceId());
+					int linkAlarms = alarmDao.removeAlarmById("link", id, CurrentUser.getWorkspaceId());
 
 					if (productAlarms + linkAlarms > 0) {
 						WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
@@ -129,7 +163,58 @@ public class AlarmService {
 		return res;
 	}
 
-	Response search(SearchDTO dto) {
+  /**
+   * TODO: testleri yazilmali!!!
+   * 
+   * Used for one or multiple links
+   * 
+   * @param dto
+   * @return
+   */
+  Response setAlarmOFF(SetAlarmOFFDTO dto) {
+  	if (dto.getAlarmTopic() == null) {
+  		return Responses.Invalid.ALARM_TOPIC;
+  	}
+
+    Response res = Responses.NotFound.ALARM;
+
+    if (dto.getEntityIdSet() != null && dto.getEntityIdSet().size() > 0) {
+      try (Handle handle = Database.getHandle()) {
+      	AlarmDao alarmDao = handle.attach(AlarmDao.class);
+
+    		handle.begin();
+      	
+      	int affected = 0;
+      	switch (dto.getAlarmTopic()) {
+					case PRODUCT: {
+						affected = alarmDao.removeAlarmsByEntityIds("product", dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
+						break;
+					}
+					case LINK: {
+						affected = alarmDao.removeAlarmsByEntityIds("link", dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
+						break;
+					}
+				}
+
+      	if (affected > 0) {
+	      	if (affected > 0) {
+						WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+						workspaceDao.decAlarmCount(affected, CurrentUser.getWorkspaceId());
+        		handle.commit();
+	      		res = Responses.OK;
+	      	} else {
+        		handle.rollback();
+	      	}
+  	    } else {
+  	    	res = Responses.NotFound.ALARM;
+  	    }
+      }
+    }
+
+    return res;
+  }
+
+	Response search(BaseSearchDTO dto) {
   	dto = DTOHelper.normalizeSearch(dto, true);
 
 		// ---------------------------------------------------
@@ -138,7 +223,7 @@ public class AlarmService {
 		StringBuilder where = new StringBuilder();
 
 		where.append("where workspace_id = ");
-		where.append(CurrentUser.getWorkspaceId());
+		where.append(dto.getWorkspaceId());
 
     if (StringUtils.isNotBlank(dto.getTerm())) {
     	where.append(" and name");
@@ -146,24 +231,6 @@ public class AlarmService {
       where.append(dto.getTerm());
       where.append("%' ");
     }
-
-		if (dto.getTopic() != null) {
-			where.append(" and topic = '");
-			where.append(dto.getTopic());
-			where.append("'");
-		}
-
-		if (CollectionUtils.isNotEmpty(dto.getSubjects())) {
-			where.append(
-		    String.format(" and subject in (%s) ", StringHelper.join("'", dto.getSubjects()))
-	    );
-		}
-
-		if (CollectionUtils.isNotEmpty(dto.getWhens())) {
-			where.append(
-		    String.format(" and subject_when in (%s) ", StringHelper.join("'", dto.getWhens()))
-	    );
-		}
 
 		// limiting
 		String limit = "";
@@ -179,7 +246,7 @@ public class AlarmService {
 			    .createQuery(
 		        "select * from alarm " +
 			      where +
-		        " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + 
+		        " order by name " + 
 		        limit
 	        )
 		    .map(new AlarmMapper()).list();

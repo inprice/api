@@ -2,6 +2,7 @@ package io.inprice.api.app.alarm;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 
@@ -133,15 +134,16 @@ public class InsertTest {
 
 	@Test
 	public void You_have_already_set_an_alarm_for_this_record() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
 
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
 		assertNotNull(alarmList);
-		assertEquals(1, alarmList.length());
+		assertTrue(alarmList.length() >= 3);
 
-		//get the first link
+		//get the first alarm
 		JSONObject found = alarmList.getJSONObject(0);
+		found.remove("id");
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)

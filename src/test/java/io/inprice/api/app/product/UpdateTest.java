@@ -34,7 +34,7 @@ public class UpdateTest {
 
 	private static final JSONObject SAMPLE_BODY = 
 			new JSONObject()
-				.put("id", 1)
+				.put("id", 10)
 				.put("sku", "A-1")
   			.put("name", "NEW PRODUCT")
 				.put("price", 5);
@@ -183,7 +183,7 @@ public class UpdateTest {
 		//searches for alarms
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
 		assertNotNull(alarmList);
-		assertTrue(alarmList.length() == 1);
+		assertTrue(alarmList.length() == 2);
 
 		//searches for product (must be 1 product)
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product O", 0);

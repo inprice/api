@@ -87,7 +87,7 @@ public class DeleteTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1L, 0);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 8L);
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));
@@ -108,7 +108,7 @@ public class DeleteTest {
 		JSONArray alarmedLinkList = TestFinder.searchAlarms(cookies, "LINK");
 
 		assertNotNull(alarmedLinkList);
-		assertEquals(2, alarmedLinkList.length());
+		assertEquals(3, alarmedLinkList.length());
 
 		//get the first alarm for a link
 		JSONObject alarmedLink = alarmedLinkList.getJSONObject(0);
@@ -133,7 +133,7 @@ public class DeleteTest {
 		JSONArray alarmedProductList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
 		assertNotNull(alarmedProductList);
-		assertEquals(1, alarmedProductList.length());
+		assertEquals(3, alarmedProductList.length());
 
 		//get the first alarm for a product
 		JSONObject alarmedProduct = alarmedProductList.getJSONObject(0);

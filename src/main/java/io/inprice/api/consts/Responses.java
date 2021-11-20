@@ -27,6 +27,7 @@ public class Responses {
     public static final Response INVITATION = new Response(BASE + 6, "Invalid invitation!");
     public static final Response ANNOUNCE = new Response(BASE + 7, "Invalid announce!");
     public static final Response ALARM = new Response(BASE + 8, "Invalid alarm!");
+    public static final Response ALARM_TOPIC = new Response(BASE + 9, "Invalid alarm topic!");
 
     public static final Response USER = new Response(BASE + 10, "Invalid user!");
     public static final Response EMAIL = new Response(BASE + 11, "Invalid email!");
