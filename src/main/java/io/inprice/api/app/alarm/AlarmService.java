@@ -21,7 +21,6 @@ import io.inprice.common.mappers.AlarmMapper;
 import io.inprice.common.meta.AlarmSubject;
 import io.inprice.common.meta.AlarmSubjectWhen;
 import io.inprice.common.models.Alarm;
-import io.inprice.common.models.Workspace;
 import io.inprice.common.utils.StringHelper;
 
 /**
@@ -40,42 +39,23 @@ public class AlarmService {
 
 		if (problem == null) {
 			try (Handle handle = Database.getHandle()) {
-				
-        WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
-        Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
+				AlarmDao alarmDao = handle.attach(AlarmDao.class);
 
-        if (workspace.getPlan() != null) {
-          int allowedAlarmCount = (workspace.getPlan().getAlarmLimit() - workspace.getAlarmCount());
-				
-          if (allowedAlarmCount > 0) {
-          	AlarmDao alarmDao = handle.attach(AlarmDao.class);
+    		String name = generateName(dto);
+      	boolean doesExist = alarmDao.doesExistByName(name, 0l, CurrentUser.getWorkspaceId());
 
-        		String name = generateName(dto);
-          	boolean doesExist = alarmDao.doesExistByName(name, 0l, CurrentUser.getWorkspaceId());
-          	
-						if (doesExist == false) {
-    					dto.setName(name);
-
-    					handle.begin();
-  						long id = alarmDao.insert(dto);
-  						if (id > 0) {
-  		        	workspaceDao.incAlarmCount(CurrentUser.getWorkspaceId());
-  		        	handle.commit();
-  							dto.setId(id);
-  							res = new Response(dto);
-  						} else {
-  							handle.rollback();
-  							res = Responses.DataProblem.DB_PROBLEM;
-  						}
-	          } else {
-	          	res = Responses.Already.Defined.ALARM;
-  					}
-          } else {
-	          res = Responses.NotAllowed.NO_ALARM_LIMIT;
-          }
+				if (doesExist == false) {
+					dto.setName(name);
+					long id = alarmDao.insert(dto);
+					if (id > 0) {
+						dto.setId(id);
+						res = new Response(dto);
+					} else {
+						res = Responses.DataProblem.DB_PROBLEM;
+					}
         } else {
-          res = Responses.NotAllowed.HAVE_NO_PLAN;
-        }
+        	res = Responses.Already.Defined.ALARM;
+				}
       }
 		} else {
 			res = new Response(problem);
@@ -131,9 +111,14 @@ public class AlarmService {
 				if (alarm != null) {
 					handle.begin();
 					handle.execute("SET FOREIGN_KEY_CHECKS=0");
-					alarmDao.removeAlarm("product", id, CurrentUser.getWorkspaceId());
-					alarmDao.removeAlarm("link", id, CurrentUser.getWorkspaceId());
-					handle.attach(WorkspaceDao.class).decAlarmCount(CurrentUser.getWorkspaceId());
+					int productAlarms = alarmDao.removeAlarm("product", id, CurrentUser.getWorkspaceId());
+					int linkAlarms = alarmDao.removeAlarm("link", id, CurrentUser.getWorkspaceId());
+
+					if (productAlarms + linkAlarms > 0) {
+						WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+						workspaceDao.decAlarmCount(productAlarms+linkAlarms, CurrentUser.getWorkspaceId());
+					}
+
 					handle.execute("SET FOREIGN_KEY_CHECKS=1");
 					handle.commit();
 					res = Responses.OK;

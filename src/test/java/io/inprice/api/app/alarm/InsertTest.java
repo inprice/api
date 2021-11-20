@@ -115,14 +115,6 @@ public class InsertTest {
 	}
 
 	@Test
-	public void You_havent_picked_a_plan_yet() {
-		JSONObject json = callTheService(TestWorkspaces.Without_a_plan_and_extra_user.ADMIN(), createBody("LINK", "PRICE", "CHANGED"), 0);
-
-		assertEquals(903, json.getInt("status"));
-		assertEquals("You haven't picked a plan yet!", json.getString("reason"));
-	}
-
-	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody("LINK", "PRICE", "CHANGED"), 0); //attention!
@@ -162,14 +154,6 @@ public class InsertTest {
 
 		assertEquals(880, json.getInt("status"));
 		assertEquals("You have already defined this alarm previously!", json.getString("reason"));
-	}
-
-	@Test
-	public void You_have_reached_max_alarm_number_of_your_plan() {
-		JSONObject json = callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), createBody("LINK", "PRICE", "CHANGED"), 0);
-
-		assertEquals(910, json.getInt("status"));
-		assertEquals("You have reached max alarm number of your plan!", json.getString("reason"));
 	}
 
 	@Test

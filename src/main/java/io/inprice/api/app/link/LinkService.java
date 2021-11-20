@@ -16,10 +16,12 @@ import io.inprice.api.app.alarm.AlarmDao;
 import io.inprice.api.app.link.dto.SearchDTO;
 import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.app.product.ProductPriceService;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.AlarmEntityDTO;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
+import io.inprice.api.helpers.SystemHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.session.CurrentUser;
@@ -37,6 +39,193 @@ import io.inprice.common.utils.StringHelper;
 class LinkService {
 
   private static final Logger logger = LoggerFactory.getLogger(LinkService.class);
+
+  /**
+   * Moves links from one product to another.
+   * 
+   * Two operations are done accordingly;
+   * 	a) setting new product id for all the selected links 
+   * 	b) refreshing product sums
+   * 
+   */
+  Response moveTo(LinkMoveDTO dto) {
+  	Response res = Responses.OK;
+  	
+  	if (dto.getToProductId() != null && dto.getToProductId() > 0) {
+  		if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) dto.getLinkIdSet().remove(null);
+
+      if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) {
+      	try (Handle handle = Database.getHandle()) {
+        	handle.begin();
+
+      		LinkDao linkDao = handle.attach(LinkDao.class);
+        	Set<Product> products = linkDao.findProductsByLinkIds(dto.getToProductId(), dto.getLinkIdSet());
+
+        	if (CollectionUtils.isNotEmpty(products)) {
+	    			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
+	    			String 
+	    				updatePart = 
+	    					String.format(
+	  							"set product_id=%d where link_id in (%s) and product_id!=%d and workspace_id=%d", 
+	  							dto.getToProductId(), joinedIds, dto.getToProductId(), CurrentUser.getWorkspaceId()
+							);
+
+            Batch batch = handle.createBatch();
+            batch.add("update link_price " + updatePart);
+            batch.add("update link_history " + updatePart);
+            batch.add("update link_spec " + updatePart);
+            batch.add("update link " + updatePart.replace("link_", "")); //this query determines the success!
+  					int[] result = batch.execute();
+
+  					if (result[3] > 0) {
+  						//refreshes product sums and alarm if needed!
+          		ProductPriceService.refresh(products, handle);
+
+          		if (dto.getFromProductId() != null) { //meaning that it is called from product definition (not from links searching page)
+                ProductDao productDao = handle.attach(ProductDao.class);
+              	Product product = productDao.findById(dto.getFromProductId(), CurrentUser.getWorkspaceId());
+
+              	Map<String, Object> data = Map.of(
+              		"product", product,
+                	"links", linkDao.findListByProductId(dto.getFromProductId(), CurrentUser.getWorkspaceId())
+            		);
+                res = new Response(data);
+          		} else {
+          			res = Responses.OK;
+          		}
+            } else {
+            	res = Responses.NotFound.LINK;
+  					}
+          } else {
+          	res = Responses.NotFound.PRODUCT;
+          }
+
+          if (res.isOK())
+          	handle.commit();
+          else
+          	handle.rollback();
+      	}
+      } else {
+      	res = Responses.NotFound.LINK;
+      }
+    } else {
+    	res = Responses.Invalid.PRODUCT;
+    }
+
+  	return res;
+  }
+
+  Response getDetails(Long id) {
+    Response res = Responses.NotFound.LINK;
+
+    if (id != null && id > 0) {
+      try (Handle handle = Database.getHandle()) {
+        LinkDao linkDao = handle.attach(LinkDao.class);
+
+        Link link = linkDao.findWithAlarmById(id, CurrentUser.getWorkspaceId());
+        if (link != null) {
+          List<LinkSpec> specList = linkDao.findSpecListByLinkId(link.getId());
+          List<LinkPrice> priceList = linkDao.findPriceListByLinkId(link.getId());
+          List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(link.getId());
+
+          if (specList == null) specList = new ArrayList<>();
+          if (priceList == null) priceList = new ArrayList<>();
+          if (historyList == null) historyList = new ArrayList<>();
+        
+          if (StringUtils.isNotBlank(link.getBrand())) specList.add(0, new LinkSpec("", link.getBrand()));
+          if (StringUtils.isNotBlank(link.getSku())) specList.add(0, new LinkSpec("", link.getSku()));
+          
+          Map<String, Object> data = Map.of(
+        		"info", link,
+          	"specList", specList,
+          	"priceList", priceList,
+          	"historyList", historyList
+        	);
+          res = new Response(data);
+        }
+      }
+    }
+
+    return res;
+  }
+
+  /**
+   * Used for one or multiple links
+   * 
+   * @param dto
+   * @return
+   */
+  Response setAlarmON(AlarmEntityDTO dto) {
+    Response res = Responses.NotFound.ALARM;
+
+    if (dto.getEntityIdSet() != null && dto.getEntityIdSet().size() > 0) {
+	    if (dto.getAlarmId() != null && dto.getAlarmId() > 0) {
+	      try (Handle handle = Database.getHandle()) {
+
+      		Response alarmLimitCheckRes = SystemHelper.checkAlarmLimit(handle);
+      		if (alarmLimitCheckRes.isOK() == false) return alarmLimitCheckRes;
+	      	
+	      	AlarmDao alarmDao = handle.attach(AlarmDao.class);
+	      	Alarm alarm = alarmDao.findById(dto.getAlarmId(), CurrentUser.getWorkspaceId());
+
+	      	if (alarm != null) {
+	      		handle.begin();
+		      	LinkDao linkDao = handle.attach(LinkDao.class);
+        		int affected = linkDao.setAlarmON(dto.getAlarmId(), dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
+	        	if (affected > 0) {
+							WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+							workspaceDao.incAlarmCount(affected, CurrentUser.getWorkspaceId());
+	        		handle.commit();
+	        		res = Responses.OK;
+		  	    } else {
+		  	    	handle.rollback();
+		  	    	res = Responses.NotFound.LINK;
+		        }
+	      	}
+	      }
+	    }
+    } else {
+    	res = Responses.NotFound.LINK;
+    }
+
+    return res;
+  }
+
+  /**
+   * Used for one or multiple links
+   * 
+   * @param dto
+   * @return
+   */
+  Response setAlarmOFF(AlarmEntityDTO dto) {
+    Response res = Responses.NotFound.LINK;
+
+    if (dto.getEntityIdSet() != null && dto.getEntityIdSet().size() > 0) {
+      try (Handle handle = Database.getHandle()) {
+      	LinkDao linkDao = handle.attach(LinkDao.class);
+
+      	AlarmDao alarmDao = handle.attach(AlarmDao.class);
+      	Alarm alarm = alarmDao.findById(dto.getAlarmId(), CurrentUser.getWorkspaceId());
+
+      	if (alarm != null) {
+      		handle.begin();
+	      	int affected = linkDao.setAlarmOFF(dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
+	      	if (affected > 0) {
+						WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+						workspaceDao.decAlarmCount(affected, CurrentUser.getWorkspaceId());
+        		handle.commit();
+	      		res = Responses.OK;
+	      	} else {
+        		handle.rollback();
+	      	}
+  	    } else {
+  	    	res = Responses.NotFound.ALARM;
+  	    }
+      }
+    }
+
+    return res;
+  }
 
   Response search(SearchDTO dto) {
   	dto = DTOHelper.normalizeSearch(dto, true);
@@ -156,179 +345,6 @@ class LinkService {
 
     }
   	return response;
-  }
-
-  /**
-   * Moves links from one product to another.
-   * 
-   * Two operations are done accordingly;
-   * 	a) setting new product id for all the selected links 
-   * 	b) refreshing product sums
-   * 
-   */
-  Response moveTo(LinkMoveDTO dto) {
-  	Response res = Responses.OK;
-  	
-  	if (dto.getToProductId() != null && dto.getToProductId() > 0) {
-  		if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) dto.getLinkIdSet().remove(null);
-
-      if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) {
-      	try (Handle handle = Database.getHandle()) {
-        	handle.begin();
-
-      		LinkDao linkDao = handle.attach(LinkDao.class);
-        	Set<Product> products = linkDao.findProductsByLinkIds(dto.getToProductId(), dto.getLinkIdSet());
-
-        	if (CollectionUtils.isNotEmpty(products)) {
-	    			String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
-	    			String 
-	    				updatePart = 
-	    					String.format(
-	  							"set product_id=%d where link_id in (%s) and product_id!=%d and workspace_id=%d", 
-	  							dto.getToProductId(), joinedIds, dto.getToProductId(), CurrentUser.getWorkspaceId()
-							);
-
-            Batch batch = handle.createBatch();
-            batch.add("update link_price " + updatePart);
-            batch.add("update link_history " + updatePart);
-            batch.add("update link_spec " + updatePart);
-            batch.add("update link " + updatePart.replace("link_", "")); //this query determines the success!
-  					int[] result = batch.execute();
-
-  					if (result[3] > 0) {
-  						//refreshes product sums and alarm if needed!
-          		ProductPriceService.refresh(products, handle);
-
-          		if (dto.getFromProductId() != null) { //meaning that it is called from product definition (not from links searching page)
-                ProductDao productDao = handle.attach(ProductDao.class);
-              	Product product = productDao.findById(dto.getFromProductId(), CurrentUser.getWorkspaceId());
-
-              	Map<String, Object> data = Map.of(
-              		"product", product,
-                	"links", linkDao.findListByProductId(dto.getFromProductId(), CurrentUser.getWorkspaceId())
-            		);
-                res = new Response(data);
-          		} else {
-          			res = Responses.OK;
-          		}
-            } else {
-            	res = Responses.NotFound.LINK;
-  					}
-          } else {
-          	res = Responses.NotFound.PRODUCT;
-          }
-
-          if (res.isOK())
-          	handle.commit();
-          else
-          	handle.rollback();
-      	}
-      } else {
-      	res = Responses.NotFound.LINK;
-      }
-    } else {
-    	res = Responses.Invalid.PRODUCT;
-    }
-
-  	return res;
-  }
-
-  Response getDetails(Long id) {
-    Response res = Responses.NotFound.LINK;
-
-    if (id != null && id > 0) {
-      try (Handle handle = Database.getHandle()) {
-        LinkDao linkDao = handle.attach(LinkDao.class);
-
-        Link link = linkDao.findWithAlarmById(id, CurrentUser.getWorkspaceId());
-        if (link != null) {
-          List<LinkSpec> specList = linkDao.findSpecListByLinkId(link.getId());
-          List<LinkPrice> priceList = linkDao.findPriceListByLinkId(link.getId());
-          List<LinkHistory> historyList = linkDao.findHistoryListByLinkId(link.getId());
-
-          if (specList == null) specList = new ArrayList<>();
-          if (priceList == null) priceList = new ArrayList<>();
-          if (historyList == null) historyList = new ArrayList<>();
-        
-          if (StringUtils.isNotBlank(link.getBrand())) specList.add(0, new LinkSpec("", link.getBrand()));
-          if (StringUtils.isNotBlank(link.getSku())) specList.add(0, new LinkSpec("", link.getSku()));
-          
-          Map<String, Object> data = Map.of(
-        		"info", link,
-          	"specList", specList,
-          	"priceList", priceList,
-          	"historyList", historyList
-        	);
-          res = new Response(data);
-        }
-      }
-    }
-
-    return res;
-  }
-
-  /**
-   * Used for one or multiple links
-   * 
-   * @param dto
-   * @return
-   */
-  Response setAlarmON(AlarmEntityDTO dto) {
-    Response res = Responses.NotFound.LINK;
-
-    if (dto.getEntityIdSet() != null && dto.getEntityIdSet().size() > 0) {
-	    if (dto.getAlarmId() != null && dto.getAlarmId() > 0) {
-	      try (Handle handle = Database.getHandle()) {
-
-	      	AlarmDao alarmDao = handle.attach(AlarmDao.class);
-	      	Alarm alarm = alarmDao.findById(dto.getAlarmId(), CurrentUser.getWorkspaceId());
-
-	      	if (alarm != null) {
-		      	LinkDao linkDao = handle.attach(LinkDao.class);
-        		int affected = linkDao.setAlarmON(dto.getAlarmId(), dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
-	        	if (affected > 0) {
-	        		res = Responses.OK;
-	        	}
-	  	    } else {
-	  	    	res = Responses.NotFound.ALARM;
-	        }
-	      }
-	    } else {
-	    	res = Responses.NotFound.ALARM;
-	    }
-    }
-
-    return res;
-  }
-
-  /**
-   * Used for one or multiple links
-   * 
-   * @param dto
-   * @return
-   */
-  Response setAlarmOFF(AlarmEntityDTO dto) {
-    Response res = Responses.NotFound.LINK;
-
-    if (dto.getEntityIdSet() != null && dto.getEntityIdSet().size() > 0) {
-      try (Handle handle = Database.getHandle()) {
-      	LinkDao linkDao = handle.attach(LinkDao.class);
-
-      	AlarmDao alarmDao = handle.attach(AlarmDao.class);
-      	Alarm alarm = alarmDao.findById(dto.getAlarmId(), CurrentUser.getWorkspaceId());
-
-      	if (alarm != null) {
-	      	int affected = linkDao.setAlarmOFF(dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
-	      	if (affected > 0) {
-	      		res = Responses.OK;
-	      	}
-  	    } else {
-  	    	res = Responses.NotFound.ALARM;
-  	    }
-      }
-    }
-
-    return res;
   }
 
 }

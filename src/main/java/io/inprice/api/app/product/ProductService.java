@@ -25,6 +25,7 @@ import io.inprice.api.app.smartprice.SmartPriceDao;
 import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.ProductDTO;
+import io.inprice.api.helpers.SystemHelper;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
 import io.inprice.api.session.CurrentUser;
@@ -67,6 +68,247 @@ class ProductService {
   		ProductDao productDao = handle.attach(ProductDao.class);
   		return new Response(productDao.getIdNameList((excludedProductId != null ? excludedProductId : 0), CurrentUser.getWorkspaceId()));
   	}
+  }
+
+  Response findLinksById(Long id) {
+    try (Handle handle = Database.getHandle()) {
+    	ProductDao productDao = handle.attach(ProductDao.class);
+      LinkDao linkDao = handle.attach(LinkDao.class);
+
+      Product product = productDao.findByIdWithLookups(id, CurrentUser.getWorkspaceId());
+      if (product != null) {
+      	Map<String, Object> dataMap = Map.of(
+        	"product", product,
+        	"links", linkDao.findListByProductId(id, CurrentUser.getWorkspaceId())
+      	);
+        return new Response(dataMap);
+      }
+    }
+    return Responses.NotFound.PRODUCT;
+  }
+
+  Response insert(ProductDTO dto) {
+    String problem = ProductVerifier.verify(dto);
+    if (problem == null) {
+
+    	try (Handle handle = Database.getHandle()) {
+      	//if an alarm set then checks if workspace has enough permission for a new alarm
+      	if (dto.getAlarmId() != null) {
+      		Response alarmLimitCheckRes = SystemHelper.checkAlarmLimit(handle);
+      		if (alarmLimitCheckRes.isOK() == false) return alarmLimitCheckRes;
+      	}
+      	
+        ProductDao productDao = handle.attach(ProductDao.class);
+
+        dto.setId(0L); //necessary for the existency check here!
+      	boolean alreadyExists = productDao.doesExistBySku(dto, CurrentUser.getWorkspaceId());
+
+      	if (alreadyExists == false) {
+        	checkBrand(dto, handle);
+        	checkCategory(dto, handle);
+        	checkAlarm(dto, handle);
+        	checkSmartPrice(dto, handle);
+
+        	Long id = productDao.insert(dto);
+        	if (id != null && id > 0) {
+          	if (dto.getAlarmId() != null && dto.getAlarmId() > 0) {
+          		handle.attach(WorkspaceDao.class).incAlarmCount(1, CurrentUser.getWorkspaceId());
+          	}
+        		return Responses.OK;
+          }
+        } else {
+        	return Responses.Already.Defined.PRODUCT;
+        }
+      }
+      return Responses.DataProblem.DB_PROBLEM;
+    } else {
+      return new Response(problem);
+    }
+  }
+  
+  Response update(ProductDTO dto) {
+  	Response res = Responses.NotFound.PRODUCT;
+
+  	if (dto.getId() != null && dto.getId() > 0) {
+
+  		String problem = ProductVerifier.verify(dto);
+      if (problem == null) {
+
+        try (Handle handle = Database.getHandle()) {
+        	ProductDao productDao = handle.attach(ProductDao.class);
+
+          //checks if sku is already used for another product
+        	boolean alreadyExists = productDao.doesExistBySku(dto, CurrentUser.getWorkspaceId());
+
+          if (alreadyExists == false) {
+          	Product found = productDao.findById(dto.getId(), CurrentUser.getWorkspaceId());
+          	if (found != null) { //must be found
+
+            	//if an alarm set then checks if workspace has enough permission for a new alarm
+            	if (dto.getAlarmId() != null &&  found.getAlarmId() == null) {
+            		Response alarmLimitCheckRes = SystemHelper.checkAlarmLimit(handle);
+            		if (alarmLimitCheckRes.isOK() == false) return alarmLimitCheckRes;
+            	}
+          		
+          		handle.begin();
+
+            	checkBrand(dto, handle);
+            	checkCategory(dto, handle);
+            	checkAlarm(dto, handle);
+            	checkSmartPrice(dto, handle);
+
+            	String suggestedPricePart = null;
+            	if (found.getActives() > 0) {
+            		ProductRefreshResult prr = null;
+
+            		if (found.getPrice().equals(dto.getPrice()) == false || found.getBasePrice().equals(dto.getBasePrice()) == false) {
+            			//prices must be updated before price refreshing sp called!
+            			handle.execute(
+          					"update product set price=?, base_price=? where id=? and workspace_id=?",
+              			dto.getPrice(), dto.getBasePrice(), dto.getId(), CurrentUser.getWorkspaceId()
+            			);
+            			prr = ProductPriceService.refresh(found, handle);
+            		}
+
+            		//if dto.getSmartPriceId() == null, suggested_price is zeroized in generateUpdateQuery method!
+            		if (dto.getSmartPriceId() != null && Objects.equals(found.getSmartPriceId(), dto.getSmartPriceId()) == false) {
+            			SmartPriceDao smartPriceDao = handle.attach(SmartPriceDao.class);
+            			SmartPrice smartPrice = smartPriceDao.findById(dto.getSmartPriceId(), CurrentUser.getWorkspaceId());
+            			if (smartPrice != null) {
+	            			if (prr == null) {
+	               			prr = ProductPriceService.refresh(found, handle);
+	               		}
+										EvaluationResult result = FormulaHelper.evaluate(smartPrice, prr);
+	                	suggestedPricePart =
+		                    String.format(
+		                      ", suggested_price=%f, suggested_price_problem=%s ",
+		                      result.getValue(),
+		                      (result.getProblem() != null ? "'"+result.getProblem()+"'" : "null"),
+		                      dto.getId()
+		                    );
+            			} else {
+            				dto.setSmartPriceId(null);
+            			}
+              	}
+            	}
+            	
+            	//we need to take care of sums, alarm and suggested price 
+            	//since because all these indicators are sensitive for the changings on price and smart_price_id!
+            	String updateQuery = generateUpdateQuery(found, dto, suggestedPricePart);
+
+            	int affected = handle.execute(
+          			updateQuery,
+          			dto.getSku(), dto.getName(), dto.getPrice(), dto.getBasePrice(), dto.getBrandId(), dto.getCategoryId(), dto.getId(), CurrentUser.getWorkspaceId()
+        			);
+
+              if (affected > 0) {
+              	if (Objects.equals(dto.getFrom(), "SearchPage")) {
+              		res = Responses.OK;
+              	} else {
+	              	found = productDao.findByIdWithLookups(dto.getId(), CurrentUser.getWorkspaceId());
+	                res = new Response(Map.of("product", found));
+              	}
+              } else {
+              	res = Responses.DataProblem.DB_PROBLEM;
+              }
+
+              if (res.isOK()) {
+              	if (dto.getAlarmId() != null && found.getAlarmId() == null) {
+              		handle.attach(WorkspaceDao.class).incAlarmCount(1, CurrentUser.getWorkspaceId());
+              	}
+              	if (dto.getAlarmId() == null && found.getAlarmId() != null) {
+              		handle.attach(WorkspaceDao.class).decAlarmCount(1, CurrentUser.getWorkspaceId());
+              	}
+              	handle.commit();
+              } else {
+              	handle.rollback();
+              }
+            }
+          } else {
+          	res = Responses.Already.Defined.PRODUCT;
+          }
+        }
+        return res;
+
+      } else {
+      	res = new Response(problem);
+      }
+    }
+
+  	return res;
+  }
+  
+  private String generateUpdateQuery(Product found, ProductDTO dto, String suggestedPricePart) {
+  	StringBuilder query = new StringBuilder("update product set sku=?, name=?, price=?, base_price=?, brand_id=?, category_id=?");
+
+  	if (dto.getSmartPriceId() != null) {
+  		query.append(", smart_price_id=" + dto.getSmartPriceId());
+  		if (suggestedPricePart != null) {
+  			query.append(suggestedPricePart);
+  		}
+  	} else {
+  		query.append(", smart_price_id=null, suggested_price=0, suggested_price_problem=null");
+  	}
+
+  	if (found.getActives() < 1) {
+  		query.append(
+				", min_price=0, min_diff=0, min_platform=null, min_seller=null, " +
+				"max_price=0, max_diff=0, max_platform=null, max_seller=null, " +
+				"avg_price=0, avg_diff=0, position='NotSet'"
+			);
+  	}
+
+  	query.append(" where id=? and workspace_id=?");
+
+  	return query.toString();
+  }
+
+  Response delete(Long id) {
+  	Response res = Responses.Invalid.PRODUCT;
+
+    if (id != null && id > 0) {
+      try (Handle handle = Database.getHandle()) {
+      	ProductDao productDao = handle.attach(ProductDao.class);
+      	Product product = productDao.findById(id, CurrentUser.getWorkspaceId());
+      	
+      	if (product != null) {
+        	handle.begin();
+        	
+    			String where = String.format("where product_id=%d and workspace_id=%d", id, CurrentUser.getWorkspaceId());
+        	
+    			int alarmCount = handle.createQuery("select count(1) from link where alarm_id is not null and product_id = "+ id).mapTo(int.class).one();
+        	if (product.getAlarmId() != null) alarmCount++;
+        	
+          Batch batch = handle.createBatch();
+          batch.add("SET FOREIGN_KEY_CHECKS=0");
+          batch.add("delete from link_price " + where);
+          batch.add("delete from link_history " + where);
+          batch.add("delete from link_spec " + where);
+          batch.add("delete from link " + where);
+          batch.add("delete from product " + where.replace("product_", "")); //this query determines the success!
+          batch.add(
+        		String.format(
+      				"update workspace set link_count=link_count-%d, alarm_count=alarm_count-%d where id=%d", 
+      				product.getLinkCount(), alarmCount, CurrentUser.getWorkspaceId()
+    				)
+      		);
+          batch.add("SET FOREIGN_KEY_CHECKS=1");
+
+          int[] result = batch.execute();
+
+          if (result[5] > 0) {
+            res = new Response(Map.of("count", product.getLinkCount()));
+            handle.commit();
+          } else {
+          	handle.rollback();
+      		}
+      	} else {
+      		res = Responses.NotFound.PRODUCT;
+      	}
+      }
+    }
+
+    return res;
   }
 
   Response search(SearchDTO dto) {
@@ -132,220 +374,6 @@ class ProductService {
       logger.error("Failed in full search for products.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
-  }
-
-  Response findLinksById(Long id) {
-    try (Handle handle = Database.getHandle()) {
-    	ProductDao productDao = handle.attach(ProductDao.class);
-      LinkDao linkDao = handle.attach(LinkDao.class);
-
-      Product product = productDao.findByIdWithLookups(id, CurrentUser.getWorkspaceId());
-      if (product != null) {
-      	Map<String, Object> dataMap = Map.of(
-        	"product", product,
-        	"links", linkDao.findListByProductId(id, CurrentUser.getWorkspaceId())
-      	);
-        return new Response(dataMap);
-      }
-    }
-    return Responses.NotFound.PRODUCT;
-  }
-
-  Response insert(ProductDTO dto) {
-    String problem = ProductVerifier.verify(dto);
-    if (problem == null) {
-      try (Handle handle = Database.getHandle()) {
-        ProductDao productDao = handle.attach(ProductDao.class);
-
-        dto.setId(0L); //necessary for the existency check here!
-      	boolean alreadyExists = productDao.doesExistBySku(dto, CurrentUser.getWorkspaceId());
-
-      	if (alreadyExists == false) {
-        	checkBrand(dto, handle);
-        	checkCategory(dto, handle);
-        	checkAlarm(dto, handle);
-        	checkSmartPrice(dto, handle);
-
-        	Long id = productDao.insert(dto);
-        	if (id != null && id > 0) {
-        		return Responses.OK;
-          }
-        } else {
-        	return Responses.Already.Defined.PRODUCT;
-        }
-      }
-      return Responses.DataProblem.DB_PROBLEM;
-    } else {
-      return new Response(problem);
-    }
-  }
-  
-  Response update(ProductDTO dto) {
-  	Response res = Responses.NotFound.PRODUCT;
-
-  	if (dto.getId() != null && dto.getId() > 0) {
-
-  		String problem = ProductVerifier.verify(dto);
-      if (problem == null) {
-
-        try (Handle handle = Database.getHandle()) {
-          ProductDao productDao = handle.attach(ProductDao.class);
-
-          //checks if sku is already used for another product
-        	boolean alreadyExists = productDao.doesExistBySku(dto, CurrentUser.getWorkspaceId());
-
-          if (alreadyExists == false) {
-          	Product found = productDao.findById(dto.getId(), CurrentUser.getWorkspaceId());
-            if (found != null) { //must be found
-            	handle.begin();
-
-            	checkBrand(dto, handle);
-            	checkCategory(dto, handle);
-            	checkAlarm(dto, handle);
-            	checkSmartPrice(dto, handle);
-
-            	String suggestedPricePart = null;
-            	if (found.getActives() > 0) {
-            		ProductRefreshResult prr = null;
-
-            		if (found.getPrice().equals(dto.getPrice()) == false || found.getBasePrice().equals(dto.getBasePrice()) == false) {
-            			//prices must be updated before price refreshing sp called!
-            			handle.execute(
-          					"update product set price=?, base_price=? where id=? and workspace_id=?",
-              			dto.getPrice(), dto.getBasePrice(), dto.getId(), CurrentUser.getWorkspaceId()
-            			);
-            			prr = ProductPriceService.refresh(found, handle);
-            		}
-
-            		//if dto.getSmartPriceId() == null, suggested_price is zeroized in generateUpdateQuery method!
-            		if (dto.getSmartPriceId() != null && Objects.equals(found.getSmartPriceId(), dto.getSmartPriceId()) == false) {
-            			SmartPriceDao smartPriceDao = handle.attach(SmartPriceDao.class);
-            			SmartPrice smartPrice = smartPriceDao.findById(dto.getSmartPriceId(), CurrentUser.getWorkspaceId());
-            			if (smartPrice != null) {
-	            			if (prr == null) {
-	               			prr = ProductPriceService.refresh(found, handle);
-	               		}
-										EvaluationResult result = FormulaHelper.evaluate(smartPrice, prr);
-	                	suggestedPricePart =
-		                    String.format(
-		                      ", suggested_price=%f, suggested_price_problem=%s ",
-		                      result.getValue(),
-		                      (result.getProblem() != null ? "'"+result.getProblem()+"'" : "null"),
-		                      dto.getId()
-		                    );
-            			} else {
-            				dto.setSmartPriceId(null);
-            			}
-              	}
-            	}
-            	
-            	//we need to take care of sums, alarm and suggested price 
-            	//since because all these indicators are sensitive for the changings on price and smart_price_id!
-            	String updateQuery = generateUpdateQuery(found, dto, suggestedPricePart);
-
-            	int affected = handle.execute(
-          			updateQuery,
-          			dto.getSku(), dto.getName(), dto.getPrice(), dto.getBasePrice(), dto.getBrandId(), dto.getCategoryId(), dto.getId(), CurrentUser.getWorkspaceId()
-        			);
-
-              if (affected > 0) {
-              	if (Objects.equals(dto.getFrom(), "SearchPage")) {
-              		res = Responses.OK;
-              	} else {
-	              	found = productDao.findByIdWithLookups(dto.getId(), CurrentUser.getWorkspaceId());
-	                res = new Response(Map.of("product", found));
-              	}
-              } else {
-              	res = Responses.DataProblem.DB_PROBLEM;
-              }
-
-              if (res.isOK())
-              	handle.commit();
-              else
-              	handle.rollback();
-            }
-          } else {
-          	res = Responses.Already.Defined.PRODUCT;
-          }
-        }
-        return res;
-
-      } else {
-      	res = new Response(problem);
-      }
-    }
-
-  	return res;
-  }
-  
-  private String generateUpdateQuery(Product found, ProductDTO dto, String suggestedPricePart) {
-  	StringBuilder query = new StringBuilder("update product set sku=?, name=?, price=?, base_price=?, brand_id=?, category_id=?");
-
-  	if (dto.getSmartPriceId() != null) {
-  		query.append(", smart_price_id=" + dto.getSmartPriceId());
-  		if (suggestedPricePart != null) {
-  			query.append(suggestedPricePart);
-  		}
-  	} else {
-  		query.append(", smart_price_id=null, suggested_price=0, suggested_price_problem=null");
-  	}
-
-  	if (found.getActives() < 1) {
-  		query.append(
-				", min_price=0, min_diff=0, min_platform=null, min_seller=null, " +
-				"max_price=0, max_diff=0, max_platform=null, max_seller=null, " +
-				"avg_price=0, avg_diff=0, position='NotSet'"
-			);
-  	}
-
-  	query.append(" where id=? and workspace_id=?");
-
-  	return query.toString();
-  }
-
-  Response delete(Long id) {
-  	Response res = Responses.Invalid.PRODUCT;
-
-    if (id != null && id > 0) {
-      try (Handle handle = Database.getHandle()) {
-      	ProductDao productDao = handle.attach(ProductDao.class);
-      	Product product = productDao.findById(id, CurrentUser.getWorkspaceId());
-      	
-      	if (product != null) {
-        	handle.begin();
-
-    			String where = String.format("where product_id=%d and workspace_id=%d", id, CurrentUser.getWorkspaceId());
-        	
-          Batch batch = handle.createBatch();
-          batch.add("SET FOREIGN_KEY_CHECKS=0");
-          batch.add("delete from link_price " + where);
-          batch.add("delete from link_history " + where);
-          batch.add("delete from link_spec " + where);
-          batch.add("delete from link " + where);
-          batch.add("delete from product " + where.replace("product_", "")); //this query determines the success!
-          batch.add(
-        		String.format(
-      				"update workspace set link_count=link_count-%d where id=%d", 
-      				product.getLinkCount(), CurrentUser.getWorkspaceId()
-    				)
-      		);
-          batch.add("SET FOREIGN_KEY_CHECKS=1");
-
-          int[] result = batch.execute();
-
-          if (result[5] > 0) {
-            res = new Response(Map.of("count", product.getLinkCount()));
-            handle.commit();
-          } else {
-          	handle.rollback();
-      		}
-      	} else {
-      		res = Responses.NotFound.PRODUCT;
-      	}
-      }
-    }
-
-    return res;
   }
 
   Response addLinks(AddLinksDTO dto) {
@@ -538,7 +566,7 @@ class ProductService {
     	}
   	}
   }
-
+  
   private void checkSmartPrice(ProductDTO dto, Handle handle) {
   	if (dto.getSmartPriceId() != null) {
   		SmartPriceDao smartPriceDao = handle.attach(SmartPriceDao.class);

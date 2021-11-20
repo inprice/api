@@ -56,7 +56,7 @@ public interface AlarmDao {
 		"where alarm_id=:alarmId " +
 		"  and workspace_id=:workspaceId"
 	)
-	boolean removeAlarm(@Define("table") String table, @Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
+	int removeAlarm(@Define("table") String table, @Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
 
 	@SqlUpdate(
 		"update <table> " +
@@ -64,6 +64,6 @@ public interface AlarmDao {
 		"where alarm_id=:alarmId " +
 		"  and workspace_id=:workspaceId"
 	)
-	boolean resetAlarm(@Define("table") String table, @Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
+	int resetAlarm(@Define("table") String table, @Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
 
 }

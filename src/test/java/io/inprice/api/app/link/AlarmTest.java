@@ -2,6 +2,7 @@ package io.inprice.api.app.link;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,7 +32,7 @@ public class AlarmTest {
 	private String SERVICE_ENDPOINT = "/link/alarm";
 
 	/**
-	 * This method runs this class twice, getReport(true and false)
+	 * This method runs this class twice
 	 * 
 	 */
   @Parameterized.Parameters
@@ -138,6 +139,51 @@ public class AlarmTest {
 
 		assertEquals(404, json.getInt("status"));
 		assertEquals("Alarm not found!", json.getString("reason"));
+	}
+
+	/**
+	 * Consists of four steps;
+	 *	a) searches for alarms for links
+	 *	b) searches for trying links
+	 *  c) builds body up with those link and alarm
+	 *  d) tries to set alarm on
+	 */
+	@Test
+	public void You_have_reached_max_alarm_number_of_your_plan() {
+		if (SERVICE_ENDPOINT.endsWith("/off")) return;
+
+		//to gather other workspace's links, admin is logged in
+		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user_for_alarm_limits.ADMIN());
+
+		//searches for alarms
+		JSONArray alarmList = TestFinder.searchAlarms(cookies, "LINK");
+		assertNotNull(alarmList);
+
+		//searches for trying links (must be 1)
+		JSONArray tryingLinksList = TestFinder.searchLinks(cookies, "TRYING");
+		assertNotNull(tryingLinksList);
+		assertTrue(tryingLinksList.length() == 1);
+
+		//picks one of those links
+		Long[] linkIds = { tryingLinksList.getJSONObject(0).getLong("id") };
+		
+		//builds the body up
+		JSONObject body = new JSONObject();
+		body.put("alarmId", alarmList.getJSONObject(0).getLong("id"));
+		body.put("entityIdSet", linkIds);
+
+		//tries to update other users' links
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(body)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(910, json.getInt("status"));
+		assertEquals("You have reached max alarm number of your plan!", json.getString("reason"));
 	}
 
 	/**

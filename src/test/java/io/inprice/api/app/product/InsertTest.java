@@ -1,6 +1,8 @@
 package io.inprice.api.app.product;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.BeforeClass;
@@ -9,12 +11,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
+import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
 import io.inprice.api.utils.TestWorkspaces;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
+import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
@@ -162,6 +166,41 @@ public class InsertTest {
 
 		assertEquals(875, json.getInt("status"));
 		assertEquals("You already have a product having the same sku!", json.getString("reason"));
+	}
+
+	/**
+	 * Consists of three steps;
+	 *	a) searches for alarms for products
+	 *	b) create a body for insert
+	 *  c) tries to insert
+	 */
+	@Test
+	public void You_have_reached_max_alarm_number_of_your_plan() {
+		//to gather other workspace's links, admin is logged in
+		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user_for_alarm_limits.ADMIN());
+
+		//searches for alarms
+		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
+		assertNotNull(alarmList);
+		assertTrue(alarmList.length() == 1);
+
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("sku", "T-1");
+		body.put("name", "Product Z of Workspace-K");
+		body.put("alarmId", alarmList.getJSONObject(0).getLong("id"));
+
+		//tries to update other users' links
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(body)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(910, json.getInt("status"));
+		assertEquals("You have reached max alarm number of your plan!", json.getString("reason"));
 	}
 
 	@Test
