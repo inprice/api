@@ -237,12 +237,12 @@ public class AlarmService {
 				boolean hasNoLowerLimit = 
 						(dto.getAmountLowerLimit() == null 
 						|| dto.getAmountLowerLimit().compareTo(BigDecimal.ZERO) < 1 
-						|| dto.getAmountLowerLimit().compareTo(new BigDecimal(9_999_999)) > 0);
+						|| dto.getAmountLowerLimit().compareTo(new BigDecimal(99_999_999)) > 0);
 
 				boolean hasNoUpperLimit = 
 						(dto.getAmountUpperLimit() == null 
 						|| dto.getAmountUpperLimit().compareTo(BigDecimal.ZERO) < 1 
-						|| dto.getAmountUpperLimit().compareTo(new BigDecimal(9_999_999)) > 0);
+						|| dto.getAmountUpperLimit().compareTo(new BigDecimal(99_999_999)) > 0);
 
 				if (hasNoLowerLimit && hasNoUpperLimit) {
 					problem = "You are expected to specify either lower or upper limit for " + dto.getSubject().name().toLowerCase() + "!";

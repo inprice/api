@@ -109,7 +109,18 @@ public interface LinkDao {
   @UseRowMapper(ProductMapper.class)
   HashSet<Product> findProductsByLinkIds(@Bind("toProductId") Long toProductId, @BindList("linkIdSet") Set<Long> linkIdSet);
 
-  @SqlQuery("select grup from link where id = :et")
-  String findProductIdSet__(@Bind("et") Long et);
+  @SqlUpdate(
+		"update link set alarm_id=:alarmId, tobe_alarmed=false, alarmed_at=null " +
+		"where id in (<linkIdSet>) " +
+		"  and workspace_id = :workspaceId"
+	)
+  int setAlarmON(@Bind("alarmId") Long alarmId, @BindList("linkIdSet") Set<Long> linkIdSet, @Bind("workspaceId") Long workspaceId);
+
+  @SqlUpdate(
+		"update link set alarm_id=null, tobe_alarmed=false, alarmed_at=null " +
+		"where id in (<linkIdSet>) " +
+		"  and workspace_id = :workspaceId"
+	)
+  int setAlarmOFF(@BindList("linkIdSet") Set<Long> linkIdSet, @Bind("workspaceId") Long workspaceId);
 
 }

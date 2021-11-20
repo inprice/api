@@ -15,6 +15,7 @@ import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.alarm.AlarmDao;
 import io.inprice.api.app.brand.BrandDao;
 import io.inprice.api.app.category.CategoryDao;
 import io.inprice.api.app.link.LinkDao;
@@ -35,6 +36,7 @@ import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.ProductRefreshResult;
 import io.inprice.common.mappers.ProductMapper;
 import io.inprice.common.meta.LinkStatus;
+import io.inprice.common.models.Alarm;
 import io.inprice.common.models.Brand;
 import io.inprice.common.models.Category;
 import io.inprice.common.models.Link;
@@ -161,6 +163,7 @@ class ProductService {
       	if (alreadyExists == false) {
         	checkBrand(dto, handle);
         	checkCategory(dto, handle);
+        	checkAlarm(dto, handle);
         	checkSmartPrice(dto, handle);
 
         	Long id = productDao.insert(dto);
@@ -198,6 +201,7 @@ class ProductService {
 
             	checkBrand(dto, handle);
             	checkCategory(dto, handle);
+            	checkAlarm(dto, handle);
             	checkSmartPrice(dto, handle);
 
             	String suggestedPricePart = null;
@@ -523,6 +527,16 @@ class ProductService {
   	if (found != null) dto.setCategoryId(found.getId());
 
   	return found;
+  }
+
+  private void checkAlarm(ProductDTO dto, Handle handle) {
+  	if (dto.getAlarmId() != null) {
+  		AlarmDao alarmDao = handle.attach(AlarmDao.class);
+    	Alarm found = alarmDao.findById(dto.getAlarmId(), dto.getWorkspaceId());
+    	if (found == null) {
+    		dto.setAlarmId(null);
+    	}
+  	}
   }
 
   private void checkSmartPrice(ProductDTO dto, Handle handle) {

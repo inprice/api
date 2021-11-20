@@ -108,7 +108,7 @@ public class InsertTest {
 
 	@Test
 	public void You_are_expected_to_specify_either_lower_or_upper_limit_for_WITH_values_greater_than_or_equals_10_million() {
-		JSONObject json = callTheService(createBody("LINK", "PRICE", "OUT_OF_LIMITS", null, new BigDecimal(10_000_000), new BigDecimal(10_000_000)));
+		JSONObject json = callTheService(createBody("LINK", "PRICE", "OUT_OF_LIMITS", null, new BigDecimal(100_000_000), new BigDecimal(100_000_000)));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("You are expected to specify either lower or upper limit for price!", json.getString("reason"));

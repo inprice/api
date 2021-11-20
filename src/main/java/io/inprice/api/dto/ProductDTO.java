@@ -18,6 +18,8 @@ public class ProductDTO {
   private SimpleDef brand;
   private SimpleDef category;
 
+  private Long alarmId;  //set by user
+  
   private Long smartPriceId;  //set by user
   private BigDecimal suggestedPrice; //set by the system in update section
   private BigDecimal suggestedPriceProblem; //set by the system in update section

@@ -3,6 +3,7 @@ package io.inprice.api.app.link;
 import io.inprice.api.app.link.dto.SearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.AlarmEntityDTO;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
 import io.inprice.api.framework.AbstractController;
@@ -52,6 +53,26 @@ public class LinkController extends AbstractController {
     	} else {
 	    	LinkMoveDTO lmDto = ctx.bodyAsClass(LinkMoveDTO.class);
 	      ctx.json(service.moveTo(lmDto));
+    	}
+    }, AccessRoles.EDITOR());
+
+    // set alarm on
+    app.put(Consts.Paths.Link.ALARM_ON, (ctx) -> {
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	    	AlarmEntityDTO dto = ctx.bodyAsClass(AlarmEntityDTO.class);
+	      ctx.json(service.setAlarmON(dto));
+    	}
+    }, AccessRoles.EDITOR());
+
+    // set alarm off
+    app.put(Consts.Paths.Link.ALARM_OFF, (ctx) -> {
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	    	AlarmEntityDTO dto = ctx.bodyAsClass(AlarmEntityDTO.class);
+	      ctx.json(service.setAlarmOFF(dto));
     	}
     }, AccessRoles.EDITOR());
 

@@ -129,7 +129,7 @@ public class InsertTest {
 	@Test
 	public void Price_is_out_of_reasonable_range_FOR_a_value_of_10m() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("price", 10_000_000);
+		body.put("price", 100_000_000);
 		
 		JSONObject json = callTheService(body);
 		

@@ -12,10 +12,12 @@ import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.alarm.AlarmDao;
 import io.inprice.api.app.link.dto.SearchDTO;
 import io.inprice.api.app.product.ProductDao;
 import io.inprice.api.app.product.ProductPriceService;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.AlarmEntityDTO;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
 import io.inprice.api.info.Response;
@@ -24,6 +26,7 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.mappers.LinkMapper;
+import io.inprice.common.models.Alarm;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
@@ -258,6 +261,70 @@ class LinkService {
         	);
           res = new Response(data);
         }
+      }
+    }
+
+    return res;
+  }
+
+  /**
+   * Used for one or multiple links
+   * 
+   * @param dto
+   * @return
+   */
+  Response setAlarmON(AlarmEntityDTO dto) {
+    Response res = Responses.NotFound.LINK;
+
+    if (dto.getEntityIdSet() != null && dto.getEntityIdSet().size() > 0) {
+	    if (dto.getAlarmId() != null && dto.getAlarmId() > 0) {
+	      try (Handle handle = Database.getHandle()) {
+
+	      	AlarmDao alarmDao = handle.attach(AlarmDao.class);
+	      	Alarm alarm = alarmDao.findById(dto.getAlarmId(), CurrentUser.getWorkspaceId());
+
+	      	if (alarm != null) {
+		      	LinkDao linkDao = handle.attach(LinkDao.class);
+        		int affected = linkDao.setAlarmON(dto.getAlarmId(), dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
+	        	if (affected > 0) {
+	        		res = Responses.OK;
+	        	}
+	  	    } else {
+	  	    	res = Responses.NotFound.ALARM;
+	        }
+	      }
+	    } else {
+	    	res = Responses.NotFound.ALARM;
+	    }
+    }
+
+    return res;
+  }
+
+  /**
+   * Used for one or multiple links
+   * 
+   * @param dto
+   * @return
+   */
+  Response setAlarmOFF(AlarmEntityDTO dto) {
+    Response res = Responses.NotFound.LINK;
+
+    if (dto.getEntityIdSet() != null && dto.getEntityIdSet().size() > 0) {
+      try (Handle handle = Database.getHandle()) {
+      	LinkDao linkDao = handle.attach(LinkDao.class);
+
+      	AlarmDao alarmDao = handle.attach(AlarmDao.class);
+      	Alarm alarm = alarmDao.findById(dto.getAlarmId(), CurrentUser.getWorkspaceId());
+
+      	if (alarm != null) {
+	      	int affected = linkDao.setAlarmOFF(dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
+	      	if (affected > 0) {
+	      		res = Responses.OK;
+	      	}
+  	    } else {
+  	    	res = Responses.NotFound.ALARM;
+  	    }
       }
     }
 
