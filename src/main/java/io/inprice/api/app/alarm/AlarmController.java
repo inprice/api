@@ -4,7 +4,6 @@ import io.inprice.api.app.alarm.dto.AlarmDTO;
 import io.inprice.api.app.alarm.dto.SetAlarmOFFDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -40,7 +39,7 @@ public class AlarmController extends AbstractController {
     	}
     }, AccessRoles.EDITOR());
 
-    // delete or set off!
+    // delete
     app.delete(Consts.Paths.Alarm.BASE + "/:id", (ctx) -> {
     	Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
     	ctx.json(service.delete(id));
@@ -48,12 +47,7 @@ public class AlarmController extends AbstractController {
 
     // search
     app.post(Consts.Paths.Alarm.SEARCH, (ctx) -> {
-    	if (ctx.body().isBlank()) {
-    		ctx.json(Responses.REQUEST_BODY_INVALID);
-    	} else {
-    		BaseSearchDTO dto = ctx.bodyAsClass(BaseSearchDTO.class);
-	    	ctx.json(service.search(dto));
-    	}
+    	ctx.json(service.search(ctx.queryParam("term")));
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     // get details
@@ -63,20 +57,17 @@ public class AlarmController extends AbstractController {
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     // returns id name pairs by topic
-    app.get(Consts.Paths.Alarm.ID_NAME_PAIRS + "/:topic", (ctx) -> {
-    	AlarmTopic topic = null;
+    app.get(Consts.Paths.Alarm.ID_NAME_PAIRS, (ctx) -> {
     	try {
-    		topic = AlarmTopic.valueOf(ctx.pathParam("topic"));
-			} catch (Exception e) { }
-    	if (topic == null) {
-    		ctx.json(Responses.Invalid.ALARM_TOPIC);
-    	} else {
+    		AlarmTopic topic = AlarmTopic.valueOf(ctx.queryParam("topic"));
     		ctx.json(service.getIdNameList(topic));
-    	}
+			} catch (Exception e) {
+				ctx.json(Responses.Invalid.ALARM_TOPIC);
+			}
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     // set alarm off
-    app.put(Consts.Paths.Link.ALARM_OFF, (ctx) -> {
+    app.put(Consts.Paths.Alarm.ALARM_OFF, (ctx) -> {
     	if (ctx.body().isBlank()) {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {

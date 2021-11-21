@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -68,11 +69,11 @@ public interface AlarmDao {
 	@SqlUpdate(
 		"update <table> " +
 		"set alarm_id=null, tobe_alarmed=false " +
-		"where id in <idSet> " +
+		"where id in (<idSet>) " +
 		"  and alarm_id is not null " +
 		"  and workspace_id=:workspaceId"
 	)
-	int removeAlarmsByEntityIds(@Define("table") String table, @Bind("idSet") Set<Long> idSet, @Bind("workspaceId") Long workspaceId);
+	int removeAlarmsByEntityIds(@Define("table") String table, @BindList("idSet") Set<Long> idSet, @Bind("workspaceId") Long workspaceId);
 
 	@SqlUpdate(
 		"update <table> " +
@@ -86,11 +87,21 @@ public interface AlarmDao {
   @UseRowMapper(IdNamePairMapper.class)
   List<IdNamePairMapper> getIdNameList(@Bind("topic") AlarmTopic topic, @Bind("workspaceId") Long workspaceId);
 
-	@SqlQuery("select id, sku, name from product where alarm_id=:alarmId and workspace_id=:workspaceId order by name")
+	@SqlQuery(
+		"select id, sku, name, position, price, alarmed_at from product " +
+		"where alarm_id=:alarmId " +
+		"  and workspace_id=:workspaceId " +
+		"order by name"
+	)
   @UseRowMapper(AlarmEntityMapper.class)
 	List<AlarmEntity> findProductEntities(@Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
 
-	@SqlQuery("select id, sku, IFNULL(name, url) from link where alarm_id=:alarmId and workspace_id=:workspaceId order by name")
+	@SqlQuery(
+		"select id, sku, IFNULL(name, url), position, price, alarmed_at from link " +
+		"where alarm_id=:alarmId " +
+		"  and workspace_id=:workspaceId " +
+		"order by name"
+	)
   @UseRowMapper(AlarmEntityMapper.class)
 	List<AlarmEntity> findLinkEntities(@Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
 

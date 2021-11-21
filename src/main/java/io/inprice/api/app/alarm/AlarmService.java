@@ -14,11 +14,10 @@ import io.inprice.api.app.alarm.dto.SetAlarmOFFDTO;
 import io.inprice.api.app.alarm.mapper.AlarmEntity;
 import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
-import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
-import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.AlarmMapper;
 import io.inprice.common.meta.AlarmSubject;
 import io.inprice.common.meta.AlarmSubjectWhen;
@@ -47,7 +46,8 @@ public class AlarmService {
 					List<AlarmEntity> links = alarmDao.findLinkEntities(id, CurrentUser.getWorkspaceId());
 
 					Map<String, Object> dataMap = Map.of(
-						"alarm", alarm,
+						"id", alarm.getId(),
+						"name", alarm.getName(),
 						"products", products,
 						"links", links
 					);
@@ -60,6 +60,7 @@ public class AlarmService {
 	}
 
   Response getIdNameList(AlarmTopic topic) {
+  	if (topic == null) return Responses.Invalid.ALARM_TOPIC;
   	try (Handle handle = Database.getHandle()) {
   		AlarmDao alarmDao = handle.attach(AlarmDao.class);
   		return new Response(alarmDao.getIdNameList(topic, CurrentUser.getWorkspaceId()));
@@ -144,7 +145,7 @@ public class AlarmService {
 				Alarm alarm = alarmDao.findById(id, CurrentUser.getWorkspaceId());
 				if (alarm != null) {
 					handle.begin();
-					handle.execute("SET FOREIGN_KEY_CHECKS=0");
+
 					int productAlarms = alarmDao.removeAlarmById("product", id, CurrentUser.getWorkspaceId());
 					int linkAlarms = alarmDao.removeAlarmById("link", id, CurrentUser.getWorkspaceId());
 
@@ -153,9 +154,13 @@ public class AlarmService {
 						workspaceDao.decAlarmCount(productAlarms+linkAlarms, CurrentUser.getWorkspaceId());
 					}
 
-					handle.execute("SET FOREIGN_KEY_CHECKS=1");
-					handle.commit();
-					res = Responses.OK;
+					boolean isOK = alarmDao.delete(id, CurrentUser.getWorkspaceId());
+					if (isOK) {
+						handle.commit();
+						res = Responses.OK;
+					} else {
+						handle.rollback();
+					}
 				}
 			}
 		}
@@ -164,7 +169,7 @@ public class AlarmService {
 	}
 
   /**
-   * TODO: testleri yazilmali!!!
+   * TODO: tests must be written!
    * 
    * Used for one or multiple links
    * 
@@ -172,11 +177,19 @@ public class AlarmService {
    * @return
    */
   Response setAlarmOFF(SetAlarmOFFDTO dto) {
-  	if (dto.getAlarmTopic() == null) {
-  		return Responses.Invalid.ALARM_TOPIC;
-  	}
+  	if (dto.getTopic() == null) return Responses.Invalid.ALARM_TOPIC;
 
-    Response res = Responses.NotFound.ALARM;
+    Response res = null;
+  	switch (dto.getTopic()) {
+			case PRODUCT: {
+				res = Responses.NotFound.PRODUCT;
+				break;
+			}
+			case LINK: {
+				res = Responses.NotFound.LINK;
+				break;
+			}
+		}
 
     if (dto.getEntityIdSet() != null && dto.getEntityIdSet().size() > 0) {
       try (Handle handle = Database.getHandle()) {
@@ -185,7 +198,7 @@ public class AlarmService {
     		handle.begin();
       	
       	int affected = 0;
-      	switch (dto.getAlarmTopic()) {
+      	switch (dto.getTopic()) {
 					case PRODUCT: {
 						affected = alarmDao.removeAlarmsByEntityIds("product", dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
 						break;
@@ -205,8 +218,6 @@ public class AlarmService {
 	      	} else {
         		handle.rollback();
 	      	}
-  	    } else {
-  	    	res = Responses.NotFound.ALARM;
   	    }
       }
     }
@@ -214,31 +225,21 @@ public class AlarmService {
     return res;
   }
 
-	Response search(BaseSearchDTO dto) {
-  	dto = DTOHelper.normalizeSearch(dto, true);
-
+	Response search(String term) {
 		// ---------------------------------------------------
 		// building the criteria up
 		// ---------------------------------------------------
 		StringBuilder where = new StringBuilder();
 
 		where.append("where workspace_id = ");
-		where.append(dto.getWorkspaceId());
+		where.append(CurrentUser.getWorkspaceId());
 
-    if (StringUtils.isNotBlank(dto.getTerm())) {
+    if (StringUtils.isNotBlank(term)) {
     	where.append(" and name");
       where.append(" like '%");
-      where.append(dto.getTerm());
+      where.append(SqlHelper.clear(term));
       where.append("%' ");
     }
-
-		// limiting
-		String limit = "";
-		if (dto.getLoadMore()) {
-			limit = " limit " + dto.getRowCount() + ", " + dto.getRowLimit();
-		} else {
-			limit = " limit " + dto.getRowLimit();
-		}
 
 		try (Handle handle = Database.getHandle()) {
 			List<Alarm> searchResult = 
@@ -246,8 +247,7 @@ public class AlarmService {
 			    .createQuery(
 		        "select * from alarm " +
 			      where +
-		        " order by name " + 
-		        limit
+		        " order by name " 
 	        )
 		    .map(new AlarmMapper()).list();
 
@@ -321,14 +321,18 @@ public class AlarmService {
 		sb.append(dto.getTopic());
 		sb.append(" ");
 
-		sb.append(dto.getSubject());
+		if (AlarmSubject.POSITION.equals(dto.getSubject()) && AlarmTopic.LINK.equals(dto.getTopic())) {
+			sb.append("status");
+		} else {
+			sb.append(dto.getSubject());
+		}
 		sb.append(" ");
 
 		switch (dto.getSubject()) {
 			case MINIMUM:
 			case AVERAGE:
 			case MAXIMUM: {
-				sb.append("price");
+				sb.append("price ");
 				break;
 			}
 			default: break;
@@ -343,7 +347,7 @@ public class AlarmService {
 				break;
 			}
 			case OUT_OF_LIMITS: {
-				sb.append(" is ");
+				sb.append("is ");
 				boolean hasLowerLimit = (dto.getAmountLowerLimit() != null && dto.getAmountLowerLimit().compareTo(BigDecimal.ZERO) > 0);
 				boolean hasUpperLimit = (dto.getAmountUpperLimit() != null && dto.getAmountUpperLimit().compareTo(BigDecimal.ZERO) > 0);
 				if (hasLowerLimit && hasUpperLimit) {
@@ -362,7 +366,7 @@ public class AlarmService {
 			}
 
 			default: {
-				sb.append(" is ");
+				sb.append("is ");
 				sb.append(dto.getSubjectWhen());
 				break;
 			}

@@ -53,8 +53,8 @@ public interface ProductDao {
   List<IdNamePairMapper> getIdNameList(@Bind("excludedId") Long excludedId, @Bind("workspaceId") Long workspaceId);
 
   @SqlUpdate(
-		"insert into product (sku, name, price, base_price, brand_id, category_id, smart_price_id, workspace_id) " +
-		"values (:dto.sku, :dto.name, :dto.price, :dto.basePrice, :dto.brandId, :dto.categoryId, :dto.smartPriceId, :dto.workspaceId)"
+		"insert into product (sku, name, price, base_price, brand_id, category_id, alarm_id, smart_price_id, workspace_id) " +
+		"values (:dto.sku, :dto.name, :dto.price, :dto.basePrice, :dto.brandId, :dto.categoryId, :dto.alarmId, :dto.smartPriceId, :dto.workspaceId)"
 	)
   @GetGeneratedKeys()
   long insert(@BindBean("dto") ProductDTO dto);

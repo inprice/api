@@ -13,7 +13,7 @@ public class SetAlarmOFFDTO implements Serializable {
 
 	private static final long serialVersionUID = -5248011303107436488L;
 
-	private AlarmTopic alarmTopic;
+	private AlarmTopic topic;
 	private Set<Long> entityIdSet; //used for representing link or product ids
 
 }

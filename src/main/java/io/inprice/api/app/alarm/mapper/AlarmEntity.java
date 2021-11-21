@@ -1,6 +1,8 @@
 package io.inprice.api.app.alarm.mapper;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -14,5 +16,8 @@ public class AlarmEntity implements Serializable {
 	private Long id;
 	private String sku;
 	private String name;
+	private String position;
+	private BigDecimal price;
+	private Date alarmedAt;
 
 }

@@ -241,6 +241,12 @@ class ProductService {
   private String generateUpdateQuery(Product found, ProductDTO dto, String suggestedPricePart) {
   	StringBuilder query = new StringBuilder("update product set sku=?, name=?, price=?, base_price=?, brand_id=?, category_id=?");
 
+  	if (dto.getAlarmId() != null) {
+  		query.append(", alarm_id=" + dto.getAlarmId());
+  	} else {
+  		query.append(", alarm_id=null, alarmed_at=null, tobe_alarmed_at=false");
+  	}
+
   	if (dto.getSmartPriceId() != null) {
   		query.append(", smart_price_id=" + dto.getSmartPriceId());
   		if (suggestedPricePart != null) {

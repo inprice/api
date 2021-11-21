@@ -16,8 +16,11 @@ public class AlarmEntityMapper implements RowMapper<AlarmEntity> {
 
     m.setId(rs.getLong("id"));
     if (Helper.hasColumn(rs, "sku")) m.setSku(rs.getString("sku"));
-    if (Helper.hasColumn(rs, "name")) m.setSku(rs.getString("name"));
-
+    if (Helper.hasColumn(rs, "name")) m.setName(rs.getString("name"));
+    if (Helper.hasColumn(rs, "position")) m.setPosition(rs.getString("position"));
+    if (Helper.hasColumn(rs, "price")) m.setPrice(rs.getBigDecimal("price"));
+    if (Helper.hasColumn(rs, "alarmed_at")) m.setAlarmedAt(rs.getTimestamp("alarmed_at"));
+    
     return m;
   }
 

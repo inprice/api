@@ -117,7 +117,7 @@ public class Consts {
     	public static final String SEARCH = BASE + "s/search";
       public static final String DETAILS = BASE + "/details";
       public static final String ID_NAME_PAIRS = BASE + "/pairs";
-      public static final String ALARM_OFF = BASE + "/alarm/off";
+      public static final String ALARM_OFF = BASE + "/off";
     }
 
     public static class Definitions {
