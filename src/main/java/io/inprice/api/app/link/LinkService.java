@@ -171,7 +171,7 @@ class LinkService {
 	      	if (alarm != null) {
 	      		handle.begin();
 		      	LinkDao linkDao = handle.attach(LinkDao.class);
-        		int affected = linkDao.setAlarmON(dto.getAlarmId(), dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
+        		int affected = linkDao.setAlarmON(alarm.getId(), dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
 	        	if (affected > 0) {
 							WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
 							workspaceDao.incAlarmCount(affected, CurrentUser.getWorkspaceId());
@@ -204,23 +204,17 @@ class LinkService {
       try (Handle handle = Database.getHandle()) {
       	LinkDao linkDao = handle.attach(LinkDao.class);
 
-      	AlarmDao alarmDao = handle.attach(AlarmDao.class);
-      	Alarm alarm = alarmDao.findById(dto.getAlarmId(), CurrentUser.getWorkspaceId());
-
-      	if (alarm != null) {
-      		handle.begin();
-	      	int affected = linkDao.setAlarmOFF(dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
-	      	if (affected > 0) {
-						WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
-						workspaceDao.decAlarmCount(affected, CurrentUser.getWorkspaceId());
-        		handle.commit();
-	      		res = Responses.OK;
-	      	} else {
-        		handle.rollback();
-	      	}
-  	    } else {
-  	    	res = Responses.NotFound.ALARM;
-  	    }
+    		handle.begin();
+      	int affected = linkDao.setAlarmOFF(dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
+      	if (affected > 0) {
+					WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+					workspaceDao.decAlarmCount(affected, CurrentUser.getWorkspaceId());
+      		handle.commit();
+      		res = Responses.OK;
+      	} else {
+      		handle.rollback();
+      		res = Responses.NotFound.ALARM;
+      	}
       }
     }
 
@@ -261,7 +255,7 @@ class LinkService {
 
     if (CollectionUtils.isNotEmpty(dto.getStatuses())) {
     	where.append(
-		    String.format(" and grup in (%s) ", StringHelper.join("'", dto.getStatuses()))
+		    String.format(" and l.grup in (%s) ", StringHelper.join("'", dto.getStatuses()))
 			);
     }
 
@@ -271,7 +265,8 @@ class LinkService {
     try (Handle handle = Database.getHandle()) {
       List<Link> searchResult =
         handle.createQuery(
-          "select * from link as l " + 
+          "select l.*, al.name as al_name from link as l " +
+      		"left join alarm as al on al.id = l.alarm_id " +
           where +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", l.id " +
           " limit " + dto.getRowCount() + ", " + dto.getRowLimit()

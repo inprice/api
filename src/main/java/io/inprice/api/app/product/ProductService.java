@@ -24,6 +24,7 @@ import io.inprice.api.app.product.dto.SearchDTO;
 import io.inprice.api.app.smartprice.SmartPriceDao;
 import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.AlarmEntityDTO;
 import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.helpers.SystemHelper;
 import io.inprice.api.info.Response;
@@ -365,7 +366,8 @@ class ProductService {
     try (Handle handle = Database.getHandle()) {
       List<Product> searchResult =
         handle.createQuery(
-          "select p.*, brn.name as brand_name, cat.name as category_name from product as p " +
+          "select p.*, al.name as al_name, brn.name as brand_name, cat.name as category_name from product as p " +
+      		"left join alarm as al on al.id = p.alarm_id " +
       		"left join brand as brn on brn.id = p.brand_id " +
       		"left join category as cat on cat.id = p.category_id " +
           where +
@@ -380,6 +382,78 @@ class ProductService {
       logger.error("Failed in full search for products.", e);
       return Responses.ServerProblem.EXCEPTION;
     }
+  }
+
+  /**
+   * Used for one or multiple products
+   * 
+   * @param dto
+   * @return
+   */
+  Response setAlarmON(AlarmEntityDTO dto) {
+    Response res = Responses.NotFound.ALARM;
+
+    if (dto.getEntityIdSet() != null && dto.getEntityIdSet().size() > 0) {
+	    if (dto.getAlarmId() != null && dto.getAlarmId() > 0) {
+	      try (Handle handle = Database.getHandle()) {
+
+      		Response alarmLimitCheckRes = SystemHelper.checkAlarmLimit(handle);
+      		if (alarmLimitCheckRes.isOK() == false) return alarmLimitCheckRes;
+	      	
+	      	AlarmDao alarmDao = handle.attach(AlarmDao.class);
+	      	Alarm alarm = alarmDao.findById(dto.getAlarmId(), CurrentUser.getWorkspaceId());
+
+	      	if (alarm != null) {
+	      		handle.begin();
+		      	ProductDao productDao = handle.attach(ProductDao.class);
+        		int affected = productDao.setAlarmON(alarm.getId(), dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
+	        	if (affected > 0) {
+							WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+							workspaceDao.incAlarmCount(affected, CurrentUser.getWorkspaceId());
+	        		handle.commit();
+	        		res = Responses.OK;
+		  	    } else {
+		  	    	handle.rollback();
+		  	    	res = Responses.NotFound.PRODUCT;
+		        }
+	      	}
+	      }
+	    }
+    } else {
+    	res = Responses.NotFound.PRODUCT;
+    }
+
+    return res;
+  }
+
+  /**
+   * Used for one or multiple products
+   * 
+   * @param dto
+   * @return
+   */
+  Response setAlarmOFF(AlarmEntityDTO dto) {
+    Response res = Responses.NotFound.PRODUCT;
+
+    if (dto.getEntityIdSet() != null && dto.getEntityIdSet().size() > 0) {
+      try (Handle handle = Database.getHandle()) {
+      	ProductDao productDao = handle.attach(ProductDao.class);
+
+    		handle.begin();
+      	int affected = productDao.setAlarmOFF(dto.getEntityIdSet(), CurrentUser.getWorkspaceId());
+      	if (affected > 0) {
+					WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+					workspaceDao.decAlarmCount(affected, CurrentUser.getWorkspaceId());
+      		handle.commit();
+      		res = Responses.OK;
+      	} else {
+      		handle.rollback();
+      		res = Responses.NotFound.ALARM;
+      	}
+      }
+    }
+
+    return res;
   }
 
   Response addLinks(AddLinksDTO dto) {

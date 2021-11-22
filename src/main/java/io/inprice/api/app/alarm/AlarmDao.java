@@ -97,7 +97,7 @@ public interface AlarmDao {
 	List<AlarmEntity> findProductEntities(@Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
-		"select id, sku, IFNULL(name, url), position, price, alarmed_at from link " +
+		"select id, sku, IFNULL(name, url) as name, position, price, alarmed_at from link " +
 		"where alarm_id=:alarmId " +
 		"  and workspace_id=:workspaceId " +
 		"order by name"

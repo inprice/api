@@ -4,6 +4,7 @@ import io.inprice.api.app.product.dto.AddLinksDTO;
 import io.inprice.api.app.product.dto.SearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.AlarmEntityDTO;
 import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
@@ -79,6 +80,26 @@ public class ProductController extends AbstractController {
     	} else {
 	  		AddLinksDTO dto = ctx.bodyAsClass(AddLinksDTO.class);
 	      ctx.json(service.addLinks(dto));
+    	}
+    }, AccessRoles.EDITOR());
+
+    // set alarm on
+    app.put(Consts.Paths.Product.ALARM_ON, (ctx) -> {
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	    	AlarmEntityDTO dto = ctx.bodyAsClass(AlarmEntityDTO.class);
+	      ctx.json(service.setAlarmON(dto));
+    	}
+    }, AccessRoles.EDITOR());
+
+    // set alarm off
+    app.put(Consts.Paths.Product.ALARM_OFF, (ctx) -> {
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	    	AlarmEntityDTO dto = ctx.bodyAsClass(AlarmEntityDTO.class);
+	      ctx.json(service.setAlarmOFF(dto));
     	}
     }, AccessRoles.EDITOR());
 

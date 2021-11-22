@@ -10,10 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.alarm.dto.AlarmDTO;
-import io.inprice.api.app.alarm.dto.SetAlarmOFFDTO;
 import io.inprice.api.app.alarm.mapper.AlarmEntity;
 import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.AlarmEntityDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
@@ -48,6 +48,7 @@ public class AlarmService {
 					Map<String, Object> dataMap = Map.of(
 						"id", alarm.getId(),
 						"name", alarm.getName(),
+						"topic", alarm.getTopic(),
 						"products", products,
 						"links", links
 					);
@@ -176,7 +177,7 @@ public class AlarmService {
    * @param dto
    * @return
    */
-  Response setAlarmOFF(SetAlarmOFFDTO dto) {
+  Response setAlarmOFF(AlarmEntityDTO dto) {
   	if (dto.getTopic() == null) return Responses.Invalid.ALARM_TOPIC;
 
     Response res = null;

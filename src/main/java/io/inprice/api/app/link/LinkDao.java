@@ -44,9 +44,10 @@ public interface LinkDao {
   Link findByProductIdAndUrlHash(@Bind("productId") Long productId, @Bind("urlHash") String urlHash);
 
   @SqlQuery(
-    "select l.*" + PlatformDao.FIELDS + 
+    "select l.*, al.name as al_name" + PlatformDao.FIELDS + 
     ", p.price as product_price, p.base_price as product_base_price, p.name as product_name, p.alarm_id as product_alarm_id, p.smart_price_id as product_smart_price_id from link as l " + 
 		"inner join product as p on p.id = l.product_id " + 
+    "left join alarm as al on al.id = l.alarm_id " + 
 		"left join platform as pl on pl.id = l.platform_id " + 
     "where l.product_id=:productId " +
     "  and l.workspace_id=:workspaceId " +

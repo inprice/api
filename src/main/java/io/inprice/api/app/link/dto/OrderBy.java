@@ -9,7 +9,7 @@ public enum OrderBy {
 	POSITION("l.position"),
   PRICE("l.price"),
   LAST_CHECKED("checked_at"),
-  LAST_UPDATED("updated_at");
+  LAST_UPDATED("l.updated_at");
 
   private String fieldName;
   

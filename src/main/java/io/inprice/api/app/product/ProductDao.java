@@ -1,9 +1,11 @@
 package io.inprice.api.app.product;
 
 import java.util.List;
+import java.util.Set;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -62,5 +64,19 @@ public interface ProductDao {
   //called after adding links
   @SqlUpdate("update product set waitings=waitings + <count> where id=:id")
   boolean incWaitingsCount(@Bind("id") Long id, @Define("count") Integer count);
+
+  @SqlUpdate(
+		"update product set alarm_id=:alarmId, tobe_alarmed=false, alarmed_at=null " +
+		"where id in (<productIdSet>) " +
+		"  and workspace_id = :workspaceId"
+	)
+  int setAlarmON(@Bind("alarmId") Long alarmId, @BindList("productIdSet") Set<Long> productIdSet, @Bind("workspaceId") Long workspaceId);
+
+  @SqlUpdate(
+		"update product set alarm_id=null, tobe_alarmed=false, alarmed_at=null " +
+		"where id in (<productIdSet>) " +
+		"  and workspace_id = :workspaceId"
+	)
+  int setAlarmOFF(@BindList("productIdSet") Set<Long> productIdSet, @Bind("workspaceId") Long workspaceId);
 
 }

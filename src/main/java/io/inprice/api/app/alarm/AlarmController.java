@@ -1,9 +1,9 @@
 package io.inprice.api.app.alarm;
 
 import io.inprice.api.app.alarm.dto.AlarmDTO;
-import io.inprice.api.app.alarm.dto.SetAlarmOFFDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.AlarmEntityDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
 import io.inprice.api.helpers.AccessRoles;
@@ -71,7 +71,7 @@ public class AlarmController extends AbstractController {
     	if (ctx.body().isBlank()) {
     		ctx.json(Responses.REQUEST_BODY_INVALID);
     	} else {
-	    	SetAlarmOFFDTO dto = ctx.bodyAsClass(SetAlarmOFFDTO.class);
+    		AlarmEntityDTO dto = ctx.bodyAsClass(AlarmEntityDTO.class);
 	      ctx.json(service.setAlarmOFF(dto));
     	}
     }, AccessRoles.EDITOR());
