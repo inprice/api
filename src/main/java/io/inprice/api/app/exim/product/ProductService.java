@@ -115,8 +115,8 @@ public class ProductService extends EximBase {
   	List<String> columns = StringHelper.splitCSV(line);
   	if (columns.size() >= 3 && columns.size() <= 5) {
   		dto.setWorkspaceId(CurrentUser.getWorkspaceId());
-  		dto.setSku(SqlHelper.clear(columns.get(0)));
-  		dto.setName(SqlHelper.clear(columns.get(1)));
+  		dto.setSku(columns.get(0));
+  		dto.setName(columns.get(1));
   		try {
 	  		dto.setPrice(new BigDecimal(columns.get(2).trim()));
   		} catch (Exception e) { 

@@ -74,7 +74,8 @@ public interface SmartPriceDao {
 
   //to refresh all the bound products after an update
   @SqlQuery(
-		"select p.actives, p.price, p.base_price, p.min_price, p.avg_price, p.max_price, sp.formula, sp.lower_limit_formula, sp.lower_limit_formula from product as p " + 
+		"select p.id as product_id, p.actives, p.price, p.base_price, p.min_price, p.avg_price, p.max_price, " +
+		"sp.formula, sp.lower_limit_formula, sp.lower_limit_formula from product as p " + 
 	  "inner join smart_price as sp on sp.id = p.smart_price_id " + 
 	  "where p.smart_price_id=:smartPriceId " +
 	  "  and p.workspace_id=:workspaceId"  		

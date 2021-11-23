@@ -26,6 +26,7 @@ public class ProductController extends AbstractController {
   		ctx.json(service.findById(id));
   	}, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
+    // id name pair list for select boxes
     app.get(Consts.Paths.Product.ID_NAME_PAIRS + "/:id", (ctx) -> {
   		Long excludedId = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(service.getIdNameList(excludedId));

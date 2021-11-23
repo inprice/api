@@ -1,6 +1,7 @@
 package io.inprice.api.app.alarm;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,16 +43,18 @@ public class AlarmService {
 
 				Alarm alarm = alarmDao.findById(id, CurrentUser.getWorkspaceId());
 				if (alarm != null) {
-					List<AlarmEntity> products = alarmDao.findProductEntities(id, CurrentUser.getWorkspaceId());
-					List<AlarmEntity> links = alarmDao.findLinkEntities(id, CurrentUser.getWorkspaceId());
+					List<AlarmEntity> entities = null;
+					if (AlarmTopic.PRODUCT.equals(alarm.getTopic())) {
+						entities = alarmDao.findProductEntities(id, CurrentUser.getWorkspaceId());
+					} else {
+						entities = alarmDao.findLinkEntities(id, CurrentUser.getWorkspaceId());
+					}
 
-					Map<String, Object> dataMap = Map.of(
-						"id", alarm.getId(),
-						"name", alarm.getName(),
-						"topic", alarm.getTopic(),
-						"products", products,
-						"links", links
-					);
+					Map<String, Object> dataMap = new HashMap<>(4);
+					dataMap.put("id", alarm.getId());
+					dataMap.put("name", alarm.getName());
+					dataMap.put("topic", alarm.getTopic());
+					dataMap.put("entities", entities);
 					res = new Response(dataMap);
 				}
 			}

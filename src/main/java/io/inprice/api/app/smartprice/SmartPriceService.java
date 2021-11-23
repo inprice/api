@@ -106,9 +106,9 @@ public class SmartPriceService {
 		          				prr.setMaxPrice(psp.getMaxPrice());
 		          				
 		          				SmartPrice sp = new SmartPrice();
-		          				sp.setFormula(psp.getFormula());
-		          				sp.setLowerLimitFormula(psp.getLowerLimitFormula());
-		          				sp.setUpperLimitFormula(psp.getUpperLimitFormula());
+		          				sp.setFormula(dto.getFormula());
+		          				sp.setLowerLimitFormula(dto.getLowerLimitFormula());
+		          				sp.setUpperLimitFormula(dto.getUpperLimitFormula());
 
 		          		  	EvaluationResult result = FormulaHelper.evaluate(sp, prr);
 			                batch.add(
@@ -116,7 +116,7 @@ public class SmartPriceService {
 		          		        "update product set suggested_price=%f, suggested_price_problem=%s where id=%d ",
 		          		        result.getValue(),
 		          		        (result.getProblem() != null ? "'"+result.getProblem()+"'" : "null"),
-		          		        dto.getId()
+		          		        psp.getProductId()
 	          		        )
 	          		      );
 		          			}

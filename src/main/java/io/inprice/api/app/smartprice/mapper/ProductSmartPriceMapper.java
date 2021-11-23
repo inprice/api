@@ -15,6 +15,7 @@ public class ProductSmartPriceMapper implements RowMapper<ProductSmartPrice> {
   	ProductSmartPrice m = new ProductSmartPrice();
 
   	//product
+    if (Helper.hasColumn(rs, "product_id")) m.setProductId(rs.getLong("product_id"));
     if (Helper.hasColumn(rs, "actives")) m.setActives(rs.getInt("actives"));
     if (Helper.hasColumn(rs, "price")) m.setPrice(rs.getBigDecimal("price"));
     if (Helper.hasColumn(rs, "base_price")) m.setBasePrice(rs.getBigDecimal("base_price"));

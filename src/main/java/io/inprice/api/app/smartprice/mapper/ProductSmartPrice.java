@@ -10,6 +10,7 @@ import lombok.Setter;
 public class ProductSmartPrice {
 
 	//product
+	private Long productId;
   private Integer actives = 0;
   private BigDecimal price = BigDecimal.ZERO;
   private BigDecimal basePrice = BigDecimal.ZERO;
