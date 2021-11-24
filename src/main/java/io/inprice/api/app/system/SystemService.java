@@ -59,7 +59,7 @@ public class SystemService {
     try (Handle handle = Database.getHandle()) {
       WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
       Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
-      
+
       Integer userLimit = 0;
       Integer linkLimit = 0;
       Integer alarmLimit = 0;
@@ -72,7 +72,8 @@ public class SystemService {
       	if (alarmLimit == null) alarmLimit = 0;
       }
 
-      Map<String, Integer> data = Map.of(
+      Map<String, Object> data = Map.of(
+	      "workspace", workspace,
 	      "userLimit", userLimit,
 	      "userCount", workspace.getUserCount(),
 	      "remainingUser", userLimit-workspace.getUserCount(),
