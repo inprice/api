@@ -2,15 +2,18 @@ package io.inprice.api.app.exim.link;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.statement.Batch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,9 +40,7 @@ public class LinkService extends EximBase {
   	List<String> problems = new ArrayList<>();
 
     try (Handle handle = Database.getHandle()) {
-
     	int allowedLinkCount = 0;
-    	
       WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
 
       Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
@@ -56,6 +57,9 @@ public class LinkService extends EximBase {
       
     	//to prevent multiple lookups to db
     	Map<String, Long> productMap = dao.getProducts(CurrentUser.getWorkspaceId());
+    	
+    	//to inc product's waitings counts
+    	Map<Long, Integer> linkCountsMap = new HashMap<>();
 
     	int lineNumber = 1;
     	Set<String> looked = new HashSet<>(); //by product id and # and url hash
@@ -80,6 +84,8 @@ public class LinkService extends EximBase {
 	        		problems.add(lineNumber + ". already exists!");
 	        	} else {
 	        		dtos.add(dto);
+	        		int count = linkCountsMap.getOrDefault(dto.getProductId(), 0);
+	        		linkCountsMap.put(dto.getProductId(), count+1);
 	        	}
 	        }
       	} else {
@@ -92,7 +98,7 @@ public class LinkService extends EximBase {
       		dtos.clear();
       		break;
       	}
-      	if (dtos.size() >= allowedLinkCount && i < rows.length-1) {
+      	if (dtos.size() >= allowedLinkCount && i < rows.length-1) { //if it is the last row, no need to add this warning!
       		problems.add("Reached your plan's maximum link limit!");
       		break;
       	}
@@ -102,8 +108,20 @@ public class LinkService extends EximBase {
       //inserting the records
       if (dtos.size() > 0) {
       	handle.begin();
-      	dao.insertAll(dtos);
+
+      	//increasing each product's link count
+        Batch batch = handle.createBatch();
+      	for (Entry<Long, Integer> entry: linkCountsMap.entrySet()) {
+          batch.add(String.format("update product set waitings=waitings+%d where id=%d", entry.getValue(), entry.getKey()));
+      	}
+      	batch.execute();
+
+      	//increasing workspace link count
       	workspaceDao.incLinkCount(CurrentUser.getWorkspaceId(), dtos.size());
+
+      	//inserts links
+      	dao.insertAll(dtos);
+
       	handle.commit();
       }
 

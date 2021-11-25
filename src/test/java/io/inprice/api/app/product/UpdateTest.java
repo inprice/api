@@ -34,7 +34,7 @@ public class UpdateTest {
 
 	private static final JSONObject SAMPLE_BODY = 
 			new JSONObject()
-				.put("id", 1)
+				.put("id", 10)
 				.put("sku", "A-1")
   			.put("name", "NEW PRODUCT")
 				.put("price", 5);
@@ -123,7 +123,7 @@ public class UpdateTest {
 	@Test
 	public void Price_is_out_of_reasonable_range_FOR_a_value_of_10m() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("price", 10_000_000);
+		body.put("price", 100_000_000);
 		
 		JSONObject json = callTheService(body);
 		
@@ -167,6 +167,45 @@ public class UpdateTest {
 
 		assertEquals(875, json.getInt("status"));
 		assertEquals("You already have a product having the same sku!", json.getString("reason"));
+	}
+
+	/**
+	 * Consists of three steps;
+	 *	a) searches for alarms for products
+	 *	b) create a body for insert
+	 *  c) tries to insert
+	 */
+	@Test
+	public void You_have_reached_max_alarm_number_of_your_plan() {
+		//to gather other workspace's links, admin is logged in
+		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user_for_alarm_limits.ADMIN());
+
+		//searches for alarms
+		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
+		assertNotNull(alarmList);
+		assertTrue(alarmList.length() == 2);
+
+		//searches for product (must be 1 product)
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product O", 0);
+		assertNotNull(productList);
+		assertTrue(productList.length() == 1);
+
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("id", productList.getJSONObject(0).getLong("id"));
+		body.put("alarmId", alarmList.getJSONObject(0).getLong("id"));
+
+		//tries to update other users' links
+		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(body)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(910, json.getInt("status"));
+		assertEquals("You have reached max alarm number of your plan!", json.getString("reason"));
 	}
 
 	@Test

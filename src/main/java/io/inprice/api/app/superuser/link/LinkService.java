@@ -26,7 +26,6 @@ import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
-import io.inprice.common.repository.ProductPriceDao;
 import io.inprice.common.utils.StringHelper;
 import io.inprice.common.repository.PlatformDao;
 
@@ -85,10 +84,9 @@ class LinkService {
     try (Handle handle = Database.getHandle()) {
       List<Link> searchResult =
         handle.createQuery(
-          "select l.*" + PlatformDao.FIELDS + ProductPriceDao.ALARM_FIELDS + ", p.name as product_name from link as l " + 
+          "select l.*" + PlatformDao.FIELDS + ", p.name as product_name from link as l " + 
       		"inner join product as p on p.id = l.product_id " + 
       		"left join platform as pl on pl.id = l.platform_id " + 
-          "left join alarm as al on al.id = l.alarm_id " + 
           where +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", l.id " +
           " limit " + dto.getRowCount() + ", " + dto.getRowLimit()

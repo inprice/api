@@ -9,12 +9,12 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
+import io.inprice.api.app.smartprice.mapper.ProductSmartPrice;
+import io.inprice.api.app.smartprice.mapper.ProductSmartPriceMapper;
 import io.inprice.common.formula.SmartPriceDTO;
 import io.inprice.common.info.IdName;
 import io.inprice.common.mappers.IdNameMapper;
-import io.inprice.common.mappers.ProductMapper;
 import io.inprice.common.mappers.SmartPriceMapper;
-import io.inprice.common.models.Product;
 import io.inprice.common.models.SmartPrice;
 
 public interface SmartPriceDao {
@@ -72,14 +72,15 @@ public interface SmartPriceDao {
 	)
   boolean releaseProducts(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
-  //to refresh all the related products after an update on any formula of a smart price
+  //to refresh all the bound products after an update
   @SqlQuery(
-		"select p.*" + FIELDS + " from product p " + 
+		"select p.id as product_id, p.actives, p.price, p.base_price, p.min_price, p.avg_price, p.max_price, " +
+		"sp.formula, sp.lower_limit_formula, sp.lower_limit_formula from product as p " + 
 	  "inner join smart_price as sp on sp.id = p.smart_price_id " + 
 	  "where p.smart_price_id=:smartPriceId " +
 	  "  and p.workspace_id=:workspaceId"  		
 	)
-  @UseRowMapper(ProductMapper.class)
-	List<Product> findProductListBySmartPriceId(@Bind("smartPriceId") Long smartPriceId, @Bind("workspaceId") Long workspaceId);
+  @UseRowMapper(ProductSmartPriceMapper.class)
+	List<ProductSmartPrice> getSmartPricesWithProductId(@Bind("smartPriceId") Long smartPriceId, @Bind("workspaceId") Long workspaceId);
 
 }

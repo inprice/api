@@ -41,7 +41,7 @@ public class UpdateTest {
 	public void No_active_session_please_sign_in_WITHOUT_login() {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
-			.body(createBody(1L, "LINK", 1L, "POSITION", "CHANGED"))
+			.body(createBody(1L, "LINK", "POSITION", "CHANGED"))
 			.asJson();
 		
 		JSONObject json = res.getBody().getObject();
@@ -60,7 +60,7 @@ public class UpdateTest {
 
 	@Test
 	public void Alarm_not_found_WITH_null_id() {
-		JSONObject json = callTheService(createBody(null, "LINK", 1L, "POSITION", "CHANGED"));
+		JSONObject json = callTheService(createBody(null, "LINK", "POSITION", "CHANGED"));
 
 		assertEquals(404, json.getInt("status"));
 		assertEquals("Alarm not found!", json.getString("reason"));
@@ -88,7 +88,7 @@ public class UpdateTest {
 		JSONObject alarm = alarmList.getJSONObject(0);
 
 		//evil user tries to update the alarm
-		JSONObject json = callTheService(createBody(alarm.getLong("id"), "LINK", 1L, "POSITION", "CHANGED"));
+		JSONObject json = callTheService(createBody(alarm.getLong("id"), "LINK", "POSITION", "EQUAL", "Lowest", null, null));
 
 		assertEquals(404, json.getInt("status"));
 		assertEquals("Alarm not found!", json.getString("reason"));
@@ -96,23 +96,15 @@ public class UpdateTest {
 
 	@Test
 	public void Topic_cannot_be_empty() {
-		JSONObject json = callTheService(createBody(1L, null, 1L, "POSITION", "CHANGED"));
+		JSONObject json = callTheService(createBody(1L, null, "POSITION", "CHANGED"));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Topic cannot be empty!", json.getString("reason"));
 	}
 
 	@Test
-	public void Topic_id_cannot_be_empty() {
-		JSONObject json = callTheService(createBody(1L, "LINK", null, "POSITION", "CHANGED"));
-
-		assertEquals(400, json.getInt("status"));
-		assertEquals("Topic id cannot be empty!", json.getString("reason"));
-	}
-
-	@Test
 	public void Subject_cannot_be_empty() {
-		JSONObject json = callTheService(createBody(1L, "LINK", 1L, null, "CHANGED"));
+		JSONObject json = callTheService(createBody(1L, "LINK", null, "CHANGED"));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Subject cannot be empty!", json.getString("reason"));
@@ -120,7 +112,7 @@ public class UpdateTest {
 
 	@Test
 	public void You_are_expected_to_specify_when_the_subject_should_be_considered() {
-		JSONObject json = callTheService(createBody(1L, "LINK", 1L, "POSITION", null));
+		JSONObject json = callTheService(createBody(1L, "LINK", "POSITION", null));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("You are expected to specify when the subject should be considered!", json.getString("reason"));
@@ -128,7 +120,7 @@ public class UpdateTest {
 
 	@Test
 	public void You_are_expected_to_specify_a_certain_position() {
-		JSONObject json = callTheService(createBody(1L, "LINK", 1L, "POSITION", "EQUAL"));
+		JSONObject json = callTheService(createBody(1L, "LINK", "POSITION", "EQUAL"));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("You are expected to specify a certain position!", json.getString("reason"));
@@ -136,7 +128,7 @@ public class UpdateTest {
 
 	@Test
 	public void You_are_expected_to_specify_either_lower_or_upper_limit_for() {
-		JSONObject json = callTheService(createBody(1L, "LINK", 1L, "PRICE", "OUT_OF_LIMITS"));
+		JSONObject json = callTheService(createBody(1L, "LINK", "PRICE", "OUT_OF_LIMITS"));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("You are expected to specify either lower or upper limit for price!", json.getString("reason"));
@@ -144,7 +136,7 @@ public class UpdateTest {
 
 	@Test
 	public void You_are_expected_to_specify_either_lower_or_upper_limit_for_WITH_values_less_than_1() {
-		JSONObject json = callTheService(createBody(1L, "LINK", 1L, "PRICE", "OUT_OF_LIMITS", null, BigDecimal.ZERO, BigDecimal.ZERO));
+		JSONObject json = callTheService(createBody(1L, "LINK", "PRICE", "OUT_OF_LIMITS", null, BigDecimal.ZERO, BigDecimal.ZERO));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("You are expected to specify either lower or upper limit for price!", json.getString("reason"));
@@ -152,7 +144,7 @@ public class UpdateTest {
 
 	@Test
 	public void You_are_expected_to_specify_either_lower_or_upper_limit_for_WITH_values_greater_than_or_equals_10_million() {
-		JSONObject json = callTheService(createBody(1L, "LINK", 1L, "PRICE", "OUT_OF_LIMITS", null, new BigDecimal(10_000_000), new BigDecimal(10_000_000)));
+		JSONObject json = callTheService(createBody(1L, "LINK", "PRICE", "OUT_OF_LIMITS", null, new BigDecimal(100_000_000), new BigDecimal(100_000_000)));
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("You are expected to specify either lower or upper limit for price!", json.getString("reason"));
@@ -161,7 +153,7 @@ public class UpdateTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(1L, "LINK", 1L, "PRICE", "CHANGED"), 0); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(8L, "LINK", "PRICE", "CHANGED")); //attention!
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));
@@ -169,12 +161,31 @@ public class UpdateTest {
 
 	@Test
 	public void You_are_not_allowed_to_do_this_operation_WITH_superuser() {
-		JSONObject json = callTheService(Fixtures.SUPER_USER, createBody(1L, "LINK", 1L, "PRICE", "CHANGED"));
+		JSONObject json = callTheService(Fixtures.SUPER_USER, createBody(1L, "LINK", "PRICE", "CHANGED"));
 
 		assertEquals(511, json.getInt("status"));
 		assertEquals("You are not allowed to do this operation!", json.getString("reason"));
 	}
 
+	@Test
+	public void You_have_already_defined_this_alarm_previously() {
+		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+
+		JSONArray alarmList = TestFinder.searchAlarms(cookies, "LINK");
+
+		assertNotNull(alarmList);
+		assertEquals(3, alarmList.length());
+
+		//get the first alarm
+		JSONObject alarm = alarmList.getJSONObject(0);
+		alarm.put("certainPosition", "HIGHEST");
+		
+		JSONObject json = callTheService(alarm);
+
+		assertEquals(880, json.getInt("status"));
+		assertEquals("You have already defined this alarm previously!", json.getString("reason"));
+	}
+	
 	@Test
 	public void Everything_must_be_ok_FOR_a_link_WITH_admin() {
 		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
@@ -182,7 +193,7 @@ public class UpdateTest {
 		JSONArray alarmedLinkList = TestFinder.searchAlarms(cookies, "LINK");
 
 		assertNotNull(alarmedLinkList);
-		assertEquals(1, alarmedLinkList.length());
+		assertEquals(3, alarmedLinkList.length());
 
 		//get the first alarm for a link
 		JSONObject alarmedLink = alarmedLinkList.getJSONObject(0);
@@ -190,7 +201,7 @@ public class UpdateTest {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody(alarmedLink.getLong("id"), "LINK", alarmedLink.getLong("linkId"), "POSITION", "NOT_EQUAL", "MAXIMUM", null, null))
+			.body(createBody(alarmedLink.getLong("id"), "LINK", "POSITION", "NOT_EQUAL", "MAXIMUM", null, null))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -207,7 +218,7 @@ public class UpdateTest {
 		JSONArray alarmedProductList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
 		assertNotNull(alarmedProductList);
-		assertEquals(1, alarmedProductList.length());
+		assertEquals(3, alarmedProductList.length());
 
 		//get the first alarm for a product
 		JSONObject alarmedProduct = alarmedProductList.getJSONObject(0);
@@ -215,7 +226,7 @@ public class UpdateTest {
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
 			.cookie(cookies)
-			.body(createBody(alarmedProduct.getLong("id"), "PRODUCT", alarmedProduct.getLong("productId"), "POSITION", "NOT_EQUAL", "Highest", null, null))
+			.body(createBody(alarmedProduct.getLong("id"), "PRODUCT", "POSITION", "NOT_EQUAL", "Highest", null, null))
 			.asJson();
 		TestUtils.logout(cookies);
 
@@ -225,20 +236,15 @@ public class UpdateTest {
 		assertNotNull(json.getJSONObject("data"));
 	}
 
-	private JSONObject createBody(Long id, String topic, Long topicId, String subject, String when) {
-		return createBody(id, topic, topicId, subject, when, null, null, null);
+	private JSONObject createBody(Long id, String topic, String subject, String when) {
+		return createBody(id, topic, subject, when, null, null, null);
 	}
 
-	private JSONObject createBody(Long id, String topic, Long topicId, String subject, String when, String certainPosition, BigDecimal amountLowerLimit, BigDecimal amountUpperLimit) {
+	private JSONObject createBody(Long id, String topic, String subject, String when, String certainPosition, BigDecimal amountLowerLimit, BigDecimal amountUpperLimit) {
 		JSONObject body = new JSONObject();
 
 		if (id != null) body.put("id", id);
 		
-		if (topicId != null) {
-  		if ("LINK".equals(topic)) body.put("linkId", topicId);
-  		if ("PRODUCT".equals(topic)) body.put("productId", topicId);
-		}
-
 		if (topic != null) body.put("topic", topic);
 		if (subject != null) body.put("subject", subject);
 		if (when != null) body.put("subjectWhen", when);

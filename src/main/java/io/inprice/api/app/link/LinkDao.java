@@ -16,11 +16,12 @@ import io.inprice.common.mappers.LinkHistoryMapper;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.mappers.LinkPriceMapper;
 import io.inprice.common.mappers.LinkSpecMapper;
+import io.inprice.common.mappers.ProductMapper;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
 import io.inprice.common.models.LinkPrice;
 import io.inprice.common.models.LinkSpec;
-import io.inprice.common.repository.ProductPriceDao;
+import io.inprice.common.models.Product;
 import io.inprice.common.repository.PlatformDao;
 
 public interface LinkDao {
@@ -30,7 +31,7 @@ public interface LinkDao {
   Link findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-		"select *" + ProductPriceDao.ALARM_FIELDS + " from link as l " +
+		"select l.*, al.name as al_name from link as l " +
     "left join alarm as al on al.id = l.alarm_id " + 
     "where l.id=:id " +
     "  and l.workspace_id=:workspaceId"
@@ -43,17 +44,25 @@ public interface LinkDao {
   Link findByProductIdAndUrlHash(@Bind("productId") Long productId, @Bind("urlHash") String urlHash);
 
   @SqlQuery(
-    "select l.*" + PlatformDao.FIELDS + ProductPriceDao.ALARM_FIELDS + 
+    "select l.*, al.name as al_name" + PlatformDao.FIELDS + 
     ", p.price as product_price, p.base_price as product_base_price, p.name as product_name, p.alarm_id as product_alarm_id, p.smart_price_id as product_smart_price_id from link as l " + 
 		"inner join product as p on p.id = l.product_id " + 
-		"left join platform as pl on pl.id = l.platform_id " + 
     "left join alarm as al on al.id = l.alarm_id " + 
+		"left join platform as pl on pl.id = l.platform_id " + 
     "where l.product_id=:productId " +
     "  and l.workspace_id=:workspaceId " +
     "order by l.grup, l.price, l.status"
   )
   @UseRowMapper(LinkMapper.class)
   List<Link> findListByProductId(@Bind("productId") Long productId, @Bind("workspaceId") Long workspaceId);
+
+	@SqlQuery(
+		"select exists(" +
+			"select 1 from link " +
+			"where url = :url " +
+			"  and product_id = :productId " +
+		")")
+	boolean doesExistByUrl(@Bind("url") String url, @Bind("productId") Long productId);
 
   @SqlQuery("select * from link_price where product_id=:productId order by link_id, id desc")
   @UseRowMapper(LinkPriceMapper.class)
@@ -93,10 +102,26 @@ public interface LinkDao {
   @GetGeneratedKeys
   long insertHistory(@BindBean("link") Link link);
 
-  @SqlQuery("select product_id from link where id in (<linkIdSet>)")
-  HashSet<Long> findProductIdSet(@BindList("linkIdSet") Set<Long> linkIdSet);
+  @SqlQuery(
+		"select * from product " +
+		"where id = :toProductId " +
+		"   or id in (select product_id from link where id in (<linkIdSet>))"
+	)
+  @UseRowMapper(ProductMapper.class)
+  HashSet<Product> findProductsByLinkIds(@Bind("toProductId") Long toProductId, @BindList("linkIdSet") Set<Long> linkIdSet);
 
-  @SqlQuery("select grup from link where id = :et")
-  String findProductIdSet__(@Bind("et") Long et);
+  @SqlUpdate(
+		"update link set alarm_id=:alarmId, tobe_alarmed=false, alarmed_at=null " +
+		"where id in (<linkIdSet>) " +
+		"  and workspace_id = :workspaceId"
+	)
+  int setAlarmON(@Bind("alarmId") Long alarmId, @BindList("linkIdSet") Set<Long> linkIdSet, @Bind("workspaceId") Long workspaceId);
+
+  @SqlUpdate(
+		"update link set alarm_id=null, tobe_alarmed=false, alarmed_at=null " +
+		"where id in (<linkIdSet>) " +
+		"  and workspace_id = :workspaceId"
+	)
+  int setAlarmOFF(@BindList("linkIdSet") Set<Long> linkIdSet, @Bind("workspaceId") Long workspaceId);
 
 }

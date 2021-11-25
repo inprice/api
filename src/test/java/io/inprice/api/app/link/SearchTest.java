@@ -99,7 +99,7 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN(), createBody(new String[] { "WAITING" }, "NOT_ALARMED"));
+		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN(), createBody(new String[] { "WAITING" }, "ALARMED"));
 		assertEquals(200, json.getInt("status"));
 
 		JSONArray rows = json.getJSONArray("data");

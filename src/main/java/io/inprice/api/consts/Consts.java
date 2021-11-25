@@ -72,6 +72,8 @@ public class Consts {
       public static final String ID_NAME_PAIRS = BASE + "/pairs";
       public static final String LINKS = BASE + "/links";
       public static final String ADD_LINKS = BASE + "/add-links";
+      public static final String ALARM_ON = BASE + "/alarm/on";
+      public static final String ALARM_OFF = BASE + "/alarm/off";
     }
 
     public static class Link {
@@ -79,6 +81,8 @@ public class Consts {
       public static final String SEARCH = BASE + "s/search";
       public static final String DETAILS = BASE + "/details";
       public static final String MOVE = BASE + "/move";
+      public static final String ALARM_ON = BASE + "/alarm/on";
+      public static final String ALARM_OFF = BASE + "/alarm/off";
     }
 
     public static class Subscription {
@@ -113,6 +117,9 @@ public class Consts {
     public static class Alarm {
       public static final String BASE = "/alarm";
     	public static final String SEARCH = BASE + "s/search";
+      public static final String DETAILS = BASE + "/details";
+      public static final String ID_NAME_PAIRS = BASE + "/pairs";
+      public static final String ALARM_OFF = BASE + "/off";
     }
 
     public static class Definitions {

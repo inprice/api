@@ -46,6 +46,8 @@ public class ProductService extends EximBase {
     	Set<String> looked = new HashSet<>(); //by sku
     	List<ProductDTO> dtos = new ArrayList<>();
     	
+    	handle.begin();
+    	
     	String[] rows = csvContent.lines().toArray(String[]::new);
       for (String row : rows) {
       	if (StringUtils.isBlank(row)) continue;
@@ -80,9 +82,10 @@ public class ProductService extends EximBase {
 
       //inserting the records
       if (dtos.size() > 0) {
-      	handle.begin();
       	dao.insertAll(dtos);
       	handle.commit();
+      } else {
+      	handle.rollback();
       }
 
       Map<String, Object> result = Map.of(
@@ -112,10 +115,10 @@ public class ProductService extends EximBase {
   	List<String> columns = StringHelper.splitCSV(line);
   	if (columns.size() >= 3 && columns.size() <= 5) {
   		dto.setWorkspaceId(CurrentUser.getWorkspaceId());
-  		dto.setSku(SqlHelper.clear(columns.get(0)));
-  		dto.setName(SqlHelper.clear(columns.get(1)));
+  		dto.setSku(columns.get(0));
+  		dto.setName(columns.get(1));
   		try {
-	  		dto.setPrice(new BigDecimal(columns.get(2)));
+	  		dto.setPrice(new BigDecimal(columns.get(2).trim()));
   		} catch (Exception e) { 
   			return Responses.Invalid.PRICE;
   		}
@@ -123,10 +126,10 @@ public class ProductService extends EximBase {
   		//tries to find brandId via brandMap. if fails then tries to insert db, and adds new brand into brandMap for later controls
   		if (columns.size() >= 4 && StringUtils.isNotBlank(columns.get(3))) {
 				String brandName = SqlHelper.clear(columns.get(3));
-  			Long brandId = brandMap.get(brandName.toLowerCase());
+  			Long brandId = brandMap.get(brandName);
   			if (brandId == null) {
 					brandId = dao.insertBrand(brandName, CurrentUser.getWorkspaceId());
-					brandMap.put(brandName.toLowerCase(), brandId);
+					brandMap.put(brandName, brandId);
 				}
   			dto.setBrandId(brandId);
   		}
@@ -134,10 +137,10 @@ public class ProductService extends EximBase {
   		//tries to find categoryId via categoryMap. if fails then tries to insert db, and adds new category into categoryMap for later controls
   		if (columns.size() == 5 && StringUtils.isNotBlank(columns.get(4))) {
 				String categoryName = SqlHelper.clear(columns.get(4));
-				Long categoryId = categoryMap.get(categoryName.toLowerCase());
+				Long categoryId = categoryMap.get(categoryName);
 				if (categoryId == null) {
 					categoryId = dao.insertCategory(categoryName, CurrentUser.getWorkspaceId());
-					categoryMap.put(categoryName.toLowerCase(), categoryId);
+					categoryMap.put(categoryName, categoryId);
 				}
 				dto.setCategoryId(categoryId);
   		}

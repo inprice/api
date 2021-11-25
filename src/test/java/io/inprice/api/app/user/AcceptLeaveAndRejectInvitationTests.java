@@ -33,7 +33,7 @@ public class AcceptLeaveAndRejectInvitationTests {
 	private String endpointPostfix;
 
 	/**
-	 * This method runs this class twice; for both acceptInvitation and rejectInvitation
+	 * This method runs this class trice; for both accept, reject invitation and leave membership
 	 * 
 	 */
   @Parameterized.Parameters

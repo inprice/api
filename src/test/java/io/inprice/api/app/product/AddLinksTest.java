@@ -117,7 +117,7 @@ public class AddLinksTest {
 		JSONObject json = callTheService(body);
 
 		assertEquals(400, json.getInt("status"));
-		assertEquals("Mostly invalid URLs!", json.getString("reason"));
+		assertEquals("Mostly invalid or duplicated URLs!", json.getString("reason"));
 	}
 
 	@Test
@@ -128,7 +128,7 @@ public class AddLinksTest {
 		JSONObject json = callTheService(body);
 
 		assertEquals(400, json.getInt("status"));
-		assertEquals("Mostly invalid URLs!", json.getString("reason"));
+		assertEquals("Mostly invalid or duplicated URLs!", json.getString("reason"));
 	}
 
 	@Test

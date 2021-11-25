@@ -4,6 +4,7 @@ import io.inprice.api.app.product.dto.AddLinksDTO;
 import io.inprice.api.app.product.dto.SearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
+import io.inprice.api.dto.AlarmEntityDTO;
 import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.framework.AbstractController;
 import io.inprice.api.framework.Router;
@@ -25,10 +26,9 @@ public class ProductController extends AbstractController {
   		ctx.json(service.findById(id));
   	}, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
+    // id name pair list for select boxes
     app.get(Consts.Paths.Product.ID_NAME_PAIRS + "/:id", (ctx) -> {
-  		//Long excludedId = ctx.pathParam("id", Long.class).getOrNull();
   		Long excludedId = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
-  		//Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
       ctx.json(service.getIdNameList(excludedId));
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
@@ -81,6 +81,26 @@ public class ProductController extends AbstractController {
     	} else {
 	  		AddLinksDTO dto = ctx.bodyAsClass(AddLinksDTO.class);
 	      ctx.json(service.addLinks(dto));
+    	}
+    }, AccessRoles.EDITOR());
+
+    // set alarm on
+    app.put(Consts.Paths.Product.ALARM_ON, (ctx) -> {
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	    	AlarmEntityDTO dto = ctx.bodyAsClass(AlarmEntityDTO.class);
+	      ctx.json(service.setAlarmON(dto));
+    	}
+    }, AccessRoles.EDITOR());
+
+    // set alarm off
+    app.put(Consts.Paths.Product.ALARM_OFF, (ctx) -> {
+    	if (ctx.body().isBlank()) {
+    		ctx.json(Responses.REQUEST_BODY_INVALID);
+    	} else {
+	    	AlarmEntityDTO dto = ctx.bodyAsClass(AlarmEntityDTO.class);
+	      ctx.json(service.setAlarmOFF(dto));
     	}
     }, AccessRoles.EDITOR());
 

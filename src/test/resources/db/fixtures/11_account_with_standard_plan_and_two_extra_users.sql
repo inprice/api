@@ -73,6 +73,17 @@ call sp_create_product_and_links('F-1', 'K', 3, 0, 1, 1, 'https://amazon.com/', 
 call sp_create_product_and_links('F-2', 'G', 2, 1, 0, 1, 'https://ebay.com/', 12, 'Workspace-F', @workspace_id);
 call sp_create_product_and_links('F-3', 'I', 1, 1, 1, 0, 'https://mediamarkt.es', 40, 'Workspace-F', @workspace_id);
 
+-- -----------------------
+-- 2 alarms definitions for 5 entities (1 product and 2 links)
+-- -----------------------
+insert into alarm (name, topic, subject, subject_when, workspace_id) 
+values ('Product position is changed', 'PRODUCT', 'POSITION', 'CHANGED', @workspace_id);
+update product set alarm_id=last_insert_id() where sku = 'F-3';
+
+insert into alarm (name, topic, subject, subject_when, workspace_id) 
+values ('Link position is changed', 'LINK', 'POSITION', 'CHANGED', @workspace_id);
+update link set alarm_id=last_insert_id() where grup = 'WAITING' and workspace_id = @workspace_id;
+
 -- tickets
 -- -----------------------
 

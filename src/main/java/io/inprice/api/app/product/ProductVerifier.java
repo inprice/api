@@ -36,15 +36,15 @@ public class ProductVerifier {
     		problem = "Price cannot be empty!";
     	} else if (dto.getPrice().compareTo(BigDecimal.ZERO) < 1) {
     		problem = "Price must be greater than zero!";
-    	} else if (dto.getPrice().compareTo(new BigDecimal(9_999_999)) > 0) {
+    	} else if (dto.getPrice().compareTo(new BigDecimal(99_999_999)) > 0) {
     		problem = "Price is out of reasonable range!";
     	}
     }
 
     if (problem == null && dto.getBasePrice() != null) {
-    	if (dto.getBasePrice().compareTo(BigDecimal.ZERO) < 1) {
-	  		problem = "Base Price must be greater than zero!";
-	  	} else if (dto.getBasePrice().compareTo(new BigDecimal(9_999_999)) > 0) {
+    	if (dto.getBasePrice().compareTo(BigDecimal.ZERO) < 0) {
+	  		problem = "Base Price must be equal or greater than zero!";
+	  	} else if (dto.getBasePrice().compareTo(new BigDecimal(99_999_999)) > 0) {
 	  		problem = "Base Price is out of reasonable range!";
 	    }
     } else if (dto.getBasePrice() == null) {

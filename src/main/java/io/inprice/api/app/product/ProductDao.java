@@ -1,9 +1,11 @@
 package io.inprice.api.app.product;
 
 import java.util.List;
+import java.util.Set;
 
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -12,16 +14,14 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
 import io.inprice.api.app.brand.BrandDao;
 import io.inprice.api.app.category.CategoryDao;
-import io.inprice.api.app.smartprice.SmartPriceDao;
 import io.inprice.api.dto.ProductDTO;
 import io.inprice.common.mappers.IdNamePairMapper;
 import io.inprice.common.mappers.ProductMapper;
 import io.inprice.common.models.Product;
-import io.inprice.common.repository.ProductPriceDao;
 
 public interface ProductDao {
 
-	@SqlQuery("select * from product p where id=:id and workspace_id=:workspaceId")
+	@SqlQuery("select * from product where id=:id and workspace_id=:workspaceId")
 	@UseRowMapper(ProductMapper.class)
 	Product findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
@@ -35,7 +35,7 @@ public interface ProductDao {
 	boolean doesExistBySku(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
-		"select p.*" + ProductPriceDao.ALARM_FIELDS + ProductPriceDao.SMART_PRICE_FIELDS + BrandDao.FIELDS + CategoryDao.FIELDS + " from product p " +
+		"select p.*, al.name as al_name, sp.name as sp_name" + BrandDao.FIELDS + CategoryDao.FIELDS + " from product p " +
 		"left join alarm as al on al.id = p.alarm_id " +
 		"left join smart_price as sp on sp.id = p.smart_price_id " +
 		"left join brand as brn on brn.id = p.brand_id " +
@@ -46,15 +46,6 @@ public interface ProductDao {
 	@UseRowMapper(ProductMapper.class)
 	Product findByIdWithLookups(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
-	@SqlQuery(
-		"select p.*" + SmartPriceDao.FIELDS + " from product p " +
-		"left join smart_price as sp on sp.id = p.smart_price_id " +
-		"where p.id=:id " +
-		"  and p.workspace_id=:workspaceId"
-	)
-	@UseRowMapper(ProductMapper.class)
-	Product findByIdWithSmarPrice(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
-
   @SqlQuery("select * from product where name=:name and workspace_id=:workspaceId limit 1")
   @UseRowMapper(ProductMapper.class)
 	Product findByName(@Bind("name") String name, @Bind("workspaceId") Long workspaceId);
@@ -64,8 +55,8 @@ public interface ProductDao {
   List<IdNamePairMapper> getIdNameList(@Bind("excludedId") Long excludedId, @Bind("workspaceId") Long workspaceId);
 
   @SqlUpdate(
-		"insert into product (sku, name, price, base_price, brand_id, category_id, smart_price_id, workspace_id) " +
-		"values (:dto.sku, :dto.name, :dto.price, :dto.basePrice, :dto.brandId, :dto.categoryId, :dto.smartPriceId, :dto.workspaceId)"
+		"insert into product (sku, name, price, base_price, brand_id, category_id, alarm_id, smart_price_id, workspace_id) " +
+		"values (:dto.sku, :dto.name, :dto.price, :dto.basePrice, :dto.brandId, :dto.categoryId, :dto.alarmId, :dto.smartPriceId, :dto.workspaceId)"
 	)
   @GetGeneratedKeys()
   long insert(@BindBean("dto") ProductDTO dto);
@@ -73,5 +64,19 @@ public interface ProductDao {
   //called after adding links
   @SqlUpdate("update product set waitings=waitings + <count> where id=:id")
   boolean incWaitingsCount(@Bind("id") Long id, @Define("count") Integer count);
+
+  @SqlUpdate(
+		"update product set alarm_id=:alarmId, tobe_alarmed=false, alarmed_at=null " +
+		"where id in (<productIdSet>) " +
+		"  and workspace_id = :workspaceId"
+	)
+  int setAlarmON(@Bind("alarmId") Long alarmId, @BindList("productIdSet") Set<Long> productIdSet, @Bind("workspaceId") Long workspaceId);
+
+  @SqlUpdate(
+		"update product set alarm_id=null, tobe_alarmed=false, alarmed_at=null " +
+		"where id in (<productIdSet>) " +
+		"  and workspace_id = :workspaceId"
+	)
+  int setAlarmOFF(@BindList("productIdSet") Set<Long> productIdSet, @Bind("workspaceId") Long workspaceId);
 
 }

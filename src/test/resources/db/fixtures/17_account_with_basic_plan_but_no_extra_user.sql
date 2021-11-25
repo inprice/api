@@ -1,9 +1,9 @@
 -- -----------------------
 -- @author mdpinar
--- @since 2021-07-04
+-- @since 2021-11-20
 -- -----------------------
 
-set @admin_email = 'admin@workspace-d.com';
+set @admin_email = 'admin@workspace-k.com';
 
 -- -----------------------
 
@@ -13,7 +13,7 @@ set @admin_id = last_insert_id();
 
 -- workspace
 insert into test.workspace (name, plan_id, status, subs_started_at, subs_renewal_at, alarm_count, admin_id) 
-values ('With Standard Plan (Vouchered) but No Extra User', @standard_plan_id, 'VOUCHERED', now(), @one_year_later, 2, @admin_id);
+values ('With Basic Plan but No Extra User for alarm tests', @basic_plan_id, 'VOUCHERED', now(), @one_year_later, 5, @admin_id);
 set @workspace_id = last_insert_id();
 
 -- workspace history
@@ -31,14 +31,15 @@ insert into test.membership (email, user_id, workspace_id, role, status) values 
 -- products and links
 -- product_name_addition, actives, tryings, waitings, problems, url, platform_id, workspace_name, workspace_id
 -- -----------------------
-call sp_create_product_and_links('CX-001', 'D', 1, 0, 0, 0, 'https://hepsiburada.com/', 84, 'Workspace-D', @workspace_id);
+call sp_create_product_and_links('KX-001', 'O', 0, 1, 0, 0, 'https://hepsinerede.com/', 84, 'Workspace-K', @workspace_id);
+call sp_create_product_and_links('KX-002', 'N', 4, 0, 0, 0, 'https://hepsiburada.com/', 84, 'Workspace-K', @workspace_id);
 
 -- -----------------------
 -- 2 alarms definitions for 2 entities (1 product and 1 link)
 -- -----------------------
 insert into alarm (name, topic, subject, subject_when, workspace_id) 
 values ('Product minimum price is increased', 'PRODUCT', 'MINIMUM', 'INCREASED', @workspace_id);
-update product set alarm_id=last_insert_id() where sku = 'CX-001';
+update product set alarm_id=last_insert_id() where sku = 'KX-002';
 
 insert into alarm (name, topic, subject, subject_when, workspace_id) 
 values ('Link price is decreased', 'LINK', 'POSITION', 'EQUAL', @workspace_id);

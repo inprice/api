@@ -63,11 +63,11 @@ public interface WorkspaceDao {
   @SqlUpdate("update workspace set link_count=link_count+<count> where id=:id")
   boolean incLinkCount(@Bind("id") Long id, @Define("count") Integer count);
   
-  @SqlUpdate("update workspace set alarm_count=alarm_count+1 where id=:id")
-  boolean incAlarmCount(@Bind("id") Long id);
+  @SqlUpdate("update workspace set alarm_count=alarm_count+<value> where id=:id")
+  boolean incAlarmCount(@Define("value") int value, @Bind("id") Long id);
 
-  @SqlUpdate("update workspace set alarm_count=alarm_count-1 where id=:id")
-  boolean decAlarmCount(@Bind("id") Long id);
+  @SqlUpdate("update workspace set alarm_count=alarm_count-<value> where id=:id")
+  boolean decAlarmCount(@Define("value") int value, @Bind("id") Long id);
 
   @SqlQuery(
     "select w.id, w.name, u.email from workspace as w " +

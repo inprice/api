@@ -7,7 +7,6 @@ import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
 import io.inprice.common.mappers.Helper;
-import io.inprice.common.utils.DateUtils;
 
 public class ProductSummaryMapper implements RowMapper<ProductSummary> {
 
@@ -22,18 +21,14 @@ public class ProductSummaryMapper implements RowMapper<ProductSummary> {
     if (Helper.hasColumn(rs, "tryings")) m.setTryings(rs.getInt("tryings"));
     if (Helper.hasColumn(rs, "waitings")) m.setWaitings(rs.getInt("waitings"));
     if (Helper.hasColumn(rs, "problems")) m.setProblems(rs.getInt("problems"));
-    if (Helper.hasColumn(rs, "price")) m.setPrice(rs.getBigDecimal("price"));
 
-    if (Helper.hasColumn(rs, "actives_sum")) m.setActives(rs.getInt("actives_sum"));
-    if (Helper.hasColumn(rs, "tryings_sum")) m.setTryings(rs.getInt("tryings_sum"));
-    if (Helper.hasColumn(rs, "waitings_sum")) m.setWaitings(rs.getInt("waitings_sum"));
-    if (Helper.hasColumn(rs, "problems_sum")) m.setProblems(rs.getInt("problems_sum"));
-    
-    if (Helper.hasColumn(rs, "updated_at") && rs.getTimestamp("updated_at") != null) {
-      m.setUpdatedAt(DateUtils.formatLongDate(rs.getTimestamp("updated_at")));
-    } else if (Helper.hasColumn(rs, "created_at")) {
-      m.setUpdatedAt(DateUtils.formatLongDate(rs.getTimestamp("created_at")));
-    }
+    if (Helper.hasColumn(rs, "price")) m.setPrice(rs.getBigDecimal("price"));
+    if (Helper.hasColumn(rs, "min_price")) m.setMinPrice(rs.getBigDecimal("min_price"));
+    if (Helper.hasColumn(rs, "avg_price")) m.setAvgPrice(rs.getBigDecimal("avg_price"));
+    if (Helper.hasColumn(rs, "max_price")) m.setMaxPrice(rs.getBigDecimal("max_price"));
+
+    if (Helper.hasColumn(rs, "min_seller")) m.setMinSeller(rs.getString("min_seller"));
+    if (Helper.hasColumn(rs, "max_seller")) m.setMaxSeller(rs.getString("max_seller"));
     
     int total = 0;
     if (m.getActives() != null) total += m.getActives();

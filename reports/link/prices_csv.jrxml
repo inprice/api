@@ -156,7 +156,7 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 				<text><![CDATA[Product]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="869" y="0" width="70" height="18" uuid="88be7074-043a-4a45-8ee7-ac4c7560d11e">
+				<reportElement x="860" y="0" width="79" height="18" uuid="88be7074-043a-4a45-8ee7-ac4c7560d11e">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
@@ -186,14 +186,14 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 				<text><![CDATA[Diff]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="1109" y="0" width="30" height="18" uuid="3db281a1-80bb-48fa-954c-b63a8c7a6f35"/>
+				<reportElement x="1109" y="0" width="38" height="18" uuid="3db281a1-80bb-48fa-954c-b63a8c7a6f35"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Serif" size="10" isBold="true" pdfEncoding="Cp1254"/>
 				</textElement>
 				<text><![CDATA[Rate]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="1139" y="0" width="40" height="18" uuid="d71ed86c-bd79-4fb1-96aa-4e0c8486a804"/>
+				<reportElement x="1148" y="0" width="30" height="18" uuid="d71ed86c-bd79-4fb1-96aa-4e0c8486a804"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Serif" size="10" isBold="true" pdfEncoding="Cp1254"/>
 				</textElement>
@@ -223,7 +223,7 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 				<textFieldExpression><![CDATA[$F{position}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="670" y="0" width="199" height="16" uuid="18839f97-61cd-40b0-9fd8-9c8eb0fd33cb">
+				<reportElement x="670" y="0" width="190" height="16" uuid="18839f97-61cd-40b0-9fd8-9c8eb0fd33cb">
 					<property name="net.sf.jasperreports.style.isBlankWhenNull" value="true"/>
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
@@ -252,7 +252,7 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 				<textFieldExpression><![CDATA[$F{p_sku}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement key="" x="869" y="0" width="70" height="16" uuid="68a88ebd-c32d-4d67-a96a-4760c97ee6d4">
+				<reportElement key="" x="860" y="0" width="79" height="16" uuid="68a88ebd-c32d-4d67-a96a-4760c97ee6d4">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement verticalAlignment="Middle">
@@ -287,8 +287,8 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{diff_amount}]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00%">
-				<reportElement x="1109" y="0" width="30" height="16" uuid="5d116acc-67ae-41c8-b238-a8637e5c0c9b">
+			<textField pattern="###0.00">
+				<reportElement x="1109" y="0" width="39" height="16" uuid="f82c38c0-b3aa-4167-8a64-f1313030eeef">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
@@ -297,14 +297,14 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 				<textFieldExpression><![CDATA[$F{diff_rate}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement key="" x="1139" y="0" width="40" height="16" uuid="4822ef8c-555f-4178-98d1-83ed0be8844a">
+				<reportElement key="" x="1148" y="0" width="30" height="16" uuid="28b1d8c5-7f6f-42a4-8144-955a4bf290af">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Serif" size="10" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[($F{diff_amount}.compareTo(java.math.BigDecimal.ZERO) != 0 ? 
-	$F{diff_amount}.compareTo(java.math.BigDecimal.ZERO) > 0 ? "UP" : "DOWN"
+	$F{diff_amount}.compareTo(java.math.BigDecimal.ZERO) > 0 ? "UP" : "DN"
 : "")]]></textFieldExpression>
 			</textField>
 		</band>

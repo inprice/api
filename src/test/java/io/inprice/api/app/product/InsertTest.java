@@ -1,6 +1,7 @@
 package io.inprice.api.app.product;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -10,12 +11,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import io.inprice.api.utils.Fixtures;
-import io.inprice.api.utils.TestWorkspaces;
+import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
+import io.inprice.api.utils.TestWorkspaces;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
+import kong.unirest.json.JSONArray;
 import kong.unirest.json.JSONObject;
 
 /**
@@ -130,7 +133,7 @@ public class InsertTest {
 	@Test
 	public void Price_is_out_of_reasonable_range_FOR_a_value_of_10m() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("price", 10_000_000);
+		body.put("price", 100_000_000);
 		
 		JSONObject json = callTheService(body);
 		
@@ -165,6 +168,41 @@ public class InsertTest {
 		assertEquals("You already have a product having the same sku!", json.getString("reason"));
 	}
 
+	/**
+	 * Consists of three steps;
+	 *	a) searches for alarms for products
+	 *	b) create a body for insert
+	 *  c) tries to insert
+	 */
+	@Test
+	public void You_have_reached_max_alarm_number_of_your_plan() {
+		//to gather other workspace's links, admin is logged in
+		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user_for_alarm_limits.ADMIN());
+
+		//searches for alarms
+		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
+		assertNotNull(alarmList);
+		assertTrue(alarmList.length() == 2);
+
+		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
+		body.put("sku", "T-1");
+		body.put("name", "Product Z of Workspace-K");
+		body.put("alarmId", alarmList.getJSONObject(0).getLong("id"));
+
+		//tries to update other users' links
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(body)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(910, json.getInt("status"));
+		assertEquals("You have reached max alarm number of your plan!", json.getString("reason"));
+	}
+
 	@Test
 	public void Everything_must_be_ok_FOR_duplicate_name_WITH_editor() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
@@ -172,9 +210,7 @@ public class InsertTest {
 		body.put("name", "Product K of Workspace-F");
 
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
-
 		assertEquals(200, json.getInt("status"));
-		assertTrue(json.has("data"));
 	}
 
 	@Test
@@ -184,9 +220,7 @@ public class InsertTest {
 		body.put("name", "Editor is trying to define a new product!");
 
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
-
 		assertEquals(200, json.getInt("status"));
-		assertTrue(json.has("data"));
 	}
 
 	@Test
@@ -195,9 +229,7 @@ public class InsertTest {
 		body.put("name", "Admin is trying to define a new product!");
 
 		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
-
 		assertEquals(200, json.getInt("status"));
-		assertTrue(json.has("data"));
 	}
 
 	private JSONObject callTheService(JSONObject body) {

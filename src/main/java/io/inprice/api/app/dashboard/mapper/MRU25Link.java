@@ -13,6 +13,7 @@ public class MRU25Link implements Serializable {
   private static final long serialVersionUID = 2062234416267369942L;
 
   private Long id;
+  private Long productId;
   private String productName;
   private String seller;
   private String platform;
@@ -22,7 +23,6 @@ public class MRU25Link implements Serializable {
   private String status;
   private String statusDesc;
   private String position;
-  private Long alarmId;
   private String updatedAt;
 
 }

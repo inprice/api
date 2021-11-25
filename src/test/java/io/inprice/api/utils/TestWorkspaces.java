@@ -128,6 +128,15 @@ public enum TestWorkspaces {
 		Map.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@workspace-j.com")
 		)
+	),
+	
+	Basic_plan_but_no_extra_user_for_alarm_limits(
+		"With Basic Plan (Free Use) but No Extra User for alarm limit tests",
+  	"Has 4 active and 1 waiting links and 1 Product. 4 active links and 1 product have alarms",
+  	null,
+		Map.of(
+			TestRoles.ADMIN, new JSONObject().put("email", "admin@workspace-k.com")
+		)
 	);
 
 	private String name; //is used for searching by name in TestFinder.searchWorkspaces(String name)

@@ -20,7 +20,7 @@
 	</parameter>
 	<queryString language="SQL">
 		<![CDATA[select l.sku as l_sku, l.name, l.price, l.position, l.updated_at, l.checked_at, l.seller, pl.name as pl_name,
-lp.created_at as lp_date, lp.old_price, lp.new_price, lp.diff_amount, lp.diff_rate, p.sku as p_sku
+lp.created_at as lp_date, lp.old_price, lp.new_price, lp.diff_amount, lp.diff_rate, link_id, p.sku as p_sku
 from link_price as lp
 inner join link as l on l.id = lp.link_id
 inner join product as p on p.id = l.product_id
@@ -106,6 +106,12 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 		<property name="com.jaspersoft.studio.field.tree.path" value="link_price"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
+	<field name="link_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="link_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="link_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="link_price"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
 	<field name="p_sku" class="java.lang.String">
 		<property name="com.jaspersoft.studio.field.name" value="p_sku"/>
 		<property name="com.jaspersoft.studio.field.label" value="p_sku"/>
@@ -113,7 +119,7 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
 	<group name="Dynamic">
-		<groupExpression><![CDATA[$F{name}+$F{p_sku}]]></groupExpression>
+		<groupExpression><![CDATA[$F{name}+$F{link_id}]]></groupExpression>
 		<groupHeader>
 			<band height="39">
 				<line>
@@ -136,7 +142,7 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 					<textFieldExpression><![CDATA[$F{name} + ($F{l_sku} != null ? " ("+$F{l_sku}+")" : "")]]></textFieldExpression>
 				</textField>
 				<textField>
-					<reportElement key="" x="177" y="23" width="70" height="15" uuid="658103bd-7182-409d-a97d-4f9eab17897c">
+					<reportElement key="" x="480" y="5" width="70" height="15" uuid="658103bd-7182-409d-a97d-4f9eab17897c">
 						<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					</reportElement>
 					<textElement verticalAlignment="Middle">
@@ -145,7 +151,7 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 					<textFieldExpression><![CDATA[java.time.format.DateTimeFormatter.ofPattern("dd-MMM, HH:mm").withZone(java.time.ZoneId.of($P{TIMEZONE})).format($F{checked_at}.toInstant())]]></textFieldExpression>
 				</textField>
 				<staticText>
-					<reportElement x="137" y="23" width="40" height="15" uuid="597ac716-2365-435b-87d7-55aa3216ef83">
+					<reportElement x="440" y="5" width="40" height="15" uuid="597ac716-2365-435b-87d7-55aa3216ef83">
 						<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					</reportElement>
 					<textElement textAlignment="Left" verticalAlignment="Middle">
@@ -181,7 +187,7 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 					<text><![CDATA[Diff]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="491" y="23" width="30" height="15" uuid="303f2a91-7f63-4c8b-aba1-d8a559285b54">
+					<reportElement x="491" y="23" width="39" height="15" uuid="303f2a91-7f63-4c8b-aba1-d8a559285b54">
 						<property name="com.jaspersoft.studio.unit.height" value="px"/>
 					</reportElement>
 					<textElement textAlignment="Right" verticalAlignment="Middle">
@@ -210,7 +216,7 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 					</graphicElement>
 				</line>
 				<textField>
-					<reportElement key="" x="0" y="23" width="135" height="15" uuid="e2c83f46-ccf7-4fcd-b6a2-c1e1fb08958c">
+					<reportElement key="" x="0" y="23" width="248" height="15" uuid="e2c83f46-ccf7-4fcd-b6a2-c1e1fb08958c">
 						<property name="com.jaspersoft.studio.unit.height" value="px"/>
 						<property name="com.jaspersoft.studio.unit.width" value="px"/>
 					</reportElement>
@@ -219,26 +225,6 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 					</textElement>
 					<textFieldExpression><![CDATA[$F{seller} + " - " + $F{pl_name}]]></textFieldExpression>
 				</textField>
-				<textField>
-					<reportElement x="430" y="5" width="120" height="15" uuid="55968a64-531f-443b-95a7-0f3478330965">
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-						<property name="com.jaspersoft.studio.unit.y" value="px"/>
-					</reportElement>
-					<textElement verticalAlignment="Middle">
-						<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$F{p_sku}]]></textFieldExpression>
-				</textField>
-				<staticText>
-					<reportElement x="387" y="5" width="40" height="15" uuid="cc9fe977-0415-4bdf-875d-4d200760a157">
-						<property name="com.jaspersoft.studio.unit.height" value="px"/>
-						<property name="com.jaspersoft.studio.unit.y" value="px"/>
-					</reportElement>
-					<textElement textAlignment="Right" verticalAlignment="Middle">
-						<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
-					</textElement>
-					<text><![CDATA[Product: ]]></text>
-				</staticText>
 				<line>
 					<reportElement x="248" y="22" width="1" height="16" uuid="21421dee-fd35-42a4-bcb8-2a6a485a250a">
 						<property name="com.jaspersoft.studio.unit.height" value="px"/>
@@ -312,23 +298,23 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 				<textFieldExpression><![CDATA[$F{diff_amount}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00%">
-				<reportElement x="491" y="0" width="30" height="15" uuid="2c9b98da-6cc8-4535-a376-3aa0a85ca1ef">
+				<reportElement x="491" y="0" width="39" height="15" uuid="2c9b98da-6cc8-4535-a376-3aa0a85ca1ef">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" pdfEncoding="Cp1254"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{diff_rate}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[new Double($F{diff_rate}.doubleValue()/100d)]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement key="" x="525" y="0" width="30" height="15" uuid="4bddc625-26c8-4947-86c3-d14c29582e10">
+				<reportElement key="" x="533" y="0" width="17" height="15" uuid="4bddc625-26c8-4947-86c3-d14c29582e10">
 					<property name="com.jaspersoft.studio.unit.height" value="px"/>
 				</reportElement>
-				<textElement textAlignment="Left" verticalAlignment="Middle">
+				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[($F{diff_amount}.compareTo(java.math.BigDecimal.ZERO) != 0 ? 
-	$F{diff_amount}.compareTo(java.math.BigDecimal.ZERO) > 0 ? "UP" : "DOWN"
+	$F{diff_amount}.compareTo(java.math.BigDecimal.ZERO) > 0 ? "UP" : "DN"
 : "")]]></textFieldExpression>
 			</textField>
 			<line>
