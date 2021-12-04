@@ -18,8 +18,6 @@ public class ForDatabase implements Serializable {
   private Long userId;
   private Long workspaceId;
   private String ip;
-  private String os;
-  private String browser;
   private String userAgent;
   private Date accessedAt = new Date();
 

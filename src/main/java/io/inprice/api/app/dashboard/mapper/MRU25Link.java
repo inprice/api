@@ -23,6 +23,8 @@ public class MRU25Link implements Serializable {
   private String status;
   private String statusDesc;
   private String position;
+  private Long alarmId;
+  private String alarmName;
   private String updatedAt;
 
 }

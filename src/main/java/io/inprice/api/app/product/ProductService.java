@@ -206,8 +206,13 @@ class ProductService {
               	if (Objects.equals(dto.getFrom(), "SearchPage")) {
               		res = Responses.OK;
               	} else {
+              		LinkDao linkDao = handle.attach(LinkDao.class);
 	              	found = productDao.findByIdWithLookups(dto.getId(), CurrentUser.getWorkspaceId());
-	                res = new Response(Map.of("product", found));
+	              	Map<String, Object> dataMap = Map.of(
+                  	"product", found,
+                  	"links", linkDao.findListByProductId(found.getId(), CurrentUser.getWorkspaceId())
+                	);
+	                res = new Response(dataMap);
               	}
               } else {
               	res = Responses.DataProblem.DB_PROBLEM;
@@ -245,7 +250,7 @@ class ProductService {
   	if (dto.getAlarmId() != null) {
   		query.append(", alarm_id=" + dto.getAlarmId());
   	} else {
-  		query.append(", alarm_id=null, alarmed_at=null, tobe_alarmed_at=false");
+  		query.append(", alarm_id=null, alarmed_at=null, tobe_alarmed=false");
   	}
 
   	if (dto.getSmartPriceId() != null) {

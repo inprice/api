@@ -35,12 +35,12 @@ public interface UserSessionDao {
   List<String> findHashesByUserId(@Bind("userId") Long userId);
 
   @SqlBatch(
-    "insert into user_session (_hash, user_id, workspace_id, ip, os, browser, user_agent) " +
-    "values (:ses.hash, :ses.userId, :ses.workspaceId, :ses.ip, :ses.os, :ses.browser, :ses.userAgent)"
+    "insert into user_session (_hash, user_id, workspace_id, ip, user_agent) " +
+    "values (:ses.hash, :ses.userId, :ses.workspaceId, :ses.ip, :ses.userAgent)"
   )
   void insertBulk(@BindBean("ses") List<ForDatabase> sesList);
 
-  @SqlQuery("select distinct os, browser, ip, accessed_at from user_session where user_id=:userId order by accessed_at desc limit 25")
+  @SqlQuery("select distinct ip, user_agent, accessed_at from user_session where user_id=:userId order by accessed_at desc limit 25")
   @UseRowMapper(DBSessionMapper.class)
   List<ForDatabase> findOpenedSessions(@Bind("userId") Long userId);
 

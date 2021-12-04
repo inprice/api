@@ -303,7 +303,7 @@ public class AuthService {
           dbSes.setUserId(mem.getUserId());
           dbSes.setWorkspaceId(mem.getWorkspaceId());
           dbSes.setIp(ipAddress);
-          dbSes.setUserAgent(ctx.userAgent());
+          dbSes.setUserAgent(ctx.userAgent());          
           dbSesList.add(dbSes);
         }
 

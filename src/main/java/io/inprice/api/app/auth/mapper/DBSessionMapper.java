@@ -19,8 +19,6 @@ public class DBSessionMapper implements RowMapper<ForDatabase> {
     if (Helper.hasColumn(rs, "user_id")) m.setUserId(Helper.nullLongHandler(rs, "user_id"));
     if (Helper.hasColumn(rs, "workspace_id")) m.setWorkspaceId(Helper.nullLongHandler(rs, "workspace_id"));
     if (Helper.hasColumn(rs, "ip")) m.setIp(rs.getString("ip"));
-    if (Helper.hasColumn(rs, "os")) m.setOs(rs.getString("os"));
-    if (Helper.hasColumn(rs, "browser")) m.setBrowser(rs.getString("browser"));
     if (Helper.hasColumn(rs, "user_agent")) m.setUserAgent(rs.getString("user_agent"));
     if (Helper.hasColumn(rs, "accessed_at")) m.setAccessedAt(rs.getTimestamp("accessed_at"));
     

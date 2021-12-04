@@ -132,11 +132,11 @@ class DashboardService {
   	int i = 0;
     Map<String, Integer> stats = Map.of(
     	Position.Lowest.name(), i++,
-    	Position.Lower.name(), i++,
-    	Position.Equal.name(), i++,
+    	Position.Low.name(), i++,
     	Position.Average.name(), i++,
-    	Position.Higher.name(), i++,
+    	Position.High.name(), i++,
     	Position.Highest.name(), i++,
+    	Position.Equal.name(), i++,
     	Position.NotSet.name(), i++
   	);
 
