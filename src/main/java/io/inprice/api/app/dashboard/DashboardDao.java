@@ -12,6 +12,8 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
 import io.inprice.api.app.dashboard.mapper.MRU25Link;
 import io.inprice.api.app.dashboard.mapper.MRU25LinkMapper;
+import io.inprice.api.app.dashboard.mapper.PlatformSummary;
+import io.inprice.api.app.dashboard.mapper.PlatformSummaryMapper;
 import io.inprice.api.app.dashboard.mapper.ProductSummary;
 import io.inprice.api.app.dashboard.mapper.ProductSummaryMapper;
 import io.inprice.common.meta.Position;
@@ -55,5 +57,16 @@ interface DashboardDao {
   )
   @UseRowMapper(ProductSummaryMapper.class)
   List<ProductSummary> findMostNProduct(@Define("number") int number, @Bind("position") Position position, @Bind("workspaceId") Long workspaceId);
+
+  @SqlQuery(
+    "select pl.domain, " + 
+    "sum(if(grup = 'ACTIVE', 1, 0)) as actives, sum(if(grup = 'TRYING', 1, 0)) as tryings, " + 
+    "sum(if(grup = 'WAITING', 1, 0)) as waitings, sum(if(grup = 'PROBLEM', 1, 0)) as problems from link as l " +
+    "inner join platform as pl on pl.id = l.platform_id " + 
+    "where workspace_id=:workspaceId " +
+    "group by pl.domain "
+  )
+  @UseRowMapper(PlatformSummaryMapper.class)
+  List<PlatformSummary> findPlatformStatusDist(@Bind("workspaceId") Long workspaceId);
 
 }
