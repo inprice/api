@@ -151,6 +151,7 @@ public class Responses {
     public static final Response PAYMENT_FAILURE_ON_PLAN_CHANGE = new Response(BASE + 2, "Your payment failed during plan changing! Please try again or use another card!");
     public static final Response EMPTY_URL_LIST = new Response(BASE + 3, "URL list is empty!");
     public static final Response TICKET = new Response(BASE + 5, "Ticket is not suitable!");
+    public static final Response LINK = new Response(BASE + 7, "Link(s) is not suitable for this update!");
   }
 
   public static class NotFound {

@@ -135,7 +135,7 @@ class LinkService {
   }
 
   Response changeStatus(BulkChangetDTO dto) {
-    Response res = Responses.NotFound.LINK;
+    Response res = Responses.NotSuitable.LINK;
 
     if (CollectionUtils.isNotEmpty(dto.getIdSet())) {
     	if (dto.getStatus() != null && STATUSES_FOR_CHANGE.contains(dto.getStatus())) {
@@ -147,8 +147,12 @@ class LinkService {
           Set<Long> selectedSet = new HashSet<>();
           
           for (Pair<Long, String> pair: idAndStatusList) {
-          	if (! LinkStatus.RESOLVED.equals(dto.getStatus()) || LinkStatus.TOBE_IMPLEMENTED.name().equals(pair.getRight())) {
-        			selectedSet.add(pair.getLeft());
+          	if (LinkStatus.RESOLVED.equals(dto.getStatus())) {
+          		if (LinkStatus.TOBE_IMPLEMENTED.name().equals(pair.getRight())) {
+            		selectedSet.add(pair.getLeft());
+            	}
+          	} else if (dto.getStatus().name().equals(pair.getRight()) == false) {
+          		selectedSet.add(pair.getLeft());
           	}
           }
   
