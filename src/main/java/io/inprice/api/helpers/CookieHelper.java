@@ -6,9 +6,6 @@ import io.inprice.api.config.Props;
 import io.inprice.api.consts.Consts;
 import io.javalin.http.Context;
 
-/**
- * ControllerHelper
- */
 public class CookieHelper {
 	
 	public static Cookie createUserCookie(String token) {
@@ -22,7 +19,7 @@ public class CookieHelper {
 	}
 
   public static void removeUserCookie(Context ctx) {
-  	Cookie cookie = createUserCookie(null);
+  	Cookie cookie = createUserCookie("");
   	cookie.setMaxAge(0);
   	ctx.cookie(cookie);
   }
@@ -38,7 +35,7 @@ public class CookieHelper {
   }
 
   public static void removeSuperCookie(Context ctx) {
-    Cookie cookie = createSuperCookie(null);
+    Cookie cookie = createSuperCookie("");
     cookie.setMaxAge(0);
     ctx.cookie(cookie);
   }

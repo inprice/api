@@ -113,7 +113,7 @@ public class ForResponse implements Serializable {
     this.email = email;
     this.timezone = timezone;
   	this.role = UserRole.SUPER;
-    this.workspace = "NOT SELECTED";
+    this.workspace = "Please bind a workspace";
     this.workspaceStatus = "UNKNOWN";
     this.planId = 0;
     this.linkCount = 0;

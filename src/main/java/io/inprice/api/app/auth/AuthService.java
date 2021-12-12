@@ -250,6 +250,7 @@ public class AuthService {
         }
       }
     }
+  	ctx.clearCookieStore();
     return Responses.Already.LOGGED_OUT;
   }
 
@@ -284,7 +285,7 @@ public class AuthService {
             }
           }
         }
-        sessionNo = sessions.size();
+        sessionNo = (sessions.size() > 1 ? sessions.size()-1 : 0);
 
         String ipAddress = ClientSide.getIp(ctx.req);
 

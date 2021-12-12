@@ -1,5 +1,7 @@
 package io.inprice.api.consts;
 
+import java.util.Set;
+
 public class Consts {
 
 	public static final String SESSION = "INPRICE_AT";
@@ -19,7 +21,9 @@ public class Consts {
   	public static final String TEST = "test";
   	public static final String PROD = "prod";
   }
-  
+
+  public static Set<String> EXCLUSIVE_EMAILS = Set.of("super@inprice.io", "admin@inprice.io", "demo@inprice.io");
+
   public static class Paths {
 
     public static class Auth {
@@ -190,6 +194,7 @@ public class Consts {
         
         public static final String SESSION = _BASE + "/session";
         public static final String TERMINATE_SESSION = SESSION + "/terminate";
+        public static final String TERMINATE_ALL_SESSIONS = SESSION + "/terminate-all";
 
         public static final String DETAILS = _BASE + "/details";
         public static final String MEMBERSHIP_LIST = DETAILS + "/memberships";

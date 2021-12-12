@@ -110,6 +110,13 @@ public class Controller extends AbstractController {
   		Response res = service.terminateSession(hash);
   		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
     }, AccessRoles.SUPER_ONLY());
+
+    // terminate all sessions
+    app.delete(Consts.Paths.Super.User.TERMINATE_ALL_SESSIONS + "/:userId", (ctx) -> {
+    	Long userId = ctx.pathParam("userId", Long.class).check(it -> it != null && it > 0).getValue();
+  		Response res = service.terminateAllSessions(userId);
+  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
+    }, AccessRoles.SUPER_ONLY());
     
     /*-------------------------------------------------------------------------------------*/
 

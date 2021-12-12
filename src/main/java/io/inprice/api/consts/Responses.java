@@ -152,6 +152,7 @@ public class Responses {
     public static final Response EMPTY_URL_LIST = new Response(BASE + 3, "URL list is empty!");
     public static final Response TICKET = new Response(BASE + 5, "Ticket is not suitable!");
     public static final Response LINK = new Response(BASE + 7, "Link(s) is not suitable for this update!");
+    public static final Response EMAIL = new Response(BASE + 15, "This email is reserved!");
   }
 
   public static class NotFound {

@@ -8,13 +8,12 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.inprice.api.app.workspace.WorkspaceDao;
-import io.inprice.api.app.voucher.VoucherDao;
 import io.inprice.api.app.subscription.SubscriptionDao;
-import io.inprice.api.app.superuser.workspace.dto.CreateVoucherDTO;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
+import io.inprice.api.app.superuser.workspace.dto.CreateVoucherDTO;
 import io.inprice.api.app.system.SystemDao;
 import io.inprice.api.app.user.UserDao;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.api.helpers.CookieHelper;
@@ -28,15 +27,16 @@ import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.AccessLogMapper;
 import io.inprice.common.meta.SubsEvent;
+import io.inprice.common.meta.WorkspaceStatus;
 import io.inprice.common.models.AccessLog;
-import io.inprice.common.models.Workspace;
-import io.inprice.common.models.WorkspaceHistory;
-import io.inprice.common.models.WorkspaceTrans;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.Plan;
 import io.inprice.common.models.User;
-import io.inprice.common.utils.VoucherManager;
+import io.inprice.common.models.Workspace;
+import io.inprice.common.models.WorkspaceHistory;
+import io.inprice.common.models.WorkspaceTrans;
 import io.inprice.common.utils.DateUtils;
+import io.inprice.common.utils.VoucherManager;
 import io.javalin.http.Context;
 
 class Service {
@@ -234,47 +234,33 @@ class Service {
     	Workspace workspace = workspaceDao.findById(workspaceId);
   		if (workspace != null) {
   			
-  			if (workspace.getStatus().isOKForVoucher()) {
-  				
-  				boolean hasLimitProblem = false;
-  				if (workspace.getPlanId() != null && workspace.getPlanId() != plan.getId()) {
-  					hasLimitProblem = (
-  							workspace.getUserCount() > plan.getUserLimit()+1 
-    	  				|| workspace.getLinkCount() > plan.getLinkLimit() 
-    	  				|| workspace.getAlarmCount() > plan.getAlarmLimit()
-    	  			);
-  				}
+  			if (WorkspaceStatus.BANNED.equals(workspace.getStatus()) == false) {
+	  	    String voucherCode = VoucherManager.generate();
+	  	    Dao dao = handle.attach(Dao.class);
+	  	    boolean isOK = dao.createVoucher(
+	  	      voucherCode,
+	  	      planId,
+	  	      days,
+	  	      description,
+	  	      workspaceId
+	  	    );
 
-  	  		if (hasLimitProblem == false) {
-  	  	    String voucherCode = VoucherManager.generate();
-  	  	    VoucherDao voucherDao = handle.attach(VoucherDao.class);
-  	  	    boolean isOK = voucherDao.create(
-  	  	      voucherCode,
-  	  	      planId,
-  	  	      days,
-  	  	      description,
-  	  	      workspaceId
-  	  	    );
-  
-  	  	    if (isOK) {
-  	  	      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
-  	  	      WorkspaceTrans trans = new WorkspaceTrans();
-  	  	      trans.setWorkspaceId(workspaceId);
-  	  	      trans.setEventId(voucherCode);
-  	  	      trans.setEvent(subsEvent);
-  	  	      trans.setSuccessful(Boolean.TRUE);
-  	  	      trans.setReason(description);
-  	  	      trans.setDescription("Issued voucher");
-  	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
-  	  	      res = new Response(Map.of("code", voucherCode));
-  	  	    } else {
-  	  	    	res = Responses.DataProblem.DB_PROBLEM;
-  	  	    }
-  	  		} else {
-  	  			res = new Response("Current limits of this workspace are greater than the plan's!");
-  	  		}
+	  	    if (isOK) {
+	  	      SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
+	  	      WorkspaceTrans trans = new WorkspaceTrans();
+	  	      trans.setWorkspaceId(workspaceId);
+	  	      trans.setEventId(voucherCode);
+	  	      trans.setEvent(subsEvent);
+	  	      trans.setSuccessful(Boolean.TRUE);
+	  	      trans.setReason(description);
+	  	      trans.setDescription("Issued voucher");
+	  	      subscriptionDao.insertTrans(trans, trans.getEvent().getEventDesc());
+	  	      res = new Response(Map.of("code", voucherCode));
+	  	    } else {
+	  	    	res = Responses.DataProblem.DB_PROBLEM;
+	  	    }
 				} else {
-					res = Responses.Already.ACTIVE_SUBSCRIPTION;
+					res = Responses.Already.BANNED_WORKSPACE;
 				}
   		}
 		} else {
