@@ -1,16 +1,22 @@
 package io.inprice.api.app.superuser.ticket;
 
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.jdbi.v3.core.Handle;
 
+import io.inprice.api.app.announce.dto.AnnounceDTO;
+import io.inprice.api.app.superuser.announce.AnnounceDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.TicketCommentDTO;
 import io.inprice.api.dto.TicketDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.meta.AnnounceLevel;
+import io.inprice.common.meta.AnnounceType;
 import io.inprice.common.meta.TicketStatus;
 import io.inprice.common.models.Ticket;
 import io.inprice.common.models.TicketComment;
@@ -49,6 +55,15 @@ public class CommentService {
 								}
 							}
 							if (isOK) {
+								makeAnAnnouncement(
+									ticket.getUserId(), 
+									dto,
+									String.format(
+											"Your ticket opened to get %s about %s has been commented by admin.", 
+											ticket.getType().name().toLowerCase(), ticket.getSubject().name()
+									), 
+									handle
+								);
   							handle.commit();
   							List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
   							res = new Response(commentList);
@@ -91,6 +106,15 @@ public class CommentService {
 									dto.setWorkspaceId(ticket.getWorkspaceId());
 		  						boolean isOK = ticketDao.updateComment(dto);
 									if (isOK) {
+										makeAnAnnouncement(
+											ticket.getUserId(), 
+											dto,
+											String.format(
+													"Your ticket opened to get %s about %s has been updated by admin.", 
+													ticket.getType().name().toLowerCase(), ticket.getSubject().name()
+											), 
+											handle
+										);
 										List<TicketComment> commentList = ticketDao.fetchCommentListByTicketId(dto.getTicketId());
 										res = new Response(commentList);
 									} else {
@@ -154,6 +178,30 @@ public class CommentService {
 		}
 
 		return res;
+	}
+
+	/**
+	 * Adding an announce to inform the user
+	 * 
+	 * @param TicketCommentDTO dto
+	 * @param handle
+	 */
+	private void makeAnAnnouncement(Long userId, TicketCommentDTO dto, String body, Handle handle) {
+		AnnounceDTO announceDTO = new AnnounceDTO();
+		announceDTO.setUserId(userId);
+		announceDTO.setWorkspaceId(dto.getWorkspaceId());
+		announceDTO.setType(AnnounceType.USER);
+		announceDTO.setLevel(AnnounceLevel.INFO);
+		announceDTO.setTitle("Your ticket has been updated!");
+		announceDTO.setBody(body);
+		announceDTO.setLink("/ticket-detail/" + dto.getTicketId());
+
+		Date today = new Date();
+		announceDTO.setStartingAt(today);
+		announceDTO.setEndingAt(DateUtils.addDays(today, 3));
+
+		AnnounceDao announceDao = handle.attach(AnnounceDao.class);
+		announceDao.insert(announceDTO);
 	}
 	
 	private String validate(TicketCommentDTO dto) {

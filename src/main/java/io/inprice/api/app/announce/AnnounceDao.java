@@ -25,6 +25,12 @@ public interface AnnounceDao {
 	)
   boolean addLogsForWaitingAnnounces(@Define("userId") Long userId, @Define("workspaceId") Long workspaceId);
 
+  @SqlUpdate(
+		"insert into announce_log (announce_id, user_id, workspace_id) " + 
+		"values (:announceId, :userId, :workspaceId) "
+	)
+  boolean markAsRead(@Bind("announceId") Long announceId, @Bind("userId") Long userId, @Bind("workspaceId") Long workspaceId);
+
   @SqlQuery(
 		"select * from announce a " + 
 		"where (a.type='SYSTEM' " +

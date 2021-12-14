@@ -1,13 +1,18 @@
 package io.inprice.api.app.superuser.ticket;
 
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.inprice.api.app.announce.dto.AnnounceDTO;
+import io.inprice.api.app.superuser.announce.AnnounceDao;
 import io.inprice.api.app.superuser.ticket.dto.ChangeStatusDTO;
 import io.inprice.api.app.ticket.dto.SearchDTO;
 import io.inprice.api.app.ticket.dto.Seen;
@@ -19,6 +24,8 @@ import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.mappers.TicketMapper;
+import io.inprice.common.meta.AnnounceLevel;
+import io.inprice.common.meta.AnnounceType;
 import io.inprice.common.models.Ticket;
 import io.inprice.common.models.TicketComment;
 import io.inprice.common.models.TicketHistory;
@@ -69,6 +76,7 @@ public class TicketService {
   						}
   
       				if (isOK) {
+      					makeAnAnnouncement(ticket.getUserId(), ticket.getWorkspaceId(), dto, handle);
   							handle.commit();
       					res = Responses.OK;
       				} else {
@@ -197,13 +205,39 @@ public class TicketService {
       return Responses.ServerProblem.EXCEPTION;
     }
   }
-	
+
 	private Response generateFullResponse(TicketDao dao, Ticket ticket) {
 		List<TicketHistory> historyList = dao.fetchHistoryListByTicketId(ticket.getId());
 		List<TicketComment> commentList = dao.fetchCommentListByTicketId(ticket.getId());
 		ticket.setHistoryList(historyList);
 		ticket.setCommentList(commentList);
 		return new Response(ticket);
+	}
+
+	/**
+	 * Adding an announce to inform the user
+	 * 
+	 * @param TicketCommentDTO dto
+	 * @param handle
+	 */
+	@SuppressWarnings("deprecation")
+	private void makeAnAnnouncement(Long userId, Long workspaceId, ChangeStatusDTO dto, Handle handle) {
+		String newStatus = WordUtils.capitalizeFully(dto.getStatus().name().replaceAll("_", " "));
+		AnnounceDTO announceDTO = new AnnounceDTO();
+		announceDTO.setUserId(userId);
+		announceDTO.setWorkspaceId(workspaceId);
+		announceDTO.setType(AnnounceType.USER);
+		announceDTO.setLevel(AnnounceLevel.INFO);
+		announceDTO.setTitle("Your ticket's status has been changed!");
+		announceDTO.setBody("New status is " + newStatus);
+		announceDTO.setLink("/ticket-detail/" + dto.getId());
+
+		Date today = new Date();
+		announceDTO.setStartingAt(today);
+		announceDTO.setEndingAt(DateUtils.addDays(today, 3));
+
+		AnnounceDao announceDao = handle.attach(AnnounceDao.class);
+		announceDao.insert(announceDTO);
 	}
 
 }

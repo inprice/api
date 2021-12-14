@@ -17,9 +17,15 @@ public class AnnounceController extends AbstractController {
   @Override
   public void addRoutes(Javalin app) {
 
-    // add logs for a user
+    // mark read as all for a user
     app.put(Consts.Paths.Announce.BASE, (ctx) -> {
     	ctx.json(service.addLogsForCurrentUser());
+    }, AccessRoles.ANYONE_EXCEPT_SUPER());
+
+    // mark read as an announce of a user
+    app.put(Consts.Paths.Announce.BASE + "/:id", (ctx) -> {
+  		Long id = ctx.pathParam("id", Long.class).check(it -> it > 0).getValue();
+    	ctx.json(service.addLogForCurrentUser(id));
     }, AccessRoles.ANYONE_EXCEPT_SUPER());
 
     // fetch new announces
