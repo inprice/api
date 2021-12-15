@@ -162,6 +162,11 @@ public class Consts {
     public static class Super {
       public static final String BASE = "/sys";
 
+      public static class Dashboard {
+        public static final String _BASE = BASE + "/dashboard";
+        public static final String REFRESH = _BASE + "/refresh";
+      }
+  
       public static class Workspace {
       	public static final String _BASE = BASE + "/workspace";
       	public static final String SEARCH = _BASE + "s/search";
