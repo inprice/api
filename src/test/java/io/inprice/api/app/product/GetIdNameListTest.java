@@ -53,7 +53,7 @@ public class GetIdNameListTest {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, 1L);
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an workspace!", json.getString("reason"));
+		assertEquals("You must bind to a workspace!", json.getString("reason"));
 	}
 
 	/**
@@ -66,7 +66,7 @@ public class GetIdNameListTest {
 	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
-		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "With Standard Plan (Vouchered) but No Extra User");
+		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, TestWorkspaces.Second_standard_plan_and_no_extra_user.getName());
 		JSONObject workspace = workspaceList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/{workspaceId}")
@@ -96,9 +96,9 @@ public class GetIdNameListTest {
 	@Test
 	public void Everything_must_be_ok_FOR_any_kind_of_users() {
 		Map<TestRoles, JSONObject> roleUserMap = Map.of(
-			TestRoles.ADMIN, TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(),
-			TestRoles.EDITOR, TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(),
-			TestRoles.VIEWER, TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER()
+			TestRoles.ADMIN, TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN(),
+			TestRoles.EDITOR, TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(),
+			TestRoles.VIEWER, TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER()
 		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {
@@ -114,7 +114,7 @@ public class GetIdNameListTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_excluded_id() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.EDITOR());
 
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product X", 0);
 		TestUtils.logout(cookies); //here is important!
@@ -123,7 +123,7 @@ public class GetIdNameListTest {
 		JSONObject product = productList.getJSONObject(0);
 
 		//evil user tries to find the product
-		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR(), product.getLong("id"));
+		JSONObject json = callTheService(TestWorkspaces.Professional_plan_and_one_extra_user.EDITOR(), product.getLong("id"));
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
@@ -134,7 +134,7 @@ public class GetIdNameListTest {
 	}
 
 	private JSONObject callTheService(Long excludedProductId) {
-		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), excludedProductId);
+		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), excludedProductId);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long excludedProductId) {

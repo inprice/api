@@ -47,7 +47,7 @@ public class GetPlansTest {
 
 	@Test
 	public void Everything_must_be_ok() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -64,10 +64,6 @@ public class GetPlansTest {
 
 		JSONObject firstPlan = data.getJSONObject(0);
 		assertNotNull(firstPlan);
-		
-		JSONArray features = firstPlan.getJSONArray("features");
-		assertNotNull(features);
-		assertTrue(features.length() > 0);
 	}
 
 }

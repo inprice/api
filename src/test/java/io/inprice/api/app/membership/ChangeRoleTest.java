@@ -51,7 +51,7 @@ public class ChangeRoleTest {
 
 	@Test
 	public void Forbidden_WITH_viewer_user() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -68,7 +68,7 @@ public class ChangeRoleTest {
 
 	@Test
 	public void Forbidden_WITH_editor_user() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -90,7 +90,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void Role_must_be_either_EDITOR_or_VIEWER_WITH_empty_role() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//get member list to find member id
 		Long memberId = findMemberIdByIndex(cookies, 0);
@@ -116,7 +116,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void Role_must_be_either_EDITOR_or_VIEWER_WITH_ADMIN_role() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//get member list to find member id
 		Long memberId = findMemberIdByIndex(cookies, 0);
@@ -142,7 +142,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void Role_must_be_either_EDITOR_or_VIEWER_WITH_SUPER_role() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//get member list to find member id
 		Long memberId = findMemberIdByIndex(cookies, 0);
@@ -168,7 +168,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void Not_suitable_FOR_the_same_role() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//finding the first member
 		JSONObject member = findMemberByIndex(cookies, 0);
@@ -197,7 +197,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void This_member_is_already_deleted_FOR_a_deleted_member() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//finding the second member
 		Long memberId = findMemberIdByIndex(cookies, 1); //attention pls!
@@ -250,7 +250,7 @@ public class ChangeRoleTest {
 
 	@Test
 	public void Member_not_found_WITH_wrong_id() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -276,7 +276,7 @@ public class ChangeRoleTest {
 	@Test
 	public void Member_not_found_WHEN_trying_to_update_the_role_of_a_foreigner() {
 		//to gather other workspace's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//searches some specific links
 		JSONArray memberList = TestFinder.getMembers(cookies);
@@ -288,7 +288,7 @@ public class ChangeRoleTest {
 		JSONObject member = memberList.getJSONObject(0);
 
 		//evil user logs in
-		cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN());
+		cookies = TestUtils.login(TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN());
 
 		//tries to change the role of other workspace's member
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
@@ -318,7 +318,7 @@ public class ChangeRoleTest {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		//the user and his email
-		JSONObject user = TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN();
+		JSONObject user = TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN();
 		String email = user.getString("email");
 
 		//searches user by email
@@ -377,7 +377,7 @@ public class ChangeRoleTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_WITH_admin_user() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//get member list to find member id
 		Long memberId = findMemberIdByIndex(cookies, 0);

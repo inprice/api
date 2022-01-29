@@ -137,7 +137,7 @@ public class InsertTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_1_HEADERS)
@@ -153,7 +153,7 @@ public class InsertTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), body);
+		return callTheService(TestWorkspaces.Premium_plan_with_no_user.ADMIN(), body);
 	}
 	
 	private JSONObject callTheService(JSONObject user, JSONObject body) {

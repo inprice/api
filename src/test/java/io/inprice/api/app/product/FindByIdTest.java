@@ -57,7 +57,7 @@ public class FindByIdTest {
 	 */
 	@Test
 	public void Product_not_found_WHEN_trying_to_find_someone_elses_product() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product X", 0);
 		TestUtils.logout(cookies); //here is important!
@@ -77,7 +77,7 @@ public class FindByIdTest {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, 1L);
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an workspace!", json.getString("reason"));
+		assertEquals("You must bind to a workspace!", json.getString("reason"));
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class FindByIdTest {
 	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
-		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "With Standard Plan (Vouchered) but No Extra User");
+		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, TestWorkspaces.Second_standard_plan_and_no_extra_user.getName());
 		JSONObject workspace = workspaceList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/{workspaceId}")
@@ -120,9 +120,9 @@ public class FindByIdTest {
 	@Test
 	public void Everything_must_be_ok_FOR_any_kind_of_users() {
 		Map<TestRoles, JSONObject> roleUserMap = Map.of(
-			TestRoles.ADMIN, TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(),
-			TestRoles.EDITOR, TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(),
-			TestRoles.VIEWER, TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER()
+			TestRoles.ADMIN, TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN(),
+			TestRoles.EDITOR, TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(),
+			TestRoles.VIEWER, TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER()
 		);
 
 		Cookies cookies = TestUtils.login(roleUserMap.get(TestRoles.ADMIN));
@@ -145,7 +145,7 @@ public class FindByIdTest {
 	}
 
 	private JSONObject callTheService(Long id) {
-		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), id);
+		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), id);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long id) {

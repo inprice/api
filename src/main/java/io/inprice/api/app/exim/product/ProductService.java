@@ -18,12 +18,14 @@ import io.inprice.api.app.exim.EximBase;
 import io.inprice.api.app.exim.product.mapper.DownloadBean;
 import io.inprice.api.app.exim.product.mapper.DownloadBeanMapper;
 import io.inprice.api.app.product.ProductVerifier;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.ProductDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
+import io.inprice.common.models.Workspace;
 import io.inprice.common.utils.StringHelper;
 import io.javalin.http.Context;
 
@@ -32,70 +34,88 @@ public class ProductService extends EximBase {
   private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
 
   Response upload(String csvContent) {
+  	Response res = Responses.OK;
   	List<String> problems = new ArrayList<>();
 
     try (Handle handle = Database.getHandle()) {
+    	WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+    	Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
 
-    	ProductDao dao = handle.attach(ProductDao.class);
+    	if (workspace.getStatus().isActive()) {
+    		int productLimit = workspace.getPlan().getProductLimit();
+    		int productCount = workspace.getProductCount();
 
-    	//to prevent multiple lookups to db
-    	Map<String, Long> brandMap = dao.getBrands(CurrentUser.getWorkspaceId());
-    	Map<String, Long> categoryMap = dao.getCategories(CurrentUser.getWorkspaceId());
-
-    	int lineNumber = 1;
-    	Set<String> looked = new HashSet<>(); //by sku
-    	List<ProductDTO> dtos = new ArrayList<>();
-    	
-    	handle.begin();
-    	
-    	String[] rows = csvContent.lines().toArray(String[]::new);
-      for (String row : rows) {
-      	if (StringUtils.isBlank(row)) continue;
-      	
-      	Response buildRes = buildProductDTO(row, dao, brandMap, categoryMap);
-      	if (buildRes.isOK()) {
-      		ProductDTO dto = buildRes.getData();
-
-      		if (looked.contains(dto.getSku().toLowerCase())) {
-	      		problems.add(lineNumber + ". " + dto.getSku()  + " duplicate!");
-	    		} else {
-		      	looked.add(dto.getSku().toLowerCase()); //for later controls to check if it is already handled!
-	
-	        	boolean exist = dao.doesSkuExist(dto.getSku(), CurrentUser.getWorkspaceId());
-	        	if (exist) {
-	        		problems.add(lineNumber + ". " + dto.getSku() + " already exists!");
-	        	} else {
-	        		dtos.add(dto);
-	        	}
-	        }
-      	} else {
-      		problems.add(lineNumber + ". " + buildRes.getReason());
-      	}
-      	if (lineNumber == 1000) break;
-      	if (problems.size() >= 25) {
-      		problems.add("Cancelled because there are too many problems in your file!");
-      		dtos.clear();
-      		break;
-      	}
-      	lineNumber++;
-      }
-
-      //inserting the records
-      if (dtos.size() > 0) {
-      	dao.insertAll(dtos);
-      	handle.commit();
-      } else {
-      	handle.rollback();
-      }
-
-      Map<String, Object> result = Map.of(
-    		"total", rows.length,
-      	"successCount", dtos.size(),
-      	"problems", problems
-  		);
-      
-      return new Response(result);
+      	if (productCount < productLimit) {
+		    	ProductDao dao = handle.attach(ProductDao.class);
+		
+		    	//to prevent multiple lookups to db
+		    	Map<String, Long> brandMap = dao.getBrands(CurrentUser.getWorkspaceId());
+		    	Map<String, Long> categoryMap = dao.getCategories(CurrentUser.getWorkspaceId());
+		
+		    	int lineNumber = 1;
+		    	Set<String> looked = new HashSet<>(); //by sku
+		    	List<ProductDTO> dtos = new ArrayList<>();
+		    	
+		    	handle.begin();
+		    	
+		    	String[] rows = csvContent.lines().toArray(String[]::new);
+		      for (String row : rows) {
+		      	if (StringUtils.isBlank(row)) continue;
+		      	
+		      	Response buildRes = buildProductDTO(row, dao, brandMap, categoryMap);
+		      	if (buildRes.isOK()) {
+		      		ProductDTO dto = buildRes.getData();
+		
+		      		if (looked.contains(dto.getSku().toLowerCase())) {
+			      		problems.add(lineNumber + ". " + dto.getSku()  + " duplicate!");
+			    		} else {
+				      	looked.add(dto.getSku().toLowerCase()); //for later controls to check if it is already handled!
+			
+			        	boolean exist = dao.doesSkuExist(dto.getSku(), CurrentUser.getWorkspaceId());
+			        	if (exist) {
+			        		problems.add(lineNumber + ". " + dto.getSku() + " already exists!");
+			        	} else {
+			        		dtos.add(dto);
+			        	}
+			        }
+		      	} else {
+		      		problems.add(lineNumber + ". " + buildRes.getReason());
+		      	}
+		      	if (lineNumber == 250) break;
+		      	if (problems.size() >= 25) {
+		      		problems.add("Cancelled because there are too many problems in your file!");
+		      		dtos.clear();
+		      		break;
+		      	}
+		      	if (productCount+lineNumber >= productLimit) break;
+		      	lineNumber++;
+		      }
+		
+		      //inserting the records
+		      if (dtos.size() > 0) {
+		      	dao.insertAll(dtos);
+		      	workspaceDao.incProductCount(CurrentUser.getWorkspaceId(), dtos.size());
+		      	handle.commit();
+		      } else {
+		      	handle.rollback();
+		      }
+		
+		      Map<String, Object> result = Map.of(
+		    		"total", rows.length,
+		      	"successCount", dtos.size(),
+		      	"problems", problems
+		  		);
+		      
+		      res = new Response(result);
+	    	} else {
+	    		res = Responses.NotAllowed.NO_PRODUCT_LIMIT;
+	    	}
+    	} else {
+    		res = Responses.NotAllowed.HAVE_NO_ACTIVE_PLAN;
+    	}
 		}
+    
+    return res;
   }
 
   /**

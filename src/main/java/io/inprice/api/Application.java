@@ -145,6 +145,8 @@ public class Application {
     	}
     	
     	boolean isSlow = (elapsed > Props.getConfig().THRESHOLDS.RESPONSE_TIME_LATENCY);
+    	
+    	//FOR TEST CASES: System.out.println("------ PATH : ["+ctx.method()+"] " + ctx.path());
 
     	boolean
     		beLogged =

@@ -45,7 +45,7 @@ public class LogoutTest {
 	@Test
 	public void Seems_that_you_are_already_logged_out_FOR_multiple_logout() {
 		//in order to get a valid cookied, user logins and logsout first
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Second_professional_plan_and_one_extra_user.EDITOR());
 		TestUtils.logout(cookies);
 		
 		//second logout
@@ -75,7 +75,7 @@ public class LogoutTest {
 	@Test
 	public void Everything_must_be_ok_WITHOUT_viewer_login() {
 		//in order to get a valid cookie, user logins first
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 		
 		//handled cookie is used here
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT).cookie(cookies).asJson();

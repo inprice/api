@@ -112,7 +112,7 @@ public class AnyonesGetServicesTests {
 
 	@Test
 	public void Everything_must_be_ok_WITH_viewer_user() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS) //this user has more than one role. he is VIEWER in his second session!

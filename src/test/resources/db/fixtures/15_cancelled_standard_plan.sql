@@ -3,7 +3,7 @@
 -- @since 2021-07-09
 -- -----------------------
 
-set @admin_email = 'admin@workspace-j.com';
+set @admin_email = 'admin@workspace-i.com';
 
 -- -----------------------
 
@@ -12,7 +12,7 @@ insert into test.user (email, password, full_name, timezone) values (@admin_emai
 set @admin_id = last_insert_id();
 
 -- workspace
-insert into test.workspace (name, plan_id, status, link_count, alarm_count, admin_id) values ('Cancelled -Starter Plan- 30 links, 6 alarms', @starter_plan_id, 'CANCELLED', 30, 6, @admin_id);
+insert into test.workspace (name, plan_id, status, admin_id) values ('Cancelled Standard Plan', @standard_plan_id, 'CANCELLED', @admin_id);
 set @workspace_id = last_insert_id();
 
 -- workspace history

@@ -2,6 +2,7 @@ package io.inprice.api.app.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.BeforeClass;
@@ -152,9 +153,34 @@ public class LoginTest {
 	}
 
 	@Test
+	public void Your_account_has_been_locked_for_5_minutes_WITH_wrong_credentials_FOR_three_attempts() {
+		JSONObject user = new JSONObject();
+		user.put("email", TestWorkspaces.Cancelled_Professional_plan.EDITOR().get("email"));
+		user.put("password", "WRONG-PASS");
+
+		for (int i = 0; i < 4; i++) {
+			HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+				.body(user)
+				.asJson();
+			TestUtils.logout(res.getCookies());
+
+			JSONObject json = res.getBody().getObject();
+			System.out.println(json.toString());
+			
+			if (i < 3) {
+				assertEquals(113, json.getInt("status"));
+		    assertEquals("Invalid email or password!", json.getString("reason"));
+			} else {
+				assertEquals(400, json.getInt("status"));
+		    assertTrue(json.getString("reason").startsWith("Your account has been locked for 5 minutes"));
+			}
+		}
+	}
+
+	@Test
 	public void Everything_must_be_OK_WITH_correct_credentials() {
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
-			.body(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN())
+			.body(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN())
 			.asJson();
 		TestUtils.logout(res.getCookies());
 

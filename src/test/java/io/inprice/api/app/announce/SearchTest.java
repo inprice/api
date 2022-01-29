@@ -52,7 +52,7 @@ public class SearchTest {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, createBody(null));
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an workspace!", json.getString("reason"));
+		assertEquals("You must bind to a workspace!", json.getString("reason"));
 	}
 
 	/**

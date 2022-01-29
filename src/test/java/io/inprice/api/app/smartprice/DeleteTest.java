@@ -80,7 +80,7 @@ public class DeleteTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -97,7 +97,7 @@ public class DeleteTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		JSONObject json = callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), 4L);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_with_no_user.ADMIN(), 4L);
 
 		assertEquals(200, json.getInt("status"));
 		assertEquals("OK", json.getString("reason"));

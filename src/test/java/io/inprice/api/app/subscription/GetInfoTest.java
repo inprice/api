@@ -50,7 +50,7 @@ public class GetInfoTest {
 		JSONObject json = callTheService(Fixtures.SUPER_USER);
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an workspace!", json.getString("reason"));
+		assertEquals("You must bind to a workspace!", json.getString("reason"));
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class GetInfoTest {
 	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
-		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "Without A Plan and Extra User");
+		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, TestWorkspaces.Without_a_plan_and_extra_user.getName());
 		JSONObject workspace = workspaceList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/{workspaceId}")
@@ -88,19 +88,19 @@ public class GetInfoTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR());
 		assertEquals(200, json.getInt("status"));
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1); //attention pls!
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), 1); //attention pls!
 		assertEquals(200, json.getInt("status"));
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 		assertEquals(200, json.getInt("status"));
 
 		JSONObject data = json.getJSONObject("data");

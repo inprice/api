@@ -51,15 +51,23 @@ public class ProductTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), "empty.csv");
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), "empty.csv");
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
 	}
 
 	@Test
+	public void You_dont_have_an_active_plan() {
+		JSONObject json = callTheService(TestWorkspaces.Cancelled_Standard_plan.ADMIN(), "products_2.csv");
+
+		assertEquals(903, json.getInt("status"));
+		assertEquals("You don't have an active plan!", json.getString("reason"));
+	}
+
+	@Test
 	public void Request_body_is_invalid_WITH_empty_content_FOR_editor() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), "empty.csv");
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(), "empty.csv");
 
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Request body is invalid!", json.getString("reason"));
@@ -67,7 +75,7 @@ public class ProductTest {
 
 	@Test
 	public void Wrong_content_WITH_admin() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), "products_wrong.csv");
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(), "products_wrong.csv");
 
 		assertEquals(200, json.getInt("status"));
 		assertEquals(0, json.getJSONObject("data").getInt("successCount"));
@@ -75,7 +83,7 @@ public class ProductTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), "products_1.csv");
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(), "products_1.csv");
 
 		assertEquals(200, json.getInt("status"));
 
@@ -85,7 +93,7 @@ public class ProductTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		JSONObject json = callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), "products_2.csv");
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), "products_2.csv");
 
 		assertEquals(200, json.getInt("status"));
 		

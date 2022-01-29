@@ -47,7 +47,7 @@ public class StartFreeUseTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 		
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_1_HEADERS)
@@ -79,7 +79,7 @@ public class StartFreeUseTest {
 
 	@Test
 	public void You_have_no_free_use_right_FOR_not_suitable_workspace() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 		
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.cookie(cookies)

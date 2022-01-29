@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.text.WordUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -220,9 +219,8 @@ public class TicketService {
 	 * @param TicketCommentDTO dto
 	 * @param handle
 	 */
-	@SuppressWarnings("deprecation")
 	private void makeAnAnnouncement(Long userId, Long workspaceId, ChangeStatusDTO dto, Handle handle) {
-		String newStatus = WordUtils.capitalizeFully(dto.getStatus().name().replaceAll("_", " "));
+		String newStatus = dto.getStatus().name().replaceAll("_", " ").toUpperCase();
 		AnnounceDTO announceDTO = new AnnounceDTO();
 		announceDTO.setUserId(userId);
 		announceDTO.setWorkspaceId(workspaceId);

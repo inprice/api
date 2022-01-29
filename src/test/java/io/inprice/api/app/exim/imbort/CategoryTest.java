@@ -55,17 +55,25 @@ public class CategoryTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), "empty.csv");
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), "empty.csv");
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));
 	}
 
 	@Test
+	public void You_dont_have_an_active_plan() {
+		JSONObject json = callTheService(TestWorkspaces.Cancelled_Standard_plan.ADMIN(), "categories_2.csv");
+
+		assertEquals(903, json.getInt("status"));
+		assertEquals("You don't have an active plan!", json.getString("reason"));
+	}
+
+	@Test
 	public void Everything_must_be_ok_FOR_any_kind_of_users() {
 		Map<TestRoles, JSONObject> roleUserMap = Map.of(
-			TestRoles.ADMIN, TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(),
-			TestRoles.EDITOR, TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR()
+			TestRoles.ADMIN, TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN(),
+			TestRoles.EDITOR, TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR()
 		);
 
 		Map<TestRoles, String> roleFileMap = Map.of(

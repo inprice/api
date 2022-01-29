@@ -2,6 +2,7 @@ package io.inprice.api.session;
 
 import io.inprice.api.session.info.ForRedis;
 import io.inprice.common.meta.UserRole;
+import io.inprice.common.meta.WorkspaceStatus;
 import io.inprice.common.models.User;
 
 /**
@@ -89,6 +90,14 @@ public class CurrentUser {
   		return "inprice.io";
   	} else {
   		return THREAD_VARIABLES.get().getSession().getWorkspace();
+  	}
+  }
+
+	public static WorkspaceStatus getWorkspaceStatus() {
+  	if (THREAD_VARIABLES.get().getSuperUser() != null) {
+  		return THREAD_VARIABLES.get().getWorkspaceStatus();
+  	} else {
+  		return THREAD_VARIABLES.get().getSession().getWorkspaceStatus();
   	}
   }
 

@@ -20,9 +20,9 @@ public class Fixtures {
 	public static final Map<String, String> SESSION_1_HEADERS = Map.of("X-Session", "1");
 
 	public static final List<JSONObject> NORMAL_USER_LIST = List.of(
-		TestWorkspaces.Pro_plan_with_two_extra_users.VIEWER(),
-		TestWorkspaces.Pro_plan_with_two_extra_users.EDITOR(),
-		TestWorkspaces.Pro_plan_with_two_extra_users.ADMIN()
+		TestWorkspaces.Second_Premium_plan_and_two_extra_users.VIEWER(),
+		TestWorkspaces.Second_Premium_plan_and_two_extra_users.EDITOR(),
+		TestWorkspaces.Second_Premium_plan_and_two_extra_users.ADMIN()
 	);
 
 }

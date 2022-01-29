@@ -118,7 +118,7 @@ public class InsertTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody("LINK", "PRICE", "CHANGED"), 0); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), createBody("LINK", "PRICE", "CHANGED"), 0); //attention!
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));
@@ -134,7 +134,7 @@ public class InsertTest {
 
 	@Test
 	public void You_have_already_set_an_alarm_for_this_record() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
@@ -159,8 +159,25 @@ public class InsertTest {
 	}
 
 	@Test
+	public void You_dont_have_an_active_plan() {
+		Cookies cookies = TestUtils.login(TestWorkspaces.Cancelled_Standard_plan.ADMIN());
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(createBody("LINK", "POSITION", "CHANGED"))
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(903, json.getInt("status"));
+		assertEquals("You don't have an active plan!", json.getString("reason"));
+	}
+
+	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -194,7 +211,7 @@ public class InsertTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
+		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), body, 0);
 	}
 	
 	private JSONObject callTheService(JSONObject user, JSONObject body, int session) {

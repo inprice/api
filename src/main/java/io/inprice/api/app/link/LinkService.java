@@ -21,9 +21,10 @@ import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.AlarmEntityDTO;
 import io.inprice.api.dto.LinkDeleteDTO;
 import io.inprice.api.dto.LinkMoveDTO;
-import io.inprice.api.helpers.SystemHelper;
+import io.inprice.api.helpers.WSPermissionChecker;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
+import io.inprice.api.meta.WSPermission;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
@@ -162,7 +163,7 @@ class LinkService {
 	    if (dto.getAlarmId() != null && dto.getAlarmId() > 0) {
 	      try (Handle handle = Database.getHandle()) {
 
-      		Response alarmLimitCheckRes = SystemHelper.checkAlarmLimit(handle);
+      		Response alarmLimitCheckRes = WSPermissionChecker.checkFor(WSPermission.ALARM_LIMIT, handle);
       		if (alarmLimitCheckRes.isOK() == false) return alarmLimitCheckRes;
 	      	
 	      	AlarmDao alarmDao = handle.attach(AlarmDao.class);
@@ -287,8 +288,6 @@ class LinkService {
   	if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) dto.getLinkIdSet().remove(null);
 
     if (CollectionUtils.isNotEmpty(dto.getLinkIdSet())) {
-    	int count = dto.getLinkIdSet().size();
-    	
     	String joinedIds = StringUtils.join(dto.getLinkIdSet(), ",");
       String where = String.format("where link_id in (%s) and workspace_id=%d ", joinedIds, CurrentUser.getWorkspaceId());
 
@@ -301,12 +300,6 @@ class LinkService {
         batch.add("delete from link_history " + where);
         batch.add("delete from link_spec " + where);
         batch.add("delete from link " + where.replace("link_", "")); //this query determines the success!
-				batch.add(
-					String.format(
-						"update workspace set link_count=link_count-%d where id=%d",
-						count, CurrentUser.getWorkspaceId()
-					)
-				);
 				batch.add("SET FOREIGN_KEY_CHECKS=1");
 
 				int[] result = batch.execute();

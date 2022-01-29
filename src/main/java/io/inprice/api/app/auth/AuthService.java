@@ -39,7 +39,10 @@ import io.inprice.api.token.TokenType;
 import io.inprice.api.token.Tokens;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.GlobalConsts;
 import io.inprice.common.info.EmailData;
+import io.inprice.common.lib.ExpiringHashMap;
+import io.inprice.common.lib.ExpiringMap;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.UserStatus;
 import io.inprice.common.models.Membership;
@@ -51,10 +54,22 @@ public class AuthService {
   private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
+
+  private ExpiringMap<String, Integer> failedLoginAttemptsMap = new ExpiringHashMap<>(5 * 60 * 1000); //expires in 5 mins
   
   Response login(Context ctx, LoginDTO dto) {
     String problem = verifyLogin(dto);
+
     if (problem == null) {
+
+      Integer failedAttempt = null;
+      if (dto.getEmail().equals(GlobalConsts.DEMO_ACCOUNT) == false) {
+        failedAttempt = failedLoginAttemptsMap.get(dto.getEmail());
+        if (failedAttempt != null && failedAttempt >= 3) {
+          failedLoginAttemptsMap.put(dto.getEmail(), failedAttempt+1);
+          return new Response("Your account has been locked for 5 minutes because you tried logging in with the wrong credentials three times!");
+        }
+      }
 
       try (Handle handle = Database.getHandle()) {
         UserDao userDao = handle.attach(UserDao.class);
@@ -65,6 +80,8 @@ public class AuthService {
 
             if (PasswordHelper.isValid(dto.getPassword(), user.getPassword())) {
             	user.setPassword(null);
+
+              if (failedAttempt != null) failedLoginAttemptsMap.remove(dto.getEmail());
 
             	if (user.isPrivileged()) { //if a super user!
             		ctx.cookie(CookieHelper.createSuperCookie(SessionHelper.toTokenForSuper(user)));
@@ -93,6 +110,9 @@ public class AuthService {
                   return createSession(ctx, user);
                 }
             	}
+            } else if (dto.getEmail().equals(GlobalConsts.DEMO_ACCOUNT) == false) {
+              if (failedAttempt == null) failedAttempt = 0;
+              failedLoginAttemptsMap.put(dto.getEmail(), failedAttempt+1);
             }
           } else {
             return Responses.BANNED_USER;

@@ -71,13 +71,11 @@ class MembershipService {
   
           		WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
           		Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
-          		if (workspace != null) {
-          			if (workspace.getPlan() == null) {
-          				return Responses.PermissionProblem.DONT_HAVE_A_PLAN;
-          			} else if (workspace.getPlan().getUserLimit().compareTo(workspace.getUserCount()) <= 0) {
-          				return Responses.PermissionProblem.USER_LIMIT_PROBLEM;
-          			}
-          		}
+        			if (workspace.getStatus().isActive() == false) {
+        				return Responses.NotAllowed.HAVE_NO_ACTIVE_PLAN;
+        			} else if (workspace.getPlan().getUserLimit().compareTo(workspace.getUserCount()) <= 0) {
+        				return Responses.PermissionProblem.USER_LIMIT_PROBLEM;
+        			}
   
           		MembershipDao membershipDao = handle.attach(MembershipDao.class);
               Membership mem = membershipDao.findByEmail(dto.getEmail(), CurrentUser.getWorkspaceId());

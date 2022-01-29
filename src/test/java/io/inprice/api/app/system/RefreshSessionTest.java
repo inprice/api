@@ -45,7 +45,7 @@ public class RefreshSessionTest {
 
 	@Test
 	public void Forbidden_WITHOUTt_admin_user() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -60,7 +60,7 @@ public class RefreshSessionTest {
 
 	@Test
 	public void Everything_must_be_ok() {
-		final JSONObject user = TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN();
+		final JSONObject user = TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN();
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)

@@ -49,7 +49,7 @@ public class ResumeTest {
 
 	@Test
 	public void Forbidden_WITH_viewer_user() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -66,7 +66,7 @@ public class ResumeTest {
 
 	@Test
 	public void Forbidden_WITH_editor_user() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -83,7 +83,7 @@ public class ResumeTest {
 
 	@Test
 	public void Member_not_found_WITH_wrong_id() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -100,7 +100,7 @@ public class ResumeTest {
 
 	@Test
 	public void This_member_is_not_paused_WITH_a_normal_member() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 		
 		Long memberId = findMemberIdByIndex(cookies, 0);
 
@@ -143,7 +143,7 @@ public class ResumeTest {
 	 */
 	@Test
 	public void This_member_is_already_deleted_FOR_a_deleted_member() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//finding the second member
 		Long memberId = findMemberIdByIndex(cookies, 1); //attention pls!
@@ -179,7 +179,7 @@ public class ResumeTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_a_paused_member() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 		
 		Long memberId = findMemberIdByIndex(cookies, 0);
 

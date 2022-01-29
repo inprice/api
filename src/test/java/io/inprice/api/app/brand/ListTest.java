@@ -53,9 +53,9 @@ public class ListTest {
 	@Test
 	public void Everything_must_be_ok_WITH_anyone() {
 		Map<TestRoles, JSONObject> roleUserMap = Map.of(
-			TestRoles.VIEWER, TestWorkspaces.Pro_plan_with_two_extra_users.VIEWER(),
-			TestRoles.EDITOR, TestWorkspaces.Pro_plan_with_two_extra_users.EDITOR(),
-			TestRoles.ADMIN, TestWorkspaces.Pro_plan_with_two_extra_users.ADMIN()
+			TestRoles.VIEWER, TestWorkspaces.Second_Premium_plan_and_two_extra_users.VIEWER(),
+			TestRoles.EDITOR, TestWorkspaces.Second_Premium_plan_and_two_extra_users.EDITOR(),
+			TestRoles.ADMIN, TestWorkspaces.Second_Premium_plan_and_two_extra_users.ADMIN()
 		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {

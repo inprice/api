@@ -11,6 +11,8 @@ import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
 import io.inprice.api.app.membership.mapper.ActiveMember;
 import io.inprice.api.app.membership.mapper.ActiveMemberMapper;
+import io.inprice.api.app.system.PlanDao;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.common.mappers.MembershipMapper;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
@@ -18,12 +20,6 @@ import io.inprice.common.models.Membership;
 
 public interface MembershipDao {
 
-  final String WORKSPACE_FIELDS = 
-    ", w.name as workspace_name, w.status as workspace_status, w.subs_started_at, " +
-    "w.subs_renewal_at, w.last_status_update, w.plan_id, w.currency_code, w.currency_format, w.user_count, w.link_count, w.alarm_count ";
-
-  final String PLAN_FIELDS = ", p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit ";
-  
   @SqlQuery("select * from membership where id=:id and workspace_id=:workspaceId and role in ('VIEWER', 'EDITOR')")
   @UseRowMapper(MembershipMapper.class)
   Membership findNormalMemberById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
@@ -33,7 +29,7 @@ public interface MembershipDao {
   Membership findByEmail(@Bind("email") String email, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-    "select m.*" + WORKSPACE_FIELDS + PLAN_FIELDS + " from membership as m " +
+    "select m.*" + WorkspaceDao.FIELDS + PlanDao.FIELDS + " from membership as m " +
     "inner join workspace as w on w.id = m.workspace_id " + 
     "left join plan as p on p.id = w.plan_id " + 
     "where w.status != 'BANNED' " +
@@ -45,7 +41,7 @@ public interface MembershipDao {
   List<Membership> findNormalMemberList(@Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-    "select m.*" + WORKSPACE_FIELDS + PLAN_FIELDS + " from membership as m " +
+    "select m.*" + WorkspaceDao.FIELDS + PlanDao.FIELDS + " from membership as m " +
     "inner join workspace as w on w.id = m.workspace_id " + 
     "left join plan as p on p.id = w.plan_id " + 
     "where w.status != 'BANNED' " +

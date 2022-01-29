@@ -79,7 +79,7 @@ public class CloseAllSessionsTest {
 	 */
 	@Test
 	public void Everything_must_ok() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)

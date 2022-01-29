@@ -13,6 +13,7 @@ import org.junit.runners.JUnit4;
 import io.inprice.api.utils.Fixtures;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
+import io.inprice.api.utils.TestWorkspaces;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -166,50 +167,10 @@ public class CreateVoucherTest {
 	}
 
 	@Test
-	public void You_already_have_an_active_subscription() {
-		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
-
-		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "With Starter Plan");
-		assertNotNull(workspaceList);
-		assertTrue(workspaceList.length() > 0);
-		
-		JSONObject workspace = workspaceList.getJSONObject(0);
-
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("workspaceId", workspace.getLong("id"));
-
-		JSONObject json = callTheService(cookies, body);
-		TestUtils.logout(cookies);
-
-		assertEquals(807, json.getInt("status"));
-		assertEquals("You already have an active subscription!", json.getString("reason"));
-	}
-
-	@Test
-	public void Current_limits_of_this_workspace_are_greater_than_the_plans() {
-		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
-
-		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "Cancelled -Starter Plan-");
-		assertNotNull(workspaceList);
-		assertTrue(workspaceList.length() > 0);
-		
-		JSONObject workspace = workspaceList.getJSONObject(0);
-
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("workspaceId", workspace.getLong("id"));
-
-		JSONObject json = callTheService(cookies, body);
-		TestUtils.logout(cookies);
-
-		assertEquals(400, json.getInt("status"));
-		assertEquals("Current limits of this workspace are greater than the plan's!", json.getString("reason"));
-	}
-
-	@Test
 	public void Everything_must_be_ok_WITH_superuser() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
-		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "Without A Plan");
+		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, TestWorkspaces.Without_a_plan_and_extra_user.getName());
 		assertNotNull(workspaceList);
 		assertTrue(workspaceList.length() > 0);
 		

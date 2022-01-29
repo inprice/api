@@ -49,7 +49,7 @@ public class DeleteTest {
 
 	@Test
 	public void Forbidden_WITH_viewer_user() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -66,7 +66,7 @@ public class DeleteTest {
 
 	@Test
 	public void Forbidden_WITH_editor_user() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -93,7 +93,7 @@ public class DeleteTest {
 	 */
 	@Test
 	public void This_member_is_already_deleted_FOR_already_deleted_user() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 		
 		Long memberId = findMemberIdByIndex(cookies, 0);
 
@@ -144,7 +144,7 @@ public class DeleteTest {
 
 	@Test
 	public void Member_not_found_WITH_wrong_id() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -173,7 +173,7 @@ public class DeleteTest {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
 		//the user and his email
-		JSONObject user = TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN();
+		JSONObject user = TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN();
 		String email = user.getString("email");
 
 		//searches user by email

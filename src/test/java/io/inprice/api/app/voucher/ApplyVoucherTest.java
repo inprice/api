@@ -50,8 +50,8 @@ public class ApplyVoucherTest {
 	@Test
 	public void Forbidden_WITH_editor() {
 		JSONObject json = callTheServiceWith(
-			TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR(),
-			TestVouchers.AVAILABLE_FOR_BASIC_PLAN_1
+			TestWorkspaces.Second_professional_plan_and_one_extra_user.EDITOR(),
+			TestVouchers.AVAILABLE_FOR_STANDARD_PLAN_1
 		);
 
 		assertEquals(403, json.getInt("status"));
@@ -61,8 +61,8 @@ public class ApplyVoucherTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		JSONObject json = callTheServiceWith(
-			TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(),
-			TestVouchers.AVAILABLE_FOR_BASIC_PLAN_1
+			TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(),
+			TestVouchers.AVAILABLE_FOR_STANDARD_PLAN_1
 		);
 
 		assertEquals(403, json.getInt("status"));
@@ -140,8 +140,8 @@ public class ApplyVoucherTest {
 	@Test
 	public void You_already_have_an_active_subscription_WITH_assigned_code() {
 		JSONObject json = callTheServiceWith(
-			TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN(),
-			TestVouchers.AVAILABLE_FOR_BASIC_PLAN_1
+			TestWorkspaces.Second_standard_plan_and_no_extra_user.ADMIN(),
+			TestVouchers.AVAILABLE_FOR_STANDARD_PLAN_1
 		);
 
 		assertEquals(807, json.getInt("status"));
@@ -150,10 +150,7 @@ public class ApplyVoucherTest {
 
 	@Test
 	public void You_need_to_select_a_broader_plan() {
-		JSONObject json = callTheServiceWith(
-			TestWorkspaces.Cancelled_Starter_plan_30_links_6_alarms.ADMIN(),
-			TestVouchers.AVAILABLE_FOR_BASIC_PLAN_1
-		);
+		JSONObject json = callTheServiceWith(TestWorkspaces.Cancelled_Professional_plan.ADMIN(), TestVouchers.AVAILABLE_FOR_STANDARD_PLAN_1);
 
  		assertNotNull("You need to select a broader plan since your actual plan has more permission!", json.getString("reason"));
 	}
@@ -161,8 +158,8 @@ public class ApplyVoucherTest {
 	@Test
 	public void Everything_must_be_ok() {
 		JSONObject json = callTheServiceWith(
-			TestWorkspaces.Cancelled_Basic_plan_no_link_no_alarm.ADMIN(),
-			TestVouchers.AVAILABLE_FOR_BASIC_PLAN_1
+			TestWorkspaces.Cancelled_Standard_plan.ADMIN(),
+			TestVouchers.AVAILABLE_FOR_STANDARD_PLAN_1
 		);
 
 		assertEquals(200, json.getInt("status"));

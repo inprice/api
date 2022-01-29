@@ -53,7 +53,7 @@ public class SearchTest {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, createBody(null, "ALL"));
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an workspace!", json.getString("reason"));
+		assertEquals("You must bind to a workspace!", json.getString("reason"));
 	}
 
 	/**
@@ -65,8 +65,7 @@ public class SearchTest {
 	@Test
 	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
-
-		JSONArray workspaces = TestFinder.searchWorkspaces(cookies, TestWorkspaces.Standard_plan_and_two_extra_users.getName());
+		JSONArray workspaces = TestFinder.searchWorkspaces(cookies, TestWorkspaces.Premium_plan_and_two_extra_users.getName());
 
 		assertEquals(1, workspaces.length());
 
@@ -99,7 +98,7 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN(), createBody(new String[] { "WAITING" }, "ALARMED"));
+		JSONObject json = callTheService(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN(), createBody(new String[] { "WAITING" }, "ALARMED"));
 		assertEquals(200, json.getInt("status"));
 
 		JSONArray rows = json.getJSONArray("data");
@@ -108,7 +107,7 @@ public class SearchTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR(), createBody(new String[] { "PROBLEM" }, "NOT_ALARMED"));
+		JSONObject json = callTheService(TestWorkspaces.Professional_plan_and_one_extra_user.EDITOR(), createBody(new String[] { "PROBLEM" }, "NOT_ALARMED"));
 		assertEquals(200, json.getInt("status"));
 
 		JSONArray rows = json.getJSONArray("data");
@@ -118,7 +117,7 @@ public class SearchTest {
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), createBody(new String[] { "ACTIVE" }, "NOT_ALARMED"), 0); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), createBody(new String[] { "ACTIVE" }, "NOT_ALARMED"), 0); //attention!
 		assertEquals(200, json.getInt("status"));
 
 		JSONArray rows = json.getJSONArray("data");

@@ -41,25 +41,29 @@ public class SmartPriceService {
 
   Response insert(SmartPriceDTO dto) {
   	Response res = Responses.DataProblem.DB_PROBLEM;
-  	
-    String problem = validate(dto);
-    if (problem == null) {
-      try (Handle handle = Database.getHandle()) {
-        SmartPriceDao smartPriceDao = handle.attach(SmartPriceDao.class);
 
-        SmartPrice found = smartPriceDao.findByName(dto.getName(), CurrentUser.getWorkspaceId());
-        if (found == null) {
-        	Long id = smartPriceDao.insert(dto, CurrentUser.getWorkspaceId());
-        	if (id != null && id > 0) {
-        		res = Responses.OK;
-          }
-        } else {
-        	res = Responses.Already.Defined.SMART_PRICE;
-        }
-      }
-    } else {
-    	res = new Response(problem);
-    }
+  	if (CurrentUser.getWorkspaceStatus().isActive()) {
+	    String problem = validate(dto);
+	    if (problem == null) {
+	      try (Handle handle = Database.getHandle()) {
+	        SmartPriceDao smartPriceDao = handle.attach(SmartPriceDao.class);
+	
+	        SmartPrice found = smartPriceDao.findByName(dto.getName(), CurrentUser.getWorkspaceId());
+	        if (found == null) {
+	        	Long id = smartPriceDao.insert(dto, CurrentUser.getWorkspaceId());
+	        	if (id != null && id > 0) {
+	        		res = Responses.OK;
+	          }
+	        } else {
+	        	res = Responses.Already.Defined.SMART_PRICE;
+	        }
+	      }
+	    } else {
+	    	res = new Response(problem);
+	    }
+  	} else {
+  		res = Responses.NotAllowed.HAVE_NO_ACTIVE_PLAN;
+  	}
 
     return res;
   }

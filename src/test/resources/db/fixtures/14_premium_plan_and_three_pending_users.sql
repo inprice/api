@@ -26,7 +26,7 @@ select id into @other_viewer_id from test.user where email=@other_viewer_email;
 
 -- workspace
 insert into test.workspace (name, plan_id, user_count, status, subs_started_at, subs_renewal_at, admin_id) 
-values ('With Premium Plan and Two Pending Users', @premium_plan_id, 3, 'SUBSCRIBED', now(), @one_year_later, @admin_id);
+values ('Premium Plan and Three Pending Users', @premium_plan_id, 3, 'SUBSCRIBED', now(), @one_year_later, @admin_id);
 set @workspace_id = last_insert_id();
 
 -- workspace history

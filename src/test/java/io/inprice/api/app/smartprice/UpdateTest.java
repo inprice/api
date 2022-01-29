@@ -197,7 +197,7 @@ public class UpdateTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -229,7 +229,7 @@ public class UpdateTest {
 		body.put("id", 4L);
 		body.put("formula", "a/2+i/2+1.12"); //this must be cause re-calculated the product's suggested price
 
-		JSONObject json = callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), body);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_with_no_user.ADMIN(), body);
 
 		assertEquals(200, json.getInt("status"));
 		assertEquals("OK", json.getString("reason"));

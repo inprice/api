@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.subscription.SubscriptionDao;
 import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.app.superuser.workspace.dto.CreateVoucherDTO;
-import io.inprice.api.app.system.SystemDao;
+import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
@@ -139,8 +139,8 @@ class Service {
   					CurrentUser.getUserTimezone()
 					);
       	session.setWorkspace(workspace.getName());
-      	session.setWorkspaceStatus(workspace.getStatus().name());
-      	session.setLinkCount(workspace.getLinkCount());
+      	session.setWorkspaceStatus(workspace.getStatus());
+      	session.setProductCount(workspace.getProductCount());
       	session.setSubsStartedAt(workspace.getSubsStartedAt());
       	session.setSubsRenewalAt(workspace.getSubsRenewalAt());
         session.setLastStatusUpdate(workspace.getLastStatusUpdate());
@@ -226,7 +226,7 @@ class Service {
   private Response createVoucher(Handle handle, long workspaceId, SubsEvent subsEvent, Integer planId, long days, String description) {
   	Response res = Responses.NotFound.WORKSPACE;
 
-  	SystemDao planDao = handle.attach(SystemDao.class);
+  	PlanDao planDao = handle.attach(PlanDao.class);
   	Plan plan = planDao.findById(planId);
   	if (plan != null) {
 

@@ -47,7 +47,7 @@ public class GetVouchersTest {
 
 	@Test
 	public void Voucher_not_found_FOR_no_voucher_workspace() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -74,7 +74,7 @@ public class GetVouchersTest {
 		JSONObject json = res.getBody().getObject();
 		
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an workspace!", json.get("reason"));
+		assertEquals("You must bind to a workspace!", json.get("reason"));
 	}
 
 	/**

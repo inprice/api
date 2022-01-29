@@ -2,6 +2,8 @@ package io.inprice.api.consts;
 
 import java.util.Set;
 
+import io.inprice.common.helpers.GlobalConsts;
+
 public class Consts {
 
 	public static final String SESSION = "INPRICE_AT";
@@ -22,7 +24,7 @@ public class Consts {
   	public static final String PROD = "prod";
   }
 
-  public static Set<String> EXCLUSIVE_EMAILS = Set.of("super@inprice.io", "admin@inprice.io", "demo@inprice.io");
+  public static Set<String> EXCLUSIVE_EMAILS = Set.of("super@inprice.io", "admin@inprice.io", GlobalConsts.DEMO_ACCOUNT);
 
   public static class Paths {
 

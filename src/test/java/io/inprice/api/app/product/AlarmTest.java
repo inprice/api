@@ -63,7 +63,7 @@ public class AlarmTest {
 
 	@Test
 	public void Request_body_is_invalid_WITHOUT_body() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), null);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN(), null);
 
 		assertEquals(400, json.getInt("status"));
     assertEquals("Request body is invalid!", json.getString("reason"));
@@ -87,7 +87,7 @@ public class AlarmTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Pro_plan_with_two_extra_users.VIEWER(), new Long[] { 1L }, 0);
+		JSONObject json = callTheService(TestWorkspaces.Second_Premium_plan_and_two_extra_users.VIEWER(), new Long[] { 1L }, 0);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -104,8 +104,10 @@ public class AlarmTest {
 	 */
 	@Test
 	public void Alarm_not_found_WHEN_trying_to_update_someone_elses_products() {
+		if (SERVICE_ENDPOINT.endsWith("/off")) return;
+
 		//to gather other workspace's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN());
 
 		//searches some specific products
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product R", 0);
@@ -114,7 +116,7 @@ public class AlarmTest {
 		TestUtils.logout(cookies); //here is important!
 
 		//evil user logs in
-		cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 
 		//searches for alarms
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
@@ -139,7 +141,7 @@ public class AlarmTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(404, json.getInt("status"));
-		assertEquals("Alarm not found!", json.getString("reason"));
+		assertEquals("Product not found!", json.getString("reason"));
 	}
 
 	/**
@@ -154,14 +156,14 @@ public class AlarmTest {
 		if (SERVICE_ENDPOINT.endsWith("/off")) return;
 
 		//to gather other workspace's products, admin is logged in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user_for_alarm_limits.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN());
 
 		//searches for alarms
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
 		assertNotNull(alarmList);
 
 		//searches for trying products (must be 1)
-		JSONArray productsList = TestFinder.searchProducts(cookies, "Product O", 0);
+		JSONArray productsList = TestFinder.searchProducts(cookies, "Product 2", 0);
 		assertNotNull(productsList);
 		assertTrue(productsList.length() == 1);
 
@@ -199,8 +201,8 @@ public class AlarmTest {
 	public void Everything_must_be_ok_FOR_editor_and_admin() {
 		//both workspace have 2 products
 		JSONObject[] users = {
-			TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN(),
-			TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR()
+			TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN(),
+			TestWorkspaces.Professional_plan_and_one_extra_user.EDITOR()
 		};
 
 		for (JSONObject user: users) {
@@ -243,7 +245,7 @@ public class AlarmTest {
 	}
 
 	private JSONObject callTheService(Long[] productIds) {
-		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN(), productIds);
+		return callTheService(TestWorkspaces.Second_standard_plan_and_no_extra_user.ADMIN(), productIds);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long[] entityIdSet) {

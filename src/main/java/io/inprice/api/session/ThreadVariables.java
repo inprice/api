@@ -1,6 +1,7 @@
 package io.inprice.api.session;
 
 import io.inprice.api.session.info.ForRedis;
+import io.inprice.common.meta.WorkspaceStatus;
 import io.inprice.common.models.User;
 
 class ThreadVariables {
@@ -8,6 +9,7 @@ class ThreadVariables {
   private int sessionNo;
   private ForRedis session;
   private User superUser;
+  private WorkspaceStatus workspaceStatus;
 
   ThreadVariables() { }
   
@@ -36,6 +38,10 @@ class ThreadVariables {
 
   public Long getWorkspaceId() {
 		return superUser.getWsId();
+	}
+
+  public WorkspaceStatus getWorkspaceStatus() {
+		return workspaceStatus;
 	}
 
 }

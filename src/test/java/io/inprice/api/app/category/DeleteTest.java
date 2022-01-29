@@ -80,7 +80,7 @@ public class DeleteTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)

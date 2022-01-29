@@ -47,7 +47,7 @@ public class DeleteWorkspaceTest {
 
 	@Test
 	public void Wrong_password_WITH_empty_password() {
-		JSONObject user = TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN();
+		JSONObject user = TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN();
 		JSONObject json = callTheServiceWith(user, null);
 
 		assertEquals(112, json.getInt("status"));
@@ -56,7 +56,7 @@ public class DeleteWorkspaceTest {
 
 	@Test
 	public void Wrong_password_WITH_different_password() {
-		JSONObject user = TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN();
+		JSONObject user = TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN();
 		JSONObject json = callTheServiceWith(user, "5678");
 
 		assertEquals(112, json.getInt("status"));
@@ -65,7 +65,7 @@ public class DeleteWorkspaceTest {
 
 	@Test
 	public void Wrong_password_FOR_shorter_password() {
-		JSONObject user = TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN();
+		JSONObject user = TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN();
 		JSONObject json = callTheServiceWith(user, "123");
 
 		assertEquals(112, json.getInt("status"));
@@ -74,7 +74,7 @@ public class DeleteWorkspaceTest {
 
 	@Test
 	public void Wrong_password_FOR_longer_password() {
-		JSONObject user = TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN();
+		JSONObject user = TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN();
 		JSONObject json = callTheServiceWith(user, RandomStringUtils.randomAlphabetic(17));
 
 		assertEquals(112, json.getInt("status"));
@@ -83,7 +83,7 @@ public class DeleteWorkspaceTest {
 
 	@Test
 	public void Forbidden_WITH_editor() {
-		JSONObject user = TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR();
+		JSONObject user = TestWorkspaces.Second_professional_plan_and_one_extra_user.EDITOR();
 		JSONObject json = callTheServiceWith(user, user.getString("password"));
 
 		assertEquals(403, json.getInt("status"));

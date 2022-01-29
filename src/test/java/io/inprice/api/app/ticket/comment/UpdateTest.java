@@ -77,7 +77,7 @@ public class UpdateTest {
 
 	@Test
 	public void You_are_not_allowed_to_update_this_data_WITH_closed_comment() {
-		JSONObject user = TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN();
+		JSONObject user = TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN();
 
 		Cookies cookies = TestUtils.login(user);
 
@@ -108,7 +108,7 @@ public class UpdateTest {
 
 	@Test
 	public void Ticket_is_closed() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "LOW");
 
@@ -159,7 +159,7 @@ public class UpdateTest {
 		comment.put("body", "This is an altered comment by an evil user!");
 
 		//evil user logs in
-		cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//tries to delete other workspace's comment
 		HttpResponse<JsonNode> res = Unirest.put(SERVICE_ENDPOINT)
@@ -229,7 +229,7 @@ public class UpdateTest {
 
 	@Test
 	public void You_are_not_allowed_to_do_this_operation_WITH_viewer_but_not_the_creator() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "HIGH");
 
@@ -256,7 +256,7 @@ public class UpdateTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "HIGH");
 
@@ -282,7 +282,7 @@ public class UpdateTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), body);
+		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), body);
 	}
 
 	private JSONObject callTheService(JSONObject user, JSONObject body) {

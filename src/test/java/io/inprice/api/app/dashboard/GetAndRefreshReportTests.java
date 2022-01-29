@@ -72,7 +72,7 @@ public class GetAndRefreshReportTests {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(915, json.getInt("status"));
-		assertNotNull("You must bind an workspace!", json.get("reason"));
+		assertNotNull("You must bind to a workspace!", json.get("reason"));
 	}
 
 	/**
@@ -105,7 +105,7 @@ public class GetAndRefreshReportTests {
 
 	@Test
 	public void Everything_must_be_ok() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -118,7 +118,6 @@ public class GetAndRefreshReportTests {
 
 		JSONObject data = json.getJSONObject("data");
 		assertNotNull(data);
-		assertTrue(data.has("date"));
 		assertTrue(data.has("products"));
 		assertTrue(data.has("links"));
 		assertTrue(data.has("workspace"));

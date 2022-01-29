@@ -14,7 +14,7 @@ import kong.unirest.json.JSONObject;
 public enum TestWorkspaces {
 
 	Without_a_plan_and_extra_user(
-		"Without A Plan and Extra User",
+		"Without a Plan and Extra User",
   	"Has one voucher and 1 User, 1 Workspace and 1 System announces. 2 Tickets and 3 Comments (1 is closed)",
   	Set.of("RB5QV6CF"),
 		Map.of(
@@ -23,7 +23,7 @@ public enum TestWorkspaces {
 	),
 
 	Second_without_a_plan_and_extra_user(
-		"Second - Without A Plan and Extra User",
+		"Second - Without a Plan and Extra User",
   	"Has two vouchers and 1 User and 1 System announces",
   	Set.of("MU3XF9NP", "KJ9QF6G7"),
 		Map.of(
@@ -31,8 +31,8 @@ public enum TestWorkspaces {
 		)
 	),
 
-	Basic_plan_but_no_extra_user(
-		"With Basic Plan (Free Use) but No Extra User",
+	Standard_plan_and_no_extra_user(
+		"Standard Plan and No Extra User",
   	"Has 9 active, 7 trying, 5 waiting and 3 problem links. 2 Product and 3 Link alarms, no voucher",
   	null,
 		Map.of(
@@ -40,8 +40,17 @@ public enum TestWorkspaces {
 		)
 	),
 
-	Starter_plan_and_one_extra_user(
-		"With Starter Plan and One Extra User",
+	Second_standard_plan_and_no_extra_user(
+		"Second - Standard Plan and No Extra User",
+  	"Has no link or voucher. 1 Product 1 Link alarms",
+  	null,
+		Map.of(
+			TestRoles.ADMIN, new JSONObject().put("email", "admin@workspace-d.com")
+		)
+	),
+
+	Professional_plan_and_one_extra_user(
+		"Professional Plan and One Extra User",
 		"Has 6 active, 2 trying, 1 waiting and 3 problem links. 1 Product and 1 Link alarms. No voucher",
   	null,
 		Map.of(
@@ -50,18 +59,9 @@ public enum TestWorkspaces {
 		)
 	),
 
-	Standard_plan_and_no_extra_users(
-		"With Standard Plan (Vouchered) but No Extra User",
-  	"Has no link or voucher. 1 Product 1 Link alarms",
-  	null,
-		Map.of(
-			TestRoles.ADMIN, new JSONObject().put("email", "admin@workspace-d.com")
-		)
-	),
-
-	Standard_plan_and_one_extra_user(
-		"With Standard Plan with One Extra User. 1 Ticket",
-  	"Has no link, alarm or voucher",
+	Second_professional_plan_and_one_extra_user(
+		"Second - Professional Plan and One Extra User",
+  	"Has no link, alarm or voucher, but one Ticket",
   	null,
 		Map.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@workspace-e.com"),
@@ -69,8 +69,17 @@ public enum TestWorkspaces {
 		)
 	),
 
-	Standard_plan_and_two_extra_users(
-		"With Standard Plan and Two Extra Users",
+	Premium_plan_with_no_user(
+		"Premium Plan and No User",
+  	"Two workspace transactions. Has 2 active and 2 problem links. No alarm or voucher",
+  	null,
+		Map.of(
+			TestRoles.ADMIN, new JSONObject().put("email", "admin@workspace-g.com")
+		)
+	),
+
+	Premium_plan_and_two_extra_users(
+		"Premium Plan and Two Extra Users",
   	"Has 5 active, 1 trying, 1 waiting and 3 problem links. 2 Tickets opened by Viewer and 1 is opened by Admin (in CLOSED status). Three workspace transactions. No alarm or voucher",
   	null,
 		Map.of(
@@ -80,17 +89,8 @@ public enum TestWorkspaces {
 		)
 	),
 
-	Pro_plan_with_no_user(
-		"With Pro Plan and No User. Two workspace transactions",
-  	"Has 2 active and 2 problem links. No alarm or voucher",
-  	null,
-		Map.of(
-			TestRoles.ADMIN, new JSONObject().put("email", "admin@workspace-g.com")
-		)
-	),
-
-	Pro_plan_with_two_extra_users(
-		"With Pro Plan and Two Extra Users.",
+	Second_Premium_plan_and_two_extra_users(
+		"Second - Premium Plan and Two Extra Users",
   	"Has no link, alarm or voucher",
   	null,
 		Map.of(
@@ -101,7 +101,7 @@ public enum TestWorkspaces {
 	),
 
 	Premium_plan_and_three_pending_users(
-		"With Premium Plan and Two Pending Users",
+		"Premium Plan and Three Pending Users",
   	"Has no link, alarm or voucher. Apart from admin, other 3 users are in PENDING state",
   	null,
 		Map.of(
@@ -112,8 +112,8 @@ public enum TestWorkspaces {
 		)
 	),
 
-	Cancelled_Basic_plan_no_link_no_alarm(
-		"Cancelled -Basic Plan- No link, No alarm",
+	Cancelled_Standard_plan(
+		"Cancelled Standard Plan",
   	"Cancelled and has no link, alarm or voucher",
   	null,
 		Map.of(
@@ -121,18 +121,19 @@ public enum TestWorkspaces {
 		)
 	),
 
-	Cancelled_Starter_plan_30_links_6_alarms(
-		"Cancelled -Starter Plan- 30 links, 6 alarms",
+	Cancelled_Professional_plan(
+		"Cancelled Professional Plan",
   	"Cancelled and 30 links, 6 alarms, No voucher",
   	null,
 		Map.of(
-			TestRoles.ADMIN, new JSONObject().put("email", "admin@workspace-j.com")
+			TestRoles.ADMIN, new JSONObject().put("email", "admin@workspace-j.com"),
+			TestRoles.EDITOR, new JSONObject().put("email", "blocked@editor.com")
 		)
 	),
 	
-	Basic_plan_but_no_extra_user_for_alarm_limits(
-		"With Basic Plan (Free Use) but No Extra User for alarm limit tests",
-  	"Has 4 active and 1 waiting links and 1 Product. 4 active links and 1 product have alarms",
+	Enterprise_plan_and_no_extra_user(
+		"Enterprise Plan and No Extra User",
+  	"Free Use. Has 4 active and 1 waiting links and 1 Product. 4 active links and 1 product alarm",
   	null,
 		Map.of(
 			TestRoles.ADMIN, new JSONObject().put("email", "admin@workspace-k.com")

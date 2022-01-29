@@ -272,7 +272,10 @@ class WorkspaceService {
         if (PasswordHelper.isValid(password, user.getPassword())) {
           Workspace workspace = workspaceDao.findByAdminId(CurrentUser.getUserId());
 
-          if (workspace != null && workspace.getId() > 2) {
+          Long baseLimit = 2L;
+          if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST)) baseLimit = 0L;
+
+          if (workspace != null && workspace.getId() > baseLimit) {
             logger.info("{} is being deleted. Id: {}...", workspace.getName(), workspace.getId());
             
             List<String> hashList = sessionDao.findHashesByWorkspaceId(CurrentUser.getWorkspaceId());

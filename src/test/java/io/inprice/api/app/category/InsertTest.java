@@ -100,7 +100,7 @@ public class InsertTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -117,7 +117,7 @@ public class InsertTest {
 
 	@Test
 	public void This_category_has_already_been_added() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN());
 
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("value", "BEVERAGES");
@@ -136,8 +136,25 @@ public class InsertTest {
 	}
 
 	@Test
+	public void You_dont_have_an_active_plan() {
+		Cookies cookies = TestUtils.login(TestWorkspaces.Cancelled_Standard_plan.ADMIN());
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(SAMPLE_BODY)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(903, json.getInt("status"));
+		assertEquals("You don't have an active plan!", json.getString("reason"));
+	}
+
+	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR());
 
 		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
 			.headers(Fixtures.SESSION_0_HEADERS)
@@ -153,7 +170,7 @@ public class InsertTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), body);
+		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), body);
 	}
 
 	private JSONObject callTheService(JSONObject user, JSONObject body) {

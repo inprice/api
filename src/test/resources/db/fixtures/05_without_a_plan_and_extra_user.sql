@@ -12,7 +12,7 @@ insert into test.user (email, password, full_name, timezone) values (@admin_emai
 set @admin_id = last_insert_id();
 
 -- workspace
-insert into test.workspace (name, admin_id) values ('Without A Plan and Extra User', @admin_id);
+insert into test.workspace (name, admin_id) values ('Without a Plan and Extra User', @admin_id);
 set @workspace_id = last_insert_id();
 
 -- workspace history
@@ -22,7 +22,7 @@ insert into test.workspace_history (workspace_id, status) values (@workspace_id,
 insert into test.membership (email, user_id, workspace_id, role, status) values (@admin_email, @admin_id, @workspace_id, 'ADMIN', 'JOINED');
 
 -- voucher for Basic Plan
-insert into test.voucher (code, plan_id, days, description, issuer_id) values ('RB5QV6CF', @basic_plan_id, 30, 'Given for testing', @workspace_id);
+insert into test.voucher (code, plan_id, days, description, issuer_id) values ('RB5QV6CF', @standard_plan_id, 30, 'Given for testing', @workspace_id);
 
 -- announces
 insert into test.announce (type, level, title, body, starting_at, ending_at, user_id, workspace_id) 
