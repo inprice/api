@@ -63,7 +63,7 @@ public class AlarmTest {
 
 	@Test
 	public void Request_body_is_invalid_WITHOUT_body() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), null);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN(), null);
 
 		assertEquals(400, json.getInt("status"));
     assertEquals("Request body is invalid!", json.getString("reason"));
@@ -87,7 +87,7 @@ public class AlarmTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), new Long[] { 1L }, 0);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), new Long[] { 1L }, 0);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -100,12 +100,14 @@ public class AlarmTest {
 	 *  c) picks one of those links
 	 *  d) builds body up
 	 *  e) evil user logs in
-	 *  f) tries to delete other workspace's links
+	 *  f) tries to update other workspace's links
 	 */
 	@Test
 	public void Alarm_not_found_WHEN_trying_to_update_someone_elses_links() {
+		if (SERVICE_ENDPOINT.endsWith("/off")) return;
+
 		//to gather other workspace's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 
 		//searches for alarms
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "LINK");
@@ -113,7 +115,7 @@ public class AlarmTest {
 		TestUtils.logout(cookies); //here is important!
 
 		//evil user logs in
-		cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN());
+		cookies = TestUtils.login(TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN());
 
 		//searches some specific links
 		JSONArray linkList = TestFinder.searchLinks(cookies, "ACTIVE", 0);
@@ -143,9 +145,9 @@ public class AlarmTest {
 
 	/**
 	 * Consists of four steps;
-	 *	a) searches for alarms for links
+	 *	a) searches alarms for links
 	 *	b) searches for trying links
-	 *  c) builds body up with those link and alarm
+	 *  c) builds body with those link and alarm
 	 *  d) tries to set alarm on
 	 */
 	@Test
@@ -153,7 +155,7 @@ public class AlarmTest {
 		if (SERVICE_ENDPOINT.endsWith("/off")) return;
 
 		//to gather other workspace's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user_for_alarm_limits.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN());
 
 		//searches for alarms
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "LINK");
@@ -162,7 +164,7 @@ public class AlarmTest {
 		//searches for trying links (must be 1)
 		JSONArray tryingLinksList = TestFinder.searchLinks(cookies, "TRYING");
 		assertNotNull(tryingLinksList);
-		assertTrue(tryingLinksList.length() == 1);
+		assertTrue(tryingLinksList.length() == 7);
 
 		//picks one of those links
 		Long[] linkIds = { tryingLinksList.getJSONObject(0).getLong("id") };
@@ -198,8 +200,8 @@ public class AlarmTest {
 	public void Everything_must_be_ok_FOR_editor_and_admin() {
 		//both workspace have 2 links in PROBLEM status!
 		JSONObject[] users = {
-			TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN(),
-			TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR()
+			TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN(),
+			TestWorkspaces.Professional_plan_and_one_extra_user.EDITOR()
 		};
 
 		for (JSONObject user: users) {
@@ -242,7 +244,7 @@ public class AlarmTest {
 	}
 
 	private JSONObject callTheService(Long[] linkIds) {
-		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN(), linkIds);
+		return callTheService(TestWorkspaces.Second_standard_plan_and_no_extra_user.ADMIN(), linkIds);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long[] entityIdSet) {

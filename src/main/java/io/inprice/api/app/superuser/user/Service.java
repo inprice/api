@@ -1,8 +1,10 @@
 package io.inprice.api.app.superuser.user;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -72,33 +74,40 @@ class Service {
   			User user = userDao.findById(dto.getId());
 
   			if (user != null) {
-  				if (! user.isBanned()) {
-  					
-  					Dao superDao = handle.attach(Dao.class);
-  					handle.begin();
-  					
-  					//user is banned
-  					boolean isOK = superDao.ban(dto.getId(), dto.getText());
+  				if (user.isBanned() == false) {
+  					//if (Consts.EXCLUSIVE_EMAILS.contains(user.getEmail()) == false) {
 
-  					if (isOK) {
-  						//he must be added in to user_marks table to prevent later registration or forgot pass. requests!
-  						superDao.addUserMark(user.getEmail(), Marks.BANNED.name(), dto.getText());
-
-  						//and his workspaces too
-  						superDao.banAllBoundWorkspacesOfUser(dto.getId());
-
-  						//his sessions are terminated as well!
-              UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
-  	          List<String> hashList = userSessionDao.findHashesByUserId(dto.getId());
-
-  	          if (hashList.size() > 0) {
-  	          	userSessionDao.deleteByHashList(hashList);
-  	          	redis.removeSesions(hashList);
-  	          }
-
-  	          handle.commit();
-  						return Responses.OK;
-  					}
+	  					Dao superDao = handle.attach(Dao.class);
+	  					handle.begin();
+	  					
+	  					//user is banned
+	  					boolean isOK = superDao.ban(dto.getId(), dto.getText());
+	
+	  					if (isOK) {
+	  						//he must be added in to user_marks table to prevent later registration or forgot pass. requests!
+	  						superDao.addUserMark(user.getEmail(), Marks.BANNED.name(), dto.getText());
+	
+	  						//and his workspaces too
+	  						superDao.banAllBoundWorkspacesOfUser(dto.getId());
+	
+	  						//his sessions are terminated as well!
+	              UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
+	  	          List<String> hashList = userSessionDao.findHashesByUserId(dto.getId());
+	
+	  	          if (hashList.size() > 0) {
+	  	          	userSessionDao.deleteByHashList(hashList);
+	  	          	redis.removeSesions(hashList);
+	  	          }
+	
+	  	          handle.commit();
+	  	          Map<String, String> dataMap = Map.of(
+	  	          	"reason", dto.getText()
+	          		);
+	  						return new Response(dataMap);
+	  					}
+    				//} else {
+    				//	return Responses.NotSuitable.EMAIL;
+    				//}
   				} else {
   					return Responses.Already.BANNED_USER;
   				}
@@ -163,6 +172,8 @@ class Service {
   			List<Membership> membershipList = superDao.fetchMembershipListById(userId);
   			List<ForDatabase> sessionList = superDao.fetchSessionListById(userId);
   			List<UserMarks> usedServiceList = superDao.fetchUsedServiceListByEmail(user.getEmail());
+  			
+  			user.setPassword(null);
   			
   			Map<String, Object> data = Map.of(
   				"user", user,
@@ -265,6 +276,24 @@ class Service {
     			return Responses.DataProblem.DB_PROBLEM;
     		}
   		}
+  	}
+  	return Responses.NotFound.USER;
+  }
+
+  Response terminateAllSessions(Long userId) {
+  	try (Handle handle = Database.getHandle()) {
+      UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
+
+      List<ForDatabase> sessions = userSessionDao.findListByUserId(userId);
+      if (CollectionUtils.isNotEmpty(sessions)) {
+      	List<String> hashList = new ArrayList<>(sessions.size());
+        for (ForDatabase ses : sessions) hashList.add(ses.getHash());
+        redis.removeSesions(hashList);
+
+        if (userSessionDao.deleteByUserId(userId)) {
+          return Responses.OK;
+        }
+      }
   	}
   	return Responses.NotFound.USER;
   }

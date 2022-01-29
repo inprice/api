@@ -34,25 +34,28 @@ public class BrandService {
   	
     String problem = validate(value);
     if (problem == null) {
-      try (Handle handle = Database.getHandle()) {
-        BrandDao brandDao = handle.attach(BrandDao.class);
-
-        String name = SqlHelper.clear(value);
-        Brand found = brandDao.findByName(name, CurrentUser.getWorkspaceId());
-
-        if (found == null) {
-        	Long id = brandDao.insert(name, CurrentUser.getWorkspaceId());
-        	if (id != null && id > 0) {
-        		res = Responses.OK;
-          }
-        } else {
-        	res = Responses.Already.Defined.BRAND;
-        }
-      }
+    	if (CurrentUser.getWorkspaceStatus().isActive()) {
+	      try (Handle handle = Database.getHandle()) {
+	        BrandDao brandDao = handle.attach(BrandDao.class);
+	
+	        String name = SqlHelper.clear(value);
+	        Brand found = brandDao.findByName(name, CurrentUser.getWorkspaceId());
+	
+	        if (found == null) {
+	        	Long id = brandDao.insert(name, CurrentUser.getWorkspaceId());
+	        	if (id != null && id > 0) {
+	        		res = Responses.OK;
+	          }
+	        } else {
+	        	res = Responses.Already.Defined.BRAND;
+	        }
+	      }
+	    } else {
+	    	res = Responses.NotAllowed.HAVE_NO_ACTIVE_PLAN;
+	    }
     } else {
     	res = new Response(problem);
     }
-
     return res;
   }
 

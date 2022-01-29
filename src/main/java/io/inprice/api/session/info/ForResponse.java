@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import io.inprice.common.meta.UserRole;
+import io.inprice.common.meta.WorkspaceStatus;
 import io.inprice.common.models.Workspace;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
@@ -23,10 +24,10 @@ public class ForResponse implements Serializable {
   private String fullName;
   private String email;
   private String workspace;
-  private String workspaceStatus;
+  private WorkspaceStatus workspaceStatus;
   private Integer planId;
   private String planName;
-  private Integer linkCount;
+  private Integer productCount;
   private Date subsStartedAt;
   private Date subsRenewalAt;
   private Date lastStatusUpdate;
@@ -41,12 +42,12 @@ public class ForResponse implements Serializable {
     this.fullName = fullName;
     this.email = email;
     this.workspace = workspace.getName();
-    this.workspaceStatus = workspace.getStatus().name();
+    this.workspaceStatus = workspace.getStatus();
     if (workspace.getPlan() != null) {
     	this.planId = workspace.getPlan().getId();
     	this.planName = workspace.getPlan().getName();
     }
-    this.linkCount = workspace.getLinkCount();
+    this.productCount = workspace.getProductCount();
     this.subsStartedAt = workspace.getSubsStartedAt();
     this.subsRenewalAt = workspace.getSubsRenewalAt();
     this.lastStatusUpdate = workspace.getLastStatusUpdate();
@@ -63,7 +64,7 @@ public class ForResponse implements Serializable {
     this.workspaceStatus = forResponse.getWorkspaceStatus();
     this.planId = forResponse.getPlanId();
     this.planName = forResponse.getPlanName();
-    this.linkCount = forResponse.getLinkCount();
+    this.productCount = forResponse.getProductCount();
     this.subsStartedAt = forResponse.getSubsStartedAt();
     this.subsRenewalAt = forResponse.getSubsRenewalAt();
     this.lastStatusUpdate = forResponse.getLastStatusUpdate();
@@ -80,7 +81,7 @@ public class ForResponse implements Serializable {
     this.workspaceStatus = forRedis.getWorkspaceStatus();
     this.planId = forRedis.getPlanId();
     this.planName = forRedis.getPlanName();
-    this.linkCount = forRedis.getLinkCount();
+    this.productCount = forRedis.getProductCount();
     this.subsStartedAt = forRedis.getSubsStartedAt();
     this.subsRenewalAt = forRedis.getSubsRenewalAt();
     this.lastStatusUpdate = forRedis.getLastStatusUpdate();
@@ -94,10 +95,10 @@ public class ForResponse implements Serializable {
     this.fullName = user.getFullName();
     this.email = forCookie.getEmail();
     this.workspace = mem.getWorkspaceName();
-    this.workspaceStatus = mem.getWorkspaceStatus().name();
+    this.workspaceStatus = mem.getWorkspaceStatus();
     this.planId = mem.getPlanId();
     this.planName = mem.getPlanName();
-    this.linkCount = mem.getLinkCount();
+    this.productCount = mem.getProductCount();
     this.subsStartedAt = mem.getSubsStartedAt();
     this.subsRenewalAt = mem.getSubsRenewalAt();
     this.lastStatusUpdate = mem.getLastStatusUpdate();
@@ -113,10 +114,10 @@ public class ForResponse implements Serializable {
     this.email = email;
     this.timezone = timezone;
   	this.role = UserRole.SUPER;
-    this.workspace = "NOT SELECTED";
-    this.workspaceStatus = "UNKNOWN";
+    this.workspace = "Please bind a workspace";
+    this.workspaceStatus = WorkspaceStatus.CREATED;
     this.planId = 0;
-    this.linkCount = 0;
+    this.productCount = 0;
   }
 
 }

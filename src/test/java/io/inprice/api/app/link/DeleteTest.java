@@ -74,7 +74,7 @@ public class DeleteTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 0);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 0);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -92,7 +92,7 @@ public class DeleteTest {
 	@Test
 	public void Link_not_found_WHEN_trying_to_delete_someone_elses_links() {
 		//to gather other workspace's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//searches some specific links
 		JSONArray linkList = TestFinder.searchLinks(cookies, "ACTIVE", 0);
@@ -106,7 +106,7 @@ public class DeleteTest {
 		Long fromProductId = link.getLong("productId");
 
 		//evil user logs in
-		cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
+		cookies = TestUtils.login(TestWorkspaces.Second_professional_plan_and_one_extra_user.EDITOR());
 
 		//builds the body up
 		JSONObject body = new JSONObject();
@@ -139,8 +139,8 @@ public class DeleteTest {
 	public void Everything_must_be_ok_FOR_editor_and_admin() {
 		//both workspace have 2 links in PROBLEM status!
 		JSONObject[] users = {
-			TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(),
-			TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR()
+			TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN(),
+			TestWorkspaces.Second_professional_plan_and_one_extra_user.EDITOR()
 		};
 
 		for (JSONObject user: users) {
@@ -190,7 +190,7 @@ public class DeleteTest {
 	}
 
 	private JSONObject callTheService(Long productId, Long[] linkIds) {
-		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN(), productId, linkIds);
+		return callTheService(TestWorkspaces.Second_standard_plan_and_no_extra_user.ADMIN(), productId, linkIds);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long productId, Long[] linkIds) {

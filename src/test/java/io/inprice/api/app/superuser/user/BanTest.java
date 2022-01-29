@@ -159,7 +159,7 @@ public class BanTest {
 		JSONObject json = callTheService(body);
 
 		assertEquals(200, json.getInt("status"));
-		assertEquals("OK", json.getString("reason"));
+		assertEquals(true, json.getBoolean("ok"));
 	}
 
 	private JSONObject callTheService(JSONObject body) {

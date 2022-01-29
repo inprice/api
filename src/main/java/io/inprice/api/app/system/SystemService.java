@@ -29,8 +29,8 @@ public class SystemService {
   		synchronized (SystemService.class) {
   			if (planList == null) {
           try (Handle handle = Database.getHandle()) {
-            SystemDao planDao = handle.attach(SystemDao.class);
-            planList = planDao.fetchPublicPlans(); 
+            PlanDao planDao = handle.attach(PlanDao.class);
+            planList = planDao.findPublicPlans(); 
           }
   			}
 			}
@@ -60,29 +60,29 @@ public class SystemService {
       WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
       Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
 
-      Integer userLimit = 0;
-      Integer linkLimit = 0;
+      Integer productLimit = 0;
       Integer alarmLimit = 0;
+      Integer userLimit = 1;
       if (workspace != null && workspace.getPlan() != null) {
-      	userLimit = workspace.getPlan().getUserLimit();
-      	linkLimit = workspace.getPlan().getLinkLimit();
+      	productLimit = workspace.getPlan().getProductLimit();
       	alarmLimit = workspace.getPlan().getAlarmLimit();
-      	if (userLimit == null) userLimit = 0;
-      	if (linkLimit == null) linkLimit = 0;
+      	userLimit = workspace.getPlan().getUserLimit();
+      	if (productLimit == null) productLimit = 0;
       	if (alarmLimit == null) alarmLimit = 0;
+      	if (userLimit == null) userLimit = 1;
       }
 
       Map<String, Object> data = Map.of(
 	      "workspace", workspace,
-	      "userLimit", userLimit,
-	      "userCount", workspace.getUserCount(),
-	      "remainingUser", userLimit-workspace.getUserCount(),
-	      "linkLimit", linkLimit,
-	      "linkCount", workspace.getLinkCount(),
-	      "remainingLink", linkLimit-workspace.getLinkCount(),
+	      "productLimit", productLimit,
+	      "productCount", workspace.getProductCount(),
+	      "remainingProduct", productLimit-workspace.getProductCount(),
 	      "alarmLimit", alarmLimit,
 	      "alarmCount", workspace.getAlarmCount(),
-	      "remainingAlarm", alarmLimit-workspace.getAlarmCount()
+	      "remainingAlarm", alarmLimit-workspace.getAlarmCount(),
+	      "userLimit", userLimit,
+	      "userCount", workspace.getUserCount(),
+	      "remainingUser", userLimit-workspace.getUserCount()
       );
       response = new Response(data);
     } catch (Exception e) {

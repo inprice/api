@@ -12,6 +12,7 @@ import org.junit.runners.JUnit4;
 import io.inprice.api.utils.Fixtures;
 import io.inprice.api.utils.TestFinder;
 import io.inprice.api.utils.TestUtils;
+import io.inprice.api.utils.TestWorkspaces;
 import kong.unirest.Cookies;
 import kong.unirest.HttpResponse;
 import kong.unirest.JsonNode;
@@ -73,7 +74,7 @@ public class FetchTransactionsTest {
 	public void Everything_must_be_ok_WITH_superuser() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
-		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "With Standard Plan and Two Extra Users");
+		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, TestWorkspaces.Premium_plan_and_two_extra_users.getName());
 		assertNotNull(workspaceList);
 		assertEquals(1, workspaceList.length());
 		

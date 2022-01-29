@@ -271,60 +271,59 @@ class WorkspaceService {
   
         if (PasswordHelper.isValid(password, user.getPassword())) {
           Workspace workspace = workspaceDao.findByAdminId(CurrentUser.getUserId());
-  
-          if (workspace != null) {
-            if (! WorkspaceStatus.SUBSCRIBED.equals(workspace.getStatus())) {
-              logger.info("{} is being deleted. Id: {}...", workspace.getName(), workspace.getId());
-              
-              List<String> hashList = sessionDao.findHashesByWorkspaceId(CurrentUser.getWorkspaceId());
-              if (hashList != null && ! hashList.isEmpty()) {
-              	redis.removeSesions(hashList);
-              }
-  
-              String where = "where workspace_id=" + CurrentUser.getWorkspaceId();
-  
-              Batch batch = handle.createBatch();
-              batch.add("SET FOREIGN_KEY_CHECKS=0");
-              batch.add("delete from link_price " + where);
-              batch.add("delete from link_history " + where);
-              batch.add("delete from link_spec " + where);
-              batch.add("delete from link " + where);
-              batch.add("delete from product " + where);
-              batch.add("delete from brand " + where);
-              batch.add("delete from category " + where);
-              batch.add("delete from alarm " + where);
-              batch.add("delete from voucher where issued_id=" + CurrentUser.getWorkspaceId() + " or issuer_id=" + CurrentUser.getWorkspaceId());
-              batch.add("delete from ticket_history " + where);
-              batch.add("delete from ticket_comment " + where);
-              batch.add("delete from ticket " + where);
-              batch.add("delete from announce_log " + where);
-              batch.add("delete from announce " + where);
-              batch.add("delete from access_log " + where);
-  
-              // in order to keep consistency, 
-              // users having no workspace other than this must be deleted too!!!
-              MembershipDao membershipDao = handle.attach(MembershipDao.class);
-              List<Long> unboundMembers = membershipDao.findUserIdListHavingJustThisWorkspace(CurrentUser.getWorkspaceId());
-              if (unboundMembers != null && ! unboundMembers.isEmpty()) {
-                String userIdList = StringUtils.join(unboundMembers, ",");
-                batch.add("delete from user where id in (" + userIdList + ")");
-              }
-              
-              batch.add("delete from membership " + where);
-              batch.add("delete from user_session " + where);
-              batch.add("delete from checkout " + where);
-              batch.add("delete from workspace_history " + where);
-              batch.add("delete from workspace_trans " + where);
-              batch.add("delete from workspace where id=" + CurrentUser.getWorkspaceId());
-  
-              batch.add("SET FOREIGN_KEY_CHECKS=1");
-              batch.execute();
-  
-              logger.info("{} is deleted. Id: {}.", workspace.getName(), workspace.getId());
-              res = Responses.OK;
-            } else {
-              res = Responses.Already.ACTIVE_SUBSCRIPTION;
+
+          Long baseLimit = 2L;
+          if (Props.getConfig().APP.ENV.equals(Consts.Env.TEST)) baseLimit = 0L;
+
+          if (workspace != null && workspace.getId() > baseLimit) {
+            logger.info("{} is being deleted. Id: {}...", workspace.getName(), workspace.getId());
+            
+            List<String> hashList = sessionDao.findHashesByWorkspaceId(CurrentUser.getWorkspaceId());
+            if (hashList != null && ! hashList.isEmpty()) {
+            	redis.removeSesions(hashList);
             }
+
+            String where = "where workspace_id=" + CurrentUser.getWorkspaceId();
+
+            Batch batch = handle.createBatch();
+            batch.add("SET FOREIGN_KEY_CHECKS=0");
+            batch.add("delete from link_price " + where);
+            batch.add("delete from link_history " + where);
+            batch.add("delete from link_spec " + where);
+            batch.add("delete from link " + where);
+            batch.add("delete from product " + where);
+            batch.add("delete from brand " + where);
+            batch.add("delete from category " + where);
+            batch.add("delete from alarm " + where);
+            batch.add("delete from voucher where issued_id=" + CurrentUser.getWorkspaceId() + " or issuer_id=" + CurrentUser.getWorkspaceId());
+            batch.add("delete from ticket_history " + where);
+            batch.add("delete from ticket_comment " + where);
+            batch.add("delete from ticket " + where);
+            batch.add("delete from announce_log " + where);
+            batch.add("delete from announce " + where);
+            batch.add("delete from access_log " + where);
+
+            // in order to keep consistency, 
+            // users having no workspace other than this must be deleted too!!!
+            MembershipDao membershipDao = handle.attach(MembershipDao.class);
+            List<Long> unboundMembers = membershipDao.findUserIdListHavingJustThisWorkspace(CurrentUser.getWorkspaceId());
+            if (unboundMembers != null && ! unboundMembers.isEmpty()) {
+              String userIdList = StringUtils.join(unboundMembers, ",");
+              batch.add("delete from user where id in (" + userIdList + ")");
+            }
+            
+            batch.add("delete from membership " + where);
+            batch.add("delete from user_session " + where);
+            batch.add("delete from checkout " + where);
+            batch.add("delete from workspace_history " + where);
+            batch.add("delete from workspace_trans " + where);
+            batch.add("delete from workspace where id=" + CurrentUser.getWorkspaceId());
+
+            batch.add("SET FOREIGN_KEY_CHECKS=1");
+            batch.execute();
+
+            logger.info("{} is deleted. Id: {}.", workspace.getName(), workspace.getId());
+            res = Responses.OK;
           } else {
             res = Responses.Invalid.WORKSPACE;
           }

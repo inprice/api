@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
 import io.inprice.api.app.workspace.WorkspaceDao;
-import io.inprice.api.app.system.SystemDao;
+import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.config.Props;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
@@ -128,10 +128,10 @@ class SubscriptionService {
         if (workspace != null) {
 
           if (workspace.getStatus().isOKForFreeUse()) {
-          	SystemDao planDao = handle.attach(SystemDao.class);
+          	PlanDao planDao = handle.attach(PlanDao.class);
             SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
-            Plan basicPlan = planDao.findByName("Basic Plan");
+            Plan standardPlan = planDao.findByName("Standard Plan");
 
           	handle.begin();
             
@@ -139,7 +139,7 @@ class SubscriptionService {
               subscriptionDao.startFreeUseOrApplyVoucher(
                 CurrentUser.getWorkspaceId(),
                 WorkspaceStatus.FREE.name(),
-                basicPlan.getId(),
+                standardPlan.getId(),
                 Props.getConfig().APP.FREE_USE_DAYS
               );
 
@@ -156,7 +156,7 @@ class SubscriptionService {
                   workspaceDao.insertStatusHistory(
                     workspace.getId(),
                     WorkspaceStatus.FREE.name(),
-                    basicPlan.getId()
+                    standardPlan.getId()
                   );
                 if (um_FREE_USE == null) workspaceDao.addUserMark(CurrentUser.getEmail(), Marks.FREE_USE.name(), true);
               }

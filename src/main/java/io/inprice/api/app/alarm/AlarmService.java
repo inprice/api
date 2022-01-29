@@ -77,29 +77,32 @@ public class AlarmService {
 		String problem = validate(dto);
 
 		if (problem == null) {
-			try (Handle handle = Database.getHandle()) {
-				AlarmDao alarmDao = handle.attach(AlarmDao.class);
-
-    		String name = generateName(dto);
-      	boolean doesExist = alarmDao.doesExistByName(name, 0l, CurrentUser.getWorkspaceId());
-
-				if (doesExist == false) {
-					dto.setName(name);
-					long id = alarmDao.insert(dto);
-					if (id > 0) {
-						dto.setId(id);
-						res = new Response(dto);
-					} else {
-						res = Responses.DataProblem.DB_PROBLEM;
+			if (CurrentUser.getWorkspaceStatus().isActive()) {
+				try (Handle handle = Database.getHandle()) {
+					AlarmDao alarmDao = handle.attach(AlarmDao.class);
+	
+	    		String name = generateName(dto);
+	      	boolean doesExist = alarmDao.doesExistByName(name, 0l, CurrentUser.getWorkspaceId());
+	
+					if (doesExist == false) {
+						dto.setName(name);
+						long id = alarmDao.insert(dto);
+						if (id > 0) {
+							dto.setId(id);
+							res = new Response(dto);
+						} else {
+							res = Responses.DataProblem.DB_PROBLEM;
+						}
+	        } else {
+	        	res = Responses.Already.Defined.ALARM;
 					}
-        } else {
-        	res = Responses.Already.Defined.ALARM;
-				}
-      }
+	      }
+			} else {
+				res = Responses.NotAllowed.HAVE_NO_ACTIVE_PLAN;
+			}
 		} else {
 			res = new Response(problem);
 		}
-
 		return res;
 	}
 

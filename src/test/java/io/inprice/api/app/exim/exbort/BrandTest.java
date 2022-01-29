@@ -51,16 +51,16 @@ public class BrandTest {
 
 	@Test
 	public void Brand_not_found() {
-		String csv = callTheService(TestWorkspaces.Cancelled_Starter_plan_30_links_6_alarms.ADMIN());
+		String csv = callTheService(TestWorkspaces.Cancelled_Professional_plan.ADMIN());
 		assertEquals("Brand not found!", csv);
 	}
 
 	@Test
 	public void Everything_must_be_ok_FOR_any_kind_of_users() {
 		Map<TestRoles, JSONObject> roleUserMap = Map.of(
-			TestRoles.ADMIN, TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(),
-			TestRoles.EDITOR, TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(),
-			TestRoles.VIEWER, TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER()
+			TestRoles.ADMIN, TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN(),
+			TestRoles.EDITOR, TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(),
+			TestRoles.VIEWER, TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER()
 		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {

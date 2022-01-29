@@ -23,6 +23,7 @@ import io.inprice.api.session.info.ForDatabase;
 import io.inprice.api.utils.Timezones;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
+import io.inprice.common.helpers.GlobalConsts;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.meta.UserRole;
 import io.inprice.common.meta.UserStatus;
@@ -161,7 +162,7 @@ public class UserService {
     try (Handle handle = Database.getHandle()) { 
       UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
       List<ForDatabase> sessions = userSessionDao.findOpenedSessions(CurrentUser.getUserId());
-      if (CurrentUser.getEmail().equals("demo@inprice.io")) {
+      if (CurrentUser.getEmail().equals(GlobalConsts.DEMO_ACCOUNT)) {
       	for (ForDatabase ses: sessions) {
       		ses.setIp("HIDDEN");
       	}

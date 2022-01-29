@@ -23,7 +23,7 @@ set @viewer_id = last_insert_id();
 
 -- workspace
 insert into test.workspace (name, plan_id, status, subs_started_at, subs_renewal_at, user_count, admin_id) 
-values ('With Pro Plan and Two Extra Users', @pro_plan_id, 'SUBSCRIBED', now(), @one_year_later, 1, @admin_id);
+values ('Second - Premium Plan and Two Extra Users', @premium_plan_id, 'SUBSCRIBED', now(), @one_year_later, 1, @admin_id);
 set @workspace_id = last_insert_id();
 
 -- workspace history

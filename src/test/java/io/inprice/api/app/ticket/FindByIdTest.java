@@ -66,7 +66,7 @@ public class FindByIdTest {
 	 */
 	@Test
 	public void Ticket_not_found_WHEN_trying_to_find_someone_elses_ticket() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
 		TestUtils.logout(cookies); //here is important!
@@ -86,7 +86,7 @@ public class FindByIdTest {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, 1L);
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an workspace!", json.getString("reason"));
+		assertEquals("You must bind to a workspace!", json.getString("reason"));
 	}
 
 	/**
@@ -99,7 +99,7 @@ public class FindByIdTest {
 	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
-		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "Without A Plan and Extra User");
+		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, TestWorkspaces.Without_a_plan_and_extra_user.getName());
 		JSONObject workspace = workspaceList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/{workspaceId}")
@@ -128,7 +128,7 @@ public class FindByIdTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
 
@@ -153,7 +153,7 @@ public class FindByIdTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "HIGH" }, 0); //for his viewer session!
 
@@ -177,7 +177,7 @@ public class FindByIdTest {
 	}
 
 	private JSONObject callTheService(Long id) {
-		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), id);
+		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), id);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long id) {

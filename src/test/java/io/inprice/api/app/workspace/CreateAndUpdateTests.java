@@ -167,12 +167,12 @@ public class CreateAndUpdateTests {
 	@Test
 	public void Everything_must_be_ok() {
 		if (httpMethod.equals("POST")) { // create operation in which everyone can create a new workspace!
-			JSONObject json = callTheServiceWith(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+			JSONObject json = callTheServiceWith(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
   		assertEquals(200, json.getInt("status"));
   		assertNotNull(json.getJSONObject("data"));
 		} else { // update operation in which only admins can update a new workspace!
-  		JSONObject json = callTheServiceWith(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+  		JSONObject json = callTheServiceWith(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
   
   		assertEquals(200, json.getInt("status"));
   		assertNotNull("OK", json.getString("reason"));
@@ -219,7 +219,7 @@ public class CreateAndUpdateTests {
 		if (currencyFormat != null) body.put("currencyFormat", currencyFormat);
 
 		//login with an admin
-		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN());
 
 		//making service call
 		HttpResponse<JsonNode> res = Unirest.request(httpMethod, SERVICE_ENDPOINT)

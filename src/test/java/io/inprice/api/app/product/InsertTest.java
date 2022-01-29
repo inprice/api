@@ -151,7 +151,7 @@ public class InsertTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 0);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 0);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -162,7 +162,7 @@ public class InsertTest {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("sku", "F-1");
 
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(), body, 0);
 
 		assertEquals(875, json.getInt("status"));
 		assertEquals("You already have a product having the same sku!", json.getString("reason"));
@@ -177,7 +177,7 @@ public class InsertTest {
 	@Test
 	public void You_have_reached_max_alarm_number_of_your_plan() {
 		//to gather other workspace's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user_for_alarm_limits.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN());
 
 		//searches for alarms
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
@@ -204,12 +204,29 @@ public class InsertTest {
 	}
 
 	@Test
+	public void You_dont_have_an_active_plan() {
+		Cookies cookies = TestUtils.login(TestWorkspaces.Cancelled_Standard_plan.ADMIN());
+
+		HttpResponse<JsonNode> res = Unirest.post(SERVICE_ENDPOINT)
+			.headers(Fixtures.SESSION_0_HEADERS)
+			.cookie(cookies)
+			.body(SAMPLE_BODY)
+			.asJson();
+		TestUtils.logout(cookies);
+
+		JSONObject json = res.getBody().getObject();
+
+		assertEquals(903, json.getInt("status"));
+		assertEquals("You don't have an active plan!", json.getString("reason"));
+	}
+
+	@Test
 	public void Everything_must_be_ok_FOR_duplicate_name_WITH_editor() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("sku", "T-1");
 		body.put("name", "Product K of Workspace-F");
 
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(), body, 0);
 		assertEquals(200, json.getInt("status"));
 	}
 
@@ -219,7 +236,7 @@ public class InsertTest {
 		body.put("sku", "Z-1");
 		body.put("name", "Editor is trying to define a new product!");
 
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(), body, 0);
 		assertEquals(200, json.getInt("status"));
 	}
 
@@ -228,12 +245,12 @@ public class InsertTest {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("name", "Admin is trying to define a new product!");
 
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN(), body, 0);
 		assertEquals(200, json.getInt("status"));
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), body, 0);
+		return callTheService(TestWorkspaces.Premium_plan_with_no_user.ADMIN(), body, 0);
 	}
 	
 	private JSONObject callTheService(JSONObject user, JSONObject body, int session) {

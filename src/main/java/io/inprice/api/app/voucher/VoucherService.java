@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.app.subscription.SubscriptionDao;
-import io.inprice.api.app.system.SystemDao;
+import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
@@ -57,16 +57,16 @@ public class VoucherService {
 
             if (voucher.getIssuedId() == null || voucher.getIssuedId().equals(CurrentUser.getWorkspaceId())) {
               WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
-              SystemDao planDao = handle.attach(SystemDao.class);
-
               Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
               if (workspace.getStatus().isOKForVoucher()) {
 
+                PlanDao planDao = handle.attach(PlanDao.class);
               	Plan voucherPlan = planDao.findById(voucher.getPlanId());
-              	if (workspace.getLinkCount() == null) workspace.setLinkCount(0);
 
-              	// if workspace's current link count is equal or less then voucher's limit
-                if (workspace.getLinkCount().compareTo(voucherPlan.getLinkLimit()) <= 0) {
+              	// if workspace's current product count is equal or less then voucher's limit
+                if (workspace.getProductCount().compareTo(voucherPlan.getProductLimit()) <= 0
+                		&& workspace.getAlarmCount().compareTo(voucherPlan.getAlarmLimit()) <= 0
+                		&& workspace.getUserCount().compareTo(voucherPlan.getUserLimit()) <= 0) {
                   SubscriptionDao subscriptionDao = handle.attach(SubscriptionDao.class);
 
                   boolean isOK = 

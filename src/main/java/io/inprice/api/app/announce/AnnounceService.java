@@ -46,6 +46,18 @@ public class AnnounceService {
 			return Responses.OK;
 		}
 	}
+	
+	Response addLogForCurrentUser(Long announceId) {
+		if (announceId != null && announceId > 0) {
+			try (Handle handle = Database.getHandle()) {
+				AnnounceDao announceDao = handle.attach(AnnounceDao.class);
+				announceDao.markAsRead(announceId, CurrentUser.getUserId(), CurrentUser.getWorkspaceId());
+				List<Announce> list = announceDao.fetchNotLoggedAnnounces(CurrentUser.getUserId(), CurrentUser.getWorkspaceId());
+				return new Response(list);
+			}
+		}
+		return Responses.NotFound.ANNOUNCE;
+	}
 
   Response search(SearchDTO dto) {
   	if (dto.getTerm() != null) dto.setTerm(SqlHelper.clear(dto.getTerm()));

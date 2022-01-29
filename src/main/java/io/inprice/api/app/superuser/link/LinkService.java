@@ -135,7 +135,7 @@ class LinkService {
   }
 
   Response changeStatus(BulkChangetDTO dto) {
-    Response res = Responses.NotSuitable.LINK;
+    Response res = Responses.NotFound.LINK;
 
     if (CollectionUtils.isNotEmpty(dto.getIdSet())) {
     	if (dto.getStatus() != null && STATUSES_FOR_CHANGE.contains(dto.getStatus())) {
@@ -144,31 +144,34 @@ class LinkService {
           LinkDao linkDao = handle.attach(LinkDao.class);
           List<Pair<Long, String>> idAndStatusList = linkDao.findIdAndStatusesByIdSet(dto.getIdSet());
   
-          Set<Long> selectedSet = new HashSet<>();
-          
-          for (Pair<Long, String> pair: idAndStatusList) {
-          	if (LinkStatus.RESOLVED.equals(dto.getStatus())) {
-          		if (LinkStatus.TOBE_IMPLEMENTED.name().equals(pair.getRight())) {
-            		selectedSet.add(pair.getLeft());
-            	}
-          	} else if (dto.getStatus().name().equals(pair.getRight()) == false) {
-          		selectedSet.add(pair.getLeft());
-          	}
-          }
-  
-          if (CollectionUtils.isNotEmpty(selectedSet)) {
-          	handle.begin();
-
-          	int affected = linkDao.setStatus(selectedSet, dto.getStatus(), dto.getStatus().getGrup());
-  
-          	if (affected == selectedSet.size()) {
-            	linkDao.insertHistory(selectedSet);
-            	handle.commit();
-            	res = Responses.OK;
-            } else {
-            	handle.rollback();
-            	res = Responses.DataProblem.DB_PROBLEM;
-            }
+          if (CollectionUtils.isNotEmpty(idAndStatusList)) {
+	          Set<Long> selectedSet = new HashSet<>();
+	          
+          	res = Responses.NotSuitable.LINK;
+	          for (Pair<Long, String> pair: idAndStatusList) {
+	          	if (LinkStatus.RESOLVED.equals(dto.getStatus())) {
+	          		if (LinkStatus.TOBE_IMPLEMENTED.name().equals(pair.getRight())) {
+	            		selectedSet.add(pair.getLeft());
+	            	}
+	          	} else if (dto.getStatus().name().equals(pair.getRight()) == false) {
+	          		selectedSet.add(pair.getLeft());
+	          	}
+	          }
+	  
+	          if (CollectionUtils.isNotEmpty(selectedSet)) {
+	          	handle.begin();
+	
+	          	int affected = linkDao.setStatus(selectedSet, dto.getStatus(), dto.getStatus().getGrup());
+	  
+	          	if (affected == selectedSet.size()) {
+	            	linkDao.insertHistory(selectedSet);
+	            	handle.commit();
+	            	res = Responses.OK;
+	            } else {
+	            	handle.rollback();
+	            	res = Responses.DataProblem.DB_PROBLEM;
+	            }
+	          }
           }
 
         }

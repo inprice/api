@@ -13,7 +13,7 @@ set @admin_id = last_insert_id();
 
 -- workspace
 insert into test.workspace (name, plan_id, status, subs_started_at, subs_renewal_at, alarm_count, admin_id) 
-values ('With Standard Plan (Vouchered) but No Extra User', @standard_plan_id, 'VOUCHERED', now(), @one_year_later, 2, @admin_id);
+values ('Second - Standard Plan and No Extra User', @standard_plan_id, 'VOUCHERED', now(), @one_year_later, 2, @admin_id);
 set @workspace_id = last_insert_id();
 
 -- workspace history

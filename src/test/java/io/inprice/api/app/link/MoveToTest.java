@@ -75,7 +75,7 @@ public class MoveToTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 0); //attention!
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), 1L, new Long[] { 1L }, 0); //attention!
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -93,7 +93,7 @@ public class MoveToTest {
 	@Test
 	public void Link_not_found_WHEN_trying_to_move_someone_elses_links() {
 		//to gather other workspace's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//searches some specific links
 		JSONArray linkList = TestFinder.searchLinks(cookies, "ACTIVE");
@@ -104,10 +104,10 @@ public class MoveToTest {
 		//picks one of those links
 		JSONObject link = linkList.getJSONObject(0);
 		Long[] linkIds = { link.getLong("id") };
-		Long toProductId = findToProductId(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), "Product 2 of Workspace-B");
+		Long toProductId = findToProductId(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), "Product 2 of Workspace-B");
 
 		//evil user logs in
-		cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
+		cookies = TestUtils.login(TestWorkspaces.Second_professional_plan_and_one_extra_user.EDITOR());
 
 		//builds the body up
 		JSONObject body = new JSONObject();
@@ -139,7 +139,7 @@ public class MoveToTest {
 	@Test
 	public void Invalid_product_FOR_null_product_id() {
 		//a user logs in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Second_professional_plan_and_one_extra_user.EDITOR());
 
 		//searches some specific links
 		JSONArray linkList = TestFinder.searchLinks(cookies, "TRYING", 1);
@@ -183,10 +183,10 @@ public class MoveToTest {
 	 */
 	@Test
 	public void Everything_must_be_ok_FOR_admin() {
-		Long toProductId = findToProductId(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), "Product 1 of Workspace-B");
+		Long toProductId = findToProductId(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), "Product 1 of Workspace-B");
 
 		//user logs in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//searches some specific links
 		JSONArray linkList = TestFinder.searchLinks(cookies, "PROBLEM");
@@ -233,7 +233,7 @@ public class MoveToTest {
 	}
 
 	private JSONObject callTheService(Long toProductId, Long[] linkIds) {
-		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN(), toProductId, linkIds);
+		return callTheService(TestWorkspaces.Second_standard_plan_and_no_extra_user.ADMIN(), toProductId, linkIds);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long toProductId, Long[] linkIds) {

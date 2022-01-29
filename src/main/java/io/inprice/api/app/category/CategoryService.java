@@ -34,25 +34,28 @@ public class CategoryService {
   	
     String problem = validate(value);
     if (problem == null) {
-      try (Handle handle = Database.getHandle()) {
-        CategoryDao categoryDao = handle.attach(CategoryDao.class);
-
-        String name = SqlHelper.clear(value);
-        Category found = categoryDao.findByName(name, CurrentUser.getWorkspaceId());
-
-        if (found == null) {
-        	Long id = categoryDao.insert(name, CurrentUser.getWorkspaceId());
-        	if (id != null && id > 0) {
-        		res = Responses.OK;
-          }
-        } else {
-        	res = Responses.Already.Defined.CATEGORY;
-        }
-      }
+    	if (CurrentUser.getWorkspaceStatus().isActive()) {
+    		try (Handle handle = Database.getHandle()) {
+	        CategoryDao categoryDao = handle.attach(CategoryDao.class);
+	
+	        String name = SqlHelper.clear(value);
+	        Category found = categoryDao.findByName(name, CurrentUser.getWorkspaceId());
+	
+	        if (found == null) {
+	        	Long id = categoryDao.insert(name, CurrentUser.getWorkspaceId());
+	        	if (id != null && id > 0) {
+	        		res = Responses.OK;
+	          }
+	        } else {
+	        	res = Responses.Already.Defined.CATEGORY;
+	        }
+	      }
+    	} else {
+    		res = Responses.NotAllowed.HAVE_NO_ACTIVE_PLAN;
+    	}
     } else {
     	res = new Response(problem);
     }
-
     return res;
   }
 

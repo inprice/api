@@ -169,7 +169,7 @@ public class InsertTest {
 		final String TICKET_NEW_STATUS = "WAITING_FOR_VERSION";
 
 		//an admin logs in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 
 		//searches some certain tickets
 		JSONArray ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);
@@ -192,7 +192,7 @@ public class InsertTest {
 		assertTrue(json.has("data"));
 
 		//the admin logs in again
-		cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 
 		//searches the changed ticket
 		ticketList = TestFinder.searchTickets(cookies, new String[] { "LOW" }, 0);

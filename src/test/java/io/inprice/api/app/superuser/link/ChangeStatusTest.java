@@ -103,15 +103,15 @@ public class ChangeStatusTest {
 	}
 
 	@Test
-	public void Link_not_found_FOR_the_links_RESOLVED_and_but_not_TOBE_IMPLEMENTED() {
+	public void Link_is_not_suitable_for_this_update_and_from_AVAILABLE_to_TOBE_IMPLEMENTED() {
 		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
 		body.put("status", "RESOLVED");
 		body.put("idSet", new Long[] { 1L });
 
 		JSONObject json = callTheService(body);
 
-		assertEquals(404, json.getInt("status"));
-		assertEquals("Link not found!", json.getString("reason"));
+		assertEquals(1007, json.getInt("status"));
+		assertEquals("Link(s) is not suitable for this update!", json.getString("reason"));
 	}
 
 	/**

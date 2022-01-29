@@ -1,5 +1,9 @@
 package io.inprice.api.consts;
 
+import java.util.Set;
+
+import io.inprice.common.helpers.GlobalConsts;
+
 public class Consts {
 
 	public static final String SESSION = "INPRICE_AT";
@@ -19,7 +23,9 @@ public class Consts {
   	public static final String TEST = "test";
   	public static final String PROD = "prod";
   }
-  
+
+  public static Set<String> EXCLUSIVE_EMAILS = Set.of("super@inprice.io", "admin@inprice.io", GlobalConsts.DEMO_ACCOUNT);
+
   public static class Paths {
 
     public static class Auth {
@@ -158,6 +164,11 @@ public class Consts {
     public static class Super {
       public static final String BASE = "/sys";
 
+      public static class Dashboard {
+        public static final String _BASE = BASE + "/dashboard";
+        public static final String REFRESH = _BASE + "/refresh";
+      }
+  
       public static class Workspace {
       	public static final String _BASE = BASE + "/workspace";
       	public static final String SEARCH = _BASE + "s/search";
@@ -190,6 +201,7 @@ public class Consts {
         
         public static final String SESSION = _BASE + "/session";
         public static final String TERMINATE_SESSION = SESSION + "/terminate";
+        public static final String TERMINATE_ALL_SESSIONS = SESSION + "/terminate-all";
 
         public static final String DETAILS = _BASE + "/details";
         public static final String MEMBERSHIP_LIST = DETAILS + "/memberships";

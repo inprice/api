@@ -2,6 +2,7 @@ package io.inprice.api.app.alarm;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -66,7 +67,7 @@ public class DeleteTest {
 	@Test
 	public void Alarm_not_found_WHEN_trying_to_delete_someone_elses_alarm() {
 		//to gather other workspace's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 
 		//searches some specific links
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
@@ -87,7 +88,7 @@ public class DeleteTest {
 	@Test
 	public void Forbidden_WITH_viewer() {
 		//this user has two roles; one is admin and the other is viewer. so, we need to specify the session number as second to pick viewer session!
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 8L);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), 8L);
 
 		assertEquals(403, json.getInt("status"));
 		assertNotNull("Forbidden!", json.getString("reason"));
@@ -103,12 +104,12 @@ public class DeleteTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_a_link_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 
 		JSONArray alarmedLinkList = TestFinder.searchAlarms(cookies, "LINK");
 
 		assertNotNull(alarmedLinkList);
-		assertEquals(3, alarmedLinkList.length());
+		assertTrue(alarmedLinkList.length() > 1);
 
 		//get the first alarm for a link
 		JSONObject alarmedLink = alarmedLinkList.getJSONObject(0);
@@ -128,12 +129,12 @@ public class DeleteTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_a_product_WITH_editor() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.EDITOR());
 
 		JSONArray alarmedProductList = TestFinder.searchAlarms(cookies, "PRODUCT");
 
 		assertNotNull(alarmedProductList);
-		assertEquals(3, alarmedProductList.length());
+		assertTrue(alarmedProductList.length() > 1);
 
 		//get the first alarm for a product
 		JSONObject alarmedProduct = alarmedProductList.getJSONObject(0);
@@ -152,7 +153,7 @@ public class DeleteTest {
 	}
 
 	private JSONObject callTheService(Long id) {
-		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), id);
+		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), id);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long id) {

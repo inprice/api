@@ -141,7 +141,7 @@ public class UpdateTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 0);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 0);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
@@ -149,7 +149,7 @@ public class UpdateTest {
 
 	@Test
 	public void You_already_have_a_product_having_the_same_sku_or_name_FOR_sku() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product X", 0);
 		TestUtils.logout(cookies); //here is important!
@@ -163,7 +163,7 @@ public class UpdateTest {
 		body.put("id", product.getLong("id")); //here is also important!
 		body.put("sku", "BX-002");
 
-		JSONObject json = callTheService(TestWorkspaces.Starter_plan_and_one_extra_user.ADMIN(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Professional_plan_and_one_extra_user.ADMIN(), body, 0);
 
 		assertEquals(875, json.getInt("status"));
 		assertEquals("You already have a product having the same sku!", json.getString("reason"));
@@ -178,7 +178,7 @@ public class UpdateTest {
 	@Test
 	public void You_have_reached_max_alarm_number_of_your_plan() {
 		//to gather other workspace's links, admin is logged in
-		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user_for_alarm_limits.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN());
 
 		//searches for alarms
 		JSONArray alarmList = TestFinder.searchAlarms(cookies, "PRODUCT");
@@ -186,7 +186,7 @@ public class UpdateTest {
 		assertTrue(alarmList.length() == 2);
 
 		//searches for product (must be 1 product)
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product O", 0);
+		JSONArray productList = TestFinder.searchProducts(cookies, "Product 3", 0);
 		assertNotNull(productList);
 		assertTrue(productList.length() == 1);
 
@@ -210,7 +210,7 @@ public class UpdateTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_duplicate_name_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product I", 0);
 		TestUtils.logout(cookies); //here is important!
@@ -224,7 +224,7 @@ public class UpdateTest {
 		body.put("id", product.getLong("id")); //here is also important!
 		body.put("name", "Product K of Workspace-F");
 
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN(), body, 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
@@ -232,7 +232,7 @@ public class UpdateTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product G", 0);
 		TestUtils.logout(cookies); //here is important!
@@ -248,7 +248,7 @@ public class UpdateTest {
 		body.put("name", "Changed name by EDITOR");
 		body.put("price", 20.12);
 
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(), body, 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
@@ -259,7 +259,7 @@ public class UpdateTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product R", 0);
 		TestUtils.logout(cookies); //here is important!
@@ -275,7 +275,7 @@ public class UpdateTest {
 		body.put("name", "Changed name by ADMIN");
 		body.put("price", 0.12);
 
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN(), body, 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
@@ -285,7 +285,7 @@ public class UpdateTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), body, 0);
+		return callTheService(TestWorkspaces.Premium_plan_with_no_user.ADMIN(), body, 0);
 	}
 	
 	private JSONObject callTheService(JSONObject user, JSONObject body, int session) {

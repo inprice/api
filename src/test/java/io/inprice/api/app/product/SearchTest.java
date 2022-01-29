@@ -57,7 +57,7 @@ public class SearchTest {
 		JSONObject json = callTheService(Fixtures.SUPER_USER, "Product A");
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an workspace!", json.getString("reason"));
+		assertEquals("You must bind to a workspace!", json.getString("reason"));
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class SearchTest {
 	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 
-		JSONArray workspaces = TestFinder.searchWorkspaces(cookies, TestWorkspaces.Standard_plan_and_two_extra_users.getName());
+		JSONArray workspaces = TestFinder.searchWorkspaces(cookies, TestWorkspaces.Premium_plan_and_two_extra_users.getName());
 
 		assertEquals(1, workspaces.length());
 
@@ -104,9 +104,9 @@ public class SearchTest {
 	@Test
 	public void Everything_must_be_ok_FOR_any_kind_of_users() {
 		Map<TestRoles, JSONObject> roleUserMap = Map.of(
-			TestRoles.ADMIN, TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN(),
-			TestRoles.EDITOR, TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(),
-			TestRoles.VIEWER, TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER()
+			TestRoles.ADMIN, TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN(),
+			TestRoles.EDITOR, TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(),
+			TestRoles.VIEWER, TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER()
 		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {

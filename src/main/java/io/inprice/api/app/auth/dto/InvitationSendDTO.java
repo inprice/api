@@ -6,10 +6,8 @@ import java.util.Date;
 import io.inprice.common.meta.UserRole;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 @Getter
-@ToString
 @Setter
 public class InvitationSendDTO implements Serializable {
 

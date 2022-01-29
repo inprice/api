@@ -26,9 +26,10 @@ import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.AlarmEntityDTO;
 import io.inprice.api.dto.ProductDTO;
-import io.inprice.api.helpers.SystemHelper;
+import io.inprice.api.helpers.WSPermissionChecker;
 import io.inprice.api.info.Response;
 import io.inprice.api.meta.AlarmStatus;
+import io.inprice.api.meta.WSPermission;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.formula.EvaluationResult;
@@ -44,7 +45,6 @@ import io.inprice.common.models.Category;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.Product;
 import io.inprice.common.models.SmartPrice;
-import io.inprice.common.models.Workspace;
 import io.inprice.common.utils.StringHelper;
 import io.inprice.common.utils.URLUtils;
 
@@ -89,42 +89,55 @@ class ProductService {
   }
 
   Response insert(ProductDTO dto) {
-    String problem = ProductVerifier.verify(dto);
-    if (problem == null) {
-
-    	try (Handle handle = Database.getHandle()) {
-      	//if an alarm set then checks if workspace has enough permission for a new alarm
-      	if (dto.getAlarmId() != null) {
-      		Response alarmLimitCheckRes = SystemHelper.checkAlarmLimit(handle);
-      		if (alarmLimitCheckRes.isOK() == false) return alarmLimitCheckRes;
-      	}
-      	
-        ProductDao productDao = handle.attach(ProductDao.class);
-
-        dto.setId(0L); //necessary for the existency check here!
-      	boolean alreadyExists = productDao.doesExistBySku(dto, CurrentUser.getWorkspaceId());
-
-      	if (alreadyExists == false) {
-        	checkBrand(dto, handle);
-        	checkCategory(dto, handle);
-        	checkAlarm(dto, handle);
-        	checkSmartPrice(dto, handle);
-
-        	Long id = productDao.insert(dto);
-        	if (id != null && id > 0) {
-          	if (dto.getAlarmId() != null && dto.getAlarmId() > 0) {
-          		handle.attach(WorkspaceDao.class).incAlarmCount(1, CurrentUser.getWorkspaceId());
-          	}
-        		return Responses.OK;
-          }
-        } else {
-        	return Responses.Already.Defined.PRODUCT;
-        }
-      }
-      return Responses.DataProblem.DB_PROBLEM;
-    } else {
-      return new Response(problem);
-    }
+  	if (CurrentUser.getWorkspaceStatus().isActive()) {
+	  	String problem = ProductVerifier.verify(dto);
+	    if (problem == null) {
+	
+	    	try (Handle handle = Database.getHandle()) {
+	    		
+	    		//Workspace permission checks
+	      	List<WSPermission> permList = new ArrayList<>(2);
+	      	permList.add(WSPermission.PRODUCT_LIMIT);
+	      	if (dto.getAlarmId() != null) permList.add(WSPermission.ALARM_LIMIT);
+	    		Response res = WSPermissionChecker.checkFor(permList, handle);
+	    		if (res.isOK() == false) return res;
+	      	
+	        ProductDao productDao = handle.attach(ProductDao.class);
+	
+	        dto.setId(0L); //necessary for the existency check here!
+	      	boolean alreadyExists = productDao.doesExistBySku(dto, CurrentUser.getWorkspaceId());
+	
+	      	if (alreadyExists == false) {
+	        	checkBrand(dto, handle);
+	        	checkCategory(dto, handle);
+	        	checkAlarm(dto, handle);
+	        	checkSmartPrice(dto, handle);
+	
+	        	handle.begin();
+	        	
+	        	Long id = productDao.insert(dto);
+	        	if (id != null && id > 0) {
+	        		WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
+	          	if (dto.getAlarmId() != null && dto.getAlarmId() > 0) {
+	          		workspaceDao.incAlarmCount(1, CurrentUser.getWorkspaceId());
+	          	}
+	          	workspaceDao.incProductCount(CurrentUser.getWorkspaceId(), 1);
+	          	handle.commit();
+	        		return Responses.OK;
+	          } else {
+	          	handle.rollback();
+	          }
+	        } else {
+	        	return Responses.Already.Defined.PRODUCT;
+	        }
+	      }
+	      return Responses.DataProblem.DB_PROBLEM;
+	    } else {
+	      return new Response(problem);
+	    }
+  	} else {
+  		return Responses.NotAllowed.HAVE_NO_ACTIVE_PLAN;
+  	}
   }
   
   Response update(ProductDTO dto) {
@@ -147,8 +160,8 @@ class ProductService {
 
             	//if an alarm set then checks if workspace has enough permission for a new alarm
             	if (dto.getAlarmId() != null &&  found.getAlarmId() == null) {
-            		Response alarmLimitCheckRes = SystemHelper.checkAlarmLimit(handle);
-            		if (alarmLimitCheckRes.isOK() == false) return alarmLimitCheckRes;
+            		Response alarmCheckRes = WSPermissionChecker.checkFor(WSPermission.ALARM_LIMIT, handle);
+            		if (alarmCheckRes.isOK() == false) return alarmCheckRes;
             	}
           		
           		handle.begin();
@@ -288,9 +301,6 @@ class ProductService {
         	
     			String where = String.format("where product_id=%d and workspace_id=%d", id, CurrentUser.getWorkspaceId());
         	
-    			int alarmCount = handle.createQuery("select count(1) from link where alarm_id is not null and product_id = "+ id).mapTo(int.class).one();
-        	if (product.getAlarmId() != null) alarmCount++;
-        	
           Batch batch = handle.createBatch();
           batch.add("SET FOREIGN_KEY_CHECKS=0");
           batch.add("delete from link_price " + where);
@@ -298,12 +308,12 @@ class ProductService {
           batch.add("delete from link_spec " + where);
           batch.add("delete from link " + where);
           batch.add("delete from product " + where.replace("product_", "")); //this query determines the success!
-          batch.add(
-        		String.format(
-      				"update workspace set link_count=link_count-%d, alarm_count=alarm_count-%d where id=%d", 
-      				product.getLinkCount(), alarmCount, CurrentUser.getWorkspaceId()
-    				)
-      		);
+  				batch.add(
+						String.format(
+							"update workspace set product_count=product_count-1, alarm_count=alarm_count-%d where id=%d",
+							(product.getAlarmId() != null ? 1 : 0), CurrentUser.getWorkspaceId()
+						)
+					);
           batch.add("SET FOREIGN_KEY_CHECKS=1");
 
           int[] result = batch.execute();
@@ -402,7 +412,7 @@ class ProductService {
 	    if (dto.getAlarmId() != null && dto.getAlarmId() > 0) {
 	      try (Handle handle = Database.getHandle()) {
 
-      		Response alarmLimitCheckRes = SystemHelper.checkAlarmLimit(handle);
+      		Response alarmLimitCheckRes = WSPermissionChecker.checkFor(WSPermission.ALARM_LIMIT, handle);
       		if (alarmLimitCheckRes.isOK() == false) return alarmLimitCheckRes;
 	      	
 	      	AlarmDao alarmDao = handle.attach(AlarmDao.class);
@@ -464,78 +474,58 @@ class ProductService {
   Response addLinks(AddLinksDTO dto) {
   	Response res = Responses.Invalid.LINK;
 
-		try (Handle handle = Database.getHandle()) {
-    	LinkDao linkDao = handle.attach(LinkDao.class);
-
-      res = validate(dto, linkDao);
-      if (res.isOK()) {
-	    	WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
-	      ProductDao productDao = handle.attach(ProductDao.class);
-	  		
-	  		Set<String> urlList = null;
+  	if (CurrentUser.getWorkspaceStatus().isActive()) {
+  		try (Handle handle = Database.getHandle()) {
+	    	LinkDao linkDao = handle.attach(LinkDao.class);
 	
-	      Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
-	      if (workspace.getPlan() != null) {
-	        int allowedLinkCount = (workspace.getPlan().getLinkLimit() - workspace.getLinkCount());
-	        urlList = res.getData();
-	
-	        if (allowedLinkCount > 0) {
-	        	if (urlList.size() <= 100 && urlList.size() <= allowedLinkCount) {
-	
-	          	handle.begin();
-	        		
-	          	urlList.forEach(url -> {
-								Link link = new Link();
-								link.setUrl(url);
-								link.setUrlHash(DigestUtils.md5Hex(url));
-								link.setProductId(dto.getProductId());
-								link.setWorkspaceId(CurrentUser.getWorkspaceId());
-	
-								long id = linkDao.insert(link);
-	
-								link.setId(id);
-								link.setStatus(LinkStatus.TOBE_CLASSIFIED);
-								linkDao.insertHistory(link);
-	          	});
-	
-	          	productDao.incWaitingsCount(dto.getProductId(), urlList.size());
-	          	workspaceDao.incLinkCount(CurrentUser.getWorkspaceId(), urlList.size());
-	
-	          	handle.commit();
-	          	
-	        		res = Responses.OK;
-	
-	          } else {
-	          	if (urlList.size() > 100) {
-	          		res = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
-	          	} else if (urlList.size() > allowedLinkCount) {
-	          		res = new Response("You can add up to " + allowedLinkCount + " link(s)!");
-	          	}
-	          }
-	        } else {
-	          res = Responses.NotAllowed.NO_LINK_LIMIT;
-	        }
-	      } else {
-	        res = Responses.NotAllowed.HAVE_NO_PLAN;
-	      }
-	
+	      res = validate(dto, linkDao);
 	      if (res.isOK()) {
-	      	Product product = productDao.findByIdWithLookups(dto.getProductId(), CurrentUser.getWorkspaceId());
-	      	int workspaceLinkCount = workspace.getLinkCount() + urlList.size();
-	
-	        Map<String, Object> data = Map.of(
-	      		"product", product,
-	      		"count", urlList.size(),
-	      		"linkCount", workspaceLinkCount,
-	      		"links", linkDao.findListByProductId(dto.getProductId(), CurrentUser.getWorkspaceId())
-	  			);
-	        res = new Response(data);
+		      ProductDao productDao = handle.attach(ProductDao.class);
+
+		  		Set<String> urlList = res.getData();
+        	if (urlList != null && urlList.size() <= 25) {
+          	handle.begin();
+        		
+          	urlList.forEach(url -> {
+							Link link = new Link();
+							link.setUrl(url);
+							link.setUrlHash(DigestUtils.md5Hex(url));
+							link.setProductId(dto.getProductId());
+							link.setWorkspaceId(CurrentUser.getWorkspaceId());
+
+							long id = linkDao.insert(link);
+
+							link.setId(id);
+							link.setStatus(LinkStatus.TOBE_CLASSIFIED);
+							linkDao.insertHistory(link);
+          	});
+
+          	productDao.incWaitingsCount(dto.getProductId(), urlList.size());
+
+          	handle.commit();
+        		res = Responses.OK;
+          } else {
+          	res = Responses.NotAllowed.LINK_LIMIT_EXCEEDED;
+          }
+		
+		      if (res.isOK()) {
+		      	Product product = productDao.findByIdWithLookups(dto.getProductId(), CurrentUser.getWorkspaceId());
+		
+		        Map<String, Object> data = Map.of(
+		      		"product", product,
+		      		"count", urlList.size(),
+		      		"links", linkDao.findListByProductId(dto.getProductId(), CurrentUser.getWorkspaceId())
+		  			);
+		        res = new Response(data);
+		      }
 	      }
-      }
-    } catch (Exception e) {
-      logger.error("Failed to import URL list!", e);
-      res = Responses.ServerProblem.EXCEPTION;
-    }
+	    } catch (Exception e) {
+	      logger.error("Failed to import URL list!", e);
+	      res = Responses.ServerProblem.EXCEPTION;
+	    }
+  	} else {
+  		res = Responses.NotAllowed.HAVE_NO_ACTIVE_PLAN;
+  	}
 
     return res;
   }

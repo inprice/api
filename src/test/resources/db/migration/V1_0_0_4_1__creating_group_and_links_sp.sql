@@ -118,7 +118,7 @@ begin
     end while;
   end if;
 
-  update workspace set link_count = link_count + in_active_count + in_trying_count + in_waiting_count + in_problem_count where id = in_workspace_id;
+  update workspace set product_count = product_count + 1 where id = in_workspace_id;
 
   commit;
 

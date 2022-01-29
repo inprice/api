@@ -66,13 +66,11 @@ public class Responses {
     private static final int BASE = 500;
     public static final Response UNAUTHORIZED = new Response(BASE + 1, "Unauthrozied!");
     public static final Response ADMIN_ONLY = new Response(BASE + 2, "This operation can only be done by an admin!");
-    public static final Response DONT_HAVE_A_PLAN = new Response(BASE + 3, "You need to subscribe to a plan!");
-    public static final Response NO_WORKSPACE = new Response(BASE + 5, "You have no active workspace! Please either create a new one or participate in an existing!");
     public static final Response USER_LIMIT_PROBLEM = new Response(BASE + 6, "Your user count is reached your plans limit!");
-    public static final Response LINK_LIMIT_PROBLEM = new Response(BASE + 7, "Your link count is reached your plans limit! You need to pass a broader plan to proceed");
+    public static final Response PRODUCT_LIMIT_PROBLEM = new Response(BASE + 7, "Your product count is reached your plans limit. You need to subscribe to a broader plan!");
     public static final Response ALARM_LIMIT_PROBLEM = new Response(BASE + 8, "Your alarm count is reached your plans limit! You need to pass a broader plan to proceed");
     public static final Response BROADER_PLAN_NEEDED = new Response(BASE + 10, "You need to select a broader plan since your actual plan has more permission!");
-    public static final Response WRONG_USER = new Response(BASE + 11, "You are not allowed to do this operation!");
+    public static final Response WRONG_USER = new Response(BASE + 11, "You are not allowed to do this operation!");  
   }
 
   public static class DataProblem {
@@ -134,15 +132,17 @@ public class Responses {
 
   public static class NotAllowed {
     private static final int BASE = 900;
-    public static final Response NO_LINK_LIMIT = new Response(BASE + 1, "You have reached max link number of your plan!");
-    public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload up to 100 URLs at once!");
-    public static final Response HAVE_NO_PLAN = new Response(BASE + 3, "You haven't picked a plan yet!");
+    public static final Response LINK_LIMIT_EXCEEDED = new Response(BASE + 2, "You are allowed to upload up to 25 URLs at once!");
+    public static final Response HAVE_NO_ACTIVE_PLAN = new Response(BASE + 3, "You don't have an active plan!");
     public static final Response UPDATE = new Response(BASE + 4, "You are not allowed to update this data!");
+    
     public static final Response NO_ALARM_LIMIT = new Response(BASE + 10, "You have reached max alarm number of your plan!");
-    public static final Response SUPER_USER = new Response(BASE + 12, "User is not suitable for this operation!");
-
+    public static final Response NO_PRODUCT_LIMIT = new Response(BASE + 11, "You have reached max product number of your plan!");
+    public static final Response NO_USER_LIMIT = new Response(BASE + 12, "You have reached max user number of your plan!");
+    
+    public static final Response SUPER_USER = new Response(BASE + 13, "User is not suitable for this operation!");
     public static final Response CLOSED_TICKET = new Response(BASE + 14, "Ticket is closed!");
-    public static final Response NO_WORKSPACE = new Response(BASE + 15, "You must bind an workspace!");
+    public static final Response NO_WORKSPACE = new Response(BASE + 15, "You must bind to a workspace!");
   }
 
   public static class NotSuitable {
@@ -152,6 +152,7 @@ public class Responses {
     public static final Response EMPTY_URL_LIST = new Response(BASE + 3, "URL list is empty!");
     public static final Response TICKET = new Response(BASE + 5, "Ticket is not suitable!");
     public static final Response LINK = new Response(BASE + 7, "Link(s) is not suitable for this update!");
+    public static final Response EMAIL = new Response(BASE + 15, "This email is reserved!");
   }
 
   public static class NotFound {

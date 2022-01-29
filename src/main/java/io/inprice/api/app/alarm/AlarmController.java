@@ -57,9 +57,9 @@ public class AlarmController extends AbstractController {
     }, AccessRoles.ANYONE_PLUS_SUPER_WITH_WORKSPACE());
 
     // returns id name pairs by topic
-    app.get(Consts.Paths.Alarm.ID_NAME_PAIRS, (ctx) -> {
+    app.get(Consts.Paths.Alarm.ID_NAME_PAIRS + "/:topic", (ctx) -> {
     	try {
-    		AlarmTopic topic = AlarmTopic.valueOf(ctx.queryParam("topic"));
+    		AlarmTopic topic = AlarmTopic.valueOf(ctx.pathParam("topic"));
     		ctx.json(service.getIdNameList(topic));
 			} catch (Exception e) {
 				ctx.json(Responses.Invalid.ALARM_TOPIC);

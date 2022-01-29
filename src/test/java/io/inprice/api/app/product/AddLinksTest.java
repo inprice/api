@@ -147,42 +147,20 @@ public class AddLinksTest {
 		JSONObject json = callTheService(TestWorkspaces.Second_without_a_plan_and_extra_user.ADMIN(), SAMPLE_BODY, 0);
 
 		assertEquals(903, json.getInt("status"));
-		assertEquals("You haven't picked a plan yet!", json.getString("reason"));
+		assertEquals("You don't have an active plan!", json.getString("reason"));
 	}
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 0);
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), SAMPLE_BODY, 0);
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.getString("reason"));
 	}
 
 	@Test
-	public void You_can_add_up_to_X_links() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN());
-		
-		JSONArray productList = TestFinder.searchProducts(cookies, "Product 2", 0);
-		TestUtils.logout(cookies); //here is important!
-
-		assertNotNull(productList);
-		assertEquals(1, productList.length());
-		
-		JSONObject product = productList.getJSONObject(0);
-
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("productId", product.getLong("id")); //here is also important!
-		body.put("linksText", VALID_URLS);
-
-		JSONObject json = callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
-
-		assertEquals(400, json.getInt("status"));
-		assertEquals("You can add up to 1 link(s)!", json.getString("reason"));
-	}
-
-	@Test
 	public void You_are_allowed_to_upload_up_to_100_URLs_at_once() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Pro_plan_with_no_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_with_no_user.ADMIN());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product A", 0);
 		TestUtils.logout(cookies); //here is important!
@@ -193,7 +171,7 @@ public class AddLinksTest {
 		JSONObject product = productList.getJSONObject(0);
 		
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i <= 100; i++) {
+		for (int i = 0; i <= 26; i++) {
 			sb.append(
 				String.format("https://amazon.com/%s\n", RandomStringUtils.randomAlphabetic(4))
 			);
@@ -203,15 +181,15 @@ public class AddLinksTest {
 		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", sb.toString());
 
-		JSONObject json = callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), body, 0);
 
 		assertEquals(902, json.getInt("status"));
-		assertEquals("You are allowed to upload up to 100 URLs at once!", json.getString("reason"));
+		assertEquals("You are allowed to upload up to 25 URLs at once!", json.getString("reason"));
 	}
 
 	@Test
 	public void Everything_must_be_ok_WITH_editor() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Second_professional_plan_and_one_extra_user.EDITOR());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product R", 1);
 		TestUtils.logout(cookies); //here is important!
@@ -225,7 +203,7 @@ public class AddLinksTest {
 		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", "https://blue-dot.com/xsa-123");
 
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_one_extra_user.EDITOR(), body, 1);
+		JSONObject json = callTheService(TestWorkspaces.Second_professional_plan_and_one_extra_user.EDITOR(), body, 1);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
@@ -236,7 +214,7 @@ public class AddLinksTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_admin() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN());
 		
 		JSONArray productList = TestFinder.searchProducts(cookies, "Product S", 0);
 		TestUtils.logout(cookies); //here is important!
@@ -250,7 +228,7 @@ public class AddLinksTest {
 		body.put("productId", product.getLong("id")); //here is also important!
 		body.put("linksText", "https://red-planet.com/mars/aa123");
 
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_one_extra_user.ADMIN(), body, 0);
+		JSONObject json = callTheService(TestWorkspaces.Second_professional_plan_and_one_extra_user.ADMIN(), body, 0);
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
@@ -260,7 +238,7 @@ public class AddLinksTest {
 	}
 
 	private JSONObject callTheService(JSONObject body) {
-		return callTheService(TestWorkspaces.Pro_plan_with_no_user.ADMIN(), body, 0);
+		return callTheService(TestWorkspaces.Premium_plan_with_no_user.ADMIN(), body, 0);
 	}
 	
 	private JSONObject callTheService(JSONObject user, JSONObject body, int session) {

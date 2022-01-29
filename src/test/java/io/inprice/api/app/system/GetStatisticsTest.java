@@ -46,7 +46,7 @@ public class GetStatisticsTest {
 
 	@Test
 	public void Everything_must_be_ok() {
-		final JSONObject user = TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER();
+		final JSONObject user = TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER();
 		Cookies cookies = TestUtils.login(user);
 
 		HttpResponse<JsonNode> res = Unirest.get(SERVICE_ENDPOINT)
@@ -60,8 +60,8 @@ public class GetStatisticsTest {
 
 		JSONObject data = json.getJSONObject("data");
 		assertNotNull(data);
+		assertTrue(data.has("productLimit"));
 		assertTrue(data.has("userLimit"));
-		assertTrue(data.has("linkLimit"));
 		assertTrue(data.has("alarmLimit"));
 	}
 

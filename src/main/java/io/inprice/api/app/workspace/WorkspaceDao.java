@@ -10,6 +10,7 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
+import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.app.workspace.mapper.WorkspaceInfo;
 import io.inprice.api.app.workspace.mapper.WorkspaceInfoMapper;
 import io.inprice.api.dto.CustomerDTO;
@@ -21,8 +22,12 @@ import io.inprice.common.models.Workspace;
 
 public interface WorkspaceDao {
 
+  final String FIELDS = 
+    ", w.name as workspace_name, w.status as workspace_status, w.subs_started_at, " +
+    "w.subs_renewal_at, w.last_status_update, w.plan_id, w.currency_code, w.currency_format, w.product_count, w.alarm_count, w.user_count ";
+
   @SqlQuery(
-		"select w.*, p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit from workspace as w " +
+		"select w.*"+ PlanDao.FIELDS +" from workspace as w " +
 		"left join plan as p on p.id = w.plan_id " +
 		"where w.id=:id"
 	)
@@ -57,14 +62,14 @@ public interface WorkspaceDao {
   )
   boolean update(@BindBean("dto") CustomerDTO dto, @Bind("id") Long id);
 
-  @SqlUpdate("update workspace set user_count=user_count+1 where id=:id")
-  boolean incUserCount(@Bind("id") Long id);
-  
-  @SqlUpdate("update workspace set link_count=link_count+<count> where id=:id")
-  boolean incLinkCount(@Bind("id") Long id, @Define("count") Integer count);
+  @SqlUpdate("update workspace set product_count=product_count+<count> where id=:id")
+  boolean incProductCount(@Bind("id") Long id, @Define("count") Integer count);
   
   @SqlUpdate("update workspace set alarm_count=alarm_count+<value> where id=:id")
   boolean incAlarmCount(@Define("value") int value, @Bind("id") Long id);
+
+  @SqlUpdate("update workspace set user_count=user_count+1 where id=:id")
+  boolean incUserCount(@Bind("id") Long id);
 
   @SqlUpdate("update workspace set alarm_count=alarm_count-<value> where id=:id")
   boolean decAlarmCount(@Define("value") int value, @Bind("id") Long id);

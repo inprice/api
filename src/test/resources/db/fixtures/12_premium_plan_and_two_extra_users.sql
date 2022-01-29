@@ -27,7 +27,7 @@ select id into @viewer_id from test.user where email=@viewer_email;
 
 -- workspace
 insert into test.workspace (name, plan_id, status, subs_started_at, subs_renewal_at, user_count, admin_id) 
-values ('With Standard Plan and Two Extra Users', @standard_plan_id, 'SUBSCRIBED', now(), @one_year_later, 2, @admin_id);
+values ('Premium Plan and Two Extra Users', @premium_plan_id, 'SUBSCRIBED', now(), @one_year_later, 2, @admin_id);
 set @workspace_id = last_insert_id();
 
 -- workspace history
@@ -81,7 +81,7 @@ values ('Product position is changed', 'PRODUCT', 'POSITION', 'CHANGED', @worksp
 update product set alarm_id=last_insert_id() where sku = 'F-3';
 
 insert into alarm (name, topic, subject, subject_when, workspace_id) 
-values ('Link position is changed', 'LINK', 'POSITION', 'CHANGED', @workspace_id);
+values ('Link status is changed', 'LINK', 'POSITION', 'CHANGED', @workspace_id);
 update link set alarm_id=last_insert_id() where grup = 'WAITING' and workspace_id = @workspace_id;
 
 -- tickets

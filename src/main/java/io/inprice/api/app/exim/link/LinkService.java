@@ -20,14 +20,12 @@ import org.slf4j.LoggerFactory;
 import io.inprice.api.app.exim.EximBase;
 import io.inprice.api.app.exim.link.mapper.DownloadBean;
 import io.inprice.api.app.exim.link.mapper.DownloadBeanMapper;
-import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.LinkDTO;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
-import io.inprice.common.models.Workspace;
 import io.inprice.common.utils.StringHelper;
 import io.inprice.common.utils.URLUtils;
 import io.javalin.http.Context;
@@ -37,102 +35,89 @@ public class LinkService extends EximBase {
   private static final Logger logger = LoggerFactory.getLogger(LinkService.class);
 
   Response upload(String csvContent) {
+  	Response res = Responses.OK;
   	List<String> problems = new ArrayList<>();
 
-    try (Handle handle = Database.getHandle()) {
-    	int allowedLinkCount = 0;
-      WorkspaceDao workspaceDao = handle.attach(WorkspaceDao.class);
-
-      Workspace workspace = workspaceDao.findById(CurrentUser.getWorkspaceId());
-      if (workspace.getPlan() != null) {
-        allowedLinkCount = (workspace.getPlan().getLinkLimit() - workspace.getLinkCount());
-        if (allowedLinkCount < 1) {
-        	return Responses.NotAllowed.NO_LINK_LIMIT;
-        }
-      } else {
-      	return Responses.NotAllowed.HAVE_NO_PLAN;
-      }
-
-    	LinkDao dao = handle.attach(LinkDao.class);
-      
-    	//to prevent multiple lookups to db
-    	Map<String, Long> productMap = dao.getProducts(CurrentUser.getWorkspaceId());
-    	
-    	//to inc product's waitings counts
-    	Map<Long, Integer> linkCountsMap = new HashMap<>();
-
-    	int lineNumber = 1;
-    	Set<String> looked = new HashSet<>(); //by product id and # and url hash
-    	List<LinkDTO> dtos = new ArrayList<>();
-    	
-    	String[] rows = csvContent.lines().toArray(String[]::new);
-      for (int i=0; i<rows.length; i++) {
-      	String row = rows[i];
-      	if (StringUtils.isBlank(row)) continue;
-      	
-      	Response buildRes = buildLinkDTO(row, dao, productMap);
-      	if (buildRes.isOK()) {
-      		LinkDTO dto = buildRes.getData();
-
-      		if (looked.contains(dto.getProductId() + "#" + dto.getUrlHash())) {
-	      		problems.add(lineNumber + ". duplicate!");
-	    		} else {
-		      	looked.add(dto.getProductId() + "#" + dto.getUrlHash()); //for later controls to check if it is already handled!
+  	if (CurrentUser.getWorkspaceStatus().isActive()) {
+  		try (Handle handle = Database.getHandle()) {
+	    	LinkDao dao = handle.attach(LinkDao.class);
+	      
+	    	//to prevent multiple lookups to db
+	    	Map<String, Long> productMap = dao.getProducts(CurrentUser.getWorkspaceId());
+	    	
+	    	//to inc product's waitings counts
+	    	Map<Long, Integer> linkCountsMap = new HashMap<>();
 	
-	        	boolean exist = dao.doesUrlHashExist(dto);
-	        	if (exist) {
-	        		problems.add(lineNumber + ". already exists!");
-	        	} else {
-	        		dtos.add(dto);
-	        		int count = linkCountsMap.getOrDefault(dto.getProductId(), 0);
-	        		linkCountsMap.put(dto.getProductId(), count+1);
-	        	}
-	        }
-      	} else {
-      		problems.add(lineNumber + ". " + buildRes.getReason());
-      	}
+	    	int lineNumber = 1;
+	    	Set<String> looked = new HashSet<>(); //by product id and # and url hash
+	    	List<LinkDTO> dtos = new ArrayList<>();
+	    	
+	    	String[] rows = csvContent.lines().toArray(String[]::new);
+	      for (int i=0; i<rows.length; i++) {
+	      	String row = rows[i];
+	      	if (StringUtils.isBlank(row)) continue;
+	      	
+	      	Response buildRes = buildLinkDTO(row, dao, productMap);
+	      	if (buildRes.isOK()) {
+	      		LinkDTO dto = buildRes.getData();
+	
+	      		if (looked.contains(dto.getProductId() + "#" + dto.getUrlHash())) {
+		      		problems.add(lineNumber + ". duplicate!");
+		    		} else {
+			      	looked.add(dto.getProductId() + "#" + dto.getUrlHash()); //for later controls to check if it is already handled!
+		
+		        	boolean exist = dao.doesUrlHashExist(dto);
+		        	if (exist) {
+		        		problems.add(lineNumber + ". already exists!");
+		        	} else {
+		        		dtos.add(dto);
+		        		int count = linkCountsMap.getOrDefault(dto.getProductId(), 0);
+		        		linkCountsMap.put(dto.getProductId(), count+1);
+		        	}
+		        }
+	      	} else {
+	      		problems.add(lineNumber + ". " + buildRes.getReason());
+	      	}
+	
+	      	if (lineNumber == 250) break;
+	      	if (problems.size() >= 25) {
+	      		problems.add("Cancelled because there are too many problems in your file!");
+	      		dtos.clear();
+	      		break;
+	      	}
+	      	lineNumber++;
+	      }
+	
+	      //inserting the records
+	      if (dtos.size() > 0) {
+	      	handle.begin();
+	
+	      	//increasing each product's link count
+	        Batch batch = handle.createBatch();
+	      	for (Entry<Long, Integer> entry: linkCountsMap.entrySet()) {
+	          batch.add(String.format("update product set waitings=waitings+%d where id=%d", entry.getValue(), entry.getKey()));
+	      	}
+	      	batch.execute();
+	
+	      	//inserts links
+	      	dao.insertAll(dtos);
+	
+	      	handle.commit();
+	      }
+	
+	      Map<String, Object> result = Map.of(
+	    		"total", rows.length,
+	      	"successCount", dtos.size(),
+	      	"problems", problems
+	  		);
+	      
+	      res = new Response(result);
+			}
+  	} else {
+  		res = Responses.NotAllowed.HAVE_NO_ACTIVE_PLAN;
+    }
 
-      	if (lineNumber == 1000) break;
-      	if (problems.size() >= 25) {
-      		problems.add("Cancelled because there are too many problems in your file!");
-      		dtos.clear();
-      		break;
-      	}
-      	if (dtos.size() >= allowedLinkCount && i < rows.length-1) { //if it is the last row, no need to add this warning!
-      		problems.add("Reached your plan's maximum link limit!");
-      		break;
-      	}
-      	lineNumber++;
-      }
-
-      //inserting the records
-      if (dtos.size() > 0) {
-      	handle.begin();
-
-      	//increasing each product's link count
-        Batch batch = handle.createBatch();
-      	for (Entry<Long, Integer> entry: linkCountsMap.entrySet()) {
-          batch.add(String.format("update product set waitings=waitings+%d where id=%d", entry.getValue(), entry.getKey()));
-      	}
-      	batch.execute();
-
-      	//increasing workspace link count
-      	workspaceDao.incLinkCount(CurrentUser.getWorkspaceId(), dtos.size());
-
-      	//inserts links
-      	dao.insertAll(dtos);
-
-      	handle.commit();
-      }
-
-      Map<String, Object> result = Map.of(
-    		"total", rows.length,
-      	"successCount", dtos.size(),
-      	"problems", problems
-  		);
-      
-      return new Response(result);
-		}
+  	return res;
   }
 
   /**

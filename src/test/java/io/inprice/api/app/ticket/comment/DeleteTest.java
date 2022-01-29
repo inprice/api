@@ -80,7 +80,7 @@ public class DeleteTest {
 		JSONObject comment = commentList.getJSONObject(0);
 
 		//evil user logs in
-		cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		//tries to delete other workspace's comment
 		HttpResponse<JsonNode> res = Unirest.delete(SERVICE_ENDPOINT)
@@ -106,7 +106,7 @@ public class DeleteTest {
 
 	@Test
 	public void You_are_not_allowed_to_do_this_operation_WITH_viewer_but_not_the_creator() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "HIGH");
 
@@ -137,7 +137,7 @@ public class DeleteTest {
 
 	@Test
 	public void You_are_not_allowed_to_update_this_data_WITH_closed_comment() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL");
 
@@ -168,7 +168,7 @@ public class DeleteTest {
 
 	@Test
 	public void Ticket_is_closed() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "LOW");
 
@@ -218,7 +218,7 @@ public class DeleteTest {
 
 	@Test
 	public void Everything_must_be_ok_WITH_viewer() {
-		Cookies cookies = TestUtils.login(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER());
+		Cookies cookies = TestUtils.login(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER());
 
 		JSONArray commentList = TestFinder.searchComments(cookies, "NORMAL");
 
@@ -242,7 +242,7 @@ public class DeleteTest {
 	}
 
 	private JSONObject callTheService(Long id) {
-		return callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN(), id);
+		return callTheService(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN(), id);
 	}
 
 	private JSONObject callTheService(JSONObject user, Long id) {

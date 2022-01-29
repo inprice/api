@@ -26,64 +26,70 @@ public class CategoryService extends EximBase {
   private static final Logger logger = LoggerFactory.getLogger(CategoryService.class);
 
   Response upload(String csvContent) {
+  	Response res = Responses.OK;
   	List<String> problems = new ArrayList<>();
 
-    try (Handle handle = Database.getHandle()) {
-
-    	CategoryDao dao = handle.attach(CategoryDao.class);
-    	
-    	int lineNumber = 1;
-    	Set<String> looked = new HashSet<>();
-    	Set<String> names = new HashSet<>();
-    	
-    	String[] rows = csvContent.lines().toArray(String[]::new);
-      for (String row : rows) {
-      	if (StringUtils.isBlank(row)) continue;
-
-      	String name = row.trim();
-      	if (name.charAt(0) == '"' && name.charAt(name.length()-1) == '"') name = name.substring(1, name.length()-1);
-      	name = SqlHelper.clear(name);
-
-      	if (looked.contains(name.toLowerCase())) {
-      		problems.add(lineNumber + ". " + name  + " duplicate!");
-    		} else {
-	      	looked.add(name.toLowerCase()); //to check if it is already handled!
-
-	      	if (name.length() < 2 || name.length() > 50) {
-	          problems.add(lineNumber + ". must be between 2 - 50 chars!");
-	        } else {
-	        	boolean exist = dao.doesNameExist(name, CurrentUser.getWorkspaceId());
-	        	if (exist) {
-	        		problems.add(lineNumber + ". " + name  + " already exists!");
-	        	} else {
-	        		names.add(name);
-	        	}
+  	if (CurrentUser.getWorkspaceStatus().isActive()) {
+  		try (Handle handle = Database.getHandle()) {
+	    	CategoryDao dao = handle.attach(CategoryDao.class);
+	    	
+	    	int lineNumber = 1;
+	    	Set<String> looked = new HashSet<>();
+	    	Set<String> names = new HashSet<>();
+	    	
+	    	String[] rows = csvContent.lines().toArray(String[]::new);
+	      for (String row : rows) {
+	      	if (StringUtils.isBlank(row)) continue;
+	
+	      	String name = row.trim();
+	      	if (name.charAt(0) == '"' && name.charAt(name.length()-1) == '"') name = name.substring(1, name.length()-1);
+	      	name = SqlHelper.clear(name);
+	
+	      	if (looked.contains(name.toLowerCase())) {
+	      		problems.add(lineNumber + ". " + name  + " duplicate!");
+	    		} else {
+		      	looked.add(name.toLowerCase()); //to check if it is already handled!
+	
+		      	if (name.length() < 2 || name.length() > 50) {
+		          problems.add(lineNumber + ". must be between 2 - 50 chars!");
+		        } else {
+		        	boolean exist = dao.doesNameExist(name, CurrentUser.getWorkspaceId());
+		        	if (exist) {
+		        		problems.add(lineNumber + ". " + name  + " already exists!");
+		        	} else {
+		        		names.add(name);
+		        	}
+		        }
 	        }
-        }
-      	if (lineNumber == 1000) break;
-      	if (problems.size() >= 25) {
-      		problems.add("Cancelled because there are too many problems in your file!");
-      		names.clear();
-      		break;
-      	}
-      	lineNumber++;
-      }
-
-      if (names.size() > 0) {
-      	handle.begin();
-      	dao.insertAll(names, CurrentUser.getWorkspaceId());
-      	handle.commit();
-      }
-
-      //inserting the records
-      Map<String, Object> result = Map.of(
-    		"total", rows.length,
-      	"successCount", names.size(),
-      	"problems", problems
-  		);
-      
-      return new Response(result);
+	      	if (lineNumber == 250) break;
+	      	if (problems.size() >= 25) {
+	      		problems.add("Cancelled because there are too many problems in your file!");
+	      		names.clear();
+	      		break;
+	      	}
+	      	lineNumber++;
+	      }
+	
+	      if (names.size() > 0) {
+	      	handle.begin();
+	      	dao.insertAll(names, CurrentUser.getWorkspaceId());
+	      	handle.commit();
+	      }
+	
+	      //inserting the records
+	      Map<String, Object> result = Map.of(
+	    		"total", rows.length,
+	      	"successCount", names.size(),
+	      	"problems", problems
+	  		);
+	      
+	      res = new Response(result);
+    	}
+  	} else {
+  		res = Responses.NotAllowed.HAVE_NO_ACTIVE_PLAN;
 		}
+
+  	return res;
   }
 
   Response download(OutputStream outputStream) {

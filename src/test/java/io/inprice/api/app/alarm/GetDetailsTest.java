@@ -65,7 +65,7 @@ public class GetDetailsTest {
 		JSONObject json = res.getBody().getObject();
 
 		assertEquals(915, json.getInt("status"));
-		assertEquals("You must bind an workspace!", json.getString("reason"));
+		assertEquals("You must bind to a workspace!", json.getString("reason"));
 	}
 
 	/**
@@ -79,7 +79,7 @@ public class GetDetailsTest {
 	public void Everything_must_be_ok_WITH_superuser_AND_bound_workspace() {
 		Cookies cookies = TestUtils.login(Fixtures.SUPER_USER);
 		
-		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, "With Basic Plan (Free Use) but No Extra User");
+		JSONArray workspaceList = TestFinder.searchWorkspaces(cookies, TestWorkspaces.Standard_plan_and_no_extra_user.getName());
 		JSONObject workspace = workspaceList.getJSONObject(0);
 
 		HttpResponse<JsonNode> res = Unirest.put("/sys/workspace/bind/{workspaceId}")
@@ -113,9 +113,9 @@ public class GetDetailsTest {
 	@Test
 	public void Everything_must_be_ok_WITH_anyone() {
 		Map<TestRoles, JSONObject> roleUserMap = Map.of(
-			TestRoles.VIEWER, TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(),
-			TestRoles.EDITOR, TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR(),
-			TestRoles.ADMIN, TestWorkspaces.Standard_plan_and_two_extra_users.ADMIN()
+			TestRoles.VIEWER, TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(),
+			TestRoles.EDITOR, TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR(),
+			TestRoles.ADMIN, TestWorkspaces.Premium_plan_and_two_extra_users.ADMIN()
 		);
 
 		for (Entry<TestRoles, JSONObject> roleUser: roleUserMap.entrySet()) {
@@ -123,9 +123,10 @@ public class GetDetailsTest {
   		assertEquals(200, json.getInt("status"));
   
   		JSONObject data = json.getJSONObject("data");
-  		assertTrue(data.has("alarm"));
-  		assertTrue(data.has("products"));
-  		assertTrue(data.has("links"));
+  		assertTrue(data.has("id"));
+  		assertTrue(data.has("name"));
+  		assertTrue(data.has("topic"));
+  		assertTrue(data.has("entities"));
 		}
 	}
 	

@@ -2,6 +2,8 @@ package io.inprice.api.app.superuser.dto;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import io.inprice.api.dto.BaseSearchDTO;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +19,10 @@ public class ALSearchDTO extends BaseSearchDTO {
 
 	private ALSearchBy searchBy = ALSearchBy.PATH;
 
+  @JsonFormat(pattern="yyyy-MM-dd HH:mm")
 	private Date startDate;
+
+  @JsonFormat(pattern="yyyy-MM-dd HH:mm")
   private Date endDate;
 
   private ALMethod method;

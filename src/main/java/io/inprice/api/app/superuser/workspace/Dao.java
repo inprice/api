@@ -5,8 +5,10 @@ import java.util.List;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindBean;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
 
+import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.dto.BaseSearchDTO;
 import io.inprice.common.info.Pair;
 import io.inprice.common.mappers.WorkspaceHistoryMapper;
@@ -32,7 +34,7 @@ public interface Dao {
 	List<Workspace> search(@BindBean("dto") BaseSearchDTO dto);
 	
 	@SqlQuery(
-		"select w.*, u.email, p.name as plan_name, p.user_limit, p.link_limit, p.alarm_limit from workspace as w "+
+		"select w.*, u.email"+ PlanDao.FIELDS +" from workspace as w "+
 		"inner join user as u on u.id = w.admin_id " +
 		"left join plan as p on p.id = w.plan_id " +
 		"where w.id=:id"
@@ -73,5 +75,12 @@ public interface Dao {
   @SqlQuery("select id, name from workspace where name like :term order by name limit 15")
   @UseRowMapper(IdNamePairMapper.class)
   List<IdNamePairMapper> searchIdNameListByName(@Bind("term") String term);
+
+  @SqlUpdate(
+    "insert into voucher (code, plan_id, days, description, issued_id) " +
+    "values (:code, :planId, :days, :description, :issuedId)"
+  )
+  boolean createVoucher(@Bind("code") String code, @Bind("planId") Integer planId,
+    @Bind("days") Long days, @Bind("description") String description, @Bind("issuedId") Long issuedId);
 
 }

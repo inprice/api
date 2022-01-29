@@ -18,7 +18,7 @@ set @editor_id = last_insert_id();
 
 -- workspace
 insert into test.workspace (name, plan_id, status, subs_started_at, subs_renewal_at, user_count, alarm_count, admin_id) 
-values ('With Starter Plan and One Extra User', @starter_plan_id, 'SUBSCRIBED', now(), @one_year_later, 1, 2, @admin_id);
+values ('Professional Plan and One Extra User', @professional_plan_id, 'SUBSCRIBED', now(), @one_year_later, 1, 2, @admin_id);
 set @workspace_id = last_insert_id();
 
 -- workspace history
@@ -44,11 +44,11 @@ values ('Product minimum price is out of limits', 'PRODUCT', 'MINIMUM', 'OUT_OF_
 update product set alarm_id=last_insert_id() where sku = 'BX-001';
 
 insert into alarm (name, topic, subject, subject_when, certain_position, workspace_id) 
-values ('Link position equals to average', 'LINK', 'POSITION', 'EQUAL', 'Average', @workspace_id);
+values ('Link status equals to average', 'LINK', 'POSITION', 'EQUAL', 'Average', @workspace_id);
 update link set alarm_id=last_insert_id() where grup = 'WAITING' and workspace_id = @workspace_id;
 
 insert into alarm (name, topic, subject, subject_when, certain_position, workspace_id) 
-values ('Link position equals to highest', 'LINK', 'POSITION', 'EQUAL', 'Highest', @workspace_id);
+values ('Link status equals to highest', 'LINK', 'POSITION', 'EQUAL', 'Highest', @workspace_id);
 
 -- tickets
 insert into test.ticket (priority, type, subject, body, user_id, workspace_id) 

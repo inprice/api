@@ -53,7 +53,7 @@ public class CancelTest {
 
 	@Test
 	public void Forbidden_WITH_viewer() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.VIEWER(), 1); //attention pls!
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.VIEWER(), 1); //attention pls!
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.get("reason"));
@@ -61,7 +61,7 @@ public class CancelTest {
 
 	@Test
 	public void Forbidden_WITH_editor() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_two_extra_users.EDITOR());
+		JSONObject json = callTheService(TestWorkspaces.Premium_plan_and_two_extra_users.EDITOR());
 
 		assertEquals(403, json.getInt("status"));
 		assertEquals("Forbidden!", json.get("reason"));
@@ -69,7 +69,7 @@ public class CancelTest {
 
 	@Test
 	public void You_dont_have_an_active_plan_to_cancel_FOR_a_cancelled_workspace() {
-		JSONObject json = callTheService(TestWorkspaces.Cancelled_Basic_plan_no_link_no_alarm.ADMIN());
+		JSONObject json = callTheService(TestWorkspaces.Cancelled_Standard_plan.ADMIN());
 
 		assertEquals(710, json.getInt("status"));
 		assertEquals("You don't have an active plan to cancel!", json.get("reason"));
@@ -85,7 +85,7 @@ public class CancelTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_an_workspace_WITH_FREE_USE() {
-		JSONObject json = callTheService(TestWorkspaces.Basic_plan_but_no_extra_user.ADMIN());
+		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_no_extra_user.ADMIN());
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
@@ -93,7 +93,7 @@ public class CancelTest {
 
 	@Test
 	public void Everything_must_be_ok_FOR_an_workspace_WITH_VOUCHERED() {
-		JSONObject json = callTheService(TestWorkspaces.Standard_plan_and_no_extra_users.ADMIN());
+		JSONObject json = callTheService(TestWorkspaces.Second_standard_plan_and_no_extra_user.ADMIN());
 
 		assertEquals(200, json.getInt("status"));
 		assertTrue(json.has("data"));
