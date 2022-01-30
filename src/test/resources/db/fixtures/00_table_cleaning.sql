@@ -5,7 +5,6 @@
 
 set foreign_key_checks=0;
 
-truncate table test.access_log;
 truncate table test.workspace;
 truncate table test.workspace_history;
 truncate table test.workspace_trans;

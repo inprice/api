@@ -1,6 +1,7 @@
 package io.inprice.api;
 
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -10,7 +11,6 @@ import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.framework.ConfigScanner;
 import io.inprice.api.framework.HandlerInterruptException;
-import io.inprice.api.helpers.AccessLogger;
 import io.inprice.api.info.Response;
 import io.inprice.api.session.AccessGuard;
 import io.inprice.api.session.CurrentUser;
@@ -18,7 +18,6 @@ import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.JsonConverter;
 import io.inprice.common.helpers.RabbitMQ;
 import io.inprice.common.helpers.Redis;
-import io.inprice.common.models.AccessLog;
 import io.javalin.Javalin;
 import io.javalin.core.util.Header;
 import io.javalin.core.util.RouteOverviewPlugin;
@@ -75,9 +74,6 @@ public class Application {
       
       logger.info(" - Web server is shutting down...");
       app.stop();
-
-      logger.info(" - Access logger is shutting down...");
-      AccessLogger.flush(true);
 
       logger.info(" - Redis connection is closing...");
       Redis.stop();
@@ -143,11 +139,11 @@ public class Application {
     	if (started != null) {
     		elapsed = (int)(System.currentTimeMillis()-started);
     	}
-    	
     	boolean isSlow = (elapsed > Props.getConfig().THRESHOLDS.RESPONSE_TIME_LATENCY);
     	
     	//FOR TEST CASES: System.out.println("------ PATH : ["+ctx.method()+"] " + ctx.path());
 
+/*
     	boolean
     		beLogged =
   				isSlow
@@ -155,40 +151,41 @@ public class Application {
     			|| (ctx.method() != "GET" && !ctx.path().matches("(?i).*search.*|(?i).*\"term\":.*"));
 
   		if (beLogged) {
-    		AccessLog userLog = new AccessLog();
+*/
+  			JSONObject userLog = new JSONObject();
     		if (CurrentUser.hasSession()) {
-      		userLog.setUserId(CurrentUser.getUserId());
-      		userLog.setUserEmail(CurrentUser.getEmail());
-      		userLog.setUserRole(CurrentUser.getRole().name());
-      		userLog.setWorkspaceId(CurrentUser.getWorkspaceId());
-      		userLog.setWorkspaceName(CurrentUser.getWorkspaceName());
+      		userLog.put("userId", CurrentUser.getUserId());
+      		userLog.put("userEmail", CurrentUser.getEmail());
+      		userLog.put("userRole", CurrentUser.getRole().name());
+      		userLog.put("workspaceId", CurrentUser.getWorkspaceId());
+      		userLog.put("workspaceName", CurrentUser.getWorkspaceName());
     		}
-    		userLog.setIp(ctx.ip());
-    		userLog.setAgent(ctx.userAgent());
-    		userLog.setMethod(ctx.method());
-    		userLog.setElapsed(elapsed);
-    		userLog.setSlow(isSlow);
-    		userLog.setPath(ctx.path());
+    		userLog.put("ip", ctx.ip());
+    		userLog.put("agent", ctx.userAgent());
+    		userLog.put("method", ctx.method());
+    		userLog.put("elapsed", elapsed);
+    		userLog.put("slow", isSlow);
+    		userLog.put("path", ctx.path());
 
     		if (StringUtils.isNotBlank(ctx.req.getQueryString())) {
-    			userLog.setPathExt("?" + ctx.req.getQueryString());
+    			userLog.put("pathExt", "?" + ctx.req.getQueryString());
     		}
     		
     		if (e != null) {
-    			userLog.setStatus(e.getStatus());
-    			userLog.setResBody(e.getMessage());
+    			userLog.put("status", e.getStatus());
+    			userLog.put("resBody", e.getMessage());
     		} else {
     			String body = (StringUtils.isNotBlank(ctx.resultString()) ? ctx.resultString().trim() : null);
 
-    			userLog.setStatus(ctx.res.getStatus());
-    			userLog.setResBody(body);
+    			userLog.put("status", ctx.res.getStatus());
+    			userLog.put("resBody", body);
     			
     			if (body != null) {
     				if (body.charAt(0) == '{' || body.charAt(0) == '[') { //meaning that it is a json string!
         			Response res = JsonConverter.fromJson(body, Response.class);
-        			userLog.setStatus(res.getStatus());
+        			userLog.put("status", res.getStatus());
         			if (res.getStatus() != 200) {
-        				userLog.setResBody(res.getReason());
+        				userLog.put("resBody", res.getReason());
         			}
     				}
     			}
@@ -196,12 +193,13 @@ public class Application {
 
       	String reqBody = ctx.sessionAttribute("body");
       	if (StringUtils.isNotBlank(reqBody)) {
-      		userLog.setReqBody(reqBody.replaceAll("(?:ssword).*\"", "ssword\":\"***\""));
+      		userLog.put("reqBody", reqBody.replaceAll("(?:ssword).*\"", "ssword\":\"***\""));
       	}
 
-    		AccessLogger.add(userLog);
+      	//logger.info(userLog.toString());
+      	logger.info("[" + userLog.getString("method") + " -- " + elapsed + "ms] " + userLog.getString("path") + " -- " + (userLog.has("pathExt") ? (userLog.getString("pathExt")) : reqBody));
     	}
-  	}
+//  	}
   	CurrentUser.cleanup();
   }
 

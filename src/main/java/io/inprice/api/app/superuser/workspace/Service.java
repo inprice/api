@@ -5,11 +5,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.subscription.SubscriptionDao;
-import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.app.superuser.workspace.dto.CreateVoucherDTO;
 import io.inprice.api.app.system.PlanDao;
 import io.inprice.api.app.user.UserDao;
@@ -25,24 +22,19 @@ import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.helpers.SqlHelper;
 import io.inprice.common.info.Pair;
-import io.inprice.common.mappers.AccessLogMapper;
 import io.inprice.common.meta.SubsEvent;
 import io.inprice.common.meta.WorkspaceStatus;
-import io.inprice.common.models.AccessLog;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.Plan;
 import io.inprice.common.models.User;
 import io.inprice.common.models.Workspace;
 import io.inprice.common.models.WorkspaceHistory;
 import io.inprice.common.models.WorkspaceTrans;
-import io.inprice.common.utils.DateUtils;
 import io.inprice.common.utils.VoucherManager;
 import io.javalin.http.Context;
 
 class Service {
 
-  private static final Logger logger = LoggerFactory.getLogger("SU:Workspace");
-  
   Response search(BaseSearchDTO dto) {
   	try (Handle handle = Database.getHandle()) {
   		Dao superDao = handle.attach(Dao.class);
@@ -51,26 +43,6 @@ class Service {
       return new Response(superDao.search(dto));
   	}
   }
-
-	Response searchForAccessLog(ALSearchDTO dto) {
-  	if (dto.getWorkspaceId() != null && dto.getWorkspaceId() > 0) {
-      try (Handle handle = Database.getHandle()) {
-      	String searchQuery = buildQueryForAccessLogSearch(dto);
-      	if (searchQuery == null) return Responses.BAD_REQUEST;
-  
-      	List<AccessLog> 
-        	searchResult = 
-        		handle.createQuery(searchQuery)
-        			.map(new AccessLogMapper())
-      			.list();
-        return new Response(searchResult);
-      } catch (Exception e) {
-        logger.error("Failed in search for access logs.", e);
-        return Responses.ServerProblem.EXCEPTION;
-      }
-  	}
-  	return new Response("Workspace id is missing!");
-	}
 
 	Response fetchDetails(Long id) {
   	try (Handle handle = Database.getHandle()) {
@@ -277,54 +249,4 @@ class Service {
   	}
   }
 
-  private String buildQueryForAccessLogSearch(ALSearchDTO dto) {
-  	dto = DTOHelper.normalizeSearch(dto, false);
-
-    StringBuilder where = new StringBuilder("select * from access_log ");
-
-    where.append("where workspace_id = ");
-    where.append(dto.getWorkspaceId());
-
-    if (dto.getUserId() != null) {
-    	where.append(" and user_id = ");
-    	where.append(dto.getUserId());
-    }
-
-    if (dto.getMethod() != null) {
-    	where.append(" and method = '");
-    	where.append(dto.getMethod());
-    	where.append("' ");
-    }
-    
-    if (dto.getStartDate() != null) {
-    	where.append(" and created_at >= ");
-    	where.append(DateUtils.formatDateForDB(dto.getStartDate()));
-    }
-
-    if (dto.getEndDate() != null) {
-    	where.append(" and created_at <= ");
-    	where.append(DateUtils.formatDateForDB(dto.getEndDate()));
-    }
-    
-    if (StringUtils.isNotBlank(dto.getTerm())) {
-  		where.append(" and ");
-  		where.append(dto.getSearchBy().getFieldName());
-    	where.append(" like '%");
-      where.append(dto.getTerm());
-      where.append("%' ");
-    }
-
-  	where.append(" order by ");
-    where.append(dto.getOrderBy().getFieldName());
-    where.append(dto.getOrderDir().getDir());
-    where.append(", id ");
-
-    where.append(" limit ");
-    where.append(dto.getRowCount());
-    where.append(", ");
-    where.append(dto.getRowLimit());
-    
-    return where.toString();
-  }
-  
 }

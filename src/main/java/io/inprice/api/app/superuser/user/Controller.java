@@ -2,7 +2,6 @@ package io.inprice.api.app.superuser.user;
 
 import org.apache.commons.lang3.StringUtils;
 
-import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
@@ -34,17 +33,6 @@ public class Controller extends AbstractController {
     	}
     }, AccessRoles.SUPER_ONLY());
 
-    // search for access logs
-    app.post(Consts.Paths.Super.User.AL_SEARCH, (ctx) -> {
-    	if (ctx.body().isBlank()) {
-    		ctx.json(Responses.REQUEST_BODY_INVALID);
-    	} else {
-	  		ALSearchDTO dto = ctx.bodyAsClass(ALSearchDTO.class);
-	  		Response res = service.searchForAccessLog(dto);
-	  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
-    	}
-    }, AccessRoles.SUPER_ONLY());
-    
     /*-------------------------------------------------------------------------------------*/
 
     // ban

@@ -7,12 +7,8 @@ import java.util.Map;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.inprice.api.app.auth.UserSessionDao;
-import io.inprice.api.app.superuser.dto.ALSearchBy;
-import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.app.user.UserDao;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
@@ -25,17 +21,12 @@ import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.Pair;
-import io.inprice.common.mappers.AccessLogMapper;
 import io.inprice.common.meta.Marks;
-import io.inprice.common.models.AccessLog;
 import io.inprice.common.models.Membership;
 import io.inprice.common.models.User;
 import io.inprice.common.models.UserMarks;
-import io.inprice.common.utils.DateUtils;
 
 class Service {
-
-  private static final Logger logger = LoggerFactory.getLogger("SU:User");
 
   private final RedisClient redis = Beans.getSingleton(RedisClient.class);
   
@@ -45,23 +36,6 @@ class Service {
       dto = DTOHelper.normalizeSearch(dto, true, false);
       dto.setTerm("%"+dto.getTerm());
       return new Response(superDao.search(dto));
-    }
-	}
-
-	Response searchForAccessLog(ALSearchDTO dto) {
-    try (Handle handle = Database.getHandle()) {
-    	String searchQuery = buildQueryForAccessLogSearch(dto);
-    	if (searchQuery == null) return Responses.BAD_REQUEST;
-
-    	List<AccessLog> 
-      	searchResult = 
-      		handle.createQuery(searchQuery)
-      			.map(new AccessLogMapper())
-    			.list();
-      return new Response(searchResult);
-    } catch (Exception e) {
-      logger.error("Failed in search for access logs.", e);
-      return Responses.ServerProblem.EXCEPTION;
     }
 	}
 
@@ -296,64 +270,6 @@ class Service {
       }
   	}
   	return Responses.NotFound.USER;
-  }
-
-  private String buildQueryForAccessLogSearch(ALSearchDTO dto) {
-  	if (dto.getUserId() == null) return null;
-
-  	dto = DTOHelper.normalizeSearch(dto, false);
-
-    StringBuilder where = new StringBuilder("select * from access_log ");
-
-    where.append("where user_id = ");
-    where.append(dto.getUserId());
-
-    if (dto.getWorkspaceId() != null) {
-    	where.append(" and workspace_id = ");
-    	where.append(dto.getWorkspaceId());
-    }
-
-    if (dto.getMethod() != null) {
-    	where.append(" and method = '");
-    	where.append(dto.getMethod());
-    	where.append("' ");
-    }
-    
-    if (dto.getStartDate() != null) {
-    	where.append(" and created_at >= ");
-    	where.append(DateUtils.formatDateForDB(dto.getStartDate()));
-    }
-
-    if (dto.getEndDate() != null) {
-    	where.append(" and created_at <= ");
-    	where.append(DateUtils.formatDateForDB(dto.getEndDate()));
-    }
-    
-    if (StringUtils.isNotBlank(dto.getTerm())) {
-    	if (ALSearchBy.STATUS.equals(dto.getSearchBy())) {
-      	where.append(" and status in (");
-        where.append(dto.getTerm());
-      	where.append(")");
-    	} else {
-    		where.append(" and ");
-    		where.append(dto.getSearchBy().getFieldName());
-      	where.append(" like '%");
-        where.append(dto.getTerm());
-        where.append("%' ");
-    	}
-    }
-
-  	where.append(" order by ");
-    where.append(dto.getOrderBy().getFieldName());
-    where.append(dto.getOrderDir().getDir());
-    where.append(", id ");
-
-    where.append(" limit ");
-    where.append(dto.getRowCount());
-    where.append(", ");
-    where.append(dto.getRowLimit());
-    
-    return where.toString();
   }
   
   private String validate(IdTextDTO dto) {

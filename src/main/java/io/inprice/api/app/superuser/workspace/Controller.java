@@ -1,7 +1,6 @@
 package io.inprice.api.app.superuser.workspace;
 
 import io.inprice.api.app.superuser.workspace.dto.CreateVoucherDTO;
-import io.inprice.api.app.superuser.dto.ALSearchDTO;
 import io.inprice.api.consts.Consts;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.BaseSearchDTO;
@@ -37,17 +36,6 @@ public class Controller extends AbstractController {
   		String term = ctx.queryParam("term", String.class).getValue();
   		Response res = service.searchIdNameList(term);
   		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
-    }, AccessRoles.SUPER_ONLY());
-
-    // search for access logs
-    app.post(Consts.Paths.Super.Workspace.AL_SEARCH, (ctx) -> {
-    	if (ctx.body().isBlank()) {
-    		ctx.json(Responses.REQUEST_BODY_INVALID);
-    	} else {
-	  		ALSearchDTO dto = ctx.bodyAsClass(ALSearchDTO.class);
-	  		Response res = service.searchForAccessLog(dto);
-	  		ctx.result(JsonConverter.toJsonWithoutIgnoring(res));
-    	}
     }, AccessRoles.SUPER_ONLY());
     
     /*-------------------------------------------------------------------------------------*/

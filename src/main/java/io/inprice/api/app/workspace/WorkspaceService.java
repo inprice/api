@@ -301,7 +301,6 @@ class WorkspaceService {
             batch.add("delete from ticket " + where);
             batch.add("delete from announce_log " + where);
             batch.add("delete from announce " + where);
-            batch.add("delete from access_log " + where);
 
             // in order to keep consistency, 
             // users having no workspace other than this must be deleted too!!!

@@ -36,8 +36,7 @@
     "cookie": 3600
   },
   "thresholds": {
-    "responseTimeLatency": 500,
-    "accessLogRowLimit": 150
+    "responseTimeLatency": 500
   },
   "queues": {
     "sendingEmails": { "name": "sending.emails.queue" }

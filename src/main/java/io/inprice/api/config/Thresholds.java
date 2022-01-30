@@ -7,7 +7,4 @@ public class Thresholds {
 	@JsonProperty("responseTimeLatency")
 	public int RESPONSE_TIME_LATENCY;
 
-	@JsonProperty("accessLogRowLimit")
-	public int ACCESS_LOG_ROW_LIMIT;
-	
 }
