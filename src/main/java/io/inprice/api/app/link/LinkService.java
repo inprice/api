@@ -266,7 +266,7 @@ class LinkService {
     try (Handle handle = Database.getHandle()) {
       List<Link> searchResult =
         handle.createQuery(
-          "select l.*, al.name as al_name from link as l " +
+          "select l.*, al.name as al_name, true as is_masked from link as l " +
       		"left join alarm as al on al.id = l.alarm_id " +
           where +
           " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", l.id " +

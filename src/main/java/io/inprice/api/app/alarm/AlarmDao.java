@@ -88,7 +88,7 @@ public interface AlarmDao {
   List<IdNamePairMapper> getIdNameList(@Bind("topic") AlarmTopic topic, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
-		"select id, sku, name, position, price, alarmed_at from product " +
+		"select id, sku, name, position, price, alarmed_at, workspace_id, false as is_a_link from product " +
 		"where alarm_id=:alarmId " +
 		"  and workspace_id=:workspaceId " +
 		"order by name"
@@ -97,7 +97,7 @@ public interface AlarmDao {
 	List<AlarmEntity> findProductEntities(@Bind("alarmId") Long alarmId, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
-		"select id, sku, IFNULL(name, url) as name, position, price, alarmed_at from link " +
+		"select id, sku, IFNULL(name, url) as name, position, price, alarmed_at, workspace_id, true as is_a_link from link " +
 		"where alarm_id=:alarmId " +
 		"  and workspace_id=:workspaceId " +
 		"order by name"

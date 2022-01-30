@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.17.0.final using JasperReports Library version 6.17.0-6d93193241dd8cc42629e188b94f9e0bc5722efd  -->
+<!-- Created with Jaspersoft Studio version 6.18.1.final using JasperReports Library version 6.18.1-9d75d1969e774d4f179fb3be8401e98a0e6d1611  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="link-prices" pageWidth="595" pageHeight="842" whenNoDataType="NoPages" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="772616b0-1569-4d15-9f2c-fcd5032bf2a2">
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="224"/>
@@ -20,7 +20,7 @@
 	</parameter>
 	<queryString language="SQL">
 		<![CDATA[select l.sku as l_sku, l.name, l.price, l.position, l.updated_at, l.checked_at, l.seller, pl.name as pl_name,
-lp.created_at as lp_date, lp.old_price, lp.new_price, lp.diff_amount, lp.diff_rate, link_id, p.sku as p_sku
+lp.created_at as lp_date, lp.old_price, lp.new_price, lp.diff_amount, lp.diff_rate, link_id, p.sku as p_sku, l.workspace_id
 from link_price as lp
 inner join link as l on l.id = lp.link_id
 inner join product as p on p.id = l.product_id
@@ -110,6 +110,12 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 		<property name="com.jaspersoft.studio.field.name" value="link_id"/>
 		<property name="com.jaspersoft.studio.field.label" value="link_id"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="link_price"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="workspace_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="workspace_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="workspace_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="link"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
 	<field name="p_sku" class="java.lang.String">
@@ -223,7 +229,7 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 					<textElement textAlignment="Left" verticalAlignment="Middle">
 						<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$F{seller} + " - " + $F{pl_name}]]></textFieldExpression>
+					<textFieldExpression><![CDATA[io.inprice.common.utils.StringHelper.maskString($F{seller}, $F{workspace_id}) + " - " + $F{pl_name}]]></textFieldExpression>
 				</textField>
 				<line>
 					<reportElement x="248" y="22" width="1" height="16" uuid="21421dee-fd35-42a4-bcb8-2a6a485a250a">

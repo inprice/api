@@ -37,7 +37,7 @@ interface DashboardDao {
 
   @SqlQuery(
     "select l.id, l.product_id, p.name as product_name, pl.domain as platform, l.seller, l.price, l.status, " +
-    "l.parse_code, l.position, l.name, l.url, l.updated_at, l.created_at, l.url, l.alarm_id, al.name as al_name from link as l " + 
+    "l.parse_code, l.position, l.name, l.url, l.updated_at, l.created_at, l.url, l.alarm_id, l.workspace_id, al.name as al_name from link as l " + 
 		"inner join product as p on p.id = l.product_id " + 
     "left join platform as pl on pl.id = l.platform_id " + 
     "left join alarm as al on al.id = l.alarm_id " + 

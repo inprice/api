@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.17.0.final using JasperReports Library version 6.17.0-6d93193241dd8cc42629e188b94f9e0bc5722efd  -->
+<!-- Created with Jaspersoft Studio version 6.18.1.final using JasperReports Library version 6.18.1-9d75d1969e774d4f179fb3be8401e98a0e6d1611  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="product-price" pageWidth="595" pageHeight="842" whenNoDataType="NoPages" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="772616b0-1569-4d15-9f2c-fcd5032bf2a2">
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="224"/>
@@ -138,6 +138,12 @@
 	<field name="updated_at" class="java.sql.Timestamp">
 		<property name="com.jaspersoft.studio.field.name" value="updated_at"/>
 		<property name="com.jaspersoft.studio.field.label" value="updated_at"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="workspace_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="workspace_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="workspace_id"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
@@ -392,7 +398,7 @@
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[($F{min_seller} != null && $F{min_seller}.equals("NA")==false ?
-	$F{min_seller} + ($F{min_seller}.equals("You")==false ? " - " + $F{min_platform} : "")
+	io.inprice.common.utils.StringHelper.maskString($F{min_seller}, $F{workspace_id}) + ($F{min_seller}.equals("You")==false ? " - " + $F{min_platform} : "")
  : "")]]></textFieldExpression>
 			</textField>
 			<textField>
@@ -404,7 +410,7 @@
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
 				<textFieldExpression><![CDATA[($F{max_seller} != null && $F{max_seller}.equals("NA")==false ?
-	$F{max_seller} + ($F{max_seller}.equals("You")==false ? " - " + $F{max_platform} : "")
+	io.inprice.common.utils.StringHelper.maskString($F{max_seller}, $F{workspace_id}) + ($F{max_seller}.equals("You")==false ? " - " + $F{max_platform} : "")
  : "")]]></textFieldExpression>
 			</textField>
 			<textField>

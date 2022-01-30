@@ -165,7 +165,6 @@ public class LoginTest {
 			TestUtils.logout(res.getCookies());
 
 			JSONObject json = res.getBody().getObject();
-			System.out.println(json.toString());
 			
 			if (i < 3) {
 				assertEquals(113, json.getInt("status"));

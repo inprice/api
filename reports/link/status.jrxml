@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.17.0.final using JasperReports Library version 6.17.0-6d93193241dd8cc42629e188b94f9e0bc5722efd  -->
+<!-- Created with Jaspersoft Studio version 6.18.1.final using JasperReports Library version 6.18.1-9d75d1969e774d4f179fb3be8401e98a0e6d1611  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="link-status" pageWidth="595" pageHeight="842" whenNoDataType="NoPages" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="772616b0-1569-4d15-9f2c-fcd5032bf2a2">
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="224"/>
@@ -14,7 +14,7 @@
 	</parameter>
 	<parameter name="WORKSPACE" class="java.lang.String" isForPrompting="false"/>
 	<queryString language="SQL">
-		<![CDATA[select l.sku as l_sku, l.name, l.url, l.price, l.position, l.shipment, l.seller, l.updated_at, l.checked_at, l.parse_problem, pl.name as pl_name, p.sku as p_sku
+		<![CDATA[select l.sku as l_sku, l.name, l.url, l.price, l.position, l.shipment, l.seller, l.updated_at, l.checked_at, l.parse_problem, pl.name as pl_name, p.sku as p_sku, l.workspace_id
 from link as l
 inner join product as p on p.id = l.product_id
 left join platform as pl on pl.id = l.platform_id
@@ -91,6 +91,12 @@ order by l.name, l.sku, p.sku, l.url, l.price;]]>
 		<property name="com.jaspersoft.studio.field.name" value="p_sku"/>
 		<property name="com.jaspersoft.studio.field.label" value="p_sku"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
+	</field>
+	<field name="workspace_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="workspace_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="workspace_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="link"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
 	<background>
@@ -209,7 +215,7 @@ order by l.name, l.sku, p.sku, l.url, l.price;]]>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{pl_name} + " - " + $F{seller}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{pl_name} + " - " + io.inprice.common.utils.StringHelper.maskString($F{seller}, $F{workspace_id})]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement key="" x="93" y="50" width="110" height="15" uuid="47ede2d3-c242-478c-a504-d9fe0cbdb934">
@@ -308,7 +314,7 @@ order by l.name, l.sku, p.sku, l.url, l.price;]]>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{url}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[io.inprice.common.utils.StringHelper.maskUrl($F{url}, $F{workspace_id})]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement key="" x="10" y="2" width="60" height="15" uuid="2f6ee575-d677-40f2-a427-d200f541e7c7">

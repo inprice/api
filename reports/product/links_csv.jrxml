@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.17.0.final using JasperReports Library version 6.17.0-6d93193241dd8cc42629e188b94f9e0bc5722efd  -->
+<!-- Created with Jaspersoft Studio version 6.18.1.final using JasperReports Library version 6.18.1-9d75d1969e774d4f179fb3be8401e98a0e6d1611  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="product-link" pageWidth="1300" pageHeight="1684" whenNoDataType="NoPages" columnWidth="1260" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" isIgnorePagination="true" uuid="772616b0-1569-4d15-9f2c-fcd5032bf2a2">
 	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
 	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="224"/>
@@ -33,7 +33,8 @@
     l.position AS l_position,
     l.checked_at,
     l.parse_problem,
-    pl.name AS pl_name
+    pl.name AS pl_name,
+    l.workspace_id
 FROM link AS l
     inner join product AS p ON p.id = l.product_id
     left join platform AS pl ON pl.id = l.platform_id
@@ -110,6 +111,12 @@ ORDER BY p.name, l.grup, l.price]]>
 		<property name="com.jaspersoft.studio.field.name" value="name"/>
 		<property name="com.jaspersoft.studio.field.label" value="pl_name"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="platform"/>
+	</field>
+	<field name="workspace_id" class="java.lang.Long">
+		<property name="com.jaspersoft.studio.field.name" value="workspace_id"/>
+		<property name="com.jaspersoft.studio.field.label" value="workspace_id"/>
+		<property name="com.jaspersoft.studio.field.tree.path" value="link"/>
+		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -215,7 +222,7 @@ ORDER BY p.name, l.grup, l.price]]>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Serif" size="10" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
-				<textFieldExpression><![CDATA[($F{parse_problem} == null ? $F{seller} : $F{parse_problem})]]></textFieldExpression>
+				<textFieldExpression><![CDATA[($F{parse_problem} == null ? io.inprice.common.utils.StringHelper.maskString($F{seller}, $F{workspace_id}) : $F{parse_problem})]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement key="" x="520" y="0" width="110" height="15" uuid="80c6ad1a-620b-4ab0-9092-ddc1930e6c0d">
@@ -234,7 +241,7 @@ ORDER BY p.name, l.grup, l.price]]>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Serif" size="10" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{url}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[io.inprice.common.utils.StringHelper.maskUrl($F{url}, $F{workspace_id})]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>

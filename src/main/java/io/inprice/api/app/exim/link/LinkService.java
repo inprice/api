@@ -178,7 +178,7 @@ public class LinkService extends EximBase {
     	handle.registerRowMapper(new DownloadBeanMapper());
       List<DownloadBean> dDeans =
         handle.createQuery(
-          "select p.sku, l.url from link as l " +
+          "select p.sku, l.url, p.workspace_id from link as l " +
       		"inner join product as p on p.id = l.product_id " +
       		"left join platform as pl on pl.id = l.platform_id " +
       		generateWhereClause(ctx) +

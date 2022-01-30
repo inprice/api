@@ -21,7 +21,7 @@ import io.inprice.common.models.Product;
 
 public interface ProductDao {
 
-	@SqlQuery("select * from product where id=:id and workspace_id=:workspaceId")
+	@SqlQuery("select *, true as is_masked from product where id=:id and workspace_id=:workspaceId")
 	@UseRowMapper(ProductMapper.class)
 	Product findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
@@ -35,7 +35,7 @@ public interface ProductDao {
 	boolean doesExistBySku(@BindBean("dto") ProductDTO dto, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(
-		"select p.*, al.name as al_name, sp.name as sp_name" + BrandDao.FIELDS + CategoryDao.FIELDS + " from product p " +
+		"select p.*, true as is_masked, al.name as al_name, sp.name as sp_name" + BrandDao.FIELDS + CategoryDao.FIELDS + " from product p " +
 		"left join alarm as al on al.id = p.alarm_id " +
 		"left join smart_price as sp on sp.id = p.smart_price_id " +
 		"left join brand as brn on brn.id = p.brand_id " +
@@ -46,7 +46,7 @@ public interface ProductDao {
 	@UseRowMapper(ProductMapper.class)
 	Product findByIdWithLookups(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
-  @SqlQuery("select * from product where name=:name and workspace_id=:workspaceId limit 1")
+  @SqlQuery("select *, true as is_masked from product where name=:name and workspace_id=:workspaceId limit 1")
   @UseRowMapper(ProductMapper.class)
 	Product findByName(@Bind("name") String name, @Bind("workspaceId") Long workspaceId);
 

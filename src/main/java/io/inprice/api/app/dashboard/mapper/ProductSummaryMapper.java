@@ -3,10 +3,13 @@ package io.inprice.api.app.dashboard.mapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
+import io.inprice.common.helpers.GlobalConsts;
 import io.inprice.common.mappers.Helper;
+import io.inprice.common.utils.StringHelper;
 
 public class ProductSummaryMapper implements RowMapper<ProductSummary> {
 
@@ -36,6 +39,16 @@ public class ProductSummaryMapper implements RowMapper<ProductSummary> {
     if (m.getWaitings() != null) total += m.getWaitings();
     if (m.getProblems() != null) total += m.getProblems();
     m.setTotal(total);
+
+    //sellers must be masked for demo account!
+    if (rs.getLong("workspace_id") == GlobalConsts.DEMO_WS_ID) {
+			if (StringUtils.isNotBlank(m.getMinSeller()) && GlobalConsts.YOU.equals(m.getMinSeller()) == false && GlobalConsts.NOT_AVAILABLE.equals(m.getMinSeller()) == false) {
+				m.setMinSeller(StringHelper.maskString(m.getMinSeller()));
+			}
+			if (StringUtils.isNotBlank(m.getMaxSeller()) && GlobalConsts.YOU.equals(m.getMaxSeller()) == false && GlobalConsts.NOT_AVAILABLE.equals(m.getMaxSeller()) == false) {
+				m.setMaxSeller(StringHelper.maskString(m.getMaxSeller()));
+			}
+    }
 
     return m;
   }

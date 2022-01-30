@@ -26,12 +26,12 @@ import io.inprice.common.repository.PlatformDao;
 
 public interface LinkDao {
 
-  @SqlQuery("select * from link where id=:id and workspace_id=:workspaceId")
+  @SqlQuery("select *, true as is_masked from link where id=:id and workspace_id=:workspaceId")
   @UseRowMapper(LinkMapper.class)
   Link findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-		"select l.*, al.name as al_name from link as l " +
+		"select l.*, al.name as al_name, true as is_masked from link as l " +
     "left join alarm as al on al.id = l.alarm_id " + 
     "where l.id=:id " +
     "  and l.workspace_id=:workspaceId"
@@ -39,12 +39,12 @@ public interface LinkDao {
   @UseRowMapper(LinkMapper.class)
   Link findWithAlarmById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
-  @SqlQuery("select * from link where product_id=:productId and url_hash=:urlHash limit 1")
+  @SqlQuery("select *, true as is_masked from link where product_id=:productId and url_hash=:urlHash limit 1")
   @UseRowMapper(LinkMapper.class)
   Link findByProductIdAndUrlHash(@Bind("productId") Long productId, @Bind("urlHash") String urlHash);
 
   @SqlQuery(
-    "select l.*, al.name as al_name" + PlatformDao.FIELDS + 
+    "select l.*, al.name as al_name, true as is_masked" + PlatformDao.FIELDS + 
     ", p.price as product_price, p.base_price as product_base_price, p.name as product_name, p.alarm_id as product_alarm_id, p.smart_price_id as product_smart_price_id from link as l " + 
 		"inner join product as p on p.id = l.product_id " + 
     "left join alarm as al on al.id = l.alarm_id " + 

@@ -8,9 +8,11 @@ import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
 import io.inprice.api.helpers.HttpHelper;
+import io.inprice.common.helpers.GlobalConsts;
 import io.inprice.common.mappers.Helper;
 import io.inprice.common.meta.LinkStatus;
 import io.inprice.common.utils.DateUtils;
+import io.inprice.common.utils.StringHelper;
 
 public class MRU25LinkMapper implements RowMapper<MRU25Link> {
 
@@ -21,9 +23,9 @@ public class MRU25LinkMapper implements RowMapper<MRU25Link> {
     if (Helper.hasColumn(rs, "id")) m.setId(rs.getLong("id"));
     if (Helper.hasColumn(rs, "product_id")) m.setProductId(rs.getLong("product_id"));
     if (Helper.hasColumn(rs, "product_name")) m.setProductName(rs.getString("product_name"));
-    if (Helper.hasColumn(rs, "seller")) m.setSeller(rs.getString("seller"));
     if (Helper.hasColumn(rs, "name")) m.setName(rs.getString("name"));
     if (Helper.hasColumn(rs, "url")) m.setUrl(rs.getString("url"));
+    if (Helper.hasColumn(rs, "seller")) m.setSeller(rs.getString("seller"));
     if (Helper.hasColumn(rs, "price")) m.setPrice(rs.getBigDecimal("price"));
     if (Helper.hasColumn(rs, "position")) m.setPosition(rs.getString("position"));
     if (Helper.hasColumn(rs, "parse_code")) m.setStatusDesc(rs.getString("parse_code"));
@@ -51,6 +53,16 @@ public class MRU25LinkMapper implements RowMapper<MRU25Link> {
       platform = HttpHelper.extractHostname(rs.getString("url"));
     }
     m.setPlatform(platform);
+
+    //seller and url must be masked for demo account!
+		if (rs.getLong("workspace_id") == GlobalConsts.DEMO_WS_ID) {
+			String maskedSeller = (StringUtils.isNotBlank(m.getSeller()) && GlobalConsts.NOT_AVAILABLE.equals(m.getSeller()) == false ? StringHelper.maskString(m.getSeller()) : null);
+			if (maskedSeller != null) {
+				m.setUrl(m.getUrl().replaceAll(m.getSeller(), maskedSeller));
+				m.setSeller(maskedSeller);
+			}
+			m.setUrl(m.getUrl().substring(0, m.getUrl().length()-12) + "-masked-url");
+		}
 
     return m;
   }
