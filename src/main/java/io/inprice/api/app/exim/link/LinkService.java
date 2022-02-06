@@ -230,7 +230,7 @@ public class LinkService extends EximBase {
   	}
 
   	if (ctx.queryParam("platform") != null) {
-  		sql.append(" and pl.name = '");
+  		sql.append(" and pl.domain = '");
   		sql.append(SqlHelper.clear(ctx.queryParam("platform")));
   		sql.append("'");
   	}

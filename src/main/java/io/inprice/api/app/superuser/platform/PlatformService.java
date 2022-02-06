@@ -134,12 +134,6 @@ class PlatformService {
   private String validate(PlatformDTO dto) {
     String problem = null;
 
-  	if (StringUtils.isBlank(dto.getName())) {
-      problem = "Name cannot be empty!";
-    } else if (dto.getName().length() < 3 || dto.getName().length() > 50) {
-      problem = "Name must be between 3 - 50 chars!";
-    }
-
     if (problem == null && (StringUtils.isBlank(dto.getCurrencyCode()) || dto.getCurrencyCode().length() != 3)) {
       problem = "Currency Code must be 3 chars!";
     }

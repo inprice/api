@@ -22,7 +22,7 @@
 	</parameter>
 	<parameter name="WORKSPACE" class="java.lang.String" isForPrompting="false"/>
 	<queryString language="SQL">
-		<![CDATA[select l.sku as l_sku, l.name, l.price, l.position, l.updated_at, l.checked_at, l.seller, pl.name as pl_name,
+		<![CDATA[select l.sku as l_sku, l.name, l.price, l.position, l.updated_at, l.checked_at, l.seller, pl.domain,
 lp.created_at as lp_date, lp.old_price, lp.new_price, lp.diff_amount, lp.diff_rate, p.sku as p_sku, l.workspace_id
 from link_price as lp
 inner join link as l on l.id = lp.link_id
@@ -73,9 +73,9 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 		<property name="com.jaspersoft.studio.field.tree.path" value="link"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
-	<field name="pl_name" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="pl_name"/>
-		<property name="com.jaspersoft.studio.field.label" value="pl_name"/>
+	<field name="domain" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="domain"/>
+		<property name="com.jaspersoft.studio.field.label" value="domain"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="platform"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
@@ -236,7 +236,7 @@ order by l.name, l.sku, p.sku, lp.created_at desc;]]>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font size="10" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA[io.inprice.common.utils.StringHelper.maskString($F{seller}, $F{workspace_id}) + " - " + $F{pl_name}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[io.inprice.common.utils.StringHelper.maskString($F{seller}, $F{workspace_id}) + " - " + $F{domain}]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement key="" x="430" y="0" width="90" height="16" uuid="38f863b7-f067-4dbf-99db-c1b9ecf8821d">

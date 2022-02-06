@@ -18,7 +18,7 @@ public interface PlatformDao {
 
   @SqlUpdate(
 		"update platform " + 
-		"set name=:dto.name, currency_code=:dto.currencyCode, currency_format=:dto.currencyFormat, queue=:dto.queue, profile=:dto.profile, parked=:dto.parked, blocked=:dto.blocked " +
+		"set currency_code=:dto.currencyCode, currency_format=:dto.currencyFormat, queue=:dto.queue, profile=:dto.profile, parked=:dto.parked, blocked=:dto.blocked " +
 		"where id=:dto.id"
 	)
   boolean update(@BindBean("dto") PlatformDTO dto);

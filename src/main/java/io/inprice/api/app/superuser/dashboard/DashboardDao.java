@@ -31,9 +31,9 @@ public interface DashboardDao {
   List<Pair<String, Integer>> findProductPositionCounts();
 
   @SqlQuery(
-    "select pl.name as name, count(1) as _count from link as l " +
+    "select pl.domain as name, count(1) as _count from link as l " +
     "inner join platform as pl on pl.id = l.platform_id " +
-    "group by pl.name " +
+    "group by pl.domain " +
     "order by _count desc, name " +
     "limit 10"
   )

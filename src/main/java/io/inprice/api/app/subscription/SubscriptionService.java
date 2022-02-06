@@ -4,33 +4,40 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jdbi.v3.core.Handle;
 
-import io.inprice.api.app.workspace.WorkspaceDao;
+import io.inprice.api.app.auth.UserSessionDao;
 import io.inprice.api.app.system.PlanDao;
+import io.inprice.api.app.workspace.WorkspaceDao;
 import io.inprice.api.config.Props;
 import io.inprice.api.consts.Responses;
 import io.inprice.api.dto.CustomerDTO;
+import io.inprice.api.external.RedisClient;
 import io.inprice.api.helpers.Commons;
 import io.inprice.api.info.Response;
 import io.inprice.api.publisher.EmailPublisher;
 import io.inprice.api.session.CurrentUser;
+import io.inprice.api.session.info.ForRedis;
+import io.inprice.common.helpers.Beans;
 import io.inprice.common.helpers.Database;
 import io.inprice.common.info.EmailData;
-import io.inprice.common.meta.WorkspaceStatus;
 import io.inprice.common.meta.EmailTemplate;
 import io.inprice.common.meta.Marks;
 import io.inprice.common.meta.SubsEvent;
-import io.inprice.common.models.Workspace;
-import io.inprice.common.models.WorkspaceTrans;
+import io.inprice.common.meta.WorkspaceStatus;
 import io.inprice.common.models.Plan;
 import io.inprice.common.models.UserMarks;
+import io.inprice.common.models.Workspace;
+import io.inprice.common.models.WorkspaceTrans;
 
 class SubscriptionService {
 
+  private final RedisClient redis = Beans.getSingleton(RedisClient.class);
+	
   Response createCheckout(int planId) {
   	return Responses.METHOD_NOT_ALLOWED;
   }
@@ -98,25 +105,24 @@ class SubscriptionService {
           }
         }
 
-        if (res.isOK())
+        if (res.isOK()) {
+          changingWSStatusOnRedisSession(WorkspaceStatus.CANCELLED, handle);
+          res = Commons.refreshSession(workspaceDao, workspace.getId());
         	handle.commit();
-        else
+        } else {
         	handle.rollback();
+        }
 
       } else {
         res = Responses.Illegal.NOT_SUITABLE_FOR_CANCELLATION;
       }
     }
 
-    if (res.isOK()) {
-      res = Commons.refreshSession(CurrentUser.getWorkspaceId());
-    }
-
     return res;
   }
 
   Response startFreeUse() {
-    Response response = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
+    Response res = Responses.DataProblem.SUBSCRIPTION_PROBLEM;
 
     try (Handle handle = Database.getHandle()) {
 
@@ -163,24 +169,25 @@ class SubscriptionService {
             }
 
             if (isOK) {
-              response = Commons.refreshSession(workspaceDao, workspace.getId());
+              changingWSStatusOnRedisSession(WorkspaceStatus.FREE, handle);
+              res = Commons.refreshSession(workspaceDao, workspace.getId());
               handle.commit();
             } else {
             	handle.rollback();
             }
 
           } else {
-            response = Responses.Illegal.NO_FREE_USE_RIGHT;
+            res = Responses.Illegal.NO_FREE_USE_RIGHT;
           }
         } else {
-        	response = Responses.NotFound.WORKSPACE;
+        	res = Responses.NotFound.WORKSPACE;
         }
       } else {
-        response = Responses.Already.FREE_USE_USED;
+        res = Responses.Already.FREE_USE_USED;
       }
     }
 
-    return response;
+    return res;
   }
 
   Response getInfo() {
@@ -323,6 +330,20 @@ class SubscriptionService {
     }
 
     return problem;
+  }
+
+  private void changingWSStatusOnRedisSession(WorkspaceStatus newStatus, Handle handle) {
+    //refresh session on Redis!
+    UserSessionDao userSessionDao = handle.attach(UserSessionDao.class);
+    List<String> hashList = userSessionDao.findHashesByWorkspaceId(CurrentUser.getWorkspaceId());
+
+    if (CollectionUtils.isNotEmpty(hashList)) {
+    	Map<String, ForRedis> newMap = redis.getSessions(hashList);
+    	for (Entry<String, ForRedis> entry: newMap.entrySet()) {
+    		entry.getValue().setWorkspaceStatus(newStatus);
+			}
+    	redis.updateSessions(newMap);
+    }
   }
 
 }

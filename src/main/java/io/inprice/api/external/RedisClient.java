@@ -1,6 +1,7 @@
 package io.inprice.api.external;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,6 +69,20 @@ public class RedisClient {
     	}
     }
     return null;
+  }
+
+  public Map<String, ForRedis> getSessions(List<String> hashList) {
+  	Map<String, ForRedis> result = new HashMap<>();
+
+  	try (Jedis jedis = Redis.getPool().getResource()) {
+    	for (String hash: hashList) {
+	    	String json = jedis.hget(SESSIONS_KEY, hash);
+	    	if (json != null) {
+	    		result.put(hash, JsonConverter.fromJson(json, ForRedis.class));
+	    	}
+    	}
+    }
+    return result;
   }
 
   public void updateSessions(Map<String, ForRedis> map) {

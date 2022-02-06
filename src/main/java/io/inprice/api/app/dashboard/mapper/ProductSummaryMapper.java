@@ -31,7 +31,10 @@ public class ProductSummaryMapper implements RowMapper<ProductSummary> {
     if (Helper.hasColumn(rs, "max_price")) m.setMaxPrice(rs.getBigDecimal("max_price"));
 
     if (Helper.hasColumn(rs, "min_seller")) m.setMinSeller(rs.getString("min_seller"));
+    if (Helper.hasColumn(rs, "min_platform")) m.setMinPlatform(rs.getString("min_platform"));
+
     if (Helper.hasColumn(rs, "max_seller")) m.setMaxSeller(rs.getString("max_seller"));
+    if (Helper.hasColumn(rs, "max_platform")) m.setMaxPlatform(rs.getString("max_platform"));
     
     int total = 0;
     if (m.getActives() != null) total += m.getActives();

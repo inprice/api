@@ -24,7 +24,7 @@
 	l.position AS l_position,
 	l.checked_at,
 	l.parse_problem,
-	pl.name AS pl_name,
+	pl.domain,
 	l.workspace_id
 FROM link AS l
 	inner join product AS p ON p.id = l.product_id
@@ -98,9 +98,9 @@ ORDER BY p.name, l.grup, l.price]]>
 		<property name="com.jaspersoft.studio.field.tree.path" value="product"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
-	<field name="pl_name" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="name"/>
-		<property name="com.jaspersoft.studio.field.label" value="pl_name"/>
+	<field name="domain" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="domain"/>
+		<property name="com.jaspersoft.studio.field.label" value="domain"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="platform"/>
 	</field>
 	<field name="workspace_id" class="java.lang.Long">
@@ -234,7 +234,7 @@ ORDER BY p.name, l.grup, l.price]]>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{pl_name}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{domain}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00">
 				<reportElement x="320" y="0" width="70" height="15" uuid="76741c7f-08b1-4189-bc4d-50cbda438802">

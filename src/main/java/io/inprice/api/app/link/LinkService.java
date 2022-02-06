@@ -1,9 +1,11 @@
 package io.inprice.api.app.link;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,7 +30,7 @@ import io.inprice.api.meta.WSPermission;
 import io.inprice.api.session.CurrentUser;
 import io.inprice.api.utils.DTOHelper;
 import io.inprice.common.helpers.Database;
-import io.inprice.common.mappers.LinkMapper;
+import io.inprice.common.mappers.LinkReducer;
 import io.inprice.common.models.Alarm;
 import io.inprice.common.models.Link;
 import io.inprice.common.models.LinkHistory;
@@ -132,14 +134,23 @@ class LinkService {
           if (specList == null) specList = new ArrayList<>();
           if (priceList == null) priceList = new ArrayList<>();
           if (historyList == null) historyList = new ArrayList<>();
-        
-          if (StringUtils.isNotBlank(link.getBrand())) specList.add(0, new LinkSpec("", link.getBrand()));
-          if (StringUtils.isNotBlank(link.getSku())) specList.add(0, new LinkSpec("", link.getSku()));
+          
+          List<BigDecimal> prices = null;
+          if (CollectionUtils.isNotEmpty(priceList)) {
+          	prices = new ArrayList<>(priceList.size()+1);
+          	prices.add(priceList.get(0).getNewPrice());
+          	for (LinkPrice lp: priceList) {
+          		prices.add(lp.getNewPrice());
+          	}
+          } else {
+          	prices = List.of(BigDecimal.ZERO, BigDecimal.ZERO);
+          }
           
           Map<String, Object> data = Map.of(
         		"info", link,
           	"specList", specList,
           	"priceList", priceList,
+          	"priceSeries", prices,
           	"historyList", historyList
         	);
           res = new Response(data);
@@ -266,15 +277,18 @@ class LinkService {
     try (Handle handle = Database.getHandle()) {
       List<Link> searchResult =
         handle.createQuery(
-          "select l.*, al.name as al_name, true as is_masked from link as l " +
+          "select l.*, al.name as al_name, true as is_masked, pl.domain, lp.new_price as lp_price from link as l " +
+      		"left join platform as pl on pl.id = l.platform_id " +
       		"left join alarm as al on al.id = l.alarm_id " +
+          "left join link_price as lp on lp.link_id = l.id " + 
           where +
-          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", l.id " +
+          " order by " + dto.getOrderBy().getFieldName() + dto.getOrderDir().getDir() + ", l.id, lp.id " +
           " limit " + dto.getRowCount() + ", " + dto.getRowLimit()
         )
-      .map(new LinkMapper())
-      .list();
-      
+      .reduceRows(new LinkReducer())
+      .sequential()
+      .collect(Collectors.toList());
+
       return new Response(searchResult);
     } catch (Exception e) {
       logger.error("Failed in full search for links.", e);

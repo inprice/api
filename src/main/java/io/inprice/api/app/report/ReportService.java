@@ -102,7 +102,7 @@ public class ReportService extends ReportBase {
     }
 
     if (StringUtils.isNotBlank(dto.getPlatform())) {
-  		sql.append(" and pl.name = '");
+  		sql.append(" and pl.domain = '");
   		sql.append(SqlHelper.clear(dto.getPlatform()));
   		sql.append("'");
     }

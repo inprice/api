@@ -11,10 +11,12 @@ import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowMapper;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 
 import io.inprice.common.mappers.LinkHistoryMapper;
 import io.inprice.common.mappers.LinkMapper;
 import io.inprice.common.mappers.LinkPriceMapper;
+import io.inprice.common.mappers.LinkReducer;
 import io.inprice.common.mappers.LinkSpecMapper;
 import io.inprice.common.mappers.ProductMapper;
 import io.inprice.common.models.Link;
@@ -31,7 +33,8 @@ public interface LinkDao {
   Link findById(@Bind("id") Long id, @Bind("workspaceId") Long workspaceId);
 
   @SqlQuery(
-		"select l.*, al.name as al_name, true as is_masked from link as l " +
+		"select l.*, al.name as al_name, true as is_masked, pl.domain from link as l " +
+    "left join platform as pl on pl.id = l.platform_id " + 
     "left join alarm as al on al.id = l.alarm_id " + 
     "where l.id=:id " +
     "  and l.workspace_id=:workspaceId"
@@ -45,15 +48,17 @@ public interface LinkDao {
 
   @SqlQuery(
     "select l.*, al.name as al_name, true as is_masked" + PlatformDao.FIELDS + 
-    ", p.price as product_price, p.base_price as product_base_price, p.name as product_name, p.alarm_id as product_alarm_id, p.smart_price_id as product_smart_price_id from link as l " + 
+    ", p.price as product_price, p.base_price as product_base_price, p.name as product_name " +
+    ", p.alarm_id as product_alarm_id, p.smart_price_id as product_smart_price_id, lp.new_price as lp_price from link as l " + 
 		"inner join product as p on p.id = l.product_id " + 
     "left join alarm as al on al.id = l.alarm_id " + 
 		"left join platform as pl on pl.id = l.platform_id " + 
+		"left join link_price as lp on lp.link_id = l.id " + 
     "where l.product_id=:productId " +
     "  and l.workspace_id=:workspaceId " +
-    "order by l.grup, l.price, l.status"
+    "order by l.grup, l.price, l.status, lp.id "
   )
-  @UseRowMapper(LinkMapper.class)
+  @UseRowReducer(LinkReducer.class)
   List<Link> findListByProductId(@Bind("productId") Long productId, @Bind("workspaceId") Long workspaceId);
 
 	@SqlQuery(

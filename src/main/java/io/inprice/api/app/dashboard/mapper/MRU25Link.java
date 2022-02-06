@@ -2,6 +2,8 @@ package io.inprice.api.app.dashboard.mapper;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -26,5 +28,6 @@ public class MRU25Link implements Serializable {
   private Long alarmId;
   private String alarmName;
   private String updatedAt;
+  private List<BigDecimal> prices = new ArrayList<>();
 
 }

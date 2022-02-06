@@ -14,7 +14,7 @@
 	</parameter>
 	<parameter name="WORKSPACE" class="java.lang.String" isForPrompting="false"/>
 	<queryString language="SQL">
-		<![CDATA[select l.sku as l_sku, l.name, l.url, l.price, l.position, l.shipment, l.seller, l.updated_at, l.checked_at, l.parse_problem, pl.name as pl_name, p.sku as p_sku, l.workspace_id
+		<![CDATA[select l.sku as l_sku, l.name, l.url, l.price, l.position, l.shipment, l.seller, l.updated_at, l.checked_at, l.parse_problem, pl.domain, p.sku as p_sku, l.workspace_id
 from link as l
 inner join product as p on p.id = l.product_id
 left join platform as pl on pl.id = l.platform_id
@@ -81,9 +81,9 @@ order by l.name, l.sku, p.sku, l.url, l.price;]]>
 		<property name="com.jaspersoft.studio.field.tree.path" value="link"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
-	<field name="pl_name" class="java.lang.String">
-		<property name="com.jaspersoft.studio.field.name" value="pl_name"/>
-		<property name="com.jaspersoft.studio.field.label" value="pl_name"/>
+	<field name="domain" class="java.lang.String">
+		<property name="com.jaspersoft.studio.field.name" value="domain"/>
+		<property name="com.jaspersoft.studio.field.label" value="domain"/>
 		<property name="com.jaspersoft.studio.field.tree.path" value="platform"/>
 		<fieldDescription><![CDATA[]]></fieldDescription>
 	</field>
@@ -215,7 +215,7 @@ order by l.name, l.sku, p.sku, l.url, l.price;]]>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="false" pdfEncoding="Cp1254"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{pl_name} + " - " + io.inprice.common.utils.StringHelper.maskString($F{seller}, $F{workspace_id})]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{domain} + " - " + io.inprice.common.utils.StringHelper.maskString($F{seller}, $F{workspace_id})]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement key="" x="93" y="50" width="110" height="15" uuid="47ede2d3-c242-478c-a504-d9fe0cbdb934">

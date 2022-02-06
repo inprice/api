@@ -14,7 +14,6 @@ public class PlatformDTO implements Serializable {
 	private static final long serialVersionUID = 4092356413564396973L;
 
 	private Long id;
-  private String name;
   private String currencyCode;
   private String currencyFormat;
   private String queue;
