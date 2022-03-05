@@ -154,10 +154,6 @@ class PlatformService {
 	    }
     }
 
-    if (problem == null && StringUtils.isNotBlank(dto.getProfile()) && (dto.getProfile().length() < 3 || dto.getProfile().length() > 15)) {
-      problem = "If given, profile can be between 3 - 15 chars!";
-    }
-
     return problem;
   }
 

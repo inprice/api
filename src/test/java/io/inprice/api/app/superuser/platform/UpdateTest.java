@@ -34,8 +34,7 @@ public class UpdateTest {
   			.put("name", "Amazon America")
 	    	.put("currencyCode", "USD")
 				.put("currencyFormat", "$#,##0.00")
-				.put("queue", "active.links.queue.cap3")
-				.put("profile", "default");
+				.put("queue", "active.links.queue.cap3");
 
 	@BeforeClass
 	public static void setup() {
@@ -216,28 +215,6 @@ public class UpdateTest {
 		
 		assertEquals(400, json.getInt("status"));
 		assertEquals("Queue must be between 5 - 50 chars!", json.getString("reason"));
-	}
-
-	@Test
-	public void Profile_can_be_between_3_and_15_chars_WITH_shorter_value() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("profile", "AB");
-
-		JSONObject json = callTheService(body);
-		
-		assertEquals(400, json.getInt("status"));
-    assertEquals("If given, profile can be between 3 - 15 chars!", json.getString("reason"));
-	}
-
-	@Test
-	public void Profile_can_be_between_3_and_15_chars_WITH_longer_value() {
-		JSONObject body = new JSONObject(SAMPLE_BODY.toMap());
-		body.put("profile", RandomStringUtils.randomAlphabetic(51));
-		
-		JSONObject json = callTheService(body);
-		
-		assertEquals(400, json.getInt("status"));
-		assertEquals("If given, profile can be between 3 - 15 chars!", json.getString("reason"));
 	}
 
 	/**

@@ -62,17 +62,13 @@ public class MRU25LinkReducer implements LinkedHashMapRowReducer<Long, MRU25Link
     		}
       }
       
+    	BigDecimal lpPrice = Helper.getColumnVal(rw, "lp_price", BigDecimal.class, BigDecimal.ZERO);
+      m.getPrices().add(lpPrice);
       //duplication for the first price is needed because sparkline component at fe side doesn't render properly without this!!!
-      if (m.getPrices().size() < 25) {
-	      if (Helper.getColumnVal(rw, "lp_price", BigDecimal.class) != null) {
-	          m.getPrices().add(Helper.getColumnVal(rw, "lp_price", BigDecimal.class));
-	          if (m.getPrices().size() == 1) m.getPrices().add(Helper.getColumnVal(rw, "lp_price", BigDecimal.class));
-	      } else {
-	      	m.getPrices().add(BigDecimal.ZERO);
-	      	m.getPrices().add(BigDecimal.ZERO);
-	      }
-	      map.put(m.getId(), m);
-      }
+      if (m.getPrices().size() == 1) m.getPrices().add(lpPrice);
+      if (m.getPrices().size() > 25) m.getPrices().remove(0);
+
+      map.put(m.getId(), m);
   }
 
 }

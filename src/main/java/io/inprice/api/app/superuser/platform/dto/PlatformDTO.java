@@ -17,7 +17,6 @@ public class PlatformDTO implements Serializable {
   private String currencyCode;
   private String currencyFormat;
   private String queue;
-  private String profile;
   private Boolean parked = Boolean.FALSE;
   private Boolean blocked = Boolean.FALSE;
 
