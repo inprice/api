@@ -27,10 +27,10 @@
     "port": 6379
   },
   "keys": {
-    "geoLocation": "9eac35ec732e43a3a89863fce6cb406a",
-    "encryption": "f7*$q{>AKbC<B)!s@n7=P",
-    "superUser": ",~2w&RWmV3bchk']pKbC<B)!:F[*#Ss8",
-    "user": "-8'fq{>As@n77jcx24.U*$=PS]#Z5wY+"
+    "geoLocation": "***",
+    "encryption": "***",
+    "superUser": "***",
+    "user": "***"
   },
   "ttls": {
     "cookie": 3600
