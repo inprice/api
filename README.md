@@ -28,5 +28,6 @@
 | JJWT              |  0.11.2  | User authentication                            |
 | MySql             |   5.7    | Database for development operations            |
 | Flyway            |   2.2    | Database migration control system for versions |
+| RabbitMQ          |  5.13.0  | Messaging queue used in other parts of system  |
 | Maven             |  4.0.0   | Compiling and dependency management system     |
 | Eclipse           |    -     | Integrated development platform for Java       |
